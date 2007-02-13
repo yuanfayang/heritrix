@@ -39,16 +39,21 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
-import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.IoUtils;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.Database;
@@ -132,6 +137,11 @@ import com.sleepycat.je.EnvironmentConfig;
  */
 public class FileSheetManager extends SheetManager {
 
+    /**
+     * First version.
+     */
+    private static final long serialVersionUID = 1L;
+
     /** The BDB environment. */
     @Immutable
     final public static Key<Environment> ENVIRONMENT = Key.make(null);
@@ -170,6 +180,9 @@ public class FileSheetManager extends SheetManager {
     /** The sheets subdirectory. */
     final private File sheetsDir;
 
+    /** The main configuration file. */
+    final private File mainConfig;
+    
     /** Sheets that are currently in memory. */
     final private Map<String, Sheet> sheets;
 
@@ -184,6 +197,7 @@ public class FileSheetManager extends SheetManager {
 
     private boolean online;
 
+    final private SAXParserFactory saxParserFactory;
     
     final private Environment bdbEnvironment;
     
@@ -201,7 +215,9 @@ public class FileSheetManager extends SheetManager {
      */
     public FileSheetManager(File main, boolean online) 
     throws IOException, DatabaseException {
-//        validateDir(main);
+        this.mainConfig = main;
+        this.saxParserFactory = SAXParserFactory.newInstance();
+        
         this.online = online;
         Properties p = load(main);
         setUpBDB(main, p);    
@@ -517,14 +533,22 @@ public class FileSheetManager extends SheetManager {
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(f));
-            SheetFileReader sfr = new SheetFileReader(br);
+            SAXParser parser = saxParserFactory.newSAXParser();
+            InputSource source = new InputSource(br);
             SingleSheet r = createSingleSheet(name);
             if (name.equals(DEFAULT_SHEET_NAME)) {
                 setManagerDefaults(r);
             }
-            new PathChanger().change(r, sfr);
-            sheets.put(name, r);
+            DefaultPathChangeListener dpcl = new DefaultPathChangeListener(r);
+            SettingsSAX sax = new SettingsSAX(dpcl);
+            parser.parse(source, sax);
             return r;
+        } catch (SAXException e) {
+            LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
+            return null;
+        } catch (ParserConfigurationException e) {
+            LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
+            return null;
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
             return null;
@@ -672,5 +696,10 @@ public class FileSheetManager extends SheetManager {
         ss.set(this, ENVIRONMENT, bdbEnvironment);
         ss.set(this, CLASS_CATALOG, classCatalogDB);
         ss.set(this, STORED_CLASS_CATALOG, classCatalog);
+    }
+    
+    
+    public File getWorkingDirectory() {
+        return mainConfig.getParentFile();
     }
 }

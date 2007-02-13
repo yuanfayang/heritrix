@@ -66,6 +66,11 @@ import org.archive.settings.path.Paths;
 public class JMXSheetManager extends SheetManager implements DynamicMBean {
 
     
+    /**
+     * First version.
+     */
+    private static final long serialVersionUID = 1L;
+
     final private SheetManager manager;
     final private Bean support;
 
@@ -302,9 +307,10 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
         Transformer<CompositeData,PathChange> transformer
          = new Transformer<CompositeData,PathChange>() {
             public PathChange transform(CompositeData cd) {
+                String type = (String)cd.get("type");
                 String path = (String)cd.get("path");
                 String value = (String)cd.get("value");
-                return new PathChange(path, value);
+                return new PathChange(path, type, value);
             }
         };
         Collection<CompositeData> c = Arrays.asList(setData);
@@ -412,10 +418,13 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             @Parameter(name="path", desc="The path to the setting to change.")
             String path, 
             
+            @Parameter(name="type", desc="The type of that setting.")
+            String type,
+            
             @Parameter(name="value", desc="The new value for the setting at that path.")
             String value) {
         SingleSheet ss = getSingleSheet(sheet);
-        PathChange change = new PathChange(path, value);
+        PathChange change = new PathChange(path, type, value);
         new PathChanger().change(ss, Collections.singleton(change));
     }
 

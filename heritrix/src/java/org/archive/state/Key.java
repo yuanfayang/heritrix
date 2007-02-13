@@ -359,6 +359,7 @@ final public class Key<Value> {
         @SuppressWarnings("unchecked")
         Map<String,Object> map = (Map)def;
         
+        @SuppressWarnings("unchecked")
         Map<String,Object> result = new HashMap(map.size());
         for (Map.Entry<String,Object> me: map.entrySet()) {
             result.put(me.getKey(), makeOfflineDefault(me.getValue()));
