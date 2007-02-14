@@ -11,6 +11,23 @@
       <corpauthor>Internet Archive</corpauthor>
     </authorgroup>
   </articleinfo>
+   <sect1 id="TODO">
+    <title>Release XXX</title>
+    <abstract>
+      <para />
+    </abstract>
+    <sect2 id="XXXXXXXXXX_contributors">
+    <title>Contributors</title>
+        <para>
+    <itemizedlist>
+      <listitem><para>Oskar Grenholm</para><para>TODO: Add note on Kw3 writer. 
+      Copy from Class javadoc.</para></listitem>
+      <listitem><para>Doug Judd</para><para>TODO: Add note on hdfs writer.</para></listitem>
+    </itemizedlist>
+        </para>
+    </sect2> 
+
+   </sect1>
 
    <sect1 id="1_10_2">
     <title>Release 1.10.2 - 01/15/2007</title>
