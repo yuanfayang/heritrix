@@ -539,6 +539,10 @@ list below, send a description of a couple of lines to the mailing list).
     <li><a href="http://vigna.dsi.unimi.it/ftp/papers/UbiCrawler.pdf">Ubicrawler</a>, a scalable distributed
     web crawler.
     </li>
+    <li><a href="http://xldb.fc.ul.pt/daniel/vnRT.pdf">The Viuva Negra crawler</a> paper describes
+    common architectures and common issues encountered crawling as introduction to the VN crawler.
+    The paper ends with comparison of the various crawlers from the literature.
+    </li>
 
     <li><a href="http://citeseer.nj.nec.com/leung01towards.html">Towards
     Web-Scale Web Archeaology</a> is a higher-level view, not as focused on
