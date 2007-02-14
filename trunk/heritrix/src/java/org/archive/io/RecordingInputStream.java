@@ -317,7 +317,19 @@ public class RecordingInputStream
     public void setSha1Digest() {
         this.recordingOutputStream.setSha1Digest();
     }
-
+    
+    /**
+     * Sets a digest algorithm which may be applied to recorded data.
+     * As usually only a subset of the recorded data should
+     * be fed to the digest, you must also call startDigest()
+     * to begin digesting.
+     *
+     * @param algorithm
+     */
+    public void setDigest(String algorithm) {
+        this.recordingOutputStream.setDigest(algorithm);
+    }
+    
     /**
      * Sets a digest function which may be applied to recorded data.
      * As usually only a subset of the recorded data should

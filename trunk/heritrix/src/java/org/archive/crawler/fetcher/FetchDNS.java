@@ -19,7 +19,7 @@
  * FetchDNS
  * Created on Jun 5, 2003
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/crawler/fetcher/FetchDNS.java,v 1.29.4.1 2007/01/13 01:31:17 stack-sf Exp $
  */
 package org.archive.crawler.fetcher;
 
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -92,10 +93,17 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 "InetAddress resolution, which may use local 'hosts' files " +
                 "or other mechanisms.", DEFAULT_ACCEPT_NON_DNS_RESOLVES));
         e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(FetchHTTP.ATTR_SHA1_CONTENT,
-        	"Whether or not to perform an on-the-fly SHA1 hash of" +
-            "retrieved content-bodies.",
-            FetchHTTP.DEFAULT_SHA1_CONTENT));
+        e = addElementToDefinition(new SimpleType(FetchHTTP.ATTR_DIGEST_CONTENT,
+                "Whether or not to perform an on-the-fly digest hash of" +
+                " retrieved content-bodies.",
+                FetchHTTP.DEFAULT_DIGEST_CONTENT));
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(
+            FetchHTTP.ATTR_DIGEST_ALGORITHM, "Which algorithm (for example " +
+                "MD5 or SHA-1) to use to perform an on-the-fly digest" +
+                " hash of retrieved content-bodies.",
+                FetchHTTP.DEFAULT_DIGEST_ALGORITHM,
+                FetchHTTP.DIGEST_ALGORITHMS));
         e.setExpertSetting(true);
     }
 
@@ -238,14 +246,20 @@ implements CoreAttributeConstants, FetchStatusCodes {
 		final byte[] dnsRecord =
 			getDNSRecord(curi.getLong(A_FETCH_BEGAN_TIME), rrecordSet);
 		HttpRecorder rec = HttpRecorder.getHttpRecorder();
+        
         // Shall we get a digest on the content downloaded?
-        boolean sha1Content = ((Boolean)getUncheckedAttribute(curi,
-            FetchHTTP.ATTR_SHA1_CONTENT)).booleanValue();
-        if(sha1Content) {
-            rec.getRecordedInput().setSha1Digest();
+		boolean digestContent  = ((Boolean)getUncheckedAttribute(curi,
+                FetchHTTP.ATTR_DIGEST_CONTENT)).booleanValue();
+        String algorithm = null; 
+        if (digestContent) {
+            algorithm = ((String)getUncheckedAttribute(curi,
+                FetchHTTP.ATTR_DIGEST_ALGORITHM));
+            rec.getRecordedInput().setDigest(algorithm);
         } else {
-            rec.getRecordedInput().setDigest(null);
+            // clear
+            rec.getRecordedInput().setDigest((MessageDigest)null);
         }
+        
 		curi.setHttpRecorder(rec);
 		InputStream is = curi.getHttpRecorder().inputWrap(
 				new ByteArrayInputStream(dnsRecord));
@@ -260,8 +274,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
 			rec.closeRecorders();
 		}
 		curi.setContentSize(dnsRecord.length);
-        curi.setContentDigest(FetchHTTP.SHA1,
-            rec.getRecordedInput().getDigestValue());
+        if (digestContent) {
+            curi.setContentDigest(algorithm,
+                rec.getRecordedInput().getDigestValue());
+        }
 	}
     
     protected byte [] getDNSRecord(final long fetchStart,

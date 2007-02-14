@@ -35,6 +35,7 @@ import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -146,7 +147,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     public static final String ATTR_SAVE_COOKIES = "save-cookies-to-file";
     public static final String ATTR_ACCEPT_HEADERS = "accept-headers";
     public static final String ATTR_DEFAULT_ENCODING = "default-encoding";
-    public static final String ATTR_SHA1_CONTENT = "sha1-content";
+    public static final String ATTR_DIGEST_CONTENT = "digest-content";
+    public static final String ATTR_DIGEST_ALGORITHM = "digest-algorithm";
     public static final String ATTR_FETCH_BANDWIDTH_MAX = "fetch-bandwidth";
    
     /**
@@ -171,11 +173,23 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private static String DEFAULT_CONTENT_CHARSET = Heritrix.DEFAULT_ENCODING;
 
     /**
-     * Default whether to perform on-the-fly SHA1 hashing of content-bodies.
+     * Default whether to perform on-the-fly digest hashing of content-bodies.
      */
-    static Boolean DEFAULT_SHA1_CONTENT = new Boolean(true);
+    static Boolean DEFAULT_DIGEST_CONTENT = new Boolean(true);
+          
+    /**
+     * The different digest algorithms to choose between, 
+     * SHA-1 or MD-5 at the moment. 
+     */
     public static final String SHA1 = "sha1";
-
+    public static final String MD5 = "md5";
+    public static String [] DIGEST_ALGORITHMS = {SHA1, MD5};
+   
+    /**
+     * Default algorithm to use for message disgesting.
+     */
+    public static final String  DEFAULT_DIGEST_ALGORITHM = SHA1; 
+    
     private transient HttpClient http = null;
 
     /**
@@ -344,10 +358,15 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             DEFAULT_CONTENT_CHARSET + ".",
             DEFAULT_CONTENT_CHARSET));
         e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(ATTR_SHA1_CONTENT,
-                "Whether or not to perform an on-the-fly SHA1 hash of" +
-                "retrieved content-bodies.",
-                DEFAULT_SHA1_CONTENT));
+        e = addElementToDefinition(new SimpleType(ATTR_DIGEST_CONTENT,
+                "Whether or not to perform an on-the-fly digest hash of" +
+                " retrieved content-bodies.",
+                DEFAULT_DIGEST_CONTENT));
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_DIGEST_ALGORITHM,
+                "Which algorithm (for example MD5 or SHA-1) to use to perform an on-the-fly digest" +
+                " hash of retrieved content-bodies.",
+                DEFAULT_DIGEST_ALGORITHM, DIGEST_ALGORITHMS));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_SEND_CONNECTION_CLOSE,
             "Send 'Connection: close' header with every request.",
@@ -403,14 +422,17 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
         
         // Shall we get a digest on the content downloaded?
-        boolean sha1Content = ((Boolean)getUncheckedAttribute(curi,
-            ATTR_SHA1_CONTENT)).booleanValue();
-        if(sha1Content) {
-            rec.getRecordedInput().setSha1Digest();
+        boolean digestContent  = ((Boolean)getUncheckedAttribute(curi,
+                ATTR_DIGEST_CONTENT)).booleanValue();
+        String algorithm = null;
+        if (digestContent) {
+            algorithm = ((String)getUncheckedAttribute(curi,
+                ATTR_DIGEST_ALGORITHM));
+            rec.getRecordedInput().setDigest(algorithm);
         } else {
             // clear
-            rec.getRecordedInput().setDigest(null);
-        }
+            rec.getRecordedInput().setDigest((MessageDigest)null);
+        }        
         
         // Below we do two inner classes that add check of midfetch
         // filters just as we're about to receive the response body.
@@ -514,8 +536,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             setCharacterEncoding(rec, method);
             curi.setContentSize(rec.getRecordedInput().getSize());
         }
-        
-        curi.setContentDigest(SHA1, rec.getRecordedInput().getDigestValue());
+ 
+        if (digestContent) {
+            curi.setContentDigest(algorithm,
+                rec.getRecordedInput().getDigestValue());
+        }
         if (logger.isLoggable(Level.INFO)) {
             logger.info((curi.isPost()? "POST": "GET") + " " +
                 curi.getUURI().toString() + " " + method.getStatusCode() +
