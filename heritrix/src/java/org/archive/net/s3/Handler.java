@@ -24,6 +24,7 @@ package org.archive.net.s3;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -33,79 +34,94 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.model.S3Bucket;
+import org.jets3t.service.model.S3Object;
+import org.jets3t.service.security.AWSCredentials;
+
 /**
- * A protocol handler for an s3 scheme. To add this handler to the
- * java.net.URL set, you must define the system property
- * <code>-Djava.protocol.handler.pkgs=org.archive.net</code>.  So this handler
- * gets triggered, your S3 URLs must have a scheme of 's3' as in:
- * <code>s3://s3.amazonaws.com/org.archive-scratch/diff.txt</code> (TODO: An
- * s3s handler for secure access).  When run, this code will look for values in
- * system properties, <code>aws.access.key.id</code> and
- * <code>aws.access.key.secret</code>, to use authenticating w/ s3.  This
- * handler has dependency on a couple of the classes from s3-library-examples.
- * 
- * @see http://developer.amazonwebservices.com/connect/entry.jspa?externalID=132&categoryID=47
+ * A protocol handler for an s3 scheme. Takes URLs of the form:
+ * <code>s3://aws.access.key.id:aws.access.key.secret@BUCKET/PATH</code> (Same
+ * as in hadoop).
  * 
  * @author stack
  */
 public class Handler extends URLStreamHandler {
-    private static final String AWS_ACCESS_KEY_ID = "aws.access.key.id";
-    private static final String AWS_ACCESS_KEY_SECRET = "aws.access.key.secret";
-    // TODO: Use JVM Locale.
-    private static final SimpleDateFormat format =
-        new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss ", Locale.US);
-    static {
-        format.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
     protected URLConnection openConnection(URL u)
     throws IOException {
-        // Do I need to strip any leading '/'?
-        String resource = u.getFile();
-        if (resource.charAt(0) == '/') {
-            resource = resource.substring(1);
+        // This looking for accessKey id and accessKey secret code is based
+        // on code from hadoop S3.
+        String accessKey = null;
+        String secretAccessKey = null;
+        String userInfo = u.getUserInfo();
+        if (userInfo != null) {
+            int index = userInfo.indexOf(':');
+            if (index != -1) {
+              accessKey = userInfo.substring(0, index);
+              secretAccessKey = userInfo.substring(index + 1);
+            } else {
+              accessKey = userInfo;
+            }
         }
-        URL h = new URL("http", u.getHost(), u.getPort(), u.getFile());
-        HttpURLConnection connection = (HttpURLConnection)h.openConnection();
-        addAuthHeader(connection, "GET", resource);
+        if (accessKey == null) {
+          accessKey = System.getProperty("aws.access.key.id");
+        }
+        if (secretAccessKey == null) {
+          secretAccessKey = System.getProperty("aws.access.key.secret");
+        }
+        if (accessKey == null && secretAccessKey == null) {
+          throw new IllegalArgumentException("AWS " +
+                "Access Key ID and Secret Access Key " +
+                "must be specified as the username " +
+                "or password (respectively) of a s3 URL, " +
+                "or by setting the " +
+                "aws.access.key.id or " +                
+                "aws.access.key.secret properties (respectively).");
+        } else if (accessKey == null) {
+          throw new IllegalArgumentException("AWS " +
+                "Access Key ID must be specified " +
+                "as the username of a s3 URL, or by setting the " +
+                "aws.access.key.id property.");
+        } else if (secretAccessKey == null) {
+          throw new IllegalArgumentException("AWS " +
+                "Secret Access Key must be specified " +
+                "as the password of a s3 URL, or by setting the " +
+                "aws.access.key.secret property.");        
+        }
+        
+        RestS3Service s3Service;
+        try {
+            s3Service = new RestS3Service(
+                new AWSCredentials(accessKey, secretAccessKey));
+        } catch (S3ServiceException e) {
+            e.printStackTrace();
+            throw new IOException(e.toString());
+        }
+        InputStream is = null;
+        try {
+            // This opens the stream to the bucket/key object.
+            S3Object s3obj = s3Service.getObject(new S3Bucket(u.getHost()),
+                u.getPath().substring(1) /* Skip starting '/' character */);
+            is = s3obj.getDataInputStream();
+        } catch (S3ServiceException e) {
+            e.printStackTrace();
+            throw new IOException(e.toString());
+        }
 
-        return connection;
-    }
-    
-    
-    /**
-     * Add the appropriate Authorization header to the HttpURLConnection.
-     * Below is based on code from s3-example-library from the AWSAuthConnection
-     * class.
-     * @param connection The HttpURLConnection to which the header will be added.
-     * @param method The HTTP method to use (GET, PUT, DELETE)
-     * @param resource The resource name (bucketName + "/" + key).
-     */
-    private void addAuthHeader(HttpURLConnection connection, String method,
-            String resource) {
-        if (connection.getRequestProperty("Date") == null) {
-            connection.setRequestProperty("Date",
-                format.format(new Date()) + "GMT");
-        }
-        if (connection.getRequestProperty("Content-Type") == null) {
-            connection.setRequestProperty("Content-Type", "");
-        }
-
-        String id = System.getProperty(AWS_ACCESS_KEY_ID);
-        if (id == null || id.length() <= 0) {
-            throw new NullPointerException(AWS_ACCESS_KEY_ID +
-                " system property is empty");
-        }
-        String secret = System.getProperty(AWS_ACCESS_KEY_SECRET);
-        if (secret == null || secret.length() <= 0) {
-            throw new NullPointerException(AWS_ACCESS_KEY_SECRET +
-                " system property is empty");
-        }
-        String canonicalString = com.amazon.s3.Utils.makeCanonicalString(method,
-            resource, connection.getRequestProperties());
-        String encodedCanonical = com.amazon.s3.Utils.encode(secret,
-            canonicalString, false);
-        connection.setRequestProperty("Authorization",
-            "AWS " + id + ":" + encodedCanonical);
+        final InputStream inputStream = is;
+        return new URLConnection(u) {
+            private InputStream is = inputStream;
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return this.is;
+            }
+            @Override
+            public void connect() throws IOException {
+                // Nothing to do. When we give back this object, we're
+                // connected.
+            }
+        };
     }
 
     /**
@@ -117,9 +133,8 @@ public class Handler extends URLStreamHandler {
     throws IOException {
         if (args.length != 1) {
             System.out.println("Usage: java " +
-                "-D" + AWS_ACCESS_KEY_ID + "=AWS_ACCESS_KEY_ID " +
-                "-D" + AWS_ACCESS_KEY_SECRET + "=AWS_ACCESS_KEY_SECRET " +
-                "org.archive.net.s3.Handler s3://AWS_HOST/bucket/key");
+                "org.archive.net.s3.Handler " +
+                "s3://AWS_ACCESS_KEY_ID:AWS_ACCESS_KEY_SECRET@BUCKET/KEY");
             System.exit(1);
         }
         URL u = new URL(args[0]);
@@ -129,7 +144,7 @@ public class Handler extends URLStreamHandler {
         byte [] buffer = new byte [bufferlength];
         InputStream is = connect.getInputStream();
         try {
-            for (int count = is.read(buffer, 0, bufferlength);
+            for (int count = -1;
                     (count = is.read(buffer, 0, bufferlength)) != -1;) {
                 System.out.write(buffer, 0, count);
             }
