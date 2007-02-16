@@ -26,7 +26,6 @@
 package org.archive.io.arc;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -62,101 +61,129 @@ public class ARC2WCDX {
         return retVal; 
     }
 
-    public static Object[] createWcdx(ARCReader reader) throws IOException, FileNotFoundException {
+    public static Object[] createWcdx(ARCReader reader) {
         reader.setDigest(true);
 
         String wcdxPath = reader.getReaderIdentifier().replaceAll("\\.arc(\\.gz)?$",".wcdx.gz");
         File wcdxFile = new File(wcdxPath+".open");
-        PrintStream writer =
-            new PrintStream(new GZIPOutputStream(new FileOutputStream(wcdxFile)));
-        
-        // write header: legend + timestamp
-        StringBuilder legend = new StringBuilder();
-        appendField(legend,"CDX");
-        appendField(legend,"surt-uri");
-        appendField(legend,"b"); // ARC timestamp
-        appendField(legend,"http-date");
-        appendField(legend,"s"); // status code
-        appendField(legend,"m"); // media type
-        appendField(legend,"sha1"); // content sha1
-        appendField(legend,"g"); // ARC name
-        appendField(legend,"V"); // start offset
-        appendField(legend,"end-offset"); // TODO: implement
-        appendField(legend,"n"); // ARC record length TODO: verify
-        appendField(legend,"http-content-length");
-        appendField(legend,"http-last-modified");
-        appendField(legend,"http-expires");
-        appendField(legend,"http-etag");
-        appendField(legend,"http-location");
-        appendField(legend,"e"); // IP
-        appendField(legend,"a"); // original URL
-        // WCDX version+creation time: crude version control
-        appendField(legend,WCDX_VERSION+"@"+ArchiveUtils.get14DigitDate());
-        writer.println(legend.toString());
+        PrintStream writer = null;
+        long count = 0;
+        try {
+            writer = new PrintStream(new GZIPOutputStream(new FileOutputStream(wcdxFile)));
+            
+            // write header: legend + timestamp
+            StringBuilder legend = new StringBuilder();
+            appendField(legend,"CDX");
+            appendField(legend,"surt-uri");
+            appendField(legend,"b"); // ARC timestamp
+            appendField(legend,"http-date");
+            appendField(legend,"s"); // status code
+            appendField(legend,"m"); // media type
+            appendField(legend,"sha1"); // content sha1
+            appendField(legend,"g"); // ARC name
+            appendField(legend,"V"); // start offset
+            appendField(legend,"end-offset"); // TODO: implement
+            appendField(legend,"n"); // ARC record length TODO: verify
+            appendField(legend,"http-content-length");
+            appendField(legend,"http-last-modified");
+            appendField(legend,"http-expires");
+            appendField(legend,"http-etag");
+            appendField(legend,"http-location");
+            appendField(legend,"e"); // IP
+            appendField(legend,"a"); // original URL
+            // WCDX version+creation time: crude version control
+            appendField(legend,WCDX_VERSION+"@"+ArchiveUtils.get14DigitDate());
+            writer.println(legend.toString());
 
-        Iterator iter = reader.iterator();
-        long count = 0; 
-        while(iter.hasNext()) {
-            ARCRecord record = (ARCRecord) iter.next();
-            record.close();
-            ARCRecordMetaData h = (ARCRecordMetaData) record.getHeader();
-            Header[] httpHeaders = record.getHttpHeaders();
-            if(httpHeaders==null) {
-                httpHeaders = new Header[0];
-            }
-            HeaderGroup hg = new HeaderGroup();
-            hg.setHeaders(httpHeaders);
-            StringBuilder builder = new StringBuilder();
+            Iterator iter = reader.iterator();
+            count = 0; 
+            while(iter.hasNext()) {
+                ARCRecord record = (ARCRecord) iter.next();
+                record.close();
+                ARCRecordMetaData h = (ARCRecordMetaData) record.getHeader();
+                Header[] httpHeaders = record.getHttpHeaders();
+                if(httpHeaders==null) {
+                    httpHeaders = new Header[0];
+                }
+                HeaderGroup hg = new HeaderGroup();
+                hg.setHeaders(httpHeaders);
+                StringBuilder builder = new StringBuilder();
 
-            // SURT-form URI
-            appendField(builder,SURT.fromURI(h.getUrl()));
-            // record timestamp ('b')
-            appendField(builder,h.getDate());
-            // http header date
-            appendTimeField(builder,hg.getFirstHeader("Date"));
-            // response code ('s')
-            appendField(builder,h.getStatusCode());
-            // media type ('m')
-            appendField(builder,h.getMimetype());
-            // content checksum (like 'c', but here Base32 SHA1)
-            appendField(builder,record.getDigestStr());
-            // arc name ('g')
-            appendField(builder,reader.getFileName());
-            // compressed start offset ('V')
-            appendField(builder,h.getOffset());
+                // SURT-form URI
+                appendField(builder,SURT.fromURI(h.getUrl()));
+                // record timestamp ('b')
+                appendField(builder,h.getDate());
+                // http header date
+                appendTimeField(builder,hg.getFirstHeader("Date"));
+                // response code ('s')
+                appendField(builder,h.getStatusCode());
+                // media type ('m')
+                appendField(builder,h.getMimetype());
+                // content checksum (like 'c', but here Base32 SHA1)
+                appendField(builder,record.getDigestStr());
+                // arc name ('g')
+                appendField(builder,reader.getFileName());
+                // compressed start offset ('V')
+                appendField(builder,h.getOffset());
 
-            // compressed end offset (?)
+                // compressed end offset (?)
 //            appendField(builder,
 //                    reader.getInputStream() instanceof RepositionableStream
 //                    ? ((GzippedInputStream)reader.getInputStream()).vPosition()
 //                    : "-");
-            // TODO; leave unavail for now
-            appendField(builder, "-");
+                // TODO; leave unavail for now
+                appendField(builder, "-");
 
-            // uncompressed (declared in ARC headerline) record length
-            appendField(builder,h.getLength());
-            // http header content-length
-            appendField(builder,hg.getFirstHeader("Content-Length"));
+                // uncompressed (declared in ARC headerline) record length
+                appendField(builder,h.getLength());
+                // http header content-length
+                appendField(builder,hg.getFirstHeader("Content-Length"));
 
-            // http header mod-date
-            appendTimeField(builder,hg.getFirstHeader("Last-Modified"));
-            // http header expires
-            appendTimeField(builder,hg.getFirstHeader("Expires"));
-            // http header etag
-            appendField(builder,hg.getFirstHeader("ETag"));
-            // http header redirect ('Location' header?)
-            appendField(builder,hg.getFirstHeader("Location"));
-            // ip ('e')
-            appendField(builder,h.getIp());
-            // original URI
-            appendField(builder,h.getUrl());
+                // http header mod-date
+                appendTimeField(builder,hg.getFirstHeader("Last-Modified"));
+                // http header expires
+                appendTimeField(builder,hg.getFirstHeader("Expires"));
+                
+                // http header etag
+                appendField(builder,hg.getFirstHeader("ETag"));
+                // http header redirect ('Location' header?)
+                appendField(builder,hg.getFirstHeader("Location"));
+                // ip ('e')
+                appendField(builder,h.getIp());
+                // original URI
+                appendField(builder,h.getUrl());
+                // TODO MAYBE - a title from inside content? 
 
-            writer.println(builder.toString());
-            count++;
+                writer.println(builder.toString());
+                count++;
+            }
+            wcdxFile.renameTo(new File(wcdxPath));
+        } catch (IOException e) {
+            // soldier on: but leave '.open' wcdx file as indicator of error
+            if(!wcdxFile.exists()) {
+                try {
+                    wcdxFile.createNewFile();
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    throw new RuntimeException(e1);
+                }
+            }
+        } catch (RuntimeException e) {
+            // soldier on: but leave '.open' wcdx file as indicator of error
+            if(!wcdxFile.exists()) {
+                try {
+                    wcdxFile.createNewFile();
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    throw new RuntimeException(e1);
+                }
+            }
+        } finally {
+            if(writer!=null) {
+                writer.close();
+            }
         }
-        reader.close();
-        writer.close();
-        wcdxFile.renameTo(new File(wcdxPath));
+        
         return new Object[] {wcdxPath, count};
     }
 
@@ -216,6 +243,7 @@ public class ARC2WCDX {
 //? etag
 //r redirect ('Location'?)
 //e ip
-
+//MAYBE: 
+//? TITLE from HTML or other format?
 
 
