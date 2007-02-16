@@ -150,7 +150,8 @@ public class SingleSheet extends Sheet {
         Map<String,Object> result;
         List<Sheet> sheets;
         if ((defMap == null) && (myMap == null)) {
-            return null;  // FIXME: Return default value of key here
+            Sheet un = getSheetManager().getUnspecifiedSheet();
+            return un.resolve(module, key);
         }
         if ((defMap != null) && (myMap != null)) {
             sheets = Collections.singletonList((Sheet)def);            
