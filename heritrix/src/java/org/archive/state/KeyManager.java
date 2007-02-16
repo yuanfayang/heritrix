@@ -205,6 +205,9 @@ final public class KeyManager {
         try {
             @SuppressWarnings("unchecked")
             Key<Object> r = (Key<Object>)keyField.get(null);
+            if (r == null) {
+                throw new IllegalStateException(keyField + " has no value.");
+            }
             return r;
         } catch (IllegalAccessException e) {
             throw new AssertionError();

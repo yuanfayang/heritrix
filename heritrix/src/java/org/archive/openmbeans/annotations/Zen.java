@@ -127,6 +127,17 @@ public class Zen {
      * @return   the methods in that class
      */
     public static List<Method> getAllMethods(Class x) {
+        if (x.isInterface()) {
+            List<Method> r = new ArrayList<Method>();
+            getAllInterfaceMethods(r, x);
+            return r;
+        } else {
+            return getAllClassMethods(x);
+        }
+    }
+    
+    
+    private static List<Method> getAllClassMethods(Class x) {
         List<Method> result = new ArrayList<Method>();
         while (true) {
             for (Method m: x.getDeclaredMethods()) {
@@ -142,6 +153,18 @@ public class Zen {
             } else {
                 x = x.getSuperclass();
             }
+        }        
+    }
+    
+    
+    private static void getAllInterfaceMethods(List<Method> result, Class x) {
+        for (Method m: x.getDeclaredMethods()) {
+            if (!contains(result, m)) {
+                result.add(m);
+            }
+        }
+        for (Class s: x.getInterfaces()) {
+            getAllInterfaceMethods(result, s);
         }
     }
 

@@ -144,11 +144,22 @@ public class Bean implements DynamicMBean, NotificationEmitter {
      * @param target  the target MBean
      */
     public Bean(DynamicMBean target) {
+        this(target, target.getClass());
+    }
+
+    public Bean(DynamicMBean target, Class c) {
         this.target = target;
-        this.metadata = getInfo(target.getClass());
+        this.metadata = getInfo(c);
         this.emitter = new NotificationBroadcasterSupport();
     }
 
+    
+    public Bean(Class c) {
+        this.target = this;
+        this.metadata = getInfo(c);
+        this.emitter = new NotificationBroadcasterSupport();
+    }
+    
     
     public Bean() {
         this.target = this;
