@@ -27,7 +27,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -54,12 +53,6 @@ public class PathChanger {
     
     final public static String REFERENCE_TAG = "reference";
     
-    /**
-     * A list of objects whose construction must be delayed until 
-     * dependencies are constructed first.
-     */
-    final private LinkedList<PathChange> delayed = 
-        new LinkedList<PathChange>();
     
 
     /**
@@ -186,23 +179,21 @@ public class PathChanger {
     
 
     private void finish(SingleSheet sheet, String path, Object value) {
-        if (!delayed.isEmpty() && path.startsWith(delayed.getLast().getPath())) {
-            // this had better be a reference to a 
-        }
-        
+        String previousPath;
+        String lastToken;
+        Object previous;
+
         int p = path.lastIndexOf('.');
         if (p < 0) {
-            if (path.equals(PathValidator.ROOT_NAME)) {
-                sheet.getSheetManager().setRoot(value);
-                return;
-            } else {
-                throw new PathChangeException("Missing controller.");
-            }
+            previousPath = "";
+            lastToken = path;
+            previous = sheet.getSheetManager();
+        } else {
+            previousPath = path.substring(0, p);
+            lastToken = path.substring(p + 1);
+            previous = PathValidator.check(sheet, previousPath);
         }
         
-        String previousPath = path.substring(0, p);
-        String lastToken = path.substring(p + 1);
-        Object previous = PathValidator.validate(sheet, previousPath);
         if (previous instanceof List) {
             int index;
             try {
@@ -230,6 +221,12 @@ public class PathChanger {
             return;
         }
 
+        if (previous == null) {
+            throw new PathChangeException("Can't change '" + path + 
+                    "' because '"
+                    + previousPath + "' resolves to null.");
+        }
+        
         Class prevType = Offline.getType(previous);
         Map<String,Key<Object>> keys = KeyManager.getKeys(prevType);
         Key<Object> key = keys.get(lastToken);

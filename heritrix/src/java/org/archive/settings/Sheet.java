@@ -195,8 +195,7 @@ public abstract class Sheet implements StateProvider, Serializable {
     
     
     static <T> void validateModuleType(Object module, Key<T> key) {
-        Class mtype = (module instanceof Offline) ? 
-                ((Offline)module).getType() : module.getClass();
+        Class mtype = Offline.getType(module);
         if (!key.getOwner().isAssignableFrom(mtype)) {
             throw new IllegalArgumentException("Illegal module type.  " +
                     "Key owner is " + key.getOwner().getName() + 

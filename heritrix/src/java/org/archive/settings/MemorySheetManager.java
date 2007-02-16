@@ -72,45 +72,48 @@ public class MemorySheetManager extends SheetManager {
 
 
     /**
-     * The root processors.
+     * The root map.
      */
-    private Object root;
-
+    private Map<String,Object> root;
+    
 
     public MemorySheetManager() {
         this(null);
     }
 
     
-    public MemorySheetManager(Object root) {
+    public MemorySheetManager(Map<String,Object> root) {
         this(root, true);
     }
     
+
     /**
      * Constructor.
      */
-    public MemorySheetManager(Object root, boolean online) {
+    public MemorySheetManager(Map<String,Object> root, boolean online) {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
-        setRoot(root);
         defaults = addSingleSheet("default");
+        defaults.set(getManagerModule(), MANAGER, this);
         this.online = online;
+        setRoot(root);
     }
 
-    
+
     @Override
     public boolean isOnline() {
         return online;
     }
 
     @Override
-    public Object getRoot() {
+    public Map<String,Object> getRoot() {
         return root;
     }
     
     
-    public void setRoot(Object root) {
+    void setRoot(Map<String,Object> root) {
         this.root = root;
+        getDefault().set(getManagerModule(), ROOT, root);
     }
 
 

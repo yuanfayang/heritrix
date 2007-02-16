@@ -26,9 +26,11 @@ package org.archive.settings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -124,7 +126,13 @@ class MapResolver<T> {
             Map<String,List<Sheet>> sheets,
             Map<String,Object> newData,
             List<Sheet> newSheet) {
-        for (Map.Entry<String,Object> me: newData.entrySet()) {
+        if (newData == null) {
+            return;
+        }
+        Set<Map.Entry<String,Object>> entrySet = newData.entrySet();
+        Iterator<Map.Entry<String,Object>> iter = entrySet.iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String,Object> me = iter.next();
             merged.put(me.getKey(), me.getValue());
             sheets.put(me.getKey(), newSheet);
         }        

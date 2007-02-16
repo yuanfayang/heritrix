@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.archive.settings.Offline;
-import org.archive.settings.Resolved;
 import org.archive.settings.Sheet;
+import org.archive.settings.SingleSheet;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 
@@ -73,6 +73,14 @@ public class PathValidator {
      */
     private List<String> tokens;
 
+    
+    /**
+     * Whether or not the very last element in the path should be looked up
+     * using full resolution.  
+     */
+    final private boolean checkLast;
+    
+    
 
     /**
      * Private constructor.  The public API for this class is a single
@@ -80,14 +88,22 @@ public class PathValidator {
      * mostly revolves around error reporting, a future version of this class
      * could trade memory usage for terser error messages.
      * 
-     * @param sheet   the sheet to use to resolve the path
-     * @param path    the path to resolve
+     * @param sheet      the sheet to use to resolve the path
+     * @param path       the path to resolve
+     * @param checkLast  
      */
-    private PathValidator(Sheet sheet, String path) {
+    private PathValidator(Sheet sheet, String path, boolean checkLast) {
+        if (sheet == null) {
+            throw new IllegalArgumentException("sheet must not be null");
+        }
+        if (path == null) {
+            throw new IllegalArgumentException("path must not be null");
+        }
         this.sheet = sheet;
         this.path = path;
         this.subPath = new StringBuilder();
         this.tokens = new LinkedList<String>(Arrays.asList(path.split("\\.")));
+        this.checkLast = checkLast;
     }
     
 
@@ -99,11 +115,11 @@ public class PathValidator {
     private Object validatePath() {
         String first = tokens.get(0);
         advance();
-        if (!first.equals(ROOT_NAME)) {
-            throw ex("No root.");
-        }
 
-        Object current = sheet.getSheetManager().getRoot();
+        Object manager = sheet.getSheetManager().getManagerModule();
+        Object current = validateKey(manager, first);
+
+        System.out.println(current.getClass());
         
         // While there are more tokens, process the next token.
         while (!tokens.isEmpty()) {
@@ -147,7 +163,7 @@ public class PathValidator {
      * @return   a new InvalidPathException
      */
     private RuntimeException ex(String msg) {
-        String e = path + msg + subPath;
+        String e = path + ": "+ msg + subPath;
         return new InvalidPathException(e);
     }
     
@@ -204,9 +220,8 @@ public class PathValidator {
         if (key == null) {
             throw ex(" has invalid key field name at ");
         }
-        
-        Resolved r = sheet.resolve(current, key);
-        return r.getValue();
+System.out.println(path + ": " +this.tokens);        
+        return resolve(current, key);
     }
 
 
@@ -218,7 +233,37 @@ public class PathValidator {
      * @return   the object represented by that path
      */
     public static Object validate(Sheet sheet, String path) {
-        return new PathValidator(sheet, path).validatePath();
+        return new PathValidator(sheet, path, false).validatePath();
     }
+
+    
+    static Object check(SingleSheet sheet, String path) {
+        return new PathValidator(sheet, path, true).validatePath();
+    }
+    
+
+    private Object resolve(Object current, Key<Object> key) {
+        if ((checkLast) && (tokens.size() == 1)) {
+            Class type = key.getType();
+            if (Map.class.isAssignableFrom(type)) {
+                Object r = sheet.check(current, key);
+                if (r == null) {
+                    throw ex(" alters a key for a nonexistent map at ");
+                }
+                return r;
+            }
+            if (List.class.isAssignableFrom(type)) {
+                Object r = sheet.check(current, key);
+                if (r == null) {
+                    throw ex(" alters an element for nonexistent list at ");
+                }
+                return r;
+            }
+        }
+        
+        return sheet.resolve(current, key).getValue();
+    }
+
+    
 
 }

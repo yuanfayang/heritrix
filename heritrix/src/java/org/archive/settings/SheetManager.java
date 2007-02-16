@@ -30,11 +30,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -42,24 +45,44 @@ import org.archive.state.KeyTypes;
  * 
  * @author pjack
  */
-public abstract class SheetManager implements Serializable {
+public abstract class SheetManager implements StateProvider, Serializable {
 
     
     final public static String DEFAULT_SHEET_NAME = "default";
     
     final private UnspecifiedSheet unspecified;
     
+    final private Offline offlineThis;
+    
+    @Immutable
+    final public static Key<Map<String,Object>> ROOT = 
+        Key.makeMap(Object.class);
+
+    @Immutable
+    final public static Key<SheetManager> MANAGER = 
+        Key.make(SheetManager.class, null);
 
     /**
      * Constructor.
      */
     public SheetManager() {
         this.unspecified = new UnspecifiedSheet(this, "unspecified");
+        offlineThis = Offline.make(getClass());
+        KeyManager.addKeys(getClass());
     }
 
     
     Sheet getUnspecifiedSheet() {
         return unspecified;
+    }
+    
+    
+    public Object getManagerModule() {
+        if (isOnline()) {
+            return this;
+        } else {
+            return offlineThis;
+        }
     }
     
 
@@ -77,11 +100,8 @@ public abstract class SheetManager implements Serializable {
      * 
      * @return  the root module
      */
-    public abstract Object getRoot();
+    public abstract Map<String,Object> getRoot();
 
-    
-    // FIXME: Is this wise?
-    public abstract void setRoot(Object object);
 
     /**
      * Returns the names of the sheets being managed.  The returned set 
@@ -262,4 +282,11 @@ public abstract class SheetManager implements Serializable {
         }
         return result;
     }
+
+
+    public <T> T get(Object module, Key<T> key) {
+        Sheet def = getDefault();
+        return def.get(module, key);
+    }
+
 }
