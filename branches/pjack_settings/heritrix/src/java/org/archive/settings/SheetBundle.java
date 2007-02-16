@@ -100,7 +100,7 @@ public class SheetBundle extends Sheet {
         }
         
         
-        if (key.getType().isAssignableFrom(List.class)) {
+        if (List.class.isAssignableFrom(key.getType())) {
             return new ListResolver<T>(this, module, key).resolve();
         }
         

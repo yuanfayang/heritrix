@@ -91,7 +91,7 @@ public class PathValidatorTest extends PathTestBase {
     
     
     private void validateOverride1() {
-        Sheet sheet = manager.getSheet("override1");
+        SingleSheet sheet = (SingleSheet)manager.getSheet("override1");
         assertTrue(html == PathValidator.validate(sheet, "root.html"));
         assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
         assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
@@ -103,10 +103,15 @@ public class PathValidatorTest extends PathTestBase {
         
         assertTrue(css == PathValidator.validate(sheet, "root.css"));
         assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(o1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
-        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+        assertTrue(o1cssRules == PathValidator.check(sheet, "root.css.decide-rules.rules"));
+        
+        // Lists are merged, so override1's elements should appear after 
+        // default's elements.
+        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
+        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
 
         assertTrue(js == PathValidator.validate(sheet, "root.js"));
         assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
@@ -129,6 +134,8 @@ public class PathValidatorTest extends PathTestBase {
         assertTrue(css == PathValidator.validate(sheet, "root.css"));
         assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
         assertTrue(cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        
+        
         assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
         assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
         assertTrue(cssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
@@ -148,19 +155,22 @@ public class PathValidatorTest extends PathTestBase {
         assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
         assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
         assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(htmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(htmlRules != PathValidator.validate(sheet, "root.html.decide-rules.rules"));
         assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
+        
         
         assertTrue(css == PathValidator.validate(sheet, "root.css"));
         assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(o1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
-        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+        assertTrue(o1cssRules != PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
+        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
 
         assertTrue(js == PathValidator.validate(sheet, "root.js"));
         assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(jsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));        
+        assertTrue(jsRules != PathValidator.validate(sheet, "root.js.decide-rules.rules"));        
     }
 
 
@@ -191,7 +201,7 @@ public class PathValidatorTest extends PathTestBase {
 
     
     private void validateOfflineOverride1() {
-        Sheet sheet = offlineManager.getSheet("override1");
+        SingleSheet sheet = (SingleSheet)offlineManager.getSheet("override1");
         assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
         assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
         assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
@@ -203,10 +213,15 @@ public class PathValidatorTest extends PathTestBase {
         
         assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
         assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(offlineO1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
-        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+        assertTrue(offlineO1cssRules == PathValidator.check(sheet, "root.css.decide-rules.rules"));
+        
+        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(offlineCssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
+        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
+        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
+        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
 
         assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
         assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
@@ -248,19 +263,23 @@ public class PathValidatorTest extends PathTestBase {
         assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
         assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
         assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(offlineHtmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(offlineHtmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
         assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
         
         assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
         assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(offlineO1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
-        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+
+        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertFalse(offlineCssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
+        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
+        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
+        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
 
         assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
         assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(offlineJsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));        
+        assertTrue(offlineJsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));        
     }
 
 }

@@ -73,6 +73,9 @@ public class SingleSheet extends Sheet {
 
     @Override
     public <T> T check(Object module, Key<T> key) {
+        if (module == null) {
+            throw new IllegalArgumentException("Requested key on null module.");
+        }
         validateModuleType(module, key);
         Map<Key,Object> keys = settings.get(module);
         if (keys == null) {
@@ -102,6 +105,9 @@ public class SingleSheet extends Sheet {
 
 
     public <T> Resolved<T> resolve(Object module, Key<T> key) {
+        if (module == null) {
+            throw new IllegalArgumentException("Requested key on null module.");
+        }
         validateModuleType(module, key);
         
         if (Map.class.isAssignableFrom(key.getType())) {
@@ -218,6 +224,10 @@ public class SingleSheet extends Sheet {
      *     the property from this sheet
      */
     public <T> void set(Object module, Key<T> key, T value) {
+        if (module == null) {
+            throw new IllegalArgumentException(
+                    "Attempt to set key value on null module.");
+        }
         Class vtype = (value == null) ? null: value.getClass();
         validateTypes(module, key, vtype);
         T v = key.getType().cast(value);

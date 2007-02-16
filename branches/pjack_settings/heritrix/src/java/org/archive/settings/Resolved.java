@@ -57,6 +57,9 @@ public class Resolved<T> {
     
     
     public Offline getOfflineProxy() {
+        if (value == null) {
+            return null;
+        }
         if (!(value instanceof Offline)) {
             throw new IllegalStateException("Online or leaf sheet.");
         }
