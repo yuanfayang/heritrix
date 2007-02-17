@@ -48,19 +48,15 @@ import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.path.PathLister;
+import org.archive.state.ExampleStateProvider;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
-import org.archive.util.CachedBdbMap;
+import org.archive.state.KeyManager;
 import org.archive.util.IoUtils;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.sleepycat.bind.serial.StoredClassCatalog;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
 
 /**
  * Simple sheet manager that stores settings in a directory hierarchy.
@@ -142,18 +138,19 @@ public class FileSheetManager extends SheetManager {
      */
     private static final long serialVersionUID = 1L;
 
+    
+    
+    
+    
     /** The BDB environment. */
     @Immutable
-    final public static Key<Environment> ENVIRONMENT = Key.make(null);
+    final public static Key<BdbModule> BDB = 
+        Key.make(BdbModule.class, null);
 
-    /** The BDB class catalog. */
-    @Immutable
-    final public static Key<Database> CLASS_CATALOG = Key.make(null);
 
-    /** The BDB stored class catalog. */
-    @Immutable
-    final public static Key<StoredClassCatalog> STORED_CLASS_CATALOG = 
-        Key.make(null);
+    static {
+        KeyManager.addKeys(FileSheetManager.class);
+    }
 
     final private static String ATTR_SHEETS = "sheets-dir";
     
@@ -163,9 +160,13 @@ public class FileSheetManager extends SheetManager {
     
     /** The default name of the subdirectory that stores sheet files. */
     final private static String DEFAULT_SHEETS = "sheets";
-
+    
+    final private static String DEFAULT_BDB_PERCENT = 
+        String.valueOf(BdbConfig.BDB_CACHE_PERCENT.getDefaultValue());
+    
     /** The default name of the subdirectory that stores the bdb database. */
-    final private static String DEFAULT_BDB = "bdb";
+    final private static String DEFAULT_BDB = 
+        BdbConfig.DIR.getDefaultValue();
 
     /** The extension for files containing SingleSheet information. */
     final private static String SINGLE_EXT = ".single";
@@ -186,9 +187,6 @@ public class FileSheetManager extends SheetManager {
     /** Sheets that are currently in memory. */
     final private Map<String, Sheet> sheets;
 
-    /** The root object. */
-    private Object root;
-
     /** The database of associations. Maps string context to sheet name. */
     final private Map<String, String> associations;
 
@@ -199,12 +197,20 @@ public class FileSheetManager extends SheetManager {
 
     final private SAXParserFactory saxParserFactory;
     
-    final private Environment bdbEnvironment;
-    
-    final private Database classCatalogDB;
-    
-    final private StoredClassCatalog classCatalog;
 
+    final private BdbModule bdb;
+    
+    final private String bdbDir;
+    
+    final private int bdbCachePercent;
+
+    
+    public FileSheetManager() 
+    throws IOException, DatabaseException {
+        this(new File("config.txt"), true);
+    }
+    
+    
     /**
      * Constructor.
      * 
@@ -220,37 +226,31 @@ public class FileSheetManager extends SheetManager {
         
         this.online = online;
         Properties p = load(main);
-        setUpBDB(main, p);    
-
-        EnvironmentConfig config = new EnvironmentConfig();
-        config.setAllowCreate(true);
-        config.setLockTimeout(5000000);
         
-        String prop = p.getProperty(ATTR_BDB_PERCENT);
-        if (prop != null) {
-            config.setCachePercent(Integer.parseInt(prop));
+        String path = p.getProperty(ATTR_BDB, DEFAULT_BDB);
+        File f = new File(path);
+        if (!f.isAbsolute()) {
+            f = new File(mainConfig.getParent(), path);
         }
         
-        prop = p.getProperty(ATTR_BDB);
-        File bdbDir = getRelative(main, prop, DEFAULT_BDB);
-        validateDir(bdbDir);
-        this.bdbEnvironment = new Environment(bdbDir, config);
+        this.bdbDir = f.getAbsolutePath();
+        this.bdbCachePercent = Integer.parseInt(p.getProperty(ATTR_BDB_PERCENT, 
+                DEFAULT_BDB_PERCENT));
         
-        // Open the class catalog database. Create it if it does not
-        // already exist. 
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(true);
-        this.classCatalogDB = this.bdbEnvironment.
-            openDatabase(null, "classes", dbConfig);
-        this.classCatalog = new StoredClassCatalog(classCatalogDB);
+        
+        ExampleStateProvider dsp = new ExampleStateProvider();
+        BdbConfig config = new BdbConfig();
+        dsp.set(config, BdbConfig.DIR, this.bdbDir);
+        dsp.set(config, BdbConfig.BDB_CACHE_PERCENT, bdbCachePercent);
+        
+        this.bdb = new BdbModule(dsp, config);
 
-
-
-        prop = p.getProperty(ATTR_SHEETS);
+        String prop = p.getProperty(ATTR_SHEETS);
         this.sheetsDir = getRelative(main, prop, DEFAULT_SHEETS);
         validateDir(sheetsDir);
         sheets = new HashMap<String, Sheet>();
-        this.associations = getBigMap("associations", String.class, String.class);
+        this.associations = 
+            bdb.getBigMap("associations", String.class, String.class);
         reload();
     }
     
@@ -280,9 +280,6 @@ public class FileSheetManager extends SheetManager {
         return r;
     }
     
-    
-    private void setUpBDB(File main, Properties p) throws DatabaseException {
-    }
 
     /**
      * Validates that the given file exists, is a directory and is both readable
@@ -315,11 +312,16 @@ public class FileSheetManager extends SheetManager {
         
         // Load default sheet first, since every other sheet relies on it.
         this.defaultSheet = loadSingleSheet(DEFAULT_SHEET_NAME);
+        if (defaultSheet == null) {
+            throw new IllegalStateException("Could not load default sheet.");
+        }
+        sheets.put("default", defaultSheet);
         
         // Load single sheets next, since bundles rely on them
         for (File f: sheetsDir.listFiles()) {
             String name = f.getName();
-            if (!name.equals(DEFAULT_SHEET_NAME) && name.endsWith(SINGLE_EXT)) {
+            if (!name.equals(DEFAULT_SHEET_NAME + SINGLE_EXT) 
+                    && name.endsWith(SINGLE_EXT)) {
                 int p = name.lastIndexOf('.');
                 String sname = name.substring(0, p);
                 loadSingleSheet(sname);
@@ -409,24 +411,12 @@ public class FileSheetManager extends SheetManager {
 
     @Override
     public SingleSheet getDefault() {
-        return (SingleSheet) getSheet("default");
+        return (SingleSheet)getSheet("default");
     }
 
-    @Override
-    public Object getRoot() {
-        return root;
-    }
-
-    @Override
-    public void setRoot(Object root) {
-        this.root = root;
-    }
 
     @Override
     public Sheet getSheet(String sheetName) throws IllegalArgumentException {
-        if (sheetName.equals("default")) {
-            return defaultSheet;
-        }
         Sheet r = sheets.get(sheetName);
         if (r == null) {
             r = loadSheet(sheetName);
@@ -539,6 +529,7 @@ public class FileSheetManager extends SheetManager {
             if (name.equals(DEFAULT_SHEET_NAME)) {
                 setManagerDefaults(r);
             }
+            sheets.put(name, r);
             DefaultPathChangeListener dpcl = new DefaultPathChangeListener(r);
             SettingsSAX sax = new SettingsSAX(dpcl);
             parser.parse(source, sax);
@@ -684,22 +675,20 @@ public class FileSheetManager extends SheetManager {
 
 
 
-    public <K,V> Map<K,V> getBigMap(String dbName, Class<K> key, Class<V> value) 
-    throws DatabaseException {
-        CachedBdbMap<K,V> r = new CachedBdbMap<K,V>(dbName);
-        r.initialize(bdbEnvironment, key, value, classCatalog);
-        return r;
-    }
-
     
     private void setManagerDefaults(SingleSheet ss) {
-        ss.set(this, ENVIRONMENT, bdbEnvironment);
-        ss.set(this, CLASS_CATALOG, classCatalogDB);
-        ss.set(this, STORED_CLASS_CATALOG, classCatalog);
+        ss.set(this, MANAGER, this);
+        ss.set(this, BDB, bdb);
+        ss.set(bdb, BdbModule.CONFIG, bdb.getBdbConfig());
+        ss.set(bdb, BdbModule.PROVIDER, this);
+        ss.set(bdb.getBdbConfig(), BdbConfig.DIR, bdbDir);
+        ss.set(bdb.getBdbConfig(), BdbConfig.BDB_CACHE_PERCENT, bdbCachePercent);
     }
     
     
+    @Override
     public File getWorkingDirectory() {
         return mainConfig.getParentFile();
     }
+
 }
