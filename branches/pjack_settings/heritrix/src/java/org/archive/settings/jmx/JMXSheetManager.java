@@ -35,14 +35,8 @@ import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
@@ -61,10 +55,14 @@ import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
 import org.archive.settings.path.Paths;
+import org.archive.state.Dependency;
+import org.archive.state.Key;
 
 
 public class JMXSheetManager extends SheetManager implements DynamicMBean {
 
+    
+    final public static String DOMAIN = "org.archive";
     
     /**
      * First version.
@@ -74,29 +72,13 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
     final private SheetManager manager;
     final private Bean support;
 
+    @Dependency
+    final public static Key<SheetManager> DELEGATE = 
+        Key.make(SheetManager.class, null);
 
-    public JMXSheetManager(MBeanServer server, SheetManager manager) 
-    throws MBeanRegistrationException {
+    public JMXSheetManager(SheetManager manager) {
         this.manager = manager;
         this.support = new Bean(this);
-        ObjectName name;
-        try {
-            // FIXME: Think of something sensible here.
-            name = new ObjectName("archive.org", "id", 
-                    Integer.toString(System.identityHashCode(this)));
-        } catch (MalformedObjectNameException e) {
-            // This never should have been a checked exception.
-            throw new AssertionError();
-        }
-        try {
-            server.registerMBean(this, name);
-        } catch (NotCompliantMBeanException e) {
-            // Framework ensures compliance.
-            throw new AssertionError();
-        } catch (InstanceAlreadyExistsException e) {
-            // Object name guaranteed to be unique
-            throw new AssertionError();
-        }
     }
 
 
@@ -172,17 +154,6 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
         return manager.getDefault();
     }
 
-
-    @Override
-    public Object getRoot() {
-        return manager.getRoot();
-    }
-    
-    
-    @Override
-    public void setRoot(Object root) {
-        manager.setRoot(root);
-    }
 
 
     @Override
@@ -266,7 +237,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
     
     
     @Operation(desc="Returns the settings overriden by the given single sheet.",
-            type="org.archive.crawler2.settings.jmx.Types.GET_DATA_ARRAY")
+            type="org.archive.settings.jmx.Types.GET_DATA_ARRAY")
     public CompositeData[] getAll(
             @Parameter(name="name", desc=
             "The name of the single sheet whose overrides to return.")
@@ -280,7 +251,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
 
 
     @Operation(desc="Resolves all settings defined by the given sheet.", 
-            type="org.archive.crawler2.settings.jmx.Types.GET_DATA_ARRAY")
+            type="org.archive.settings.jmx.Types.GET_DATA_ARRAY")
     public CompositeData[] resolveAll(
             @Parameter(name="name", desc=
             "The name of the single sheet whose overrides to return.")
@@ -300,7 +271,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             String sheetName,
             
             @Parameter(name="setData", desc="An array of path/values to set.",
-             type="org.archive.crawler2.settings.jmx.Types.SET_DATA_ARRAY")
+             type="org.archive.settings.jmx.Types.SET_DATA_ARRAY")
             CompositeData[] setData) 
     {
         SingleSheet sheet = (SingleSheet)getSheet(sheetName);
