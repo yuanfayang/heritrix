@@ -100,7 +100,9 @@ public abstract class SheetManager implements StateProvider, Serializable {
      * 
      * @return  the root module
      */
-    public abstract Map<String,Object> getRoot();
+    public Map<String,Object> getRoot() {
+        return getDefault().get(getManagerModule(), ROOT);
+    }
 
 
     /**
