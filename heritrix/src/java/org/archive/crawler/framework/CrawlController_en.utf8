@@ -39,3 +39,6 @@ The frontier.
 
 processors-description:
 The chain of processors that will handle each URI in the crawl.
+
+bdb-description:
+The BDB module.

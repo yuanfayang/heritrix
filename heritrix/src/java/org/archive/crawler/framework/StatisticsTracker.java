@@ -49,6 +49,9 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.net.UURI;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
+import org.archive.state.Dependency;
+import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
@@ -183,6 +186,14 @@ implements CrawlURIDispositionListener, Serializable {
     // sExitMessage: only set at crawl-end
     private String sExitMessage = "Before crawl end";
 
+    
+    @Dependency
+    final public static Key<CrawlController> CONTROLLER =
+        Key.make(CrawlController.class, null);
+    
+    static {
+        KeyManager.addKeys(StatisticsTracker.class);
+    }
 
     public StatisticsTracker(CrawlController c)
     throws FatalConfigurationException {

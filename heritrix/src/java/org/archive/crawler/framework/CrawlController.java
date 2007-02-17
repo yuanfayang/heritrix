@@ -59,6 +59,8 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.Operation;
 import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
@@ -76,9 +78,9 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
-import org.archive.processors.fetcher.DefaultServerCache;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
+import org.archive.settings.file.BdbModule;
 import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
@@ -97,8 +99,6 @@ import org.xbill.DNS.dns;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.DbInternal;
 import com.sleepycat.je.Environment;
@@ -118,7 +118,8 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Gordon Mohr
  */
-public class CrawlController implements Serializable, Reporter, StateProvider {
+public class CrawlController extends Bean 
+implements Serializable, Reporter, StateProvider {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlController.class,1);
@@ -186,6 +187,9 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     final public static Key<SheetManager> SHEET_MANAGER = 
         Key.make(SheetManager.class, null);
     
+    @Dependency
+    final public static Key<BdbModule> BDB =
+        Key.make(BdbModule.class, null);
     
     static {
         KeyManager.addKeys(CrawlController.class);
@@ -380,28 +384,14 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      protected transient ArrayList<CrawlURIDispositionListener> 
      registeredCrawlURIDispositionListeners;
     
-    /** Shared bdb Environment for Frontier subcomponents */
-    // TODO: investigate using multiple environments to split disk accesses
-    // across separate physical disks
-    private transient Environment bdbEnvironment = null;
-    
-    /**
-     * Shared class catalog database.  Used by the
-     * {@link #classCatalog}.
-     */
-    private transient Database classCatalogDB = null;
-    
-    /**
-     * Class catalog instance.
-     * Used by bdb serialization.
-     */
-    private transient StoredClassCatalog classCatalog = null;
     
     /**
      * Keep a list of all BigMap instance made -- shouldn't be many -- so that
      * we can checkpoint.
      */
     private transient Map<String,CachedBdbMap<?,?>> bigmaps = null;
+
+    
     
 
 //    private transient Map<String,Processor> processors;
@@ -409,11 +399,15 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
     final private CrawlOrder order;
 
+    final private BdbModule bdb;
+    
 
-    public CrawlController(SheetManager manager, CrawlOrder order) 
+    public CrawlController(SheetManager manager, CrawlOrder order, 
+            BdbModule environment) 
     throws InitializationException {
         this.sheetManager = manager;
         this.order = order;
+        this.bdb = environment;
         sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
 
         this.singleThreadLock = new ReentrantLock();
@@ -464,7 +458,6 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             }
             
             onFailMessage = "Unable to setup bdb environment.";
-            setupBdb();
             
 //            onFailMessage = "Unable to setup statistics";
 //            setupStatTracking();
@@ -538,61 +531,13 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         return getOrderSetting(CrawlOrder.CHECKPOINT_COPY_BDBJE_LOGS);
     }
     
-    private void setupBdb()
-    throws FatalConfigurationException, AttributeNotFoundException {
-        EnvironmentConfig envConfig = new EnvironmentConfig();
-        envConfig.setAllowCreate(true);
-        int bdbCachePercent = getOrderSetting(CrawlOrder.BDB_CACHE_PERCENT);
-        if(bdbCachePercent > 0) {
-            // Operator has expressed a preference; override BDB default or 
-            // je.properties value
-            envConfig.setCachePercent(bdbCachePercent);
-        }
-        envConfig.setLockTimeout(5000000); // 5 seconds
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            envConfig.setConfigParam("java.util.logging.level", "SEVERE");
-            envConfig.setConfigParam("java.util.logging.level.evictor",
-                "SEVERE");
-            envConfig.setConfigParam("java.util.logging.ConsoleHandler.on",
-                "true");
-        }
-
-        if (!getCheckpointCopyBdbjeLogs()) {
-            // If we are not copying files on checkpoint, then set bdbje to not
-            // remove its log files so that its possible to later assemble
-            // (manually) all needed to run a recovery using mix of current
-            // bdbje logs and those its marked for deletion.
-            envConfig.setConfigParam("je.cleaner.expunge", "false");
-        }
-                
-        try {
-            this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
-            if (LOGGER.isLoggable(Level.FINE)) {
-                // Write out the bdb configuration.
-                envConfig = bdbEnvironment.getConfig();
-                LOGGER.fine("BdbConfiguration: Cache percentage " +
-                    envConfig.getCachePercent() +
-                    ", cache size " + envConfig.getCacheSize());
-            }
-            // Open the class catalog database. Create it if it does not
-            // already exist. 
-            DatabaseConfig dbConfig = new DatabaseConfig();
-            dbConfig.setAllowCreate(true);
-            this.classCatalogDB = this.bdbEnvironment.
-                openDatabase(null, "classes", dbConfig);
-            this.classCatalog = new StoredClassCatalog(classCatalogDB);
-        } catch (DatabaseException e) {
-            e.printStackTrace();
-            throw new FatalConfigurationException(e.getMessage());
-        }
-    }
     
     public Environment getBdbEnvironment() {
-        return this.bdbEnvironment;
+        return this.bdb.getEnvironment();
     }
     
     public StoredClassCatalog getClassCatalog() {
-        return this.classCatalog;
+        return this.bdb.getClassCatalog();
     }
 
     /**
@@ -793,7 +738,13 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
     private void setupDisk() {
         String diskPath = get(order, CrawlOrder.DISK_PATH);
-        this.disk = getRelative(diskPath);
+        File file = new File(diskPath);
+        if (file.isAbsolute()) {
+            this.disk = file;
+        } else {
+            File workDir = sheetManager.getWorkingDirectory();
+            this.disk = new File(workDir, diskPath);
+        }
         this.disk.mkdirs();
         this.logsDisk = getSettingsDir(CrawlOrder.LOGS_PATH);
         this.checkpointsDisk = getSettingsDir(CrawlOrder.CHECKPOINTS_PATH);
@@ -1060,7 +1011,9 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     /** 
      * Operator requested crawl begin
      */
+    @Operation(desc="Start the crawl.")
     public void requestCrawlStart() {
+        setupToePool();
         runProcessorInitialTasks();
 
         sendCrawlStateChangeEvent(State.STARTED, CrawlStatus.PENDING);
@@ -1125,23 +1078,6 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         if (this.checkpointer != null) {
             this.checkpointer.cleanup();
             this.checkpointer = null;
-        }
-        if (this.classCatalogDB != null) {
-            try {
-                this.classCatalogDB.close();
-            } catch (DatabaseException e) {
-                e.printStackTrace();
-            }
-            this.classCatalogDB = null;
-        }
-        if (this.bdbEnvironment != null) {
-            try {
-                this.bdbEnvironment.sync();
-                this.bdbEnvironment.close();
-            } catch (DatabaseException e) {
-                e.printStackTrace();
-            }
-            this.bdbEnvironment = null;
         }
         this.bigmaps = null;
         if (this.toePool != null) {
@@ -1317,7 +1253,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      */
     protected void checkpointBdb(File checkpointDir)
     throws DatabaseException, IOException, RuntimeException {
-        EnvironmentConfig envConfig = this.bdbEnvironment.getConfig();
+        EnvironmentConfig envConfig = bdb.getEnvironment().getConfig();
         final List bkgrdThreads = Arrays.asList(new String []
             {"je.env.runCheckpointer", "je.env.runCleaner",
                 "je.env.runINCompressor"});
@@ -1342,12 +1278,12 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             // pretty slow, since it is potentially a large amount of
             // random I/O."
             chkptConfig.setMinimizeRecoveryTime(true);
-            this.bdbEnvironment.checkpoint(chkptConfig);
+            bdb.getEnvironment().checkpoint(chkptConfig);
             LOGGER.fine("Finished bdb checkpoint.");
             
             // From the sleepycat folks: A trick for flipping db logs.
             EnvironmentImpl envImpl = 
-                DbInternal.envGetEnvironmentImpl(this.bdbEnvironment);
+                DbInternal.envGetEnvironmentImpl(bdb.getEnvironment());
             long firstFileInNextSet =
                 DbLsn.getFileNumber(envImpl.forceLogFileFlip());
             // So the last file in the checkpoint is firstFileInNextSet - 1.
@@ -2041,11 +1977,9 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         if (f.isAbsolute()) {
             return f;
         }
-        
-        //FIXME: Verify this was previous behavior
-        String relPath = this.getOrderSetting(CrawlOrder.DISK_PATH);
-        File dir = new File(relPath);
-        return new File(dir, path);
+
+    
+        return new File(disk, path);
     }
     
     
@@ -2055,7 +1989,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     
     
     public CredentialStore getCredentialStore() {
-        return getOrderSetting(CREDENTIAL_STORE);
+        return get(this, CREDENTIAL_STORE);
     }
     
     

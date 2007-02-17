@@ -38,6 +38,8 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.scope.DecidingScope;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
+import org.archive.settings.file.BdbConfig;
+import org.archive.settings.file.BdbModule;
 import org.archive.state.StateProcessorTestBase;
 import org.archive.util.IoUtils;
 
@@ -83,17 +85,25 @@ public class CrawlControllerTest extends StateProcessorTestBase {
             IoUtils.close(fileWriter);
         }
 
+        MemorySheetManager manager = new MemorySheetManager();
+        SingleSheet def = manager.getDefault();
+        
+        BdbConfig config = new BdbConfig();
+        File state = new File(tmp, "state");
+        state.mkdirs();
+        def.set(config, BdbConfig.DIR, state.getAbsolutePath());
+        
         CrawlOrder order = new CrawlOrder();
         Map<String,String> headers = new HashMap<String,String>();
         headers.put("user-agent", "Heritrix (+http://www.archive.org) abc");
         headers.put("from", "info@archive.org");
         
-        MemorySheetManager manager = new MemorySheetManager();
-        SingleSheet def = manager.getDefault();
         def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
         def.set(order, CrawlOrder.HTTP_HEADERS, headers);
         
-        CrawlController controller = new CrawlController(manager, order);
+        BdbModule bdb = new BdbModule(def, config); 
+        
+        CrawlController controller = new CrawlController(manager, order, bdb);
         CrawlScope scope = new DecidingScope(controller);
         def.set(controller, CrawlController.SHEET_MANAGER, manager);
         def.set(controller, CrawlController.ORDER, order);
