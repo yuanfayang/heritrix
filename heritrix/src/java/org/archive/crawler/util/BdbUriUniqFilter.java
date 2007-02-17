@@ -30,7 +30,9 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.framework.CrawlController;
+import org.archive.settings.file.BdbModule;
+import org.archive.state.Dependency;
+import org.archive.state.Key;
 
 import st.ata.util.FPGenerator;
 
@@ -81,19 +83,24 @@ extends SetBasedUriUniqFilter implements Serializable {
     
     private static final String COLON_SLASH_SLASH = "://";
     
+    
+    @Dependency
+    public static final Key<BdbModule> BDB = 
+        Key.make(BdbModule.class, null);
+    
+    
     /**
      * Shutdown default constructor.
      */
 	protected BdbUriUniqFilter() {
 		super();
 	}
-    
-   
-   // Help the settings system along
-   public BdbUriUniqFilter(CrawlController c) throws IOException {
-       this(c.getBdbEnvironment());
-   }
+
         
+    public BdbUriUniqFilter(BdbModule bdb) 
+    throws IOException {
+        this(bdb.getEnvironment());
+    }
         
     /**
      * Constructor.
