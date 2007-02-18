@@ -30,8 +30,12 @@ import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Scoper;
 import org.archive.crawler.settings.MapType;
@@ -54,14 +58,8 @@ public class SupplementaryLinksScoper extends Scoper {
     private static Logger LOGGER =
         Logger.getLogger(SupplementaryLinksScoper.class.getName());
     
-    public static final String ATTR_LINK_FILTERS = "link-filters";
-    
-    /**
-     * Instance of filters to run.
-     */
-    private MapType filters = null;
-    
-    
+    public static final String ATTR_LINKS_DECIDE_RULES = "link-rules";
+
     /**
      * @param name Name of this filter.
      */
@@ -74,10 +72,11 @@ public class SupplementaryLinksScoper extends Scoper {
             ATTR_OVERRIDE_LOGGER_ENABLED + " and set logger level " +
             "at INFO or above).");
         
-        this.filters = (MapType)addElementToDefinition(
-            new MapType(ATTR_LINK_FILTERS, "Filters to apply to each " +
-            "link carried by the passed CrawlURI.", Filter.class));
-        this.filters.setExpertSetting(true);
+        addElementToDefinition(
+                new DecideRuleSequence(ATTR_LINKS_DECIDE_RULES,
+                    "DecideRules which if their final decision on a link is " +
+                    "REJECT, cause the link to be ruled out-of-scope, even " +
+                    "if it had previously been accepted by the main scope."));
     }
 
     protected void innerProcess(final CrawlURI curi) {
@@ -103,7 +102,7 @@ public class SupplementaryLinksScoper extends Scoper {
             (CrawlURI)caUri:
             new CrawlURI(caUri.getUURI());
         boolean result = false;
-        if (filtersAccept(this.filters, curi)) {
+        if (rulesAccept(getLinkRules(curi), curi)) {
             result = true;
             if (LOGGER.isLoggable(Level.FINER)) {
                 LOGGER.finer("Accepted: " + caUri);
@@ -112,6 +111,14 @@ public class SupplementaryLinksScoper extends Scoper {
             outOfScope(caUri);
         }
         return result;
+    }
+    
+    protected DecideRule getLinkRules(Object o) {
+        try {
+            return (DecideRule)getAttribute(o, ATTR_LINKS_DECIDE_RULES);
+        } catch (AttributeNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     /**

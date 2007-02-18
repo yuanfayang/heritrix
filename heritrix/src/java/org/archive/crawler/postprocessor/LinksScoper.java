@@ -31,10 +31,14 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Scoper;
@@ -70,8 +74,8 @@ implements FetchStatusCodes {
     private final static Boolean DEFAULT_SEED_REDIRECTS_NEW_SEEDS =
         new Boolean(true);
     
-    public static final String ATTR_LOG_REJECT_FILTERS =
-        "scope-rejected-url-filters";
+    public static final String ATTR_REJECTLOG_DECIDE_RULES =
+        "scope-rejected-url-rules";
     
     public static final String ATTR_PREFERENCE_DEPTH_HOPS =
         "preference-depth-hops";
@@ -111,13 +115,12 @@ implements FetchStatusCodes {
         DEFAULT_PREFERENCE_DEPTH_HOPS));
         t.setExpertSetting(true);
         
-        this.rejectLogFilters = (MapType)addElementToDefinition(
-            new MapType(ATTR_LOG_REJECT_FILTERS, "Filters applied after " +
-               "an URI has been rejected. If filter return " +
-               "TRUE, the URI is logged (if the logging level is INFO). " +
-               "Depends on " + ATTR_OVERRIDE_LOGGER_ENABLED +
-               " being enabled.", Filter.class));
-        this.rejectLogFilters.setExpertSetting(true);
+        addElementToDefinition(
+            new DecideRuleSequence(ATTR_REJECTLOG_DECIDE_RULES,
+                "DecideRules which, if their final decision on a link is " +
+                "not REJECT, cause the otherwise scope-rejected links to " +
+                "be logged"));
+
     }
 
     protected void innerProcess(final CrawlURI curi) {
@@ -225,8 +228,16 @@ implements FetchStatusCodes {
         CrawlURI curi = (caUri instanceof CrawlURI)?
             (CrawlURI)caUri:
             new CrawlURI(caUri.getUURI());
-        if (filtersAccept(this.rejectLogFilters, curi)) {
+        if (rulesAccept(getRejectLogRules(curi), curi)) {
             LOGGER.info(curi.getUURI().toString());
+        }
+    }
+    
+    protected DecideRule getRejectLogRules(Object o) {
+        try {
+            return (DecideRule)getAttribute(o, ATTR_REJECTLOG_DECIDE_RULES);
+        } catch (AttributeNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
     
