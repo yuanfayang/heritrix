@@ -81,7 +81,7 @@ extends PredicatedDecideRule {
 
     }
     
-    boolean evaluate(Object obj) {
+    protected boolean evaluate(Object obj) {
         ExternalGeoLookupInterface impl = getConfiguredImplementation(obj);
         if (impl == null) {
             return false;
