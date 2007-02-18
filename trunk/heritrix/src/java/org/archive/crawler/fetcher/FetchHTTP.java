@@ -769,25 +769,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     }
 
     /**
-     * @param curi
-     * @param method
-     */
-    private void setConditionalGetHeader(CrawlURI curi, HttpMethod method, 
-            String setting, String sourceHeader, String targetHeader) {
-        if(((Boolean)getUncheckedAttribute(curi,setting))) {
-            try {
-                String previous = curi.getAList().getAListArray(
-                        A_FETCH_HISTORY)[0].getString(sourceHeader);
-                if(previous!=null) {
-                    method.setRequestHeader(targetHeader, previous);
-                }
-            } catch (RuntimeException e) {
-                // for absent key, bad index, etc. just do nothing
-            }
-        }
-    }
-
-    /**
      * Setup proxy, based on attributes in CrawlURI and settings, 
      * for this CrawlURI only. 
      * @return HostConfiguration customized as necessary, or null if no
