@@ -43,7 +43,7 @@ public class AddRedirectFromRootServerToScope extends PredicatedDecideRule {
 				"scope. Also mark the URI as a seed."); 
 	}
 
-	boolean evaluate(Object object) {
+	protected boolean evaluate(Object object) {
 		UURI via = getVia(object);
 		if (via == null) {
 			return false;

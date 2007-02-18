@@ -44,5 +44,5 @@ public abstract class PredicatedDecideRule extends ConfiguredDecideRule {
         return PASS;
     }
 
-    abstract boolean evaluate(Object object);
+    protected abstract boolean evaluate(Object object);
 }

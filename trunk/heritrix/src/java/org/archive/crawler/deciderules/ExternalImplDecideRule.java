@@ -61,7 +61,7 @@ extends PredicatedDecideRule {
             "instantiate.", ""));
     }
     
-    boolean evaluate(Object obj) {
+    protected boolean evaluate(Object obj) {
         ExternalImplInterface impl = getConfiguredImplementation(obj);
         return (impl != null)? impl.evaluate(obj): false;
     }
