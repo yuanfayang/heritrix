@@ -31,6 +31,8 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
@@ -56,16 +58,15 @@ public class Processor extends ModuleType {
     private static final long serialVersionUID = 6248563827413710226L;
 
     /**
-     * Key to use asking settings for filters value.
+     * Key to use asking settings for decide-rules value.
      */
-    public final static String ATTR_FILTERS = "filters";
+    public static final String ATTR_DECIDE_RULES = "decide-rules";
 
     /**
      * Key to use asking settings for enabled value.
      */
     public final static String ATTR_ENABLED = "enabled";
 
-    private MapType filters;
     private Processor defaultNextProcessor = null;
 
     private static Logger logger =
@@ -79,8 +80,10 @@ public class Processor extends ModuleType {
         super(name, description);
         addElementToDefinition(new SimpleType(ATTR_ENABLED,
             "Is processor enabled", new Boolean(true)));
-        filters = (MapType) addElementToDefinition(new MapType(ATTR_FILTERS,
-            "Filters applied to this processor", Filter.class));
+        addElementToDefinition(
+            new DecideRuleSequence(ATTR_DECIDE_RULES,
+                "DecideRules which, if their final decision is REJECT, " +
+                "prevent this Processor from running."));
     }
 
     /**
@@ -102,7 +105,7 @@ public class Processor extends ModuleType {
             logger.severe(e.getMessage());
         }
 
-        if(filtersAccept(curi)) {
+        if(rulesAccept(curi)) {
             innerProcess(curi);
         } else {
             innerRejectProcess(curi);
@@ -157,40 +160,21 @@ public class Processor extends ModuleType {
         // by default do nothing
     }
 
-    /**
-     * Do all specified filters (if any) accept this CrawlURI?
-     *
-     * @param curi
-     * @return True if all filters accept this CrawlURI.
-     */
-    protected boolean filtersAccept(CrawlURI curi) {
-        return filtersAccept(this.filters, curi);
-    }
-    
-    /**
-     * Do all specified filters (if any) accept this CrawlURI?
-     *
-     * @param curi
-     * @param fs Filters to process.
-     * @return True if all filters accept this CrawlURI.
-     */
-    protected boolean filtersAccept(MapType fs, CrawlURI curi) {
-        if (fs.isEmpty(curi)) {
-            return true;
+    protected DecideRule getDecideRule(Object o) {
+        try {
+            return (DecideRule)getAttribute(o, ATTR_DECIDE_RULES);
+        } catch (AttributeNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        for (Iterator i = fs.iterator(curi); i.hasNext();) {
-            Filter filter = (Filter)i.next();
-            if (!filter.accepts(curi)) {
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info(filter + " rejected " + curi +
-                        " in Processor " + getName());
-                }
-                return false;
-            }
-        }
-        return true;
     }
 
+    protected boolean rulesAccept(Object o) {
+        return rulesAccept(getDecideRule(o),o);
+    }
+
+    protected boolean rulesAccept(DecideRule rule, Object o) {
+        return rule.decisionFor(o) != DecideRule.REJECT;
+    }
     /**
      * Returns the next processor for the given CrawlURI in the processor chain.
      * @param curi The CrawlURI that we want to find the next processor for.

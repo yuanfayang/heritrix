@@ -91,6 +91,8 @@ import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Processor;
@@ -206,15 +208,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private int curisHandled = 0;
         
     /**
-     * Filters to apply mid-fetch, just after receipt of the response
+     * Rules to apply mid-fetch, just after receipt of the response
      * headers before we start to download body.
      */
-    public final static String MIDFETCH_ATTR_FILTERS = "midfetch-filters";
-
-    /**
-     * Instance of midfetchfilters.
-     */
-    private MapType midfetchfilters = null;
+    public static final String ATTR_MIDFETCH_DECIDE_RULES = "midfetch-decide-rules";
     
     /**
      * What to log if midfetch abort.
@@ -227,6 +224,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         new Header("Connection", "close");
     public static final String ATTR_SEND_REFERER = "send-referer";
     public static final String ATTR_SEND_RANGE = "send-range";
+    /**/
     public static final String REFERER = "Referer";
     public static final String RANGE = "Range";
     public static final String RANGE_PREFIX = "bytes=0-";
@@ -281,16 +279,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      */
     public FetchHTTP(String name) {
         super(name, "HTTP Fetcher");
-        this.midfetchfilters = (MapType) addElementToDefinition(
-            new MapType(MIDFETCH_ATTR_FILTERS, "Filters applied after" +
-                " receipt of HTTP response headers but before we start to" +
-                " download the body. If any filter returns" +
-                " FALSE, the fetch is aborted. Prerequisites such as" +
-                " robots.txt by-pass filtering (i.e. they cannot be" +
-                " midfetch aborted.", Filter.class));
-// see [ 1379040 ] regex for midfetch filter not being stored in crawl order
-// http://sourceforge.net/support/tracker.php?aid=1379040
-//        this.midfetchfilters.setExpertSetting(true);
+
+        addElementToDefinition(
+            new DecideRuleSequence(ATTR_MIDFETCH_DECIDE_RULES, 
+                "DecideRules which, if final decision is REJECT, " +
+                "abort fetch after headers before all content is" +
+                "read."));
         
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
             "If the fetch is not completed in this number of seconds,"
@@ -368,6 +362,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 " hash of retrieved content-bodies.",
                 DEFAULT_DIGEST_ALGORITHM, DIGEST_ALGORITHMS));
         e.setExpertSetting(true);
+        /**/
         e = addElementToDefinition(new SimpleType(ATTR_SEND_CONNECTION_CLOSE,
             "Send 'Connection: close' header with every request.",
              new Boolean(true)));
@@ -586,11 +581,19 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     
     protected boolean checkMidfetchAbort(CrawlURI curi,
             HttpRecorderMethod method, HttpConnection conn) {
-        if (curi.isPrerequisite() || filtersAccept(midfetchfilters, curi)) {
+        if (curi.isPrerequisite() || rulesAccept(getMidfetchRule(curi), curi)) {
             return false;
         }
         method.markContentBegin(conn);
         return true;
+    }
+    
+    protected DecideRule getMidfetchRule(Object o) {
+        try {
+            return (DecideRule)getAttribute(o, ATTR_MIDFETCH_DECIDE_RULES);
+        } catch (AttributeNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     /**
@@ -756,11 +759,32 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             }
         }
         
+        /**/
+        
         // TODO: What happens if below method adds a header already
         // added above: e.g. Connection, Range, or Referer?
         setAcceptHeaders(curi, method);
         
         return configureProxy(curi);
+    }
+
+    /**
+     * @param curi
+     * @param method
+     */
+    private void setConditionalGetHeader(CrawlURI curi, HttpMethod method, 
+            String setting, String sourceHeader, String targetHeader) {
+        if(((Boolean)getUncheckedAttribute(curi,setting))) {
+            try {
+                String previous = curi.getAList().getAListArray(
+                        A_FETCH_HISTORY)[0].getString(sourceHeader);
+                if(previous!=null) {
+                    method.setRequestHeader(targetHeader, previous);
+                }
+            } catch (RuntimeException e) {
+                // for absent key, bad index, etc. just do nothing
+            }
+        }
     }
 
     /**
@@ -1568,7 +1592,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      */
     public void crawlEnded(String sExitMessage) {
         this.http = null;
-        this.midfetchfilters = null;
     }
 
     /* (non-Javadoc)
