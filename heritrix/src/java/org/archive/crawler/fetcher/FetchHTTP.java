@@ -112,6 +112,7 @@ import org.archive.io.RecorderTimeoutException;
 import org.archive.io.RecorderTooMuchHeaderException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
+import org.archive.util.bdbje.EnhancedEnvironment;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -224,7 +225,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         new Header("Connection", "close");
     public static final String ATTR_SEND_REFERER = "send-referer";
     public static final String ATTR_SEND_RANGE = "send-range";
-    /**/
+    public static final String ATTR_SEND_IF_MODIFIED_SINCE = "send-if-modified-since";
+    public static final String ATTR_SEND_IF_NONE_MATCH = "send-if-none-match";
     public static final String REFERER = "Referer";
     public static final String RANGE = "Range";
     public static final String RANGE_PREFIX = "bytes=0-";
@@ -362,7 +364,18 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 " hash of retrieved content-bodies.",
                 DEFAULT_DIGEST_ALGORITHM, DIGEST_ALGORITHMS));
         e.setExpertSetting(true);
-        /**/
+        e = addElementToDefinition(new SimpleType(ATTR_SEND_IF_MODIFIED_SINCE,
+                "Send 'If-Modified-Since' header, if previous 'Last-Modified' " +
+                "fetch history information is available in URI history.",
+                 new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_SEND_IF_NONE_MATCH,
+                "Send 'If-None-Match' header, if previous 'Etag' fetch " +
+                "history information is available in URI history.",
+                 new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_SEND_CONNECTION_CLOSE,
             "Send 'Connection: close' header with every request.",
              new Boolean(true)));
@@ -759,13 +772,40 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             }
         }
         
-        /**/
+        setConditionalGetHeader(curi, method, ATTR_SEND_IF_MODIFIED_SINCE, 
+                CoreAttributeConstants.A_LAST_MODIFIED_HEADER, "If-Modified-Since");
+        setConditionalGetHeader(curi, method, ATTR_SEND_IF_NONE_MATCH, 
+                CoreAttributeConstants.A_ETAG_HEADER, "If-None-Match");
         
         // TODO: What happens if below method adds a header already
         // added above: e.g. Connection, Range, or Referer?
         setAcceptHeaders(curi, method);
         
         return configureProxy(curi);
+    }
+
+    /**
+     * Set the given conditional-GET header, if the setting is enabled and
+     * a suitable value is available in the URI history. 
+     * @param curi source CrawlURI
+     * @param method HTTP operation pending
+     * @param setting true/false enablement setting name to consult
+     * @param sourceHeader header to consult in URI history
+     * @param targetHeader header to set if possible
+     */
+    protected void setConditionalGetHeader(CrawlURI curi, HttpMethod method, 
+            String setting, String sourceHeader, String targetHeader) {
+        if(((Boolean)getUncheckedAttribute(curi,setting))) {
+            try {
+                String previous = curi.getAList().getAListArray(
+                        A_FETCH_HISTORY)[0].getString(sourceHeader);
+                if(previous!=null) {
+                    method.setRequestHeader(targetHeader, previous);
+                }
+            } catch (RuntimeException e) {
+                // for absent key, bad index, etc. just do nothing
+            }
+        }
     }
 
     /**
@@ -1104,6 +1144,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     protected void cleanupHttp() {
         if(cookieDb!=null) {
             try {
+                cookieDb.sync();
                 cookieDb.close();
             } catch (DatabaseException e) {
                 // TODO Auto-generated catch block
@@ -1188,11 +1229,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         if(((Boolean)getUncheckedAttribute(null, ATTR_BDB_COOKIES)).
                 booleanValue()) {
             try {
-                Environment env = getController().getBdbEnvironment();
-                StoredClassCatalog classCatalog = getController().getClassCatalog();
+                EnhancedEnvironment env = getController().getBdbEnvironment();
+                StoredClassCatalog classCatalog = env.getClassCatalog();
                 DatabaseConfig dbConfig = new DatabaseConfig();
                 dbConfig.setTransactional(false);
                 dbConfig.setAllowCreate(true);
+                dbConfig.setDeferredWrite(true);
                 cookieDb = env.openDatabase(null, COOKIEDB_NAME, dbConfig);
                 StoredSortedMap cookiesMap = new StoredSortedMap(cookieDb,
                         new StringBinding(), new SerialBinding(classCatalog,
