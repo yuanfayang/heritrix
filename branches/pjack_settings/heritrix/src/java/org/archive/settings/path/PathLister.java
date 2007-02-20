@@ -27,6 +27,7 @@ package org.archive.settings.path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,7 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.KeyTypes;
 
 
 /**
@@ -61,6 +63,9 @@ public class PathLister {
     /** True if we're in "resolve" mode, false if we're in "get" mode. */
     final private boolean resolve;
     
+    /** Maps objects that were already seen to the path where they were seen. */
+    final private IdentityHashMap<Object,String> alreadySeen;
+    
     
     /**
      * Constructor.  Private so the API is a static utility library.
@@ -75,6 +80,7 @@ public class PathLister {
         this.startSheet = sheet;
         this.resolve = resolve;
         this.consumer = c;
+        this.alreadySeen = new IdentityHashMap<Object,String>();
     }
     
 
@@ -134,6 +140,10 @@ public class PathLister {
     private void handleModule(
             String path,
             Object module) {
+        if (alreadySeen(module, path)) {
+            return;
+        }
+        
         // Get the keys for the module
         Class ptype;
         if (module instanceof Offline) {
@@ -203,9 +213,10 @@ public class PathLister {
      * @param value   the value of the setting
      */
     private void consume(String path, List<Sheet> list, Object value) {
+        String seen = alreadySeen.get(value);
         Sheet last = list.get(list.size() - 1);
         if (resolve || (last == startSheet)) {
-            consumer.consume(path, list, value);
+            consumer.consume(path, list, value, seen);
         }
     }
     
@@ -241,6 +252,9 @@ public class PathLister {
      *   body than at each call site)
      */
     private void handleList(String path, List<List<Sheet>> sheets, Object l) {
+        if (alreadySeen(l, path)) {
+            return;
+        }
         @SuppressWarnings("unchecked")
         List<Object> list = (List<Object>)l;
         
@@ -254,6 +268,9 @@ public class PathLister {
 
 
     private void handleMap(String path, Map<String,List<Sheet>> sheetMap, Object m) {
+        if (alreadySeen(m, path)) {
+            return;
+        }
         @SuppressWarnings("unchecked")
         Map<String,Object> map = (Map<String,Object>)m;
         for (Map.Entry<String,Object> entry: map.entrySet()) {
@@ -273,4 +290,20 @@ public class PathLister {
         }
         return path + "." + next;
     }
+
+
+    private boolean alreadySeen(Object v, String path) {
+        if (v == null) {
+            return false;
+        }
+        if (KeyTypes.isSimple(Offline.getType(v))) {
+            return false;
+        }
+        if (alreadySeen.containsKey(v)) {
+            return true;
+        }
+        alreadySeen.put(v, path);
+        return false;
+    }
+
 }

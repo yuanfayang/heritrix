@@ -43,7 +43,10 @@ public interface PathListConsumer {
      * @param path    the path to the setting
      * @param sheet   the sheet that defined the setting
      * @param value   the value of the setting
+     * @param seenPath   null if the value is a complex type and has never
+     *  been seen before; or, the path where the value was previously seen.
      */
-    void consume(String path, List<Sheet> sheet, Object value);
+    void consume(String path, List<Sheet> sheet, Object value, 
+            String seenPath);
 
 }

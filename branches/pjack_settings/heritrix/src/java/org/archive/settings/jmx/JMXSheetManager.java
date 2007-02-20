@@ -54,9 +54,9 @@ import org.archive.settings.path.PathChange;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
-import org.archive.settings.path.Paths;
 import org.archive.state.Dependency;
 import org.archive.state.Key;
+import org.archive.state.KeyTypes;
 
 
 public class JMXSheetManager extends SheetManager implements DynamicMBean {
@@ -414,7 +414,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
         if (v == null) {
             return null;
         }
-        if (Paths.isSimple(v.getClass())) {
+        if (KeyTypes.isSimple(v.getClass())) {
             return v.toString();
         }
         return v.getClass().getName();
@@ -467,6 +467,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             String sheetName) {
         Sheet ss = getSheet(sheetName);
         StringWriter sw = new StringWriter();
+        
         FilePathListConsumer c = new FilePathListConsumer(sw);
         PathLister.resolveAll(ss, c);
         return sw.toString();

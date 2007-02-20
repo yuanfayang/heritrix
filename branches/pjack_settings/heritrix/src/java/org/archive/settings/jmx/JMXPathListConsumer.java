@@ -7,7 +7,7 @@ import javax.management.openmbean.CompositeData;
 
 import org.archive.settings.Sheet;
 import org.archive.settings.path.PathListConsumer;
-import org.archive.settings.path.Paths;
+import org.archive.state.KeyTypes;
 
 public class JMXPathListConsumer implements PathListConsumer {
 
@@ -18,13 +18,14 @@ public class JMXPathListConsumer implements PathListConsumer {
         return list.toArray(new CompositeData[list.size()]);
     }
     
-    public void consume(String path, List<Sheet> sheets, Object value) {
+    public void consume(String path, List<Sheet> sheets, Object value,
+            String seen) {
         String[] snames = new String[sheets.size()];
         for (int i = 0; i < snames.length; i++) {
             snames[i] = sheets.get(i).getName();
         }
         
-        if (Paths.isSimple(value.getClass())) {
+        if (KeyTypes.isSimple(value.getClass())) {
             addSimple(path, snames, value);
         } else {
             addSimple(path + "._impl", snames, value.getClass().getName());
