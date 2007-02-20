@@ -72,7 +72,8 @@ extends SetBasedUriUniqFilter implements Serializable {
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
     protected transient Database alreadySeen = null;
-    protected transient DatabaseEntry value = null;
+    static protected DatabaseEntry ZERO_LENGTH_ENTRY = 
+        new DatabaseEntry(new byte[0]);
     private static final String DB_NAME = "alreadySeenUrl";
     protected long count = 0;
     private long aggregatedLookupTime = 0;
@@ -149,6 +150,7 @@ extends SetBasedUriUniqFilter implements Serializable {
     protected void initialize(Environment env) throws DatabaseException {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
+        dbConfig.setDeferredWrite(true);
         try {
             env.truncateDatabase(null, DB_NAME, false);
         } catch (DatabaseNotFoundException e) {
@@ -171,7 +173,6 @@ extends SetBasedUriUniqFilter implements Serializable {
     protected void open(final Environment env, final DatabaseConfig dbConfig)
     throws DatabaseException {
         this.alreadySeen = env.openDatabase(null, DB_NAME, dbConfig);
-        this.value = new DatabaseEntry("".getBytes());
     }
     
     public synchronized void close() {
@@ -183,6 +184,7 @@ extends SetBasedUriUniqFilter implements Serializable {
                     logger.info("Count of alreadyseen on close " +
                         Long.toString(count));
                 }
+                this.alreadySeen.sync();
 				this.alreadySeen.close();
 			} catch (DatabaseException e) {
 				logger.severe(e.getMessage());
@@ -242,7 +244,7 @@ extends SetBasedUriUniqFilter implements Serializable {
             if (logger.isLoggable(Level.INFO)) {
                 started = System.currentTimeMillis();
             }
-            status = alreadySeen.putNoOverwrite(null, key, value);
+            status = alreadySeen.putNoOverwrite(null, key, ZERO_LENGTH_ENTRY);
             if (logger.isLoggable(Level.INFO)) {
                 aggregatedLookupTime +=
                     (System.currentTimeMillis() - started);
