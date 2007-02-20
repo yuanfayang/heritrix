@@ -1,4 +1,4 @@
-# Available DecideRules.
+# Available DecideRules
 # Lines beginning with # and empty lines are ignored
 org.archive.crawler.deciderules.AcceptDecideRule
 org.archive.crawler.deciderules.RejectDecideRule
@@ -33,3 +33,4 @@ org.archive.crawler.deciderules.FetchStatusMatchesRegExpDecideRule
 org.archive.crawler.deciderules.FetchStatusNotMatchesRegExpDecideRule
 org.archive.crawler.deciderules.NotExceedsDocumentLengthTresholdDecideRule
 org.archive.crawler.deciderules.ExceedsDocumentLengthTresholdDecideRule
+org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule
