@@ -28,18 +28,23 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+import org.archive.crawler.event.CrawlStatusAdapter;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Sheet;
 import org.archive.settings.file.FileSheetManager;
@@ -68,57 +73,70 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     final private File rootDir;
     
     final private Map<String,CrawlController> jobs;
-    
+
     
     public CrawlJobManagerImpl(File rootDir, MBeanServer server) {
         super(CrawlJobManager.class);
         this.rootDir = rootDir;
         this.jobs = new HashMap<String,CrawlController>();
-        setMBeanServer(server);
+        this.server = server;
+        register("CrawlJobManager", "CrawlJobManager", this);
+    }
+    
+
+    public void copyProfile(String origName, String copiedName) 
+    throws IOException {
+        File src = new File(getProfilesDir(), origName);
+        File dest = new File(getProfilesDir(), copiedName);
+        
+        if (!src.exists()) {
+            throw new IllegalArgumentException("No such profile: " + origName);
+        }
+        
+        if (dest.exists()) {
+            throw new IllegalArgumentException("Profile already exists: " + 
+                    copiedName);
+        }
+        
+        FileUtils.copyFiles(src, dest);
     }
 
     
-    public void setMBeanServer(MBeanServer server) {
-        if (server == this.server) {
-            return;
+    public void openProfile(String profile) throws IOException {
+        File src = new File(getProfilesDir(), profile);
+        
+        if (!src.exists()) {
+            throw new IllegalArgumentException("No such profile: " + profile);
         }
-        this.server = server;
-        if (server == null) {
-            return;
+
+        File bootstrap = new File(src, BOOTSTRAP);
+        FileSheetManager fsm;
+        try {
+            fsm = new FileSheetManager(bootstrap, false);
+        } catch (DatabaseException e) {
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
+        }
+
+        JMXSheetManager jmx = new JMXSheetManager(fsm);
+        register(profile, "SheetManager", jmx);
+    }
+
+    
+    public void closeProfile(String profile) {
+        File src = new File(getProfilesDir(), profile);
+        
+        if (!src.exists()) {
+            throw new IllegalArgumentException("No such profile: " + profile);
         }
         
-        try {
-            Hashtable<String,String> ht = new Hashtable<String,String>();
-            ht.put("name", "CrawlJobManager");
-            ht.put("type", "CrawlJobManager");
-            ObjectName name = new ObjectName(DOMAIN, ht);
-            server.registerMBean(this, name);
-            
-            for (Map.Entry<String,CrawlController> job: jobs.entrySet()) {
-                ht = new Hashtable<String,String>();
-                ht.put("name", job.getKey());
-                ht.put("type", "CrawlController");
-                name = new ObjectName(DOMAIN, ht);
-                server.registerMBean(job.getValue(), name);
-            }
-        } catch (MalformedObjectNameException e) {
-            
-        } catch (InstanceAlreadyExistsException e) {
-            
-        } catch (NotCompliantMBeanException e) {
-            
-        } catch (MBeanRegistrationException e) {
-            
-        }
+        ObjectName sm = name(profile, "SheetManager");
+        unregister(sm);
     }
-
-    public void copyProfile(String origName, String copiedName) {
-        // TODO Auto-generated method stub
-        System.out.println("copyProfile(" + origName + "," + copiedName);
-    }
-
-
-    public void launchProfile(String profile, String job) 
+    
+    
+    public void launchProfile(String profile, final String job) 
     throws IOException {
         File src = new File(getProfilesDir(), profile);
         File dest = new File(getJobsDir(), job);
@@ -144,7 +162,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
 
         JMXSheetManager jmx = new JMXSheetManager(fsm);
-        register(job, "SheetManager", jmx);
+        final ObjectName smName = register(job, "SheetManager", jmx);
 
         // Find the crawlcontroller.
         Sheet sheet = fsm.getDefault();
@@ -156,20 +174,37 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
         
         CrawlController cc = (CrawlController)o;
-        register(job, "CrawlController", cc);
+        final ObjectName ccName = register(job, "CrawlController", cc);
+        
+        cc.addCrawlStatusListener(new CrawlStatusAdapter() {
+            public void crawlEnded(String msg) {
+                unregister(ccName);
+                unregister(smName);
+                jobs.remove(job);
+            }
+        });
+        
         jobs.put(job, cc);
     }
-
     
-    private void register(String name, String type, Object o) {
+    
+    private ObjectName name(String name, String type) {
         try {
             Hashtable<String,String> ht = new Hashtable<String,String>();
             ht.put("name", name);
             ht.put("type", type);
-            ObjectName oname = new ObjectName(DOMAIN, ht);
-            server.registerMBean(o, oname);
+            return new ObjectName(DOMAIN, ht);
         } catch (MalformedObjectNameException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    
+    private ObjectName register(String name, String type, Object o) {
+        try {
+            ObjectName oname = name(name, type);
+            server.registerMBean(o, oname);
+            return oname;
         } catch (InstanceAlreadyExistsException e) {
             throw new IllegalStateException(e);
         } catch (NotCompliantMBeanException e) {
@@ -180,24 +215,24 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
     
     
-
-    public String[] listActiveJobs() {
-        // TODO Auto-generated method stub
-        System.out.println("listActiveJobs()");
-        return null;
+    private void unregister(ObjectName oname) {
+        try {
+            server.unregisterMBean(oname);  
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-
-    public String[] listCompletedJobs() {
-        System.out.println("listCompletedJobs()");
-        // TODO Auto-generated method stub
-        return null;
+    
+    public String[] listAllJobs() {
+        File jobsDir = getJobsDir();
+        return jobsDir.list();
     }
 
 
     public String[] listProfiles() {
-        System.out.println("listProfiles()");
-        return null;
+        File profDir = getProfilesDir();
+        return profDir.list();
     }
 
 

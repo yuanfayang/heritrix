@@ -1131,6 +1131,7 @@ implements Serializable, Reporter, StateProvider {
      * @throws IllegalStateException Thrown if crawl is not in paused state
      * (Crawl must be first paused before checkpointing).
      */
+    @Operation(desc="Request a checkpoint.")
     public synchronized void requestCrawlCheckpoint()
     throws IllegalStateException {
         if (this.checkpointer == null) {
@@ -1419,6 +1420,7 @@ implements Serializable, Reporter, StateProvider {
     /**
      * Operator requested for crawl to stop.
      */
+    @Operation(desc="Aborts the crawl.")
     public synchronized void requestCrawlStop() {
         requestCrawlStop(CrawlStatus.ABORTED);
     }
@@ -1455,6 +1457,7 @@ implements Serializable, Reporter, StateProvider {
     /**
      * Stop the crawl temporarly.
      */
+    @Operation(desc="Stop the crawl temporarily.")
     public synchronized void requestCrawlPause() {
         if (state == State.PAUSING || state == State.PAUSED) {
             // Already about to pause
@@ -1489,6 +1492,7 @@ implements Serializable, Reporter, StateProvider {
     /**
      * Resume crawl from paused state
      */
+    @Operation(desc="Resume crawl from paused state.")
     public synchronized void requestCrawlResume() {
         if (state != State.PAUSING && state != State.PAUSED && state != State.CHECKPOINTING) {
             // Can't resume if not been told to pause or if we're in middle of

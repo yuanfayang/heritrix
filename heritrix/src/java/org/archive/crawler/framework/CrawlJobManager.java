@@ -39,15 +39,9 @@ import org.archive.openmbeans.annotations.Parameter;
 public interface CrawlJobManager {
 
     
-    @Operation(desc="Lists all active crawl jobs, including jobs that are " +
-                "pending, running and paused.  The result does not include" +
-                "profiles or completed jobs. ")
-    public String[] listActiveJobs();
-    
-    
-    @Operation(desc="Lists all completed crawl jobs.")
-    public String[] listCompletedJobs();
-    
+
+    @Operation(desc="Lists all jobs.")
+    public String[] listAllJobs();
 
     @Operation(desc="Lists all profiles.")
     public String[] listProfiles();
@@ -60,7 +54,7 @@ public interface CrawlJobManager {
             String origName, 
             
             @Parameter(name="copiedName", desc="The name for the new profile.")
-            String copiedName);
+            String copiedName) throws IOException;
     
     
     @Operation(desc="Launches a profile into a new, pending job.")
@@ -72,4 +66,21 @@ public interface CrawlJobManager {
             @Parameter(name="job", desc="The name for the new launched job.")
             String job) throws IOException;
 
+    
+    @Operation(desc="Loads a profile for editing.")
+    public void openProfile(
+            
+            @Parameter(name="profile", desc="The name of the profile to load.")
+            String profile
+            
+            ) throws IOException;
+
+    
+    @Operation(desc="Closes an open profile.")
+    public void closeProfile(
+            
+            @Parameter(name="profile", desc="The name of the open profile to close.")
+            String profile
+            
+            ) throws IOException;
 }

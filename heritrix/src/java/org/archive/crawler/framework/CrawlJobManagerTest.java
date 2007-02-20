@@ -28,12 +28,13 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.util.Hashtable;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import junit.framework.TestCase;
 
-import org.archive.settings.file.FileSheetManager;
 import org.archive.util.FileUtils;
 
 /**
@@ -53,6 +54,17 @@ public class CrawlJobManagerTest extends TestCase {
 
         CrawlJobManagerImpl cjmi = new CrawlJobManagerImpl(f, server);
         cjmi.launchProfile("default", "test1");
+        
+        Hashtable<String,String> ht = new Hashtable<String,String>();
+        ht.put("name", "test1");
+        ht.put("type", "SheetManager");
+        ObjectName on = new ObjectName("org.archive.crawler", ht);
+        Object s = server.invoke(on, "resolveAllAsString", 
+                new Object[] { "default" }, 
+                new String[] { "java.lang.String" });
+        System.out.println(s);
     }
+
     
+    // TODO TESTME
 }
