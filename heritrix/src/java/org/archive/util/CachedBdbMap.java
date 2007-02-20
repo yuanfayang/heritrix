@@ -286,6 +286,7 @@ implements Map<K,V>, Serializable {
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setTransactional(false);
             dbConfig.setAllowCreate(true);
+            dbConfig.setDeferredWrite(true);
             
             Database catalogDb = env.environment.openDatabase(null,
                     CLASS_CATALOG, dbConfig);
@@ -303,6 +304,7 @@ implements Map<K,V>, Serializable {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setTransactional(false);
         dbConfig.setAllowCreate(true);
+        dbConfig.setDeferredWrite(true);
         return environment.openDatabase(null, dbName, dbConfig);
     }
 
@@ -310,6 +312,7 @@ implements Map<K,V>, Serializable {
         // Close out my bdb db.
         if (this.db != null) {
             try {
+                this.db.sync();
                 this.db.close();
             } catch (DatabaseException e) {
                 e.printStackTrace();
