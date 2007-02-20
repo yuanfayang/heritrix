@@ -331,17 +331,17 @@
          </dependency>
         <dependency>
             <id>je</id>
-            <version>3.0.12</version>
-            <url>http://www.sleepycat.com/products/je.shtml</url>
+            <version>3.2.13</version>
+            <url>http://www.oracle.com/technology/products/berkeley-db/je/index.html</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
                 <description>Berkeley DB Java Edition.  
-                Copyright (c) 1990-2004 Sleepycat Software.  
+                Copyright (c) 2006 Oracle.  
                 All rights reserved.  See above link for how to obtain source.  
                 </description>
-                <license>http://www.sleepycat.com/download/jeoslicense.html
+                <license>http://www.oracle.com/technology/software/products/berkeley-db/htdocs/jeoslicense.html
                 </license>
             </properties>
         </dependency>
