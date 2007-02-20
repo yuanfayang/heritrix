@@ -27,56 +27,23 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.StringWriter;
 
-import org.archive.settings.Offline;
-import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
-import org.archive.state.KeyTypes;
+import org.archive.settings.file.FilePathListConsumer;
+
 
 public class PathListerTest extends PathTestBase {
 
-    public static class Consumer implements PathListConsumer {
-        
-        public StringBuilder sb = new StringBuilder();
-        private Map<Object,String> refs = new IdentityHashMap<Object,String>();
-        
-        public void consume(String path, List<Sheet> sheets, Object value) {
-            for (Sheet s: sheets) {
-                sb.append(s.getName()).append(" -> ");
-            }
-            sb.append(path).append('=');
-            consume(sheets, path, value);
-            sb.append('\n');
-        }
-        
-        
-        private void consume(List<Sheet> sheets, String path, Object value) {
-            Class c = (value instanceof Offline) ? ((Offline)value).getType() : value.getClass();
-            if (KeyTypes.isSimple(c)) {
-                String tag = KeyTypes.getSimpleTypeTag(c);
-                sb.append(tag).append(':').append(value);
-                return;
-            }
-
-            String ref = refs.get(value);
-            if (ref != null) {
-                sb.append(ref);
-                return;
-            }
-            
-            sb.append("object:").append(c.getName());
-        }
-   }
 
 
     public void ntestQ() throws Exception {
 //        String expected = load(sheetName + ".resolved.txt");
-        Consumer consumer = new Consumer();
-        PathLister.getAll((SingleSheet)offlineManager.getSheet("override2"), consumer);
-        String result = consumer.sb.toString();
+        StringWriter sw = new StringWriter();
+        PathListConsumer consumer = new FilePathListConsumer(sw);
+        PathLister.getAll((SingleSheet)
+                offlineManager.getSheet("override1"), consumer);
+        String result = sw.toString();
         System.out.println(result);
         
         
@@ -105,18 +72,20 @@ public class PathListerTest extends PathTestBase {
     
     private void runResolve(String sheetName) throws IOException {
         String expected = load(sheetName + ".resolved.txt");
-        Consumer consumer = new Consumer();
+        StringWriter sw = new StringWriter();
+        PathListConsumer consumer = new FilePathListConsumer(sw);
         
         PathLister.resolveAll(offlineManager.getSheet(sheetName), consumer);
-        String result = consumer.sb.toString();
+        String result = sw.toString();
         System.out.println("OFFLINE SHEET: " + sheetName);
         System.out.println(expected + "\n\n\n");
         System.out.println(result);
         assertEquals(expected, result);
 
-        consumer = new Consumer();
+        sw = new StringWriter();
+        consumer = new FilePathListConsumer(sw);
         PathLister.resolveAll(manager.getSheet(sheetName), consumer);
-        result = consumer.sb.toString();
+        result = sw.toString();
         System.out.println("ONLINE SHEET: " + sheetName);
         System.out.println(expected + "\n\n\n");
         System.out.println(result);
@@ -127,10 +96,11 @@ public class PathListerTest extends PathTestBase {
     
     private void runGet(String sheetName) throws IOException {
         String expected = load(sheetName + ".get.txt");
-        Consumer consumer = new Consumer();
+        StringWriter sw = new StringWriter();
+        PathListConsumer consumer = new FilePathListConsumer(sw);
         SingleSheet ss = (SingleSheet)manager.getSheet(sheetName);
         PathLister.getAll(ss, consumer);
-        String result = consumer.sb.toString();
+        String result = sw.toString();
         assertEquals(expected, result);
     }
 

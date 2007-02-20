@@ -118,8 +118,6 @@ public class PathValidator {
 
         Object manager = sheet.getSheetManager().getManagerModule();
         Object current = validateKey(manager, first);
-
-        System.out.println(current.getClass());
         
         // While there are more tokens, process the next token.
         while (!tokens.isEmpty()) {
@@ -220,7 +218,6 @@ public class PathValidator {
         if (key == null) {
             throw ex(" has invalid key field name at ");
         }
-System.out.println(path + ": " +this.tokens);        
         return resolve(current, key);
     }
 
@@ -243,7 +240,7 @@ System.out.println(path + ": " +this.tokens);
     
 
     private Object resolve(Object current, Key<Object> key) {
-        if ((checkLast) && (tokens.size() == 1)) {
+        if ((checkLast) && (tokens.size() <= 1)) {
             Class type = key.getType();
             if (Map.class.isAssignableFrom(type)) {
                 Object r = sheet.check(current, key);
