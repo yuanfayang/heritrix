@@ -253,7 +253,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
         
         hostQueues = new AdaptiveRevisitQueueList(c.getBdbEnvironment(),
-            c.getClassCatalog());
+            c.getBdbEnvironment().getClassCatalog());
         
         if(((Boolean)getUncheckedAttribute(
                 null,ATTR_USE_URI_UNIQ_FILTER)).booleanValue()){

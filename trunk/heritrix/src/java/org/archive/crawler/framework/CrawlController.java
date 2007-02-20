@@ -33,7 +33,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
@@ -80,22 +80,18 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.Reporter;
+import org.archive.util.bdbje.EnhancedEnvironment;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Type;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.DbInternal;
-import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -296,19 +292,7 @@ public class CrawlController implements Serializable, Reporter {
     /** Shared bdb Environment for Frontier subcomponents */
     // TODO: investigate using multiple environments to split disk accesses
     // across separate physical disks
-    private transient Environment bdbEnvironment = null;
-    
-    /**
-     * Shared class catalog database.  Used by the
-     * {@link #classCatalog}.
-     */
-    private transient Database classCatalogDB = null;
-    
-    /**
-     * Class catalog instance.
-     * Used by bdb serialization.
-     */
-    private transient StoredClassCatalog classCatalog = null;
+    private transient EnhancedEnvironment bdbEnvironment = null;
     
     /**
      * Keep a list of all BigMap instance made -- shouldn't be many -- so that
@@ -482,7 +466,7 @@ public class CrawlController implements Serializable, Reporter {
         }
                 
         try {
-            this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
+            this.bdbEnvironment = new EnhancedEnvironment(getStateDisk(), envConfig);
             if (LOGGER.isLoggable(Level.FINE)) {
                 // Write out the bdb configuration.
                 envConfig = bdbEnvironment.getConfig();
@@ -490,25 +474,24 @@ public class CrawlController implements Serializable, Reporter {
                     envConfig.getCachePercent() +
                     ", cache size " + envConfig.getCacheSize());
             }
-            // Open the class catalog database. Create it if it does not
-            // already exist. 
-            DatabaseConfig dbConfig = new DatabaseConfig();
-            dbConfig.setAllowCreate(true);
-            this.classCatalogDB = this.bdbEnvironment.
-                openDatabase(null, "classes", dbConfig);
-            this.classCatalog = new StoredClassCatalog(classCatalogDB);
         } catch (DatabaseException e) {
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
         }
     }
     
-    public Environment getBdbEnvironment() {
+    /**
+     * @return the shared EnhancedEnvironment
+     */
+    public EnhancedEnvironment getBdbEnvironment() {
         return this.bdbEnvironment;
     }
     
+    /**
+     * @deprecated use EnhancedEnvironment's getClassCatalog() instead
+     */
     public StoredClassCatalog getClassCatalog() {
-        return this.classCatalog;
+        return this.bdbEnvironment.getClassCatalog();
     }
 
     /**
@@ -1070,14 +1053,6 @@ public class CrawlController implements Serializable, Reporter {
         if (this.checkpointer != null) {
             this.checkpointer.cleanup();
             this.checkpointer = null;
-        }
-        if (this.classCatalogDB != null) {
-            try {
-                this.classCatalogDB.close();
-            } catch (DatabaseException e) {
-                e.printStackTrace();
-            }
-            this.classCatalogDB = null;
         }
         if (this.bdbEnvironment != null) {
             try {
@@ -1962,7 +1937,7 @@ public class CrawlController implements Serializable, Reporter {
             result = temp;
         }
         result.initialize(getBdbEnvironment(), keyClass, valueClass,
-                getClassCatalog());
+                getBdbEnvironment().getClassCatalog());
         // Save reference to all big maps made so can manage their
         // checkpointing.
         this.bigmaps.put(dbName, result);

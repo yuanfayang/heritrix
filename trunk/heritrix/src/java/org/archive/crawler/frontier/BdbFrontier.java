@@ -117,7 +117,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     private BdbMultipleWorkQueues createMultipleWorkQueues()
     throws DatabaseException {
         return new BdbMultipleWorkQueues(this.controller.getBdbEnvironment(),
-            this.controller.getClassCatalog(),
+            this.controller.getBdbEnvironment().getClassCatalog(),
             this.controller.isCheckpointRecover());
     }
 
