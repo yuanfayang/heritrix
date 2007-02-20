@@ -489,10 +489,6 @@ implements Serializable, Reporter, CoreAttributeConstants {
      * Assumption is that only one thread at a time will ever be accessing
      * a particular CandidateURI.
      * 
-     * @deprecated Public access will be deprecated. This methods access
-     * will change in next release.  Use specialized accessors instead such
-     * as {@link #getString(String)}.
-     * 
      * @return the attribute list.
      */
     public AList getAList() {

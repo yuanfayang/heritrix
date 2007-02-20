@@ -86,7 +86,9 @@ implements FetchStatusCodes {
     transient private int threadNumber;
 
     // dynamic context
+    /** @deprecated */
     private int linkHopCount = UNCALCULATED; // from seeds
+    /** @deprecated */
     private int embedHopCount = UNCALCULATED; // from a sure link; reset upon any link traversal
 
     // User agent to masquerade as when crawling this URI. If null, globals should be used
@@ -672,6 +674,7 @@ implements FetchStatusCodes {
      * Get the embeded hop count.
      *
      * @return the embeded hop count.
+     * @deprecated 
      */
     public int getEmbedHopCount() {
         return embedHopCount;
@@ -681,6 +684,7 @@ implements FetchStatusCodes {
      * Get the link hop count.
      *
      * @return the link hop count.
+     * @deprecated 
      */
     public int getLinkHopCount() {
         return linkHopCount;
@@ -689,6 +693,8 @@ implements FetchStatusCodes {
     /**
      * Mark this uri as being a seed.
      *
+     *
+     * @deprecated 
      */
     public void markAsSeed() {
         linkHopCount = 0;
@@ -859,8 +865,7 @@ implements FetchStatusCodes {
         setAList(getPersistentAList());
     }
     
-    @SuppressWarnings("deprecation")
-    protected AList getPersistentAList() {
+    public AList getPersistentAList() {
         AList newAList = new HashtableAList();
         // copy declared persistent keys
         if(alistPersistentMember!=null && alistPersistentMember.size() > 0) {
