@@ -58,8 +58,8 @@ import java.util.regex.Matcher;
  * is vanishingly rare for case-variance to be meaningful, while URI case-
  * variance often arises from people's confusion or sloppiness, and they
  * only correct it insofar as necessary to avoid blatant problems. Thus 
- * SURT form is considered to be flattened to all lowercase, and thus not
- * completely reversible. 
+ * the usual SURT form is considered to be flattened to all lowercase, and 
+ * not completely reversible. 
  * 
  * @author gojomo
  */
@@ -92,7 +92,18 @@ public class SURT {
     //       escaped     = "%" hex hex
 
 
-    
+    /**
+     * Utility method for creating the SURT form of the URI in the
+     * given String.
+     * 
+     * By default, does not preserve casing. 
+     * 
+     * @param s String URI to be converted to SURT form
+     * @return SURT form 
+     */
+    public static String fromURI(String s) {
+        return fromURI(s,false);
+    }
     
     /**
      * Utility method for creating the SURT form of the URI in the
@@ -107,9 +118,10 @@ public class SURT {
      * evaluation.
      * 
      * @param s String URI to be converted to SURT form
+     * @param preserveCase whether original case should be preserved
      * @return SURT form 
      */
-    public static String fromURI(String s) {
+    public static String fromURI(String s, boolean preserveCase) {
         Matcher m = TextUtils.getMatcher(URI_SPLITTER,s);
         if(!m.matches()) {
             // not an authority-based URI scheme; return unchanged
@@ -145,8 +157,10 @@ public class SURT {
         append(builder,s,m.start(2),m.end(2)); // userinfo
         builder.append(END_TRANSFORMED_AUTHORITY); // ')'
         append(builder,s,m.start(7),m.end(7)); // path
-        for(int i = 0; i < builder.length(); i++) {
-            builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
+        if (!preserveCase) {
+            for(int i = 0; i < builder.length(); i++) {
+                builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
+            }
         }
         TextUtils.recycleMatcher(m);
         return builder.toString();

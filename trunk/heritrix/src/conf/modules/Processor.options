@@ -1,4 +1,4 @@
-# Availible processors.
+# Available processors
 # Each processor class should be listed with full package info
 # followed by a '|' and a descriptive name (containing only [a-z,A-z])
 # Lines beginning with # and empty lines are ignored
@@ -40,3 +40,7 @@ org.archive.crawler.processor.BeanShellProcessor|BeanShellProcessor
 org.archive.crawler.prefetch.QuotaEnforcer|QuotaEnforcer
 org.archive.crawler.prefetch.RuntimeLimitEnforcer|RuntimeLimitEnforcer
 org.archive.crawler.extractor.JerichoExtractorHTML|JerichoExtractorHTML
+org.archive.crawler.processor.recrawl.PersistStoreProcessor|PersistStoreProcessor
+org.archive.crawler.processor.recrawl.PersistLogProcessor|PersistLogProcessor
+org.archive.crawler.processor.recrawl.PersistLoadProcessor|PersistLoadProcessor
+org.archive.crawler.processor.recrawl.FetchHistoryProcessor|FetchHistoryProcessor

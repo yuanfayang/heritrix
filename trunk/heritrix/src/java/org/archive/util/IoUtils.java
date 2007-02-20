@@ -25,15 +25,19 @@ package org.archive.util;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -251,5 +255,81 @@ public class IoUtils {
             + ((isMultibyte) ? Boolean.TRUE : Boolean.FALSE));
         // default: return 0
         return 0;
+    }
+
+    /**
+     * Utility method to serialize an object to the given File. 
+     * 
+     * @param object Object to serialize
+     * @param file File to receive serialized copy
+     * @throws IOException
+     */
+    public static void serializeToFile(Object object, File file) throws IOException {
+        ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+        oos.writeObject(object);
+        oos.close();
+    }
+
+    /**
+     * Utility method to deserialize an Object from given File. 
+     * 
+     * @param file File source
+     * @return deserialized Object
+     * @throws IOException
+     */
+    public static Object deserializeFromFile(File file) throws IOException {
+        ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)));
+        Object object;
+        try {
+            object = ois.readObject();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
+        ois.close();
+        return object;
+    }
+    
+    /**
+     * Utility method to serialize Object to byte[]. 
+     * 
+     * @param object Object to be serialized
+     * @return byte[] serialized form
+     */
+    public static byte[] serializeToByteArray(Object object) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(object);
+            oos.close();
+        } catch (IOException e) {
+            // shouldn't be possible
+            throw new RuntimeException(e);
+        }
+        return baos.toByteArray();
+    }
+
+    /**
+     * Utility method to deserialize Object from  byte[]. 
+     * 
+     * @param in byte[] source
+     * @return Object deserialized
+     */
+    public static Object deserializeFromByteArray(byte[] in) {
+        Object object;
+        try {
+            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(in));
+            try {
+                object = ois.readObject();
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                throw new RuntimeException(e);
+            }
+            ois.close();
+        } catch (IOException e) {
+            // shouldn't be possible
+            throw new RuntimeException(e);
+        }
+        return object;
     }
 }
