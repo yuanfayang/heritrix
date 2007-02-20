@@ -165,7 +165,6 @@ implements CoreAttributeConstants, CrawlStatusListener {
 
     @Override
     public synchronized void initialTasks(StateProvider context) {
-        System.out.println("\n\nINITIAL TASKS\n\n");
         // Add this class to crawl state listeners and setup pool.
         controller.addCrawlStatusListener(this);
         setupPool(context, new AtomicInteger());

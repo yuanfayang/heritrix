@@ -37,6 +37,7 @@ import org.archive.net.UURI;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
+import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Key;
@@ -110,6 +111,9 @@ public class SurtPrefixedDecideRule extends DecideRule
     final public static Key<Boolean> ALSO_CHECK_VIA = 
         Key.make(false);
 
+    @Dependency
+    final public static Key<CrawlController> CONTROLLER = 
+        Key.make(CrawlController.class, null);
     
     protected SurtPrefixSet surtPrefixes = null;
 
