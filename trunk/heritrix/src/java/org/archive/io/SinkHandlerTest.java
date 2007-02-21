@@ -52,12 +52,14 @@ public class SinkHandlerTest extends TestCase {
         RuntimeException e = new RuntimeException("Nothing exception");
         LOGGER.log(Level.SEVERE, "with exception", e);
         SinkHandler h = SinkHandler.getInstance();
-        assertEquals(h.getAllUnread().size(), 4);
-        SinkHandlerLogRecord shlr = h.get(3);
-        h.remove(3);
-        assertEquals(h.getAllUnread().size(), 3);
+        assertEquals(4, h.getAllUnread().size());
+//        SinkHandlerLogRecord shlr = h.get(3);
+//        h.remove(3);
+        SinkHandlerLogRecord shlr = h.getAllUnread().get(3);
+        h.remove(shlr.getSequenceNumber());
+        assertEquals(3, h.getAllUnread().size());
         h.publish(shlr);
-        assertEquals(h.getAllUnread().size(), 4);
+        assertEquals(4, h.getAllUnread().size());
     }
     /*
     public void testToString() throws Exception {
