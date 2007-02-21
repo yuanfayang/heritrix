@@ -36,7 +36,7 @@ import junit.framework.TestCase;
  *
  * @author stack
  */
-public class TmpDirTestCase extends TestCase
+public abstract class TmpDirTestCase extends TestCase
 {
     /**
      * Name of the system property that holds pointer to tmp directory into
