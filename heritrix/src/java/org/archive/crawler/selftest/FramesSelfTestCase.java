@@ -51,8 +51,9 @@ public class FramesSelfTestCase extends SelfTestCase
      * Verify that all frames and their contents are found by the crawler.
      *
      */
-    public void testFrames()
+    public void stestFrames()
     {
+        assertInitialized();
         testFilesInArc(FILES_TO_FIND);
     }
 }

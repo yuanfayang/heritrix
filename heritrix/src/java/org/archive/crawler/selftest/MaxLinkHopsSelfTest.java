@@ -66,9 +66,10 @@ public class MaxLinkHopsSelfTest
     /**
      * Test the max-link-hops setting is being respected.
      */
-    public void testMaxLinkHops()
+    public void stestMaxLinkHops()
         throws AttributeNotFoundException, MBeanException, ReflectionException
     {
+        assertInitialized();
         CrawlScope scope =
            (CrawlScope)getCrawlJob().getSettingsHandler()
            .getModule(CrawlScope.ATTR_NAME);

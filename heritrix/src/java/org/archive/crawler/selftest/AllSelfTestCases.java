@@ -106,7 +106,7 @@ public class AllSelfTestCases
         TestSuite suite =
             new TestSuite("Test(s) for org.archive.crawler.selftest");
         for (Iterator i = selftests.iterator(); i.hasNext();) {
-            suite.addTestSuite((Class)i.next());
+            suite.addTest(new AltTestSuite((Class)i.next(),"stest"));
         }
 
         return new TestSetup(suite) {

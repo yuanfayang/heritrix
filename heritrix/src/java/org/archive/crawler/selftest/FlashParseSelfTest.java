@@ -42,7 +42,8 @@ public class FlashParseSelfTest extends SelfTestCase
         Arrays.asList(new File[]
             {new File("success.html")});
 
-    public void testFilesFound() {
+    public void stestFilesFound() {
+        assertInitialized();
         testFilesInArc(FILES_TO_FIND);
     }
 }
