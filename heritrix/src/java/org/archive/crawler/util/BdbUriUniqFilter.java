@@ -149,15 +149,23 @@ extends SetBasedUriUniqFilter implements Serializable {
      * @throws DatabaseException
      */
     protected void initialize(Environment env) throws DatabaseException {
-        DatabaseConfig dbConfig = new DatabaseConfig();
+        DatabaseConfig dbConfig = getDatabaseConfig();
         dbConfig.setAllowCreate(true);
-        dbConfig.setDeferredWrite(true);
         try {
             env.truncateDatabase(null, DB_NAME, false);
         } catch (DatabaseNotFoundException e) {
             // Ignored
         }
         open(env, dbConfig);
+    }
+
+    /**
+     * @return DatabaseConfig to use
+     */
+    protected DatabaseConfig getDatabaseConfig() {
+        DatabaseConfig dbConfig = new DatabaseConfig();
+        dbConfig.setDeferredWrite(true);
+        return dbConfig;
     }
     
     /**
@@ -168,7 +176,8 @@ extends SetBasedUriUniqFilter implements Serializable {
      */
     public void reopen(final Environment env)
     throws DatabaseException {
-        open(env, null);
+        DatabaseConfig dbConfig = getDatabaseConfig();
+        open(env, dbConfig);
     }
     
     protected void open(final Environment env, final DatabaseConfig dbConfig)
