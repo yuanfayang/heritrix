@@ -1600,7 +1600,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
      */
     public void crawlCheckpoint(File checkpointDir) {
-        // TODO Auto-generated method stub
+        try {
+            cookieDb.sync();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)

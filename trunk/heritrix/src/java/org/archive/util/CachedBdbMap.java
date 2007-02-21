@@ -510,6 +510,14 @@ implements Map<K,V>, Serializable {
             expungeStaleEntry(entry);
         }   
         
+        // force sync of deferred-writes
+        try {
+            this.db.sync();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
+        
         if (logger.isLoggable(Level.INFO)) {
             logger.info(dbName + " sync took " +
                 (System.currentTimeMillis() - startTime) + "ms. " +

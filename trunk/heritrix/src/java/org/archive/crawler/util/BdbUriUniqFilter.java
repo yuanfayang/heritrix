@@ -26,6 +26,7 @@ package org.archive.crawler.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -295,5 +296,16 @@ extends SetBasedUriUniqFilter implements Serializable {
     	    // We always write but this might be place to do the sync
         // when checkpointing?  TODO.
         return 0;
+    }
+    
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+        // sync deferred-write database
+        try {
+            alreadySeen.sync();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
+        oos.defaultWriteObject();
     }
 }
