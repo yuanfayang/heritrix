@@ -56,7 +56,7 @@ import org.archive.util.FileUtils;
  * @author stack
  * @version $Id$
  */
-public class SelfTestCase extends TestCase
+public abstract class SelfTestCase extends TestCase
 {
     /**
      * Suffix for selftest classes.
@@ -110,34 +110,14 @@ public class SelfTestCase extends TestCase
         super(testName);
     }
 
-    /* (non-Javadoc)
-     * @see junit.framework.TestCase#setUp()
-     */
-    protected void setUp() throws Exception
-    {
-        if (!initialized)
-        {
-            throw new Exception("SelfTestCase.initialize() not called" +
-                " before running of first test.");
-        }
-        super.setUp();
+    public void testNothing() {
+        // dummy test that always succeeds; prevents warning of no tests found
+        // when running 'all JUnit tests' in Heritrix project
     }
-
-    /**
-     * Test passed object is non-null.
-     *
-     * @param obj Object to test.
-     * @return Passed object.
-     * @throws NullPointerException Thrown if passed object is null.
-     */
-    private static Object testNonNull(Object obj)
-        throws NullPointerException
-    {
-        if (obj == null)
-        {
-            throw new NullPointerException(obj.toString());
-        }
-        return obj;
+    
+    public void assertInitialized() {
+        assertTrue("SelfTestCase.initialize() not called " +
+                "before running selftest.", initialized);
     }
 
     /**
@@ -147,15 +127,8 @@ public class SelfTestCase extends TestCase
      * @return The passed string.
      * @throws IllegalArgumentException if null or empty string.
      */
-    private static String testNonNullNonEmpty(String str)
-        throws IllegalArgumentException, NullPointerException
-    {
-        if (((String)testNonNull(str)).length() <= 0)
-        {
-            throw new IllegalArgumentException("Passed string " + str +
-                " is empty.");
-        }
-        return str;
+    protected static void assertNonEmpty(String str) {
+        assertTrue("String "+str+" is empty",str.length()>0);
     }
 
     /**
@@ -165,14 +138,8 @@ public class SelfTestCase extends TestCase
      * @return Passed file.
      * @throws FileNotFoundException passed file doesn't exist.
      */
-    private static File testNonNullExists(File file)
-        throws FileNotFoundException
-    {
-        if (!((File)testNonNull(file)).exists())
-        {
-            throw new FileNotFoundException(file.getAbsolutePath());
-        }
-        return file;
+    protected static void assertExists(File file) {
+        assertTrue("File "+file+" doesn't exist",file.exists());
     }
 
     /**
@@ -193,16 +160,27 @@ public class SelfTestCase extends TestCase
         throws IOException, AttributeNotFoundException, MBeanException,
             ReflectionException, InterruptedException
     {
-        testNonNullNonEmpty(url);
+        assertNotNull(url);
+        assertNonEmpty(url);
         SelfTestCase.selftestURL = url.endsWith("/")? url: url + "/";
-        SelfTestCase.crawlJob = (CrawlJob)testNonNull(job);
-        SelfTestCase.crawlJobDir = testNonNullExists(jobDir);
-        SelfTestCase.htdocs = testNonNullExists(docs);
+        
+        assertNotNull(job);
+        SelfTestCase.crawlJob = job;
+        
+        assertNotNull(jobDir);
+        assertExists(jobDir);
+        SelfTestCase.crawlJobDir = jobDir;
+        
+        assertNotNull(docs);
+        assertExists(docs);
+        SelfTestCase.htdocs = docs;
+        
         // Calculate the logs directory.  If diskPath is not absolute, then logs
         // are in the jobs directory under the diskPath subdirectory.  Guard
         // against case where diskPath is empty.
-        CrawlOrder crawlOrder =
-            (CrawlOrder)testNonNull(job.getSettingsHandler().getOrder());
+        CrawlOrder crawlOrder =job.getSettingsHandler().getOrder();
+        assertNotNull(crawlOrder);
+
         String diskPath = (String)crawlOrder.
             getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         if (diskPath != null && diskPath.length() > 0 &&
@@ -213,7 +191,9 @@ public class SelfTestCase extends TestCase
                 (diskPath != null && diskPath.length() > 0)?
                     new File(jobDir, diskPath): jobDir;
         }
-        testNonNullExists(SelfTestCase.logsDir);
+        assertNotNull(SelfTestCase.logsDir);
+        assertExists(SelfTestCase.logsDir);
+        
         // Calculate the arcfile name.  Find it in the arcDir.  Should only be
         // one. Then make an instance of ARCReader and call the validate on it.
         ComplexType arcWriterProcessor =
@@ -228,9 +208,14 @@ public class SelfTestCase extends TestCase
             arcDir = (arcDirStr != null && arcDirStr.length() > 0)?
                 new File(SelfTestCase.logsDir, arcDirStr): SelfTestCase.logsDir;
         }
-        testNonNullExists(arcDir);
-        String prefix = testNonNullNonEmpty((String)arcWriterProcessor.
+        assertNotNull(arcDir);
+        assertExists(arcDir);
+        
+        String prefix = ((String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PREFIX));
+        assertNotNull(prefix);
+        assertNonEmpty(prefix);
+        
         File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
         /*
         if (arcs.length != 1) {

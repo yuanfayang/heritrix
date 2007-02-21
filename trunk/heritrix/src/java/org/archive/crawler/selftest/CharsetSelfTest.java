@@ -54,8 +54,9 @@ public class CharsetSelfTest extends SelfTestCase
      * chain is a page named END_OF_CHAIN_PAGE.  This test looks to see that
      * arc has all pages in the chain.
      */
-    public void testCharset()
+    public void stestCharset()
     {
+        assertInitialized();
         testFilesInArc(FILES_TO_FIND);
     }
 }

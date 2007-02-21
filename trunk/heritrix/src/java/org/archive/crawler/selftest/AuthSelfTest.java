@@ -59,7 +59,8 @@ public class AuthSelfTest
     /**
      * Test the max-link-hops setting is being respected.
      */
-    public void testAuth() {
+    public void stestAuth() {
+        assertInitialized();
         testFilesInArc(FILES_TO_FIND);
     }
 }

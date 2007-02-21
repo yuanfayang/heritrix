@@ -53,8 +53,9 @@ public class BackgroundImageExtractionSelfTestCase
      * Look that there is only one instance of the background image in the
      * ARC and that it is of the same size as the image in the webapp dir.
      */
-    public void testBackgroundImageExtraction()
+    public void stestBackgroundImageExtraction()
     {
+        assertInitialized();
         String relativePath = getTestName() + '/' + IMAGE_NAME;
         String url = getSelftestURLWithTrailingSlash() + relativePath;
         File image = new File(getHtdocs(), relativePath);

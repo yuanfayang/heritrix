@@ -53,7 +53,8 @@ public class BadURIsStopPageParsingSelfTest extends SelfTestCase
                 new File("two.html"),
                 new File("three.html")});
 
-    public void testFilesFound() {
+    public void stestFilesFound() {
+        assertInitialized();
         List<File> foundFiles = filesFoundInArc();
         ArrayList<File> editedFoundFiles
          = new ArrayList<File>(foundFiles.size());
