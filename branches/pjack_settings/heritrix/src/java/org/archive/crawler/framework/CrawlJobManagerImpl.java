@@ -28,15 +28,12 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -44,7 +41,6 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 import org.archive.crawler.event.CrawlStatusAdapter;
-import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Sheet;
 import org.archive.settings.file.FileSheetManager;
@@ -74,13 +70,14 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
     final private Map<String,CrawlController> jobs;
 
+    final private ObjectName oname;
     
     public CrawlJobManagerImpl(File rootDir, MBeanServer server) {
         super(CrawlJobManager.class);
         this.rootDir = rootDir;
         this.jobs = new HashMap<String,CrawlController>();
         this.server = server;
-        register("CrawlJobManager", "CrawlJobManager", this);
+        this.oname = register("CrawlJobManager", "CrawlJobManager", this);
     }
     
 
@@ -235,6 +232,10 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         return profDir.list();
     }
 
+    
+    public ObjectName getObjectName() {
+        return this.oname;
+    }
 
     private File getProfilesDir() {
         return new File(rootDir, "profiles");
