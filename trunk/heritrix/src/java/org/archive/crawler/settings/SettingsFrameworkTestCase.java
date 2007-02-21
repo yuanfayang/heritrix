@@ -40,7 +40,7 @@ import org.archive.util.TmpDirTestCase;
  *
  * @author John Erik Halse
  */
-public class SettingsFrameworkTestCase extends TmpDirTestCase implements
+public abstract class SettingsFrameworkTestCase extends TmpDirTestCase implements
         ValueErrorHandler {
     private File orderFile;
     private File settingsDir;
