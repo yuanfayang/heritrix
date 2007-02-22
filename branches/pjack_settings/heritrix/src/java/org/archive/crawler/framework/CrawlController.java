@@ -52,6 +52,7 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
+import javax.management.Notification;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
@@ -60,6 +61,7 @@ import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.Emitter;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -976,6 +978,15 @@ implements Serializable, Reporter, StateProvider {
                     LOGGER.fine("Sent " + newState + " to " + l);
                 }
             }
+            Notification n = new Notification(
+                    newState.toString(), 
+                    this, 
+                    0,
+                    System.currentTimeMillis()
+                    );
+            emit(n); 
+            // FIXME: Should we ONLY use JMX notifications, and eliminate
+            // the old event framework?
             LOGGER.fine("Sent " + newState);
         }
     }
@@ -2020,7 +2031,7 @@ implements Serializable, Reporter, StateProvider {
         try {
             st = new SURTTokenizer(uri.toString());
         } catch (URIException e) {
-            throw new AssertionError();
+            throw new AssertionError(e);
         }
         
         SheetList list = null;
@@ -2070,16 +2081,21 @@ implements Serializable, Reporter, StateProvider {
     public String getUserAgent(StateProvider p) {
         return p.get(order, CrawlOrder.HTTP_HEADERS).get("user-agent");
     }
-    
-
-
-    
-
 
 
     
     public CrawlOrder getOrder() {
         return order;
     }
+
     
+    @Emitter(desc="Emitted when the crawl status changes (eg, when a crawl "
+        + " goes from CRAWLING to ENDED)",         
+        types={ "PAUSED", "RUNNING", "PAUSING", "STARTED", "STOPPING", 
+            "FINISHED", "PREPARING" })
+    private void emit(Notification n) {
+        sendNotification(n);
+    }
+
+
 }

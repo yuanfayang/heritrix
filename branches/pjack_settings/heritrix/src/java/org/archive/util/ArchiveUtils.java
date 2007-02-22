@@ -603,7 +603,9 @@ public class ArchiveUtils {
      * @return string with http:// added if no scheme already present
      */
     public static String addImpliedHttpIfNecessary(String u) {
-        if(u.indexOf(':') == -1 || u.indexOf('.') < u.indexOf(':')) {
+        int colon = u.indexOf(':');
+        int period = u.indexOf('.');
+        if (colon == -1 || (period >= 0) && (period < colon)) {
             // No scheme present; prepend "http://"
             u = "http://" + u;
         }

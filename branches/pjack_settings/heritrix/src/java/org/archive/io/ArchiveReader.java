@@ -233,7 +233,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      *
      * @throws IOException
      */
-    public List validate() throws IOException {
+    public List<ArchiveRecordHeader> validate() throws IOException {
         return validate(-1);
     }
 
@@ -253,7 +253,8 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      *
      * @throws IOException
      */
-    public List validate(int noRecords) throws IOException {
+    public List<ArchiveRecordHeader> validate(int noRecords) 
+    throws IOException {
         List<ArchiveRecordHeader> hs = new ArrayList<ArchiveRecordHeader>();
         int count = 0;
         setStrict(true);

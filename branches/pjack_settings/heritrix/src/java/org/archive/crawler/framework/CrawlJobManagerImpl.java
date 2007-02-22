@@ -56,6 +56,10 @@ import com.sleepycat.je.DatabaseException;
  */
 public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
+    final public static String NAME = "CrawlJobManager";
+    final public static String TYPE = "CrawlJobManager";
+    
+    
     final private static Logger LOGGER = 
         Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
     
@@ -77,7 +81,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         this.rootDir = rootDir;
         this.jobs = new HashMap<String,CrawlController>();
         this.server = server;
-        this.oname = register("CrawlJobManager", "CrawlJobManager", this);
+        this.oname = register(NAME, TYPE, this);
     }
     
 
