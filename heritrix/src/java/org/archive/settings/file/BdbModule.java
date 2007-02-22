@@ -93,6 +93,7 @@ public class BdbModule implements Module, Serializable {
         config.setLockTimeout(5000000);        
         config.setCachePercent(cachePercent);
         
+        new File(path).mkdirs();
         this.bdbEnvironment = new Environment(new File(path), config);
         
         // Open the class catalog database. Create it if it does not

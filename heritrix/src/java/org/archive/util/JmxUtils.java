@@ -24,6 +24,7 @@ package org.archive.util;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -342,4 +343,27 @@ public class JmxUtils {
         String name = on.getKeyProperty(NAME);
         return name.substring(name.indexOf("-") + 1);
     }
+    
+ 
+    
+    
+    public static ObjectName makeObjectName(String domain, String name,
+            String type, String... keyValuePairs) {
+        if (keyValuePairs.length % 2 != 0) {
+            throw new IllegalArgumentException("Missing value in key/value pairs.");
+        }
+        Hashtable<String,String> ht = new Hashtable<String,String>();
+        ht.put(NAME, name);
+        ht.put(TYPE, type);
+        
+        for (int i = 0; i < keyValuePairs.length; i += 2) {
+            ht.put(keyValuePairs[i], keyValuePairs[i + 1]);
+        }
+        try {
+            return new ObjectName(domain, ht);
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
 }
