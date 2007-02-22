@@ -22,6 +22,7 @@
  */
 package org.archive.util;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -32,17 +33,21 @@ import java.util.logging.Logger;
  * @version $Date$, $Revision$
  */
 public class CachedBdbMapTest extends TmpDirTestCase {
+    File envDir; 
     private CachedBdbMap<String,HashMap<String,String>> cache;
     
     @SuppressWarnings("unchecked")
     protected void setUp() throws Exception {
         super.setUp();
-        this.cache = new CachedBdbMap(getTmpDir(),
+        this.envDir = new File(getTmpDir(),"CachedBdbMapTest");
+        this.envDir.mkdirs();
+        this.cache = new CachedBdbMap(this.envDir,
             this.getClass().getName(), String.class, HashMap.class);
     }
     
     protected void tearDown() throws Exception {
         this.cache.close();
+        FileUtils.deleteDir(this.envDir);
         super.tearDown();
     }
     
