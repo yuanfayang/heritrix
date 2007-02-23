@@ -1052,6 +1052,9 @@ implements FetchStatusCodes {
     }
     
     public String getContentDigestSchemeString() {
+        if(this.contentDigest==null) {
+            return null;
+        }
         return this.contentDigestScheme + ":" + getContentDigestString();
     }
 
@@ -1065,6 +1068,9 @@ implements FetchStatusCodes {
     }
     
     public String getContentDigestString() {
+        if(this.contentDigest==null) {
+            return null;
+        }
         return Base32.encode(this.contentDigest);
     }
 
