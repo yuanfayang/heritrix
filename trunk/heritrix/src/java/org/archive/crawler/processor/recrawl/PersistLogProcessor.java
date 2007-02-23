@@ -30,6 +30,7 @@ import java.io.PrintStream;
 import org.apache.commons.codec.binary.Base64;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 
 
@@ -71,7 +72,7 @@ public class PersistLogProcessor extends PersistProcessor {
     protected void initialTasks() {
         try {
             // TODO make configurable filename
-            File logFile = new File(getController().getDisk(),
+            File logFile = FileUtils.maybeRelative(getController().getDisk(),
                     (String) getUncheckedAttribute(null, ATTR_LOG_FILENAME));
             log = new PrintStream(logFile);
         } catch (FileNotFoundException e) {
