@@ -126,7 +126,7 @@ public abstract class PersistProcessor extends Processor {
      * @throws IOException
      */
     public static void main(String[] args) throws DatabaseException, IOException {
-        if(args.length!=3) {
+        if(args.length!=2) {
             System.out.println("Requires 2 arguments: ");
             System.out.println("    source target");
             System.out.println(
