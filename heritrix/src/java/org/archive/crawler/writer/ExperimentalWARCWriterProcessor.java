@@ -109,11 +109,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
-            if ((scheme.equals("dns") &&
-                    curi.getFetchStatus() == S_DNS_SUCCESS) ||
-                ((scheme.equals("http") || scheme.equals("https")) &&
-            		curi.getFetchStatus() > 0 && curi.isHttpTransaction()) ||
-                (scheme.equals("ftp") && curi.getFetchStatus() == 200)) {
+            if (shouldWrite(curi)) {
                 write(scheme, curi);
             } else {
                 logger.info("This writer does not write out scheme " +

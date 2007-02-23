@@ -49,6 +49,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
@@ -64,7 +65,7 @@ import org.archive.io.WriterPoolMember;
  * @author stack
  */
 public abstract class WriterPoolProcessor extends Processor
-implements CoreAttributeConstants, CrawlStatusListener {
+implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
     /**
@@ -255,7 +256,38 @@ implements CoreAttributeConstants, CrawlStatusListener {
         }
     }
     
+    /**
+     * Whether the given CrawlURI should be written to archive files
+     * 
+     * @param curi CrawlURI
+     * @return true if URI should be written; false otherwise
+     */
+    protected boolean shouldWrite(CrawlURI curi) {
+        String scheme = curi.getUURI().getScheme().toLowerCase();
+        // TODO: possibly move this sort of isSuccess() test into CrawlURI
+        if (scheme.equals("dns")) {
+            return curi.getFetchStatus() == S_DNS_SUCCESS;
+        } else if (scheme.equals("http") || scheme.equals("https")) {
+            return curi.getFetchStatus() > 0 && curi.isHttpTransaction();
+        } else if (scheme.equals("ftp")) {
+            return curi.getFetchStatus() == 200;
+        }
+        return false; 
+    }
+    
+    /**
+     * Return IP address of given URI suitable for recording (as in a
+     * classic ARC 5-field header line).
+     * 
+     * @param curi CrawlURI
+     * @return String of IP address
+     */
     protected String getHostAddress(CrawlURI curi) {
+        // special handling for DNS URIs: want address of DNS server
+        if(curi.getUURI().getScheme().toLowerCase().equals("dns")) {
+            return curi.getString(A_DNS_SERVER_IP_LABEL);
+        }
+        // otherwise, host referenced in URI
         CrawlHost h = getController().getServerCache().getHostFor(curi);
         if (h == null) {
             throw new NullPointerException("Crawlhost is null for " +
