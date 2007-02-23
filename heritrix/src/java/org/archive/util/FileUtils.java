@@ -504,4 +504,20 @@ public class FileUtils {
 
         return result;
     }
+    
+    /**
+     * Turn path into a File, relative to context (which may be ignored 
+     * if path is absolute). 
+     * 
+     * @param context File context if path is relative
+     * @param path String path to make into a File
+     * @return File created
+     */
+    public static File maybeRelative(File context, String path) {
+        File f = new File(path);
+        if(f.isAbsolute()) {
+            return f;
+        }
+        return new File(context, path);
+    }
 }
