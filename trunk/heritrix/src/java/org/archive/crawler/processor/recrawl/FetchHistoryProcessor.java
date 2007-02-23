@@ -72,8 +72,11 @@ public class FetchHistoryProcessor extends Processor implements CoreAttributeCon
         // save fetch start time
         latestFetch.putLong(A_FETCH_BEGAN_TIME,curi.getLong(A_FETCH_BEGAN_TIME));
         // save digest
-        latestFetch.putString(
-                A_CONTENT_DIGEST,curi.getContentDigestSchemeString());
+        String digest = curi.getContentDigestSchemeString();
+        if(digest!=null) {
+            latestFetch.putString(
+                    A_CONTENT_DIGEST,digest);
+        }
         // save relevant HTTP headers, if available
         if(curi.containsKey(A_HTTP_TRANSACTION)) {
             HttpMethodBase method = 
