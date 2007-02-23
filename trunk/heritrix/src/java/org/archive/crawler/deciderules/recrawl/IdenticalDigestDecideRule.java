@@ -27,6 +27,8 @@ package org.archive.crawler.deciderules.recrawl;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.deciderules.PredicatedDecideRule;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 
 import st.ata.util.AList;
 
@@ -49,6 +51,9 @@ implements CoreAttributeConstants {
         setDescription("IdenticalDigestDecideRule. Applies configured " +
                 "decision to any CrawlURIs whose prior-history " +
                 "content-digest matches the latest fetch.");
+        // make default REJECT (overriding superclass)
+        Type type = addElementToDefinition(new SimpleType(ATTR_DECISION,
+                "Decision to be applied", REJECT, ALLOWED_TYPES));
     }
 
     /**
@@ -60,6 +65,19 @@ implements CoreAttributeConstants {
      */
     protected boolean evaluate(Object object) {
         CrawlURI curi = (CrawlURI)object;
+        return hasIdenticalDigest(curi);
+    }
+
+    /**
+     * Utility method for testing if a CrawlURI's last two history 
+     * entiries (one being the most recent fetch) have identical 
+     * content-digest information. 
+     * 
+     * @param curi CrawlURI to test
+     * @return true if last two history entries have identical digests, 
+     * otherwise false
+     */
+    public static boolean hasIdenticalDigest(CrawlURI curi) {
         if(curi.getAList().containsKey(A_FETCH_HISTORY)) {
             AList[] history = curi.getAList().getAListArray(A_FETCH_HISTORY);
             return history[0] != null 
