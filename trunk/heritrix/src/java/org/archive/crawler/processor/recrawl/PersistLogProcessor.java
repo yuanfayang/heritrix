@@ -87,20 +87,20 @@ public class PersistLogProcessor extends PersistProcessor {
     }
 
     @Override
-    protected void innerProcess(CrawlURI curi) throws InterruptedException {
+    protected void innerProcess(CrawlURI curi) {
         if(shouldStore(curi)) {
-            log.print(persistKeyFor(curi));
-            log.append(' ');
-            try {
-                log.write(
-                    Base64.encodeBase64(
-                        IoUtils.serializeToByteArray(
-                            curi.getPersistentAList())));
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                throw new RuntimeException(e);
-            }
-            log.print('\n');
+            synchronized (log) {
+                log.print(persistKeyFor(curi));
+                log.append(' ');
+                try {
+                    log.write(Base64.encodeBase64(IoUtils
+                            .serializeToByteArray(curi.getPersistentAList())));
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    throw new RuntimeException(e);
+                }
+                log.print('\n');
+            }            
         }
     }
 }
