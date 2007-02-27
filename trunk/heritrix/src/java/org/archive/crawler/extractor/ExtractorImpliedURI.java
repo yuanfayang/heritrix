@@ -132,18 +132,20 @@ public class ExtractorImpliedURI extends Extractor implements CoreAttributeConst
                     final boolean removeTriggerURI = 
                     	((Boolean)getUncheckedAttribute(curi,
                     			ATTR_REMOVE_TRIGGER_URIS)).booleanValue();
+
                     // remove trigger URI from the outlinks if configured so.
-                    if (removeTriggerURI && !curi.getOutLinks().remove(wref)) {
-                    	LOGGER.log(Level.FINE, "Failed to remove " + 
-                    			wref.getDestination() + " from " + 
-                    			wref.getSource()+ " outlinks list.");
+                    if (removeTriggerURI) {
+                    	if (curi.getOutLinks().remove(wref)) {
+                    		LOGGER.log(Level.FINE, wref.getDestination() + 
+                    				" has been removed from " + 
+                    				wref.getSource() + " outlinks list.");                    	
+                    		numberOfLinksExtracted--;
 
-                    } else {
-                    	LOGGER.log(Level.FINE, wref.getDestination() + 
-                    			" has been removed from " + wref.getSource() + 
-                    			" outlinks list.");                    	
-
-                    	numberOfLinksExtracted--;
+                    	} else {
+                        	LOGGER.log(Level.FINE, "Failed to remove " + 
+                        			wref.getDestination() + " from " + 
+                        			wref.getSource()+ " outlinks list.");             		
+                    	}
                     }
                     
                 } catch (URIException e) {
