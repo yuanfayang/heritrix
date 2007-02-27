@@ -50,6 +50,7 @@ import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
@@ -111,11 +112,22 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
      */
     public static final String ATTR_POOL_MAX_WAIT = "pool-max-wait";
 
-    /***
+    /**
      * Key for the maximum bytes to write attribute.
      */
     public static final String ATTR_MAX_BYTES_WRITTEN =
     	"total-bytes-to-write";
+    
+    /***
+     * Key for whether to skip writing records of content-digest repeats 
+     */
+    public static final String ATTR_SKIP_IDENTICAL_DIGESTS =
+        "skip-identical-digests";
+    
+    /**
+     * CrawlURI annotation indicating no record was written
+     */
+    protected static final String ANNOTATION_UNWRITTEN = "unwritten";
     
     /**
      * Default maximum file size.
@@ -208,6 +220,13 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
             "A value of zero means no upper limit.", new Long(0)));
         e.setOverrideable(false);
         e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_SKIP_IDENTICAL_DIGESTS,
+                "Whether to skip the writing of a record when URI " +
+                "history information is available and indicates the " +
+                "prior fetch had an identical content digest. " +
+                "Default is false.", new Boolean(false)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
     }
     
     protected String [] getDefaultPath() {
@@ -257,22 +276,39 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     }
     
     /**
-     * Whether the given CrawlURI should be written to archive files
+     * Whether the given CrawlURI should be written to archive files. 
+     * Annotates CrawlURI with a reason for any negative answer. 
      * 
      * @param curi CrawlURI
      * @return true if URI should be written; false otherwise
      */
     protected boolean shouldWrite(CrawlURI curi) {
+        // check for duplicate content write suppression
+        if(((Boolean)getUncheckedAttribute(curi, ATTR_SKIP_IDENTICAL_DIGESTS)) 
+            && IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
+            curi.addAnnotation(ANNOTATION_UNWRITTEN + ":identicalDigest");
+            return false; 
+        }
         String scheme = curi.getUURI().getScheme().toLowerCase();
         // TODO: possibly move this sort of isSuccess() test into CrawlURI
+        boolean retVal; 
         if (scheme.equals("dns")) {
-            return curi.getFetchStatus() == S_DNS_SUCCESS;
+            retVal = curi.getFetchStatus() == S_DNS_SUCCESS;
         } else if (scheme.equals("http") || scheme.equals("https")) {
-            return curi.getFetchStatus() > 0 && curi.isHttpTransaction();
+            retVal = curi.getFetchStatus() > 0 && curi.isHttpTransaction();
         } else if (scheme.equals("ftp")) {
-            return curi.getFetchStatus() == 200;
+            retVal = curi.getFetchStatus() == 200;
+        } else {
+            // unsupported scheme
+            curi.addAnnotation(ANNOTATION_UNWRITTEN + ":scheme");
+            return false; 
         }
-        return false; 
+        if (retVal == false) {
+            // status not deserving writing
+            curi.addAnnotation(ANNOTATION_UNWRITTEN + ":status");
+            return false; 
+        }
+        return true; 
     }
     
     /**
