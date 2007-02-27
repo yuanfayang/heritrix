@@ -772,10 +772,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             }
         }
         
-        setConditionalGetHeader(curi, method, ATTR_SEND_IF_MODIFIED_SINCE, 
-                CoreAttributeConstants.A_LAST_MODIFIED_HEADER, "If-Modified-Since");
-        setConditionalGetHeader(curi, method, ATTR_SEND_IF_NONE_MATCH, 
-                CoreAttributeConstants.A_ETAG_HEADER, "If-None-Match");
+        if(!curi.isPrerequisite()) {
+            setConditionalGetHeader(curi, method, ATTR_SEND_IF_MODIFIED_SINCE, 
+                    CoreAttributeConstants.A_LAST_MODIFIED_HEADER, "If-Modified-Since");
+            setConditionalGetHeader(curi, method, ATTR_SEND_IF_NONE_MATCH, 
+                    CoreAttributeConstants.A_ETAG_HEADER, "If-None-Match");
+        }
         
         // TODO: What happens if below method adds a header already
         // added above: e.g. Connection, Range, or Referer?
