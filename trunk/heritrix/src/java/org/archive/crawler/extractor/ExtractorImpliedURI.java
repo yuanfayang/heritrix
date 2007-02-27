@@ -66,7 +66,12 @@ public class ExtractorImpliedURI extends Extractor implements CoreAttributeConst
     public static final String ATTR_TRIGGER_REGEXP = "trigger-regexp";
     /** replacement pattern used to build 'implied' URI */
     public static final String ATTR_BUILD_PATTERN = "build-pattern";
-
+    
+    /** whether to remove URIs that trigger addition of 'implied' URI;
+     * default false 
+     */
+    public static final String ATTR_REMOVE_TRIGGER_URIS = "remove-trigger-uris";
+    
     // FIXME: these counters are not incremented atomically; totals may not
     // be correct
     private long numberOfCURIsHandled = 0;
@@ -92,6 +97,11 @@ public class ExtractorImpliedURI extends Extractor implements CoreAttributeConst
                 new SimpleType(ATTR_BUILD_PATTERN, 
                     "Replacement pattern to build 'implied' URI, using " +
                     "captured groups of trigger expression.", ""));
+        addElementToDefinition(
+                new SimpleType(ATTR_REMOVE_TRIGGER_URIS, 
+                    "If true, all URIs that match trigger regular expression " +
+                    "are removed from the list of extracted URIs. " +
+                    "Default is false.", Boolean.FALSE));
     }
 
     /**
@@ -116,7 +126,26 @@ public class ExtractorImpliedURI extends Extractor implements CoreAttributeConst
                             implied, 
                             Link.SPECULATIVE_MISC,
                             Link.SPECULATIVE_HOP);
+                	
                     numberOfLinksExtracted++;
+                	
+                    final boolean removeTriggerURI = 
+                    	((Boolean)getUncheckedAttribute(curi,
+                    			ATTR_REMOVE_TRIGGER_URIS)).booleanValue();
+                    // remove trigger URI from the outlinks if configured so.
+                    if (removeTriggerURI && !curi.getOutLinks().remove(wref)) {
+                    	LOGGER.log(Level.FINE, "Failed to remove " + 
+                    			wref.getDestination() + " from " + 
+                    			wref.getSource()+ " outlinks list.");
+
+                    } else {
+                    	LOGGER.log(Level.FINE, wref.getDestination() + 
+                    			" has been removed from " + wref.getSource() + 
+                    			" outlinks list.");                    	
+
+                    	numberOfLinksExtracted--;
+                    }
+                    
                 } catch (URIException e) {
                     LOGGER.log(Level.FINE, "bad URI", e);
                 }
