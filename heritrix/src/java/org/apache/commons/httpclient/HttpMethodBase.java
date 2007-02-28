@@ -262,7 +262,10 @@ public abstract class HttpMethodBase implements HttpMethod {
             buffer.append('?');
             buffer.append(this.queryString);
         }
-        return new URI(buffer.toString(), true);
+//      BEGIN IA CHANGES
+//      return new URI(buffer.toString(), true);
+        return new org.archive.net.LaxURI(buffer.toString(), true);
+//      END IA CHANGES
     }
 
     /**
