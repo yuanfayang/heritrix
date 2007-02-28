@@ -64,7 +64,7 @@ public class PersistLogProcessor extends PersistProcessor {
         addElementToDefinition(new SimpleType(ATTR_LOG_FILENAME,
                 "Filename to which to log URI persistence information. " +
                 "Interpreted relative to job directory. " +
-                "Default is 'persistlog.txt.ser'. ", 
+                "Default is 'persistlog.txtser'. ", 
                 DEFAULT_LOG_FILENAME));
     }
 
