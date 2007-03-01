@@ -30,9 +30,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -43,6 +45,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.archive.settings.ModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
@@ -209,8 +212,14 @@ public class FileSheetManager extends SheetManager {
     throws IOException, DatabaseException {
         this(new File("config.txt"), true);
     }
+
     
-    
+    public FileSheetManager(File main, boolean online) 
+    throws IOException, DatabaseException {
+        this(main, online, emptyList());
+    }
+
+
     /**
      * Constructor.
      * 
@@ -219,8 +228,10 @@ public class FileSheetManager extends SheetManager {
      * @param maxSheets
      *            the maximum number of sheets to keep in memory
      */
-    public FileSheetManager(File main, boolean online) 
+    public FileSheetManager(File main, boolean online, 
+            Collection<ModuleListener> listeners) 
     throws IOException, DatabaseException {
+        super(listeners);
         this.mainConfig = main;
         this.saxParserFactory = SAXParserFactory.newInstance();
         
@@ -253,7 +264,12 @@ public class FileSheetManager extends SheetManager {
             bdb.getBigMap("associations", String.class, String.class);
         reload();
     }
+
     
+    private static List<ModuleListener> emptyList() {
+        return Collections.emptyList();
+    }
+
     
     private static Properties load(File file) throws IOException {
         FileInputStream finp = new FileInputStream(file);

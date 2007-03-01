@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.archive.state.Constraint;
 import org.archive.state.Key;
+import org.archive.state.KeyTypes;
 
 
 /**
@@ -280,7 +281,10 @@ public class SingleSheet extends Sheet {
         if (value == null) {
             map.remove(key);
         } else {
-            map.put(key, value);
+            Object old = map.put(key, value);
+            if (!KeyTypes.isSimple(Offline.getType(value))) {
+                getSheetManager().fireModuleChanged(old, value);
+            }
         }
     }
 
