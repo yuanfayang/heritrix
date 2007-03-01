@@ -230,13 +230,9 @@ implements FetchStatusCodes {
         if (!LOGGER.isLoggable(Level.INFO)) {
             return;
         }
-        // TODO: Fix filters so work on CandidateURI.
-        CrawlURI curi = (caUri instanceof CrawlURI)?
-            (CrawlURI)caUri:
-            new CrawlURI(caUri.getUURI());
         DecideRuleSequence seq = caUri.get(this, REJECT_RULES);
-        if (seq.decisionFor(curi) == DecideResult.ACCEPT) {
-            LOGGER.info(curi.getUURI().toString());
+        if (seq.decisionFor(caUri) == DecideResult.ACCEPT) {
+            LOGGER.info(caUri.getUURI().toString());
         }
     }
     
