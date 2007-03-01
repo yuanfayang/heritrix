@@ -23,6 +23,7 @@
  */
 package org.archive.settings.jmx;
 
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,13 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.DynamicMBean;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
 import org.archive.crawler.util.Transform;
@@ -46,7 +40,6 @@ import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
 import org.archive.settings.Sheet;
-import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.FilePathListConsumer;
@@ -54,12 +47,10 @@ import org.archive.settings.path.PathChange;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
-import org.archive.state.Dependency;
-import org.archive.state.Key;
 import org.archive.state.KeyTypes;
 
 
-public class JMXSheetManager extends SheetManager implements DynamicMBean {
+public class JMXSheetManager extends Bean implements Serializable {
 
     
     final public static String DOMAIN = "org.archive";
@@ -70,106 +61,19 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
     private static final long serialVersionUID = 1L;
 
     final private SheetManager manager;
-    final private Bean support;
 
-    @Dependency
-    final public static Key<SheetManager> DELEGATE = 
-        Key.make(SheetManager.class, null);
 
     public JMXSheetManager(SheetManager manager) {
         this.manager = manager;
-        this.support = new Bean(this);
     }
 
 
-    public Object getAttribute(String attribute) 
-    throws AttributeNotFoundException, ReflectionException {
-        return support.getAttribute(attribute);
-    }
-
-
-    public AttributeList getAttributes(String[] attributes) {
-        return support.getAttributes(attributes);
-    }
-
-
-    public MBeanInfo getMBeanInfo() {
-        return support.getMBeanInfo();
-    }
-
-
-    public Object invoke(String actionName, Object[] params, String[] sig) 
-    throws MBeanException, ReflectionException {
-        return support.invoke(actionName, params, sig);
-    }
-
-
-    public void setAttribute(Attribute attribute) 
-    throws AttributeNotFoundException, ReflectionException {
-        support.setAttribute(attribute);
-    }
-
-
-    public AttributeList setAttributes(AttributeList attributes) {
-        return support.setAttributes(attributes);
-    }
-
-
-
-
-    
-    @Override
-    public SingleSheet addSingleSheet(String name) {
-        return manager.addSingleSheet(name);
-    }
-
-    
-    @Override
-    public SheetBundle addSheetBundle(String name, Collection<Sheet> c) {
-        SheetBundle r = manager.addSheetBundle(name, c);
-        return r;
-    }
-
-
-    @Override
-    public void associate(Sheet sheet, Iterable<String> strings) {
-        manager.associate(sheet, strings);
-    }
-
-
-    @Override
-    public void disassociate(Sheet sheet, Iterable<String> strings) {
-        manager.disassociate(sheet, strings);
-    }
-
-
-    @Override
-    public Sheet getAssociation(String context) {
-        return manager.getAssociation(context);
-    }
-
-
-    @Override
-    public SingleSheet getDefault() {
-        return manager.getDefault();
-    }
-
-
-
-    @Override
-    public Sheet getSheet(String sheetName) throws IllegalArgumentException {
-        return manager.getSheet(sheetName);
-    }
-
-
-    @Override
     public Set<String> getSheetNames() {
         return manager.getSheetNames();
     }
 
 
     @Operation(desc="Removes the sheet with the given name.")
-    @Override
     public void removeSheet(
             @Parameter(name="sheetName", desc="The name of the sheet to remove.")
             String sheetName) throws IllegalArgumentException {
@@ -178,7 +82,6 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
 
 
     @Operation(desc="Renames a sheet.")
-    @Override
     public void renameSheet(
             
             @Parameter(name="oldName", desc="The old name of the sheet.")
@@ -194,26 +97,9 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
     public void makeSingleSheet(
             @Parameter(name="name", desc="The name for the new sheet")
             String name) {
-        addSingleSheet(name);
+        manager.addSingleSheet(name);
     }
     
-  /*  
-    @Operation(desc="Creates a new sheet bundle.", impact=Bean.ACTION)
-    public void makeSheetBundle(
-            @Parameter(name="name", desc="The name for the new sheet")
-            String name, 
-            
-            @Parameter(name="sheets", desc="The names of the sheets " 
-                + "to include in the bundle, in order of priority.")
-            String[] sheets) {
-        List<Sheet> list = new ArrayList<Sheet>();
-        for (String s: sheets) {
-            list.add(getSheet(s));
-        }
-        addSheetBundle(name, list);
-    }
-
-*/
     
     @Operation(desc="Creates a new sheet bundle.", impact=Bean.ACTION)
     public void makeSheetBundle(
@@ -225,16 +111,11 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             String sheets) {
         List<Sheet> list = new ArrayList<Sheet>();
         for (String s: sheets.split(",")) {
-            list.add(getSheet(s));
+            list.add(manager.getSheet(s));
         }
-        addSheetBundle(name, list);
+        manager.addSheetBundle(name, list);
     }
 
-    
-    
-
-
-    
     
     @Operation(desc="Returns the settings overriden by the given single sheet.",
             type="org.archive.settings.jmx.Types.GET_DATA_ARRAY")
@@ -243,7 +124,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             "The name of the single sheet whose overrides to return.")
             String name
     ) {
-        SingleSheet sheet = (SingleSheet)getSheet(name);
+        SingleSheet sheet = (SingleSheet)manager.getSheet(name);
         JMXPathListConsumer c = new JMXPathListConsumer();
         PathLister.getAll(sheet, c);
         return c.getData();
@@ -257,7 +138,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             "The name of the single sheet whose overrides to return.")
             String name
     ) {
-        Sheet sheet = getSheet(name);
+        Sheet sheet = manager.getSheet(name);
         JMXPathListConsumer c = new JMXPathListConsumer();
         PathLister.resolveAll(sheet, c);
         return c.getData();
@@ -274,7 +155,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
              type="org.archive.settings.jmx.Types.SET_DATA_ARRAY")
             CompositeData[] setData) 
     {
-        SingleSheet sheet = (SingleSheet)getSheet(sheetName);
+        SingleSheet sheet = (SingleSheet)manager.getSheet(sheetName);
         Transformer<CompositeData,PathChange> transformer
          = new Transformer<CompositeData,PathChange>() {
             public PathChange transform(CompositeData cd) {
@@ -340,7 +221,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
 
 
     private SingleSheet getSingleSheet(String name) {
-        Sheet s = getSheet(name);
+        Sheet s = manager.getSheet(name);
         if (!(s instanceof SingleSheet)) {
             throw new IllegalArgumentException(name + " is not a SingleSheet.");
         }
@@ -356,7 +237,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             
             @Parameter(name="surts", desc="The surts to associate with that sheet.")
             String[] contexts) {
-        Sheet sheet = getSheet(sheetName);
+        Sheet sheet = manager.getSheet(sheetName);
         manager.associate(sheet, Arrays.asList(contexts));
     }
     
@@ -409,7 +290,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             @Parameter(name="path", desc="The path to the setting whose value to resolve.")
             String path
             ) {
-        Sheet sheet = getSheet(sheetName);
+        Sheet sheet = manager.getSheet(sheetName);
         Object v = PathValidator.validate(sheet, path);
         if (v == null) {
             return null;
@@ -429,7 +310,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             
             @Parameter(name="surt", desc="The SURT to associate with that sheet.")
             String surt) {
-        Sheet sheet = getSheet(sheetName);
+        Sheet sheet = manager.getSheet(sheetName);
         manager.associate(sheet, Collections.singleton(surt));
     }
 
@@ -442,7 +323,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             
             @Parameter(name="surt", desc="The SURT to disassociate from that sheet.")
             String surt) {
-        Sheet sheet = getSheet(sheetName);
+        Sheet sheet = manager.getSheet(sheetName);
         manager.disassociate(sheet, Collections.singleton(surt));
     }
 
@@ -452,7 +333,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             
             @Parameter(name="surt", desc="The SURT whose sheet to return.")
             String surt) {
-        Sheet s = getAssociation(surt);
+        Sheet s = manager.getAssociation(surt);
         if (s == null) {
             return null;
         }
@@ -465,7 +346,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             
             @Parameter(name="sheetName", desc="The name of the sheet whose settings to resolve.")
             String sheetName) {
-        Sheet ss = getSheet(sheetName);
+        Sheet ss = manager.getSheet(sheetName);
         StringWriter sw = new StringWriter();
         
         FilePathListConsumer c = new FilePathListConsumer(sw);

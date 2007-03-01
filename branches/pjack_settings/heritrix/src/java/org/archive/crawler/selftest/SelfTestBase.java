@@ -62,8 +62,8 @@ import org.mortbay.jetty.handler.ResourceHandler;
 public abstract class SelfTestBase extends TmpDirTestCase {
 
     
-    private HeritrixThread heritrixThread;
-    private Server httpServer;
+    protected HeritrixThread heritrixThread;
+    protected Server httpServer;
 
     
     @Override
@@ -100,10 +100,10 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         FileUtils.copyFiles(new File(src, "profile"), tmpDefProfile);
         
         // Start up a Jetty that servers the selftest's content directory.
-        this.httpServer = configureHttpServer();
-        httpServer.start();
+        startHttpServer();
         
         startHeritrix(tmpTestDir.getAbsolutePath());
+        this.waitForCrawlFinish();
     }
     
     
@@ -112,12 +112,16 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         super.tearDown();
 
         heritrixThread.interrupt();
-        httpServer.stop();
+        stopHttpServer();
     }
     
     
+    protected void stopHttpServer() throws Exception {
+        httpServer.stop();        
+    }
     
-    protected Server configureHttpServer() {
+    
+    protected void startHttpServer() throws Exception {
         Server server = new Server();
         SocketConnector sc = new SocketConnector();
         sc.setHost("localhost");
@@ -130,7 +134,8 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         handlers.setHandlers(new Handler[] { rhandler, new DefaultHandler() });
         server.setHandler(handlers);
         
-        return server;
+        this.httpServer = server;
+        server.start();
     }
     
     
@@ -160,29 +165,14 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         
         // Above invocation should have created a new SheetManager and a new
         // CrawlController for the job.  Find the CrawlController.
-        ObjectName crawlController = JmxUtils.makeObjectName(
-                    CrawlJobManagerImpl.DOMAIN,
-                    "the_job",
-                    "CrawlController"                
-                );
-        waitFor(crawlController);
         
-        // Set up utility to wait for FINISHED signal from crawler.
-        JmxWaiter waiter = new JmxWaiter(server, crawlController, 
-                CrawlStatus.FINISHED.toString());
-        
-        // Tell the CrawlController to start the crawl.
-        server.invoke(
-                crawlController,
-                "requestCrawlStart",
-                new Object[0],
-                new String[0]             
-                );
-        
-        // Wait for the FINISHED signal for up to 30 seconds.
-        waiter.waitUntilNotification(0);
+        waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController");
     }
     
+    
+    protected void waitForCrawlFinish() throws Exception {
+        invokeAndWait("requestCrawlStart", CrawlStatus.FINISHED);
+    }
     
     protected File getSrcHtdocs() {
         return new File("testdata/selftest/" + getSelfTestName() + "/htdocs");
@@ -219,10 +209,10 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
     
     
-    private static void waitFor(ObjectName name) throws Exception{
+    protected static void waitFor(ObjectName name) throws Exception{
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         int count = 0;
-        while (!server.isRegistered(name)) {
+        while (server.queryNames(name, null).isEmpty()) {
             count++;
             if (count > 40) {
                 throw new IllegalStateException("Could not find " + 
@@ -230,6 +220,62 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             }
             Thread.sleep(500);
         }
+    }
+    
+    
+    protected static void waitFor(String query) throws Exception {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        int count = 0;
+        ObjectName name = new ObjectName(query);
+        while (server.queryNames(null, name).isEmpty()) {
+            count++;
+            if (count > 40) {
+                throw new IllegalStateException("Could not find " + 
+                        name + " after 20 seconds.");
+            }
+            Thread.sleep(500);
+        }        
+    }
+    
+    
+    protected static ObjectName getCrawlController() throws Exception {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        @SuppressWarnings("unchecked")
+        Set<ObjectName> set = server.queryNames(null, null);
+        for (ObjectName name: set) {
+            if (name.getDomain().equals("org.archive.crawler")
+                    && name.getKeyProperty("name").equals("the_job")
+                    && name.getKeyProperty("type").equals("org.archive.crawler.framework.CrawlController")) {
+                return name;
+            }
+        }
+        return null;
+    }
+    
+    
+    protected static void invokeAndWait(String operation, CrawlStatus status) 
+    throws Exception {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        
+        // Above invocation should have created a new SheetManager and a new
+        // CrawlController for the job.  Find the CrawlController.
+        ObjectName crawlController = getCrawlController();
+        waitFor(crawlController);
+        
+        // Set up utility to wait for FINISHED signal from crawler.
+        JmxWaiter waiter = new JmxWaiter(server, crawlController, 
+                status.toString());
+        
+        // Tell the CrawlController to start the crawl.
+        server.invoke(
+                crawlController,
+                operation,
+                new Object[0],
+                new String[0]             
+                );
+        
+        // Wait for the FINISHED signal for up to 30 seconds.
+        waiter.waitUntilNotification(0);
     }
 
     

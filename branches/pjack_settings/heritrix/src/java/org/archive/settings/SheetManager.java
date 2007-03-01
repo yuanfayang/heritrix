@@ -32,6 +32,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.state.Immutable;
 import org.archive.state.Key;
@@ -47,12 +50,17 @@ import org.archive.state.StateProvider;
  */
 public abstract class SheetManager implements StateProvider, Serializable {
 
+    final public static Logger LOGGER = 
+        Logger.getLogger(SheetManager.class.getName());
     
     final public static String DEFAULT_SHEET_NAME = "default";
     
     final private UnspecifiedSheet unspecified;
     
     final private Offline offlineThis;
+
+    final private List<ModuleListener> moduleListeners = 
+        new CopyOnWriteArrayList<ModuleListener>();
     
     @Immutable
     final public static Key<Map<String,Object>> ROOT = 
@@ -69,6 +77,12 @@ public abstract class SheetManager implements StateProvider, Serializable {
         this.unspecified = new UnspecifiedSheet(this, "unspecified");
         offlineThis = Offline.make(getClass());
         KeyManager.addKeys(getClass());
+    }
+    
+    
+    public SheetManager(Collection<ModuleListener> listeners) {
+        this();
+        moduleListeners.addAll(listeners);
     }
 
     
@@ -291,4 +305,25 @@ public abstract class SheetManager implements StateProvider, Serializable {
         return def.get(module, key);
     }
 
+    
+    public void addModuleListener(ModuleListener listener) {
+        this.moduleListeners.add(listener);
+    }
+    
+    
+    public void removeModuleListener(ModuleListener listener) {
+        moduleListeners.remove(listener);
+    }
+    
+    public List<ModuleListener> getModuleListeners() {
+        return new ArrayList<ModuleListener>(moduleListeners);
+    }
+    
+    void fireModuleChanged(Object oldModule, Object newModule) {
+        for (ModuleListener ml: moduleListeners) try {
+            ml.moduleChanged(oldModule, newModule);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "ModuleListener raised exception.", e);
+        }
+    }
 }

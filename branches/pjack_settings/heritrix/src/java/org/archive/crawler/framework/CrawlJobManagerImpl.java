@@ -28,8 +28,10 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -42,8 +44,10 @@ import javax.management.ObjectName;
 
 import org.archive.crawler.event.CrawlStatusAdapter;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.settings.ModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.file.FileSheetManager;
+import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.path.PathValidator;
 import org.archive.util.FileUtils;
@@ -154,8 +158,11 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         File bootstrap = new File(dest, BOOTSTRAP);
         FileSheetManager fsm;
+        JMXModuleListener listener = new JMXModuleListener(DOMAIN, job, server);
         try {
-            fsm = new FileSheetManager(bootstrap, true);
+            List<ModuleListener> list = new ArrayList<ModuleListener>();
+            list.add(listener);
+            fsm = new FileSheetManager(bootstrap, true, list);
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);
@@ -175,8 +182,10 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
         
         CrawlController cc = (CrawlController)o;
-        final ObjectName ccName = register(job, "CrawlController", cc);
         
+        final ObjectName ccName = listener.nameOf(cc);
+
+        // TODO: Use JMX notification for this instead.
         cc.addCrawlStatusListener(new CrawlStatusAdapter() {
             public void crawlEnded(String msg) {
                 unregister(ccName);
