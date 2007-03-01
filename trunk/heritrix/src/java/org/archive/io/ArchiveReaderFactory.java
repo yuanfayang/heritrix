@@ -146,16 +146,26 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
         	atFirstRecord);
     }
     
+    /**
+     * @param is
+     * @return If passed <code>is</code> is
+     * {@link RepositionableInputStream}, returns <code>is</code>, else we
+     * wrap <code>is</code> with {@link RepositionableStream}.
+     */
+    protected InputStream asRepositionable(final InputStream is) {
+        if (is instanceof RepositionableStream) {
+            return is;
+        }
+        // RepositionableInputStream calls mark on each read so can back up at
+        // least the read amount.  Needed for gzip inflater overinflations
+        // reading into the next gzip member.
+        return new RepositionableInputStream(is, 16 * 1024);
+    }
+    
     protected ArchiveReader getArchiveReader(final String id, 
     		final InputStream is, final boolean atFirstRecord)
     throws IOException {
-    	InputStream stream = is;
-    	if (!(stream instanceof RepositionableStream)) {
-    		// RepositionableInputStream calls mark on each read so can
-    		// back up at least the read amount.  Needed for gzip inflater
-    		// overinflations reading into the next gzip member.
-        	stream = new RepositionableInputStream(stream, 16 * 1024);
-    	}
+    	final InputStream stream = asRepositionable(is);
         if (ARCReaderFactory.isARCSuffix(id)) {
             return ARCReaderFactory.get(id, stream, atFirstRecord);
         } else if (WARCReaderFactory.isWARCSuffix(id)) {

@@ -137,7 +137,8 @@ implements ARCConstants {
 			throws IOException {
 		// For now, assume stream is compressed. Later add test of input
 		// stream or handle exception thrown when figure not compressed stream.
-		return new CompressedARCReader(arc, is, atFirstRecord);
+		return new CompressedARCReader(arc, asRepositionable(is),
+            atFirstRecord);
 	}
     
     /**
