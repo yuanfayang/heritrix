@@ -74,7 +74,7 @@ public class AuthSelfTest
 
 
     @Override
-    protected Server configureHttpServer() {
+    protected void startHttpServer() {
         Server server = new Server();
         
         Constraint constraint = new Constraint();
@@ -115,7 +115,7 @@ public class AuthSelfTest
         ServletHolder holder = new ServletHolder(new AuthServlet());
         servletHandler.addServletWithMapping(holder, "/login/*");
 
-        return server;
+        this.httpServer = server;
     }
 
 

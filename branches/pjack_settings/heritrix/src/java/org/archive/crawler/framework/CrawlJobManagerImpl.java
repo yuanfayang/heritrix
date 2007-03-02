@@ -44,8 +44,10 @@ import javax.management.ObjectName;
 
 import org.archive.crawler.event.CrawlStatusAdapter;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.Sheet;
+import org.archive.settings.file.Checkpointable;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
@@ -158,10 +160,11 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         File bootstrap = new File(dest, BOOTSTRAP);
         FileSheetManager fsm;
-        JMXModuleListener listener = new JMXModuleListener(DOMAIN, job, server);
+        JMXModuleListener jmxListener = new JMXModuleListener(DOMAIN, job, server);
         try {
             List<ModuleListener> list = new ArrayList<ModuleListener>();
-            list.add(listener);
+            list.add(jmxListener);
+            list.add(ListModuleListener.make(Checkpointable.class));
             fsm = new FileSheetManager(bootstrap, true, list);
         } catch (DatabaseException e) {
             IOException io = new IOException();
@@ -183,7 +186,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         CrawlController cc = (CrawlController)o;
         
-        final ObjectName ccName = listener.nameOf(cc);
+        final ObjectName ccName = jmxListener.nameOf(cc);
 
         // TODO: Use JMX notification for this instead.
         cc.addCrawlStatusListener(new CrawlStatusAdapter() {

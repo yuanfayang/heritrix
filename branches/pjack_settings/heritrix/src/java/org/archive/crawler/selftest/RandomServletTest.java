@@ -17,50 +17,34 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * BdbConfig.java
+ * RandomServletTest.java
  *
- * Created on Feb 15, 2007
+ * Created on Feb 28, 2007
  *
  * $Id:$
  */
-package org.archive.settings.file;
 
-import java.io.Serializable;
+package org.archive.crawler.selftest;
 
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.Module;
+import junit.framework.TestCase;
 
 /**
  * @author pjack
  *
  */
-public class BdbConfig implements Module, Serializable {
+public class RandomServletTest extends TestCase {
 
     
     
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
+    public void testPathParse() {
+        for (int i = 0; i < 1000; i++) {
+            String s = RandomServletLinkWriter.toPath(i);
+            // System.out.println(i +" -> " + s);
+            int v = RandomServletLinkWriter.fromPath(s);
+            int v2 = RandomServletLinkWriter.fromPath("/" + s);
+            assertEquals(i, v);
+            assertEquals(i, v2);
+        }
+    }
 
-    @Immutable
-    final public static Key<String> DIR = Key.make("state");
-    
-    @Immutable
-    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(60); 
-    
-    @Immutable
-    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-        Key.make(true);
-    
-    static {
-        KeyManager.addKeys(BdbConfig.class);
-    }
-    
-    public BdbConfig() {
-    }
-    
-    
 }

@@ -80,9 +80,12 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
+import org.archive.settings.ListModuleListener;
+import org.archive.settings.ModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.BdbModule;
+import org.archive.settings.file.Checkpointable;
 import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
@@ -394,10 +397,6 @@ implements Serializable, Reporter, StateProvider {
     private transient Map<String,CachedBdbMap<?,?>> bigmaps = null;
 
     
-    
-
-//    private transient Map<String,Processor> processors;
-    
 
     final private CrawlOrder order;
 
@@ -487,6 +486,23 @@ implements Serializable, Reporter, StateProvider {
 //        processors = get(this, PROCESSORS);
     }
 
+    
+    private List<Checkpointable> getCheckpointables() {
+        for (ModuleListener ml: sheetManager.getModuleListeners()) {
+            if (ml instanceof ListModuleListener) {
+                ListModuleListener lml = (ListModuleListener)ml;
+                if (lml.getType() == Checkpointable.class) {
+                    @SuppressWarnings("unchecked")
+                    List<Checkpointable> r = lml.getList(); 
+                    return r;
+                }
+            }
+        }
+        LOGGER.warning("No Checkpointables found!");
+        List<Checkpointable> r = Collections.emptyList();
+        return r;
+    }
+    
     
     public <T> T getOrderSetting(Key<T> key) {
         Sheet def = sheetManager.getDefault();
@@ -1185,201 +1201,18 @@ implements Serializable, Reporter, StateProvider {
         rotateLogFiles(CURRENT_LOG_SUFFIX + "." +
             this.checkpointer.getNextCheckpointName());
 
-        // Sync the BigMap contents to bdb, if their bdb bigmaps.
-        LOGGER.fine("BigMaps.");
-        checkpointBigMaps(this.checkpointer.getCheckpointInProgressDirectory());
-
-        // Note, on deserialization, the super CrawlType#parent
-        // needs to be restored. Parent is '/crawl-order/loggers'.
-        // The settings handler for this module also needs to be
-        // restored. Both of these fields are private in the
-        // super class. Adding the restored ST to crawl order should take
-        // care of this.
-
-        // Checkpoint bdb environment.
-        LOGGER.fine("Bdb environment.");
-        checkpointBdb(this.checkpointer.getCheckpointInProgressDirectory());
-
-        // Make copy of order, seeds, and settings.
-        LOGGER.fine("Copying settings.");
-        copySettings(this.checkpointer.getCheckpointInProgressDirectory());
+        LOGGER.fine("Dealing with Checkpointable modules.");
+        List<Checkpointable> checkpointables = getCheckpointables();
+        for (Checkpointable ch: checkpointables) {
+            ch.checkpoint(checkpointer.getCheckpointInProgressDirectory());
+        }
 
         // Checkpoint this crawlcontroller.
         CheckpointUtils.writeObjectToFile(this,
             this.checkpointer.getCheckpointInProgressDirectory());
     }
-    
-    /**
-     * Copy off the settings.
-     * @param checkpointDir Directory to write checkpoint to.
-     * @throws IOException 
-     */
-    protected void copySettings(final File checkpointDir) throws IOException {
-        // FIXME: Overhaul checkpointing
-/*        final List files = this.settingsHandler.getListOfAllFiles();
-        boolean copiedSettingsDir = false;
-        final File settingsDir = new File(this.disk, "settings");
-        for (final Iterator i = files.iterator(); i.hasNext();) {
-            File f = new File((String)i.next());
-            if (f.getAbsolutePath().startsWith(settingsDir.getAbsolutePath())) {
-                if (copiedSettingsDir) {
-                    // Skip.  We've already copied this member of the
-                    // settings directory.
-                    continue;
-                }
-                // Copy 'settings' dir all in one lump, not a file at a time.
-                copiedSettingsDir = true;
-                FileUtils.copyFiles(settingsDir,
-                    new File(checkpointDir, settingsDir.getName()));
-                continue;
-            }
-            FileUtils.copyFiles(f, f.isDirectory()? checkpointDir:
-                new File(checkpointDir, f.getName()));
-        } */
-    }
-    
-    /**
-     * Checkpoint bdb.
-     * I used do a call to log cleaning as suggested in je-2.0 javadoc but takes
-     * way too much time (20minutes for a crawl of 1million items). Assume
-     * cleaner is keeping up. Below was log cleaning loop .
-     * <pre>int totalCleaned = 0;
-     * for (int cleaned = 0; (cleaned = this.bdbEnvironment.cleanLog()) != 0;
-     *  totalCleaned += cleaned) {
-     *      LOGGER.fine("Cleaned " + cleaned + " log files.");
-     * }
-     * </pre>
-     * <p>I also used to do a sync. But, from Mark Hayes, sync and checkpoint
-     * are effectively same thing only sync is not configurable.  He suggests
-     * doing one or the other:
-     * <p>MS: Reading code, Environment.sync() is a checkpoint.  Looks like
-     * I don't need to call a checkpoint after calling a sync?
-     * <p>MH: Right, they're almost the same thing -- just do one or the other,
-     * not both.  With the new API, you'll need to do a checkpoint not a
-     * sync, because the sync() method has no config parameter.  Don't worry
-     * -- it's fine to do a checkpoint even though you're not using.
-     * @param checkpointDir Directory to write checkpoint to.
-     * @throws DatabaseException 
-     * @throws IOException 
-     * @throws RuntimeException Thrown if failed setup of new bdb environment.
-     */
-    protected void checkpointBdb(File checkpointDir)
-    throws DatabaseException, IOException, RuntimeException {
-        EnvironmentConfig envConfig = bdb.getEnvironment().getConfig();
-        final List bkgrdThreads = Arrays.asList(new String []
-            {"je.env.runCheckpointer", "je.env.runCleaner",
-                "je.env.runINCompressor"});
-        try {
-            // Disable background threads
-            setBdbjeBkgrdThreads(envConfig, bkgrdThreads, "false");
-            // Do a force checkpoint.  Thats what a sync does (i.e. doSync).
-            CheckpointConfig chkptConfig = new CheckpointConfig();
-            chkptConfig.setForce(true);
-            
-            // Mark Hayes of sleepycat says:
-            // "The default for this property is false, which gives the current
-            // behavior (allow deltas).  If this property is true, deltas are
-            // prohibited -- full versions of internal nodes are always logged
-            // during the checkpoint. When a full version of an internal node
-            // is logged during a checkpoint, recovery does not need to process
-            // it at all.  It is only fetched if needed by the application,
-            // during normal DB operations after recovery. When a delta of an
-            // internal node is logged during a checkpoint, recovery must
-            // process it by fetching the full version of the node from earlier
-            // in the log, and then applying the delta to it.  This can be
-            // pretty slow, since it is potentially a large amount of
-            // random I/O."
-            chkptConfig.setMinimizeRecoveryTime(true);
-            bdb.getEnvironment().checkpoint(chkptConfig);
-            LOGGER.fine("Finished bdb checkpoint.");
-            
-            // From the sleepycat folks: A trick for flipping db logs.
-            EnvironmentImpl envImpl = 
-                DbInternal.envGetEnvironmentImpl(bdb.getEnvironment());
-            long firstFileInNextSet =
-                DbLsn.getFileNumber(envImpl.forceLogFileFlip());
-            // So the last file in the checkpoint is firstFileInNextSet - 1.
-            // Write manifest of all log files into the bdb directory.
-            final String lastBdbCheckpointLog =
-                getBdbLogFileName(firstFileInNextSet - 1);
-            processBdbLogs(checkpointDir, lastBdbCheckpointLog);
-            LOGGER.fine("Finished processing bdb log files.");
-        } finally {
-            // Restore background threads.
-            setBdbjeBkgrdThreads(envConfig, bkgrdThreads, "true");
-        }
-    }
-    
-    protected void processBdbLogs(final File checkpointDir,
-            final String lastBdbCheckpointLog) throws IOException {
-        File bdbDir = CheckpointUtils.getBdbSubDirectory(checkpointDir);
-        if (!bdbDir.exists()) {
-            bdbDir.mkdir();
-        }
-        PrintWriter pw = new PrintWriter(new FileOutputStream(new File(
-             checkpointDir, "bdbje-logs-manifest.txt")));
-        try {
-            // Don't copy any beyond the last bdb log file (bdbje can keep
-            // writing logs after checkpoint).
-            boolean pastLastLogFile = false;
-            Set<String> srcFilenames = null;
-            final boolean copyFiles = getCheckpointCopyBdbjeLogs();
-            do {
-                FilenameFilter filter = CheckpointUtils.getJeLogsFilter();
-                srcFilenames =
-                    new HashSet<String>(Arrays.asList(
-                            getStateDisk().list(filter)));
-                List tgtFilenames = Arrays.asList(bdbDir.list(filter));
-                if (tgtFilenames != null && tgtFilenames.size() > 0) {
-                    srcFilenames.removeAll(tgtFilenames);
-                }
-                if (srcFilenames.size() > 0) {
-                    // Sort files.
-                    srcFilenames = new TreeSet<String>(srcFilenames);
-                    int count = 0;
-                    for (final Iterator i = srcFilenames.iterator();
-                            i.hasNext() && !pastLastLogFile;) {
-                        String name = (String) i.next();
-                        if (copyFiles) {
-                            FileUtils.copyFiles(new File(getStateDisk(), name),
-                                new File(bdbDir, name));
-                        }
-                        pw.println(name);
-                        if (name.equals(lastBdbCheckpointLog)) {
-                            // We're done.
-                            pastLastLogFile = true;
-                        }
-                        count++;
-                    }
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.fine("Copied " + count);
-                    }
-                }
-            } while (!pastLastLogFile && srcFilenames != null &&
-                srcFilenames.size() > 0);
-        } finally {
-            pw.close();
-        }
-    }
- 
-    protected String getBdbLogFileName(final long index) {
-        String lastBdbLogFileHex = Long.toHexString(index);
-        StringBuffer buffer = new StringBuffer();
-        for (int i = 0; i < (8 - lastBdbLogFileHex.length()); i++) {
-            buffer.append('0');
-        }
-        buffer.append(lastBdbLogFileHex);
-        buffer.append(".jdb");
-        return buffer.toString();
-    }
-    
-    protected void setBdbjeBkgrdThreads(final EnvironmentConfig config,
-            final List threads, final String setting) {
-        for (final Iterator i = threads.iterator(); i.hasNext();) {
-            config.setConfigParam((String)i.next(), setting);
-        }
-    }
-    
+
+
     /**
      * Get recover checkpoint.
      * Returns null if we're NOT in recover mode.
@@ -1930,35 +1763,9 @@ implements Serializable, Reporter, StateProvider {
             final Class<? super K> keyClass,
             final Class<? super V> valueClass)
     throws Exception {
-        CachedBdbMap<K,V> result = new CachedBdbMap<K,V>(dbName);
-        if (isCheckpointRecover()) {
-            File baseDir = getCheckpointRecover().getDirectory();
-            @SuppressWarnings("unchecked")
-            CachedBdbMap<K,V> temp = CheckpointUtils.
-                readObjectFromFile(result.getClass(), dbName, baseDir);
-            result = temp;
-        }
-        result.initialize(getBdbEnvironment(), keyClass, valueClass,
-                getClassCatalog());
-        // Save reference to all big maps made so can manage their
-        // checkpointing.
-        this.bigmaps.put(dbName, result);
-        return result;
+        return bdb.getBigMap(dbName, keyClass, valueClass);
     }
     
-    protected void checkpointBigMaps(final File cpDir)
-    throws Exception {
-        for (final Iterator i = this.bigmaps.keySet().iterator(); i.hasNext();) {
-            Object key = i.next();
-            Object obj = this.bigmaps.get(key);
-            // TODO: I tried adding sync to custom serialization of BigMap
-            // implementation but data member counts of the BigMap
-            // implementation were not being persisted properly.  Look at
-            // why.  For now, do sync in advance of serialization for now.
-            ((CachedBdbMap)obj).sync();
-            CheckpointUtils.writeObjectToFile(obj, (String)key, cpDir);
-        }
-    }
 
     /**
      * Called whenever progress statistics logging event.
