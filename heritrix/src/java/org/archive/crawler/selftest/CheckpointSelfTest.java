@@ -22,27 +22,12 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.logging.Logger;
 
-import javax.management.Attribute;
-import javax.management.AttributeNotFoundException;
-import javax.management.InvalidAttributeValueException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
-
-import org.archive.crawler.admin.CrawlJob.MBeanCrawlController;
-import org.archive.crawler.datamodel.Checkpoint;
-import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.event.CrawlURIDispositionListener;
-import org.archive.crawler.framework.Checkpointer;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.util.CheckpointUtils;
+import org.archive.crawler.framework.CrawlStatus;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.bio.SocketConnector;
+import org.mortbay.jetty.servlet.ServletHandler;
+import org.mortbay.jetty.servlet.ServletHolder;
 
 
 /**
@@ -50,132 +35,89 @@ import org.archive.crawler.util.CheckpointUtils;
  * @author stack
  * @version $Date$ $Version$
  */
-public class CheckpointSelfTest extends SelfTestCase
-implements CrawlStatusListener, CrawlURIDispositionListener {
-	private final Logger LOG = Logger.getLogger(this.getClass().getName());
-	private boolean crawlEnded = false;
+public class CheckpointSelfTest extends SelfTestBase {
 
-	public CheckpointSelfTest() {
-		// TODO Auto-generated constructor stub
-	}
+    final private static String HOST = "localhost";
+    
+    final private static int MIN_PORT = 7000;
+    
+    final private static int MAX_PORT = 7010;
+    
+    final private static int MAX_HOPS = 3;
+    
 
-	public CheckpointSelfTest(String testName) {
-		super(testName);
-		// TODO Auto-generated constructor stub
-	}
-	
-	/**
-	 * Recover from the checkpoint made during selftest.
-	 * @throws InitializationException 
-	 * @throws IOException 
-	 * @throws InvalidAttributeValueException 
-	 * @throws ReflectionException 
-	 * @throws MBeanException 
-	 * @throws AttributeNotFoundException 
-	 * @throws ClassNotFoundException 
-	 * @throws InterruptedException 
-	 */
-	public void testCheckpointRecover()
-	throws InitializationException, IOException,
-			InvalidAttributeValueException, AttributeNotFoundException,
-			MBeanException, ReflectionException, ClassNotFoundException,
-			InterruptedException {
-		// Check checkpoint dir is in place.
-		File f = getFile(getCrawlJobDir(), "checkpoints");
-		// Use the first checkpoint in the dir.
-		File cpdir = getFile(f, Checkpointer.formatCheckpointName("", 1));
-		// Check valid checkpoint file is in place.
-	    getFile(cpdir, Checkpoint.VALIDITY_STAMP_FILENAME);
-	    // Get order file from checkpoint dir.
-	    File order = getFile(cpdir, "order.xml");
-        XMLSettingsHandler handler =
-            new XMLSettingsHandler(order);
-        handler.initialize();
-        // Set recover-path to be this checkpoint dir.
-        handler.getOrder().setAttribute(
-        	new Attribute(CrawlOrder.ATTR_RECOVER_PATH, cpdir.toString()));
-        Checkpoint cp =
-        	CrawlController.getCheckpointRecover(handler.getOrder());
-        if (cp == null) {
-        	throw new NullPointerException("Failed read of checkpoint object");
+    private Server[] servers;
+    
+    
+    public CheckpointSelfTest() {
+    }
+
+    
+    @Override
+    protected void stopHttpServer() {
+        boolean fail = false;
+        for (int i = 0; i < servers.length; i++) try {
+            servers[i].stop();
+        } catch (Exception e) {
+            fail = true;
+            e.printStackTrace();
         }
-        CrawlController c = (MBeanCrawlController)CheckpointUtils.
-        	readObjectFromFile(MBeanCrawlController.class, cpdir);
-        c.initialize(handler);
-        c.addCrawlStatusListener(this);
-        c.addCrawlURIDispositionListener(this);
-        c.requestCrawlStart();
-        LOG.info("Recover from selftest crawl started using " +
-            order.toString() + ".");
-        // Wait here a while till its up and running?
-        while(!this.crawlEnded) {
-        	LOG.info("Waiting on recovered crawl to finish");
-        	Thread.sleep(1000);
+        
+        if (fail) {
+            throw new AssertionError();
         }
-	}
+    }
+    
+    @Override
+    protected void startHttpServer() throws Exception {
+        this.servers = new Server[MAX_PORT - MIN_PORT];
+        for (int i = 0; i < servers.length; i++) {
+            servers[i] = makeHttpServer(i + MIN_PORT);
+            servers[i].start();
+        }
+    }
+    
+    
+    private Server makeHttpServer(int port) throws Exception {
+        Server server = new Server();
+        SocketConnector sc = new SocketConnector();
+        sc.setHost(HOST);
+        sc.setPort(port);
+        server.addConnector(sc);
+        ServletHandler servletHandler = new ServletHandler();
+        server.setHandler(servletHandler);
+
+        RandomServlet random = new RandomServlet();
+        random.setHost(HOST);
+        random.setMinPort(MIN_PORT);
+        random.setMaxPort(MAX_PORT);
+        random.setMaxHops(MAX_HOPS);
+        random.setPathRoot("random");
+
+        ServletHolder holder = new ServletHolder(new RandomServlet());
+        servletHandler.addServletWithMapping(holder, "/random/*");
+        server.start();
+        return server;
+    }
+
+
+    @Override
+    protected void waitForCrawlFinish() throws Exception {
+        // Start the crawl; wait for two seconds; pause the crawl so we
+        // can checkpoint; checkpoint; and abort the crawl.
+        invokeAndWait("requestCrawlStart", CrawlStatus.RUNNING);
+        Thread.sleep(2000);
+        invokeAndWait("requestCrawlPause", CrawlStatus.PAUSED);
+        invokeAndWait("requestCrawlCheckpoint", CrawlStatus.PAUSED);
+        invokeAndWait("requestCrawlStop", CrawlStatus.ABORTED);
+        
+        // Get rid of the old crawler thread.
+        heritrixThread.interrupt();
+    }
+
+    
+
+    public void testCheckpointRecover() throws Exception {
+    }
 	
-	private File getFile(final File parent, final String name)
-	throws IOException {
-		File f = new File(parent, name);
-		if (!f.exists()) {
-			throw new FileNotFoundException(f.getAbsolutePath());
-		}
-		if (!f.canRead()) {
-			throw new IOException("Can't read " + f.getAbsolutePath());
-		}
-		return f;
-	}
-
-	public void crawlCheckpoint(File checkpointDir) throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawlEnded(String sExitMessage) {
-		this.crawlEnded = true;
-	}
-
-	public void crawlEnding(String sExitMessage) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawlPaused(String statusMessage) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawlPausing(String statusMessage) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawlResuming(String statusMessage) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawlStarted(String message) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawledURIDisregard(CrawlURI curi) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawledURIFailure(CrawlURI curi) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawledURINeedRetry(CrawlURI curi) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void crawledURISuccessful(CrawlURI curi) {
-		LOG.info(curi.toString());
-	}
 }

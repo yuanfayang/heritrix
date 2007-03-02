@@ -55,6 +55,7 @@ import org.archive.state.ExampleStateProvider;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -134,7 +135,7 @@ import com.sleepycat.je.DatabaseException;
  * 
  * @author pjack
  */
-public class FileSheetManager extends SheetManager {
+public class FileSheetManager extends SheetManager implements Checkpointable {
 
     /**
      * First version.
@@ -707,4 +708,12 @@ public class FileSheetManager extends SheetManager {
         return mainConfig.getParentFile();
     }
 
+    
+    public void checkpoint(File dir) throws IOException {
+        File config = new File(dir, "config.txt");
+        FileUtils.copyFile(mainConfig, config);
+        
+        File sheets = new File(dir, "sheets");
+        FileUtils.copyFiles(sheetsDir, sheets);
+    }
 }

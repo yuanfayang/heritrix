@@ -17,50 +17,26 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * BdbConfig.java
+ * Checkpointable.java
  *
- * Created on Feb 15, 2007
+ * Created on Mar 1, 2007
  *
  * $Id:$
  */
+
 package org.archive.settings.file;
 
-import java.io.Serializable;
-
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.Module;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author pjack
  *
  */
-public class BdbConfig implements Module, Serializable {
+public interface Checkpointable {
 
     
-    
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
-
-    @Immutable
-    final public static Key<String> DIR = Key.make("state");
-    
-    @Immutable
-    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(60); 
-    
-    @Immutable
-    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-        Key.make(true);
-    
-    static {
-        KeyManager.addKeys(BdbConfig.class);
-    }
-    
-    public BdbConfig() {
-    }
+    void checkpoint(File dir) throws IOException;
     
     
 }
