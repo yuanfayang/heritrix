@@ -184,7 +184,7 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         addDecideRule(new TransclusionDecideRule("TRANSCLUSION"));
         final int max =
             TransclusionDecideRule.DEFAULT_MAX_TRANS_HOPS.intValue();
-        final char pathExpansion = 'X';
+        final char pathExpansion = 'E';
         UURI uuri = UURIFactory.getInstance("http://archive.org");
         CandidateURI candidate = new CandidateURI(uuri);
         Object decision = this.rule.decisionFor(candidate);
