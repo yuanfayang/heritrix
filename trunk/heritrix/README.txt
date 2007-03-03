@@ -17,7 +17,7 @@ archival-quality web crawler project. Heritrix (sometimes spelled heretrix, or
 misspelled or missaid as heratrix/heritix/heretix/heratix) is an archaic word
 for heiress (woman who inherits). Since our crawler seeks to collect and
 preserve the digital artifacts of our culture for the benefit of future
-researchers and generations, this name seemed apt. 
+researchers and generations, this name seemed apt.
 
 
 2.0 Webmasters!
