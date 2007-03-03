@@ -40,7 +40,7 @@ import org.archive.util.TextUtils;
  * 
  * @author gojomo
  */
-public class AntiCalendarCostAssignmentPolicy extends WagCostAssignmentPolicy {
+public class AntiCalendarCostAssignmentPolicy extends UnitCostAssignmentPolicy {
     public static String CALENDARISH =
             "(?i)(calendar)|(year)|(month)|(day)|(date)|(viewcal)" +
             "|(\\D19\\d\\d\\D)|(\\D20\\d\\d\\D)|(event)|(yr=)" +
