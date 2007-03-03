@@ -55,12 +55,20 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
     private static final long serialVersionUID = -3975688876990558918L;
 
     private static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
-    
+
+    private static final String ATTR_MAX_SPECULATIVE_HOPS = "max-speculative-hops";
+
     /**
-     * Default maximum hops.
+     * Default maximum transitive hops -- any type
      * Default access so can be accessed by unit tests.
      */
     static final Integer DEFAULT_MAX_TRANS_HOPS = new Integer(3);
+
+    /**
+     * Default maximum speculative ('X') hops.
+     * Default access so can be accessed by unit tests.
+     */
+    static final Integer DEFAULT_MAX_SPECULATIVE_HOPS = new Integer(1);
 
     /**
      * Usual constructor. 
@@ -76,10 +84,11 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
         Type type = getElementFromDefinition(ATTR_DECISION);
         type.setTransient(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
-            "Maximum number of non-navlink ('L') hops.", 
+            "Maximum number of non-navlink (non-'L') hops to ACCEPT.", 
             DEFAULT_MAX_TRANS_HOPS));
-        // TODO: add expert settings for further penalizing certain hop types,
-        // eg: make speculative hops ('X') count 3x, etc.
+        addElementToDefinition(new SimpleType(ATTR_MAX_SPECULATIVE_HOPS,
+            "Maximum number of speculative ('X') hops to ACCEPT.", 
+            DEFAULT_MAX_SPECULATIVE_HOPS));
     }
 
     /**
@@ -102,17 +111,19 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
             return false; 
         }
         int count = 0;
+        int specCount = 0; 
         for (int i = hopsPath.length() - 1; i >= 0; i--) {
-            if (hopsPath.charAt(i) != Link.NAVLINK_HOP) {
-                // TODO: count some hops for more (to bias against chains 
-                // of them, eg 'X' speculative links that might really be
-                // navlinks)
+            char c = hopsPath.charAt(i);
+            if (c != Link.NAVLINK_HOP) {
                 count++;
+                if(c == Link.SPECULATIVE_HOP) {
+                    specCount++;
+                }
             } else {
                 break;
             }
         }
-        return count > 0 && count <= getThresholdHops(object);
+        return count > 0 && (specCount <= getThresholdSpeculativeHops(object) && count <= getThresholdHops(object));
     }
 
     /**
@@ -121,6 +132,15 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
      */
     private int getThresholdHops(Object obj) {
         return ((Integer)getUncheckedAttribute(obj,ATTR_MAX_TRANS_HOPS)).
+            intValue();
+    }
+    
+    /**
+     * @param obj Context object.
+     * @return hops cutoff threshold
+     */
+    private int getThresholdSpeculativeHops(Object obj) {
+        return ((Integer)getUncheckedAttribute(obj,ATTR_MAX_SPECULATIVE_HOPS)).
             intValue();
     }
 }
