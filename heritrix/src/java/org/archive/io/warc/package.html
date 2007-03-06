@@ -8,6 +8,8 @@ Experimental WARC Writer and Readers.  Code and specification subject to change
 with no guarantees of backward compatibility: i.e. newer readers
 may not be able to parse WARCs written with older writers. This package
 contains prototyping code for revision 0.12 of the WARC specification.
+See <a href="https://archive-access.svn.sourceforge.net/svnroot/archive-access/branches/gjm_warc_0_12/warc/warc_file_format.html">latest revision</a>
+for current state.
 Version 0.10 code and its documentation has been moved into the
 <a href="v10/package.html">v10</a> subpackage.
 
@@ -20,6 +22,12 @@ tools can be found in the package above this one, at
 respectively.  Pass <code>--help</code> to learn how to use each tool.
 TODO: Fix these tools to point at v12.
 </p>
+
+<h2>TODO</h2>
+<ul>
+<li>Is MIME-Version needed?  Should we write out a Content-Transfer-Encoding
+header (Currently we do not).</li>
+</ul>
 
 </body>
 </html>
