@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: WARCReaderFactory.java 4533 2006-08-24 00:59:04Z stack-sf $
  *
  * Created Aug 22, 2006
  *
@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,6 +34,7 @@ import org.archive.io.ArchiveReader;
 import org.archive.io.ArchiveReaderFactory;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.GzippedInputStream;
+import org.archive.io.warc.WARCConstants;
 import org.archive.util.FileUtils;
 
 /**
@@ -41,7 +42,7 @@ import org.archive.util.FileUtils;
  * Figures whether to give out a compressed file Reader or an uncompressed
  * Reader.
  * @author stack
- * @version $Date$ $Version$
+ * @version $Date: 2006-08-23 17:59:04 -0700 (Wed, 23 Aug 2006) $ $Version$
  */
 public class WARCReaderFactory extends ArchiveReaderFactory
 implements WARCConstants {

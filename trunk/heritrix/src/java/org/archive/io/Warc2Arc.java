@@ -41,9 +41,9 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.warc.WARCConstants;
-import org.archive.io.warc.WARCReader;
-import org.archive.io.warc.WARCReaderFactory;
-import org.archive.io.warc.WARCRecord;
+import org.archive.io.warc.v10.WARCReader;
+import org.archive.io.warc.v10.WARCReaderFactory;
+import org.archive.io.warc.v10.WARCRecord;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 

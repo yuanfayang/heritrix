@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: WARCReader.java 4754 2006-11-28 02:03:03Z stack-sf $
  *
  * Created Aug 23, 2006
  *
@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,12 +37,13 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang.NotImplementedException;
 import org.archive.io.ArchiveReader;
 import org.archive.io.ArchiveRecord;
+import org.archive.io.warc.WARCConstants;
 
 /**
  * WARCReader.
  * Go via {@link WARCReaderFactory} to get instance.
  * @author stack
- * @version $Date$ $Version$
+ * @version $Date: 2006-11-27 18:03:03 -0800 (Mon, 27 Nov 2006) $ $Version$
  */
 public class WARCReader extends ArchiveReader implements WARCConstants {
     WARCReader() {
@@ -52,7 +53,7 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
     @Override
     protected void initialize(String i) {
         super.initialize(i);
-        setVersion(WARC_VERSION);
+        setVersion("0.10");
     }
     
     /**

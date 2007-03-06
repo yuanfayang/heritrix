@@ -1,4 +1,4 @@
-/*  $Id$
+/*  $Id: ExperimentalWARCWriter.java 4604 2006-09-06 05:38:18Z stack-sf $
  *
  * Created on July 27th, 2006
  *
@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.io.UTF8Bytes;
 import org.archive.io.WriterPoolMember;
+import org.archive.io.warc.WARCConstants;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -59,7 +60,7 @@ import org.archive.util.anvl.ANVLRecord;
  * <p>While being written, WARCs have a '.open' suffix appended.
  *
  * @author stack
- * @version $Revision$ $Date$
+ * @version $Revision: 4604 $ $Date: 2006-09-05 22:38:18 -0700 (Tue, 05 Sep 2006) $
  */
 public class ExperimentalWARCWriter extends WriterPoolMember
 implements WARCConstants {

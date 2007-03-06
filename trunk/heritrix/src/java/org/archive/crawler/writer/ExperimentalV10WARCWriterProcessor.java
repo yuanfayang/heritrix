@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ExperimentalWARCWriterProcessor.java 4935 2007-02-23 00:27:24Z gojomo $
  *
  * Created on August 1st, 2006.
  *
@@ -42,9 +42,9 @@ import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.io.warc.WARCConstants;
-import org.archive.io.warc.WARCWriterPool;
+import org.archive.io.warc.v10.ExperimentalWARCWriter;
+import org.archive.io.warc.v10.V10WARCWriterPool;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -55,7 +55,7 @@ import org.archive.util.anvl.ANVLRecord;
  * 
  * @author stack
  */
-public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor
+public class ExperimentalV10WARCWriterProcessor extends WriterPoolProcessor
 implements CoreAttributeConstants, CrawlStatusListener,
 WriterPoolSettings, FetchStatusCodes, WARCConstants {
 
@@ -75,12 +75,12 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     /**
      * @param name Name of this writer.
      */
-    public ExperimentalWARCWriterProcessor(String name) {
+    public ExperimentalV10WARCWriterProcessor(String name) {
         super(name, "Experimental WARCWriter processor");
     }
 
     protected void setupPool(final AtomicInteger serialNo) {
-		setPool(new WARCWriterPool(serialNo, this, getPoolMaximumActive(),
+		setPool(new V10WARCWriterPool(serialNo, this, getPoolMaximumActive(),
             getPoolMaximumWait()));
     }
     
