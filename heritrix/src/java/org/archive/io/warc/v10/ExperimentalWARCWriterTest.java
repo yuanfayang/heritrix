@@ -1,7 +1,7 @@
 /*
  * ExperimentalWARCWriterTest
  *
- * $Id$
+ * $Id: ExperimentalWARCWriterTest.java 4554 2006-08-30 02:35:48Z stack-sf $
  *
  * Created on July 27th, 2006
  *
@@ -23,7 +23,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -41,6 +41,7 @@ import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.UTF8Bytes;
 import org.archive.io.WriterPoolMember;
+import org.archive.io.warc.WARCConstants;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.TmpDirTestCase;
@@ -49,7 +50,7 @@ import org.archive.util.anvl.ANVLRecord;
 /**
  * Test Writer and Reader.
  * @author stack
- * @version $Date$ $Version$
+ * @version $Date: 2006-08-29 19:35:48 -0700 (Tue, 29 Aug 2006) $ $Version$
  */
 public class ExperimentalWARCWriterTest
 extends TmpDirTestCase implements WARCConstants {

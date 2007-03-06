@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: WARCWriterPool.java 4566 2006-08-31 16:51:41Z stack-sf $
  *
  * Created on August 1st, 2006.
  *
@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,16 +33,16 @@ import org.archive.io.WriterPoolSettings;
 /**
  * A pool of WARCWriters.
  * @author stack
- * @version $Revision$ $Date$
+ * @version $Revision: 4566 $ $Date: 2006-08-31 09:51:41 -0700 (Thu, 31 Aug 2006) $
  */
-public class WARCWriterPool extends WriterPool {
+public class V10WARCWriterPool extends WriterPool {
     /**
      * Constructor
      * @param settings Settings for this pool.
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public WARCWriterPool(final WriterPoolSettings settings,
+    public V10WARCWriterPool(final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
     	this(new AtomicInteger(), settings, poolMaximumActive, poolMaximumWait);
     }
@@ -54,7 +54,7 @@ public class WARCWriterPool extends WriterPool {
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public WARCWriterPool(final AtomicInteger serial,
+    public V10WARCWriterPool(final AtomicInteger serial,
     		final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
     	super(serial, new BasePoolableObjectFactory() {

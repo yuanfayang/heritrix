@@ -43,8 +43,8 @@ import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecord;
-import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.io.warc.WARCConstants;
+import org.archive.io.warc.v10.ExperimentalWARCWriter;
 import org.archive.util.FileUtils;
 import org.archive.util.anvl.ANVLRecord;
 

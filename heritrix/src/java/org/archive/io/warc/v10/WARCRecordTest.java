@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: WARCRecordTest.java 4545 2006-08-26 00:33:38Z stack-sf $
  *
  * Created on August 25th, 2006
  *
@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
