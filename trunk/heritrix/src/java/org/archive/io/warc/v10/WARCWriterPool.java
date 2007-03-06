@@ -35,14 +35,14 @@ import org.archive.io.WriterPoolSettings;
  * @author stack
  * @version $Revision: 4566 $ $Date: 2006-08-31 09:51:41 -0700 (Thu, 31 Aug 2006) $
  */
-public class V10WARCWriterPool extends WriterPool {
+public class WARCWriterPool extends WriterPool {
     /**
      * Constructor
      * @param settings Settings for this pool.
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public V10WARCWriterPool(final WriterPoolSettings settings,
+    public WARCWriterPool(final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
     	this(new AtomicInteger(), settings, poolMaximumActive, poolMaximumWait);
     }
@@ -54,7 +54,7 @@ public class V10WARCWriterPool extends WriterPool {
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public V10WARCWriterPool(final AtomicInteger serial,
+    public WARCWriterPool(final AtomicInteger serial,
     		final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
     	super(serial, new BasePoolableObjectFactory() {

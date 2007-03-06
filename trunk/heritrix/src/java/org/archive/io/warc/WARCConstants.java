@@ -54,7 +54,7 @@ public interface WARCConstants extends ArchiveFileConstants {
      * Setting to 0.10 because differs from 0.9 spec.  See accompanying
      * package documentation.
      */
-	public static final String WARC_VERSION = "0.10";
+	public static final String WARC_VERSION = "0.12";
     
     /**
      * Assumed maximum size of a Header Line.
@@ -109,6 +109,10 @@ public interface WARCConstants extends ArchiveFileConstants {
      */
     public static final String DEFAULT_ENCODING = "ISO-8859-1";
     public static final String HEADER_LINE_ENCODING = DEFAULT_ENCODING;
+    
+    // TODO: Revisit. 8859 isn't correct, especially if we settle on RFC822
+    // headers
+    public static final String WARC_HEADER_ENCODING = HEADER_LINE_ENCODING;
     
     public static final String [] HEADER_FIELD_KEYS = {
         VERSION_FIELD_KEY,
@@ -188,6 +192,26 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String NAMED_FIELD_TRUNCATED_VALUE_HEAD =
         "long-headers";
     public static final String NAMED_FIELD_TRUNCATED_VALUE_UNSPECIFIED = null;
+    
+    // Headers new to version 0.12 of spec.
+    public static final String HEADER_KEY_URI = "WARC-Subject-URI";
+    public static final String HEADER_KEY_DATE = "WARC-Date";
+    public static final String HEADER_KEY_TYPE = "WARC-Type";
+    public static final String HEADER_KEY_IP = "WARC-IP-Address";   
+    public static final String HEADER_KEY_CHECKSUM = "WARC-Checksum";
+    public static final String HEADER_KEY_CONCURRENT_TO =
+        "WARC-Concurrent-To";
+    public static final String HEADER_KEY_TRUNCATED = "WARC-Truncated";
+    
+    public static final String MIME_VERSION = "MIME-Version: 1.0";
+    public static final String CONTENT_ID = "Content-ID";
+    public static final String CONTENT_LENGTH = "Content-Length";
+    public static final String CONTENT_TYPE = "Content-Type";
+    
+    public static final String COLON_SPACE = ": ";
+    // TODO: This is not in spec. Fix.
+    public static final String TRUNCATED_VALUE_UNSPECIFIED = "unspecified";
+    
     
     /**
      * To be safe, lets use application type rather than message. Regards 
