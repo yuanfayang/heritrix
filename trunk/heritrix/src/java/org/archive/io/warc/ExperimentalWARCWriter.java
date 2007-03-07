@@ -30,9 +30,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.cert.CRL;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.io.UTF8Bytes;
 import org.archive.io.WriterPoolMember;
-import org.archive.io.warc.WARCConstants;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -76,12 +72,6 @@ implements WARCConstants {
             e.printStackTrace();
         }
     };
-    
-    /**
-     * Formatter for the length.
-     */
-    private static NumberFormat RECORD_LENGTH_FORMATTER =
-        new DecimalFormat(PLACEHOLDER_RECORD_LENGTH_STRING);
     
     /**
      * Metadata.
@@ -193,7 +183,7 @@ implements WARCConstants {
         return sb.toString();
     }
 
-    protected byte [] createRecordHeader(final String type,
+    protected String createRecordHeader(final String type,
     		final String url, final String create14DigitDate,
     		final String mimetype, final URI recordId,
     		final ANVLRecord xtraHeaders, final long contentLength)
@@ -215,15 +205,14 @@ implements WARCConstants {
 
         // TODO: Is MIME Version needed.
         sb.append(MIME_VERSION).append(CRLF);
-        sb.append(CONTENT_ID).append(COLON_SPACE).append(recordId.toString()).
-            append(CRLF);
+        sb.append(CONTENT_ID).append(COLON_SPACE).append('<').
+            append(recordId.toString()).append('>').append(CRLF);
         sb.append(CONTENT_TYPE).append(COLON_SPACE).
             append(checkHeaderLineMimetypeParameter(mimetype)).append(CRLF);
         sb.append(CONTENT_LENGTH).append(COLON_SPACE).
             append(Long.toString(contentLength)).append(CRLF);
     	
-        // TODO: Revisit encoding.
-    	return sb.toString().getBytes(WARC_HEADER_ENCODING);
+    	return sb.toString();
     }
 
     protected void writeRecord(final String type, final String url,
@@ -237,19 +226,20 @@ implements WARCConstants {
     	if (contentLength == 0 &&
                 (xtraHeaders == null || xtraHeaders.size() <= 0)) {
     		throw new IllegalArgumentException("Cannot write record " +
-    		    "of conent-length zero and base headers only.");
+    		    "of content-length zero and base headers only.");
     	}
     	
         preWriteRecordTasks();
         try {
-        	
-        	// Serialize metadata first so we have metadata length.
-            final byte [] header = createRecordHeader(type, url,
+            final String header = createRecordHeader(type, url,
             	create14DigitDate, mimetype, recordId, xtraHeaders,
             	contentLength);
-            write(header);
-            write(CRLF_BYTES);
+            // TODO: Revisit endcoding of header.
+            write(header.getBytes(WARC_HEADER_ENCODING));
+            
             if (contentStream != null && contentLength > 0) {
+                // Write out the header/body separator.
+                write(CRLF_BYTES);
             	readFullyFrom(contentStream, contentLength, this.readbuffer);
             }
             
