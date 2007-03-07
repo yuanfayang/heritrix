@@ -32,6 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -44,7 +45,16 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
+import javax.xml.transform.SourceLocator;
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
@@ -55,6 +65,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
@@ -152,6 +163,11 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
      * Total number of bytes written to disc.
      */
     private long totalBytesWritten = 0;
+    
+    /**
+     * Calculate metadata once only.
+     */
+    transient private List<String> cachedMetadata = null;
 
 
     /**
@@ -586,5 +602,117 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         } finally {
             dos.close();
         }
+    }
+    
+    /**
+     * Return list of metadatas to add to first arc file metadata record.
+     * 
+     * Default is to stylesheet the order file.  To specify stylesheet,
+     * override {@link #getFirstrecordStylesheet()}.
+     *
+     * Get xml files from settingshandler.  Currently order file is the
+     * only xml file.  We're NOT adding seeds to meta data.
+     *
+     * @return List of strings and/or files to add to arc file as metadata or
+     * null.
+     */
+    public synchronized List<String> getMetadata() {
+        if (this.cachedMetadata != null) {
+            return this.cachedMetadata;
+        }
+        return cacheMetadata();
+    }
+    
+    protected synchronized List<String> cacheMetadata() {
+        if (this.cachedMetadata != null) {
+            return this.cachedMetadata;
+        }
+        
+        // If no stylesheet, return empty metadata.
+        if (getFirstrecordStylesheet() == null ||
+                getFirstrecordStylesheet().length() == 0) {
+            this.cachedMetadata = new ArrayList<String>(1);
+            this.cachedMetadata.add("");
+            return this.cachedMetadata;
+        }
+        
+        List<String> result = null;
+        if (!XMLSettingsHandler.class.isInstance(getSettingsHandler())) {
+            logger.warning("Expected xml settings handler (No warcinfo).");
+            // Early return
+            return result;
+        }
+        
+        XMLSettingsHandler xsh = (XMLSettingsHandler)getSettingsHandler();
+        File orderFile = xsh.getOrderFile();
+        if (!orderFile.exists() || !orderFile.canRead()) {
+                logger.severe("File " + orderFile.getAbsolutePath() +
+                    " is does not exist or is not readable.");
+        } else {
+            result = new ArrayList<String>(1);
+            result.add(getFirstrecordBody(orderFile));
+        }
+        this.cachedMetadata = result;
+        return this.cachedMetadata;
+    }
+    
+    /**
+     * @preturn Full path to stylesheet (Its read off the CLASSPATH
+     * as resource).
+     */
+    protected String getFirstrecordStylesheet() {
+        return null;
+    }
+
+    /**
+     * Write the arc metadata body content.
+     *
+     * Its based on the order xml file but into this base we'll add other info
+     * such as machine ip.
+     *
+     * @param orderFile Order file.
+
+     *
+     * @return String that holds the arc metaheader body.
+     */
+    protected String getFirstrecordBody(File orderFile) {
+        String result = null;
+        TransformerFactory factory = TransformerFactory.newInstance();
+        Templates templates = null;
+        Transformer xformer = null;
+        try {
+            templates = factory.newTemplates(new StreamSource(
+                this.getClass().getResourceAsStream(getFirstrecordStylesheet())));
+            xformer = templates.newTransformer();
+            // Below parameter names must match what is in the stylesheet.
+            xformer.setParameter("software", "Heritrix " +
+                Heritrix.getVersion() + " http://crawler.archive.org");
+            xformer.setParameter("ip",
+                InetAddress.getLocalHost().getHostAddress());
+            xformer.setParameter("hostname",
+                InetAddress.getLocalHost().getHostName());
+            StreamSource source = new StreamSource(
+                new FileInputStream(orderFile));
+            StringWriter writer = new StringWriter();
+            StreamResult target = new StreamResult(writer);
+            xformer.transform(source, target);
+            result= writer.toString();
+        } catch (TransformerConfigurationException e) {
+            logger.severe("Failed transform " + e);
+        } catch (FileNotFoundException e) {
+            logger.severe("Failed transform, file not found " + e);
+        } catch (UnknownHostException e) {
+            logger.severe("Failed transform, unknown host " + e);
+        } catch(TransformerException e) {
+            SourceLocator locator = e.getLocator();
+            int col = locator.getColumnNumber();
+            int line = locator.getLineNumber();
+            String publicId = locator.getPublicId();
+            String systemId = locator.getSystemId();
+            logger.severe("Transform error " + e + ", col " + col + ", line " +
+                line + ", publicId " + publicId + ", systemId " + systemId);
+        }
+
+        return result;
     }
 }

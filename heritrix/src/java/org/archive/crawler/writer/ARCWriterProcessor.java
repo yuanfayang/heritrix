@@ -86,11 +86,6 @@ WriterPoolSettings, FetchStatusCodes {
     private static final String [] DEFAULT_PATH = {"arcs"};
 
     /**
-     * Calculate metadata once only.
-     */
-    transient private List<String> cachedMetadata = null;
-
-    /**
      * @param name Name of this writer.
      */
     public ARCWriterProcessor(String name) {
@@ -190,96 +185,9 @@ WriterPoolSettings, FetchStatusCodes {
         }
         checkBytesWritten();
     }
-
-    /**
-     * Return list of metadatas to add to first arc file metadata record.
-     *
-     * Get xml files from settingshandle.  Currently order file is the
-     * only xml file.  We're NOT adding seeds to meta data.
-     *
-     * @return List of strings and/or files to add to arc file as metadata or
-     * null.
-     */
-    public synchronized List<String> getMetadata() {
-        if (this.cachedMetadata != null) {
-            return this.cachedMetadata;
-        }
-        return cacheMetadata();
-    }
     
-    protected synchronized List<String> cacheMetadata() {
-        if (this.cachedMetadata != null) {
-            return this.cachedMetadata;
-        }
-        
-        List<String> result = null;
-        if (!XMLSettingsHandler.class.isInstance(getSettingsHandler())) {
-            logger.warning("Expected xml settings handler (No arcmetadata).");
-            // Early return
-            return result;
-        }
-        
-        XMLSettingsHandler xsh = (XMLSettingsHandler)getSettingsHandler();
-        File orderFile = xsh.getOrderFile();
-        if (!orderFile.exists() || !orderFile.canRead()) {
-                logger.severe("File " + orderFile.getAbsolutePath() +
-                    " is does not exist or is not readable.");
-        } else {
-            result = new ArrayList<String>(1);
-            result.add(getMetadataBody(orderFile));
-        }
-        this.cachedMetadata = result;
-        return this.cachedMetadata;
-    }
-
-    /**
-     * Write the arc metadata body content.
-     *
-     * Its based on the order xml file but into this base we'll add other info
-     * such as machine ip.
-     *
-     * @param orderFile Order file.
-     *
-     * @return String that holds the arc metaheader body.
-     */
-    protected String getMetadataBody(File orderFile) {
-        String result = null;
-        TransformerFactory factory = TransformerFactory.newInstance();
-        Templates templates = null;
-        Transformer xformer = null;
-        try {
-            templates = factory.newTemplates(new StreamSource(
-                this.getClass().getResourceAsStream("/arcMetaheaderBody.xsl")));
-            xformer = templates.newTransformer();
-            // Below parameter names must match what is in the stylesheet.
-            xformer.setParameter("software", "Heritrix " +
-                Heritrix.getVersion() + " http://crawler.archive.org");
-            xformer.setParameter("ip",
-                InetAddress.getLocalHost().getHostAddress());
-            xformer.setParameter("hostname",
-                InetAddress.getLocalHost().getHostName());
-            StreamSource source = new StreamSource(
-                new FileInputStream(orderFile));
-            StringWriter writer = new StringWriter();
-            StreamResult target = new StreamResult(writer);
-            xformer.transform(source, target);
-            result= writer.toString();
-        } catch (TransformerConfigurationException e) {
-            logger.severe("Failed transform " + e);
-        } catch (FileNotFoundException e) {
-            logger.severe("Failed transform, file not found " + e);
-        } catch (UnknownHostException e) {
-            logger.severe("Failed transform, unknown host " + e);
-        } catch(TransformerException e) {
-            SourceLocator locator = e.getLocator();
-            int col = locator.getColumnNumber();
-            int line = locator.getLineNumber();
-            String publicId = locator.getPublicId();
-            String systemId = locator.getSystemId();
-            logger.severe("Transform error " + e + ", col " + col + ", line " +
-                line + ", publicId " + publicId + ", systemId " + systemId);
-        }
-
-        return result;
+    @Override
+    protected String getFirstrecordStylesheet() {
+        return "/arcMetaheaderBody.xsl";
     }
 }

@@ -198,15 +198,17 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String HEADER_KEY_DATE = "WARC-Date";
     public static final String HEADER_KEY_TYPE = "WARC-Type";
     public static final String HEADER_KEY_IP = "WARC-IP-Address";   
-    public static final String HEADER_KEY_CHECKSUM = "WARC-Checksum";
+    public static final String HEADER_KEY_CHECKSUM = "WARC-Digest";
     public static final String HEADER_KEY_CONCURRENT_TO =
         "WARC-Concurrent-To";
     public static final String HEADER_KEY_TRUNCATED = "WARC-Truncated";
+    public static final String HEADER_KEY_FILENAME = "WARC-Filename";
     
     public static final String MIME_VERSION = "MIME-Version: 1.0";
     public static final String CONTENT_ID = "Content-ID";
     public static final String CONTENT_LENGTH = "Content-Length";
     public static final String CONTENT_TYPE = "Content-Type";
+    public static final String CONTENT_DESCRIPTION = "Content-Description";
     
     public static final String COLON_SPACE = ": ";
     // TODO: This is not in spec. Fix.

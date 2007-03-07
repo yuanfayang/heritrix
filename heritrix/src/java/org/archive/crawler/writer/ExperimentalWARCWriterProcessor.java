@@ -28,7 +28,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -151,7 +150,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             // 'transaction'.
             final URI baseid = getRecordID();
             final String timestamp =
-                ArchiveUtils.get14DigitDate(curi.getLong(A_FETCH_BEGAN_TIME));
+                ArchiveUtils.getLog14Date(curi.getLong(A_FETCH_BEGAN_TIME));
             if (lowerCaseScheme.startsWith("http")) {
                 // Add named fields for ip, checksum, and relate the metadata
                 // and request to the resource field.
@@ -306,9 +305,9 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         }
         return result;
     }  
-
-    public List getMetadata() {
-        // TODO: As ANVL?
-        return null;
+    
+    @Override
+    protected String getFirstrecordStylesheet() {
+        return "/warcinfobody.xsl";
     }
 }

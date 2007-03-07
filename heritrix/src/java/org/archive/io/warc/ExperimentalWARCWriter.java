@@ -105,7 +105,6 @@ implements WARCConstants {
             final List warcinfoData)
     throws IOException {
         super(serialNo, out, f, cmprs, a14DigitDate);
-        // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
             
@@ -125,7 +124,6 @@ implements WARCConstants {
             final int maxSize, final List warcinfoData) {
         super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
         	WARC_FILE_EXTENSION);
-        // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
     
@@ -291,9 +289,9 @@ implements WARCConstants {
         		filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
         }
         ANVLRecord record = new ANVLRecord(2);
-        record.addLabelValue(NAMED_FIELD_WARCFILENAME, filename);
+        record.addLabelValue(HEADER_KEY_FILENAME, filename);
         if (description != null && description.length() > 0) {
-        	record.addLabelValue(NAMED_FIELD_DESCRIPTION, description);
+        	record.addLabelValue(CONTENT_DESCRIPTION, description);
         }
         // Add warcinfo body.
         byte [] warcinfoBody = null;
