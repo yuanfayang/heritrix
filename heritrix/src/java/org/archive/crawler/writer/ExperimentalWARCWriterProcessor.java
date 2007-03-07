@@ -82,12 +82,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
      * @param name Name of this writer.
      */
     public ExperimentalWARCWriterProcessor(final String name) {
-        this(name, "Experimental WARCWriter processor (Version 0.12)");
-    }
-    
-    protected ExperimentalWARCWriterProcessor(final String name,
-            final String description) {
-        super(name, description);
+        super(name, "Experimental WARCWriter processor (Version 0.12)");
     }
 
     protected void setupPool(final AtomicInteger serialNo) {
@@ -154,21 +149,20 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         try {
             // Write a request, response, and metadata all in the one
             // 'transaction'.
-            // TODO: This all better belongs as methods on WARCWriter. Refactor.
             final URI baseid = getRecordID();
             final String timestamp =
                 ArchiveUtils.get14DigitDate(curi.getLong(A_FETCH_BEGAN_TIME));
-            ANVLRecord headers = null;
             if (lowerCaseScheme.startsWith("http")) {
                 // Add named fields for ip, checksum, and relate the metadata
                 // and request to the resource field.
-                headers = new ANVLRecord(5);
+                // TODO: Use other than ANVL (or rename ANVL as NameValue or
+                // use RFC822 (commons-httpclient?).
+                ANVLRecord headers = new ANVLRecord(5);
                 if (curi.getContentDigest() != null) {
                     headers.addLabelValue(HEADER_KEY_CHECKSUM,
                         curi.getContentDigestSchemeString());
                 }
-                headers.addLabelValue(HEADER_KEY_IP,
-                    getHostAddress(curi));
+                headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
                 if (curi.isTruncatedFetch()) {
                     String value = curi.isTimeTruncatedFetch()?
                         NAMED_FIELD_TRUNCATED_VALUE_TIME:
@@ -182,13 +176,15 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 }
                 URI rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
                 	baseid, curi, headers);
+                
                 headers = new ANVLRecord(1);
                 headers.addLabelValue(HEADER_KEY_CONCURRENT_TO,
-                    rid.toString());
+                    '<' + rid.toString() + '>');
                 writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
                 	baseid, curi, headers);
                 writeMetadata(w, timestamp, baseid, curi, headers);
             } else if (lowerCaseScheme.equals("dns")) {
+                ANVLRecord headers = null;
                 String ip = curi.getString(A_DNS_SERVER_IP_LABEL);
                 if (ip != null && ip.length() > 0) {
                     headers = new ANVLRecord(1);
