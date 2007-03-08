@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import org.apache.commons.codec.binary.Base64;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.io.CrawlerJournal;
 import org.archive.util.IoUtils;
 import org.archive.util.SURT;
 import org.archive.util.bdbje.EnhancedEnvironment;
@@ -177,7 +178,7 @@ public abstract class PersistProcessor extends Processor {
         
         if(source.isFile()) {
             // scan log, writing to database
-            BufferedReader br = new BufferedReader(new FileReader(source));
+            BufferedReader br = CrawlerJournal.getBufferedReader(source);
             Iterator iter = new LineReadingIterator(br);
             while(iter.hasNext()) {
                 String line = (String) iter.next(); 
@@ -233,7 +234,7 @@ public abstract class PersistProcessor extends Processor {
         
         if(source.isFile()) {
             // scan log, writing to database
-            BufferedReader br = new BufferedReader(new FileReader(source));
+            BufferedReader br = CrawlerJournal.getBufferedReader(source);
             Iterator iter = new LineReadingIterator(br);
             while(iter.hasNext()) {
                 String line = (String) iter.next(); 
