@@ -22,7 +22,12 @@
  */
 package org.archive.crawler.processor.recrawl;
 
+import java.io.File;
+
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.event.CrawlStatusListener;
+
+import com.sleepycat.je.DatabaseException;
 
 /**
  * Store CrawlURI attributes from latest fetch to persistent storage for
@@ -31,7 +36,8 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author gojomo
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
-public class PersistStoreProcessor extends PersistOnlineProcessor {
+public class PersistStoreProcessor extends PersistOnlineProcessor 
+implements CrawlStatusListener {
     private static final long serialVersionUID = -8308356194337303758L;
 
     /**
@@ -44,10 +50,55 @@ public class PersistStoreProcessor extends PersistOnlineProcessor {
                 "from latest fetch for consultation by a later recrawl.");
     }
 
+    protected void initialTasks() {
+        super.initialTasks();
+        // Add this class to crawl state listeners to note checkpoints
+        getController().addCrawlStatusListener(this);
+    }
+    
     @Override
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
         if(shouldStore(curi)) {
             store.put(persistKeyFor(curi),curi.getPersistentAList());
         }
+    }
+    
+    public void crawlCheckpoint(File checkpointDir) throws Exception {
+        // sync db
+        try {
+            historyDb.sync();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void crawlEnded(String sExitMessage) {
+        // ignored
+        
+    }
+
+    public void crawlEnding(String sExitMessage) {
+        // ignored
+        
+    }
+
+    public void crawlPaused(String statusMessage) {
+        // ignored
+        
+    }
+
+    public void crawlPausing(String statusMessage) {
+        // ignored
+        
+    }
+
+    public void crawlResuming(String statusMessage) {
+        // ignored
+        
+    }
+
+    public void crawlStarted(String message) {
+        // ignored
     }
 }
