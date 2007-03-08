@@ -48,6 +48,7 @@ public interface WARCConstants extends ArchiveFileConstants {
 	 * WARC files and records begin with this sequence.
 	 */
 	public static final String WARC_MAGIC = "WARC/";
+    public static final String WARC_010_MAGIC = "WARC/";
     
     /**
      * Hard-coded version for WARC files made with this code.
@@ -159,6 +160,7 @@ public interface WARCConstants extends ArchiveFileConstants {
      * WARC-ID
      */
     public static final String WARC_ID = WARC_MAGIC + WARC_VERSION;
+    public static final String WARC_010_ID = WARC_010_MAGIC + "0.10";
         
     /**
      * Header field seperator character.
@@ -182,7 +184,7 @@ public interface WARCConstants extends ArchiveFileConstants {
     
     public static final String NAMED_FIELD_IP_LABEL = "IP-Address";
     public static final String NAMED_FIELD_CHECKSUM_LABEL = "Checksum";
-    public static final String NAMED_FIELD_RELATED_LABEL = "Related-Record-ID";
+    public static final String NAMED_FIELD_RELATED_LABEL = "References";
     public static final String NAMED_FIELD_WARCFILENAME = "Filename";
     public static final String NAMED_FIELD_DESCRIPTION = "Description";
     public static final String NAMED_FIELD_FILEDESC = "ARC-FileDesc";
@@ -224,7 +226,7 @@ public interface WARCConstants extends ArchiveFileConstants {
      * @see <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html#sec19.1">rfc2616 section 19.1</a>
      */
     public static final String HTTP_REQUEST_MIMETYPE =
-    	"application/http;msgtype=request";
+    	"application/http; msgtype=request";
     public static final String HTTP_RESPONSE_MIMETYPE =
-    	"application/http;msgtype=response";
+    	"application/http; msgtype=response";
 }

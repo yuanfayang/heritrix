@@ -83,7 +83,7 @@ implements WARCConstants {
 		boolean compressed = testCompressedWARCFile(f);
 		if (!compressed) {
 			if (!FileUtils.isReadableWithExtensionAndMagic(f,
-					DOT_WARC_FILE_EXTENSION, WARC_MAGIC)) {
+					DOT_WARC_FILE_EXTENSION, WARC_010_MAGIC)) {
 				throw new IOException(f.getAbsolutePath()
 						+ " is not a WARC file.");
 			}
