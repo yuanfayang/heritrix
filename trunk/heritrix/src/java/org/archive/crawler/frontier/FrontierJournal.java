@@ -34,7 +34,7 @@ import org.archive.net.UURI;
  * @version $Date$, $Revision$
  */
 public interface FrontierJournal {
-    public static final String LOGNAME_RECOVER = "recover";
+    public static final String LOGNAME_RECOVER = "recover.gz";
 
     /**
      * @param curi CrawlURI that has been scheduled to be added to the
