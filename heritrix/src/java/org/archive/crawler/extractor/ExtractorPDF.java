@@ -50,9 +50,6 @@ public class ExtractorPDF extends Extractor implements CoreAttributeConstants {
     // TODO: make configurable
     private long maxSizeToParse = DEFAULT_MAX_SIZE_TO_PARSE;
 
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
-
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
@@ -122,7 +119,7 @@ public class ExtractorPDF extends Extractor implements CoreAttributeConstants {
             numberOfLinksExtracted += uris.size();
         }
 
-        logger.fine(curi+" has "+uris.size()+" links.");
+        LOGGER.fine(curi+" has "+uris.size()+" links.");
         // Set flag to indicate that link extraction is completed.
         curi.linkExtractorFinished();
     }
