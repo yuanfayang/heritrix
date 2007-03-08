@@ -263,6 +263,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
 		curi.setHttpRecorder(rec);
 		InputStream is = curi.getHttpRecorder().inputWrap(
 				new ByteArrayInputStream(dnsRecord));
+        if(digestContent) {
+            rec.getRecordedInput().startDigest();
+        }
 		// Reading from the wrapped stream, behind the scenes, will write
 		// files into scratch space
 		try {
