@@ -27,15 +27,11 @@ package org.archive.crawler.frontier;
 import it.unimi.dsi.mg4j.util.MutableString;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -373,36 +369,5 @@ implements FrontierJournal {
             segs.add(read.subSequence(lastStart,i));
         }
         return (CharSequence[]) segs.toArray(new CharSequence[segs.size()]);        
-    }
-
-    /**
-     * @param source
-     * @return Recover log buffered reader.
-     * @throws IOException
-     */
-    public static BufferedReader getBufferedReader(File source)
-    throws IOException {
-        boolean isGzipped = source.getName().toLowerCase().
-            endsWith(GZIP_SUFFIX);
-        FileInputStream fis = new FileInputStream(source);
-        return new BufferedReader(isGzipped?
-            new InputStreamReader(new GZIPInputStream(fis)):
-            new InputStreamReader(fis));   
-    }
-
-    /**
-     * Get a BufferedInputStream on the recovery file given.
-     *
-     * @param source file to open
-     * @return Recover log buffered input stream.
-     * @throws IOException
-     */
-    public static BufferedInputStream getBufferedInput(File source)
-    throws IOException {
-        boolean isGzipped = source.getName().toLowerCase().
-            endsWith(GZIP_SUFFIX);
-        FileInputStream fis = new FileInputStream(source);
-        return isGzipped ? new BufferedInputStream(new GZIPInputStream(fis))
-                : new BufferedInputStream(fis);
     }
 }
