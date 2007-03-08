@@ -91,10 +91,7 @@ extends Formatter implements CoreAttributeConstants {
 
         String via = curi.flattenVia();
         
-        Object digest = curi.getContentDigest();
-        if (digest != null) {
-            digest = Base32.encode((byte [])digest);
-        }
+        String digest = curi.getContentDigestSchemeString();
 
         String sourceTag = curi.containsKey(A_SOURCE_TAG) 
                 ? curi.getString(A_SOURCE_TAG)
@@ -122,7 +119,7 @@ extends Formatter implements CoreAttributeConstants {
             .append(" ")
             .append(arcTimeAndDuration)
             .append(" ")
-            .append(checkForNull((String)digest))
+            .append(checkForNull(digest))
             .append(" ")
             .append(checkForNull(sourceTag))
             .append(" ")
