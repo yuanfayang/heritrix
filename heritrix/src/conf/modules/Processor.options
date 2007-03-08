@@ -45,3 +45,4 @@ org.archive.crawler.processor.recrawl.PersistStoreProcessor|PersistStoreProcesso
 org.archive.crawler.processor.recrawl.PersistLogProcessor|PersistLogProcessor
 org.archive.crawler.processor.recrawl.PersistLoadProcessor|PersistLoadProcessor
 org.archive.crawler.processor.recrawl.FetchHistoryProcessor|FetchHistoryProcessor
+org.archive.crawler.extractor.TrapSuppressExtractor|TrapSuppressExtractor
