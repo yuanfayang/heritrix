@@ -117,4 +117,12 @@ public interface AList {
      * @param other source AList
      */
     public void copyKeysFrom(Iterator keys, AList other);
+
+    /**
+     * Provides a somewhat pretty (matching brackets for nesting) 
+     * string of AList. 
+     * 
+     * @return pretty String
+     */
+    public String toPrettyString();
 }
