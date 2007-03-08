@@ -14,8 +14,10 @@ import java.util.NoSuchElementException;
 // Tested by TestHashtableAList
 
 /** Implementation of {@link AList} using simple hashtable. */
-@SuppressWarnings({"serial", "unchecked"})
+@SuppressWarnings({"unchecked"})
 public class HashtableAList implements MutableAList, Serializable {
+    private static final long serialVersionUID = 3670660167336648644L;
+    
     private final Hashtable mTable = new Hashtable();
 
     private static class DateArray {
@@ -433,5 +435,60 @@ public class HashtableAList implements MutableAList, Serializable {
 
     public String toString() {
         return mTable.toString();
+    }
+
+    /**
+     * Enhance given object's default String display for appearing
+     * nested in a pretty AList String.
+     * 
+     * @param obj Object to prettify
+     * @return prettified String
+     */
+    protected String prettyString(Object obj) {
+        if (obj instanceof AList) return ((AList)obj).toPrettyString();
+        else if (obj instanceof AList[]) return prettyString((AList[])obj);
+        else return "<"+obj+">"; 
+    }
+    
+    /* (non-Javadoc)
+     * @see st.ata.util.AList#toPrettyString()
+     */
+    public String toPrettyString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{ ");
+        boolean needsComma = false; 
+        for( String key : getKeyArray()) {
+            if(needsComma) {
+                builder.append(", ");
+            }
+            builder.append(key);
+            builder.append(": ");
+            builder.append(prettyString(mTable.get(key)));
+            needsComma = true; 
+        }
+        builder.append(" }");
+        return builder.toString();
+    }
+    
+    /**
+     * Provide a slightly-improved String of AList[]
+     * 
+     * @param alists
+     * @return prettified (in square brackets) of AList[]
+     */
+    protected String prettyString(AList[] alists) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[ ");
+        boolean needsComma = false; 
+        for( AList alist : alists) {
+            if(alist==null) continue;
+            if(needsComma) {
+                builder.append(", ");
+            }
+            builder.append(alist.toPrettyString());
+            needsComma = true; 
+        }
+        builder.append(" ]");
+        return builder.toString();
     }
 }

@@ -24,8 +24,10 @@ package org.archive.crawler.processor.recrawl;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
@@ -119,22 +121,43 @@ public abstract class PersistProcessor extends Processor {
 
     /**
      * Utility main for importing a log into a BDB-JE environment or moving a
-     * database between environments. 
+     * database between environments (2 arguments), or simply dumping a log
+     * to stdout in a more readable format (1 argument). 
      * 
      * @param args command-line arguments
      * @throws DatabaseException
      * @throws IOException
      */
     public static void main(String[] args) throws DatabaseException, IOException {
-        if(args.length!=2) {
-            System.out.println("Requires 2 arguments: ");
-            System.out.println("    source target");
+        if(args.length==2) {
+            main2args(args);
+        } else if (args.length==1) {
+            main1arg(args);
+        } else {
+            System.out.println("Arguments: ");
+            System.out.println("    source [target]");
             System.out.println(
                 "...where source is either a txtser log file or BDB env dir");
             System.out.println(
-                "and target is a BDB env dir. ");
+                "and target, if present, is a BDB env dir. ");
             return;
         }
+        
+    }
+
+    /**
+     * Move the history information in the first argument (either the path 
+     * to a log or to an environment containing a uri_history database) to 
+     * the environment in the second environment (path; environment will 
+     * be created if it dow not already exist). 
+     * 
+     * @param args command-line arguments
+     * @throws DatabaseException
+     * @throws FileNotFoundException
+     * @throws UnsupportedEncodingException
+     * @throws IOException
+     */
+    private static void main2args(String[] args) throws DatabaseException, FileNotFoundException, UnsupportedEncodingException, IOException {
         File source = new File(args[0]);
         File env = new File(args[1]);
         if(!env.exists()) {
@@ -169,10 +192,10 @@ public abstract class PersistProcessor extends Processor {
         } else {
             // open the source env history DB, copying entries to target env
             EnhancedEnvironment sourceEnv = setupEnvironment(source);
-            StoredClassCatalog sourceClassCatalog = targetEnv.getClassCatalog();
-            Database sourceHistoryDB = targetEnv.openDatabase(
+            StoredClassCatalog sourceClassCatalog = sourceEnv.getClassCatalog();
+            Database sourceHistoryDB = sourceEnv.openDatabase(
                     null,URI_HISTORY_DBNAME,historyDatabaseConfig());
-            StoredSortedMap sourceHistoryMap = new StoredSortedMap(historyDB,
+            StoredSortedMap sourceHistoryMap = new StoredSortedMap(sourceHistoryDB,
                     new StringBinding(), new SerialBinding(sourceClassCatalog,
                             AList.class), true);
             Iterator iter = sourceHistoryMap.entrySet().iterator();
@@ -193,6 +216,59 @@ public abstract class PersistProcessor extends Processor {
         System.out.println(count+" records imported from "+source+" to BDB env "+env);
     }
 
+    /**
+     * Dump the contents of the argument (path to a persist log) to stdout
+     * in a slightly more readable format. 
+     * 
+     * @param args command-line arguments
+     * @throws DatabaseException
+     * @throws FileNotFoundException
+     * @throws UnsupportedEncodingException
+     * @throws IOException
+     */
+    private static void main1arg(String[] args) throws DatabaseException, FileNotFoundException, UnsupportedEncodingException, IOException {
+        File source = new File(args[0]);
+        
+        int count = 0;
+        
+        if(source.isFile()) {
+            // scan log, writing to database
+            BufferedReader br = new BufferedReader(new FileReader(source));
+            Iterator iter = new LineReadingIterator(br);
+            while(iter.hasNext()) {
+                String line = (String) iter.next(); 
+                String[] splits = line.split(" ");
+                AList alist = (AList)IoUtils.deserializeFromByteArray(
+                        Base64.decodeBase64(splits[1].getBytes("UTF8")));
+                System.out.println(
+                        splits[0] + " " + alist.toPrettyString());
+                count++;
+            }
+            br.close();
+        } else {
+            // open the source env history DB, copying entries to target env
+            EnhancedEnvironment sourceEnv = setupEnvironment(source);
+            StoredClassCatalog sourceClassCatalog = sourceEnv.getClassCatalog();
+            Database sourceHistoryDB = sourceEnv.openDatabase(
+                    null,URI_HISTORY_DBNAME,historyDatabaseConfig());
+            StoredSortedMap sourceHistoryMap = new StoredSortedMap(sourceHistoryDB,
+                    new StringBinding(), new SerialBinding(sourceClassCatalog,
+                            AList.class), true);
+            Iterator iter = sourceHistoryMap.entrySet().iterator();
+            while(iter.hasNext()) {
+                Entry item = (Entry) iter.next(); 
+                AList alist = (AList)item.getValue();
+                System.out.println(item.getKey() + " " + alist.toPrettyString());
+                count++;
+            }
+            StoredIterator.close(iter);
+            sourceHistoryDB.close();
+            sourceEnv.close();
+        }
+        
+        System.out.println(count+" records dumped from "+source);
+    }
+    
     private static EnhancedEnvironment setupEnvironment(File env) throws DatabaseException {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
