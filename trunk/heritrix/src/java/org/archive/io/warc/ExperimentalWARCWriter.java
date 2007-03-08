@@ -191,8 +191,11 @@ implements WARCConstants {
     	sb.append(WARC_ID).append(CRLF);
         sb.append(HEADER_KEY_TYPE).append(COLON_SPACE).append(type).
             append(CRLF);
-        sb.append(HEADER_KEY_URI).append(COLON_SPACE).
-            append(checkHeaderValue(url)).append(CRLF);
+        // Do not write a subject-uri if not one present.
+        if (url != null && url.length() > 0) {
+            sb.append(HEADER_KEY_URI).append(COLON_SPACE).
+                append(checkHeaderValue(url)).append(CRLF);
+        }
         sb.append(HEADER_KEY_DATE).append(COLON_SPACE).
             append(create14DigitDate).append(CRLF);
         if (xtraHeaders != null) {
@@ -306,7 +309,7 @@ implements WARCConstants {
         	}
         	warcinfoBody = baos.toByteArray();
         }
-        URI uri = writeWarcinfoRecord("text/plain", record,
+        URI uri = writeWarcinfoRecord("text/xml", record,
             new ByteArrayInputStream(warcinfoBody), warcinfoBody.length);
         // TODO: If at start of file, and we're writing compressed,
         // write out our distinctive GZIP extensions.
@@ -350,7 +353,7 @@ implements WARCConstants {
         final String mimetype, final URI recordId, final ANVLRecord namedFields,
     	final InputStream fileMetadata, final long fileMetadataLength)
     throws IOException {
-    	writeRecord(WARCINFO, recordId.toString(), create14DigitDate, mimetype,
+    	writeRecord(WARCINFO, null, create14DigitDate, mimetype,
         	recordId, namedFields, fileMetadata, fileMetadataLength);
     }
     

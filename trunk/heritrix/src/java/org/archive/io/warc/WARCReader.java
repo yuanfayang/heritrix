@@ -53,7 +53,7 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
     @Override
     protected void initialize(String i) {
         super.initialize(i);
-        setVersion("0.10");
+        setVersion(WARC_VERSION);
     }
     
     /**
@@ -68,7 +68,7 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
                 "in here");
         }
 
-        // Records end in 2*CRLF.  Such it up.
+        // Records end in 2*CRLF.  Suck it up.
         readExpectedChar(getIn(), CRLF.charAt(0));
         readExpectedChar(getIn(), CRLF.charAt(1));
         readExpectedChar(getIn(), CRLF.charAt(0));

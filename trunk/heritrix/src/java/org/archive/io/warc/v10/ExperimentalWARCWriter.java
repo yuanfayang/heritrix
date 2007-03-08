@@ -204,7 +204,7 @@ implements WARCConstants {
     throws IOException {
     	final StringBuilder sb =
     		new StringBuilder(2048/*A SWAG: TODO: Do analysis.*/);
-    	sb.append(WARC_ID);
+    	sb.append(WARC_010_ID);
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(PLACEHOLDER_RECORD_LENGTH_STRING);
     	sb.append(HEADER_FIELD_SEPARATOR);
@@ -228,7 +228,7 @@ implements WARCConstants {
     	
     	// Insert length and pad out to fixed width with zero prefix to
         // highlight 'fixed-widthness' of length.
-    	int start = WARC_ID.length() + 1 /*HEADER_FIELD_SEPARATOR */;
+    	int start = WARC_010_ID.length() + 1 /*HEADER_FIELD_SEPARATOR */;
         int end = start + PLACEHOLDER_RECORD_LENGTH_STRING.length();
     	String lenStr = RECORD_LENGTH_FORMATTER.format(length);
     	sb.replace(start, end, lenStr);
