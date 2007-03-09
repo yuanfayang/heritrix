@@ -306,7 +306,11 @@ public class RecordingInputStream
     public void markContentBegin() {
         this.recordingOutputStream.markContentBegin();
     }
-
+    
+    public long getContentBegin() {
+        return this.recordingOutputStream.getContentBegin();
+    }
+    
     public void startDigest() {
         this.recordingOutputStream.startDigest();
     }

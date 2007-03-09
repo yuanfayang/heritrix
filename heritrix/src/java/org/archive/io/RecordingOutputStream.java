@@ -384,6 +384,13 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     /**
+     * Return stored content-begin-mark (which is also end-of-headers)
+     */
+    public long getContentBegin() {
+        return this.contentBeginMark;
+    }
+    
+    /**
      * Starts digesting recorded data, if a MessageDigest has been
      * set.
      */
