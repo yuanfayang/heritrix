@@ -33,6 +33,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpConstants;
+import org.apache.commons.httpclient.HttpMethodBase;
+import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -50,7 +54,6 @@ import org.archive.io.warc.WARCWriterPool;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
-
 
 /**
  * Experimental WARCWriterProcessor.
@@ -84,10 +87,18 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         "write-metadata";
     
     /**
-     * Key for whether to write 'metadata' type records where possible
+     * Key for whether to write 'revisit' type records when
+     * consecutive identical digest
      */
     public static final String ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS =
         "write-revisit-for-identical-digests";
+    
+    /**
+     * Key for whether to write 'revisit' type records for server
+     * "304 not modified" responses
+     */
+    public static final String ATTR_WRITE_REVISIT_FOR_NOT_MODIFIED =
+        "write-revisit-for-not-modified";
     
     /**
      * Default path list.
@@ -120,6 +131,13 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 "Whether to write 'revisit' type records when a URI's " +
                 "history indicates the previous fetch had an identical " +
                 "content digest. " +
+                "Default is true.", new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(
+                new SimpleType(ATTR_WRITE_REVISIT_FOR_NOT_MODIFIED,
+                "Whether to write 'revisit' type records when a " +
+                "304-Not Modified response is received. " +
                 "Default is true.", new Boolean(true)));
         e.setOverrideable(true);
         e.setExpertSetting(true);
@@ -205,10 +223,15 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
                 URI rid;
                 
-                if(IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
+                if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
                         ((Boolean)getUncheckedAttribute(curi, 
                                 ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
                     rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+                            baseid, curi, headers);
+                } else if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED && 
+                        ((Boolean)getUncheckedAttribute(curi, 
+                                ATTR_WRITE_REVISIT_FOR_NOT_MODIFIED))) {
+                    rid = writeRevisitNotModified(w, timestamp,
                             baseid, curi, headers);
                 } else {
                     if (curi.isTruncatedFetch()) {
@@ -301,7 +324,10 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         revisedLength = revisedLength > 0 
             ? revisedLength 
             : curi.getHttpRecorder().getRecordedInput().getSize();
-        namedFields.addLabelValue(HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
+        namedFields.addLabelValue(
+        		HEADER_KEY_PROFILE, PROFILE_REVISIT_IDENTICAL_DIGEST);
+        namedFields.addLabelValue(
+        		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
         w.writeRevisitRecord(curi.toString(), timestamp, mimetype, baseid,
             namedFields,
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
@@ -309,7 +335,46 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return baseid;
     }
     
-    protected URI writeMetadata(final ExperimentalWARCWriter w,
+    protected URI writeRevisitNotModified(final ExperimentalWARCWriter w,
+            final String timestamp, 
+            final URI baseid, final CrawlURI curi,
+            final ANVLRecord namedFields) 
+    throws IOException {
+        namedFields.addLabelValue(
+        		HEADER_KEY_PROFILE, PROFILE_REVISIT_NOT_MODIFIED);
+        // save just enough context to understand basis of not-modified
+        if(curi.containsKey(A_HTTP_TRANSACTION)) {
+            HttpMethodBase method = 
+                (HttpMethodBase) curi.getObject(A_HTTP_TRANSACTION);
+            saveHeader(A_ETAG_HEADER,method,namedFields,HEADER_KEY_ETAG);
+            saveHeader(A_LAST_MODIFIED_HEADER,method,namedFields,
+            		HEADER_KEY_LAST_MODIFIED);
+        }
+        // truncate to zero-length (all necessary info is above)
+        namedFields.addLabelValue(HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
+        w.writeRevisitRecord(curi.toString(), timestamp, null, baseid,
+            namedFields,
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
+            0);
+        return baseid;
+    }
+    
+    /**
+     * Save a header from the given HTTP operation into the 
+     * provider headers under a new name
+     * 
+     * @param origName header name to get if present
+     * @param method http operation containing headers
+     */
+    protected void saveHeader(String origName, HttpMethodBase method, 
+    		ANVLRecord headers, String newName) {
+        Header header = method.getResponseHeader(origName);
+        if(header!=null) {
+            headers.addLabelValue(newName, header.getValue());
+        }
+    }
+
+	protected URI writeMetadata(final ExperimentalWARCWriter w,
             final String timestamp,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 

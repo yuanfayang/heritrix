@@ -208,8 +208,10 @@ implements WARCConstants {
         sb.append(MIME_VERSION).append(CRLF);
         sb.append(CONTENT_ID).append(COLON_SPACE).append('<').
             append(recordId.toString()).append('>').append(CRLF);
-        sb.append(CONTENT_TYPE).append(COLON_SPACE).
-            append(checkHeaderLineMimetypeParameter(mimetype)).append(CRLF);
+        if (contentLength > 0) {
+            sb.append(CONTENT_TYPE).append(COLON_SPACE).append(
+                checkHeaderLineMimetypeParameter(mimetype)).append(CRLF);
+        }
         sb.append(CONTENT_LENGTH).append(COLON_SPACE).
             append(Long.toString(contentLength)).append(CRLF);
     	
@@ -240,7 +242,7 @@ implements WARCConstants {
             
             if (contentStream != null && contentLength > 0) {
                 // Write out the header/body separator.
-                write(CRLF_BYTES);
+                write(CRLF_BYTES); // TODO: should this be written even for zero-length?
             	readToLimitFrom(contentStream, contentLength, this.readbuffer);
             }
             
