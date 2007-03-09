@@ -133,7 +133,7 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String RESOURCE = "resource";
     public static final String REQUEST = "request";
     public static final String METADATA = "metadata";
-    public static final String REVISIT = "revist";
+    public static final String REVISIT = "revisit";
     public static final String CONVERSION = "conversion";
     public static final String CONTINUATION = "continuation";
     
@@ -204,7 +204,17 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String HEADER_KEY_CONCURRENT_TO =
         "WARC-Concurrent-To";
     public static final String HEADER_KEY_TRUNCATED = "WARC-Truncated";
+    public static final String HEADER_KEY_PROFILE = "WARC-Profile";
     public static final String HEADER_KEY_FILENAME = "WARC-Filename";
+    public static final String HEADER_KEY_ETAG = "WARC-Etag";
+    public static final String HEADER_KEY_LAST_MODIFIED = "WARC-Last-Modified";
+    
+    public static final String PROFILE_REVISIT_IDENTICAL_DIGEST = 
+    	"http://netpreserve.org/warc/0.12/revisit/identical-content-digest";
+    public static final String PROFILE_REVISIT_NOT_MODIFIED = 
+    	"http://netpreserve.org/warc/0.12/revisit/server-not-modified";
+    public static final String PROFILE_CONVERSION_SOFTWARE_COMMAND = 
+    	"http://netpreserve.org/warc/0.12/conversion/software-command";
     
     public static final String MIME_VERSION = "MIME-Version: 1.0";
     public static final String CONTENT_ID = "Content-ID";
