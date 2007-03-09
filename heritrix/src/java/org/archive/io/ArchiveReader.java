@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.archive.util.MimetypeUtils;
 
 
@@ -683,7 +685,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      * @throws IOException
      * @return True if handled.
      */
-    protected boolean outputRecord(final String format)
+    public boolean outputRecord(final String format)
     throws IOException {
     	boolean result = true;
         if (format.equals(CDX)) {
@@ -712,4 +714,39 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      * when we bring Archive files local and need to clean up afterward.
      */
     public abstract ArchiveReader getDeleteFileOnCloseReader(final File f);
+    
+    /**
+     * Output passed record using passed format specifier.
+     * @param r ARCReader instance to output.
+     * @param format What format to use outputting.
+     * @throws IOException
+     */
+    protected static void outputRecord(final ArchiveReader r,
+        final String format)
+    throws IOException {
+        if (!r.outputRecord(format)) {
+            throw new IOException("Unsupported format" +
+                " (or unsupported on a single record): " + format);
+        }
+    }
+    
+    /**
+     * @return Base Options object filled out with help, digest, strict, etc.
+     * options.
+     */
+    protected static Options getOptions() {
+        Options options = new Options();
+        options.addOption(new Option("h","help", false,
+            "Prints this message and exits."));
+        options.addOption(new Option("o","offset", true,
+            "Outputs record at this offset into file."));
+        options.addOption(new Option("d","digest", true,
+            "Pass true|false. Expensive. Default: true (SHA-1)."));
+        options.addOption(new Option("s","strict", false,
+            "Strict mode. Fails parse if incorrectly formatted file."));
+        options.addOption(new Option("f","format", true,
+            "Output options: 'cdx', cdxfile', 'dump', 'gzipdump'," +
+            "'or 'nohead'. Default: 'cdx'."));
+        return options;
+    }
 }

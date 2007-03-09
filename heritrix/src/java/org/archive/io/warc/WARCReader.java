@@ -158,21 +158,6 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
             throw new IOException("Unsupported format: " + format);
     	}
     }
-    
-    /**
-     * Output passed record using passed format specifier.
-     * @param r ARCReader instance to output.
-     * @param format What format to use outputting.
-     * @throws IOException
-     */
-    protected static void outputRecord(final WARCReader r,
-    	final String format)
-    throws IOException {
-    	if (!r.outputRecord(format)) {
-            throw new IOException("Unsupported format" +
-                " (or unsupported on a single record): " + format);
-    	}
-    }
 
     /**
      * Generate a CDX index file for an ARC file.
@@ -212,18 +197,7 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
      */
     public static void main(String [] args)
     throws ParseException, IOException, java.text.ParseException {
-        Options options = new Options();
-        options.addOption(new Option("h","help", false,
-            "Prints this message and exits."));
-        options.addOption(new Option("o","offset", true,
-            "Outputs record at this offset into arc file."));
-        options.addOption(new Option("d","digest", true,
-            "Pass true|false. Expensive. Default: true (SHA-1)."));
-        options.addOption(new Option("s","strict", false,
-            "Strict mode. Fails parse if incorrectly formatted WARC."));
-        options.addOption(new Option("f","format", true,
-            "Output options: 'cdx', cdxfile', 'dump', 'gzipdump'," +
-            "'or 'nohead'. Default: 'cdx'."));
+        Options options = getOptions();
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
