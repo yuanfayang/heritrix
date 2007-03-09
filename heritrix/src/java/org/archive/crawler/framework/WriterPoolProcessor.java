@@ -129,7 +129,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     public static final String ATTR_MAX_BYTES_WRITTEN =
     	"total-bytes-to-write";
     
-    /***
+    /**
      * Key for whether to skip writing records of content-digest repeats 
      */
     public static final String ATTR_SKIP_IDENTICAL_DIGESTS =
