@@ -193,7 +193,7 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
 			}
 
 			public String getUrl() {
-				return (String)this.headers.get(URL_FIELD_KEY);
+				return (String)this.headers.get(HEADER_KEY_URI);
 			}
 
 			public String getVersion() {

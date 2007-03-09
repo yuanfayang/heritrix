@@ -33,7 +33,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import org.archive.io.arc.ARCReaderFactory;
-import org.archive.io.warc.v10.WARCReaderFactory;
+import org.archive.io.warc.WARCReaderFactory;
 import org.archive.net.UURI;
 import org.archive.net.md5.Md5URLConnection;
 import org.archive.net.rsync.RsyncURLConnection;

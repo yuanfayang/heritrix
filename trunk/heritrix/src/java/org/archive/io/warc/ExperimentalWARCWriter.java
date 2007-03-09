@@ -335,7 +335,7 @@ implements WARCConstants {
     	final long fileMetadataLength)
     throws IOException {
     	final URI recordid = generateRecordId(TYPE, WARCINFO);
-    	writeWarcinfoRecord(ArchiveUtils.get14DigitDate(), mimetype, recordid,
+    	writeWarcinfoRecord(ArchiveUtils.getLog14Date(), mimetype, recordid,
             namedFields, fileMetadata, fileMetadataLength);
     	return recordid;
     }
