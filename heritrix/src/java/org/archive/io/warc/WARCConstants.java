@@ -200,7 +200,7 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String HEADER_KEY_DATE = "WARC-Date";
     public static final String HEADER_KEY_TYPE = "WARC-Type";
     public static final String HEADER_KEY_IP = "WARC-IP-Address";   
-    public static final String HEADER_KEY_CHECKSUM = "WARC-Digest";
+    public static final String HEADER_KEY_CHECKSUM = "WARC-Content-Digest";
     public static final String HEADER_KEY_CONCURRENT_TO =
         "WARC-Concurrent-To";
     public static final String HEADER_KEY_TRUNCATED = "WARC-Truncated";
