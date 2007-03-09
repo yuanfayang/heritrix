@@ -36,9 +36,12 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.ExperimentalWARCWriter;
@@ -69,6 +72,24 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
+     * Key for whether to write 'request' type records where possible
+     */
+    public static final String ATTR_WRITE_REQUESTS =
+        "write-requests";
+    
+    /**
+     * Key for whether to write 'metadata' type records where possible
+     */
+    public static final String ATTR_WRITE_METADATA =
+        "write-metadata";
+    
+    /**
+     * Key for whether to write 'metadata' type records where possible
+     */
+    public static final String ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS =
+        "write-revisit-for-identical-digests";
+    
+    /**
      * Default path list.
      */
     private static final String [] DEFAULT_PATH = {"warcs"};
@@ -82,6 +103,26 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
      */
     public ExperimentalWARCWriterProcessor(final String name) {
         super(name, "Experimental WARCWriter processor (Version 0.12)");
+        Type e = addElementToDefinition(
+                new SimpleType(ATTR_WRITE_REQUESTS,
+                "Whether to write 'request' type records. " +
+                "Default is true.", new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(
+                new SimpleType(ATTR_WRITE_METADATA,
+                "Whether to write 'metadata' type records. " +
+                "Default is true.", new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(
+                new SimpleType(ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS,
+                "Whether to write 'revisit' type records when a URI's " +
+                "history indicates the previous fetch had an identical " +
+                "content digest. " +
+                "Default is true.", new Boolean(true)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
     }
 
     protected void setupPool(final AtomicInteger serialNo) {
@@ -162,26 +203,40 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                         curi.getContentDigestSchemeString());
                 }
                 headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
-                if (curi.isTruncatedFetch()) {
-                    String value = curi.isTimeTruncatedFetch()?
-                        NAMED_FIELD_TRUNCATED_VALUE_TIME:
-                        curi.isLengthTruncatedFetch()?
-                            NAMED_FIELD_TRUNCATED_VALUE_LEN:
-                            curi.isHeaderTruncatedFetch()?
-                                NAMED_FIELD_TRUNCATED_VALUE_HEAD:
-                        // TODO: Add this to spec.
-                        TRUNCATED_VALUE_UNSPECIFIED;
-                    headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+                URI rid;
+                
+                if(IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
+                        ((Boolean)getUncheckedAttribute(curi, 
+                                ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
+                    rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+                            baseid, curi, headers);
+                } else {
+                    if (curi.isTruncatedFetch()) {
+                        String value = curi.isTimeTruncatedFetch()?
+                            NAMED_FIELD_TRUNCATED_VALUE_TIME:
+                            curi.isLengthTruncatedFetch()?
+                                NAMED_FIELD_TRUNCATED_VALUE_LEN:
+                                curi.isHeaderTruncatedFetch()?
+                                    NAMED_FIELD_TRUNCATED_VALUE_HEAD:
+                            // TODO: Add this to spec.
+                            TRUNCATED_VALUE_UNSPECIFIED;
+                        headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+                    }
+                    rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+                    	baseid, curi, headers);
                 }
-                URI rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
-                	baseid, curi, headers);
                 
                 headers = new ANVLRecord(1);
                 headers.addLabelValue(HEADER_KEY_CONCURRENT_TO,
                     '<' + rid.toString() + '>');
-                writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
-                	baseid, curi, headers);
-                writeMetadata(w, timestamp, baseid, curi, headers);
+
+                if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_REQUESTS))) {
+                    writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
+                            baseid, curi, headers);
+                }
+                if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
+                    writeMetadata(w, timestamp, baseid, curi, headers);
+                } 
             } else if (lowerCaseScheme.equals("dns")) {
                 ANVLRecord headers = null;
                 String ip = curi.getString(A_DNS_SERVER_IP_LABEL);
@@ -234,6 +289,23 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             namedFields,
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
             curi.getHttpRecorder().getRecordedInput().getSize());
+        return baseid;
+    }
+    
+    protected URI writeRevisitDigest(final ExperimentalWARCWriter w,
+            final String timestamp, final String mimetype,
+            final URI baseid, final CrawlURI curi,
+            final ANVLRecord namedFields) 
+    throws IOException {
+        long revisedLength = curi.getHttpRecorder().getRecordedInput().getContentBegin();
+        revisedLength = revisedLength > 0 
+            ? revisedLength 
+            : curi.getHttpRecorder().getRecordedInput().getSize();
+        namedFields.addLabelValue(HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
+        w.writeRevisitRecord(curi.toString(), timestamp, mimetype, baseid,
+            namedFields,
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
+            revisedLength);
         return baseid;
     }
     

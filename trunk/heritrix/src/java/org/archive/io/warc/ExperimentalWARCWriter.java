@@ -241,7 +241,7 @@ implements WARCConstants {
             if (contentStream != null && contentLength > 0) {
                 // Write out the header/body separator.
                 write(CRLF_BYTES);
-            	readFullyFrom(contentStream, contentLength, this.readbuffer);
+            	readToLimitFrom(contentStream, contentLength, this.readbuffer);
             }
             
             // Write out the two blank lines at end of all records.
@@ -395,6 +395,17 @@ implements WARCConstants {
             final long responseLength)
     throws IOException {
         writeRecord(RESPONSE, url, create14DigitDate,
+            mimetype, recordId, namedFields, response,
+            responseLength);
+    }
+    
+    public void writeRevisitRecord(final String url,
+            final String create14DigitDate, final String mimetype,
+            final URI recordId,
+            final ANVLRecord namedFields, final InputStream response,
+            final long responseLength)
+    throws IOException {
+        writeRecord(REVISIT, url, create14DigitDate,
             mimetype, recordId, namedFields, response,
             responseLength);
     }
