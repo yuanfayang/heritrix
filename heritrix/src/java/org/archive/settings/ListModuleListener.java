@@ -26,8 +26,12 @@
 
 package org.archive.settings;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -47,7 +51,7 @@ public class ListModuleListener<T> implements ModuleListener, Serializable {
 
     
     private Class<T> type;
-    private Map<T,Object> objects = new WeakHashMap<T,Object>();
+    private transient Map<T,Object> objects = new WeakHashMap<T,Object>();
 
     
 
@@ -84,4 +88,24 @@ public class ListModuleListener<T> implements ModuleListener, Serializable {
     public Class<T> getType() {
         return type;
     }
+
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        Map<T,Object> temp = new HashMap<T,Object>(objects.size());
+        synchronized (objects) {
+            temp.putAll(objects);
+        }
+        out.writeObject(temp);
+    }
+    
+    
+    private void readObject(ObjectInputStream in) 
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        @SuppressWarnings("unchecked")
+        Map<T,Object> temp = (Map)in.readObject();
+        this.objects = new WeakHashMap<T,Object>(temp);
+    }
+
 }
