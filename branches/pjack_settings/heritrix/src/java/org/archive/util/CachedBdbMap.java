@@ -121,6 +121,13 @@ implements Map<K,V>, Serializable {
      */
     private String dbName = null;
 
+    
+    private Class<K> keyClass;
+    
+    
+    private Class<V> valueClass;
+    
+    
     /**
      * Reference to the Reference#referent Field.
      */
@@ -223,13 +230,26 @@ implements Map<K,V>, Serializable {
      * @param classCatalog
      * @throws DatabaseException
      */
+    @SuppressWarnings("unchecked")
     public synchronized void initialize(final Environment env, final Class keyClass,
             final Class valueClass, final StoredClassCatalog classCatalog)
     throws DatabaseException {
         initializeInstance();
         this.db = openDatabase(env, this.dbName);
+        this.keyClass = keyClass;
+        this.valueClass = valueClass;
         this.diskMap = createDiskMap(this.db, classCatalog, keyClass,
             valueClass);
+    }
+    
+    
+    public Class<K> getKeyClass() {
+        return keyClass;
+    }
+    
+    
+    public Class<V> getValueClass() {
+        return valueClass;
     }
     
     /**

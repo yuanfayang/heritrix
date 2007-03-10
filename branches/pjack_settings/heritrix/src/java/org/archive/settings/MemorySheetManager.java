@@ -47,6 +47,12 @@ public class MemorySheetManager extends SheetManager {
      */
     private static final long serialVersionUID = 1L;
 
+    
+    /**
+     * The default sheet.
+     */
+    transient private SingleSheet defaults;
+
 
     private boolean online;
     
@@ -65,11 +71,6 @@ public class MemorySheetManager extends SheetManager {
     final private ConcurrentMap<String,Sheet> associations;
 
 
-    /**
-     * The default sheet.
-     */
-    final private SingleSheet defaults;
-
 
     /**
      * The root map.
@@ -78,7 +79,7 @@ public class MemorySheetManager extends SheetManager {
     
 
     public MemorySheetManager() {
-        this(null);
+        this(new ConcurrentHashMap<String,Object>());
     }
 
     
@@ -94,8 +95,8 @@ public class MemorySheetManager extends SheetManager {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
         defaults = addSingleSheet("default");
-        defaults.set(getManagerModule(), MANAGER, this);
         this.online = online;
+        defaults.set(getManagerModule(), MANAGER, this);
         setRoot(root);
     }
 
@@ -112,8 +113,8 @@ public class MemorySheetManager extends SheetManager {
     
     
     void setRoot(Map<String,Object> root) {
-        this.root = root;
-        getDefault().set(getManagerModule(), ROOT, root);
+        this.root = new SettingsMap<Object>(this, root);
+        getDefault().set(getManagerModule(), ROOT, this.root);
     }
 
 
@@ -223,5 +224,6 @@ public class MemorySheetManager extends SheetManager {
     public void reload() {}
     
     public void save() {}
+
 
 }

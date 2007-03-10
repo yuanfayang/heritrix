@@ -281,6 +281,7 @@ public class SingleSheet extends Sheet {
         if (value == null) {
             map.remove(key);
         } else {
+            value = transform(value);
             Object old = map.put(key, value);
             if (!KeyTypes.isSimple(Offline.getType(value))) {
                 getSheetManager().fireModuleChanged(old, value);
@@ -300,5 +301,17 @@ public class SingleSheet extends Sheet {
     }
 
 
+    @SuppressWarnings("unchecked")
+    private Object transform(Object o) {
+        if ((o instanceof Map) && (!(o instanceof SettingsMap))) {
+            Map<String,Object> map = (Map)o;
+            return new SettingsMap<Object>(getSheetManager(), map);
+        }
+        if ((o instanceof List) && (!(o instanceof SettingsList))) {
+            List<Object> list = (List)o;
+            return new SettingsList<Object>(getSheetManager(), list);
+        }
+        return o;
+    }
 
 }

@@ -45,6 +45,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.util.CheckpointUtils;
+import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.RecoverAction;
 import org.archive.state.Dependency;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -87,10 +89,12 @@ public class BdbModule implements Module, Checkpointable, Serializable {
     }
     
     final private BdbConfig config;
-
+    
     private boolean checkpointCopy;
     
-    private File path;
+    private String path;
+    
+    private int cachePercent;
     
     private transient Environment bdbEnvironment;
     
@@ -102,16 +106,15 @@ public class BdbModule implements Module, Checkpointable, Serializable {
         new ConcurrentHashMap<String,CachedBdbMap>();
     
     
-    public BdbModule(StateProvider provider, BdbConfig bdbConfig) 
+    public BdbModule(BdbConfig bdbConfig, StateProvider provider) 
     throws DatabaseException {
         if (bdbConfig == null) {
             throw new IllegalArgumentException("config may not be null");
         }
         this.config = bdbConfig;
-        this.checkpointCopy = provider.get(bdbConfig, 
-                BdbConfig.CHECKPOINT_COPY_BDBJE_LOGS);
-        int cachePercent = provider.get(bdbConfig, BdbConfig.BDB_CACHE_PERCENT);
-        String path = provider.get(bdbConfig, BdbConfig.DIR);
+        this.checkpointCopy = provider.get(config, BdbConfig.CHECKPOINT_COPY_BDBJE_LOGS);
+        cachePercent = provider.get(config, BdbConfig.BDB_CACHE_PERCENT);
+        path = provider.get(config, BdbConfig.DIR);
         setUp(path, cachePercent, true);
     }
     
@@ -123,9 +126,9 @@ public class BdbModule implements Module, Checkpointable, Serializable {
         config.setLockTimeout(5000000);        
         config.setCachePercent(cachePercent);
         
-        this.path = new File(path);
-        this.path.mkdirs();
-        this.bdbEnvironment = new Environment(this.path, config);
+        File f = new File(path);
+        f.mkdirs();
+        this.bdbEnvironment = new Environment(f, config);
         
         // Open the class catalog database. Create it if it does not
         // already exist. 
@@ -166,6 +169,7 @@ public class BdbModule implements Module, Checkpointable, Serializable {
             return r;
         }
         r = new CachedBdbMap<K,V>(dbName);
+        
         r.initialize(bdbEnvironment, key, value, classCatalog);
         bigMaps.put(dbName, r);
         return r;
@@ -174,24 +178,26 @@ public class BdbModule implements Module, Checkpointable, Serializable {
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
-        try {
-            out.writeInt(bdbEnvironment.getConfig().getCachePercent());
-            out.writeUTF(bdbEnvironment.getHome().getAbsolutePath());
-        } catch (DatabaseException e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
-        }
     }
     
     
     private void readObject(ObjectInputStream in) 
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        int cachePercent = in.readInt();
-        String path = in.readUTF();
+        if (in instanceof CheckpointRecovery) {
+            CheckpointRecovery cr = (CheckpointRecovery)in;
+            path = cr.translatePath(path);
+            cr.setState(this.config, BdbConfig.DIR, path);
+        }
         try {
-            setUp(path, cachePercent, false);
+            setUp(path, this.cachePercent, false);
+            for (CachedBdbMap map: bigMaps.values()) {
+                map.initialize(
+                        this.bdbEnvironment, 
+                        map.getKeyClass(), 
+                        map.getValueClass(), 
+                        this.classCatalog);
+            }
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);
@@ -200,10 +206,14 @@ public class BdbModule implements Module, Checkpointable, Serializable {
     }
 
 
-    public void checkpoint(File dir) throws IOException {
+    public void checkpoint(File dir, List<RecoverAction> actions) 
+    throws IOException {
+        if (checkpointCopy) {
+            actions.add(new BdbRecover(path));
+        }
         // First sync bigMaps
         for (Map.Entry<String,CachedBdbMap> me: bigMaps.entrySet()) {
-            me.getValue().sync();            
+            me.getValue().sync();
         }
 
         EnvironmentConfig envConfig;
@@ -280,7 +290,7 @@ public class BdbModule implements Module, Checkpointable, Serializable {
             do {
                 FilenameFilter filter = CheckpointUtils.getJeLogsFilter();
                 srcFilenames =
-                    new HashSet<String>(Arrays.asList(path.list(filter)));
+                    new HashSet<String>(Arrays.asList(new File(path).list(filter)));
                 List tgtFilenames = Arrays.asList(bdbDir.list(filter));
                 if (tgtFilenames != null && tgtFilenames.size() > 0) {
                     srcFilenames.removeAll(tgtFilenames);
@@ -333,6 +343,26 @@ public class BdbModule implements Module, Checkpointable, Serializable {
         buffer.append(lastBdbLogFileHex);
         buffer.append(".jdb");
         return buffer.toString();
+    }
+    
+    
+    private static class BdbRecover implements RecoverAction {
+
+        private static final long serialVersionUID = 1L;
+
+        private String path;
+
+        public BdbRecover(String path) {
+            this.path = path;
+        }
+        
+        public void recoverFrom(File checkpointDir, 
+            CheckpointRecovery recovery) throws Exception {
+            File bdbDir = CheckpointUtils.getBdbSubDirectory(checkpointDir);
+            path = recovery.translatePath(path);
+            FileUtils.copyFiles(bdbDir, new File(path));
+        }
+        
     }
 
 }
