@@ -24,6 +24,7 @@
 package org.archive.state;
 
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +46,9 @@ import org.archive.settings.Offline;
  *
  * @param <Value>
  */
-final public class Key<Value> {
+final public class Key<Value> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /** The name of the field.  Set by the KeyManager. */
     private String fieldName;
@@ -54,31 +57,31 @@ final public class Key<Value> {
     private Class owner;
     
     /** The type of the field. */
-    final private Class<Value> type;
+    transient final private Class<Value> type;
     
     /** The default value of the field. */
-    final private Value def;
+    transient final private Value def;
     
     /** The default offline value of the field. */
-    final private Object offlineDef;
+    transient final private Object offlineDef;
     
     /** The constraints that determine valid values for the field. */
-    final private Set<Constraint<Value>> constraints;
+    transient final private Set<Constraint<Value>> constraints;
 
     // Note that all flags are false by default, and set to true in the
     // presence of a corresponding annotation.
     
     /** True if the property is considered "expert". */
-    private boolean expert;
+    transient private boolean expert;
 
     /** True if the property can be overridden. */
-    private boolean global;
+    transient private boolean global;
     
     /** True if the property can be mutated. */
-    private boolean immutable;
+    transient private boolean immutable;
     
     /** True if the property is a dependency for the class that defined it. */
-    private boolean dependency;
+    transient private boolean dependency;
     
     /**
      * Constructs a new key.
@@ -367,4 +370,9 @@ final public class Key<Value> {
         return Collections.unmodifiableMap(result);
     }
 
+    
+    // Preserve singleton status 
+    private Object readResolve() {
+        return KeyManager.getKeys(owner).get(fieldName);
+    }
 }
