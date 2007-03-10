@@ -17,29 +17,32 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Checkpointable.java
+ * CheckpointStream.java
  *
- * Created on Mar 1, 2007
+ * Created on Mar 8, 2007
  *
  * $Id:$
  */
 
-package org.archive.settings.file;
+package org.archive.settings;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+import java.net.URI;
 
-import org.archive.settings.RecoverAction;
+import org.archive.state.Key;
 
 /**
+ * The information about a checkpoint recovery.
+ * 
  * @author pjack
- *
  */
-public interface Checkpointable {
+public interface CheckpointRecovery {
 
     
-    void checkpoint(File dir, List<RecoverAction> actions) throws IOException;
+    String translatePath(String path);
     
+    URI translateURI(URI uri);
+    
+    <T> void setState(Object module, Key<T> key, T value);
 
+    void apply(SingleSheet global);
 }

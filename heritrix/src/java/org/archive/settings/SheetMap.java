@@ -30,7 +30,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantLock;
@@ -418,6 +420,22 @@ class SheetMap<K,V> implements Serializable {
         out.writeObject(null);
     }
 
+    
+    public Map<K,V> snapshot() {
+        Map<K,V> result = new HashMap<K,V>();
+        AtomicReferenceArray<Node<K,V>> localBuckets = buckets;
+        for (int i = 0; i < localBuckets.length(); i++) {
+            Node<K,V> head = localBuckets.get(i);
+            for (Node<K,V> n = head; n != null; n = n.next) {
+                K key = n.key.get();
+                V value = n.value;
+                if ((key != null) && (value != null)) {
+                    result.put(key, value);
+                }
+            }
+        }
+        return result;
+    }
 
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream in) 

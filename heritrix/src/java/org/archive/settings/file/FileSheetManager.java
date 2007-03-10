@@ -29,6 +29,8 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,7 +47,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.ModuleListener;
+import org.archive.settings.RecoverAction;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
@@ -183,10 +187,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             .getLogger(FileSheetManager.class.getName());
 
     /** The sheets subdirectory. */
-    final private File sheetsDir;
+    private File sheetsDir;
 
     /** The main configuration file. */
-    final private File mainConfig;
+    private File mainConfig;
     
     /** Sheets that are currently in memory. */
     final private Map<String, Sheet> sheets;
@@ -204,7 +208,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     final private BdbModule bdb;
     
-    final private String bdbDir;
+    private String bdbDir;
     
     final private int bdbCachePercent;
 
@@ -255,7 +259,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         dsp.set(config, BdbConfig.DIR, this.bdbDir);
         dsp.set(config, BdbConfig.BDB_CACHE_PERCENT, bdbCachePercent);
         
-        this.bdb = new BdbModule(dsp, config);
+        this.bdb = new BdbModule(config, dsp);
 
         String prop = p.getProperty(ATTR_SHEETS);
         this.sheetsDir = getRelative(main, prop, DEFAULT_SHEETS);
@@ -709,11 +713,65 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     }
 
     
-    public void checkpoint(File dir) throws IOException {
+    public void checkpoint(File dir, List<RecoverAction> actions) 
+    throws IOException {
         File config = new File(dir, "config.txt");
         FileUtils.copyFile(mainConfig, config);
         
         File sheets = new File(dir, "sheets");
         FileUtils.copyFiles(sheetsDir, sheets);
+        
+        actions.add(new FSMRecover(mainConfig.getAbsolutePath(), 
+                sheetsDir.getAbsolutePath()));
+        
     }
+    
+
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+    
+    
+    private void readObject(ObjectInputStream inp) 
+    throws IOException, ClassNotFoundException {
+        inp.defaultReadObject();
+        if (inp instanceof CheckpointRecovery) {
+            CheckpointRecovery cr = (CheckpointRecovery)inp;
+            mainConfig = 
+                new File(cr.translatePath(mainConfig.getAbsolutePath()));
+            sheetsDir =
+                new File(cr.translatePath(sheetsDir.getAbsolutePath()));
+            bdbDir = 
+                new File(cr.translatePath(bdbDir)).getAbsolutePath();
+        }
+    }
+
+
+    static class FSMRecover implements RecoverAction {
+
+        private static final long serialVersionUID = 1L;
+
+        private String mainConfig;
+        private String sheets;
+        
+        
+        public FSMRecover(String mainConfig, String sheets) {
+            this.mainConfig = mainConfig;
+            this.sheets = sheets;
+        }
+        
+        public void recoverFrom(File checkpointDir, CheckpointRecovery recovery) 
+        throws Exception {
+            mainConfig = recovery.translatePath(mainConfig);
+            sheets = recovery.translatePath(sheets);
+            File srcCfg = new File(checkpointDir, "config.txt");
+            FileUtils.copyFile(srcCfg, new File(mainConfig));
+            
+            File srcSheets = new File(checkpointDir, "sheets");
+            FileUtils.copyFile(srcSheets, new File(sheets));
+        }
+
+    }
+
 }

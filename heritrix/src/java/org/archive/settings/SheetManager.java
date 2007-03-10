@@ -36,6 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -57,10 +58,13 @@ public abstract class SheetManager implements StateProvider, Serializable {
     
     final private UnspecifiedSheet unspecified;
     
-    final private Offline offlineThis;
+    final transient private Offline offlineThis;
 
     final private List<ModuleListener> moduleListeners = 
         new CopyOnWriteArrayList<ModuleListener>();
+    
+    final private ListModuleListener<Checkpointable> checkpointables =
+        ListModuleListener.make(Checkpointable.class);
     
     @Immutable
     final public static Key<Map<String,Object>> ROOT = 
@@ -76,9 +80,14 @@ public abstract class SheetManager implements StateProvider, Serializable {
     public SheetManager() {
         this.unspecified = new UnspecifiedSheet(this, "unspecified");
         offlineThis = Offline.make(getClass());
+        moduleListeners.add(checkpointables);
         KeyManager.addKeys(getClass());
     }
     
+    
+    public List<Checkpointable> getCheckpointables() {
+        return checkpointables.getList();
+    }
     
     public SheetManager(Collection<ModuleListener> listeners) {
         this();
