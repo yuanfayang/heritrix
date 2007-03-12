@@ -74,7 +74,7 @@ public class TooManyHopsDecideRule extends DecideRule {
         if (hops.length() <= uri.get(this, MAX_HOPS)) {
             return DecideResult.PASS;
         }
-        return DecideResult.ACCEPT;
+        return DecideResult.REJECT;
     }
 
 }

@@ -22,16 +22,11 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.File;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
-
-import org.archive.crawler.framework.CrawlScope;
-import org.archive.crawler.scope.ClassicScope;
 
 
 /**
@@ -41,47 +36,18 @@ import org.archive.crawler.scope.ClassicScope;
  * @version $Id$
  */
 public class MaxLinkHopsSelfTest
-    extends SelfTestCase
+    extends SelfTestBase
 {
-    /**
-     * Files to find as a list.
-     */
-    private static final List<File> FILES_TO_FIND =
-        Arrays.asList(new File[] {new File("2.html"),
-            new File("3.html"), new File("4.html"), new File("5.html")});
-
-    /**
-     * Files not to find as a list.
-     */
-    private static final List FILES_NOT_TO_FIND =
-        Arrays.asList(new File[] {new File("1.html"), new File("6.html")});
-
-    /**
-     * Assumption is that the setting for max-link-hops is less than this
-     * number.
-     */
-    private static final int MAXLINKHOPS = 5;
-
-
-    /**
-     * Test the max-link-hops setting is being respected.
-     */
-    public void testMaxLinkHops()
-        throws AttributeNotFoundException, MBeanException, ReflectionException
-    {
-        CrawlScope scope =
-           (CrawlScope)getCrawlJob().getSettingsHandler()
-           .getModule(CrawlScope.ATTR_NAME);
-        int maxLinkHops =
-            ((Integer)scope.getAttribute(ClassicScope.ATTR_MAX_LINK_HOPS))
-            .intValue();
-        assertTrue("max-link-hops incorrect", MAXLINKHOPS == maxLinkHops);
-
-        // Make sure file we're NOT supposed to find is actually on disk.
-        assertTrue("File present on disk", filesExist(FILES_NOT_TO_FIND));
-
-        // Ok.  The file not to find exists.  Lets see if it made it into arc.
-        testFilesInArc(FILES_TO_FIND);
+    final private static Set<String> EXPECTED = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList(new String[] {
+            "index.html", "1.html", "2.html", "3.html", 
+            "", "robots.txt"
+    })));
+    
+    public void testMaxHops() throws Exception {
+        Set<String> files = filesInArcs();
+        assertTrue(EXPECTED.equals(files));
     }
+    
 }
 
