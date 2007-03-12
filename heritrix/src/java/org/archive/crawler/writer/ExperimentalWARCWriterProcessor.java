@@ -62,7 +62,7 @@ import org.archive.util.anvl.ANVLRecord;
  * @author stack
  */
 public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor
-implements CoreAttributeConstants, CrawlStatusListener,
+implements CoreAttributeConstants, 
 FetchStatusCodes, WARCConstants {
 
     private static final long serialVersionUID = 3L;
@@ -91,10 +91,10 @@ FetchStatusCodes, WARCConstants {
 
 
     @Override
-    protected void setupPool(StateProvider context, AtomicInteger serialNo) {
-        int maxActive = context.get(this, POOL_MAX_ACTIVE);
-        int maxWait = context.get(this, POOL_MAX_WAIT);
-        WriterPoolSettings wps = getWriterPoolSettings(context);
+    protected void setupPool(AtomicInteger serialNo) {
+        int maxActive = getMaxActive();
+        int maxWait = getMaxWait();
+        WriterPoolSettings wps = getWriterPoolSettings();
         setPool(new WARCWriterPool(serialNo, wps, maxActive, maxWait));
     }
     
