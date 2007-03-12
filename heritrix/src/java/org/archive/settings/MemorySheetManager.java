@@ -51,7 +51,7 @@ public class MemorySheetManager extends SheetManager {
     /**
      * The default sheet.
      */
-    transient private SingleSheet defaults;
+    private SingleSheet defaults;
 
 
     private boolean online;
