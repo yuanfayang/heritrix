@@ -22,11 +22,10 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Selftest for figuring problems parsing URIs in a page.
@@ -37,36 +36,26 @@ import java.util.List;
  * URI Syntax Errors stop page parsing.</a>
  * @version $Revision$, $Date$
  */
-public class BadURIsStopPageParsingSelfTest extends SelfTestCase
+public class BadURIsStopPageParsingSelfTest extends SelfTestBase
 {
+
+
+    
     /**
-     * Files to find as a list.
+     * Files to find as a set.
      * 
      * We don't find goodtwo.html because it has a BASE that is out
      * of scope.
      */
-    private static final List<File> FILES_TO_FIND =
-        Arrays.asList(new File[]
-            {new File("goodone.html"),
-                new File("goodthree.html"),
-                new File("one.html"),
-                new File("two.html"),
-                new File("three.html")});
-
-    public void testFilesFound() {
-        List<File> foundFiles = filesFoundInArc();
-        ArrayList<File> editedFoundFiles
-         = new ArrayList<File>(foundFiles.size());
-        for (Iterator i = foundFiles.iterator(); i.hasNext();) {
-            File f = (File)i.next();
-            if (f.getAbsolutePath().endsWith("polishex.html")) {
-                // There is a URI in our list with the above as suffix.  Its in
-                // the arc as a 404. Remove it.  It doesn't exist on disk so it
-                // will cause the below testFilesInArc to fail.
-                continue;
-            }
-            editedFoundFiles.add(f);
-        }
-        testFilesInArc(FILES_TO_FIND, editedFoundFiles);
+    final private static Set<String> EXPECTED = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList(new String[] {
+            "index.html", "goodone.html", "goodthree.html", "one.html", 
+            "two.html", "three.html", "", "robots.txt"
+    })));
+    
+    public void testFilesFoud() throws Exception {
+        Set<String> files = filesInArcs();
+        assertTrue(EXPECTED.equals(files));
     }
+
 }

@@ -22,9 +22,10 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.File;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -33,26 +34,24 @@ import java.util.List;
  * @author stack
  * @version $Id$
  */
-public class FramesSelfTestCase extends SelfTestCase
+public class FramesSelfTestCase extends SelfTestBase
 {
-    /**
-     * Files to find as a list.
-     */
-    private static final List<File> FILES_TO_FIND =
-        Arrays.asList(new File[]
-            {new File("topframe.html"),
-                new File("leftframe.html"),
-                new File("noframe.html"),
-                new File("index.html"),
-                new File("rightframe.html")});
 
 
+    
     /**
-     * Verify that all frames and their contents are found by the crawler.
-     *
+     * Files to find as a set.
      */
-    public void testFrames()
-    {
-        testFilesInArc(FILES_TO_FIND);
+    final private static Set<String> EXPECTED = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList(new String[] {
+            "index.html", "topframe.html", "leftframe.html", "noframe.html",
+            "rightframe.html", "", "robots.txt"
+    })));
+    
+    public void testFilesFoud() throws Exception {
+        Set<String> files = filesInArcs();
+        assertTrue(EXPECTED.equals(files));
     }
+
+    
 }
