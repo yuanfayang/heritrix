@@ -40,6 +40,7 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
+import org.archive.state.KeyManager;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.je.DatabaseException;
@@ -62,7 +63,9 @@ implements Serializable, Checkpointable {
     /** all URIs scheduled to be crawled */
     protected transient BdbMultipleWorkQueues pendingUris;
 
-
+    static {
+        KeyManager.addKeys(BdbFrontier.class);
+    }
     
     /**
      * Create the single object (within which is one BDB database)

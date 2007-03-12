@@ -27,7 +27,6 @@
 package org.archive.crawler.frontier;
 
 import org.archive.crawler.framework.CrawlerProcessorTestBase;
-import org.archive.crawler.util.BloomUriUniqFilter;
 import org.archive.crawler.util.NoopUriUniqFilter;
 
 
@@ -48,6 +47,12 @@ public class BdbFrontierTest extends CrawlerProcessorTestBase {
     protected Object makeModule() throws Exception {
         return new BdbFrontier(controller, new BucketQueueAssignmentPolicy(), 
                 new NoopUriUniqFilter());
+    }
+
+
+    @Override
+    protected void verifySerialization(Object first, byte[] firstBytes, 
+            Object second, byte[] secondBytes) throws Exception {
     }
 
 
