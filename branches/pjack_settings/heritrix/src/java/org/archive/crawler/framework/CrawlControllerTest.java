@@ -113,4 +113,13 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         return controller;
     }
 
+    
+    @Override
+    protected void verifySerialization(Object first, byte[] firstBytes, 
+            Object second, byte[] secondBytes) throws Exception {
+        // TODO TESTME
+    }
+
+    
+    
 }
