@@ -27,13 +27,16 @@ package org.archive.io;
 import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.logging.Logger;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.Inflater;
+import java.util.zip.ZipException;
 
 
 /**
@@ -193,6 +196,8 @@ implements RepositionableStream {
      * @return Iterator over GZIP Members.
      */
     public Iterator iterator() {
+        final Logger logger = Logger.getLogger(this.getClass().getName());
+        
         try {
             // We know its a RepositionableStream else we'd have failed
         	// construction.  On iterator construction, set file back to
@@ -211,7 +216,14 @@ implements RepositionableStream {
                 try {
                     gotoEOR();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    if ((e instanceof ZipException) ||
+                        (e.getMessage() != null &&
+                         e.getMessage().startsWith("Corrupt GZIP trailer"))) {
+                        // Try skipping end of bad record; try moving to next.
+                        logger.info("Skipping exception " + e.getMessage());
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
                 return moveToNextGzipMember();
             }
