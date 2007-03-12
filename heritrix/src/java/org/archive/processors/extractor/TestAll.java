@@ -26,8 +26,11 @@
 
 package org.archive.processors.extractor;
 
+
+import org.archive.util.TestUtils;
+
 import junit.framework.Test;
-import junit.framework.TestSuite;
+
 
 /**
  * Test suite for org.archive.processors.extractor package.
@@ -38,25 +41,7 @@ public class TestAll {
 
     
     public static Test suite() throws Exception {
-        String cname = TestAll.class.getName();
-        int p = cname.lastIndexOf('.');
-        String pname = cname.substring(0, p);
-        
-        TestSuite suite = new TestSuite(pname);
-        suite.addTestSuite(AggressiveExtractorHTMLTest.class);
-        suite.addTestSuite(ExtractorCSSTest.class);
-        suite.addTestSuite(ExtractorDOCTest.class);
-        suite.addTestSuite(ExtractorHTMLTest.class);
-        suite.addTestSuite(ExtractorHTTPTest.class);
-        suite.addTestSuite(ExtractorImpliedURITest.class);
-        suite.addTestSuite(ExtractorJSTest.class);
-        suite.addTestSuite(ExtractorPDFTest.class);
-        suite.addTestSuite(ExtractorSWFTest.class);
-        suite.addTestSuite(ExtractorUniversalTest.class);
-        suite.addTestSuite(ExtractorURITest.class);
-        suite.addTestSuite(ExtractorXMLTest.class);
-        suite.addTestSuite(HTTPContentDigestTest.class);
-        return suite;
+        return TestUtils.makePackageSuite(TestAll.class);
     }
     
     

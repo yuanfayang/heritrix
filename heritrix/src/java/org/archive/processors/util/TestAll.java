@@ -26,8 +26,11 @@
 
 package org.archive.processors.util;
 
+
+import org.archive.util.TestUtils;
+
 import junit.framework.Test;
-import junit.framework.TestSuite;
+
 
 /**
  * @author pjack
@@ -36,15 +39,7 @@ import junit.framework.TestSuite;
 public class TestAll {
 
     
-    public static Test suite() {
-        String cname = TestAll.class.getName();
-        int p = cname.lastIndexOf('.');
-        String pname = cname.substring(0, p);
-        TestSuite result = new TestSuite(pname);
-        result.addTestSuite(CrawlHostTest.class);
-        result.addTestSuite(CrawlServerTest.class);
-        result.addTestSuite(RobotsHonoringPolicyTest.class);
-        result.addTestSuite(ServerCacheTest.class);        
-        return result;
+    public static Test suite() throws Exception {
+        return TestUtils.makePackageSuite(TestAll.class);
     }
 }

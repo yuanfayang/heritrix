@@ -1552,7 +1552,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             Collections.synchronizedList(new ArrayList<CrawlStatusListener>());
         // Ensure no holdover singleThreadMode
         singleThreadMode = false; 
-        System.out.println("Read the CC " + state + System.identityHashCode(this));
     }
     
     

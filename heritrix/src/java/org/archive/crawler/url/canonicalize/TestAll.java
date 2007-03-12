@@ -26,8 +26,11 @@
 
 package org.archive.crawler.url.canonicalize;
 
+
+import org.archive.util.TestUtils;
+
 import junit.framework.Test;
-import junit.framework.TestSuite;
+
 
 /**
  * @author pjack
@@ -36,21 +39,8 @@ import junit.framework.TestSuite;
 public class TestAll {
 
     
-    public static Test suite() {
-        String cname = TestAll.class.getName();
-        int p = cname.lastIndexOf('.');
-        String pname = cname.substring(0, p);
-        
-        TestSuite suite = new TestSuite(pname);
-        suite.addTestSuite(FixupQueryStrTest.class);
-        suite.addTestSuite(LowercaseRuleTest.class);
-        suite.addTestSuite(RegexRuleTest.class);
-        suite.addTestSuite(StripSessionCFIDsTest.class);
-        suite.addTestSuite(StripSessionIDsTest.class);
-        suite.addTestSuite(StripUserinfoRuleTest.class);
-        suite.addTestSuite(StripWWWNRuleTest.class);
-        suite.addTestSuite(StripWWWRuleTest.class);
-        return suite;
+    public static Test suite() throws Exception {
+        return TestUtils.makePackageSuite(TestAll.class);
     }
     
     

@@ -26,6 +26,7 @@ package org.archive.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.ref.SoftReference;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
 
 /**
@@ -81,7 +83,54 @@ public class TestUtils {
         return bout.toByteArray();        
     }
 
+    
+    public static TestSuite makePackageSuite(Class c) 
+    throws ClassNotFoundException {
+        String cname = c.getName();
+        int p = cname.lastIndexOf('.');
+        String dir = cname.substring(0, p).replace('.', File.separatorChar);
+        String root = "src/java/".replace('/', File.separatorChar);
+        File src = new File(root);
+        return makeSuite(src, new File(root + dir));
+    }
+    
 
-
+    public static TestSuite makeSuite(File srcRoot, File dir) 
+    throws ClassNotFoundException {
+        TestSuite result = new TestSuite("All Tests");
+        if (!dir.exists()) {
+            throw new IllegalArgumentException(dir + " does not exist.");
+        }
+        scanSuite(result, srcRoot, dir);
+        return result;
+    }
+    
+    
+    private static void scanSuite(TestSuite suite, File start, File dir) 
+    throws ClassNotFoundException {
+        for (File f: dir.listFiles()) {
+            if (f.isDirectory() && !f.getName().startsWith(".")) {
+                String prefix = start.getAbsolutePath();
+                String full = f.getAbsolutePath();
+                TestSuite sub = new TestSuite(full.substring(prefix.length()));
+                scanSuite(sub, start, f);
+                if (sub.testCount() > 0) {
+                    suite.addTest(sub);
+                }
+            } else {
+                if (f.getName().endsWith("Test.java")) {
+                    String full = f.getAbsolutePath();
+                    String prefix = start.getAbsolutePath();
+                    String cname = full.substring(prefix.length());
+                    if (cname.startsWith(File.separator)) {
+                        cname = cname.substring(1);
+                    }
+                    cname = cname.replace(File.separatorChar, '.');
+                    cname = cname.substring(0, cname.length() - 5);
+                    suite.addTestSuite(Class.forName(cname));
+                }
+            }
+        }
+    }
 
 }
