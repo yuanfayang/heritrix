@@ -223,6 +223,10 @@ implements ARCConstants {
                     getVersion(), offset), bodyOffset, isDigest(),
                     isStrict(), isParseHttpHeaders()));
         } catch (IOException e) {
+            if (e instanceof RecoverableIOException) {
+                // Don't mess with RecoverableIOExceptions.  Let them out.
+                throw e;
+            }
             IOException newE = new IOException(e.getMessage() + " (Offset " +
                     offset + ").");
             newE.setStackTrace(e.getStackTrace());
@@ -334,7 +338,7 @@ implements ARCConstants {
         if (keys.size() != values.size()) {
             List<String> originalValues = values;
             if (!isStrict()) {
-                values = fixSpaceInMetadataLine(values, keys.size());
+                values = fixSpaceInURL(values, keys.size());
                 // If values still doesn't match key size, try and do
                 // further repair.
 	            if (keys.size() != values.size()) {
@@ -349,7 +353,19 @@ implements ARCConstants {
 	            		nuvalues.add(3, values.get(3) + values.get(4));
 	            		nuvalues.add(4, values.get(5));
 	            		values = nuvalues;
-	            	}
+	            	} else if((values.size() + 1) == keys.size() &&
+                            isLegitimateIPValue(values.get(1)) &&
+                            isDate(values.get(2)) && isNumber(values.get(3))) {
+                        // Mimetype is empty.
+                        List<String> nuvalues =
+                            new ArrayList<String>(keys.size());
+                        nuvalues.add(0, values.get(0));
+                        nuvalues.add(1, values.get(1));
+                        nuvalues.add(2, values.get(2));
+                        nuvalues.add(3, "-");
+                        nuvalues.add(4, values.get(3));
+                        values = nuvalues;
+                    }
 	            }
         	}
             if (keys.size() != values.size()) {
@@ -383,6 +399,30 @@ implements ARCConstants {
         return new ARCRecordMetaData(getReaderIdentifier(), headerFields);
     }
     
+    protected boolean isDate(final String date) {
+        if (date.length() != 14) {
+            return false;
+        }
+        return isNumber(date);
+    }
+    
+    protected boolean isNumber(final String n) {
+        for (int i = 0; i < n.length(); i++) {
+            if (!Character.isDigit(n.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    protected boolean isLegitimateIPValue(final String ip) {
+        if (ip == "-") {
+            return true;
+        }
+        Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
+        return m != null && m.matches();
+    }
+    
     /**
      * Fix space in URLs.
      * The ARCWriter used to write into the ARC URLs with spaces in them.
@@ -396,44 +436,37 @@ implements ARCConstants {
      * @return New list if we successfully fixed up values or original if
      * fixup failed.
      */
-    protected List<String> fixSpaceInMetadataLine(List<String> values,
-    		int requiredSize) {
+    protected List<String> fixSpaceInURL(List<String> values, int requiredSize) {
         // Do validity check. 3rd from last is a date of 14 numeric
-        // characters.  The 4th from last is IP, all before the IP
+        // characters. The 4th from last is IP, all before the IP
         // should be concatenated together with a '%20' joiner.
         // In the below, '4' is 4th field from end which has the IP.
         if (!(values.size() > requiredSize) || values.size() < 4) {
             return values;
         }
         // Test 3rd field is valid date.
-        String date = (String)values.get(values.size() - 3);
-        if (date.length() != 14) {
+        if (!isDate((String) values.get(values.size() - 3))) {
             return values;
         }
-        for (int i = 0; i < date.length(); i++) {
-            if (!Character.isDigit(date.charAt(i))) {
-                return values;
-            }
-        }
+
         // Test 4th field is valid IP.
-        String ip = (String)values.get(values.size() - 4);
-        Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
-        if (ip == "-" || m.matches()) {
-            List<String> newValues = new ArrayList<String>(requiredSize);
-            StringBuffer url = new StringBuffer();
-            for (int i = 0; i < (values.size() - 4); i++) {
-                if (i > 0) {
-                    url.append("%20");
-                }
-                url.append(values.get(i));
-            } 
-            newValues.add(url.toString());
-            for (int i = values.size() - 4; i < values.size(); i++) {
-                newValues.add(values.get(i));
-            }
-            values =  newValues;
+        if (!isLegitimateIPValue((String) values.get(values.size() - 4))) {
+            return values;
         }
-        return values;
+
+        List<String> newValues = new ArrayList<String>(requiredSize);
+        StringBuffer url = new StringBuffer();
+        for (int i = 0; i < (values.size() - 4); i++) {
+            if (i > 0) {
+                url.append("%20");
+            }
+            url.append(values.get(i));
+        }
+        newValues.add(url.toString());
+        for (int i = values.size() - 4; i < values.size(); i++) {
+            newValues.add(values.get(i));
+        }
+        return newValues;
     }
     
 	protected boolean isAlignedOnFirstRecord() {
@@ -705,6 +738,7 @@ implements ARCConstants {
     public static void main(String [] args)
     throws ParseException, IOException, java.text.ParseException {
         Options options = getOptions();
+        options.addOption(new Option("p","parse", false, "Parse headers."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
@@ -738,7 +772,7 @@ implements ARCConstants {
                     break;
                     
                 case 'p':
-                	parse = getTrueOrFalse(cmdlineOptions[i].getValue());
+                	parse = true;
                     break;
                     
                 case 'd':
