@@ -25,12 +25,14 @@
 package org.archive.crawler;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.management.MBeanServer;
@@ -71,6 +73,17 @@ import org.archive.util.JndiUtils;
  */
 public class Heritrix {
 
+    
+    /**
+     * Name of configuration directory.
+     */
+    private static final String CONF = "conf";
+    
+    /**
+     * Name of the heritrix properties file.
+     */
+    private static final String PROPERTIES = "heritrix.properties";
+
 
     /**
      * Heritrix logging instance.
@@ -97,9 +110,7 @@ public class Heritrix {
 
     /**
      * Launch program.
-     * Optionally will launch a web server to host UI.  Will also register
-     * Heritrix MBean with first found JMX Agent (Usually the 1.5.0 JVM
-     * Agent).
+     * Will also register Heritrix MBean with platform MBeanServer.
      * 
      * @param args Command line arguments.
      * @throws Exception
@@ -125,6 +136,13 @@ public class Heritrix {
             start = new File(".");
         } else {
             start = new File(args[0]);
+        }
+        
+        File conf = new File(start, CONF);
+        File heritrixProperties = new File(conf, PROPERTIES);
+        if (heritrixProperties.exists()) {
+            FileInputStream finp = new FileInputStream(heritrixProperties);
+            LogManager.getLogManager().readConfiguration(finp);
         }
         
         // Set timezone here.  Would be problematic doing it if we're running
@@ -240,6 +258,7 @@ public class Heritrix {
     
     protected static boolean isDevelopment() {
         return System.getProperty("heritrix.development") != null;
-    }
+    }    
+
 
 }

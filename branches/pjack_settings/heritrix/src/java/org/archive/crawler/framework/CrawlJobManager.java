@@ -83,4 +83,23 @@ public interface CrawlJobManager {
             String profile
             
             ) throws IOException;
+
+
+
+    @Operation(desc="Lists all available checkpoints.")
+    String[] listCheckpoints();
+
+    
+    @Operation(desc="Recovers a checkpoint.")
+    void recoverCheckpoint(
+            
+            @Parameter(name="checkpointPath", desc="The path to the checkpoint directory.")
+            String checkpoint, 
+            
+            @Parameter(name="oldPaths", desc="Old path prefixes to replace.")
+            String[] oldPaths, 
+            
+            @Parameter(name="newPaths", desc="New path prefixes to replace.")
+            String[] newPaths) throws IOException;
+
 }

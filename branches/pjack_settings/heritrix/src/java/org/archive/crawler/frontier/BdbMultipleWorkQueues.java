@@ -84,7 +84,7 @@ public class BdbMultipleWorkQueues {
     throws DatabaseException {
         // Open the database. Create it if it does not already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(true);
+        dbConfig.setAllowCreate(!recycle);
         if (!recycle) {
             try {
                 env.truncateDatabase(null, "pending", false);
@@ -282,12 +282,17 @@ public class BdbMultipleWorkQueues {
         OperationStatus status;
         try {
             cursor = this.pendingUrisDB.openCursor(null, null);
+            
             // get cap; headKey at this point should always point to 
             // a queue-beginning cap entry (zero-length value)
             status = cursor.getSearchKey(headKey, result, null);
-            if(status!=OperationStatus.SUCCESS || result.getData().length > 0) {
-                // cap missing
-                throw new DatabaseException("bdb queue cap missing");
+            if (status != OperationStatus.SUCCESS) {
+                throw new DatabaseException("bdb queue cap missing: " 
+                        + status.toString() + " "  + new String(headKey.getData()));
+            }
+            if (result.getData().length > 0) {
+                throw new DatabaseException("bdb queue has nonzero size: " 
+                        + result.getData().length);
             }
             // get next item (real first item of queue)
             status = cursor.getNext(headKey,result,null);

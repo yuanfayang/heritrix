@@ -101,7 +101,7 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
         def.set(order, CrawlOrder.HTTP_HEADERS, headers);
         
-        BdbModule bdb = new BdbModule(def, config); 
+        BdbModule bdb = new BdbModule(config, def); 
         
         CrawlController controller = new CrawlController(manager, order, bdb);
         CrawlScope scope = new DecidingScope(controller);

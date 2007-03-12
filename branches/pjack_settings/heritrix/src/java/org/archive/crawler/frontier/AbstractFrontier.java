@@ -28,6 +28,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -57,6 +59,7 @@ import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
+import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.Sheet;
 import org.archive.state.Dependency;
 import org.archive.state.Expert;
@@ -77,7 +80,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
-    protected transient CrawlController controller;
+    protected CrawlController controller;
 
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
@@ -133,14 +136,6 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     final public static Key<Integer> MAX_RETRIES = Key.make(30);
 
 
-    /**
-     * Defines how to assign URIs to queues. Can assign by host, by ip, and into
-     * one of a fixed set of buckets (1k).
-     */
-//    final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
-//        makeQAP();
-    
-    
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
     @Immutable @Expert
     final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
@@ -199,7 +194,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected int lastMaxBandwidthKB = 0;
 
     /** Policy for assigning CrawlURIs to named queues */
-    protected transient QueueAssignmentPolicy queueAssignmentPolicy = null;
+    protected QueueAssignmentPolicy queueAssignmentPolicy = null;
 
     /**
      * Crawl replay logger.
@@ -222,7 +217,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
 
 
     /**
-     * The queue assignment policy to use with this Frontier.
+     * Defines how to assign URIs to queues. Can assign by host, by ip, and into
+     * one of a fixed set of buckets (1k).
      */
     @Dependency
     final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
@@ -235,17 +231,20 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     public AbstractFrontier(CrawlController c, QueueAssignmentPolicy qap) throws IOException {
         this.controller = c;
         c.addCrawlStatusListener(this);
-        File logsDisk = null;
-        logsDisk = c.getLogsDir();
-        if (logsDisk != null) {
-            String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
-            if (get(RECOVERY_LOG_ENABLED)) {
-                this.recover = new RecoveryJournal(logsPath,
-                    FrontierJournal.LOGNAME_RECOVER);
-            }
+        if (get(RECOVERY_LOG_ENABLED)) {
+            initJournal(controller.getLogsDir().getAbsolutePath());            
         }
-        queueAssignmentPolicy = qap; //get(QUEUE_ASSIGNMENT_POLICY);
+        queueAssignmentPolicy = qap;
         pause();
+    }
+    
+    
+    private void initJournal(String logsDisk) throws IOException {
+        if (logsDisk != null) {
+            String logsPath = logsDisk + File.separatorChar;
+            this.recover = new RecoveryJournal(logsPath,
+                    FrontierJournal.LOGNAME_RECOVER);
+        }
     }
     
     
@@ -938,29 +937,22 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     }
 
     public void crawlStarted(String message) {
-        // TODO Auto-generated method stub
     }
 
     public void crawlPausing(String statusMessage) {
-        // TODO Auto-generated method stub
     }
 
     public void crawlPaused(String statusMessage) {
-        // TODO Auto-generated method stub
     }
 
     public void crawlResuming(String statusMessage) {
-        // TODO Auto-generated method stub
     }
     
     public void crawlCheckpoint(StateProvider context, File checkpointDir)
     throws Exception {
-        if (this.recover == null) {
-            return;
-        }
-        this.recover.checkpoint(checkpointDir);
     }
-    
+
+
     //
     // Reporter implementation
     // 
@@ -973,4 +965,33 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     }
 
 
+    private void writeObject(ObjectOutputStream out) 
+    throws IOException {
+        out.defaultWriteObject();
+        boolean recoveryLogEnabled = get(RECOVERY_LOG_ENABLED);
+        out.writeBoolean(recoveryLogEnabled);
+        if (recoveryLogEnabled) {
+            out.writeUTF(controller.getLogsDir().getAbsolutePath());
+        }
+    }
+    
+    
+    private void readObject(ObjectInputStream inp) 
+    throws IOException, ClassNotFoundException {
+        inp.defaultReadObject();
+        boolean recoveryLogEnabled = inp.readBoolean();
+        if (recoveryLogEnabled) {
+            String path = inp.readUTF();
+            if (inp instanceof CheckpointRecovery) {
+                CheckpointRecovery cr = (CheckpointRecovery)inp;
+                path = cr.translatePath(path);
+                new File(path).mkdirs();
+            }
+            initJournal(path);
+        }
+        shouldPause = true;
+    }
+    
+    
+    
 }

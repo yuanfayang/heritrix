@@ -23,6 +23,8 @@
 package org.archive.crawler.frontier;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -55,11 +57,13 @@ import org.archive.net.UURI;
 import org.archive.settings.Sheet;
 import org.archive.state.Dependency;
 import org.archive.state.Expert;
+import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.collections.StoredIterator;
+import com.sleepycat.je.DatabaseException;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -135,7 +139,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     final public static Key<Long> QUEUE_TOTAL_BUDGET = Key.make(-1L);
 
     /** cost assignment policy to use. */
-    @Expert
+    @Expert @Global
     final public static Key<CostAssignmentPolicy> COST_POLICY = 
         Key.make(CostAssignmentPolicy.class, new UnitCostAssignmentPolicy());
 
@@ -146,7 +150,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
-    protected transient UriUniqFilter alreadyIncluded;
+    protected UriUniqFilter alreadyIncluded;
 
     /** All known queues.
      */
@@ -197,16 +201,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
-
-    /** a policy for assigning 'cost' values to CrawlURIs */
-    private transient CostAssignmentPolicy costAssignmentPolicy;
     
-    /** all policies available to be chosen */
-    String[] AVAILABLE_COST_POLICIES = new String[] {
-            ZeroCostAssignmentPolicy.class.getName(),
-            UnitCostAssignmentPolicy.class.getName(),
-            WagCostAssignmentPolicy.class.getName(),
-            AntiCalendarCostAssignmentPolicy.class.getName()};
 
     
     public <T> T get(Key<T> key) {
@@ -235,25 +230,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             UriUniqFilter uuf) 
     throws FatalConfigurationException, IOException {
         super(c, qap);
-//        this.queueAssignmentPolicy = qap;
         this.alreadyIncluded = uuf;
         alreadyIncluded.setDestination(this);
-//    }
-
-    
-    
-    /**
-     * Initializes the Frontier, given the supplied CrawlController.
-     *
-     * @see org.archive.crawler.framework.Frontier#initialize(org.archive.crawler.framework.CrawlController)
-     */
-//    public void initialize(CrawlController c)
-//            throws FatalConfigurationException, IOException {
-        // Call the super method. It sets up frontier journalling.
-//        super.initialize(c);
-
-        
-        //this.controller = c;
         
         this.targetSizeForReadyQueues = get(TARGET_READY_BACKLOG);
         if (this.targetSizeForReadyQueues < 1) {
@@ -262,28 +240,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         this.wakeTimer = new Timer("waker for " + c.toString());
         
         try {
-            if (workQueueDataOnDisk()
-                    && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
-                    && queueAssignmentPolicy.maximumNumberOfKeys() <= 
-                        MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
-                this.allQueues = Collections.synchronizedMap(
-                        new HashMap<String,WorkQueue>());
-            } else {
-                this.allQueues = c.getBigMap("allqueues",
-                        String.class, WorkQueue.class);
-                if (logger.isLoggable(Level.FINE)) {
-                    Iterator i = this.allQueues.keySet().iterator();
-                    try {
-                        for (; i.hasNext();) {
-                            logger.fine((String) i.next());
-                        }
-                    } finally {
-                        StoredIterator.close(i);
-                    }
-                }
-            }
-//            this.alreadyIncluded = createAlreadyIncluded();
-            initQueue();
+            initAllQueues(false);
         } catch (IOException e) {
             e.printStackTrace();
             throw (FatalConfigurationException)
@@ -294,19 +251,37 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 new FatalConfigurationException(e.getMessage()).initCause(e);
         }
         
-        initCostPolicy();
-        
         loadSeeds();
     }
     
-    /**
-     * Set (or reset after configuration change) the cost policy in effect.
-     * 
-     * @throws FatalConfigurationException
-     */
-    private void initCostPolicy() throws FatalConfigurationException {
-        costAssignmentPolicy = get(COST_POLICY);
+    
+    private void initAllQueues(boolean recycle) 
+    throws IOException, DatabaseException {
+        if (workQueueDataOnDisk()
+                && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
+                && queueAssignmentPolicy.maximumNumberOfKeys() <= 
+                    MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
+            this.allQueues = Collections.synchronizedMap(
+                    new HashMap<String,WorkQueue>());
+        } else {
+            this.allQueues = controller.getBigMap("allqueues",
+                    String.class, WorkQueue.class);
+            if (logger.isLoggable(Level.FINE)) {
+                Iterator i = this.allQueues.keySet().iterator();
+                try {
+                    for (; i.hasNext();) {
+                        logger.fine((String) i.next());
+                    }
+                } finally {
+                    StoredIterator.close(i);
+                }
+            }
+        }
+//        this.alreadyIncluded = createAlreadyIncluded();
+        initQueue(recycle);
+        
     }
+
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
@@ -492,11 +467,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             target = 1;
         }
         this.targetSizeForReadyQueues = target; 
-        try {
-            initCostPolicy();
-        } catch (FatalConfigurationException fce) {
-            throw new RuntimeException(fce);
-        }
+
+        // TODO: See about caching costPolicy again
+        //        try {
+//            initCostPolicy();
+//        } catch (FatalConfigurationException fce) {
+//            throw new RuntimeException(fce);
+//        }
+
         // The rules for a 'retired' queue may have changed; so,
         // unretire all queues to 'inactive'. If they still qualify
         // as retired/overbudget next time they come up, they'll
@@ -644,7 +622,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     private int getCost(CrawlURI curi) {
         int cost = curi.getHolderCost();
         if (cost == CrawlURI.UNCALCULATED) {
-            cost = costAssignmentPolicy.costOf(curi);
+            cost = get(COST_POLICY).costOf(curi);
             curi.setHolderCost(cost);
         }
         return cost;
@@ -1250,7 +1228,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         getQueueFor(temp).expend(getCost(temp));
     }
     
-    protected abstract void initQueue() throws IOException;
+    protected abstract void initQueue(boolean recycle) throws IOException;
     protected abstract void closeQueue() throws IOException;
     
     /**
@@ -1295,6 +1273,27 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      */
     public synchronized boolean isEmpty() {
         return queuedUriCount == 0 && alreadyIncluded.pending() == 0;
+    }
+
+    
+    
+    private void readObject(ObjectInputStream inp)
+    throws IOException, ClassNotFoundException {
+        inp.defaultReadObject();
+        this.wakeTimer = new Timer("waker for " + controller.toString());
+        try {
+            initAllQueues(true);
+        } catch (DatabaseException e) {
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
+        }
+    }
+
+
+    private void writeObject(ObjectOutputStream out) 
+    throws IOException {
+        out.defaultWriteObject();
     }
 
 }

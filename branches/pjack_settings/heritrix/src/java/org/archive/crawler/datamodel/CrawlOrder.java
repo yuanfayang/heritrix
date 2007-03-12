@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-//import java.util.logging.Logger;
 
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.processors.util.RobotsHonoringPolicy;
@@ -55,17 +54,6 @@ public class CrawlOrder implements Module, Serializable {
 
 
     private static final long serialVersionUID = 3L;
-
-
-
-    /**
-     * Directory where override settings are kept. The settings for many modules can 
-     * be overridden based on the domain or subdomain of the URI being processed. 
-     * This setting specifies a file level directory to store those settings. The path
-     * is relative to {@link #DISK_PATH} unless an absolute path is provided.
-     */
-    @Expert @Immutable
-    final public static Key<String> SETTINGS_DIRECTORY = Key.make("settings");
 
 
     /**
@@ -158,15 +146,6 @@ public class CrawlOrder implements Module, Serializable {
 
             
     /**
-     * Percentage of heap to allocate to BerkeleyDB JE cache. Default of zero 
-     * means no preference (accept BDB's default, usually 60%, or the 
-     * je.maxMemoryPercent property value).
-     */
-    @Expert @Immutable
-    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(0);
-
-
-    /**
      * HTTP headers. Information that will be used when constructing the HTTP 
      * headers of the crawler's HTTP requests.
      */
@@ -194,25 +173,6 @@ public class CrawlOrder implements Module, Serializable {
      */
     @Expert @Immutable
     final public static Key<String> RECOVER_PATH = Key.make("");
-
-
-    /**
-     * When true, on a checkpoint, we copy off the bdbje log files to the
-     * checkpoint directory. To recover a checkpoint, just set the recover-path
-     * to point at the checkpoint directory to recover. This is default setting.
-     * But if crawl is large, copying bdbje log files can take tens of minutes
-     * and even upwards of an hour (Copying bdbje log files will consume bulk of
-     * time checkpointing). If this setting is false, we do NOT copy bdbje logs
-     * on checkpoint AND we set bdbje to NEVER delete log files (instead we have
-     * it rename files-to-delete with a '.del' extension). Assumption is that
-     * when this setting is false, an external process is managing the removal
-     * of bdbje log files and that come time to recover from a checkpoint, the
-     * files that comprise a checkpoint are manually assembled. This is an
-     * expert setting.
-     */
-    @Expert @Immutable
-    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-        Key.make(true);
 
 
     /**
@@ -252,7 +212,6 @@ public class CrawlOrder implements Module, Serializable {
         
         return new Key<Map<String,String>>(km);
     }
-
 
 
 }

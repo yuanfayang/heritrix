@@ -23,9 +23,9 @@
  *
  * $Id:$
  */
-
 package org.archive.settings.jmx;
 
+import java.io.Serializable;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -38,18 +38,24 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 import org.archive.settings.ModuleListener;
+import org.archive.settings.SheetManager;
 import org.archive.util.JmxUtils;
 
 /**
  * @author pjack
  *
  */
-public class JMXModuleListener implements ModuleListener {
+public class JMXModuleListener implements ModuleListener, Serializable {
 
-    
+
+    private static final long serialVersionUID = 1L;
+
+
     final public static String INSTANCE = "instance";
     
-    private class ObjectInfo {
+
+    private class ObjectInfo implements Serializable {
+        private static final long serialVersionUID = 1L;
         public int count;
         public ObjectName name;
     }
@@ -57,7 +63,7 @@ public class JMXModuleListener implements ModuleListener {
     
     final private String domain;
     final private String name;
-    final private MBeanServer server;
+    transient private MBeanServer server;
     final private Map<Object,ObjectInfo> counts = 
         new IdentityHashMap<Object,ObjectInfo>();
     
@@ -67,8 +73,24 @@ public class JMXModuleListener implements ModuleListener {
         this.server = server;
         this.name = name;
     }
-    
-    
+
+
+    public void setServer(MBeanServer server) {
+        this.server = server;
+        for (Object o: counts.keySet()) {
+            try {
+                server.registerMBean(o, nameOf(o));
+            } catch (InstanceAlreadyExistsException e) {
+                throw new IllegalStateException(e);
+            } catch (MBeanRegistrationException e) {
+                throw new IllegalStateException(e);
+            } catch (NotCompliantMBeanException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
+
     public synchronized void moduleChanged(Object old, Object newModule) {        
         // These vars are used to prevent expensive registration/deregistration
         // from happening inside the synchronized block.
@@ -111,7 +133,6 @@ public class JMXModuleListener implements ModuleListener {
         
         try {
             server.registerMBean(newModule, nameOf(newModule));
-            System.out.println("Registered " + nameOf(newModule));
         } catch (InstanceAlreadyExistsException e) {
             throw new IllegalStateException(e);
         } catch (MBeanRegistrationException e) {
@@ -129,7 +150,22 @@ public class JMXModuleListener implements ModuleListener {
                 this.name, 
                 o.getClass().getName(), 
                 INSTANCE, String.valueOf(System.identityHashCode(o)));
-        
     }
 
+
+    public static JMXModuleListener get(SheetManager mgr) {
+        JMXModuleListener result = null;
+        for (ModuleListener ml: mgr.getModuleListeners()) {
+            if (ml instanceof JMXModuleListener) {
+                if (result != null) {
+                    throw new IllegalStateException("More than one JMXModuleListener.");
+                }
+                result = (JMXModuleListener)ml;
+            }
+        }
+        if (result == null) {
+            throw new IllegalStateException("No JMXModuleListener.");
+        }
+        return result;
+    }
 }

@@ -6,7 +6,6 @@
   </dependencies>
  </object>
  <object name="order" value="org.archive.crawler.datamodel.CrawlOrder">
-  <string name="settings-directory"      value="settings"/>
   <string name="disk-path"               value="."/>
   <string name="logs-path"               value="logs"/>
   <string name="checkpoints-path"        value="checkpoints"/>
@@ -18,7 +17,6 @@
   <int  name="max-toe-threads"           value="1"/>
   <int  name="recorder-out-buffer-bytes" value="4096"/>
   <int  name="recorder-in-buffer-bytes"  value="65536"/>
-  <int  name="bdb-cache-percent"         value="0"/>
   <object name="http-headers" value="java.util.HashMap">
     <string name="user-agent" value="Mozilla/5.0 (compatible; heritrix/11 +http://www.archive.org)"/>
     <string name="from" value="info@archive.org"/>
@@ -71,6 +69,14 @@
     </object> <!-- root.controller.scope.decide-rules.rules -->
    </object><!-- root.controller.scope.decide-rules -->
   </object><!-- root.controller.scope -->
+
+  <object name="loggers" value="java.util.ArrayList">
+   <object name="0" value="org.archive.crawler.framework.StatisticsTracker">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>
+   </object>
+  </object>
 
   <object name="frontier" value="org.archive.crawler.frontier.BdbFrontier">
    <dependencies>
@@ -189,13 +195,6 @@
    </object>
   </object>
 
-  <object name="loggers" value="java.util.ArrayList">
-   <object name="0" value="org.archive.crawler.framework.StatisticsTracker">
-    <dependencies>
-     <reference name="controller" value="root.controller"/>
-    </dependencies>
-   </object>
-  </object>
  </object>
 </object>
 </root>

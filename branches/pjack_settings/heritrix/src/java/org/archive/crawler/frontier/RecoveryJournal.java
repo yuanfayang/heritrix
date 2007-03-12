@@ -39,6 +39,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -51,6 +52,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.extractor.HTMLLinkContext;
 import org.archive.processors.extractor.LinkContext;
+import org.archive.settings.RecoverAction;
 import org.archive.util.ArchiveUtils;
 
 import java.util.concurrent.CountDownLatch;
@@ -515,7 +517,8 @@ implements FrontierJournal {
         writeLine("\n"+LOG_ERROR+ArchiveUtils.getLog14Date()+" "+err);
     }
 
-    public synchronized void checkpoint(final File checkpointDir)
+    public synchronized void checkpoint(final File checkpointDir, 
+            List<RecoverAction> actions)
     throws IOException {
         if (this.out == null || !this.gzipFile.exists()) {
             return;

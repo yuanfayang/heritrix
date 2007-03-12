@@ -26,7 +26,6 @@
 package org.archive.crawler.frontier;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,11 +38,8 @@ import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.util.BdbUriUniqFilter;
-import org.archive.crawler.util.CheckpointUtils;
-import org.archive.state.Expert;
-import org.archive.state.Key;
-import org.archive.state.StateProvider;
+import org.archive.settings.RecoverAction;
+import org.archive.settings.file.Checkpointable;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.je.DatabaseException;
@@ -54,7 +50,8 @@ import com.sleepycat.je.DatabaseException;
  *
  * @author Gordon Mohr
  */
-public class BdbFrontier extends WorkQueueFrontier implements Serializable {
+public class BdbFrontier extends WorkQueueFrontier 
+implements Serializable, Checkpointable {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
         .classnameBasedUID(BdbFrontier.class, 1);
@@ -74,32 +71,13 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
      * @return the created BdbMultipleWorkQueues
      * @throws DatabaseException
      */
-    private BdbMultipleWorkQueues createMultipleWorkQueues()
+    private BdbMultipleWorkQueues createMultipleWorkQueues(boolean recycle)
     throws DatabaseException {
         return new BdbMultipleWorkQueues(this.controller.getBdbEnvironment(),
             this.controller.getClassCatalog(),
-            this.controller.isCheckpointRecover());
+            recycle);
     }
 
-    
-     
-    protected UriUniqFilter deserializeAlreadySeen(
-            final Class<? extends UriUniqFilter> cls,
-            final File dir)
-    throws FileNotFoundException, IOException {
-        UriUniqFilter uuf = null;
-        try {
-            logger.fine("Started deserializing " + cls.getName() +
-                " of checkpoint recover.");
-            uuf = CheckpointUtils.readObjectFromFile(cls, dir);
-            logger.fine("Finished deserializing bdbje as part " +
-                "of checkpoint recover.");
-        } catch (ClassNotFoundException e) {
-            throw new IOException("Failed to deserialize "  +
-                cls.getName() + ": " + e.getMessage());
-        }
-        return uuf;
-    }
 
     /**
      * Return the work queue for the given CrawlURI's classKey. URIs
@@ -167,9 +145,10 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         return results;
     }
     
-    protected void initQueue() throws IOException {
+    @Override
+    protected void initQueue(boolean recycle) throws IOException {
         try {
-            this.pendingUris = createMultipleWorkQueues();
+            this.pendingUris = createMultipleWorkQueues(recycle);
         } catch(DatabaseException e) {
             throw (IOException)new IOException(e.getMessage()).initCause(e);
         }
@@ -199,70 +178,18 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             UriUniqFilter alreadySeen)
     throws FatalConfigurationException, IOException {
         super(c, qap, alreadySeen);
-//    }
-
-    
-//    public void initialize(CrawlController c)
-//    throws FatalConfigurationException, IOException {
-//        super.initialize(c);
-        if (c.isCheckpointRecover()) {
-            // If a checkpoint recover, copy old values from serialized
-            // instance into this Frontier instance. Do it this way because 
-            // though its possible to serialize BdbFrontier, its currently not
-            // possible to set/remove frontier attribute plugging the
-            // deserialized object back into the settings system.
-            // The below copying over is error-prone because its easy
-            // to miss a value.  Perhaps there's a better way?  Introspection?
-            BdbFrontier f = null;
-            try {
-                f = (BdbFrontier)CheckpointUtils.
-                    readObjectFromFile(this.getClass(),
-                        this.controller.getCheckpointRecover().getDirectory());
-            } catch (FileNotFoundException e) {
-                throw new FatalConfigurationException("Failed checkpoint " +
-                    "recover: " + e.getMessage());
-            } catch (IOException e) {
-                throw new FatalConfigurationException("Failed checkpoint " +
-                    "recover: " + e.getMessage());
-            } catch (ClassNotFoundException e) {
-                throw new FatalConfigurationException("Failed checkpoint " +
-                    "recover: " + e.getMessage());
-            }
-
-            this.nextOrdinal = f.nextOrdinal;
-            this.totalProcessedBytes = f.totalProcessedBytes;
-            this.disregardedUriCount = f.disregardedUriCount;
-            this.failedFetchCount = f.failedFetchCount;
-            this.processedBytesAfterLastEmittedURI =
-                f.processedBytesAfterLastEmittedURI;
-            this.queuedUriCount = f.queuedUriCount;
-            this.succeededFetchCount = f.succeededFetchCount;
-            this.lastMaxBandwidthKB = f.lastMaxBandwidthKB;
-            this.readyClassQueues = f.readyClassQueues;
-            this.inactiveQueues = f.inactiveQueues;
-            this.retiredQueues = f.retiredQueues;
-            this.snoozedClassQueues = f.snoozedClassQueues;
-            this.inProcessQueues = f.inProcessQueues;
-            wakeQueues();
-        }
     }
 
-    public void crawlCheckpoint(StateProvider context,
-            File checkpointDir) throws Exception {
-        super.crawlCheckpoint(context, checkpointDir);
-        logger.fine("Started serializing already seen as part "
+    public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
+    throws IOException {
+        logger.fine("Started syncing already seen as part "
             + "of checkpoint. Can take some time.");
         // An explicit sync on the any deferred write dbs is needed to make the
         // db recoverable. Sync'ing the environment doesn't work.
         if (this.pendingUris != null) {
         	this.pendingUris.sync();
         }
-        CheckpointUtils .writeObjectToFile(this.alreadyIncluded, checkpointDir);
-        logger.fine("Finished serializing already seen as part "
-            + "of checkpoint.");
-        // Serialize ourselves.
-        CheckpointUtils.writeObjectToFile(this, checkpointDir);
+        logger.fine("Finished syncing already seen as part of checkpoint.");
     }
-    
-    
+
 }

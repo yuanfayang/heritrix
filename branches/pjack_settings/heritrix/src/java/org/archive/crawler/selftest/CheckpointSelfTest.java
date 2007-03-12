@@ -23,7 +23,14 @@
 package org.archive.crawler.selftest;
 
 
+import java.io.File;
+import java.lang.management.ManagementFactory;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.archive.crawler.framework.CrawlStatus;
+import org.archive.util.FileUtils;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.bio.SocketConnector;
 import org.mortbay.jetty.servlet.ServletHandler;
@@ -43,7 +50,7 @@ public class CheckpointSelfTest extends SelfTestBase {
     
     final private static int MAX_PORT = 7010;
     
-    final private static int MAX_HOPS = 3;
+    final private static int MAX_HOPS = 2;
     
 
     private Server[] servers;
@@ -103,16 +110,45 @@ public class CheckpointSelfTest extends SelfTestBase {
 
     @Override
     protected void waitForCrawlFinish() throws Exception {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        
         // Start the crawl; wait for two seconds; pause the crawl so we
         // can checkpoint; checkpoint; and abort the crawl.
         invokeAndWait("requestCrawlStart", CrawlStatus.RUNNING);
         Thread.sleep(2000);
         invokeAndWait("requestCrawlPause", CrawlStatus.PAUSED);
         invokeAndWait("requestCrawlCheckpoint", CrawlStatus.PAUSED);
-        invokeAndWait("requestCrawlStop", CrawlStatus.ABORTED);
+        invokeAndWait("requestCrawlStop", CrawlStatus.FINISHED);
+        waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController", false);
+        System.out.println("Old crawl job deleted.");
         
-        // Get rid of the old crawler thread.
-        heritrixThread.interrupt();
+        ObjectName cjm = getCrawlJobManager();
+        String[] checkpoints = (String[])server.invoke(
+                cjm,
+                "listCheckpoints", 
+                new Object[0], 
+                new String[0]);
+
+        assertEquals(1, checkpoints.length);
+        File recoverLoc = new File(getJobDir().getParentFile(), "recovered");
+        FileUtils.deleteDir(recoverLoc);
+        String[] oldPath = new String[] { getJobDir().getAbsolutePath() };
+        String[] newPath = new String[] { recoverLoc.getAbsolutePath() };
+        server.invoke(
+                cjm,
+                "recoverCheckpoint", 
+                new Object[] { 
+                        checkpoints[0], 
+                        oldPath, 
+                        newPath },
+                new String[] { 
+                        String.class.getName(), 
+                        oldPath.getClass().getName(), 
+                        newPath.getClass().getName()
+                        });
+        ObjectName cc = getCrawlController();
+        waitFor(cc);
+        invokeAndWait("requestCrawlResume", CrawlStatus.FINISHED);
     }
 
     

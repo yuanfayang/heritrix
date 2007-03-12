@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +42,7 @@ import org.archive.state.KeyManager;
  * 
  * @author gojomo
  */
-public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
+public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializable {
     private static Logger LOGGER =
         Logger.getLogger(SetBasedUriUniqFilter.class.getName());
 
@@ -89,6 +90,11 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
     public void add(String key, CandidateURI value) {
         profileLog(key);
         if (setAdd(key)) {
+            if (receiver == null) {
+                System.out.println(System.identityHashCode(this) + " was null,");
+            } else {                
+                System.out.println(System.identityHashCode(this) + " is normal.");
+            }
             this.receiver.receive(value);
             if (setCount() % 50000 == 0) {
                 LOGGER.log(Level.FINE, "count: " + setCount() + " totalDups: "

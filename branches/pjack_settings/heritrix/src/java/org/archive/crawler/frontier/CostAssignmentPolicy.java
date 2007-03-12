@@ -24,6 +24,8 @@
 */ 
 package org.archive.crawler.frontier;
 
+import java.io.Serializable;
+
 import org.archive.crawler.datamodel.CrawlURI;
 
 /**
@@ -31,7 +33,7 @@ import org.archive.crawler.datamodel.CrawlURI;
  * 
  * @author gojomo
  */
-public abstract class CostAssignmentPolicy {
+public abstract class CostAssignmentPolicy implements Serializable {
     
     public abstract int costOf(CrawlURI curi);
     

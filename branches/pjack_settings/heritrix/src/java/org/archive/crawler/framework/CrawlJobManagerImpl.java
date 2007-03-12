@@ -27,7 +27,6 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -36,17 +35,22 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
+import javax.management.Notification;
+import javax.management.NotificationFilter;
+import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
-import org.archive.crawler.event.CrawlStatusAdapter;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
 import org.archive.settings.file.Checkpointable;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
@@ -188,14 +192,24 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         final ObjectName ccName = jmxListener.nameOf(cc);
 
-        // TODO: Use JMX notification for this instead.
-        cc.addCrawlStatusListener(new CrawlStatusAdapter() {
-            public void crawlEnded(String msg) {
-                unregister(ccName);
-                unregister(smName);
-                jobs.remove(job);
-            }
-        });
+        try {
+            server.addNotificationListener(
+                ccName, 
+                new NotificationListener() {
+                    public void handleNotification(Notification n, Object o) {
+                        unregister(ccName);
+                        unregister(smName);
+                        jobs.remove(job);
+                    }
+                }, new NotificationFilter() {
+                    private static final long serialVersionUID = 1L;
+                    public boolean isNotificationEnabled(Notification n) {
+                        return n.getType().startsWith("FINISHED");
+                    }
+                }, null);
+        } catch (InstanceNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
         
         jobs.put(job, cc);
     }
@@ -262,16 +276,52 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         return new File(rootDir, "jobs");
     }
 
-    
-    public static void main(String args[]) throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        System.out.println(server);
-        File f = new File("/Users/pjack/Desktop/crawl");
-        new CrawlJobManagerImpl(f, server);
-        Object eternity = new Object();
-        synchronized (eternity) {
-            eternity.wait();
+
+    public String[] listCheckpoints() {
+        ArrayList<String> checkpoints = new ArrayList<String>();
+        for (File f: getJobsDir().listFiles()) {
+            if (f.isDirectory()) {
+                File cp = new File(f, "checkpoints");
+                if (cp.exists()) {
+                    for (File d: cp.listFiles()) {
+                        if (d.isDirectory()) {
+                            checkpoints.add(d.getAbsolutePath());
+                        }
+                    }
+                }
+            }
         }
+        String[] arr = checkpoints.toArray(new String[checkpoints.size()]);
+        return arr;
+    }
+    
+    
+    public void recoverCheckpoint(String cpPath, 
+            String[] oldPaths, 
+            String[] newPaths) 
+    throws IOException {
+        if (cpPath.startsWith(".")) {
+            throw new IllegalArgumentException("Illegal checkpoint: " + cpPath);
+        }
+        File checkpointDir = new File(cpPath);
+        if (!checkpointDir.isDirectory()) {
+            throw new IllegalArgumentException("Not a dir: " + cpPath);
+        }
+        
+        if (oldPaths.length != newPaths.length) {
+            throw new IllegalArgumentException(
+                    "oldPaths and newPaths must be parallel.");
+        }
+        
+        DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery();
+        for (int i = 0; i < oldPaths.length; i++) {
+            cr.getFileTranslations().put(oldPaths[i], newPaths[i]);
+            new File(newPaths[i]).mkdirs();
+        }
+
+        SheetManager mgr = org.archive.settings.Checkpointer.recover(checkpointDir, cr);
+        JMXModuleListener jml = JMXModuleListener.get(mgr);
+        jml.setServer(server);
     }
 
 }

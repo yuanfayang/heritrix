@@ -203,7 +203,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     private boolean online;
 
-    final private SAXParserFactory saxParserFactory;
+    transient private SAXParserFactory saxParserFactory;
     
 
     final private BdbModule bdb;
@@ -736,6 +736,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private void readObject(ObjectInputStream inp) 
     throws IOException, ClassNotFoundException {
         inp.defaultReadObject();
+        this.saxParserFactory = SAXParserFactory.newInstance();
         if (inp instanceof CheckpointRecovery) {
             CheckpointRecovery cr = (CheckpointRecovery)inp;
             mainConfig = 
@@ -769,7 +770,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             FileUtils.copyFile(srcCfg, new File(mainConfig));
             
             File srcSheets = new File(checkpointDir, "sheets");
-            FileUtils.copyFile(srcSheets, new File(sheets));
+            FileUtils.copyFiles(srcSheets, new File(sheets));
         }
 
     }

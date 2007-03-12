@@ -102,6 +102,11 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // Start up a Jetty that servers the selftest's content directory.
         startHttpServer();
         
+        // Copy configuration for eg Logging over
+        File tmpConfDir = new File(tmpTestDir, "conf");
+        tmpConfDir.mkdirs();
+        FileUtils.copyFiles(new File("testdata/selftest/conf"), tmpConfDir);
+        
         startHeritrix(tmpTestDir.getAbsolutePath());
         this.waitForCrawlFinish();
     }
@@ -166,7 +171,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // Above invocation should have created a new SheetManager and a new
         // CrawlController for the job.  Find the CrawlController.
         
-        waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController");
+        waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController", true);
     }
     
     
@@ -221,19 +226,22 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             Thread.sleep(500);
         }
     }
+
     
-    
-    protected static void waitFor(String query) throws Exception {
+    protected static void waitFor(String query, boolean exist) throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         int count = 0;
         ObjectName name = new ObjectName(query);
-        while (server.queryNames(null, name).isEmpty()) {
+        Set set = server.queryNames(null, name);
+        while (set.isEmpty() == exist) {
+            System.out.println(set + " vs " + exist);
             count++;
             if (count > 40) {
                 throw new IllegalStateException("Could not find " + 
                         name + " after 20 seconds.");
             }
             Thread.sleep(500);
+            set = server.queryNames(null, name);
         }        
     }
     
@@ -253,6 +261,16 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
+    protected static ObjectName getCrawlJobManager() throws Exception {
+        ObjectName cjm = JmxUtils.makeObjectName(
+                CrawlJobManagerImpl.DOMAIN,
+                CrawlJobManagerImpl.NAME, 
+                CrawlJobManagerImpl.TYPE);
+        waitFor(cjm);
+        return cjm;
+    }
+    
+    
     protected static void invokeAndWait(String operation, CrawlStatus status) 
     throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
@@ -262,7 +280,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         ObjectName crawlController = getCrawlController();
         waitFor(crawlController);
         
-        // Set up utility to wait for FINISHED signal from crawler.
+        // Set up utility to wait for signal from crawler.
         JmxWaiter waiter = new JmxWaiter(server, crawlController, 
                 status.toString());
         
