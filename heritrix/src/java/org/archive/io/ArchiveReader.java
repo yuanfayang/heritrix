@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.archive.util.MimetypeUtils;
@@ -339,6 +338,10 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     }
     
     /**
+     * Returns an ArchiveRecord iterator.
+     * Of note, on IOException, especially if ZipException reading compressed
+     * ARCs, rather than fail the iteration, try moving to the next record.
+     * If {@link ArchiveReader#strict} is not set, this will usually succeed.
      * @return An iterator over ARC records.
      */
     public Iterator<ArchiveRecord> iterator() {
@@ -449,6 +452,8 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      * @author stack
      */
     protected class ArchiveRecordIterator implements Iterator<ArchiveRecord> {
+        private final Logger logger =
+            Logger.getLogger(this.getClass().getName());
         /**
          * @return True if we have more records to read.
          * @exception RuntimeException Can throw an IOException wrapped in a
@@ -461,7 +466,14 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
             try {
                 cleanupCurrentRecord();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                if (isStrict()) {
+                    throw new RuntimeException(e);
+                }
+                // If not strict, try going again.  We might be able to skip
+                // over the bad record.
+                logger.warning("Trying skip of failed record cleanup of " +
+                    currentRecord.getHeader().toString() + ": " +
+                    e.getMessage());
             }
             return innerHasNext();
         }
@@ -497,7 +509,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
                     // subsequent record.
                     try {
                         if (hasNext()) {
-                            getLogger().warning("Bad Record. Trying to skip " +
+                            getLogger().warning("Bad Record. Trying skip " +
                                 "(Current offset " +  offset + "): " +
                                 e.getMessage());
                             return exceptionNext();
