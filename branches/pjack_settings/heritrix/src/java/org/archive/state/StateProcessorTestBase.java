@@ -24,12 +24,15 @@
 package org.archive.state;
 
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
-
-import org.archive.util.TestUtils;
 
 import junit.framework.TestCase;
 
@@ -92,6 +95,27 @@ public abstract class StateProcessorTestBase extends TestCase {
 
     
     public void testSerialization() throws Exception {
-        TestUtils.testSerialization(makeModule());
+        Object first = makeModule();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream output = new ObjectOutputStream(bout);
+        output.writeObject(first);
+        
+        ByteArrayInputStream binp = new ByteArrayInputStream(bout.toByteArray());
+        ObjectInputStream input = new ObjectInputStream(binp);
+        Object second = input.readObject();
+        
+        ByteArrayOutputStream bout2 = new ByteArrayOutputStream();
+        output = new ObjectOutputStream(bout2);
+        output.writeObject(second);
+        
+        verifySerialization(first, 
+                bout.toByteArray(), second, bout2.toByteArray());
+
+    }
+    
+    
+    protected void verifySerialization(Object first, byte[] firstBytes, 
+            Object second, byte[] secondBytes) throws Exception {
+        assertTrue(Arrays.equals(firstBytes, secondBytes));
     }
 }
