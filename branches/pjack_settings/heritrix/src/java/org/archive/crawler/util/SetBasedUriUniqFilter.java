@@ -90,11 +90,6 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializab
     public void add(String key, CandidateURI value) {
         profileLog(key);
         if (setAdd(key)) {
-            if (receiver == null) {
-                System.out.println(System.identityHashCode(this) + " was null,");
-            } else {                
-                System.out.println(System.identityHashCode(this) + " is normal.");
-            }
             this.receiver.receive(value);
             if (setCount() % 50000 == 0) {
                 LOGGER.log(Level.FINE, "count: " + setCount() + " totalDups: "

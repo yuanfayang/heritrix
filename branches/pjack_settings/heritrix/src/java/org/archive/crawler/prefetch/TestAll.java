@@ -26,8 +26,11 @@
 
 package org.archive.crawler.prefetch;
 
+
+import org.archive.util.TestUtils;
+
 import junit.framework.Test;
-import junit.framework.TestSuite;
+
 
 /**
  * @author pjack
@@ -36,17 +39,8 @@ import junit.framework.TestSuite;
 public class TestAll {
 
     
-    public static Test suite() {
-        String cname = TestAll.class.getName();
-        int p = cname.lastIndexOf('.');
-        String pname = cname.substring(0, p);
-        
-        TestSuite suite = new TestSuite(pname);
-        suite.addTestSuite(PreconditionEnforcerTest.class);
-        suite.addTestSuite(PreselectorTest.class);
-        suite.addTestSuite(QuotaEnforcerTest.class);
-        suite.addTestSuite(RuntimeLimitEnforcerTest.class);
-        return suite;        
+    public static Test suite() throws Exception {
+        return TestUtils.makePackageSuite(TestAll.class);    
     }
     
     

@@ -19,18 +19,16 @@
  *
  * TestAll.java
  *
- * Created on Feb 1, 2007
+ * Created on Mar 12, 2007
  *
  * $Id:$
  */
 
-package org.archive.crawler.scope;
-
+package org.archive;
 
 import org.archive.util.TestUtils;
 
 import junit.framework.Test;
-
 
 /**
  * @author pjack
@@ -42,6 +40,4 @@ public class TestAll {
     public static Test suite() throws Exception {
         return TestUtils.makePackageSuite(TestAll.class);
     }
-    
-    
 }

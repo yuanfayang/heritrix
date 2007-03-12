@@ -26,8 +26,10 @@
 
 package org.archive.crawler.frontier;
 
+import org.archive.util.TestUtils;
+
 import junit.framework.Test;
-import junit.framework.TestSuite;
+
 
 /**
  * @author pjack
@@ -36,17 +38,8 @@ import junit.framework.TestSuite;
 public class TestAll {
 
     
-    public static Test suite() {
-        String cname = TestAll.class.getName();
-        int p = cname.lastIndexOf('.');
-        String pname = cname.substring(0, p);
-        
-        TestSuite suite = new TestSuite(pname);
-        suite.addTestSuite(AdaptiveRevisitFrontierTest.class);
-        suite.addTestSuite(AdaptiveRevisitHostQueueTest.class);
-        suite.addTestSuite(BdbFrontierTest.class);
-        suite.addTestSuite(RecoveryJournalTest.class);
-        return suite;
+    public static Test suite() throws Exception {
+        return TestUtils.makePackageSuite(TestAll.class);
     }
     
     

@@ -26,6 +26,8 @@
 
 package org.archive.processors;
 
+import org.archive.util.TestUtils;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -37,15 +39,16 @@ public class TestAll {
 
     
     public static Test suite() throws Exception {
-        String cname = TestAll.class.getName();
-        int p = cname.lastIndexOf('.');
-        String pname = cname.substring(0, p);
-        
-        TestSuite suite = new TestSuite(pname);
-        suite.addTest(org.archive.processors.extractor.TestAll.suite());
-        suite.addTest(org.archive.processors.fetcher.TestAll.suite());
-        suite.addTest(org.archive.processors.writer.TestAll.suite());
-        return suite;        
+        return TestUtils.makePackageSuite(TestAll.class);
+//        String cname = TestAll.class.getName();
+//        int p = cname.lastIndexOf('.');
+//        String pname = cname.substring(0, p);
+//        
+//        TestSuite suite = new TestSuite(pname);
+//        suite.addTest(org.archive.processors.extractor.TestAll.suite());
+//        suite.addTest(org.archive.processors.fetcher.TestAll.suite());
+//        suite.addTest(org.archive.processors.writer.TestAll.suite());
+//        return suite;        
     }
     
     

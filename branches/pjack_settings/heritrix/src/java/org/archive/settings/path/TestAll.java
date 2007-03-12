@@ -26,9 +26,12 @@
 
 package org.archive.settings.path;
 
+
+import org.archive.util.TestUtils;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
-import junit.framework.TestSuite;
+
 
 /**
  * @author pjack
@@ -37,11 +40,7 @@ import junit.framework.TestSuite;
 public class TestAll extends TestCase {
 
     
-    public static Test suite() {
-        TestSuite r = new TestSuite("org.archive.settings.path");
-        r.addTestSuite(PathValidatorTest.class);
-        r.addTestSuite(PathListerTest.class);
-        r.addTestSuite(PathChangerTest.class);
-        return r;
+    public static Test suite() throws Exception {
+        return TestUtils.makePackageSuite(TestAll.class);
     }
 }
