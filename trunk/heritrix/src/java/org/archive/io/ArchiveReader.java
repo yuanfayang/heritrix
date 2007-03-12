@@ -493,18 +493,19 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
                 return exceptionNext();
             } catch (IOException e) {
                 if (!isStrict()) {
-                    // Retry once.
+                    // Retry though an IOE.  Maybe we will succeed reading
+                    // subsequent record.
                     try {
                         if (hasNext()) {
-                            getLogger().warning("Retrying (Current offset " +
-                                offset + "): " +  e.getMessage());
+                            getLogger().warning("Bad Record. Trying to skip " +
+                                "(Current offset " +  offset + "): " +
+                                e.getMessage());
                             return exceptionNext();
                         }
-                        // There is no next and we don't have a record
-                        // to return.  Throw the recoverable.
-                        throw new RuntimeException("Retried but " +
-                            "no next record (Offset " + offset + ")",
-                            e);
+                        // Else we are at last record.  Iterator#next is
+                        // expecting value. We do not have one. Throw exception.
+                        throw new RuntimeException("Retried but no next " + 
+                            "record (Offset " + offset + ")", e);
                     } catch (IOException e1) {
                         throw new RuntimeException("After retry (Offset " +
                                 offset + ")", e1);
