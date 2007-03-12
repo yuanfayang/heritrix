@@ -26,23 +26,27 @@ package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Simple selftest for flash extractor.
  *
  * @author stack
  */
-public class FlashParseSelfTest extends SelfTestCase
+public class FlashParseSelfTest extends SelfTestBase
 {
-    /**
-     * Files to find as a list.
-     */
-    private static final List<File> FILES_TO_FIND =
-        Arrays.asList(new File[]
-            {new File("success.html")});
-
-    public void testFilesFound() {
-        testFilesInArc(FILES_TO_FIND);
+    
+    final private static Set<String> EXPECTED = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList(new String[] {
+            "index.html", "success.html", "pirates.swf",  "", "robots.txt"
+    })));
+    
+    public void testFilesFound() throws Exception {
+        Set<String> files = filesInArcs();
+        assertTrue(EXPECTED.equals(files));
     }
+
 }

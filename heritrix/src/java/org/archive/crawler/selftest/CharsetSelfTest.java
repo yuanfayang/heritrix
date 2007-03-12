@@ -24,7 +24,10 @@ package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Simple test to ensure we can extract links from multibyte pages.
@@ -34,28 +37,16 @@ import java.util.List;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CharsetSelfTest extends SelfTestCase
+public class CharsetSelfTest extends SelfTestBase
 {
-    /**
-     * Files to find as a list.
-     */
-    private static final List<File> FILES_TO_FIND =
-        Arrays.asList(new File[]
-            {new File("utf8.jsp"),
-                new File("shiftjis.jsp"),
-                new File("charsetselftest_end.html")});
-
-    /**
-     * Look for last file in link chain.
-     *
-     * The way the pages are setup under the CharsetSelfTest directory under
-     * the webapp is that we have one multibyte page w/ a single link buried in
-     * it that points off to another multibyte page.  On the end of the link
-     * chain is a page named END_OF_CHAIN_PAGE.  This test looks to see that
-     * arc has all pages in the chain.
-     */
-    public void testCharset()
-    {
-        testFilesInArc(FILES_TO_FIND);
+    final private static Set<String> EXPECTED = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList(new String[] {
+            "index.html", "link.html", "", "robots.txt"
+    })));
+    
+    public void testNothing() throws Exception {
+        Set<String> files = filesInArcs();
+        assertTrue(EXPECTED.equals(files));
     }
+    
 }

@@ -1,0 +1,193 @@
+<root>
+<object name="root" value="java.util.HashMap">
+ <object name="uriUniqFilter" value="org.archive.crawler.util.BdbUriUniqFilter">
+  <dependencies>
+   <reference name="bdb" value="manager.bdb"/>
+  </dependencies>
+ </object>
+ <object name="order" value="org.archive.crawler.datamodel.CrawlOrder">
+  <string name="disk-path"               value="."/>
+  <string name="logs-path"               value="logs"/>
+  <string name="checkpoints-path"        value="checkpoints"/>
+  <string name="state-path"              value="state"/>
+  <string name="scratch-path"            value="scratch"/>
+  <long name="max-bytes-download"        value="0"/>
+  <long name="max-document-download"     value="0"/>
+  <long name="max-time-sec"              value="0"/>
+  <int  name="max-toe-threads"           value="1"/>
+  <int  name="recorder-out-buffer-bytes" value="4096"/>
+  <int  name="recorder-in-buffer-bytes"  value="65536"/>
+  <object name="http-headers" value="java.util.HashMap">
+    <string name="user-agent" value="Mozilla/5.0 (compatible; heritrix/11 +http://www.archive.org)"/>
+    <string name="from" value="info@archive.org"/>
+  </object>
+  <object name="robots-honoring-policy" value="org.archive.processors.util.RobotsHonoringPolicy">
+   <boolean name="masquerade"    value="false"/>
+   <string  name="custom-robots" value=""/>
+   <object  name="user-agents"   value="java.util.ArrayList"/>
+  </object>
+  <string name="recover-path" value=""/>
+  <boolean name="recover-retain-failures" value="false"/>
+ </object>
+
+ <object name="queue-assignment-policy" value="org.archive.crawler.frontier.HostnameQueueAssignmentPolicy"/>
+
+ <object name="controller" value="org.archive.crawler.framework.CrawlController">
+  <dependencies>
+   <reference name="sheet-manager" value="manager"/>
+   <reference name="order" value="root.order"/>
+   <reference name="bdb" value="manager.bdb"/>
+  </dependencies>
+  <object name="credential-store" value="org.archive.processors.credential.CredentialStore"/>
+  <object name="scope" value="org.archive.crawler.scope.DecidingScope">
+   <dependencies>
+    <reference name="controller" value="root.controller"/>
+   </dependencies>
+   <boolean name="enabled"   value="true"/>
+   <string  name="seedsfile" value="seeds.txt"/>
+   <object name="decide-rules" value="org.archive.processors.deciderules.DecideRuleSequence">
+    <object name="rules" value="java.util.ArrayList">
+     <object name="0" value="org.archive.processors.deciderules.RejectDecideRule"/>
+     <object name="1" value="org.archive.crawler.deciderules.SurtPrefixedDecideRule">
+      <dependencies>
+       <reference name="controller" value="root.controller"/>
+      </dependencies>
+      <string  name="surts-source-file"      value=""/>
+      <boolean name="seeds-as-surt-prefixes" value="true"/>
+      <string  name="surts-dump-file"        value=""/>
+     </object>
+     <object name="2" value="org.archive.processors.deciderules.TooManyHopsDecideRule">
+      <int name="max-hops" value="20"/>
+     </object>
+     <object name="3" value="org.archive.processors.deciderules.PrerequisiteAcceptDecideRule"/>
+    </object> <!-- root.controller.scope.decide-rules.rules -->
+   </object><!-- root.controller.scope.decide-rules -->
+  </object><!-- root.controller.scope -->
+
+  <object name="frontier" value="org.archive.crawler.frontier.BdbFrontier">
+   <dependencies>
+    <reference name="controller" value="root.controller"/>
+    <reference name="queue-assignment-policy" value="root.queue-assignment-policy"/>
+    <reference name="uri-uniq-filter" value="root.uriUniqFilter"/>
+   </dependencies>
+   <float  name="delay-factor"                        value="0.0"/>
+   <int    name="max-delay-ms"                        value="0"/>
+   <int    name="min-delay-ms"                        value="0"/>
+   <int    name="max-retries"                         value="10"/>
+   <long   name="retry-delay-seconds"                 value="90"/>
+   <int    name="preference-embed-hops"               value="1"/>
+   <int    name="total-bandwidth-usage-kb-sec"        value="0"/>
+   <int    name="max-per-host-bandwidth-usage-kb-sec" value="0"/>
+   <string name="force-queue-assignment"              value=""/>
+   <boolean name="pause-at-finish" value="false"/>
+   <boolean name="hold-queues" value="true"/>
+   <int name="balance-replenish-amount" value="3000"/>
+   <long name="queue-total-budget" value="-1"/>
+   <object name="cost-policy" value="org.archive.crawler.frontier.ZeroCostAssignmentPolicy"/>
+  </object>
+
+  <object name="uri-canonicalization-rules" value="java.util.ArrayList">
+   <object name="0" value="org.archive.crawler.url.canonicalize.LowercaseRule"/>
+   <object name="1" value="org.archive.crawler.url.canonicalize.StripUserinfoRule"/>
+   <object name="2" value="org.archive.crawler.url.canonicalize.StripWWWNRule"/>
+   <object name="3" value="org.archive.crawler.url.canonicalize.StripSessionIDs"/>
+   <object name="4" value="org.archive.crawler.url.canonicalize.StripSessionCFIDs"/>
+   <object name="5" value="org.archive.crawler.url.canonicalize.FixupQueryStr"/>
+  </object>
+
+  <object name="server-cache" value="org.archive.crawler.framework.CrawlerServerCache">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>
+  </object>
+
+  <object name="processors" value="java.util.LinkedHashMap">
+   <object name="Preselector" value="org.archive.crawler.prefetch.Preselector">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>
+    <boolean name="recheck-scope"   value="true"/>
+    <boolean name="block-all"       value="false"/>
+    <string  name="block-by-regexp" value=""/>
+   </object>
+   <object name="Preprocessor" value="org.archive.crawler.prefetch.PreconditionEnforcer">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>
+    <int name="ip-validity-duration-seconds" value="21600"/>
+    <int name="robots-validity-duration-seconds" value="86400"/>
+   </object>
+   <object name="DNS" value="org.archive.processors.fetcher.FetchDNS">
+    <dependencies>
+     <reference name="server-cache" value="root.controller.server-cache"/>
+    </dependencies>
+    <boolean name="accept-non-dns-resolves" value="true"/>
+   </object>
+   <object name="HTTP" value="org.archive.processors.fetcher.FetchHTTP">
+    <dependencies>
+     <reference name="server-cache" value="root.controller.server-cache"/>
+     <reference name="credential-store" value="root.controller.credential-store"/>
+    </dependencies>
+    <object  name="midfetch-rules"   value="org.archive.processors.deciderules.DecideRuleSequence"/>
+    <int     name="timeout-seconds"  value="1200"/>
+    <int     name="sotimeout-ms"     value="20000"/>
+    <long    name="max-length-bytes" value="0"/>
+    <string  name="trust-level"      value="open"/>
+    <object  name="accept-headers"   value="java.util.ArrayList"/>
+    <string  name="http-proxy-host"  value=""/>
+    <int     name="http-proxy-port"  value="0"/>
+    <string  name="default-encoding" value="ISO-8859-1"/>
+    <boolean name="sha1-content"     value="true"/>
+    <boolean name="send-referer"     value="true"/>
+    <boolean name="send-range"       value="false"/>
+    <boolean name="send-connection-close" value="true"/>
+   </object>
+   <object name="ExtractorHTTP" value="org.archive.processors.extractor.ExtractorHTTP"/>
+   <object name="ExtractorHTML" value="org.archive.processors.extractor.ExtractorHTML"/>
+   <object name="ExtractorCSS" value="org.archive.processors.extractor.ExtractorCSS"/>
+   <object name="ExtractorJS" value="org.archive.processors.extractor.ExtractorJS"/>
+   <object name="ExtractorSWF" value="org.archive.processors.extractor.ExtractorSWF"/>
+   <object name="Archiver" value="org.archive.crawler.writer.ARCWriterProcessor">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>
+    <boolean name="compress"       value="true"/>
+    <string  name="prefix"         value="IAH"/>
+    <string  name="suffix"         value="archive.org"/>
+    <int     name="max-size-bytes" value="100000000"/>
+    <object  name="path" value="java.util.ArrayList">
+     <string name="0" value="arcs"/>
+    </object>
+    <int     name="pool-max-active"      value="5"/>
+    <int     name="pool-max-wait"        value="300000"/>
+    <long    name="total-bytes-to-write" value="0"/>
+   </object>
+   <object name="Updater" value="org.archive.crawler.postprocessor.CrawlStateUpdater">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>    
+   </object>
+   <object name="LinksScoper" value="org.archive.crawler.postprocessor.LinksScoper">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>
+    <boolean name="seed-redirects-new-seeds" value="true"/>
+    <boolean name="override-logger" value="false"/>
+   </object>
+   <object name="Scheduler" value="org.archive.crawler.postprocessor.FrontierScheduler">
+    <dependencies>
+     <reference name="frontier" value="root.controller.frontier"/>
+    </dependencies>
+   </object>
+  </object>
+
+  <object name="loggers" value="java.util.ArrayList">
+   <object name="0" value="org.archive.crawler.framework.StatisticsTracker">
+    <dependencies>
+     <reference name="controller" value="root.controller"/>
+    </dependencies>
+   </object>
+  </object>
+ </object>
+</object>
+</root>
