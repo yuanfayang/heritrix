@@ -11,12 +11,15 @@
       <corpauthor>Internet Archive</corpauthor>
     </authorgroup>
   </articleinfo>
-   <sect1 id="TODO">
-    <title>Release XXX</title>
+   <sect1 id="1_12_0">
+    <title>Release 1.12.0 (NOT YET RELEASED)</title>
     <abstract>
-      <para />
+      <para>Heritrix 1.12.0 is in prerelease testing. Until release, the 
+      most up-to-date release notes will be available in the project wiki 
+      at <ulink url="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.12.0">
+      Release Notes - 1.12.0</ulink>.</para>
     </abstract>
-    <sect2 id="XXXXXXXXXX_contributors">
+    <sect2 id="1_12_0_contributors">
     <title>Contributors</title>
         <para>
     <itemizedlist>
