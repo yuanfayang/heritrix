@@ -22,6 +22,7 @@
  */
 package org.archive.processors.fetcher;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Hashtable;
 import java.util.logging.Level;
@@ -39,7 +40,12 @@ import org.archive.processors.util.ServerCache;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class DefaultServerCache implements ServerCache {
+public class DefaultServerCache implements ServerCache, Serializable {
+
+
+    private static final long serialVersionUID = 1L;
+
+
     private static Logger logger =
         Logger.getLogger(DefaultServerCache.class.getName());
     

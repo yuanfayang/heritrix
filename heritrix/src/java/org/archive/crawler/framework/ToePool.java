@@ -298,4 +298,26 @@ public class ToePool extends ThreadGroup implements Reporter {
     public void reportTo(PrintWriter writer) {
         reportTo(null,writer);
     }
+
+
+    public void waitForAll() {
+        while (true) try {
+            if (isAllAlive(getToes())) {
+                return;
+            }
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+    
+    
+    private static boolean isAllAlive(Thread[] threads) {
+        for (Thread t: threads) {
+            if ((t != null) && (!t.isAlive())) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

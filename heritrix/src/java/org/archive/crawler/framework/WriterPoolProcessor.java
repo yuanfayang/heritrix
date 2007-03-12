@@ -31,6 +31,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,10 +45,13 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.writer.EmptyMetadataProvider;
 import org.archive.crawler.writer.MetadataProvider;
+import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.processors.util.CrawlHost;
+import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.RecoverAction;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
@@ -60,7 +65,7 @@ import org.archive.state.StateProvider;
  * @author stack
  */
 public abstract class WriterPoolProcessor extends CrawlerProcessor
-implements CoreAttributeConstants, CrawlStatusListener {
+implements CoreAttributeConstants {
     
     
     private static final Logger logger = 
@@ -153,6 +158,11 @@ implements CoreAttributeConstants, CrawlStatusListener {
     private long totalBytesWritten = 0;
 
     
+    private WriterPoolSettings settings;
+    private int maxActive;
+    private int maxWait;
+    private AtomicInteger serial = new AtomicInteger();
+    
 
     /**
      * @param name Name of this processor.
@@ -166,12 +176,15 @@ implements CoreAttributeConstants, CrawlStatusListener {
     @Override
     public synchronized void initialTasks(StateProvider context) {
         // Add this class to crawl state listeners and setup pool.
-        controller.addCrawlStatusListener(this);
-        setupPool(context, new AtomicInteger());
+//        controller.addCrawlStatusListener(this);
+        this.maxActive = context.get(this, POOL_MAX_ACTIVE);
+        this.maxWait = context.get(this, POOL_MAX_WAIT);
+        this.settings = getWriterPoolSettings(context);
+        setupPool(serial);
         // Run checkpoint recovery code.
-        if (controller.isCheckpointRecover()) {
-            checkpointRecover();
-        }
+//        if (controller.isCheckpointRecover()) {
+//            checkpointRecover();
+//        }
     }
     
     
@@ -183,8 +196,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
     /**
      * Set up pool of files.
      */
-    protected abstract void setupPool(StateProvider context, 
-            final AtomicInteger serialNo);
+    protected abstract void setupPool(final AtomicInteger serial);
 
     
     protected void checkBytesWritten(StateProvider context) {
@@ -214,29 +226,14 @@ implements CoreAttributeConstants, CrawlStatusListener {
         }
         return h.getIP().getHostAddress();
     }
-    
 
-
-	public void crawlEnding(String sExitMessage) {
-		this.pool.close();
-	}
-
-	public void crawlEnded(String sExitMessage) {
-        // sExitMessage is unused.
-	}
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
-     */
-    public void crawlStarted(String message) {
-        // TODO Auto-generated method stub
-    }
-    
+/*    
     protected String getCheckpointStateFile() {
     	return this.getClass().getName() + ".state";
     }
+*/
     
-    public void crawlCheckpoint(StateProvider context, File checkpointDir) 
+    public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
     throws IOException {
         int serial = getSerialNo().get();
         if (this.pool.getNumActive() > 0) {
@@ -247,55 +244,55 @@ implements CoreAttributeConstants, CrawlStatusListener {
             // we're paused checkpointing (Revisit if this assumption changes).
             serial = getSerialNo().incrementAndGet();
         }
-        saveCheckpointSerialNumber(checkpointDir, serial);
+//        saveCheckpointSerialNumber(checkpointDir, serial);
         // Close all ARCs on checkpoint.
         try {
             this.pool.close();
         } finally {
             // Reopen on checkpoint.
-            setupPool(context, new AtomicInteger(serial));
+            this.serial = new AtomicInteger(serial);
+            setupPool(this.serial);
         }
     }
-    
-	public void crawlPausing(String statusMessage) {
+  
+    /*
+    public void crawlPausing(String statusMessage) {
         // sExitMessage is unused.
-	}
+    }
 
-	public void crawlPaused(String statusMessage) {
+    public void crawlPaused(String statusMessage) {
         // sExitMessage is unused.
-	}
+    }
 
-	public void crawlResuming(String statusMessage) {
+    public void crawlResuming(String statusMessage) {
         // sExitMessage is unused.
-	}
-	
-        /*
-    private void readObject(ObjectInputStream stream)
-    throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        ObjectPlusFilesInputStream coistream =
-            (ObjectPlusFilesInputStream)stream;
-        coistream.registerFinishTask( new Runnable() {
-            public void run() {
-                // FIXME: Figure out checkpointing in new settings system
-            	setupPool(new ExampleStateProvider(), new AtomicInteger());
-            }
-        });
     }*/
 
-	protected WriterPool getPool() {
-		return pool;
-	}
+    
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+    
+    
+    private void readObject(ObjectInputStream stream) 
+    throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        this.setupPool(serial);
+    }
 
-	protected void setPool(WriterPool pool) {
-		this.pool = pool;
-	}
+    protected WriterPool getPool() {
+        return pool;
+    }
 
-	protected long getTotalBytesWritten() {
-		return totalBytesWritten;
-	}
+    protected void setPool(WriterPool pool) {
+        this.pool = pool;
+    }
 
-	protected void setTotalBytesWritten(long totalBytesWritten) {
+    protected long getTotalBytesWritten() {
+        return totalBytesWritten;
+    }
+
+    protected void setTotalBytesWritten(long totalBytesWritten) {
         this.totalBytesWritten = totalBytesWritten;
     }
 	
@@ -303,17 +300,19 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * Called out of {@link #initialTasks()} when recovering a checkpoint.
      * Restore state.
      */
+    /*
     protected void checkpointRecover() {
         int serialNo = loadCheckpointSerialNumber();
         if (serialNo != -1) {
             getSerialNo().set(serialNo);
         }
-    }
+    }*/
 
     /**
      * @return Serial number from checkpoint state file or if unreadable, -1
      * (Client should check for -1).
      */
+    /*
     protected int loadCheckpointSerialNumber() {
         int result = -1;
         
@@ -358,7 +357,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
             dos.close();
         }
     }
-    
+    */
     
     protected List<String> getMetadata(StateProvider context) {
         MetadataProvider provider = context.get(this, METADATA_PROVIDER);
@@ -389,41 +388,32 @@ implements CoreAttributeConstants, CrawlStatusListener {
         return results;        
     }
     
-    protected WriterPoolSettings getWriterPoolSettings(
+    
+    protected WriterPoolSettings getWriterPoolSettings() {
+        return settings;
+    }
+    
+    
+    protected int getMaxActive() {
+        return maxActive;
+    }
+    
+    
+    protected int getMaxWait() {
+        return maxWait;
+    }
+    
+    
+    private WriterPoolSettings getWriterPoolSettings(
             final StateProvider context) {
-        final int maxSize = context.get(this, MAX_SIZE_BYTES);
-        final List<String> metadata = getMetadata(context);
-        final List<File> output = getOutputDirs(context);
-        final String prefix = context.get(this, PREFIX);
-        final String suffix = context.get(this, SUFFIX);
-        final boolean compressed = context.get(this, COMPRESS);
-        return new WriterPoolSettings() {
-
-            public int getMaxSize() {
-                return maxSize;
-            }
-
-            public List<String> getMetadata() {
-                return metadata;
-            }
-
-            public List<File> getOutputDirs() {
-                return output;
-            }
-
-            public String getPrefix() {
-                return prefix;
-            }
-
-            public String getSuffix() {
-                return suffix;
-            }
-
-            public boolean isCompressed() {
-                return compressed;
-            }
-            
-        };
+        DefaultWriterPoolSettings result = new DefaultWriterPoolSettings();
+        result.setMaxSize(context.get(this, MAX_SIZE_BYTES));
+        result.setMetadata(getMetadata(context));
+        result.setOutputDirs(getOutputDirs(context));
+        result.setPrefix(context.get(this, PREFIX));
+        result.setSuffix(context.get(this, SUFFIX));
+        result.setCompressed(context.get(this, COMPRESS));
+        return result;
     }
     
     protected static Key<List<String>> makePath(String defaultPath) {

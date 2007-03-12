@@ -63,8 +63,7 @@ import org.archive.state.StateProvider;
  * @author Parker Thompson
  */
 public class ARCWriterProcessor extends WriterPoolProcessor
-implements CoreAttributeConstants, ARCConstants, CrawlStatusListener,
-FetchStatusCodes {
+implements CoreAttributeConstants, ARCConstants, FetchStatusCodes {
 
     private static final long serialVersionUID = 3L;
 
@@ -89,6 +88,8 @@ FetchStatusCodes {
     private static final String [] DEFAULT_PATH = {"arcs"};
 
 
+    
+    
     /**
      * @param name Name of this writer.
      */
@@ -101,10 +102,10 @@ FetchStatusCodes {
 	}
 
     @Override
-    protected void setupPool(StateProvider context, AtomicInteger serialNo) {
-        int maxActive = context.get(this, POOL_MAX_ACTIVE);
-        int maxWait = context.get(this, POOL_MAX_WAIT);
-        WriterPoolSettings wps = getWriterPoolSettings(context);
+    protected void setupPool(AtomicInteger serialNo) {
+        int maxActive = getMaxActive();
+        int maxWait = getMaxWait();
+        WriterPoolSettings wps = getWriterPoolSettings();
         setPool(new ARCWriterPool(serialNo, wps, maxActive, maxWait));
     }
 

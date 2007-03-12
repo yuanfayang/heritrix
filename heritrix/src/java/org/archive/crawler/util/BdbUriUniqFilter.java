@@ -26,6 +26,8 @@ package org.archive.crawler.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -89,6 +91,8 @@ extends SetBasedUriUniqFilter implements Serializable {
         Key.make(BdbModule.class, null);
     
     
+    private BdbModule bdb;
+    
     /**
      * Shutdown default constructor.
      */
@@ -99,19 +103,10 @@ extends SetBasedUriUniqFilter implements Serializable {
         
     public BdbUriUniqFilter(BdbModule bdb) 
     throws IOException {
-        this(bdb.getEnvironment());
-    }
-        
-    /**
-     * Constructor.
-     * @param environment A bdb environment ready-configured.
-     * @throws IOException
-     */
-    public BdbUriUniqFilter(Environment environment)
-    throws IOException {
         super();
+        this.bdb = bdb;
         try {
-            initialize(environment);
+            initialize(bdb.getEnvironment());
         } catch (DatabaseException e) {
             throw new IOException(e.getMessage());
         }
@@ -310,4 +305,22 @@ extends SetBasedUriUniqFilter implements Serializable {
         // when checkpointing?  TODO.
         return 0;
     }
+
+    private void writeObject(ObjectOutputStream output) throws IOException {
+        output.defaultWriteObject();
+    }
+
+    private void readObject(ObjectInputStream input) 
+    throws IOException, ClassNotFoundException {
+        input.defaultReadObject();        
+
+        try {
+            reopen(bdb.getEnvironment());
+        } catch (DatabaseException e) {
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
+        }
+    }
+
 }

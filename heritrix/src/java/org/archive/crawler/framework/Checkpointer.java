@@ -199,7 +199,9 @@ public class Checkpointer implements Serializable {
                     checkpointFailed("Failed wait for complete pause.");
                 } else {
                     createCheckpointInProgressDirectory();
-                    this.getController().checkpoint();
+                    org.archive.settings.Checkpointer.checkpoint(
+                            getController().getSheetManager(),
+                            checkpointInProgressDir);
                 }
             } catch (Exception e) {
                 checkpointFailed(e);

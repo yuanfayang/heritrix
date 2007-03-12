@@ -24,26 +24,20 @@
 package org.archive.crawler.framework;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EventObject;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
@@ -80,8 +74,8 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
-import org.archive.settings.ListModuleListener;
-import org.archive.settings.ModuleListener;
+import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.RecoverAction;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.BdbModule;
@@ -95,7 +89,6 @@ import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.surt.SURTTokenizer;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
@@ -103,13 +96,8 @@ import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
-import com.sleepycat.je.CheckpointConfig;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.DbInternal;
 import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.dbi.EnvironmentImpl;
-import com.sleepycat.je.utilint.DbLsn;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -124,7 +112,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Gordon Mohr
  */
 public class CrawlController extends Bean 
-implements Serializable, Reporter, StateProvider {
+implements Serializable, Reporter, StateProvider, Checkpointable {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlController.class,1);
@@ -237,13 +225,13 @@ implements Serializable, Reporter, StateProvider {
 
     /**
      * Sheet manager for context (SURT) based settings.  Passed to the
-     * initialization method.
+     * constructor.
      */
-    private transient SheetManager sheetManager;
+    private SheetManager sheetManager;
 
     // Used to enable/disable single-threaded operation after OOM
     private volatile transient boolean singleThreadMode = false; 
-    private transient ReentrantLock singleThreadLock = null;
+    private ReentrantLock singleThreadLock = null;
 
     // emergency reserve of memory to allow some progress/reporting after OOM
     private transient LinkedList<char[]> reserveMemory;
@@ -276,23 +264,23 @@ implements Serializable, Reporter, StateProvider {
     transient private State state = State.NASCENT;
 
     // disk paths
-    private transient File disk;        // overall disk path
-    private transient File logsDisk;    // for log files
+    transient private File disk;        // overall disk path
+    transient private File logsDisk;    // for log files
     
     /**
      * For temp files representing state of crawler (eg queues)
      */
-    private transient File stateDisk;
+    transient private File stateDisk;
     
     /**
      * For discardable temp files (eg fetch buffers).
      */
-    private transient File scratchDisk;
+    transient private File scratchDisk;
 
     /**
      * Directory that holds checkpoint.
      */
-    private transient File checkpointsDisk;
+    transient private File checkpointsDisk;
     
     /**
      * Checkpointer.
@@ -300,6 +288,13 @@ implements Serializable, Reporter, StateProvider {
      * checkpoints.
      */
     private Checkpointer checkpointer;
+    
+    // Would be final but for Serialization
+    private CrawlOrder order;
+
+    // Would be final but for Serialization
+    private BdbModule bdb;
+
     
     /**
      * Gets set to checkpoint we're in recovering if in checkpoint recover
@@ -316,7 +311,7 @@ implements Serializable, Reporter, StateProvider {
      * A manifest of all files used/created during this crawl. Written to file
      * at the end of the crawl (the absolutely last thing done).
      */
-    private StringBuffer manifest;
+    transient private StringBuffer manifest;
 
     /**
      * Record of fileHandlers established for loggers,
@@ -377,7 +372,7 @@ implements Serializable, Reporter, StateProvider {
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
-    private transient List<CrawlStatusListener> registeredCrawlStatusListeners =
+    private List<CrawlStatusListener> registeredCrawlStatusListeners =
         Collections.synchronizedList(new ArrayList<CrawlStatusListener>());
     
     // Since there is a high probability that there will only ever by one
@@ -388,19 +383,8 @@ implements Serializable, Reporter, StateProvider {
     // And then switch to the array once there is more then one.
      protected transient ArrayList<CrawlURIDispositionListener> 
      registeredCrawlURIDispositionListeners;
-    
-    
-    /**
-     * Keep a list of all BigMap instance made -- shouldn't be many -- so that
-     * we can checkpoint.
-     */
-    private transient Map<String,CachedBdbMap<?,?>> bigmaps = null;
 
-    
 
-    final private CrawlOrder order;
-
-    final private BdbModule bdb;
     
 
     public CrawlController(SheetManager manager, CrawlOrder order, 
@@ -414,7 +398,6 @@ implements Serializable, Reporter, StateProvider {
         this.singleThreadLock = new ReentrantLock();
 //        this.order = new CrawlOrder();
 //        this.order.setController(this);
-        this.bigmaps = new Hashtable<String,CachedBdbMap<?,?>>();
         sExit = null;
         this.manifest = new StringBuffer();
         String onFailMessage = "";
@@ -460,8 +443,8 @@ implements Serializable, Reporter, StateProvider {
             
             onFailMessage = "Unable to setup bdb environment.";
             
-//            onFailMessage = "Unable to setup statistics";
-//            setupStatTracking();
+            onFailMessage = "Unable to setup statistics";
+            //setupStatTracking();
             
             onFailMessage = "Unable to setup crawl modules";
             setupCrawlModules();
@@ -486,23 +469,6 @@ implements Serializable, Reporter, StateProvider {
 //        processors = get(this, PROCESSORS);
     }
 
-    
-    private List<Checkpointable> getCheckpointables() {
-        for (ModuleListener ml: sheetManager.getModuleListeners()) {
-            if (ml instanceof ListModuleListener) {
-                ListModuleListener lml = (ListModuleListener)ml;
-                if (lml.getType() == Checkpointable.class) {
-                    @SuppressWarnings("unchecked")
-                    List<Checkpointable> r = lml.getList(); 
-                    return r;
-                }
-            }
-        }
-        LOGGER.warning("No Checkpointables found!");
-        List<Checkpointable> r = Collections.emptyList();
-        return r;
-    }
-    
     
     public <T> T getOrderSetting(Key<T> key) {
         Sheet def = sheetManager.getDefault();
@@ -543,10 +509,6 @@ implements Serializable, Reporter, StateProvider {
                 this.checkpointRecover.getDisplayName() + " in " +
                 (System.currentTimeMillis() - started) + "ms.");
         }
-    }
-    
-    protected boolean getCheckpointCopyBdbjeLogs() {
-        return getOrderSetting(CrawlOrder.CHECKPOINT_COPY_BDBJE_LOGS);
     }
     
     
@@ -808,7 +770,8 @@ implements Serializable, Reporter, StateProvider {
      */
 /*    private void setupStatTracking()
     throws InvalidAttributeValueException, FatalConfigurationException {
-        List<StatisticsTracking> loggers = getOrderSetting(LOGGERS);
+        List<StatisticsTracking> loggers = 
+            getSheetManager().getDefault().check(this, LOGGERS);
         final String cstName = "crawl-statistics";
         if (loggers.isEmpty()) {
             if (!isCheckpointRecover() && this.statistics == null) {
@@ -822,12 +785,15 @@ implements Serializable, Reporter, StateProvider {
         }
 
         for (StatisticsTracking tracker: loggers) {
-            // tracker.initialize(this);
+            tracker.initialize(this);
             if (this.statistics == null) {
                 this.statistics = tracker;
             }
         }
-    } */
+        
+    }
+    */
+
     
     protected void restoreStatisticsTracker(List<StatisticsTracking> loggers,
         String replaceName)
@@ -862,7 +828,6 @@ implements Serializable, Reporter, StateProvider {
             logsPath);
 
         this.fileHandlers = new HashMap<Logger,FileHandler>();
-
         setupLogFile(uriProcessing,
             logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
             new UriProcessingFormatter(), true);
@@ -1016,7 +981,7 @@ implements Serializable, Reporter, StateProvider {
      * @param checkpointDir Where to write checkpoint state to.
      * @throws Exception
      */
-    protected void sendCheckpointEvent(File checkpointDir) throws Exception {
+/*    protected void sendCheckpointEvent(File checkpointDir) throws Exception {
         synchronized (this.registeredCrawlStatusListeners) {
             if (this.state != State.PAUSED) {
                 throw new IllegalStateException("Crawler must be completly " +
@@ -1033,7 +998,7 @@ implements Serializable, Reporter, StateProvider {
             }
             LOGGER.fine("Sent " + State.CHECKPOINTING);
         }
-    }
+    }*/
 
     /** 
      * Operator requested crawl begin
@@ -1106,7 +1071,6 @@ implements Serializable, Reporter, StateProvider {
             this.checkpointer.cleanup();
             this.checkpointer = null;
         }
-        this.bigmaps = null;
         if (this.toePool != null) {
             this.toePool.cleanup();
             // I played with launching a thread here to do cleanup of the
@@ -1179,37 +1143,16 @@ implements Serializable, Reporter, StateProvider {
     
     /**
      * Run checkpointing.
-     * CrawlController takes care of managing the checkpointing/serializing
-     * of bdb, the StatisticsTracker, and the CheckpointContext.  Other
-     * modules that want to revive themselves on checkpoint recovery need to
-     * save state during their {@link CrawlStatusListener#crawlCheckpoint(File)}
-     * invocation and then in their #initialize if a module,
-     * or in their #initialTask if a processor, check with the CrawlController
-     * if its checkpoint recovery. If it is, read in their old state from the
-     * pointed to  checkpoint directory.
+     * 
      * <p>Default access only to be called by Checkpointer.
      * @throws Exception
      */
-    void checkpoint()
-    throws Exception {
-        // Tell registered listeners to checkpoint.
-        sendCheckpointEvent(this.checkpointer.
-            getCheckpointInProgressDirectory());
-        
+    public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
+    throws IOException {
         // Rotate off crawler logs.
         LOGGER.fine("Rotating log files.");
         rotateLogFiles(CURRENT_LOG_SUFFIX + "." +
             this.checkpointer.getNextCheckpointName());
-
-        LOGGER.fine("Dealing with Checkpointable modules.");
-        List<Checkpointable> checkpointables = getCheckpointables();
-        for (Checkpointable ch: checkpointables) {
-            ch.checkpoint(checkpointer.getCheckpointInProgressDirectory());
-        }
-
-        // Checkpoint this crawlcontroller.
-        CheckpointUtils.writeObjectToFile(this,
-            this.checkpointer.getCheckpointInProgressDirectory());
     }
 
 
@@ -1337,16 +1280,24 @@ implements Serializable, Reporter, StateProvider {
      * Resume crawl from paused state
      */
     @Operation(desc="Resume crawl from paused state.")
-    public synchronized void requestCrawlResume() {
+    public void requestCrawlResume() {
+        if (this.toePool == null) {
+            this.setupToePool();
+        }
+
         if (state != State.PAUSING && state != State.PAUSED && state != State.CHECKPOINTING) {
             // Can't resume if not been told to pause or if we're in middle of
             // a checkpoint.
             return;
         }
+        
+        // ToePool might be null if we are resuming after a checkpoint recovery
         multiThreadMode();
-        getFrontier().unpause();
-        LOGGER.fine("Crawl resumed.");
+        Frontier f = getFrontier();
+        f.unpause();
+        LOGGER.info("Crawl resumed.");
         sendCrawlStateChangeEvent(State.RUNNING, CrawlStatus.RUNNING);
+
     }
 
     /**
@@ -1363,6 +1314,7 @@ implements Serializable, Reporter, StateProvider {
         toePool = new ToePool(this);
         // TODO: make # of toes self-optimizing
         toePool.setSize(get(order, CrawlOrder.MAX_TOE_THREADS));
+        toePool.waitForAll();
     }
 
 
@@ -1545,14 +1497,71 @@ implements Serializable, Reporter, StateProvider {
         return state == State.RUNNING && !shouldContinueCrawling();
     }
     
+    
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        // In an ideal world, this wouldn't be necessary:  Modules would
+        // declare formal dependencies on the objects they require, and would
+        // not go through the CrawlController to find each other.  However,
+        // since many modules still do use the CrawlController to find each
+        // other, we must ensure that critical things are deserialized in
+        // order.  In particular, CrawlOrder and BdbModule must be deserialized
+        // first since Modules that are constructed during defaultReadObject
+        // may require those things.
+        stream.writeObject(order);
+        stream.writeObject(bdb);
+        
+        stream.writeObject(disk);
+        stream.writeObject(logsDisk);
+        stream.writeObject(checkpointsDisk);
+        stream.writeObject(scratchDisk);
+        stream.writeObject(stateDisk);
+        
+        stream.defaultWriteObject();
+    }
+    
+    
     private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
+        this.order = (CrawlOrder)stream.readObject();
+        this.bdb = (BdbModule)stream.readObject();
+        this.state = State.PAUSED;
+        
+        disk = (File)stream.readObject();
+        logsDisk = (File)stream.readObject();
+        checkpointsDisk = (File)stream.readObject();
+        scratchDisk = (File)stream.readObject();
+        stateDisk = (File)stream.readObject();
+        this.manifest = new StringBuffer();
+        
+        if (stream instanceof CheckpointRecovery) {
+            CheckpointRecovery cr = (CheckpointRecovery)stream;
+            this.disk = translate(cr, CrawlOrder.DISK_PATH, this.disk);
+            this.logsDisk = translate(cr, CrawlOrder.LOGS_PATH, this.logsDisk);
+            this.checkpointsDisk = translate(cr, 
+                    CrawlOrder.CHECKPOINTS_PATH, this.checkpointsDisk);
+            this.scratchDisk = translate(cr, 
+                    CrawlOrder.SCRATCH_PATH, this.scratchDisk);
+            this.stateDisk = translate(cr, 
+                    CrawlOrder.STATE_PATH, this.stateDisk);
+        }
+        this.setupLogs();
+            
         stream.defaultReadObject();
         // Setup status listeners
         this.registeredCrawlStatusListeners =
             Collections.synchronizedList(new ArrayList<CrawlStatusListener>());
         // Ensure no holdover singleThreadMode
         singleThreadMode = false; 
+        System.out.println("Read the CC " + state + System.identityHashCode(this));
+    }
+    
+    
+    private File translate(CheckpointRecovery cr, Key<String> key, File f) {
+        String newPath = cr.translatePath(f.getAbsolutePath());
+        cr.setState(order, key, newPath);
+        File r = new File(newPath);
+        r.mkdirs();
+        return r;
     }
 
     /**
@@ -1762,7 +1771,7 @@ implements Serializable, Reporter, StateProvider {
     public <K,V> Map<K,V> getBigMap(final String dbName, 
             final Class<? super K> keyClass,
             final Class<? super V> valueClass)
-    throws Exception {
+    throws DatabaseException {
         return bdb.getBigMap(dbName, keyClass, valueClass);
     }
     
@@ -1905,4 +1914,7 @@ implements Serializable, Reporter, StateProvider {
     }
 
 
+    public BdbModule getBdbModule() {
+        return bdb;
+    }
 }

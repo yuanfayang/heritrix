@@ -9,6 +9,9 @@ import org.archive.state.Key;
 public class CrawlerServerCache extends DefaultServerCache {
    
     
+    private static final long serialVersionUID = 1L;
+
+
     @Dependency
     final public static Key<CrawlController> CONTROLLER =
         Key.make(CrawlController.class, null);

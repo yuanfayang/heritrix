@@ -24,6 +24,8 @@
 */ 
 package org.archive.crawler.frontier;
 
+import java.io.Serializable;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlController;
 
@@ -32,7 +34,7 @@ import org.archive.crawler.framework.CrawlController;
  * 
  * @author gojomo
  */
-public abstract class QueueAssignmentPolicy {
+public abstract class QueueAssignmentPolicy implements Serializable {
     /** 
      * Get the String key (name) of the queue to which the 
      * CrawlURI should be assigned. 

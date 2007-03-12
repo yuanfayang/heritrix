@@ -404,6 +404,10 @@ implements Map<K,V>, Serializable {
         if (!logger.isLoggable((Level.FINE))) {
             return;
         }
+        if (cacheHit + diskHit == 0) {
+            // Preent division by zero below
+            return;
+        }
         try {
             long cacheHitPercent = (cacheHit * 100) / (cacheHit + diskHit);
             logger.fine("DB name: " + this.db.getDatabaseName()

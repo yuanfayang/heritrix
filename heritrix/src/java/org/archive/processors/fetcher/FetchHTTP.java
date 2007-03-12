@@ -26,6 +26,8 @@ package org.archive.processors.fetcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -345,7 +347,8 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     /***************************************************************************
      * Socket factory that has the configurable trust manager installed.
      */
-    private SSLSocketFactory sslfactory = null;
+    private transient SSLSocketFactory sslfactory = null;
+    private String trustLevel;
 
     final private CredentialStore credentialStore;
 
@@ -730,9 +733,13 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
         if (proxy.length() == 0) {
             proxy = null;
         } else {
-            port = (Integer) getAttributeEither(curi, HTTP_PROXY_PORT);
+            port = (Integer) getAttributeEither(curi, HTTP_PROXY_PORT);            
         }
-        HostConfiguration config = this.http.getHostConfiguration();
+        return configureProxy(proxy, port);
+    }
+    
+    private HostConfiguration configureProxy(String proxy, int port) {
+        HostConfiguration config = http.getHostConfiguration();
         if (config.getProxyHost() == proxy && config.getProxyPort() == port) {
             // no change
             return null;
@@ -743,6 +750,7 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
             return null;
         }
         config = new HostConfiguration(config); // copy of config
+        System.out.println("Configuring " + proxy + ":" + port);
         config.setProxy(proxy, port);
         return config;
     }
@@ -1033,6 +1041,12 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
         // load cookies from a file if specified in the order file.
         http.getState().setCookiesMap(cm.loadCookiesMap());
 
+        this.trustLevel = defaults.get(this, TRUST_LEVEL);
+        setSSLFactory();
+    }
+    
+    
+    private void setSSLFactory() {
         // I tried to get the default KeyManagers but doesn't work unless you
         // point at a physical keystore. Passing null seems to do the right
         // thing so we'll go w/ that.
@@ -1040,13 +1054,15 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
             SSLContext context = SSLContext.getInstance("SSL");
             context.init(null,
                     new TrustManager[] { new ConfigurableX509TrustManager(
-                            defaults.get(this, TRUST_LEVEL)) }, null);
+                            trustLevel) }, null);
             this.sslfactory = context.getSocketFactory();
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed configure of ssl context "
                     + e.getMessage(), e);
         }
+        
     }
+
 
     public void finalTasks(StateProvider defaults) {
         // At the end save cookies to the file specified in the order file.
@@ -1073,8 +1089,22 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     }
 
     protected void configureHttp(StateProvider defaults) {
-        // Get timeout. Use it for socket and for connection timeout.
         int soTimeout = defaults.get(this, SOTIMEOUT_MS);
+        String addressStr = defaults.get(this, LOCAL_ADDRESS);
+        String proxy = (String) getAttributeEither(defaults, HTTP_PROXY_HOST);
+        int port = -1;
+        if (proxy.length() == 0) {
+            proxy = null;
+        } else {
+            port = (Integer) getAttributeEither(defaults, HTTP_PROXY_PORT);            
+        }
+
+        configureHttp(soTimeout, addressStr, proxy, port);
+    }
+    
+    protected void configureHttp(int soTimeout, String addressStr,
+            String proxy, int port) {
+        // Get timeout. Use it for socket and for connection timeout.
         int timeout = (soTimeout > 0) ? soTimeout : 0;
 
         // HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
@@ -1097,7 +1127,6 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
         // Set client to be version 1.0.
         hcp.setVersion(HttpVersion.HTTP_1_0);
 
-        String addressStr = defaults.get(this, LOCAL_ADDRESS);
         if (addressStr != null && addressStr.length() > 0) {
             try {
                 InetAddress localAddress = InetAddress.getByName(addressStr);
@@ -1122,7 +1151,10 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
         this.http.getParams().setIntParameter(
                 HttpMethodParams.STATUS_LINE_GARBAGE_LIMIT, 10);
 
-        HostConfiguration configOrNull = configureProxy(defaults);
+        if ((proxy != null) && (proxy.length() == 0)) {
+            proxy = null;
+        }
+        HostConfiguration configOrNull = configureProxy(proxy, port);
         if (configOrNull != null) {
             // global proxy settings are in effect
             this.http.setHostConfiguration(configOrNull);
@@ -1343,26 +1375,76 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     }
 
     // custom serialization
-    // Code removed: Only useful for handling cookies; cookie responsibility
-    // has been delegated to CookieStorage
-    /*
-     * private void writeObject(ObjectOutputStream stream) throws IOException {
-     * stream.defaultWriteObject(); // save cookies
-     * @SuppressWarnings("unchecked") Collection<Cookie> c =
-     * http.getState().getCookiesMap().values(); Cookie[] cookies =
-     * c.toArray(new Cookie[c.size()]); stream.writeObject(cookies); }
-     * 
-     * private void readObject(ObjectInputStream stream) throws IOException,
-     * ClassNotFoundException { stream.defaultReadObject(); Cookie cookies[] =
-     * (Cookie[]) stream.readObject(); ObjectPlusFilesInputStream coistream =
-     * (ObjectPlusFilesInputStream)stream; coistream.registerFinishTask( new
-     * PostRestore(cookies) ); }
-     * 
-     * class PostRestore implements Runnable { Cookie cookies[]; public
-     * PostRestore(Cookie cookies[]) { this.cookies = cookies; } public void
-     * run() { configureHttp(); for(int i = 0; i < cookies.length; i++) {
-     * getHttp().getState().addCookie(cookies[i]); } } }
-     */
+
+    private String getLocalAddress() {
+        HostConfiguration hc = http.getHostConfiguration();
+        if (hc == null) {
+            return "";
+        }
+        
+        InetAddress addr = hc.getLocalAddress();
+        if (addr == null) {
+            return "";
+        }
+        
+        String r = addr.getHostName();
+        if (r == null) {
+            return "";
+        }
+        
+        return r;
+    }
+    
+    
+    private String getProxyHost() {
+        HostConfiguration hc = http.getHostConfiguration();
+        if (hc == null) {
+            return "";
+        }
+        
+        String r = hc.getProxyHost();
+        if (r == null) {
+            return "";
+        }
+        
+        return r;
+    }
+    
+    
+    private int getProxyPort() {
+        HostConfiguration hc = http.getHostConfiguration();
+        if (hc == null) {
+            return -1;
+        }
+        
+        return hc.getProxyPort();
+    }
+
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+         stream.defaultWriteObject();
+
+         // Special handling for http since it isn't Serializable itself
+         stream.writeInt(http.getParams().getSoTimeout());
+         stream.writeUTF(getLocalAddress());
+         stream.writeUTF(getProxyHost());
+         stream.writeInt(getProxyPort());
+     }
+
+
+    private void readObject(ObjectInputStream stream) 
+     throws IOException, ClassNotFoundException {
+         stream.defaultReadObject();
+         
+         int soTimeout = stream.readInt();
+         String localAddress = stream.readUTF();
+         String proxy = stream.readUTF();
+         int port = stream.readInt();
+         
+         configureHttp(soTimeout, localAddress, proxy, port);
+         setSSLFactory();
+     }
+
 
     /**
      * @return Returns the http instance.
