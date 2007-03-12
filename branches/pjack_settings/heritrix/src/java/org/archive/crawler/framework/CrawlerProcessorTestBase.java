@@ -43,6 +43,13 @@ public abstract class CrawlerProcessorTestBase extends ProcessorTest {
     protected void setUp() throws Exception {
         controller = CrawlControllerTest.makeTempCrawlController();
     }
+
+
+    @Override
+    protected void verifySerialization(Object first, byte[] firstBytes, 
+            Object second, byte[] secondBytes) throws Exception {
+
+    }
     
     
     // TODO TESTME!
