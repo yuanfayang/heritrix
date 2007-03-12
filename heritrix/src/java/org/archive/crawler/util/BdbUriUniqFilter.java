@@ -108,7 +108,9 @@ extends SetBasedUriUniqFilter implements Serializable {
         try {
             initialize(bdb.getEnvironment());
         } catch (DatabaseException e) {
-            throw new IOException(e.getMessage());
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
         }
     }
     
