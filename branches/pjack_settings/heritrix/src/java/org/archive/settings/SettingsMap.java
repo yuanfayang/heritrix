@@ -34,6 +34,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.archive.util.TypeSubstitution;
+
 
 /**
  * A map whose elements are configured by a SheetManager.  Modifications
@@ -42,7 +44,8 @@ import java.util.Set;
  * @author pjack
  *
  */
-public class SettingsMap<T> implements Map<String,T>, Serializable {
+public class SettingsMap<T> implements Map<String,T>, 
+Serializable, TypeSubstitution {
 
 
     private static final long serialVersionUID = 1L;
@@ -142,6 +145,15 @@ public class SettingsMap<T> implements Map<String,T>, Serializable {
         return new Values<T>(delegate.values());
     }
 
+    
+    public Class getActualClass() {
+        return delegate.getClass();
+    }
+    
+    
+    public Map<String,T> getDelegate() {
+        return delegate;
+    }
 
     private class KeySet<X> extends AbstractSet<String> {
         

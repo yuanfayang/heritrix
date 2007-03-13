@@ -49,6 +49,7 @@ import org.archive.processors.ProcessorURI;
 import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 
@@ -80,6 +81,10 @@ implements CoreAttributeConstants, ARCConstants, FetchStatusCodes {
     @Global
     final public static Key<List<String>> PATH = makePath();
 
+    
+    static {
+        KeyManager.addKeys(ARCWriterProcessor.class);
+    }
         
         
     /**

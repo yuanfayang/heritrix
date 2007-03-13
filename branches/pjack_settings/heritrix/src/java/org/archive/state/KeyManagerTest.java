@@ -64,7 +64,7 @@ public class KeyManagerTest extends TestCase {
         
         m = KeyManager.getKeys(ExampleDependentModule.class);
         expected.add("runnable");
-        expected.add("logger");
+        expected.add("charsequence");
         assertEquals(expected, m.keySet());
         
         // Classes were initialized by above code

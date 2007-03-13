@@ -27,6 +27,7 @@ package org.archive.io;
 import java.io.ByteArrayInputStream;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import junit.framework.TestCase;
@@ -46,6 +47,9 @@ public class SinkHandlerTest extends TestCase {
     }
     
     public void testLogging() throws Exception {
+        LogRecord lr = new LogRecord(Level.SEVERE, "");
+        long base = lr.getSequenceNumber() + 1;
+        System.out.println(base);
         LOGGER.severe("Test1");
         LOGGER.severe("Test2");
         LOGGER.warning("Test3");
@@ -53,8 +57,9 @@ public class SinkHandlerTest extends TestCase {
         LOGGER.log(Level.SEVERE, "with exception", e);
         SinkHandler h = SinkHandler.getInstance();
         assertEquals(h.getAllUnread().size(), 4);
-        SinkHandlerLogRecord shlr = h.get(3);
-        h.remove(3);
+        SinkHandlerLogRecord shlr = h.get(base + 3);
+        assertTrue(shlr != null);
+        h.remove(base + 3);
         assertEquals(h.getAllUnread().size(), 3);
         h.publish(shlr);
         assertEquals(h.getAllUnread().size(), 4);

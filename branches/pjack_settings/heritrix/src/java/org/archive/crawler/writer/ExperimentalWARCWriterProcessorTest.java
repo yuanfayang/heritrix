@@ -45,7 +45,10 @@ public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBas
     
     @Override
     protected Object makeModule() {
-        return new ExperimentalWARCWriterProcessor(controller);
+        ExperimentalWARCWriterProcessor result;
+        result = new ExperimentalWARCWriterProcessor(controller);
+        result.initialTasks(controller);
+        return result;
     }
     
     

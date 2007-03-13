@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.util.SubList;
+import org.archive.util.TypeSubstitution;
 
 /**
  * A list whose elements are configured by a SheetManager.  Modifications
@@ -41,7 +42,8 @@ import org.archive.util.SubList;
  * @author pjack
  *
  */
-public class SettingsList<T> extends AbstractList<T> implements Serializable {
+public class SettingsList<T> extends AbstractList<T> 
+implements TypeSubstitution, Serializable {
 
 
     private static final long serialVersionUID = 1L;
@@ -56,6 +58,16 @@ public class SettingsList<T> extends AbstractList<T> implements Serializable {
         this.manager = manager;
     }
     
+    
+    public Class getActualClass() {
+        return delegate.getClass();
+    }
+    
+    
+    public List<T> getDelegate() {
+        return delegate;
+    }
+
 
     public void add(int index, T element) {
         delegate.add(index, element);

@@ -813,11 +813,13 @@ public class UURIFactoryTest extends TestCase {
     
     public void testIdn() throws URIException {
         // See http://www.josefsson.org/idn.php.
-        String idn1 = new String("http://räksmörgås.josefßon.org/");
+        // http://räksmörgås.josefßon.org/
+        String idn1 = "http://r\u00e4ksm\u00f6rg\u00e5s.josef\u00dfon.org/";
         String puny1 = "http://xn--rksmrgs-5wao1o.josefsson.org/";
         assertEquals("encoding of " + idn1, puny1, UURIFactory
                 .getInstance(idn1).toString());
-        String idn2 = "http://www.pølse.dk/";
+        // http://www.pølse.dk/
+        String idn2 = "http://www.p\u00f8lse.dk/";
         String puny2 = "http://www.xn--plse-gra.dk/";
         assertEquals("encoding of " + idn2, puny2, UURIFactory
                 .getInstance(idn2).toString());

@@ -25,6 +25,9 @@ package org.archive.crawler.util;
 
 import java.io.Serializable;
 
+import org.archive.state.Dependency;
+import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.LongFPSet;
 
@@ -50,6 +53,16 @@ implements Serializable {
     
     private LongFPSet fpset;
     private transient FPGenerator fpgen = FPGenerator.std64;
+    
+    
+    @Dependency
+    final public static Key<LongFPSet> LONG_FP_SET = 
+        Key.make(LongFPSet.class, null);
+
+
+    static {
+        KeyManager.addKeys(FPUriUniqFilter.class);
+    }
     
     /**
      * Create FPUriUniqFilter wrapping given long set

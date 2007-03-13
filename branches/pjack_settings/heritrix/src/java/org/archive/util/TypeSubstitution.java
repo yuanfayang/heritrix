@@ -1,4 +1,5 @@
-/* Copyright (C) 2007 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,19 +17,22 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * SingleSheetTest.java
- * Created on January 18, 2007
+ * TypeSubstitution.java
  *
- * $Header$
+ * Created on Mar 13, 2007
+ *
+ * $Id:$
  */
-package org.archive.settings;
 
+package org.archive.util;
 
-import junit.framework.TestCase;
+/**
+ * @author pjack
+ *
+ */
+public interface TypeSubstitution {
 
-public class SingleSheetTest extends TestCase {
-
-    // TODO TESTME
     
-    
+    Class getActualClass();
+
 }
