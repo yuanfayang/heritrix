@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -468,6 +469,12 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
             } catch (IOException e) {
                 if (isStrict()) {
                     throw new RuntimeException(e);
+                }
+                if (e instanceof EOFException) {
+                    logger.warning("Premature EOF cleaning up " + 
+                        currentRecord.getHeader().toString() + ": " +
+                        e.getMessage());
+                    return false;
                 }
                 // If not strict, try going again.  We might be able to skip
                 // over the bad record.
