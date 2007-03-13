@@ -50,6 +50,7 @@ import org.archive.processors.ProcessorURI;
 import org.archive.processors.extractor.Link;
 import org.archive.state.Global;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
@@ -70,6 +71,7 @@ FetchStatusCodes, WARCConstants {
     private static final Logger logger = 
         Logger.getLogger(ExperimentalWARCWriterProcessor.class.getName());
 
+
     /**
      * Where to save files. Supply absolute or relative path. If relative, files
      * will be written relative to the order.disk-path setting. If more than one
@@ -81,6 +83,11 @@ FetchStatusCodes, WARCConstants {
     final public static Key<List<String>> PATH = 
         Key.make(Collections.singletonList("warcs"));
 
+    
+    static {
+        KeyManager.addKeys(ExperimentalWARCWriterProcessor.class);
+    }
+    
     
     /**
      * @param name Name of this writer.

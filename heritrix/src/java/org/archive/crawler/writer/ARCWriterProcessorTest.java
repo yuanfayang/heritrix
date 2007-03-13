@@ -45,10 +45,12 @@ public class ARCWriterProcessorTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new ARCWriterProcessor(controller);
+        ARCWriterProcessor result = new ARCWriterProcessor(controller);
+        result.initialTasks(controller);
+        return result;
     }
     
     
     // TODO TESTME!
-    
+
 }

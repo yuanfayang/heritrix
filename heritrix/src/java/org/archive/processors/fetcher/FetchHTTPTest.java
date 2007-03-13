@@ -28,6 +28,7 @@ package org.archive.processors.fetcher;
 
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorTest;
+import org.archive.state.ExampleStateProvider;
 
 
 /**
@@ -45,7 +46,9 @@ public class FetchHTTPTest extends ProcessorTest {
     
     @Override
     protected Processor makeModule() {
-        return new FetchHTTP(null, null); // FIXME
+        FetchHTTP result = new FetchHTTP(null, null); // FIXME
+        result.initialTasks(new ExampleStateProvider());
+        return result;
     }
     
     

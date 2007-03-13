@@ -23,7 +23,9 @@
  */
 package org.archive.settings;
 
-final public class Offline<T> {
+import org.archive.util.TypeSubstitution;
+
+final public class Offline<T> implements TypeSubstitution {
 
     
     private Class<T> type;
@@ -35,6 +37,11 @@ final public class Offline<T> {
     
     
     public Class<T> getType() {
+        return type;
+    }
+    
+    
+    public Class getActualClass() {
         return type;
     }
     
@@ -55,8 +62,8 @@ final public class Offline<T> {
 
 
     public static Class getType(Object object) {
-        if (object instanceof Offline) {
-            return ((Offline)object).getType();
+        if (object instanceof TypeSubstitution) {
+            return ((TypeSubstitution)object).getActualClass();
         } else {
             return object.getClass();
         }
