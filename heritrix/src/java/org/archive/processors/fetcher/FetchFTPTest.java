@@ -26,14 +26,14 @@
 package org.archive.processors.fetcher;
 
 
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 
 
 /**
  * @author pjack
  *
  */
-public class FetchFTPTest extends ProcessorTest {
+public class FetchFTPTest extends ProcessorTestBase {
 
     
     @Override

@@ -32,7 +32,7 @@ import org.archive.state.StateProcessorTestBase;
  * 
  * @author pjack
  */
-public abstract class ProcessorTest extends StateProcessorTestBase {
+public abstract class ProcessorTestBase extends StateProcessorTestBase {
 
     
     

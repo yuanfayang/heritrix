@@ -26,7 +26,7 @@
 package org.archive.crawler.postprocessor;
 
 
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 
 
 /**
@@ -34,7 +34,7 @@ import org.archive.processors.ProcessorTest;
  *
  * @author pjack
  */
-public class WaitEvaluatorTest extends ProcessorTest {
+public class WaitEvaluatorTest extends ProcessorTestBase {
 
     
     @Override

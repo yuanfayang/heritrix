@@ -26,7 +26,7 @@
 package org.archive.crawler.framework;
 
 
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 
 
 /**
@@ -34,7 +34,7 @@ import org.archive.processors.ProcessorTest;
  *
  * @author pjack
  */
-public abstract class CrawlerProcessorTestBase extends ProcessorTest {
+public abstract class CrawlerProcessorTestBase extends ProcessorTestBase {
 
     
     protected CrawlController controller;
