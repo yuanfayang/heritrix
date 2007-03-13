@@ -26,7 +26,7 @@
 package org.archive.processors.extractor;
 
 
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 import org.archive.processors.util.DefaultTempDirProvider;
 
 
@@ -35,7 +35,7 @@ import org.archive.processors.util.DefaultTempDirProvider;
  *
  * @author pjack
  */
-public class ExtractorPDFTest extends ProcessorTest {
+public class ExtractorPDFTest extends ProcessorTestBase {
 
     
     @Override

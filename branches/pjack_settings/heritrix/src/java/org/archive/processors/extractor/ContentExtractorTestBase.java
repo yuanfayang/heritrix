@@ -32,7 +32,7 @@ import java.util.Collections;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.DefaultProcessorURI;
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 import org.archive.state.StateProcessorTestBase;
 import org.archive.util.Recorder;
 
@@ -42,7 +42,7 @@ import org.archive.util.Recorder;
  * 
  * @author pjack
  */
-public abstract class ContentExtractorTestBase extends ProcessorTest {
+public abstract class ContentExtractorTestBase extends ProcessorTestBase {
 
     
     /**

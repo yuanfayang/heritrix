@@ -27,7 +27,7 @@ package org.archive.processors.fetcher;
 
 
 import org.archive.processors.Processor;
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 import org.archive.state.ExampleStateProvider;
 
 
@@ -35,7 +35,7 @@ import org.archive.state.ExampleStateProvider;
  * @author pjack
  *
  */
-public class FetchHTTPTest extends ProcessorTest {
+public class FetchHTTPTest extends ProcessorTestBase {
 
     
     @Override

@@ -26,14 +26,14 @@
 package org.archive.processors.writer;
 
 
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 
 
 /**
  * @author pjack
  *
  */
-public class MirrorWriterProcessorTest extends ProcessorTest {
+public class MirrorWriterProcessorTest extends ProcessorTestBase {
 
     
     @Override

@@ -26,7 +26,7 @@
 package org.archive.processors.extractor;
 
 
-import org.archive.processors.ProcessorTest;
+import org.archive.processors.ProcessorTestBase;
 
 
 /**
@@ -34,7 +34,7 @@ import org.archive.processors.ProcessorTest;
  *
  * @author pjack
  */
-public class ExtractorSWFTest extends ProcessorTest {
+public class ExtractorSWFTest extends ProcessorTestBase {
 
     
     @Override
