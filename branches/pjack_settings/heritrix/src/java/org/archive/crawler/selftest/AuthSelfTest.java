@@ -22,7 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.IOException;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -64,10 +64,9 @@ public class AuthSelfTest
             "", "robots.txt"
     })));
 
-    /**
-     * Test the max-link-hops setting is being respected.
-     */
-    public void testAuth() throws IOException {
+
+    @Override
+    protected void verify() throws Exception {
         Set<String> found = this.filesInArcs();
         assertTrue(EXPECTED.equals(found));
     }

@@ -40,11 +40,10 @@ public class MaxLinkHopsSelfTest
 {
     final private static Set<String> EXPECTED = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(new String[] {
-            "index.html", "1.html", "2.html", "3.html", 
-            "", "robots.txt"
+            "index.html", "1.html", "2.html", "3.html", "robots.txt"
     })));
     
-    public void testMaxHops() throws Exception {
+    protected void verify() throws Exception {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }

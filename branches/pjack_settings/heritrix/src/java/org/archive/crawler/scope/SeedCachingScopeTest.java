@@ -49,7 +49,13 @@ import org.archive.util.TmpDirTestCase;
 */
 public class SeedCachingScopeTest extends StateProcessorTestBase {
     
-   private static Set<UURI> seeds = null;
+    private static Set<UURI> seeds = null;
+
+    @Override
+    protected void verifySerialization(Object first, byte[] firstBytes,
+            Object second, byte[] secondBytes) throws Exception {
+
+    }
 
    /**
     * Comparator for treeset of uuris.

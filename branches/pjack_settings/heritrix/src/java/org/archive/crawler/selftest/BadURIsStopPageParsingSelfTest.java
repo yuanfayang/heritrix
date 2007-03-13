@@ -50,10 +50,11 @@ public class BadURIsStopPageParsingSelfTest extends SelfTestBase
     final private static Set<String> EXPECTED = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "goodone.html", "goodthree.html", "one.html", 
-            "two.html", "three.html", "", "robots.txt"
+            "two.html", "three.html", "robots.txt"
     })));
     
-    public void testFilesFoud() throws Exception {
+    @Override
+    protected void verify() throws Exception {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }

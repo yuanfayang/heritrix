@@ -45,10 +45,12 @@ public class FramesSelfTestCase extends SelfTestBase
     final private static Set<String> EXPECTED = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "topframe.html", "leftframe.html", "noframe.html",
-            "rightframe.html", "", "robots.txt"
+            "rightframe.html", "robots.txt"
     })));
     
-    public void testFilesFoud() throws Exception {
+    
+    @Override
+    protected void verify() throws Exception {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }

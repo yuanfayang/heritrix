@@ -26,6 +26,7 @@
 
 package org.archive.crawler.framework;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import org.archive.openmbeans.annotations.Operation;
@@ -36,7 +37,7 @@ import org.archive.openmbeans.annotations.Parameter;
  * 
  * @author pjack
  */
-public interface CrawlJobManager {
+public interface CrawlJobManager extends Closeable {
 
     
 
@@ -102,4 +103,6 @@ public interface CrawlJobManager {
             @Parameter(name="newPaths", desc="New path prefixes to replace.")
             String[] newPaths) throws IOException;
 
+    @Operation(desc="Deregisters this CrawlJobManager from the MBeanServer.")
+    void close();
 }
