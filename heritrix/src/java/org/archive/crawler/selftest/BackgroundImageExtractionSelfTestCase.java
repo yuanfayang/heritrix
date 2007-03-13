@@ -45,11 +45,11 @@ public class BackgroundImageExtractionSelfTestCase
      */
     final private static Set<String> EXPECTED = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(new String[] {
-            "index.html", "example-background-image.jpeg",
-            "", "robots.txt"
+            "index.html", "example-background-image.jpeg", "robots.txt"
     })));
     
-    public void testFilesFoud() throws Exception {
+    @Override
+    protected void verify() throws Exception {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }

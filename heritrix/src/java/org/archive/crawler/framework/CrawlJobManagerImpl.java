@@ -177,7 +177,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
 
         JMXSheetManager jmx = new JMXSheetManager(fsm);
-        final ObjectName smName = register(job, "SheetManager", jmx);
+        final ObjectName smName = jmxListener.nameOf(jmx); // register(job, "SheetManager", jmx);
 
         // Find the crawlcontroller.
         Sheet sheet = fsm.getDefault();
@@ -324,4 +324,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         jml.setServer(server);
     }
 
+    public void close() {
+        unregister(oname);
+    }
 }

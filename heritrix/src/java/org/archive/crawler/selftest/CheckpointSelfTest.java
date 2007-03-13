@@ -153,7 +153,11 @@ public class CheckpointSelfTest extends SelfTestBase {
 
     
 
-    public void testCheckpointRecover() throws Exception {
+    protected void verify() throws Exception {
     }
 	
+    
+    public void testSomething() {
+        assertTrue(false); // FIXME: Get this test working again.
+    }
 }

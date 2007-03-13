@@ -22,11 +22,9 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,10 +39,11 @@ public class CharsetSelfTest extends SelfTestBase
 {
     final private static Set<String> EXPECTED = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(new String[] {
-            "index.html", "link.html", "", "robots.txt"
+            "index.html", "link.html", "robots.txt"
     })));
     
-    public void testNothing() throws Exception {
+    @Override
+    protected void verify() throws Exception {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }

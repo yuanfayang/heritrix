@@ -6,7 +6,6 @@
   </dependencies>
  </object>
  <object name="order" value="org.archive.crawler.datamodel.CrawlOrder">
-  <string name="settings-directory"      value="settings"/>
   <string name="disk-path"               value="."/>
   <string name="logs-path"               value="logs"/>
   <string name="checkpoints-path"        value="checkpoints"/>
@@ -18,7 +17,6 @@
   <int  name="max-toe-threads"           value="1"/>
   <int  name="recorder-out-buffer-bytes" value="4096"/>
   <int  name="recorder-in-buffer-bytes"  value="65536"/>
-  <int  name="bdb-cache-percent"         value="0"/>
   <object name="http-headers" value="java.util.HashMap">
     <string name="user-agent" value="Mozilla/5.0 (compatible; heritrix/11 +http://www.archive.org)"/>
     <string name="from" value="info@archive.org"/>
@@ -102,7 +100,7 @@
    <int    name="max-delay-ms"                        value="0"/>
    <int    name="min-delay-ms"                        value="0"/>
    <int    name="max-retries"                         value="10"/>
-   <long   name="retry-delay-seconds"                 value="90"/>
+   <long   name="retry-delay-seconds"                 value="0"/>
    <int    name="preference-embed-hops"               value="1"/>
    <int    name="total-bandwidth-usage-kb-sec"        value="0"/>
    <int    name="max-per-host-bandwidth-usage-kb-sec" value="0"/>

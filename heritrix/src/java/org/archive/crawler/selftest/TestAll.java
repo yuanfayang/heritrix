@@ -17,45 +17,27 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * HeritrixThread.java
+ * TestAll.java
  *
- * Created on Feb 21, 2007
+ * Created on Mar 12, 2007
  *
  * $Id:$
  */
 
 package org.archive.crawler.selftest;
 
-import org.archive.crawler.Heritrix;
+import org.archive.util.TestUtils;
+
+import junit.framework.Test;
 
 /**
  * @author pjack
  *
  */
-class HeritrixThread extends Thread {
+public class TestAll {
 
     
-    final private String[] args;
-    private Exception exception;
-    
-    
-    public HeritrixThread(String[] args) {
-        this.args = args;
+    public static Test suite() throws Exception {
+        return TestUtils.makePackageSuite(TestAll.class);
     }
-    
-    
-    @Override
-    public void run() {
-        try {
-            Heritrix.main(args);
-        } catch (Exception e) {
-            exception = e;
-        }
-    }
-    
-    
-    public Exception getHeritrixException() {
-        return exception;
-    }
-    
 }

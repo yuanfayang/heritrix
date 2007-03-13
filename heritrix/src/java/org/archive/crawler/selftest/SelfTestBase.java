@@ -34,10 +34,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.framework.CrawlJobManagerImpl;
 import org.archive.crawler.framework.CrawlStatus;
 import org.archive.io.ArchiveRecordHeader;
@@ -61,15 +63,14 @@ import org.mortbay.jetty.handler.ResourceHandler;
  */
 public abstract class SelfTestBase extends TmpDirTestCase {
 
+    final private Logger LOGGER = 
+        Logger.getLogger(SelfTestBase.class.getName());
     
-    protected HeritrixThread heritrixThread;
+//    protected HeritrixThread heritrixThread;
     protected Server httpServer;
 
     
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
+    protected void open() throws Exception {
         // We expect to be run from the project directory.
         // (Both eclipse and maven run junit tests from there).
         String name = getSelfTestName();
@@ -112,17 +113,39 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
-    @Override
-    public void tearDown() throws Exception{
-        super.tearDown();
 
-        heritrixThread.interrupt();
+    protected void close() throws Exception {
         stopHttpServer();
+        stopHeritrix();
+    }
+
+
+    public void testSomething() throws Exception {
+        boolean fail = false;
+        try {
+            open();
+            verify();
+        } finally {
+            try {
+                close();
+            } catch (Exception e) {
+                e.printStackTrace();
+                fail = true;
+            }
+        }
+        assertFalse(fail);
     }
     
     
+    protected abstract void verify() throws Exception;
+    
+    
     protected void stopHttpServer() throws Exception {
-        httpServer.stop();        
+        try {
+            httpServer.stop();  
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
     
@@ -148,9 +171,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // Launch heritrix in its own thread.
         // By interrupting the thread, we can gracefully clean up the test.
         String[] args = { path };
-        heritrixThread = new HeritrixThread(args);
-        
-        heritrixThread.start();
+        Heritrix.main(args);
 
         // Wait up to 20 seconds for the main OpenMBean to appear.
         ObjectName cjm = JmxUtils.makeObjectName(
@@ -174,6 +195,12 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController", true);
     }
     
+    
+    protected void stopHeritrix() throws Exception {
+        ObjectName cjm = getCrawlJobManager();
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        server.invoke(cjm, "close", new Object[0], new String[0]);
+    }
     
     protected void waitForCrawlFinish() throws Exception {
         invokeAndWait("requestCrawlStart", CrawlStatus.FINISHED);
@@ -324,8 +351,11 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             if (path.startsWith("/")) {
                 path = path.substring(1);
             }
-            result.add(path);
+            if (arh.getUrl().startsWith("http:")) {
+                result.add(path);
+            }
         }
+        LOGGER.finest(result.toString());
         return result;
     }
 
