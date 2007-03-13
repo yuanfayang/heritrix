@@ -309,6 +309,9 @@
             <include name="*.jar"/>
           </fileset>
         </copy>
+        <copy todir="${maven.dist.src.assembly.dir}/testdata">
+          <fileset dir="./testdata" />
+        </copy>
     </postGoal>
 
     <goal name="selftest" 
