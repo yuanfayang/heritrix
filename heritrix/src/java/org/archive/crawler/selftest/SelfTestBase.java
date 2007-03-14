@@ -113,12 +113,31 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
+    
 
     protected void close() throws Exception {
         stopHttpServer();
         stopHeritrix();
+        Set<ObjectName> set = dumpMBeanServer();
+        if (!set.isEmpty()) {
+            MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+            for (ObjectName name: set) {
+                server.unregisterMBean(name);
+            }
+            throw new IllegalStateException("MBeans lived on after test: " + set);
+        }
     }
 
+    
+    protected Set<ObjectName> dumpMBeanServer() throws Exception {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        @SuppressWarnings("unchecked")
+        Set<ObjectName> set = 
+            server.queryNames(null, new ObjectName("org.archive.crawler:*"));
+        System.out.println(set);
+        return set;
+    }
+    
 
     public void testSomething() throws Exception {
         boolean fail = false;
@@ -197,11 +216,11 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
     
     protected void stopHeritrix() throws Exception {
-        ObjectName cjm = getCrawlJobManager();
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        ObjectName cjm = getCrawlJobManager();
         server.invoke(cjm, "close", new Object[0], new String[0]);
     }
-    
+
     protected void waitForCrawlFinish() throws Exception {
         invokeAndWait("requestCrawlStart", CrawlStatus.FINISHED);
     }
@@ -269,6 +288,9 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             }
             Thread.sleep(500);
             set = server.queryNames(null, name);
+            if (set.size() > 1) {
+                throw new IllegalStateException(set.size() + " matches for " + query);
+            }
         }        
     }
     

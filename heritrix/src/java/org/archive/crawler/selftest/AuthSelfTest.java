@@ -60,8 +60,7 @@ public class AuthSelfTest
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "link1.html", "link2.html", "link3.html", 
             "basic/index.html", "basic/link1.html", "basic/link2.html", "basic/link3.html", 
-            "login/login.html", "success.html",
-            "", "robots.txt"
+            "login/login.html", "success.html", "robots.txt"
     })));
 
 
@@ -73,7 +72,7 @@ public class AuthSelfTest
 
 
     @Override
-    protected void startHttpServer() {
+    protected void startHttpServer() throws Exception {
         Server server = new Server();
         
         Constraint constraint = new Constraint();
@@ -115,6 +114,7 @@ public class AuthSelfTest
         servletHandler.addServletWithMapping(holder, "/login/*");
 
         this.httpServer = server;
+        this.httpServer.start();
     }
 
 
