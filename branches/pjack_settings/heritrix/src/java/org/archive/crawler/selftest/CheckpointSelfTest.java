@@ -25,10 +25,12 @@ package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.util.Set;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.framework.CrawlStatus;
 import org.archive.util.FileUtils;
 import org.mortbay.jetty.Server;
@@ -50,7 +52,7 @@ public class CheckpointSelfTest extends SelfTestBase {
     
     final private static int MAX_PORT = 7010;
     
-    final private static int MAX_HOPS = 2;
+    final private static int MAX_HOPS = 1;
     
 
     private Server[] servers;
@@ -101,7 +103,7 @@ public class CheckpointSelfTest extends SelfTestBase {
         random.setMaxHops(MAX_HOPS);
         random.setPathRoot("random");
 
-        ServletHolder holder = new ServletHolder(new RandomServlet());
+        ServletHolder holder = new ServletHolder(random);
         servletHandler.addServletWithMapping(holder, "/random/*");
         server.start();
         return server;
@@ -120,7 +122,10 @@ public class CheckpointSelfTest extends SelfTestBase {
         invokeAndWait("requestCrawlCheckpoint", CrawlStatus.PAUSED);
         invokeAndWait("requestCrawlStop", CrawlStatus.FINISHED);
         waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController", false);
-        System.out.println("Old crawl job deleted.");
+        dumpMBeanServer();
+        stopHeritrix();
+        dumpMBeanServer();
+        Heritrix.main(new String[] { getCrawlDir().getAbsolutePath() });
         
         ObjectName cjm = getCrawlJobManager();
         String[] checkpoints = (String[])server.invoke(
@@ -154,10 +159,8 @@ public class CheckpointSelfTest extends SelfTestBase {
     
 
     protected void verify() throws Exception {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+
     }
-	
-    
-    public void testSomething() {
-        assertTrue(false); // FIXME: Get this test working again.
-    }
+
 }

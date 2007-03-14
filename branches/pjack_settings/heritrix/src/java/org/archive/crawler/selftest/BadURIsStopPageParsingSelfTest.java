@@ -39,18 +39,14 @@ import java.util.Set;
 public class BadURIsStopPageParsingSelfTest extends SelfTestBase
 {
 
-
-    
     /**
      * Files to find as a set.
-     * 
-     * We don't find goodtwo.html because it has a BASE that is out
-     * of scope.
      */
     final private static Set<String> EXPECTED = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "goodone.html", "goodthree.html", "one.html", 
-            "two.html", "three.html", "robots.txt"
+            "two.html", "three.html", "robots.txt", "goodtwo.html",
+            "cata;pgs-new.html", "www.loc.gov/rr/european/egw/polishex.html"
     })));
     
     @Override
