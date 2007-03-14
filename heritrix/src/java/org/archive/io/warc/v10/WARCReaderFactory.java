@@ -36,6 +36,7 @@ import org.archive.io.ArchiveRecord;
 import org.archive.io.GzippedInputStream;
 import org.archive.io.warc.WARCConstants;
 import org.archive.util.FileUtils;
+import org.archive.net.UURI;
 
 /**
  * Factory for WARC Readers.
@@ -77,6 +78,14 @@ implements WARCConstants {
     	return (WARCReader)WARCReaderFactory.factory.
     		getArchiveReader(f, offset);
     }
+
+    protected ArchiveReader getArchiveReader(final String arcFileOrUrl,
+        final long offset) 
+    throws MalformedURLException, IOException {
+        return UURI.hasScheme(arcFileOrUrl)?
+            get(new URL(arcFileOrUrl), offset):
+            get(new File(arcFileOrUrl), offset);
+    } 
     
     protected ArchiveReader getArchiveReader(final File f, final long offset)
     throws IOException {
