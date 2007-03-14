@@ -913,6 +913,25 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
         return (Type) definitionMap.get(name);
     }
+    
+    /**
+     * This method can only be called before the ComplexType has been
+     * initialized. This usually means that this method is available for
+     * constructors of subclasses of this class.
+     * @param name Name of element to remove.
+     * @return Element removed.
+     */
+    protected Type removeElementFromDefinition(final String name) {
+        if (isInitialized()) {
+            throw new IllegalStateException(
+                "Elements definition can only be removed in constructor.");
+        }
+        Object removedObj = this.definitionMap.remove(name);
+        if (removedObj != null) {
+            this.definition.remove(removedObj);
+        }
+        return (Type)removedObj;
+    } 
 
     /** This method can be overridden in subclasses to do local
      * initialisation.
