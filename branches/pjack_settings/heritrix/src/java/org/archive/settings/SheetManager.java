@@ -24,6 +24,7 @@
 package org.archive.settings;
 
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -66,6 +67,9 @@ public abstract class SheetManager implements StateProvider, Serializable {
     final private ListModuleListener<Checkpointable> checkpointables =
         ListModuleListener.make(Checkpointable.class);
     
+    final private ListModuleListener<Closeable> closeables = 
+        ListModuleListener.make(Closeable.class);
+    
     @Immutable
     final public static Key<Map<String,Object>> ROOT = 
         Key.makeMap(Object.class);
@@ -81,12 +85,18 @@ public abstract class SheetManager implements StateProvider, Serializable {
         this.unspecified = new UnspecifiedSheet(this, "unspecified");
         offlineThis = Offline.make(getClass());
         moduleListeners.add(checkpointables);
+        moduleListeners.add(closeables);
         KeyManager.addKeys(getClass());
     }
     
     
     public List<Checkpointable> getCheckpointables() {
         return checkpointables.getList();
+    }
+    
+    
+    public List<Closeable> getCloseables() {
+        return closeables.getList();
     }
     
     public SheetManager(Collection<ModuleListener> listeners) {

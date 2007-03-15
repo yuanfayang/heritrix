@@ -25,6 +25,7 @@
  */
 package org.archive.settings.file;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
@@ -66,7 +67,8 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
-public class BdbModule implements Module, Checkpointable, Serializable {
+public class BdbModule implements Module, Checkpointable, Serializable, 
+Closeable {
 
     final private static Logger LOGGER = 
         Logger.getLogger(BdbModule.class.getName()); 
@@ -344,8 +346,30 @@ public class BdbModule implements Module, Checkpointable, Serializable {
         buffer.append(".jdb");
         return buffer.toString();
     }
+
     
-    
+    public void close() {        
+        for (Map.Entry<String,CachedBdbMap> me: bigMaps.entrySet()) try {
+            me.getValue().sync();
+            me.getValue().close();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error closing " + me.getKey(), e);
+        }
+
+        try {
+            this.classCatalog.close();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception closing StoredClassCatalog", e);
+        }
+
+        try {
+            this.bdbEnvironment.sync();
+            this.bdbEnvironment.close();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error closing environment.", e);
+        }
+    }
+
     private static class BdbRecover implements RecoverAction {
 
         private static final long serialVersionUID = 1L;
