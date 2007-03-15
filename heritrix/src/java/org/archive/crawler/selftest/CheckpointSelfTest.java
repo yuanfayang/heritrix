@@ -122,9 +122,11 @@ public class CheckpointSelfTest extends SelfTestBase {
         invokeAndWait("requestCrawlCheckpoint", CrawlStatus.PAUSED);
         invokeAndWait("requestCrawlStop", CrawlStatus.FINISHED);
         waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController", false);
-        dumpMBeanServer();
         stopHeritrix();
-        dumpMBeanServer();
+        Set<ObjectName> set = dumpMBeanServer();
+        if (!set.isEmpty()) {
+            throw new Exception("Mbeans lived on after stopHeritrix: " + set);
+        }
         Heritrix.main(new String[] { getCrawlDir().getAbsolutePath() });
         
         ObjectName cjm = getCrawlJobManager();

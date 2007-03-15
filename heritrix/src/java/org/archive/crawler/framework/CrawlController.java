@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -1039,6 +1040,13 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             this.registeredCrawlStatusListeners = null;
         }
         
+        List<Closeable> closeables = sheetManager.getCloseables();
+        for (Closeable c: closeables) try {
+            c.close();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Could not close " + c, e);
+        }
+
         closeLogFiles();
         
         // Release reference to logger file handler instances.
