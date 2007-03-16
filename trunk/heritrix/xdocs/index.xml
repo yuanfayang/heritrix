@@ -43,6 +43,16 @@
         <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Release 1.12.0 03/16/2007">
+    <p>Release 1.12.0 is the first of several planned releases enhancing
+      Heritrix with "smart crawler" functionality. In this release, the theme
+      has been offering new options to reduce the amount of duplicate content
+      crawled and stored when recrawling sites at regular intervals. A number
+      of other enhancements and bug fixes are also included.
+      See the <a href="articles/releasenotes/1_12_0.html">Release Notes</a> for
+      details.
+    </p>
+    </subsection>
 
     <subsection name="HDFS Writer Processor 01/25/2007">
       <p>
