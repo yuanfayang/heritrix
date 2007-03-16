@@ -55,15 +55,14 @@
   <sect1 id="install">
     <title>Installing and running Heritrix</title>
 
-    <para>This chapter will explain how to set up Heritrix.
-    </para>
+    <para>This chapter will explain how to set up Heritrix.</para>
 
     <para>Because Heritrix is a pure Java program it can (in theory anyway) be
     run on any platform that has a Java 5.0 VM. However we are only committed
     to supporting its operation on Linux and so this chapter only covers setup
-    on that platform.  Because of this, what follows assumes
-    basic Linux administration skills.  Other chapters in the user manual are
-    platform agnostic.</para>
+    on that platform. Because of this, what follows assumes basic Linux
+    administration skills. Other chapters in the user manual are platform
+    agnostic.</para>
 
     <para>This chapter also only covers installing and running the prepackaged
     binary distributions of Heritrix. For information about downloading and
@@ -131,7 +130,6 @@
                 url="http://www.ibm.com/java">www.ibm.com/java</ulink></para>
               </listitem>
             </itemizedlist>
-
           </sect5>
         </sect4>
 
@@ -159,8 +157,7 @@
     <sect2>
       <title>Running Heritrix</title>
 
-      <para>To run Heritrix, first do the following:
-      <programlisting>  % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</programlisting>...where
+      <para>To run Heritrix, first do the following: <programlisting>  % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</programlisting>...where
       <literal>$HERITRIX_HOME</literal> is the location of your untarred
       <filename>heritrix.?.?.?.tar.gz</filename>.</para>
 
@@ -201,188 +198,197 @@
   Tue Feb 10 17:03:01 PST 2004 Starting heritrix...
   Tue Feb 10 17:03:05 PST 2004 Heritrix 0.4.0 is running.
   Web UI is at: http://b116-dyn-60.archive.org:8080/admin
-  Login and password: admin/letmein</programlisting>
-<note>
-    <para>By default, as of version 1.10.x, Heritrix binds to localhost only.
-    This means that you need to be running Heritrix on the same machine as
-    your browser to access the Heritrix UI.  Read about the 
-    <literal>--bind</literal> argument above if you need to access the
-    Heritrix UI over a network.
-    </para>
-</note>
-</para>
+  Login and password: admin/letmein</programlisting> <note>
+          <para>By default, as of version 1.10.x, Heritrix binds to localhost
+          only. This means that you need to be running Heritrix on the same
+          machine as your browser to access the Heritrix UI. Read about the
+          <literal>--bind</literal> argument above if you need to access the
+          Heritrix UI over a network.</para>
+        </note></para>
 
+      <para>See <xref linkend="wui" /> and <xref linkend="tutorial" /> to get
+      your first crawl up and running.</para>
 
+      <sect3>
+        <title>Environment variables</title>
 
-  <para>See <xref linkend="wui" /> and <xref linkend="tutorial" /> to get
-  your first crawl up and running.</para>
+        <para>Below are environment variables that effect Heritrix
+        operation.</para>
 
-  <sect3>
-    <title>Environment variables</title>
-    <para>Below are environment variables that effect Heritrix operation.
-    </para>
+        <sect4>
+          <title>HERITRIX_HOME</title>
 
-    <sect4>
-      <title>HERITRIX_HOME</title>
+          <para>Set this environment variable to point at the Heritrix home
+          directory. For example, if you've unpacked Heritrix in your home
+          directory and Heritrix is sitting in the heritrix-1.0.0 directory,
+          you'd set HERITRIX_HOME as follows. Assuming your shell is
+          bash:<programlisting>  % export HERITRIX_HOME=~/heritrix-1.0.0</programlisting>If
+          you don't set this environment variable, the Heritrix start script
+          makes a guess at the home for Heritrix. It doesn't always guess
+          correctly.</para>
+        </sect4>
 
-      <para>Set this environment variable to point at the Heritrix home
-      directory. For example, if you've unpacked Heritrix in your home
-      directory and Heritrix is sitting in the heritrix-1.0.0 directory,
-      you'd set HERITRIX_HOME as follows. Assuming your shell is
-      bash:<programlisting>  % export HERITRIX_HOME=~/heritrix-1.0.0</programlisting>If
-      you don't set this environment variable, the Heritrix start script
-      makes a guess at the home for Heritrix. It doesn't always guess
-      correctly.</para>
-    </sect4>
+        <sect4>
+          <title>JAVA_HOME</title>
 
-    <sect4>
-      <title>JAVA_HOME</title>
+          <para>This environment variable may already exist. It should point
+          to the Java installation on the machine. An example of how this
+          might be set (assuming your shell is bash):</para>
 
-      <para>This environment variable may already exist. It should point
-      to the Java installation on the machine. An example of how this
-      might be set (assuming your shell is bash):</para>
+          <para><programlisting>  % export JAVA_HOME=/usr/local/java/jre/</programlisting></para>
+        </sect4>
 
-      <para><programlisting>  % export JAVA_HOME=/usr/local/java/jre/</programlisting></para>
-    </sect4>
+        <sect4 id="java_opts">
+          <title>JAVA_OPTS</title>
 
-    <sect4 id="java_opts">
-      <title>JAVA_OPTS</title>
-
-      <para>Pass options to the Heritrix JVM by populating the JAVA_OPTS
-      environment variable with values. For example, if you want to have
-      Heritrix run with a larger heap, say 512 megs, you could do either
-      of the following (assuming your shell is bash):<programlisting>  % export JAVA_OPTS="-Xmx512M"
+          <para>Pass options to the Heritrix JVM by populating the JAVA_OPTS
+          environment variable with values. For example, if you want to have
+          Heritrix run with a larger heap, say 512 megs, you could do either
+          of the following (assuming your shell is bash):<programlisting>  % export JAVA_OPTS="-Xmx512M"
 % $HERITRIX_HOME/bin/heritrix</programlisting>Or, you could do it all on the
-      one line as follows:<programlisting>  % JAVA_OPTS="-Xmx512m" $HERITRIX_HOME/bin/heritrix</programlisting></para>
-    </sect4>
-  </sect3>
+          one line as follows:<programlisting>  % JAVA_OPTS="-Xmx512m" $HERITRIX_HOME/bin/heritrix</programlisting></para>
+        </sect4>
+      </sect3>
 
-  <sect3>
-    <title>System properties</title>
+      <sect3>
+        <title>System properties</title>
 
-    <para>Below we document the system properties passed on the
-    command-line that can influence Heritrix's behavior. If you are using
-    the /bin/heritrix script to launch Heritrix you may have to edit it to
-    change/set these properties or else pass them as part of JAVA_OPTS.
-</para>
+        <para>Below we document the system properties passed on the
+        command-line that can influence Heritrix's behavior. If you are using
+        the /bin/heritrix script to launch Heritrix you may have to edit it to
+        change/set these properties or else pass them as part of
+        JAVA_OPTS.</para>
 
-    <sect4 id="heritrix.properties">
-      <title>heritrix.properties</title>
+        <sect4 id="heritrix.properties">
+          <title>heritrix.properties</title>
 
-      <para>Set this property to point at an alternate
-      heritrix.properties file --
-<literal>e.g.: -Dheritrix.properties=/tmp/alternate.properties</literal>
-      -- when you want heritrix to use a properties file other than that
-found at <literal>conf/heritrix.properties</literal>.</para>
-    </sect4>
+          <para>Set this property to point at an alternate heritrix.properties
+          file -- <literal>e.g.:
+          -Dheritrix.properties=/tmp/alternate.properties</literal> -- when
+          you want heritrix to use a properties file other than that found at
+          <literal>conf/heritrix.properties</literal>.</para>
+        </sect4>
 
-    <sect4>
-      <title>heritrix.context</title>
-      <para>Provide an alternate context for the Heritrix admin
-UI.  Usually the admin webapp is mounted on root: i.e. '/'.
-      </para>
-    </sect4>
+        <sect4>
+          <title>heritrix.context</title>
 
-    <sect4>
-      <title>heritrix.development</title>
+          <para>Provide an alternate context for the Heritrix admin UI.
+          Usually the admin webapp is mounted on root: i.e. '/'.</para>
+        </sect4>
 
-      <para>Set this property when you want to run
-      the crawler from eclipse.  This property takes no arguments.
-    When this property is set, the
-      <literal>conf</literal> and <literal>webapps</literal> directories
-      will be found in their development locations and startup messages
-      will show on the text console (standard out).</para>
-    </sect4>
+        <sect4>
+          <title>heritrix.development</title>
 
-    <sect4>
-      <title>heritrix.home</title>
-      <para>Where heritrix is homed usually passed by the heritrix
-launch script.
-      </para>
-    </sect4>
-    <sect4>
-      <title>heritrix.out</title>
-      <para>Where stdout/stderr are sent, usually heritrix_out.log and
-passed by the heritrix launch script.
-      </para>
-    </sect4>
-    <sect4>
-      <title>heritrix.version</title>
-      <para>Version of heritrix set by the heritrix build into
-    heritrix.properties.
-      </para>
-    </sect4>
-    <sect4>
-      <title>heritrix.jobsdir</title>
-      <para>Where to drop heritrix jobs.  Usually empty.  Default
-      location is <literal>${HERITRIX_HOME}/jobs</literal>.
-      </para>
-    </sect4>
-    <sect4 id="hconf">
-        <title>heritrix.conf</title>
-        <para>Specify an alternate configuration directory other than
-    the default <literal>$HERITRIX_HOME/conf</literal>.</para>
-    </sect4>
+          <para>Set this property when you want to run the crawler from
+          eclipse. This property takes no arguments. When this property is
+          set, the <literal>conf</literal> and <literal>webapps</literal>
+          directories will be found in their development locations and startup
+          messages will show on the text console (standard out).</para>
+        </sect4>
 
+        <sect4>
+          <title>heritrix.home</title>
 
-<sect4>
-    <title>heritrix.cmdline</title>
-<para>This set of system properties are rarely used.
-    They are for use when Heritrix has NOT been started from the
-    command-line -- e.g. its been embedded in another application -- and
-the startup configuration that is set usually by command-line options,
-    instead needs to be done via system properties alone.
-    </para>
-<sect5>
-      <title>heritrix.cmdline.admin</title>
-    <para>Value is a colon-delimited String  user name and
-    password for admin GUI</para>
-</sect5>
-<sect5>
-      <title>heritrix.cmdline.nowui</title>
-    <para>If set to true, will prevent embedded web server crawler 
-    control interface from starting up.</para>
-</sect5>
-<sect5>
-      <title>heritrix.cmdline.order</title>
-    <para>If set to to a string file path, will use the specified 
-    crawl order XML file.</para>
-</sect5>
-<sect5>
-      <title>heritrix.cmdline.port</title>
-    <para>Value is port GUI is to run on.</para>
-</sect5>
-<sect5>
-      <title>heritrix.cmdline.run</title>
-    <para>If true, crawler is set into run mode on startup.</para>
-</sect5>
-</sect4>
+          <para>Where heritrix is homed usually passed by the heritrix launch
+          script.</para>
+        </sect4>
 
-    <sect4>
-      <title>javax.net.ssl.trustStore</title>
+        <sect4>
+          <title>heritrix.out</title>
 
-      <para>Heritrix has its own trust store at
-      <literal>conf/heritrix.cacerts</literal> that it uses if the
-      <literal>FetcherHTTP</literal> is configured to use a trust level of
-      other than <emphasis>open</emphasis> (open is the default setting).
-      In the unusual case where you'd like to have Heritrix use an
-      alternate truststore, point at the alternate by supplying the JSSE
-      <literal>javax.net.ssl.trustStore</literal> property on the command
-      line: e.g.</para>
-    </sect4>
+          <para>Where stdout/stderr are sent, usually heritrix_out.log and
+          passed by the heritrix launch script.</para>
+        </sect4>
 
-    <sect4>
-      <title>java.util.logging.config.file</title>
+        <sect4>
+          <title>heritrix.version</title>
 
-      <para>The Heritrix <filename><literal>conf</literal></filename>
-      directory includes a file named
-      <filename>heritrix.properties</filename>. A section of this file
-      specifies the default Heritrix logging configuration. To override
-      these settings, point
-      <literal>java.util.logging.config.file</literal> at a properties
-      file with an alternate logging configuration. Below we reproduce the
-      default <filename>heritrix.properties</filename> for
-      reference:<programlisting>  # Basic logging setup; to console, all levels
+          <para>Version of heritrix set by the heritrix build into
+          heritrix.properties.</para>
+        </sect4>
+
+        <sect4>
+          <title>heritrix.jobsdir</title>
+
+          <para>Where to drop heritrix jobs. Usually empty. Default location
+          is <literal>${HERITRIX_HOME}/jobs</literal>.</para>
+        </sect4>
+
+        <sect4 id="hconf">
+          <title>heritrix.conf</title>
+
+          <para>Specify an alternate configuration directory other than the
+          default <literal>$HERITRIX_HOME/conf</literal>.</para>
+        </sect4>
+
+        <sect4>
+          <title>heritrix.cmdline</title>
+
+          <para>This set of system properties are rarely used. They are for
+          use when Heritrix has NOT been started from the command-line -- e.g.
+          its been embedded in another application -- and the startup
+          configuration that is set usually by command-line options, instead
+          needs to be done via system properties alone.</para>
+
+          <sect5>
+            <title>heritrix.cmdline.admin</title>
+
+            <para>Value is a colon-delimited String user name and password for
+            admin GUI</para>
+          </sect5>
+
+          <sect5>
+            <title>heritrix.cmdline.nowui</title>
+
+            <para>If set to true, will prevent embedded web server crawler
+            control interface from starting up.</para>
+          </sect5>
+
+          <sect5>
+            <title>heritrix.cmdline.order</title>
+
+            <para>If set to to a string file path, will use the specified
+            crawl order XML file.</para>
+          </sect5>
+
+          <sect5>
+            <title>heritrix.cmdline.port</title>
+
+            <para>Value is port GUI is to run on.</para>
+          </sect5>
+
+          <sect5>
+            <title>heritrix.cmdline.run</title>
+
+            <para>If true, crawler is set into run mode on startup.</para>
+          </sect5>
+        </sect4>
+
+        <sect4>
+          <title>javax.net.ssl.trustStore</title>
+
+          <para>Heritrix has its own trust store at
+          <literal>conf/heritrix.cacerts</literal> that it uses if the
+          <literal>FetcherHTTP</literal> is configured to use a trust level of
+          other than <emphasis>open</emphasis> (open is the default setting).
+          In the unusual case where you'd like to have Heritrix use an
+          alternate truststore, point at the alternate by supplying the JSSE
+          <literal>javax.net.ssl.trustStore</literal> property on the command
+          line: e.g.</para>
+        </sect4>
+
+        <sect4>
+          <title>java.util.logging.config.file</title>
+
+          <para>The Heritrix <filename><literal>conf</literal></filename>
+          directory includes a file named
+          <filename>heritrix.properties</filename>. A section of this file
+          specifies the default Heritrix logging configuration. To override
+          these settings, point
+          <literal>java.util.logging.config.file</literal> at a properties
+          file with an alternate logging configuration. Below we reproduce the
+          default <filename>heritrix.properties</filename> for
+          reference:<programlisting>  # Basic logging setup; to console, all levels
 handlers= java.util.logging.ConsoleHandler
 java.util.logging.ConsoleHandler.level= ALL
 
@@ -397,315 +403,309 @@ progress-statistics.level= INFO
 recover.level= INFO
 
 # HttpClient is too chatty... only want to hear about severe problems
-org.apache.commons.httpclient.level= SEVERE</programlisting>Here's an
-      example of how you might specify an override:<programlisting>  % JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
+org.apache.commons.httpclient.level= SEVERE</programlisting>Here's an example
+          of how you might specify an override:<programlisting>  % JAVA_OPTS="-Djava.util.logging.config.file=heritrix.properties" \
       ./bin/heritrix --no-wui order.xml</programlisting></para>
 
-      <para>Alternatively you could edit the default file.</para>
-    </sect4>
-    <sect4>
-    <title>java.io.tmpdir</title>
-    <para>Specify an alternate tmp directory.  Default is /tmp.
-            </para>
-    </sect4>
-    <sect4>
-    <title>com.sun.management.jmxremote.port</title>
-    <para>What port to start up JMX Agent on.  Default is 8849.
-            See also the environment variable JMX_PORT.
-            </para>
-    </sect4>
-     
-  </sect3>
-</sect2>
-<sect2 id="security">
- <title>Security Considerations</title>
- 
- <para>The crawler is a large and active network application which 
- presents security implications, both local to the machine where
- it operates, and remotely for machines it contacts.</para>
- 
- <sect3>
- <title>Local to the Crawling Machine</title>
- 
- <para>It is important to recognize that the web UI (discussed in 
- <xref linkend="wui"/>) and JMX agent (discussed in 
- <xref linkend="mon_com"/>) allow remote control of the crawler process 
- in ways that might potentially disrupt a crawl, change the crawler's 
- behavior, read or write locally-accessible files, and perform or 
- trigger other actions in the Java VM or local machine. </para>
- 
- <para>The administrative login and password are currently only a 
- very mild protection against unauthorized access, unless you take
- additional steps to prevent access to the crawler machine. We 
- strongly recommend some combination of the following practices:</para>
- 
- <para><emphasis role="bold">First,</emphasis> use network 
- configuration tools, like a firewall, to only allow trusted remote 
- hosts to contact the web UI and, if applicable, JMX agent ports. 
- (The default web UI port is 8080; JMX is 8849.)</para>
- 
- <para><emphasis role="bold">Second,</emphasis> use a strong and 
- unique username/password combination to secure the web UI and JMX
- agent. However, keep in mind that the default administrative web 
- server uses plain HTTP for access, so these values are susceptible
- to eavesdropping in transit if network links between your browser and
- the crawler are compromised. (An upcoming update will change the 
- default to HTTPS.) Also, setting the username/password on
- the command-line may result in their values being visible to other
- users of the crawling machine, and they are additionally printed 
- to the console and heritrix_out.log for operator reference.</para>
- 
- <para><emphasis role="bold">Third,</emphasis> run the crawler as a 
- user with the minimum privileges necessary for its operation, so that
- in the event of unauthorized access to the web UI or JMX agent,
- the potential damage is limited.</para>
- 
- <para>Successful unauthorized access to the web UI or JMX agent could 
- trivially end or corrupt a crawl, or change the crawler's behavior to 
- be a nuisance to other network hosts. By adjusting configuration 
- paths, unauthorized access could potentially delete, corrupt, or 
- replace files accessible to the crawler process, and thus cause more 
- extensive problems on the crawler machine.</para>
- 
- <para>Another potential risk is that some 
- worst-case or maliciously-crafted crawled content might, in 
- combination with crawler bugs, disrupt the crawl or other files or
- operations of the local system. For example, in the past, even
- without malicious intent, some rich-media content has caused 
- runaway memory use in 3rd-party libraries used by the crawler, 
- resulting in a memory-exhaustion condition that can stop or 
- corrupt a crawl in progress. Similarly, atypical input patterns have
- at times caused runaway CPU use by crawler link-extraction regular
- expressions, severely slowing crawls. Crawl operators should 
- monitor their crawls closely and stay informed via the project 
- discussion list and bug database for any newly discovered similar
- bugs. </para>
- 
- </sect3>
- 
-</sect2>
-</sect1>
+          <para>Alternatively you could edit the default file.</para>
+        </sect4>
 
-<sect1 id="wui">
-<title>Web based user interface</title>
+        <sect4>
+          <title>java.io.tmpdir</title>
 
-<para>After Heritrix has been launched from the command line, the web
-based user interface (WUI) becomes accessible.</para>
+          <para>Specify an alternate tmp directory. Default is /tmp.</para>
+        </sect4>
 
-<para>The URI to access the WUI is printed on the text console from which
-the program was launched (typically
-<literal>http://&lt;host&gt;:8080/admin/</literal>).</para>
+        <sect4>
+          <title>com.sun.management.jmxremote.port</title>
 
-<para>The WUI is password protected. There is no default login for 
-access; one must be specified using either the '-a'/'--admin' command-line
-option at startup or by setting the 'heritrix.cmdline.admin' system
-property.  The currently valid
-username and password combination will be printed out to the console,
-along with the access URL for the WUI, at startup.</para>
+          <para>What port to start up JMX Agent on. Default is 8849. See also
+          the environment variable JMX_PORT.</para>
+        </sect4>
+      </sect3>
+    </sect2>
 
-<para>The WUI can be accessed via any web browser. While we've
-endeavoured to make certain that it functions in all recent browsers,
-Mozilla 5 or newer is recommended. IE 6 or newer should also work without
-problems.</para>
+    <sect2 id="security">
+      <title>Security Considerations</title>
 
-<para>The initial login page takes the username/password
-combination discussed above.  Logins will time out after a period
-of non-use.</para>
+      <para>The crawler is a large and active network application which
+      presents security implications, both local to the machine where it
+      operates, and remotely for machines it contacts.</para>
 
-<caution>
-  <para>By default, communication with the WUI is not done over an 
-  encrypted HTTPS connection! Passwords will be submitted over the 
-  network in plain text, so you should take additional steps to 
-  protect your crawler administrative interface from unauthorized
-  access, as described in the <xref linkend="security"/> section.
-  </para>
-</caution>
-</sect1>
+      <sect3>
+        <title>Local to the Crawling Machine</title>
 
-<sect1 id="tutorial">
-<title>A quick guide to running your first crawl job</title>
+        <para>It is important to recognize that the web UI (discussed in <xref
+        linkend="wui" />) and JMX agent (discussed in <xref
+        linkend="mon_com" />) allow remote control of the crawler process in
+        ways that might potentially disrupt a crawl, change the crawler's
+        behavior, read or write locally-accessible files, and perform or
+        trigger other actions in the Java VM or local machine.</para>
 
-<para>Once you've installed Heritrix and logged into the WUI (see above)
-you are presented with the web Console page. Near the top there is a row of
-tabs.</para>
+        <para>The administrative login and password are currently only a very
+        mild protection against unauthorized access, unless you take
+        additional steps to prevent access to the crawler machine. We strongly
+        recommend some combination of the following practices:</para>
 
-<para><emphasis role="bold">Step 1.</emphasis> <emphasis>Create a
-job</emphasis></para>
+        <para><emphasis role="bold">First,</emphasis> use network
+        configuration tools, like a firewall, to only allow trusted remote
+        hosts to contact the web UI and, if applicable, JMX agent ports. (The
+        default web UI port is 8080; JMX is 8849.)</para>
 
-<para>To create a new job choose the Jobs tab, this will take you to the
-Jobs page. Once there you are presented with three options for creating a
-new job. Select 'With defaults'. This will create a new
-job based on the default profile (see <xref linkend="profile" />).</para>
+        <para><emphasis role="bold">Second,</emphasis> use a strong and unique
+        username/password combination to secure the web UI and JMX agent.
+        However, keep in mind that the default administrative web server uses
+        plain HTTP for access, so these values are susceptible to
+        eavesdropping in transit if network links between your browser and the
+        crawler are compromised. (An upcoming update will change the default
+        to HTTPS.) Also, setting the username/password on the command-line may
+        result in their values being visible to other users of the crawling
+        machine, and they are additionally printed to the console and
+        heritrix_out.log for operator reference.</para>
 
-<para>On the screen that comes next you will be asked to supply a name,
-description and a seed list for the new job.</para>
+        <para><emphasis role="bold">Third,</emphasis> run the crawler as a
+        user with the minimum privileges necessary for its operation, so that
+        in the event of unauthorized access to the web UI or JMX agent, the
+        potential damage is limited.</para>
 
-<para>For a name supply a short text with no special characters or spaces
-(except dash and underscore). You can skip the description if you like. In
-the seeds list type in the URL of the sites you are interested in
-harvesting. One URL to a line.</para>
+        <para>Successful unauthorized access to the web UI or JMX agent could
+        trivially end or corrupt a crawl, or change the crawler's behavior to
+        be a nuisance to other network hosts. By adjusting configuration
+        paths, unauthorized access could potentially delete, corrupt, or
+        replace files accessible to the crawler process, and thus cause more
+        extensive problems on the crawler machine.</para>
 
-<para>Creating a job is covered in greater detail in <xref
-linkend="creating" />.</para>
+        <para>Another potential risk is that some worst-case or
+        maliciously-crafted crawled content might, in combination with crawler
+        bugs, disrupt the crawl or other files or operations of the local
+        system. For example, in the past, even without malicious intent, some
+        rich-media content has caused runaway memory use in 3rd-party
+        libraries used by the crawler, resulting in a memory-exhaustion
+        condition that can stop or corrupt a crawl in progress. Similarly,
+        atypical input patterns have at times caused runaway CPU use by
+        crawler link-extraction regular expressions, severely slowing crawls.
+        Crawl operators should monitor their crawls closely and stay informed
+        via the project discussion list and bug database for any newly
+        discovered similar bugs.</para>
+      </sect3>
+    </sect2>
+  </sect1>
 
-<para><emphasis role="bold">Step 2.</emphasis> <emphasis>Configure the
-job</emphasis></para>
+  <sect1 id="wui">
+    <title>Web based user interface</title>
 
-<para>Once you've entered this information in you are ready to go to the
-configuration pages. Click the <emphasis>Modules</emphasis> button in the
-row of buttons at the bottom of the page.</para>
+    <para>After Heritrix has been launched from the command line, the web
+    based user interface (WUI) becomes accessible.</para>
 
-<para>This will take you to the modules configuration page (more details
-in <xref linkend="modules" />). For now we are only interested in the
-option second from the top named <emphasis role="bold">Select crawl
-scope</emphasis>. It allows you to specify the limits of the crawl. By
-default it is limited to the domains that your seeds span. This may be
-suitable for your purposes. If not you can choose a broad scope (not
-limited to the domains of its seeds) or the more restrictive host scope
-that limits the crawl to the hosts that its seeds span. For more on
-scopes refer to <xref linkend="scopes" />.</para>
+    <para>The URI to access the WUI is printed on the text console from which
+    the program was launched (typically
+    <literal>http://&lt;host&gt;:8080/admin/</literal>).</para>
 
-<para>To change scopes, select the new one from the combobox and click the
-<emphasis>Change </emphasis>button.</para>
+    <para>The WUI is password protected. There is no default login for access;
+    one must be specified using either the '-a'/'--admin' command-line option
+    at startup or by setting the 'heritrix.cmdline.admin' system property. The
+    currently valid username and password combination will be printed out to
+    the console, along with the access URL for the WUI, at startup.</para>
 
-<para>Next turn your attention to the second row of tabs at the top of the
-page, below the usual tabs. You are currently on the far left tab. Now
-select the tab called <emphasis>Settings</emphasis> near the middle of the
-row.</para>
+    <para>The WUI can be accessed via any web browser. While we've endeavoured
+    to make certain that it functions in all recent browsers, Mozilla 5 or
+    newer is recommended. IE 6 or newer should also work without
+    problems.</para>
 
-<para>This takes you to the Settings page. It allows you to configure
-various details of the crawl. Exhaustive coverage of this page can be
-found in <xref linkend="settings" />. For now we are only interested in
-the two settings under <emphasis role="bold">http-headers</emphasis>.
-These are the <literal>user-agent</literal> and <literal>from</literal>
-field of the HTTP headers in the crawlers requests. You must set them to
-valid values before a crawl can be run. The current values upper-case what
-needs replacing. If you have trouble with that please refer to <xref
-linkend="httpheaders" /> for what's regarded as valid values.</para>
+    <para>The initial login page takes the username/password combination
+    discussed above. Logins will time out after a period of non-use.</para>
 
-<para>Once you've set the <emphasis role="bold">http-headers</emphasis>
-settings to proper values (and made any other desired changes), you can
-click the <emphasis>Submit job</emphasis> tab at the far right of the
-second row of tabs. The crawl job is now configured and ready to
-run.</para>
+    <caution>
+      <para>By default, communication with the WUI is not done over an
+      encrypted HTTPS connection! Passwords will be submitted over the network
+      in plain text, so you should take additional steps to protect your
+      crawler administrative interface from unauthorized access, as described
+      in the <xref linkend="security" /> section.</para>
+    </caution>
+  </sect1>
 
-<para>Configuring a job is covered in greater detail in <xref
-linkend="config" />.</para>
+  <sect1 id="tutorial">
+    <title>A quick guide to running your first crawl job</title>
 
-<para><emphasis role="bold">Step 3.</emphasis> <emphasis>Running the
-job</emphasis></para>
+    <para>Once you've installed Heritrix and logged into the WUI (see above)
+    you are presented with the web Console page. Near the top there is a row
+    of tabs.</para>
 
-<para>Submitted new jobs are placed in a queue of pending
-jobs. The crawler does not start processing jobs from this queue until the
-crawler is started. While the crawler is stopped, jobs are simply
-held.</para>
+    <para><emphasis role="bold">Step 1.</emphasis> <emphasis>Create a
+    job</emphasis></para>
 
-<para>To start the crawler, click on the Console tab. Once on the Console
-page, you will find the option <emphasis>Start</emphasis> at the top of
-the <emphasis role="bold">Crawler Status</emphasis> box, just to the 
-right of the indicator of current status. Clicking this option will put 
-the crawling into <emphasis>Crawling Jobs</emphasis> mode, where it will 
-begin crawling any next pending job, such as the job you just created and
-configured.</para>
+    <para>To create a new job choose the Jobs tab, this will take you to the
+    Jobs page. Once there you are presented with three options for creating a
+    new job. Select 'With defaults'. This will create a new job based on the
+    default profile (see <xref linkend="profile" />).</para>
 
-<para>The Console will update to display progress information about the
-on-going crawl. Click the <emphasis>Refresh</emphasis> option (or the
-top-left Heritrix logo) to update this information.</para>
+    <para>On the screen that comes next you will be asked to supply a name,
+    description and a seed list for the new job.</para>
 
-<para>For more information about running a job see <xref
-linkend="running" />.</para>
+    <para>For a name supply a short text with no special characters or spaces
+    (except dash and underscore). You can skip the description if you like. In
+    the seeds list type in the URL of the sites you are interested in
+    harvesting. One URL to a line.</para>
 
-<para>Detailed information about evaluating the progress of a job can be
-found in <xref linkend="analysis" />.</para>
-</sect1>
+    <para>Creating a job is covered in greater detail in <xref
+    linkend="creating" />.</para>
 
-<sect1 id="creating">
-<title>Creating jobs and profiles</title>
+    <para><emphasis role="bold">Step 2.</emphasis> <emphasis>Configure the
+    job</emphasis></para>
 
-<para>In order to run a crawl a configuration must be created that defines
-it. In Heritrix such a configuration is called a <emphasis
-role="bold">crawl job</emphasis>.</para>
+    <para>Once you've entered this information in you are ready to go to the
+    configuration pages. Click the <emphasis>Modules</emphasis> button in the
+    row of buttons at the bottom of the page.</para>
 
-<sect2>
-  <title id="crawljob">Crawl job</title>
+    <para>This will take you to the modules configuration page (more details
+    in <xref linkend="modules" />). For now we are only interested in the
+    option second from the top named <emphasis role="bold">Select crawl
+    scope</emphasis>. It allows you to specify the limits of the crawl. By
+    default it is limited to the domains that your seeds span. This may be
+    suitable for your purposes. If not you can choose a broad scope (not
+    limited to the domains of its seeds) or the more restrictive host scope
+    that limits the crawl to the hosts that its seeds span. For more on scopes
+    refer to <xref linkend="scopes" />.</para>
 
-  <para>A crawl job encompasses the configurations needed to run a single
-  crawl. It also contains some additional elements such as file locations,
-  status etc.</para>
+    <para>To change scopes, select the new one from the combobox and click the
+    <emphasis>Change </emphasis>button.</para>
 
-  <para>Once logged onto the WUI new jobs can be created by going to the
-  <emphasis>Jobs</emphasis> tab. Once the Jobs page loads users can create
-  jobs by choosing of the following three options:</para>
+    <para>Next turn your attention to the second row of tabs at the top of the
+    page, below the usual tabs. You are currently on the far left tab. Now
+    select the tab called <emphasis>Settings</emphasis> near the middle of the
+    row.</para>
 
-  <orderedlist>
+    <para>This takes you to the Settings page. It allows you to configure
+    various details of the crawl. Exhaustive coverage of this page can be
+    found in <xref linkend="settings" />. For now we are only interested in
+    the two settings under <emphasis role="bold">http-headers</emphasis>.
+    These are the <literal>user-agent</literal> and <literal>from</literal>
+    field of the HTTP headers in the crawlers requests. You must set them to
+    valid values before a crawl can be run. The current values upper-case what
+    needs replacing. If you have trouble with that please refer to <xref
+    linkend="httpheaders" /> for what's regarded as valid values.</para>
 
+    <para>Once you've set the <emphasis role="bold">http-headers</emphasis>
+    settings to proper values (and made any other desired changes), you can
+    click the <emphasis>Submit job</emphasis> tab at the far right of the
+    second row of tabs. The crawl job is now configured and ready to
+    run.</para>
 
-    <listitem>
-      <para><emphasis role="bold">Based on existing job</emphasis></para>
+    <para>Configuring a job is covered in greater detail in <xref
+    linkend="config" />.</para>
 
-      <para>This option allows the user to create a job by basing it on
-      any existing job, regardless of whether it has been crawled or not.
-      Can be useful for repeating crawls or recovering a crawl that had
-      problems. (See <xref linkend="recover" /></para>
-    </listitem>
-    <listitem>
-      <para><emphasis role="bold">Based on a profile</emphasis></para>
+    <para><emphasis role="bold">Step 3.</emphasis> <emphasis>Running the
+    job</emphasis></para>
 
-      <para>This option allows the user to create a job by basing it on
-      any existing profiles.</para>
-    </listitem>
-    <listitem>
-      <para><emphasis role="bold">With defaults</emphasis></para>
+    <para>Submitted new jobs are placed in a queue of pending jobs. The
+    crawler does not start processing jobs from this queue until the crawler
+    is started. While the crawler is stopped, jobs are simply held.</para>
 
-      <para>This option creates a new crawl job based on the default
-      profile.</para>
-    </listitem>
+    <para>To start the crawler, click on the Console tab. Once on the Console
+    page, you will find the option <emphasis>Start</emphasis> at the top of
+    the <emphasis role="bold">Crawler Status</emphasis> box, just to the right
+    of the indicator of current status. Clicking this option will put the
+    crawling into <emphasis>Crawling Jobs</emphasis> mode, where it will begin
+    crawling any next pending job, such as the job you just created and
+    configured.</para>
 
-  </orderedlist>
+    <para>The Console will update to display progress information about the
+    on-going crawl. Click the <emphasis>Refresh</emphasis> option (or the
+    top-left Heritrix logo) to update this information.</para>
 
-  <para>Options 1 and 2 will display a list of available options.
-  Initially there are two profiles and no existing jobs.</para>
+    <para>For more information about running a job see <xref
+    linkend="running" />.</para>
 
-  <para>All crawl jobs are created by basing them on profiles (see <xref
-  linkend="profile" />) or existing jobs.</para>
+    <para>Detailed information about evaluating the progress of a job can be
+    found in <xref linkend="analysis" />.</para>
+  </sect1>
 
-  <para>Once the proper profile/job has been chosen to base the new job
-  on, a simple page will appear asking for the new job's:</para>
+  <sect1 id="creating">
+    <title>Creating jobs and profiles</title>
 
-  <orderedlist>
-    <listitem>
-      <para><emphasis role="bold">Name</emphasis></para>
+    <para>In order to run a crawl a configuration must be created that defines
+    it. In Heritrix such a configuration is called a <emphasis
+    role="bold">crawl job</emphasis>.</para>
 
-      <para>The name must only contain letters, numbers, dash (-) and
-      underscore (_). No other characters are allowed. This name will be
-      used to identify the crawl in the WUI but it need not be unique. The
-      name can not be changed later</para>
-    </listitem>
+    <sect2>
+      <title id="crawljob">Crawl job</title>
 
-    <listitem>
-      <para><emphasis role="bold">Description</emphasis></para>
+      <para>A crawl job encompasses the configurations needed to run a single
+      crawl. It also contains some additional elements such as file locations,
+      status etc.</para>
 
-      <para>A short description of the job. This is a freetext input box
-      and can be edited later.</para>
-    </listitem>
+      <para>Once logged onto the WUI new jobs can be created by going to the
+      <emphasis>Jobs</emphasis> tab. Once the Jobs page loads users can create
+      jobs by choosing of the following three options:</para>
 
-    <listitem>
-      <para><emphasis role="bold">Seeds</emphasis></para>
+      <orderedlist>
+        <listitem>
+          <para><emphasis role="bold">Based on existing job</emphasis></para>
 
-      <para>The seed URIs to use for the job. This list can be edited
-      later along with the general configurations.</para>
-    </listitem>
-  </orderedlist>
+          <para>This option allows the user to create a job by basing it on
+          any existing job, regardless of whether it has been crawled or not.
+          Can be useful for repeating crawls or recovering a crawl that had
+          problems. (See <xref linkend="recover" /></para>
+        </listitem>
 
-  <para>Below these input fields there are several buttons. The last one
-  <emphasis>Submit job</emphasis> will immediately submit the job and
-  (assuming it is properly configured) it will be ready to run (see
-  <xref linkend="running" />). The other buttons will take the user to the
-  relevant configuration pages (those are covered in detail in <xref
-  linkend="config" />). Once all desired changes have been made to the
-  configuration, click the '<emphasis>Submit job</emphasis>' tab (usually
-  displayed top and bottom right) to submit it to the list of waiting
-  jobs.<note>
+        <listitem>
+          <para><emphasis role="bold">Based on a profile</emphasis></para>
+
+          <para>This option allows the user to create a job by basing it on
+          any existing profiles.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">With defaults</emphasis></para>
+
+          <para>This option creates a new crawl job based on the default
+          profile.</para>
+        </listitem>
+      </orderedlist>
+
+      <para>Options 1 and 2 will display a list of available options.
+      Initially there are two profiles and no existing jobs.</para>
+
+      <para>All crawl jobs are created by basing them on profiles (see <xref
+      linkend="profile" />) or existing jobs.</para>
+
+      <para>Once the proper profile/job has been chosen to base the new job
+      on, a simple page will appear asking for the new job's:</para>
+
+      <orderedlist>
+        <listitem>
+          <para><emphasis role="bold">Name</emphasis></para>
+
+          <para>The name must only contain letters, numbers, dash (-) and
+          underscore (_). No other characters are allowed. This name will be
+          used to identify the crawl in the WUI but it need not be unique. The
+          name can not be changed later</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Description</emphasis></para>
+
+          <para>A short description of the job. This is a freetext input box
+          and can be edited later.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Seeds</emphasis></para>
+
+          <para>The seed URIs to use for the job. This list can be edited
+          later along with the general configurations.</para>
+        </listitem>
+      </orderedlist>
+
+      <para>Below these input fields there are several buttons. The last one
+      <emphasis>Submit job</emphasis> will immediately submit the job and
+      (assuming it is properly configured) it will be ready to run (see <xref
+      linkend="running" />). The other buttons will take the user to the
+      relevant configuration pages (those are covered in detail in <xref
+      linkend="config" />). Once all desired changes have been made to the
+      configuration, click the '<emphasis>Submit job</emphasis>' tab (usually
+      displayed top and bottom right) to submit it to the list of waiting
+      jobs.<note>
           <para>Changes made afterwards to the original jobs or profiles that
           a new job is based on will <emphasis role="bold">not</emphasis> in
           any way affect the newly created job.</para>
@@ -913,18 +913,18 @@ role="bold">crawl job</emphasis>.</para>
             either by letting the SURT prefixes be implied from the supplied
             seed URIs, specifying an external file with a listing of SURT
             prefixes, or both.</para>
-            
+
             <para>This scope also enables a special syntax within the seeds
-            list for adding SURT prefixes separate from seeds. Any line in 
-            the seeds list beginning with a '+' will be considered a SURT
-            prefix specification, rather than a seed. Any URL you put after
-            the '+' will only be used to deduce a SURT prefix -- it will not
-            be independently scheduled. You can also put your own literal
-            SURT prefix after the '+'.</para>
-            
-            <para>For example, each of the following SURT prefix directives in 
+            list for adding SURT prefixes separate from seeds. Any line in the
+            seeds list beginning with a '+' will be considered a SURT prefix
+            specification, rather than a seed. Any URL you put after the '+'
+            will only be used to deduce a SURT prefix -- it will not be
+            independently scheduled. You can also put your own literal SURT
+            prefix after the '+'.</para>
+
+            <para>For example, each of the following SURT prefix directives in
             the seeds box are equivalent:</para>
-            
+
             <para><programlisting>
 +http://(org,example,      # literal SURT prefix
 +http://example.org        # regular URL implying same SURT prefix
@@ -939,13 +939,13 @@ role="bold">crawl job</emphasis>.</para>
             <literal>http-headers</literal>.</para>
 
             <para>Use the <literal>surts-source-file</literal> setting to
-            supply an external file from which to infer SURT prefixes, if 
+            supply an external file from which to infer SURT prefixes, if
             desired. Any URLs in this file will be converted to the implied
-            SURT prefix, and any line beginning with a '+' will be 
-            interpreted as a literal, precise SURT prefix. 
-            Use the <literal>seeds-as-surt-prefixes</literal> setting to
-            establish whether SURT prefixes should be deduced from the seeds,
-            in accordance with the rules given at the <xref
+            SURT prefix, and any line beginning with a '+' will be interpreted
+            as a literal, precise SURT prefix. Use the
+            <literal>seeds-as-surt-prefixes</literal> setting to establish
+            whether SURT prefixes should be deduced from the seeds, in
+            accordance with the rules given at the <xref
             linkend="surtprefix" /> glossary entry. (The default is 'true', to
             deduce SURT prefixes from seeds.)</para>
 
@@ -1044,7 +1044,7 @@ role="bold">crawl job</emphasis>.</para>
               <literal>bigbird</literal>, add a slash on the end, using a form
               such as <literal>http://members.aol.com/bigbird/</literal> or
               <literal>http://members.aol.com/bigbird/index.html</literal>
-              instead. </para>
+              instead.</para>
             </note>
           </listitem>
         </itemizedlist>
@@ -1084,6 +1084,7 @@ role="bold">crawl job</emphasis>.</para>
 
         <sect4 id="scopeproblems">
           <title>Problems with the current Scopes</title>
+
           <para>Our original Scope classes -- PathScope, HostScope,
           DomainScope, BroadScope -- all could be thought of as fitting a
           specific pattern: A URI is included if and only if:</para>
@@ -1265,18 +1266,17 @@ role="bold">crawl job</emphasis>.</para>
         PrerequisiteAcceptDecideRule   // but always accept a prerequisite of other URI
         </programlisting></para>
 
-          <para>In Heritirx 1.10.0, the default profile was changed to use
-          the above set of DecideRules (Previous to this, the operator had to
+          <para>In Heritirx 1.10.0, the default profile was changed to use the
+          above set of DecideRules (Previous to this, the operator had to
           choose the 'deciding-default' profile, since removed).</para>
 
           <para>The naming, behavior, and user-interface for DecideRule-based
           scoping is subject to significant change based on feedback and
           experience in future releases.</para>
-          
+
           <para>Enable FINE logging on the class
           <literal>org.archive.crawler.deciderules.DecideRuleSequence</literal>
-          to watch each deciderules finding on each processed URI.
-          </para>
+          to watch each deciderules finding on each processed URI.</para>
         </sect4>
       </sect3>
 
@@ -1319,8 +1319,8 @@ role="bold">crawl job</emphasis>.</para>
           <para>The forerunner of the <xref linkend="bdbfrontier" />. Now
           deprecated mostly because its custom disk-based data structures
           could not move as much Frontier state out of main memory as the
-          BerkeleyDB Java Edition approach. Has same general
-          characteristics as the <xref linkend="bdbfrontier" />.</para>
+          BerkeleyDB Java Edition approach. Has same general characteristics
+          as the <xref linkend="bdbfrontier" />.</para>
         </sect4>
 
         <sect4 id="dsf">
@@ -1379,7 +1379,7 @@ role="bold">crawl job</emphasis>.</para>
                 where it is not possible to judge changes in content.
                 Currently this applies only to DNS lookups.</para>
               </listitem>
-            </itemizedlist> </para>
+            </itemizedlist></para>
 
           <para>If you want to specify different wait times and factors for
           URIs based on their mime types, this is possible. You have to create
@@ -1430,9 +1430,8 @@ role="bold">crawl job</emphasis>.</para>
         first and last two merit a little bit more attention.</para>
 
         <para>In the <literal>Pre-fetch processing</literal> chain the
-        following two
-        processors should be included (or replacement modules that perform
-        similar operations):</para>
+        following two processors should be included (or replacement modules
+        that perform similar operations):</para>
 
         <itemizedlist>
           <listitem>
@@ -1454,8 +1453,7 @@ role="bold">crawl job</emphasis>.</para>
         </itemizedlist>
 
         <para>Similarly the <literal>Post Processing</literal> chain has the
-        following
-        special purpose processors:</para>
+        following special purpose processors:</para>
 
         <itemizedlist>
           <listitem>
@@ -1465,21 +1463,22 @@ role="bold">crawl job</emphasis>.</para>
             by the fetch. This is currently robots and IP address info. Should
             always be included.</para>
           </listitem>
-            <listitem>
-              <para><emphasis role="bold">LinksScoper</emphasis></para>
 
-              <para>Checks all links extracted from the current download
-              against the crawl scope.  Those that are out of scope are
-              discarded.  Logging of discarded URLs can be enabled.
-              </para>
-            </listitem>
-            <listitem>
-                <para><emphasis role="bold">FrontierScheduler</emphasis></para>
-                <para>'Schedules' any URLs stored as CandidateURIs found
-                in the current CrawlURI with the frontier for crawling.
-                Also schedules prerequisites if any.</para>
-            </listitem>
+          <listitem>
+            <para><emphasis role="bold">LinksScoper</emphasis></para>
 
+            <para>Checks all links extracted from the current download against
+            the crawl scope. Those that are out of scope are discarded.
+            Logging of discarded URLs can be enabled.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">FrontierScheduler</emphasis></para>
+
+            <para>'Schedules' any URLs stored as CandidateURIs found in the
+            current CrawlURI with the frontier for crawling. Also schedules
+            prerequisites if any.</para>
+          </listitem>
         </itemizedlist>
       </sect3>
 
@@ -1499,17 +1498,14 @@ role="bold">crawl job</emphasis>.</para>
     <sect2 id="submodules">
       <title>Submodules</title>
 
-
-      <para>On the Submodules tab, 
-      configuration points that take variable-sized listings of components
-      can be configured. Components can be added, ordered, and removed.
-      Examples of such components are listings of canonicalization rules to
-      run against each URL discovered, <xref linkend="filters" />
-      on processors, and
-      credentials.  Once submodules
-      are added under the Submodules tab, they will show in subsequent 
-      redrawings of the Settings tab.  Values which control their operation
-      are configured over under the Settings tab.</para>
+      <para>On the Submodules tab, configuration points that take
+      variable-sized listings of components can be configured. Components can
+      be added, ordered, and removed. Examples of such components are listings
+      of canonicalization rules to run against each URL discovered, <xref
+      linkend="filters" /> on processors, and credentials. Once submodules are
+      added under the Submodules tab, they will show in subsequent redrawings
+      of the Settings tab. Values which control their operation are configured
+      over under the Settings tab.</para>
 
       <sect3 id="urlcanon">
         <title>URL Canonicalization Rules</title>
@@ -1620,18 +1616,16 @@ role="bold">crawl job</emphasis>.</para>
 
         <para>Their use in scopes has already been discussed in <xref
         linkend="scopes" /> and the problems with using them that in <xref
-        linkend="scopeproblems" />.  
-        </para>
+        linkend="scopeproblems" />.</para>
 
-        <note><para>A DecidingFilter was added in 1.4.0 to address problems
-        with current filter model.  DecideRules can be added into
-        a DecidingFilter with the filter decision the result of all
-        included DecideRule set processing. There are DecideRule equivalents
-        for all Filter-types mentioned below.
-        See <xref linkend="decidingscope" /> for more on
-        the particulars of DecideRules and on the new Deciding model in
-        general.
-        </para>
+        <note>
+          <para>A DecidingFilter was added in 1.4.0 to address problems with
+          current filter model. DecideRules can be added into a DecidingFilter
+          with the filter decision the result of all included DecideRule set
+          processing. There are DecideRule equivalents for all Filter-types
+          mentioned below. See <xref linkend="decidingscope" /> for more on
+          the particulars of DecideRules and on the new Deciding model in
+          general.</para>
         </note>
 
         <para>Aside from scopes, filters are also used in processors. Filters
@@ -1646,9 +1640,8 @@ role="bold">crawl job</emphasis>.</para>
           <title>Adding, removing and reordering filters</title>
 
           <para>The Submodules page of the configuration section of the WUI
-          lists existing filters
-          along with the option to remove, add, or move Filters up or
-          down in the listing.</para>
+          lists existing filters along with the option to remove, add, or move
+          Filters up or down in the listing.</para>
 
           <para>Adding a new filters requires giving it a unique name (for
           that list), selecting the class type of the filter from a combobox
@@ -1780,9 +1773,9 @@ role="bold">crawl job</emphasis>.</para>
         <note>
           <title>Logging</title>
 
-          <para>To enable text console logging of authentication interactions 
-          (for example for debugging), set the FetchHTTP and PrconditionEnforcer
-          log levels to fine</para>
+          <para>To enable text console logging of authentication interactions
+          (for example for debugging), set the FetchHTTP and
+          PrconditionEnforcer log levels to fine</para>
 
           <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE
 org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting></para>
@@ -1937,10 +1930,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
       <para>This page presents a semi-treelike representation of all the
       modules (fixed and pluggable alike) that make up the current
-      configuration and allows the user to edit any of their settings.
-      Go to the Modules and SubModules tabs to add, remove, replace modules
-      mentioned here in the Settings page.
-      </para>
+      configuration and allows the user to edit any of their settings. Go to
+      the Modules and SubModules tabs to add, remove, replace modules
+      mentioned here in the Settings page.</para>
 
       <para>The first option presented directly under the top tabs is whether
       to hide or display 'expert settings'. Expert settings are those settings
@@ -2089,10 +2081,10 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
             <para><programlisting>Mozilla/5.0 (compatible; heritrix/0.11.0 +PROJECT_URL_HERE</programlisting></para>
 
-            <para>You must change at least the 
-            <literal>PROJECT_URL_HERE</literal> and put in
-            place a website that webmasters can go to to view information on
-            the organization or person running a crawl.</para>
+            <para>You must change at least the
+            <literal>PROJECT_URL_HERE</literal> and put in place a website
+            that webmasters can go to to view information on the organization
+            or person running a crawl.</para>
 
             <para>The <literal>user-agent</literal> string must adhere to the
             following format:</para>
@@ -2221,12 +2213,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
               multiple of the amount of time it took to fetch the last URI
               downloaded from that host.</para>
 
-              <para>For example if it took 800 milliseconds
-              to fetch the last URI
-              from a host and the delay-factor is 5 (a very high value) then
-              the Frontier will wait 4000 milliseconds (4 seconds)
-              before allowing
-              another URI from that host to be processed.</para>
+              <para>For example if it took 800 milliseconds to fetch the last
+              URI from a host and the delay-factor is 5 (a very high value)
+              then the Frontier will wait 4000 milliseconds (4 seconds) before
+              allowing another URI from that host to be processed.</para>
 
               <para>This value can be set to 0 for maximum impoliteness. It is
               never possible to have multiple concurrent URIs being processed
@@ -2238,10 +2228,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
               <para>This setting allows the user to set a maximum upper limit
               on the 'in between URIs' wait created by the delay factor. If
-              set to 1000 milliseconds
-              then in the example used above the Frontier
-              would only hold URIs from that host for 1 second instead of 4
-              since the delay factor exceeded this ceiling value.</para>
+              set to 1000 milliseconds then in the example used above the
+              Frontier would only hold URIs from that host for 1 second
+              instead of 4 since the delay factor exceeded this ceiling
+              value.</para>
             </listitem>
 
             <listitem>
@@ -2249,10 +2239,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
               <para>Similar to the maximum limit, this imposes a minimum limit
               to the politeness. This can be useful to ensure, for example,
-              that at least 100 milliseconds elapse
-              between connections to the same
-              host. In a case where the delay factor is 2 and it only took 20
-              milliseconds to get a URI this would come into effect.</para>
+              that at least 100 milliseconds elapse between connections to the
+              same host. In a case where the delay factor is 2 and it only
+              took 20 milliseconds to get a URI this would come into
+              effect.</para>
             </listitem>
 
             <listitem>
@@ -2414,12 +2404,12 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
             <listitem>
               <para><emphasis role="bold">path</emphasis></para>
 
-              <para>Path where ARC files should be written. Can be a list
-              of absolute paths. If relative paths, will be relative to the
-              <literal>job</literal>directory.  It can be safely
-              configured mid-crawl to point elsewhere if current location is
-              close to full. If multiple paths, then we'll choose from the list
-              of paths in a round-robin fashion.</para>
+              <para>Path where ARC files should be written. Can be a list of
+              absolute paths. If relative paths, will be relative to the
+              <literal>job</literal>directory. It can be safely configured
+              mid-crawl to point elsewhere if current location is close to
+              full. If multiple paths, then we'll choose from the list of
+              paths in a round-robin fashion.</para>
             </listitem>
 
             <listitem>
@@ -2680,32 +2670,32 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <listitem>
             <para><emphasis role="bold">Crawler Status</emphasis></para>
 
-            <para>Is the crawler in <emphasis>Holding Jobs</emphasis> or 
+            <para>Is the crawler in <emphasis>Holding Jobs</emphasis> or
             <emphasis>Crawling Jobs</emphasis> mode? If holding, no new jobs
             pending or created will be started (but a job already begun will
-            continue). If crawling, the next pending or created job will be 
-            started as soon as possible, for example when a previous job 
-            finishes. For more detail see 
-            <xref linkend="holdingvcrawling" />.</para>
-            
-            <para>To the right of the current crawler status, a control
-            link reading either "Start" or "Hold" will toggle the crawler
-            between the two modes.</para> 
+            continue). If crawling, the next pending or created job will be
+            started as soon as possible, for example when a previous job
+            finishes. For more detail see <xref
+            linkend="holdingvcrawling" />.</para>
+
+            <para>To the right of the current crawler status, a control link
+            reading either "Start" or "Hold" will toggle the crawler between
+            the two modes.</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Jobs</emphasis></para>
 
-            <para>If a current job is in progress, its status and name 
-            will appear. Alternatively, "None running" will appear to 
-            indicate no job is in progress because the crawler is holding,
-            or "None available" if no job is in progress because no jobs
-            have been queued.</para>
-            
+            <para>If a current job is in progress, its status and name will
+            appear. Alternatively, "None running" will appear to indicate no
+            job is in progress because the crawler is holding, or "None
+            available" if no job is in progress because no jobs have been
+            queued.</para>
+
             <para>Below the current job info, the number of jobs pending and
-            completed is shown. The completed count includes those
-            that failed to start for some reason (see <xref
-            linkend="failedtostart" /> for more on misconfigured jobs).</para>
+            completed is shown. The completed count includes those that failed
+            to start for some reason (see <xref linkend="failedtostart" /> for
+            more on misconfigured jobs).</para>
           </listitem>
 
           <listitem>
@@ -2716,23 +2706,23 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
             <para>See <xref linkend="alerts" /> for more on alerts.</para>
           </listitem>
-          
+
           <listitem>
             <para><emphasis role="bold">Memory</emphasis></para>
 
-            <para>The amount of memory currently used, the size of the 
-            Java heap, and the maximum size to which the heap can possibly
-            grow are all displayed, in kilobytes (KB).</para>
+            <para>The amount of memory currently used, the size of the Java
+            heap, and the maximum size to which the heap can possibly grow are
+            all displayed, in kilobytes (KB).</para>
           </listitem>
         </itemizedlist>
       </sect3>
-     
+
       <sect3>
         <title>Job Status Box</title>
-        
+
         <para>If a job is in-progress -- running, paused, or between job
-        states -- the following information is also provided in a second
-        area underneath the <emphasis>Crawler Status Box</emphasis>.</para>
+        states -- the following information is also provided in a second area
+        underneath the <emphasis>Crawler Status Box</emphasis>.</para>
 
         <itemizedlist>
           <listitem>
@@ -2740,21 +2730,21 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
             <para>The current status of the job in progress. Jobs being
             crawled are usually running or paused.</para>
-            
-            <para>To the right of the current
-            status, controls for pausing/resuming or terminating the current
-            job will appear as appropriate.</para>
-            
+
+            <para>To the right of the current status, controls for
+            pausing/resuming or terminating the current job will appear as
+            appropriate.</para>
+
             <para>When a job is terminated, its status will be marked as
-            'Ended by operator'. All currently active threads will be allowed 
-            to finish behind the scenes even though the WUI will report the 
-            job being terminated at once. If the crawler is in "Crawling Jobs" 
+            'Ended by operator'. All currently active threads will be allowed
+            to finish behind the scenes even though the WUI will report the
+            job being terminated at once. If the crawler is in "Crawling Jobs"
             mode, a next pending job, if any, will start immediately.</para>
-            
-            <para>When a running job is paused, it may take some time
-            for all the active threads to enter a paused state. Until then the
-            job is considered to be still running and 'pausing'. It is
-            possible to resume from this interim state.</para>
+
+            <para>When a running job is paused, it may take some time for all
+            the active threads to enter a paused state. Until then the job is
+            considered to be still running and 'pausing'. It is possible to
+            resume from this interim state.</para>
 
             <para>Once paused a job is considered to be suspended and time
             spent in that state does not count towards elapsed job time or
@@ -2767,91 +2757,90 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
             <para>The number of URIs successfully processed per second is
             shown, both the rate in the latest sampling interval and (in
             parentheses) the average rate since the crawl began. The sampling
-            interval is typically about 20 seconds, and is adjustable via
-            the "interval-seconds" setting. The latest rate of progress can
-            fluctuate considerably, as the crawler workload varies and 
-            housekeeping memory and file operations occur -- especially if 
-            the sampling interval has been set to a low value.</para>
+            interval is typically about 20 seconds, and is adjustable via the
+            "interval-seconds" setting. The latest rate of progress can
+            fluctuate considerably, as the crawler workload varies and
+            housekeeping memory and file operations occur -- especially if the
+            sampling interval has been set to a low value.</para>
 
-            <para>Also show is the rate of successful content collection, 
-            in KB/sec, for the latest sampling interval and (in parentheses)
-            the average since the crawl began. (See <xref linkend="bytes" />.)
-            </para>
+            <para>Also show is the rate of successful content collection, in
+            KB/sec, for the latest sampling interval and (in parentheses) the
+            average since the crawl began. (See <xref
+            linkend="bytes" />.)</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Time</emphasis></para>
 
             <para>The amount of time that has elapsed since the crawl began
-            (excluding any time spent paused) is displayed, as well as a 
-            very crude estimate of the require time remaining. (This estimate
-            does not yet consider the typical certainty of discovering more
-            URIs to crawl, and ignored other factors, so should not be 
-            relied upon until it can be improved in future releases.)</para>
+            (excluding any time spent paused) is displayed, as well as a very
+            crude estimate of the require time remaining. (This estimate does
+            not yet consider the typical certainty of discovering more URIs to
+            crawl, and ignored other factors, so should not be relied upon
+            until it can be improved in future releases.)</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Load</emphasis></para>
 
-            <para>A number of measures are shown of how busy or loaded the
-            job has made the crawler. The number of active threads, compared to
-            the total available, is shown. Typically, if only a small number of
-            threads are active, it is because activating more threads would 
+            <para>A number of measures are shown of how busy or loaded the job
+            has made the crawler. The number of active threads, compared to
+            the total available, is shown. Typically, if only a small number
+            of threads are active, it is because activating more threads would
             exceed the configured politeness settings, given the remaining URI
-            workload. (For example, if all remaining URIs are on a single host,
-            no more than one thread will be active -- and often none will be, 
-            as polite delays are observed between requests.)</para>
-            
-            <para>The <emphasis>congestion ratio</emphasis> is a rough estimate
-            of how much additional capacity, as a multiple of current capacity, 
-            would be necessary to crawl the current workload at the maximum 
-            rate allowable by politeness settings. (It is calculated by 
-            comparing the number of internal queues that are progressing with
-            those that are waiting for a thread to become available.)</para>
-            
+            workload. (For example, if all remaining URIs are on a single
+            host, no more than one thread will be active -- and often none
+            will be, as polite delays are observed between requests.)</para>
+
+            <para>The <emphasis>congestion ratio</emphasis> is a rough
+            estimate of how much additional capacity, as a multiple of current
+            capacity, would be necessary to crawl the current workload at the
+            maximum rate allowable by politeness settings. (It is calculated
+            by comparing the number of internal queues that are progressing
+            with those that are waiting for a thread to become
+            available.)</para>
+
             <para>The <emphasis>deepest queue</emphasis> number indicates the
             longest chain of pending URIs that must be processed sequentially,
-            which is a better indicator of the work remaining than the total 
+            which is a better indicator of the work remaining than the total
             number of URIs pending. (A thousand URIs in a thousand independent
-            queues can complete in parallel very quickly; a thousand in one 
+            queues can complete in parallel very quickly; a thousand in one
             queue will take longer.)</para>
-            
-            <para>The <emphasis>average depth</emphasis> number indicates
-            the average depth of the last URI in every active sequential
+
+            <para>The <emphasis>average depth</emphasis> number indicates the
+            average depth of the last URI in every active sequential
             queue.</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">Totals</emphasis></para>
 
-            <para>A progress bar indicates the relative percentage of 
+            <para>A progress bar indicates the relative percentage of
             completed URIs to those known and pending. As with the remaining
-            time estimate, no consideration is given to the liklihood of 
-            discovering additional URIs to crawl. So, the percentage 
-            completed can shrink as well as grow, especially in broader
-            crawls.</para>
-            
+            time estimate, no consideration is given to the liklihood of
+            discovering additional URIs to crawl. So, the percentage completed
+            can shrink as well as grow, especially in broader crawls.</para>
+
             <para>To the left of the progress bar, the total number of URIs
             successfully downloaded is shown; to the right, the total number
-            of URIs queued for future processing. Beneath the bar, the total 
-            of downloaded plus queued is shown, as well as the uncompressed 
-            total size of successfully downloaded data in kilobytes. See
-            <xref linkend="bytes" />. (Compressed ARCs on disk will be 
-            somewhat smaller than this figure.)</para>
+            of URIs queued for future processing. Beneath the bar, the total
+            of downloaded plus queued is shown, as well as the uncompressed
+            total size of successfully downloaded data in kilobytes. See <xref
+            linkend="bytes" />. (Compressed ARCs on disk will be somewhat
+            smaller than this figure.)</para>
           </listitem>
-          
+
           <listitem>
             <para><emphasis role="bold">Paused Operations</emphasis></para>
-            
+
             <para>When the job is paused, additional options will appear such
             as <emphasis>View or Edit Frontier URIs</emphasis>.</para>
-            
+
             <para>The <emphasis>View or Edit Frontier URIs</emphasis> option
             takes the operator to a page allowing the lookup and deletion of
-            URIs in the frontier by using a regular expression, or addition
-            of URIs from an external file (even URIs that have already
-            been processed).</para>
-            
+            URIs in the frontier by using a regular expression, or addition of
+            URIs from an external file (even URIs that have already been
+            processed).</para>
           </listitem>
         </itemizedlist>
 
@@ -2970,9 +2959,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <title>Thread report</title>
 
           <para>Contains information about what each toe thread is doing and
-          how long it has been doing it. Also allows users to terminate threads
-          that have become stuck. Terminated threads will not actually be
-          removed from memory, Java does not provide a way of doing that.
+          how long it has been doing it. Also allows users to terminate
+          threads that have become stuck. Terminated threads will not actually
+          be removed from memory, Java does not provide a way of doing that.
           Instead they will be isolated from the rest of the program running
           and the URI they are working on will be reported back to the
           frontier as if it had failed to be processed.<caution>
@@ -3034,15 +3023,16 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>Right next to it is the number of current and new alerts.</para>
 
-        <para>The second line tells the user if the crawler is in "Crawling 
-        Jobs" or "Holding Jobs" mode. (See <xref linkend="holdingvcrawling" />). 
-        If a job is in progress, its status and name will also be shown.</para>
+        <para>The second line tells the user if the crawler is in "Crawling
+        Jobs" or "Holding Jobs" mode. (See <xref
+        linkend="holdingvcrawling" />). If a job is in progress, its status
+        and name will also be shown.</para>
 
-        <para>At the beginning of the final line the number of pending and 
-        completed jobs are displayed. Clicking on either value takes the user 
+        <para>At the beginning of the final line the number of pending and
+        completed jobs are displayed. Clicking on either value takes the user
         to the related overview page. Finally if a job is in progress, total
-        current URIs completed, elapsed time, and URIs/sec figures are shown.
-        </para>
+        current URIs completed, elapsed time, and URIs/sec figures are
+        shown.</para>
       </sect3>
 
       <sect3>
@@ -3245,14 +3235,12 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       for on disk location of logs (<xref
       linkend="crawl-manifest.txt" />).</para>
 
-      <para>Logs can be manually rotated.  Pause the crawl and at the base
-      of the screen a <emphasis role="bold">Rotate Logs</emphasis>
-      link will appear.  Clicking on
-      <emphasis role="bold">Rotate Logs</emphasis>
-      will move aside all current crawl logs appending a 14-digit
-      GMT timestamp to the moved-aside logs. New log files will be opened
-      for the crawler to use in subsequent crawling.
-      </para>
+      <para>Logs can be manually rotated. Pause the crawl and at the base of
+      the screen a <emphasis role="bold">Rotate Logs</emphasis> link will
+      appear. Clicking on <emphasis role="bold">Rotate Logs</emphasis> will
+      move aside all current crawl logs appending a 14-digit GMT timestamp to
+      the moved-aside logs. New log files will be opened for the crawler to
+      use in subsequent crawling.</para>
 
       <para>The WUI offers users four ways of viewing these logs by:</para>
 
@@ -3324,28 +3312,28 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         downloaded. The <emphasis rule="bold">5th</emphasis> column holds
         breadcrumb codes showing the trail of downloads that got us to the
         current URI. See <xref linkend="discoverypath" /> for description of
-        possible code values. The <emphasis rule="bold">6th</emphasis>
-        column holds the URI that immediately referenced this URI
-        ('referrer'). Both of the latter two fields -- the discovery path and
-        the referrer URL -- will be empty for such as the seed URIs.</para>
+        possible code values. The <emphasis rule="bold">6th</emphasis> column
+        holds the URI that immediately referenced this URI ('referrer'). Both
+        of the latter two fields -- the discovery path and the referrer URL --
+        will be empty for such as the seed URIs.</para>
 
-        <para>The <emphasis rule="bold">7th</emphasis> holds the document
-        mime type, the <emphasis rule="bold">8th</emphasis> column has the
-        id of the worker thread that downloaded this document, the <emphasis
+        <para>The <emphasis rule="bold">7th</emphasis> holds the document mime
+        type, the <emphasis rule="bold">8th</emphasis> column has the id of
+        the worker thread that downloaded this document, the <emphasis
         rule="bold">9th</emphasis> column holds a timestamp (in RFC2550/ARC
         condensed digits-only format) indicating when a network fetch was
         begun, and if appropriate, the millisecond duration of the fetch,
         separated from the begin-time by a '+' character.</para>
 
-        <para>The <emphasis rule="bold">10th</emphasis> field is a SHA1
-        digest of the content only (headers are not digested). The <emphasis
-        rule="bold">11th</emphasis> column is the 'source tag' inherited 
-        by this URI, if that feature is enabled. Finally, the <emphasis 
+        <para>The <emphasis rule="bold">10th</emphasis> field is a SHA1 digest
+        of the content only (headers are not digested). The <emphasis
+        rule="bold">11th</emphasis> column is the 'source tag' inherited by
+        this URI, if that feature is enabled. Finally, the <emphasis
         rule="bold">12th</emphasis> column holds <quote>annotations</quote>,
-        if any have been set. Possible annontations include: the number
-        of times the URI was tried (This field is '-' if the download
-        was never retried); the literal <literal>lenTrunc</literal> if the
-        download was truncated because it exceeded configured limits;
+        if any have been set. Possible annontations include: the number of
+        times the URI was tried (This field is '-' if the download was never
+        retried); the literal <literal>lenTrunc</literal> if the download was
+        truncated because it exceeded configured limits;
         <literal>timeTrunc</literal> if the download was truncated because the
         download time exceeded configured limits; or
         <literal>midFetchTrunc</literal> if a midfetch filter determined the
@@ -3710,11 +3698,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         Heritrix (It usually has more than one ARC open at a time).</para>
 
         <para id="invalid">Files with a <literal>.invalid</literal> are files
-        Heritrix had trouble writing to (Disk full, bad disk, etc.). 
-        On IOException,
-        Heritrix closes the problematic ARC and gives it the
-        <literal>.invalid</literal> suffix. These files need to be
-        checked for coherence.</para>
+        Heritrix had trouble writing to (Disk full, bad disk, etc.). On
+        IOException, Heritrix closes the problematic ARC and gives it the
+        <literal>.invalid</literal> suffix. These files need to be checked for
+        coherence.</para>
 
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
@@ -3823,8 +3810,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       <title>Recovery of Frontier State and recover.gz</title>
 
       <para>During normal running, the Heritrix Frontier by default keeps a
-      journal. The
-      journal is kept in the jobs logs directory. Its named
+      journal. The journal is kept in the jobs logs directory. Its named
       <literal>recover.gz</literal>. If a crawl crashes, the recover.gz
       journal can be used to recreate approximately the status of the crawler
       at the time of the crash. Recovery can take a long time in some cases,
@@ -3833,12 +3819,12 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       <para>To run the recovery process, relaunch the crashed crawler. Create
       a new crawl order job based on the crawl that crashed. If you choose the
       "recover-log" link from the list of completed jobs in the 'Based on
-      recovery' page, the new job will
-      automatically be set up to use the original job's recovery journal to
-      bootstrap its Frontier state (of completed and queued URIs). Further, if
-      the recovered job attempts to reuse any already-full 'logs' or 'state'
-      directories, new paths for these directories will be chosen with as many
-      '-R' suffixes as are necessary to specify a new empty directory.</para>
+      recovery' page, the new job will automatically be set up to use the
+      original job's recovery journal to bootstrap its Frontier state (of
+      completed and queued URIs). Further, if the recovered job attempts to
+      reuse any already-full 'logs' or 'state' directories, new paths for
+      these directories will be chosen with as many '-R' suffixes as are
+      necessary to specify a new empty directory.</para>
 
       <para>(If you simply base your new job on the old job without using the
       'Recover' link, you must manually enter the full path of the original
@@ -3868,167 +3854,166 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       use restoring the frontier at least to where the gzip file went bad
       (Gzip zips in 32k blocks; the worst loss would be the last 32k of
       gzipped data).</para>
-      
-      <para>Java's Gzip support (up through at least Java 1.5/5.0) can 
-      compress arbitrarily large input streams, but has problems when 
-      decompressing any stream to output larger than 2GB. When attempting
-      to recover a crawl that has a recovery log that, when uncompressed,
-      would be over 2GB, this will trigger a FatalConfigurationException
-      alert, with detail message "Recover.log problem: java.io.IOException: 
-      Corrupt GZIP trailer". Heritrix will accept either compressed or 
-      uncompressed recovery log files, so a workaround is to first uncompress 
-      the recovery log using another non-Java tool (such as the 'gunzip' 
-      available in Linux and Cygwin), then refer to this uncompressed 
-      recovery log when recovering. (Reportedly, Java 6.0 "Mustang" will fix
-      this Java bug with un-gzipping large files.)</para>
-      
-      <para>See also below, the related recovery facility,
-        <xref linkend="checkpoint" />, for an alternate recovery mechanism.
-      </para>
+
+      <para>Java's Gzip support (up through at least Java 1.5/5.0) can
+      compress arbitrarily large input streams, but has problems when
+      decompressing any stream to output larger than 2GB. When attempting to
+      recover a crawl that has a recovery log that, when uncompressed, would
+      be over 2GB, this will trigger a FatalConfigurationException alert, with
+      detail message "Recover.log problem: java.io.IOException: Corrupt GZIP
+      trailer". Heritrix will accept either compressed or uncompressed
+      recovery log files, so a workaround is to first uncompress the recovery
+      log using another non-Java tool (such as the 'gunzip' available in Linux
+      and Cygwin), then refer to this uncompressed recovery log when
+      recovering. (Reportedly, Java 6.0 "Mustang" will fix this Java bug with
+      un-gzipping large files.)</para>
+
+      <para>See also below, the related recovery facility, <xref
+      linkend="checkpoint" />, for an alternate recovery mechanism.</para>
     </sect2>
 
     <sect2 id="checkpoint">
       <title>Checkpointing</title>
+
       <para>Checkpointing [<xref linkend="checkpointing" />], the crawler
-      writes a representation of current  state to a directory under
+      writes a representation of current state to a directory under
       <literal>checkpoints-path</literal>, named for the checkpoint.
-      Checkpointed state includes serialization of main crawler objects, copies
-      of current set of bdbje log files, etc.  The idea is that the checkpoint
-      directory contains all that is required recovering a crawler. 
+      Checkpointed state includes serialization of main crawler objects,
+      copies of current set of bdbje log files, etc. The idea is that the
+      checkpoint directory contains all that is required recovering a crawler.
       Checkpointing also rotates off the crawler logs including the
       <literal>recover.gz</literal> log, if enabled. Log files are NOT copied
       to the checkpoint directory. They are left under the logs directory but
-      are distingushed by a suffix. The suffix is
-      the checkpoint name (e.g.  <literal>crawl.log.000031</literal> where
-      <literal>000031</literal> is the checkpoint name).
-      </para>
+      are distingushed by a suffix. The suffix is the checkpoint name (e.g.
+      <literal>crawl.log.000031</literal> where <literal>000031</literal> is
+      the checkpoint name).</para>
+
       <note>
-      <para>Currently, only the BdbFrontier using the bdbje-based already-seen
-      or the bloom filter already-seen is checkpointable.
-      </para>
+        <para>Currently, only the BdbFrontier using the bdbje-based
+        already-seen or the bloom filter already-seen is
+        checkpointable.</para>
       </note>
+
       <para>To run a checkpoint, click the checkpoint button in the UI or
-      invoke <literal>checkpoint</literal> from JMX.  This launches
-      a thread to run through the following steps: If crawling, pause the crawl;
-      run actual checkpoint; if was crawling when checkpoint was invoked, 
-      resume the crawl.  Dependent on the size of the crawl, checkpointing can
-      take some time; often the step that takes longest is pausing the crawl,
-      waiting on threads to get into a paused, checkpointable state.  While
-      checkpointing, the status will show
-      as <literal>CHECKPOINTING</literal>. When the checkpoint has completed --
-      the crawler will resume crawling (Of if in PAUSED state when
-      checkpointing was invoked, will return to the PAUSED state).
-      </para>
+      invoke <literal>checkpoint</literal> from JMX. This launches a thread to
+      run through the following steps: If crawling, pause the crawl; run
+      actual checkpoint; if was crawling when checkpoint was invoked, resume
+      the crawl. Dependent on the size of the crawl, checkpointing can take
+      some time; often the step that takes longest is pausing the crawl,
+      waiting on threads to get into a paused, checkpointable state. While
+      checkpointing, the status will show as <literal>CHECKPOINTING</literal>.
+      When the checkpoint has completed -- the crawler will resume crawling
+      (Of if in PAUSED state when checkpointing was invoked, will return to
+      the PAUSED state).</para>
 
-      <para>Recovery from a checkpoint has much in common with the
-      recovery of a crawl using the recover.log (See <xref linked="recover" />.
-      To recover, create a job.  Then before launching, set the
+      <para>Recovery from a checkpoint has much in common with the recovery of
+      a crawl using the recover.log (See <xref linked="recover"></xref>. To
+      recover, create a job. Then before launching, set the
       <literal>crawl-order/recover-path</literal> to point at the checkpoint
-      directory you want to recover from.  Alternatively, browse to the
-      <literal>Jobs->Based on a recovery</literal> screen and select the
-      checkpoint you want to recover from.  After clicking, a new job
-      will be created that takes the old jobs' (end-of-crawl) settings
-      and autofills the recover-path with the right directory-path (The
-      renaming of logs and <literal>crawl-order/state-path</literal> "state"
-      dirs so they do not clash with the old as is described above in
-      <xref linkend="recover" /> is also done).  The first thing recover does
-      is copy into place the saved-off bdbje log files.  Again, recovery can
-      take time -- an hour or more if a crawl of millions. 
-      </para>
-      <para>Checkpointing is currently experimental.  The recover-log technique
-      is tried-and-true.  Once checkpointing is proven reliable, faster, and
-      more comprehensive, it will become the preferred method recovering
-      a crawler).  
-      </para>
+      directory you want to recover from. Alternatively, browse to the
+      <literal>Jobs-&gt;Based on a recovery</literal> screen and select the
+      checkpoint you want to recover from. After clicking, a new job will be
+      created that takes the old jobs' (end-of-crawl) settings and autofills
+      the recover-path with the right directory-path (The renaming of logs and
+      <literal>crawl-order/state-path</literal> "state" dirs so they do not
+      clash with the old as is described above in <xref linkend="recover" />
+      is also done). The first thing recover does is copy into place the
+      saved-off bdbje log files. Again, recovery can take time -- an hour or
+      more if a crawl of millions.</para>
 
-
+      <para>Checkpointing is currently experimental. The recover-log technique
+      is tried-and-true. Once checkpointing is proven reliable, faster, and
+      more comprehensive, it will become the preferred method recovering a
+      crawler).</para>
 
       <sect3>
         <title>Expert mode: Fast checkpointing</title>
-      <para>The bulk of the time checkpointing is taken up copying off the bdbje
-      logs.  For example, checkpointing a crawl that had downloaded
-      18million items -- it had discovered > 130million (bloom filter) -- the
-      checkpointing took about 100minutes to complete of which 90 plus minutes
-      were spent copying the ~12k bdbje log files (One disk only involved). 
-      Set log level on <literal>org.archive.util.FileUtils</literal> to FINE to
-      watch the java bdbje log file-copy.
-      </para>
+
+        <para>The bulk of the time checkpointing is taken up copying off the
+        bdbje logs. For example, checkpointing a crawl that had downloaded
+        18million items -- it had discovered &gt; 130million (bloom filter) --
+        the checkpointing took about 100minutes to complete of which 90 plus
+        minutes were spent copying the ~12k bdbje log files (One disk only
+        involved). Set log level on
+        <literal>org.archive.util.FileUtils</literal> to FINE to watch the
+        java bdbje log file-copy.</para>
 
         <para>Since copying off bdbje log files can take hours, we've added an
         <emphasis>expert mode</emphasis> checkpoint that bypasses bdbje log
-        copying.  The upside is your checkpoint completes promptly -- in
+        copying. The upside is your checkpoint completes promptly -- in
         minutes, even if the crawl is large -- but downside is recovery takes
-        more work: to recover from a checkpoint, the bdbje log files need to be
-        manually assembled in the checkpoint <literal>bdb-logs</literal>
+        more work: to recover from a checkpoint, the bdbje log files need to
+        be manually assembled in the checkpoint <literal>bdb-logs</literal>
         subdirectory. You'll know which bdbje log files make up the checkpoint
         because Heritrix writes the checkpoint list of bdbje logs into the
         checkpoint directory to a file named
-        <literal>bdbj-logs-manifest.txt</literal>. To prevent bdbje removing log
-        files that might be needed assembling a checkpoint made at sometime in
-        the past, when running expert mode checkpointing, we configure bdbje
-        not to delete logs when its finished with them; instead, bdbje gives
-        logs its no longer using a <literal>.del</literal> suffix. Assembling a
-        checkpoint will often require renaming files with the
-        <literal>.del</literal> suffix so they have the <literal>.jdb</literal>
-        suffix in accordance with the <literal>bdbj-logs-manifest.txt</literal>
-        list (See below for more on this).
-        </para>
+        <literal>bdbj-logs-manifest.txt</literal>. To prevent bdbje removing
+        log files that might be needed assembling a checkpoint made at
+        sometime in the past, when running expert mode checkpointing, we
+        configure bdbje not to delete logs when its finished with them;
+        instead, bdbje gives logs its no longer using a
+        <literal>.del</literal> suffix. Assembling a checkpoint will often
+        require renaming files with the <literal>.del</literal> suffix so they
+        have the <literal>.jdb</literal> suffix in accordance with the
+        <literal>bdbj-logs-manifest.txt</literal> list (See below for more on
+        this).</para>
 
-        <note><para>With this expert mode enabled, the crawler
-        <literal>crawl-order/state-path</literal> "state" directory will grow
-        without bound; a process external to the crawler can be set to prune
-        the state directory of <literal>.del</literal> files referenced
-        by checkpoints since superceded).
-        </para></note>
+        <note>
+          <para>With this expert mode enabled, the crawler
+          <literal>crawl-order/state-path</literal> "state" directory will
+          grow without bound; a process external to the crawler can be set to
+          prune the state directory of <literal>.del</literal> files
+          referenced by checkpoints since superceded).</para>
+        </note>
 
         <para>To enable the no-files copy checkpoint, set the new expert mode
         setting <literal>checkpoint-copy-bdbje-logs</literal> to
-        <literal>false</literal>.
-        </para>
+        <literal>false</literal>.</para>
 
-
-        <para>To recover using a checkpoint that has all but the bdbje log files
-        present, you will need to copy all logs listed in
+        <para>To recover using a checkpoint that has all but the bdbje log
+        files present, you will need to copy all logs listed in
         <literal>bdbj-logs-manifest.txt</literal> to the
-        <literal>bdbje-logs</literal> checkpoint subdirectory.  In some cases
-        this will necessitate renaming logs with the <literal>.del</literal> to
-        instead have the <literal>.jdb</literal> ending as suggested above. One
-        thing to watch for is copying too many logs into the bdbje logs
-        subdirectory. The list of logs must match exactly whats in the manifest
-        file.  Otherwise, the recovery will fail (For example, see 
-        <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1325961&amp;group_id=73833&amp;atid=539099">[1325961] resurrectOneQueueState has keys for items not in allqueues</ulink>).
-        </para>
+        <literal>bdbje-logs</literal> checkpoint subdirectory. In some cases
+        this will necessitate renaming logs with the <literal>.del</literal>
+        to instead have the <literal>.jdb</literal> ending as suggested above.
+        One thing to watch for is copying too many logs into the bdbje logs
+        subdirectory. The list of logs must match exactly whats in the
+        manifest file. Otherwise, the recovery will fail (For example, see
+        <ulink
+        url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1325961&amp;group_id=73833&amp;atid=539099">[1325961]
+        resurrectOneQueueState has keys for items not in
+        allqueues</ulink>).</para>
 
         <para>On checkpoint recovery, Heritrix copies bdbje log files from the
-        referenced checkpoint <literal>bdb-logs</literal> subdirectory
-        to the new crawl's <literal>crawl-order/state-path</literal> "state"
-        directory. As noted above, this can take some time. 
-      Of note, if a bdbje log file already exists in the new crawls'
-      <literal>crawl-order/state-path</literal> "state" directory, checkpoint
-      recover will not overwrite the existing bdbje log file.
-      Exploit this property and save on recovery time by using native unix
-      <literal>cp</literal> to manually copy over bdbje log files from the
-      checkpoint directory to the new crawls'
-      <literal>crawl-order/state-path</literal> "state"
-      directory before launching a recovery (Or, at the extreme, though it will
-      trash your checkpoint, set the checkpoint's <literal>bdb-logs</literal>
-      subdirectory as the new crawls <literal>crawl-order/state-path</literal>
-      "state" directory).</para>
-
+        referenced checkpoint <literal>bdb-logs</literal> subdirectory to the
+        new crawl's <literal>crawl-order/state-path</literal> "state"
+        directory. As noted above, this can take some time. Of note, if a
+        bdbje log file already exists in the new crawls'
+        <literal>crawl-order/state-path</literal> "state" directory,
+        checkpoint recover will not overwrite the existing bdbje log file.
+        Exploit this property and save on recovery time by using native unix
+        <literal>cp</literal> to manually copy over bdbje log files from the
+        checkpoint directory to the new crawls'
+        <literal>crawl-order/state-path</literal> "state" directory before
+        launching a recovery (Or, at the extreme, though it will trash your
+        checkpoint, set the checkpoint's <literal>bdb-logs</literal>
+        subdirectory as the new crawls
+        <literal>crawl-order/state-path</literal> "state" directory).</para>
       </sect3>
+
       <sect3 id="automated_chkpt">
         <title>Automated Checkpointing</title>
+
         <para>To have Heritrix run a checkpoint on a period, uncomment (or
         add) to <literal>heritrix.properties</literal> a line like:
         <programlisting>org.archive.crawler.framework.Checkpointer.period = 2</programlisting>
         This will install a Timer Thread that will run on an interval (Units
-        are in hours). See <literal>heritrix_out.log</literal> to see log
-        of installation of the timer thread that will run the checkpoint
-        on a period and to see log of everytime it runs (Assuming 
+        are in hours). See <literal>heritrix_out.log</literal> to see log of
+        installation of the timer thread that will run the checkpoint on a
+        period and to see log of everytime it runs (Assuming
         <literal>org.archive.crawler.framework.Checkpointer.level</literal> is
         set to INFO).</para>
       </sect3>
-
     </sect2>
 
     <sect2 id="mon_com">
@@ -4041,264 +4026,296 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       admin password as password. By default, the JMX Agent is started up on
       port 8849 (To change any of the JMX settings, set the JMX_OPTS
       environment variable).</para>
-      <para>On startup, Heritrix looks if any JMX Agent running in current 
+
+      <para>On startup, Heritrix looks if any JMX Agent running in current
       context and registers itself with the first JMX Agent found publishing
-      attributes and operations that can be run remotely.  If running in
-      a SUN 1.5.0 JVM where the JVM JMX Agent has been started, Heritrix
-      will attach to the JVM JMX Agent (If running inside JBOSS, Heritrix
-      will register with the JBOSS JMX Agent).
-      </para>
-      <para>To see what Attributes and Operations are  available via JMX, use
+      attributes and operations that can be run remotely. If running in a SUN
+      1.5.0 JVM where the JVM JMX Agent has been started, Heritrix will attach
+      to the JVM JMX Agent (If running inside JBOSS, Heritrix will register
+      with the JBOSS JMX Agent).</para>
+
+      <para>To see what Attributes and Operations are available via JMX, use
       the SUN 1.5.0 JDK jconsole application -- its in $JAVA_HOME/bin -- or
       use <xref linkend="jmxclient" />.</para>
 
-      <para>To learn more about the SUN 1.5.0 JDK
-      JMX managements and jconsole, see <ulink
+      <para>To learn more about the SUN 1.5.0 JDK JMX managements and
+      jconsole, see <ulink
       url="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring
       and Management Using JMX</ulink>. This O'Reilly article is also a good
       place for getting started : <ulink
       url="http://www.onjava.com/pub/a/onjava/2004/09/29/tigerjmx.html">Monitoring
       Local and Remote Applications Using JMX 1.2 and JConsole</ulink>.</para>
     </sect2>
+
     <sect2 id="ftp_support">
       <title>Experimental FTP Support</title>
-      
-      <para>As of release 1.10.0, Heritrix has experimental support for 
-      crawling FTP servers.  To enable FTP support for your crawls, there is
-      a configuration file change you will have to manually make.</para>
 
-      <para>Specifically, you will have to edit the 
+      <para>As of release 1.10.0, Heritrix has experimental support for
+      crawling FTP servers. To enable FTP support for your crawls, there is a
+      configuration file change you will have to manually make.</para>
+
+      <para>Specifically, you will have to edit the
       <filename>$HERITRIX_HOME/conf/heritrix.properties</filename> file.
-      Remove <literal>ftp</literal> from the 
+      Remove <literal>ftp</literal> from the
       <literal>org.archive.net.UURIFactory.ignored-schemes</literal> property
-      list. Also, you must add <literal>ftp</literal> to the 
-      <literal>org.archive.net.UURIFactory.schemes</literal> property list.
-      </para>
+      list. Also, you must add <literal>ftp</literal> to the
+      <literal>org.archive.net.UURIFactory.schemes</literal> property
+      list.</para>
 
-      <para>After that change, you should be able to add the FetchFTP 
-      processor to your crawl using the Web UI.  Just create a new job,
-      click "Modules", and add FetchFTP under "Fetchers."</para>
+      <para>After that change, you should be able to add the FetchFTP
+      processor to your crawl using the Web UI. Just create a new job, click
+      "Modules", and add FetchFTP under "Fetchers."</para>
 
-      <para>Note that FetchFTP is a little unusual in that it works both
-      as a fetcher and as an extractor.  If an FTP URI refers to a 
-      directory, and if FetchFTP's <literal>extract-from-dirs</literal> 
-      property is set to true, then FetchFTP will extract one link for
-      every line of the directory listing.  Similarly, if the 
-      <literal>extract-parent</literal> property is true, then FetchFTP will 
-      extract the parent directory from every FTP URI it encounters.</para>
+      <para>Note that FetchFTP is a little unusual in that it works both as a
+      fetcher and as an extractor. If an FTP URI refers to a directory, and if
+      FetchFTP's <literal>extract-from-dirs</literal> property is set to true,
+      then FetchFTP will extract one link for every line of the directory
+      listing. Similarly, if the <literal>extract-parent</literal> property is
+      true, then FetchFTP will extract the parent directory from every FTP URI
+      it encounters.</para>
 
-      <para>Also, remember that FetchFTP is experimental.  As of 1.10,
-      FetchFTP has the following known limitations:</para>
+      <para>Also, remember that FetchFTP is experimental. As of 1.10, FetchFTP
+      has the following known limitations:</para>
 
       <orderedlist>
-      <listitem>FetchFTP can only store directories if the FTP server 
-      supports the <literal>NLIST</literal> command.  Some older systems
-      may not support <literal>NLIST</literal>.</listitem>
-      <listitem>Similarly, FetchFTP uses passive mode transfer,
-      to work behind firewalls.  Not all FTP servers support passive
-      mode, however.</listitem>
-      <listitem>Heritrix currently has no means of determining the 
-      mime-type of a document unless an HTTP server explicitly mentions
-      one.  Since FTP has no concept of metadata, all documents retrieved
-      using FetchFTP have a mime-type of <literal>no-type</literal>.
-      </listitem>
-      <listitem>In the absence of a mime-type, many of the postprocessors
-      will not work.  For instance, HTMLExtractor will
-      not extract links from an HTML file fetched with FetchFTP.
-      </listitem>
+        <listitem>
+          FetchFTP can only store directories if the FTP server supports the 
+
+          <literal>NLIST</literal>
+
+           command. Some older systems may not support 
+
+          <literal>NLIST</literal>
+
+          .
+        </listitem>
+
+        <listitem>
+          Similarly, FetchFTP uses passive mode transfer, to work behind firewalls. Not all FTP servers support passive mode, however.
+        </listitem>
+
+        <listitem>
+          Heritrix currently has no means of determining the mime-type of a document unless an HTTP server explicitly mentions one. Since FTP has no concept of metadata, all documents retrieved using FetchFTP have a mime-type of 
+
+          <literal>no-type</literal>
+
+          . 
+        </listitem>
+
+        <listitem>
+          In the absence of a mime-type, many of the postprocessors will not work. For instance, HTMLExtractor will not extract links from an HTML file fetched with FetchFTP. 
+        </listitem>
       </orderedlist>
 
-      <para>Still, FetchFTP can be used to archive an FTP directory of 
-      tarballs, for instance.  If you discover any additional problems using
-      FetchFTP, please inform the <email>archive-crawler@yahoogroups.com</email>
-      mailing list.</para>
+      <para>Still, FetchFTP can be used to archive an FTP directory of
+      tarballs, for instance. If you discover any additional problems using
+      FetchFTP, please inform the
+      <email>archive-crawler@yahoogroups.com</email> mailing list.</para>
+    </sect2>
+
+    <sect2>
+      <title>Duplication Reduction Processors</title>
+
+      <para>Starting in release 1.12.0, a number of Processors can cooperate
+      to carry forward URI content history information between crawls,
+      reducing the amount of duplicate material downloaded or stored in later
+      crawls. For more information, see the project wiki's <ulink
+      url="http://webteam.archive.org/confluence/display/Heritrix/Feature+Notes+-+1.12.0">notes
+      on using the new duplication-reduction functionality</ulink>. </para>
     </sect2>
   </sect1>
 
   <appendix id="usecases">
-  <title>Common Heritrix Use Cases</title>
+    <title>Common Heritrix Use Cases</title>
+
     <appendixinfo>
-        <author>
-  <firstname>Frank</firstname>
-  <surname>McCown</surname>
-  <affiliation>
-    <orgname>Old Dominion University</orgname>
-  </affiliation>
-        </author>
+      <author>
+        <firstname>Frank</firstname>
+
+        <surname>McCown</surname>
+
+        <affiliation>
+          <orgname>Old Dominion University</orgname>
+        </affiliation>
+      </author>
     </appendixinfo>
-<para> There are many different ways you may perform a web crawl. Here
-we have listed several use cases which will allow you to become familiar
-with some of Heritrix's more frequently used crawling parameters.</para>
 
-<sect2>
+    <para>There are many different ways you may perform a web crawl. Here we
+    have listed several use cases which will allow you to become familiar with
+    some of Heritrix's more frequently used crawling parameters.</para>
 
-<title>Avoiding Too Much Dynamic Content</title>
+    <sect2>
+      <title>Avoiding Too Much Dynamic Content</title>
 
-<para> Suppose you want to crawl only pages from a particular host
-(<literal>http://www.foo.org/</literal>), and you want to avoid crawling
-too many pages of the dynamically generated calendar.  Let's say the
-calendar is accessed by passing a year, month and day to the
-<literal>calendar</literal> directory, as in
-<literal>http://www.foo.org/calendar?year=2006&amp;month=3&amp;day=12</literal>.
-</para>
+      <para>Suppose you want to crawl only pages from a particular host
+      (<literal>http://www.foo.org/</literal>), and you want to avoid crawling
+      too many pages of the dynamically generated calendar. Let's say the
+      calendar is accessed by passing a year, month and day to the
+      <literal>calendar</literal> directory, as in
+      <literal>http://www.foo.org/calendar?year=2006&amp;month=3&amp;day=12</literal>.</para>
 
-<para>When you first create the job for this crawl, you will specify a
-single seed URI: <literal>http://www.foo.org/</literal>. By default,
-your new crawl job will use the DecidingScope, which will contain a
-default set of DecideRules. One of the default rules is the
-SurtPrefixedDecideRule, which tells Heritrix to accept any URIs that
-match our seed URI's SURT prefix,
-<literal>http://(org,foo,www,)/</literal>. Subsequently, if the URI
-<literal>http://foo.org/</literal> is encountered, it will be rejected
-since its SURT prefix <literal>http://(org,foo,)</literal> does not
-match the seed's SURT prefix. To allow both <literal>foo.org</literal>
-and <literal>www.foo.org</literal>, you could use the two seeds
-<literal>http://foo.org/</literal> and
-<literal>http://www.foo.org/</literal>.  To allow every subdomain of
-<literal>foo.org</literal>, you could use the seed
-<literal>http://foo.org</literal> (note the absence of a trailing
-slash).</para>
+      <para>When you first create the job for this crawl, you will specify a
+      single seed URI: <literal>http://www.foo.org/</literal>. By default,
+      your new crawl job will use the DecidingScope, which will contain a
+      default set of DecideRules. One of the default rules is the
+      SurtPrefixedDecideRule, which tells Heritrix to accept any URIs that
+      match our seed URI's SURT prefix,
+      <literal>http://(org,foo,www,)/</literal>. Subsequently, if the URI
+      <literal>http://foo.org/</literal> is encountered, it will be rejected
+      since its SURT prefix <literal>http://(org,foo,)</literal> does not
+      match the seed's SURT prefix. To allow both <literal>foo.org</literal>
+      and <literal>www.foo.org</literal>, you could use the two seeds
+      <literal>http://foo.org/</literal> and
+      <literal>http://www.foo.org/</literal>. To allow every subdomain of
+      <literal>foo.org</literal>, you could use the seed
+      <literal>http://foo.org</literal> (note the absence of a trailing
+      slash).</para>
 
-<para>You will need to delete the TransclusionDecideRule since this rule
-has the potential to lead Heritrix onto another host. For example, if a
-URI returned a 301 (moved permanently) or 302 (found) response code and
-a URI with a different host name, Heritrix would accept this URI using
-the TransclusionDecideRule. Removing this rule will keep Heritrix from
-straying off of our <literal>www.foo.org</literal> host.</para>
+      <para>You will need to delete the TransclusionDecideRule since this rule
+      has the potential to lead Heritrix onto another host. For example, if a
+      URI returned a 301 (moved permanently) or 302 (found) response code and
+      a URI with a different host name, Heritrix would accept this URI using
+      the TransclusionDecideRule. Removing this rule will keep Heritrix from
+      straying off of our <literal>www.foo.org</literal> host.</para>
 
-<para>A few of the rules like PathologicalPathDecideRule and
-TooManyPathSegmentsDecideRule will allow Heritrix to avoid some types of
-crawler traps. The TooManyHopsDecideRule will keep Heritrix from
-following too many links away from the seed so the calendar
-doesn't trap Heritrix in an infinite loop. By default, the hop
-path is set to 15, but you can change that on the Settings screen. </para>
+      <para>A few of the rules like PathologicalPathDecideRule and
+      TooManyPathSegmentsDecideRule will allow Heritrix to avoid some types of
+      crawler traps. The TooManyHopsDecideRule will keep Heritrix from
+      following too many links away from the seed so the calendar doesn't trap
+      Heritrix in an infinite loop. By default, the hop path is set to 15, but
+      you can change that on the Settings screen.</para>
 
-<para>Alternatively, you may add the MatchesFilePatternDecideRule.
-Set <literal>use-preset-pattern</literal> to <literal>CUSTOM</literal> and set
-<literal>regexp</literal> to something like:</para>
+      <para>Alternatively, you may add the MatchesFilePatternDecideRule. Set
+      <literal>use-preset-pattern</literal> to <literal>CUSTOM</literal> and
+      set <literal>regexp</literal> to something like:</para>
 
-<computeroutput>
-.*foo\.org(?!/calendar).*|.*foo\.org/calendar\?year=200[56].*
-</computeroutput>
+      <computeroutput>.*foo\.org(?!/calendar).*|.*foo\.org/calendar\?year=200[56].*</computeroutput>
 
-<para>Finally, you'll need to set the <literal>user-agent</literal> and <literal>from</literal>
-fields on the Settings screen, and then you may submit the job and
-monitor the crawl.</para>
+      <para>Finally, you'll need to set the <literal>user-agent</literal> and
+      <literal>from</literal> fields on the Settings screen, and then you may
+      submit the job and monitor the crawl.</para>
+    </sect2>
 
-</sect2>
+    <sect2>
+      <title>Only Store Successful HTML Pages</title>
 
-<sect2>
+      <para>Suppose you wanted to only grab the first 50 pages encountered
+      from a set of seeds and archive only those pages that return a 200
+      response code and have the <literal>text/html</literal> MIME type.
+      Additionally, you only want to look for links in HTML resources.</para>
 
-<title>Only Store Successful HTML Pages</title>
+      <para>When you create your job, use the DecidingScope with the default
+      set of DecideRules.</para>
 
-<para>Suppose you wanted to only grab the first 50 pages encountered
-from a set of seeds and archive only those pages that return a 200
-response code and have the <literal>text/html</literal> MIME type.
-Additionally, you only want to look for links in HTML resources.</para>
+      <para>In order to examine HTML documents only for links, you will need
+      to remove the following extractors that tell Heritrix to look for links
+      in style sheets, JavaScript, and Flash files:</para>
 
-<para> When you create your job, use the DecidingScope with the default
-set of DecideRules.</para>
+      <orderedlist>
+        <listitem>ExtractorCSS</listitem>
 
-<para> In order to examine HTML documents only for links, you will need
-to remove the following extractors that tell Heritrix to look for links
-in style sheets, JavaScript, and Flash files:</para>
+        <listitem>ExtractorJS</listitem>
 
-<orderedlist>
-<listitem>ExtractorCSS</listitem>
-<listitem>ExtractorJS</listitem>
-<listitem>ExtractorSWF</listitem>
-</orderedlist>
+        <listitem>ExtractorSWF</listitem>
+      </orderedlist>
 
-<para>You should leave in the ExtractorHTTP since it is useful in locating
-resources that can only be found using a redirect (301 or 302).</para>
+      <para>You should leave in the ExtractorHTTP since it is useful in
+      locating resources that can only be found using a redirect (301 or
+      302).</para>
 
-<para>You can limit the number of files to download by setting
-max-document-download on the Settings screen. Setting this value to 50
-will probably not have the results you intend. Since each DNS response
-and robots.txt file is counted in this number, you'll likely want
-to use the value of 50 * number of seeds * 2. </para>
+      <para>You can limit the number of files to download by setting
+      max-document-download on the Settings screen. Setting this value to 50
+      will probably not have the results you intend. Since each DNS response
+      and robots.txt file is counted in this number, you'll likely want to use
+      the value of 50 * number of seeds * 2.</para>
 
-<para>Next, you will need to add filters to the ARCWriterProcessor so
-that it only records documents with a 200 status code and a mime-type of
-text/html.  The first filter to add is the ContentTypeRegExpFilter; set
-its <literal>regexp</literal> setting to <literal>text/html.*</literal>. 
-Next, add a DecidingFilter to the ARCWriterProcessor, then add
-FetchStatusDecideRule to the DecidingFilter. </para>
+      <para>Next, you will need to add filters to the ARCWriterProcessor so
+      that it only records documents with a 200 status code and a mime-type of
+      text/html. The first filter to add is the ContentTypeRegExpFilter; set
+      its <literal>regexp</literal> setting to <literal>text/html.*</literal>.
+      Next, add a DecidingFilter to the ARCWriterProcessor, then add
+      FetchStatusDecideRule to the DecidingFilter.</para>
 
-<para>You'll probably want to apply the above filters to the
-<literal>mid-fetch-filters</literal> setting of FetchHTTP as well.  That
-will prevent FetchHTTP from downloading the content of any non-html or
-non-successful documents.</para>
+      <para>You'll probably want to apply the above filters to the
+      <literal>mid-fetch-filters</literal> setting of FetchHTTP as well. That
+      will prevent FetchHTTP from downloading the content of any non-html or
+      non-successful documents.</para>
 
-<para> Once you have entered the desired settings, start the job and
-monitor the crawl.</para>
+      <para>Once you have entered the desired settings, start the job and
+      monitor the crawl.</para>
+    </sect2>
 
-</sect2>
+    <sect2>
+      <title>Mirroring .html Files Only</title>
 
-<sect2>
-<title>Mirroring .html Files Only</title>
+      <para>Suppose you only want to crawl URLs that match
+      <literal>http://foo.org/bar/*.html</literal>, and you'd like to save the
+      crawled files in a file/directory format instead of saving them in ARC
+      files. Suppose you also know that you are crawling a web server that is
+      case sensitive (<literal>http://foo.org/bar/abc.html</literal> and
+      <literal>http://foo.org/bar/ABC.HTML</literal> are pointing to two
+      different resources).</para>
 
-<para>Suppose you only want to crawl URLs that match
-<literal>http://foo.org/bar/*.html</literal>, and you'd like to save the
-crawled files in a file/directory format instead of saving them in ARC
-files.  Suppose you also know that you are crawling a web server that is
-case sensitive (<literal>http://foo.org/bar/abc.html</literal> and
-<literal>http://foo.org/bar/ABC.HTML</literal> are pointing to two
-different resources).</para>
+      <para>You would first need to create a job with the single seed
+      http://foo.org/bar/. You'll need to add the MirrorWriterProcessor on the
+      Modules screen and delete the ARCWriterProcessor. This will store your
+      files in a directory structure that matches the crawled URIs, and the
+      files will be stored in the crawl job's <filename>mirror</filename>
+      directory.</para>
 
-<para>You would first need to create a job with the single seed
-http://foo.org/bar/.  You'll need to add the MirrorWriterProcessor on
-the Modules screen and delete the ARCWriterProcessor. This will store
-your files in a directory structure that matches the crawled URIs, and
-the files will be stored in the crawl job's <filename>mirror</filename>
-directory.</para>
+      <para>Your job should use the DecidingScope with the following set of
+      DecideRules:</para>
 
-<para>Your job should use the DecidingScope with the following set of
-DecideRules:</para>
+      <orderedlist>
+        <listitem>RejectDecideRule</listitem>
 
-<orderedlist>
-<listitem>RejectDecideRule</listitem>
-<listitem>SurtPrefixedDecideRule</listitem>
-<listitem>TooManyHopsDecideRule</listitem>
-<listitem>PathologicalPathDecideRule</listitem>
-<listitem>TooManyPathSegmentsDecideRule</listitem>
-<listitem>NotMatchesFilePatternDecideRule</listitem>
-<listitem>PrerequisiteAcceptDecideRule</listitem>
-</orderedlist>
+        <listitem>SurtPrefixedDecideRule</listitem>
 
-<para> We are using the NotMatchesFilePatternDecideRule so we can
-eliminate crawling any URIs that don't end with
-<literal>.html</literal>. It's important that this DecideRule be placed
-immediately before PrerequisiteAcceptDecideRule; otherwise the DNS and
-robots.txt prerequisites will be rejected since they won't match the
-regexp.</para>
+        <listitem>TooManyHopsDecideRule</listitem>
 
-<para> On the Setting screen, you'll want to set the following for the
-NotMatchesFilePatternDecideRule:</para>
+        <listitem>PathologicalPathDecideRule</listitem>
 
-<orderedlist>
-<listitem>decision: REJECT</listitem>
-<listitem>use-preset-pattern: CUSTOM</listitem>
-<listitem>regexp: .*(/|\.html)$</listitem>
-</orderedlist>
+        <listitem>TooManyPathSegmentsDecideRule</listitem>
 
-<para> Note that the regexp will accept URIs that end with / as well as
-.html. If we don't accept the /, the seed URI will be rejected. This
-also allows us to accept URIs like http://foo.org/bar/dir/ which are
-likely pointing to index.html. A stricter regexp would be .*\.html$, but
-you'll need to change your seed URI if you use it. One thing to be aware
-of: if Heritrix encounters the URI http://foo.org/bar/dir where dir is a
-directory, the URI will be rejected since it is missing the terminating
-slash.</para>
+        <listitem>NotMatchesFilePatternDecideRule</listitem>
 
-<para>Finally you'll need to allow Heritrix to differentiate between
-abc.html and ABC.HTML. Do this by removing the LowercaseRule under
-uri-canonicalization-rules on the Submodules screen. </para>
+        <listitem>PrerequisiteAcceptDecideRule</listitem>
+      </orderedlist>
 
-<para> Once you have entered the desired settings, start the job and
-monitor the crawl. </para>
-	
-</sect2>
+      <para>We are using the NotMatchesFilePatternDecideRule so we can
+      eliminate crawling any URIs that don't end with
+      <literal>.html</literal>. It's important that this DecideRule be placed
+      immediately before PrerequisiteAcceptDecideRule; otherwise the DNS and
+      robots.txt prerequisites will be rejected since they won't match the
+      regexp.</para>
+
+      <para>On the Setting screen, you'll want to set the following for the
+      NotMatchesFilePatternDecideRule:</para>
+
+      <orderedlist>
+        <listitem>decision: REJECT</listitem>
+
+        <listitem>use-preset-pattern: CUSTOM</listitem>
+
+        <listitem>regexp: .*(/|\.html)$</listitem>
+      </orderedlist>
+
+      <para>Note that the regexp will accept URIs that end with / as well as
+      .html. If we don't accept the /, the seed URI will be rejected. This
+      also allows us to accept URIs like http://foo.org/bar/dir/ which are
+      likely pointing to index.html. A stricter regexp would be .*\.html$, but
+      you'll need to change your seed URI if you use it. One thing to be aware
+      of: if Heritrix encounters the URI http://foo.org/bar/dir where dir is a
+      directory, the URI will be rejected since it is missing the terminating
+      slash.</para>
+
+      <para>Finally you'll need to allow Heritrix to differentiate between
+      abc.html and ABC.HTML. Do this by removing the LowercaseRule under
+      uri-canonicalization-rules on the Submodules screen.</para>
+
+      <para>Once you have entered the desired settings, start the job and
+      monitor the crawl.</para>
+    </sect2>
   </appendix>
 
   <glossary id="glossary">
@@ -4347,6 +4364,7 @@ monitor the crawl. </para>
           background thread performs a checkpoint is user-configurable; we
           typically checkpoint anywhere from 1 to 4 times per
           day.</quote></para>
+
           <para>See <xref linkend="checkpoint" /> for discussion of the
           Heritrix implementation.</para>
         </glossdef>
@@ -4427,18 +4445,18 @@ monitor the crawl. </para>
         <glossterm>"Holding Jobs" vs. "Crawling Jobs"</glossterm>
 
         <glossdef>
-          <para>The mode <emphasis>Crawling Jobs</emphasis> generally means 
+          <para>The mode <emphasis>Crawling Jobs</emphasis> generally means
           that the crawler will start executing a job as soon as one is made
           available in the pending jobs queue (as long as there is not a job
           already running).</para>
 
-          <para>If the crawler is in the <emphasis>Holding Jobs</emphasis> mode, 
-          jobs added to the pending jobs queue will be held; they will not be
-          started, even if there are no jobs currently being run.</para>
-
+          <para>If the crawler is in the <emphasis>Holding Jobs</emphasis>
+          mode, jobs added to the pending jobs queue will be held; they will
+          not be started, even if there are no jobs currently being
+          run.</para>
         </glossdef>
       </glossentry>
-      
+
       <glossentry>
         <glossterm id="host">Host</glossterm>
 
@@ -4592,11 +4610,11 @@ monitor the crawl. </para>
   -7000 Processing thread was killed by the operator (perhaps because of a
         hung condition)
   -9998 Robots.txt rules precluded fetch</programlisting></para>
-  <note>
-    <para>Codes and explainations are also available under the Help link in the
-    web UI.
-    </para>
-  </note>
+
+          <note>
+            <para>Codes and explainations are also available under the Help
+            link in the web UI.</para>
+          </note>
 
           <para>Please note that status codes defined by Heritrix may be
           subject to change between versions, especially new codes may be
@@ -4665,7 +4683,7 @@ monitor the crawl. </para>
 
           <orderedlist>
             <listitem>
-              <para>Convert the URI to its SURT form. </para>
+              <para>Convert the URI to its SURT form.</para>
             </listitem>
 
             <listitem>
@@ -4675,7 +4693,7 @@ monitor the crawl. </para>
               &lt;http://(org,example,www,)/main/subsection&gt; is truncated
               to &lt;http://(org,example,www,)/main/&gt;;
               &lt;http://(org,example,www,)/&gt; is unchanged; and
-              &lt;http://(org,example,www,)&gt; is unchanged. </para>
+              &lt;http://(org,example,www,)&gt; is unchanged.</para>
             </listitem>
 
             <listitem>
@@ -4683,7 +4701,7 @@ monitor the crawl. </para>
               remove the off-parenthesis. So each of the above examples except
               for the last is unchanged, while the last
               &lt;http://(org,example,www,)&gt; becomes
-              &lt;http://(org,example,www,&gt;. </para>
+              &lt;http://(org,example,www,&gt;.</para>
             </listitem>
           </orderedlist>
 
