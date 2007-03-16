@@ -43,9 +43,9 @@ public class DecideRule extends ModuleType {
 
     private static final long serialVersionUID = 3437522810581532520L;
     // enumeration of 'actions'
-    public static final String ACCEPT = "ACCEPT";
-    public static final String REJECT = "REJECT";
-    public static final String PASS = "PASS";
+    public static final String ACCEPT = "ACCEPT".intern();
+    public static final String REJECT = "REJECT".intern();
+    public static final String PASS = "PASS".intern();
 
     /**
      * Constructor.

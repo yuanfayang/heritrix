@@ -34,3 +34,4 @@ org.archive.crawler.deciderules.FetchStatusNotMatchesRegExpDecideRule
 org.archive.crawler.deciderules.NotExceedsDocumentLengthTresholdDecideRule
 org.archive.crawler.deciderules.ExceedsDocumentLengthTresholdDecideRule
 org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule
+org.archive.crawler.deciderules.FilterDecideRule
