@@ -33,6 +33,8 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.filter.ContentTypeRegExpFilter;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
@@ -399,6 +401,39 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
             plusFour + " with via " + plusFour.flattenVia() + " but got " +
             decision, decision == DecideRule.PASS);        
     }     
+    
+    public void testFilter()
+    throws InvalidAttributeValueException, URIException, AttributeNotFoundException, MBeanException, ReflectionException {
+    	FilterDecideRule dr = new FilterDecideRule(
+			"FilterDecideRule(ContentTypeRegExpFilter)");
+        addDecideRule(dr);
+        StringBuffer baseUri = new StringBuffer();
+        UURI uuri = UURIFactory.getInstance("http://example.com/foo");
+        CrawlURI curi = new CrawlURI(uuri);
+        curi.setContentType("text/html");
+        Object decision = this.rule.decisionFor(curi);
+        // default for unconfigured FilterDecideRule is true from (empty)
+        // filters, then ACCEPT because of true
+        assertTrue("Expect " + DecideRule.ACCEPT + " but got " + decision,
+            decision == DecideRule.ACCEPT);
+        ContentTypeRegExpFilter filt = 
+        	new ContentTypeRegExpFilter("ContentTypeRegExpFilter","app.*");
+        dr.filters.addElement(null,filt);
+        decision = this.rule.decisionFor(curi);
+        // filter should now return false, making decision REJECT
+        assertTrue("Expect " + DecideRule.REJECT + " but got " + decision,
+            decision == DecideRule.REJECT);
+        curi.setContentType("application/octet-stream");
+        decision = this.rule.decisionFor(curi);
+        // filter should now return true, making decision ACCEPT
+        assertTrue("Expect " + DecideRule.ACCEPT + " but got " + decision,
+                decision == DecideRule.ACCEPT);
+        // change true answer to "PASS"; use String to simulate settings non-identity
+        dr.setAttribute(new Attribute(FilterDecideRule.ATTR_TRUE_DECISION,"PASS"));
+        decision = this.rule.decisionFor(curi);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
+                decision == DecideRule.PASS);       
+    }
     
     protected DecideRule addDecideRule(DecideRule dr)
     throws InvalidAttributeValueException {
