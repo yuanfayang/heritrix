@@ -68,11 +68,10 @@ public class FilterDecideRule extends DecideRule {
 
         this.filters = (MapType) addElementToDefinition(
             new MapType(ATTR_FILTERS, "Filters considered to determine " +
-                "decision.  of HTTP response headers but before we start to" +
-                " download the body. If any filter returns" +
-                " FALSE, the fetch is aborted. Prerequisites such as" +
-                " robots.txt by-pass filtering (i.e. they cannot be" +
-                " midfetch aborted.", Filter.class));
+                "decision.  If any filter returns FALSE, the configured " +
+                "false-decision (usually REJECT) is applied. If no filter " +
+                "returns false, the configured true-decision (usually " +
+                "ACCEPT) is applied.", Filter.class));
         addElementToDefinition(new SimpleType(ATTR_TRUE_DECISION,
                 "Decision applied if filters all return true. ", 
                 ACCEPT, ALLOWED_TYPES));
