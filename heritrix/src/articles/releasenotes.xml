@@ -13,7 +13,7 @@
   </articleinfo>
 
   <sect1 id="1_12_0">
-    <title>Release 1.12.0 - 3/15/2007</title>
+    <title>Release 1.12.0 - 3/16/2007</title>
 
     <abstract>
       <para>Release 1.12.0 is the first of several planned releases enhancing
@@ -115,8 +115,8 @@
         version <ulink
         url="http://archive-access.svn.sourceforge.net/viewvc/*checkout*/archive-access/branches/gjm_warc_0_12/warc/warc_file_format.html">"WARC/0.12"
         (revision H1.12-RC1)</ulink>. The implementation as of Heritrix 1.10.x
-        remains for reference as ExperimentalV10WARCWriterProcessor. The WARC
-        format remains under discussion. </para>
+        remains for reference as org.archive.io.warc.v10.ExperimentalV10WARCWriterProcessor.
+        The WARC format remains under discussion. </para>
       </sect3>
 
       <sect3>
@@ -133,7 +133,7 @@
         <title>All tracked changes</title>
 
         <para>A dynamic list of all tracked changes marked as fixed in 1.12.0
-        is available at:<ulink
+        is available at: <ulink
         url="http://webteam.archive.org/confluence/display/Heritrix/Issues+with+%27Fix+Version%27+1.12.0">Issues
         with 'Fix Version' 1.12.0.</ulink></para>
       </sect3>
