@@ -40,6 +40,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
+import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.WARCConstants;
@@ -204,10 +205,17 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final ANVLRecord namedFields) 
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, REQUEST);
-        w.writeRequestRecord(curi.toString(), timestamp, mimetype, uid,
-            namedFields,
-            curi.getHttpRecorder().getRecordedOutput().getReplayInputStream(),
-            curi.getHttpRecorder().getRecordedOutput().getSize());
+        ReplayInputStream ris =
+            curi.getHttpRecorder().getRecordedOutput().getReplayInputStream();
+        try {
+            w.writeRequestRecord(curi.toString(), timestamp, mimetype, uid,
+                namedFields, ris,
+                curi.getHttpRecorder().getRecordedOutput().getSize());
+        } finally {
+            if (ris != null) {
+                ris.close();
+            }
+        }
         return uid;
     }
     
@@ -216,10 +224,17 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
-        w.writeResponseRecord(curi.toString(), timestamp, mimetype, baseid,
-            namedFields,
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
-            curi.getHttpRecorder().getRecordedInput().getSize());
+        ReplayInputStream ris =
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
+        try {
+            w.writeResponseRecord(curi.toString(), timestamp, mimetype, baseid,
+                namedFields, ris,
+                curi.getHttpRecorder().getRecordedInput().getSize());
+        } finally {
+            if (ris != null) {
+                ris.close();
+            }
+        }
         return baseid;
     }
     

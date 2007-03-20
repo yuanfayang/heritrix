@@ -34,7 +34,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpConstants;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
@@ -46,6 +45,7 @@ import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.ExperimentalWARCWriter;
@@ -296,10 +296,17 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final ANVLRecord namedFields) 
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, REQUEST);
-        w.writeRequestRecord(curi.toString(), timestamp, mimetype, uid,
-            namedFields,
-            curi.getHttpRecorder().getRecordedOutput().getReplayInputStream(),
-            curi.getHttpRecorder().getRecordedOutput().getSize());
+        ReplayInputStream ris =
+            curi.getHttpRecorder().getRecordedOutput().getReplayInputStream();
+        try {
+            w.writeRequestRecord(curi.toString(), timestamp, mimetype, uid,
+                namedFields, ris,
+                curi.getHttpRecorder().getRecordedOutput().getSize());
+        } finally {
+            if (ris != null) {
+                ris.close();
+            }
+        }
         return uid;
     }
     
@@ -308,10 +315,17 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
-        w.writeResponseRecord(curi.toString(), timestamp, mimetype, baseid,
-            namedFields,
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
-            curi.getHttpRecorder().getRecordedInput().getSize());
+        ReplayInputStream ris =
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
+        try {
+            w.writeResponseRecord(curi.toString(), timestamp, mimetype, baseid,
+                namedFields, ris,
+                curi.getHttpRecorder().getRecordedInput().getSize());
+        } finally {
+            if (ris != null) {
+                ris.close();
+            }
+        }
         return baseid;
     }
     
@@ -328,10 +342,16 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         		HEADER_KEY_PROFILE, PROFILE_REVISIT_IDENTICAL_DIGEST);
         namedFields.addLabelValue(
         		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
-        w.writeRevisitRecord(curi.toString(), timestamp, mimetype, baseid,
-            namedFields,
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
-            revisedLength);
+        ReplayInputStream ris =
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
+        try {
+            w.writeRevisitRecord(curi.toString(), timestamp, mimetype, baseid,
+                namedFields, ris, revisedLength);
+        } finally {
+            if (ris != null) {
+                ris.close();
+            }
+        }
         return baseid;
     }
     
@@ -351,11 +371,18 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             		HEADER_KEY_LAST_MODIFIED);
         }
         // truncate to zero-length (all necessary info is above)
-        namedFields.addLabelValue(HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
-        w.writeRevisitRecord(curi.toString(), timestamp, null, baseid,
-            namedFields,
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
-            0);
+        namedFields.addLabelValue(HEADER_KEY_TRUNCATED,
+            NAMED_FIELD_TRUNCATED_VALUE_LEN);
+        ReplayInputStream ris =
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
+        try {
+            w.writeRevisitRecord(curi.toString(), timestamp, null, baseid,
+                namedFields, ris, 0);
+        } finally {
+            if (ris !=  null) {
+                ris.close();
+            }
+        }
         return baseid;
     }
     
