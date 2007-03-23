@@ -48,7 +48,7 @@
     be picked up and appended to the currentVersion.  Handy for continuous
     builds if the version.build.suffix holds time of build.
     -->
-  <currentVersion>1.11.0${version.build.suffix}</currentVersion>
+  <currentVersion>pjack-settings${version.build.suffix}</currentVersion>
   
   <!-- Details about the organization that 'owns' the project -->
   <organization>
@@ -720,6 +720,13 @@
         </includes>
     </resource>
     <resource>
+        <directory>${basedir}/src/java</directory>
+        <includes>
+            <include>**/*.utf8</include>
+            <include>**/*.txt</include>
+        </includes>
+    </resource>
+    <resource>
         <directory>${maven.build.dir}/conf/</directory>
         <includes>
             <include>heritrix.properties</include>
@@ -747,11 +754,11 @@
         -->
         <!--
         <report>maven-jdepend-plugin</report>
-        -->
         <report>maven-junit-report-plugin</report>
         <report>maven-jxr-plugin</report>
         <report>maven-pmd-plugin</report>
         <report>maven-tasklist-plugin</report>
+        -->
         <!--<report>maven-findbugs-plugin</report>
          -->
         <!--<report>maven-developer-activity-plugin</report>-->
