@@ -45,7 +45,7 @@ public class HashCrawlMapperTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new HashCrawlMapper(controller);
+        return new HashCrawlMapper();
     }
     
     

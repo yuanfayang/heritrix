@@ -27,7 +27,6 @@ package org.archive.processors.extractor;
 
 
 import org.archive.processors.ProcessorTestBase;
-import org.archive.processors.util.DefaultTempDirProvider;
 
 
 /**
@@ -46,7 +45,7 @@ public class ExtractorPDFTest extends ProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new ExtractorPDF(new DefaultTempDirProvider());
+        return new ExtractorPDF();
     }
     
     

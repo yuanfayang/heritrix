@@ -45,7 +45,7 @@ public class BeanShellProcessorTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new BeanShellProcessor(controller);
+        return new BeanShellProcessor();
     }
     
     

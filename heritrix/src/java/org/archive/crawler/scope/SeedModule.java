@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.framework;
+package org.archive.crawler.scope;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,7 +42,6 @@ import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.processors.DirectoryModule;
-import org.archive.processors.deciderules.DecideRule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -52,37 +51,19 @@ import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
 
 /**
- * A CrawlScope instance defines which URIs are "in"
- * a particular crawl.
- *
- * It is essentially a Filter which determines, looking at
- * the totality of information available about a
- * CandidateURI/CrawlURI instamce, if that URI should be
- * scheduled for crawling.
- *
- * Dynamic information inherent in the discovery of the
- * URI -- such as the path by which it was discovered --
- * may be considered.
- *
- * Dynamic information which requires the consultation
- * of external and potentially volatile information --
- * such as current robots.txt requests and the history
- * of attempts to crawl the same URI -- should NOT be
- * considered. Those potentially high-latency decisions
- * should be made at another step.
+ * Module that maintanis a list of seeds.
  *
  * @author gojomo
  *
  */
-public abstract class CrawlScope extends DecideRule implements Initializable {
+public class SeedModule implements Initializable {
 
     private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
-        Logger.getLogger(CrawlScope.class.getName());
-    public static final String ATTR_NAME = "scope";
-    
-    
+        Logger.getLogger(SeedModule.class.getName());
+
+
     /**
      * File from which to extract seeds.
      */
@@ -99,16 +80,13 @@ public abstract class CrawlScope extends DecideRule implements Initializable {
     @Global @Expert
     final public static Key<Boolean> REREAD_SEEDS_ON_CONFIG = Key.make(true);
 
-    
+    final public static Key<DirectoryModule> DIRECTORY = 
+        Key.make(DirectoryModule.class, null);
+
     protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();
 
     protected Set<SeedRefreshListener> seedRefreshListeners = 
         new HashSet<SeedRefreshListener>();
-
-    
-    
-    final public static Key<DirectoryModule> DIRECTORY = 
-        Key.make(DirectoryModule.class, null);
 
     
     private StateProvider global;
@@ -116,9 +94,9 @@ public abstract class CrawlScope extends DecideRule implements Initializable {
 
 
     /** 
-     * Constructs a new CrawlScope.
+     * Constructor.
      */
-    public CrawlScope() {
+    public SeedModule() {
     }
 
 
@@ -133,7 +111,7 @@ public abstract class CrawlScope extends DecideRule implements Initializable {
      *
      */
     public void refreshSeeds() {
-        // by default do nothing (subclasses which cache should override)
+        fireSeedsRefreshed();
     }
     
     

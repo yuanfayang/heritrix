@@ -25,7 +25,6 @@ package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
 import java.net.InetAddress;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,6 +36,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.processors.Processor;
 import org.archive.processors.fetcher.HostResolver;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.Recorder;
@@ -283,7 +283,7 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         lastStartTime = System.currentTimeMillis();
         Map<String,Processor> localProcessors = 
             controller.get(controller, CrawlController.PROCESSORS);
-        controller.setStateProvider(currentCuri);
+        currentCuri.setStateProvider(controller.getSheetManager());
         currentCuri.setRecorder(httpRecorder);
         try {
             for (Map.Entry<String,Processor> me: localProcessors.entrySet()) {

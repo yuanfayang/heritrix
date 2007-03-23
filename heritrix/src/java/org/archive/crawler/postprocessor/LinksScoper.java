@@ -32,7 +32,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
@@ -100,8 +99,8 @@ implements FetchStatusCodes {
     /**
      * @param name Name of this filter.
      */
-    public LinksScoper(CrawlController controller) {
-        super(controller);
+    public LinksScoper() {
+        super();
     }
     
     
@@ -149,7 +148,7 @@ implements FetchStatusCodes {
                 curi.getOutCandidates().add(caURI);
             }
         } catch (URIException e) {
-            getController().logUriError(e, curi.getUURI(), 
+            loggerModule.logUriError(e, curi.getUURI(), 
                     wref.getDestination().toString());
         }
         curi.getOutLinks().clear();
@@ -206,7 +205,7 @@ implements FetchStatusCodes {
             }
             caUri.setSchedulingDirective(prereqPriority);
             caUri.setForceFetch(true);
-            getController().setStateProvider(caUri);
+// FIXME!!!            getController().setStateProvider(caUri);
             if(isInScope(caUri)) {
                 // replace link with CandidateURI
                 curi.setPrerequisiteUri(caUri);
@@ -217,11 +216,11 @@ implements FetchStatusCodes {
             }
        } catch (URIException ex) {
             Object[] array = {curi, curi.getPrerequisiteUri()};
-            getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
+            loggerModule.getUriErrors().log(Level.INFO,ex.getMessage(), array);
         } catch (NumberFormatException e) {
             // UURI.createUURI will occasionally throw this error.
             Object[] array = {curi, curi.getPrerequisiteUri()};
-            getController().uriErrors.log(Level.INFO,e.getMessage(), array);
+            loggerModule.getUriErrors().log(Level.INFO,e.getMessage(), array);
         }
     }
 

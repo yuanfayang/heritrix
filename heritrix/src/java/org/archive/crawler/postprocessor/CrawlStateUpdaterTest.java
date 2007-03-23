@@ -45,7 +45,7 @@ public class CrawlStateUpdaterTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new CrawlStateUpdater(controller);
+        return new CrawlStateUpdater();
     }
     
     

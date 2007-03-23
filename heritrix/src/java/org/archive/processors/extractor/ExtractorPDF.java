@@ -33,8 +33,10 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.DefaultTempDirProvider;
-import org.archive.state.Dependency;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 
 /** Allows the caller to process a CrawlURI representing a PDF
@@ -43,7 +45,7 @@ import org.archive.state.Key;
  * @author Parker Thompson
  *
  */
-public class ExtractorPDF extends ContentExtractor {
+public class ExtractorPDF extends ContentExtractor implements Initializable {
 
     private static final long serialVersionUID = 3L;
 
@@ -60,22 +62,25 @@ public class ExtractorPDF extends ContentExtractor {
 
     final private AtomicLong numberOfLinksExtracted = new AtomicLong(0);
 
-    final private TempDirProvider tempDirProvider;
+    private TempDirProvider tempDirProvider;
     
     
     /**
      * Provides the location for temporary PDF files to be written.
      */
-    @Dependency
+    @Immutable
     final public static Key<TempDirProvider> TEMP_DIR_PROVIDER =
         Key.make(TempDirProvider.class, new DefaultTempDirProvider());
     
     
 
-    public ExtractorPDF(TempDirProvider p) {
-        this.tempDirProvider = p;
+    public ExtractorPDF() {
     }
 
+    
+    public void initialTasks(StateProvider p) {
+        this.tempDirProvider = p.get(this, TEMP_DIR_PROVIDER);
+    }
     
     @Override
     protected boolean shouldExtract(ProcessorURI uri) {

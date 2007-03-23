@@ -44,7 +44,7 @@ public class FetchDNSTest extends ProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new FetchDNS(null); // FIXME
+        return new FetchDNS(); // FIXME
     }
     
     

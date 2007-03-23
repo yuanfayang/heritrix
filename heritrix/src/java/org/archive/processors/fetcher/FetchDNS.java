@@ -34,15 +34,16 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.ServerCache;
-import org.archive.state.Dependency;
 import org.archive.state.Expert;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 import org.archive.util.InetAddressUtil;
@@ -61,21 +62,19 @@ import org.xbill.DNS.dns;
  *
  * @author multiple
  */
-public class FetchDNS extends Processor
-implements CoreAttributeConstants, FetchStatusCodes {
-	private static final long serialVersionUID = 3L;
+public class FetchDNS extends Processor implements Initializable {
 
-	private static Logger logger = Logger.getLogger(FetchDNS.class.getName());
+    private static final long serialVersionUID = 3L;
+
+    private static Logger logger = Logger.getLogger(FetchDNS.class.getName());
 
     // Defaults.
     private short ClassType = DClass.IN;
     private short TypeType = Type.A;
     protected InetAddress serverInetAddr = null;
 
+    private ServerCache crawlHostCache;
 
-    final private ServerCache crawlHostCache;
-    
-    
     /**
      * If a DNS lookup fails, whether or not to fallback to InetAddress
      * resolution, which may use local 'hosts' files or other mechanisms.
@@ -88,7 +87,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     /**
      * Used to do DNS lookups.
      */
-    @Dependency
+    @Immutable
     final public static Key<ServerCache> SERVER_CACHE = 
         Key.make(ServerCache.class, null);
     
@@ -106,10 +105,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
 
     
-    public FetchDNS(ServerCache cache) {
-        this.crawlHostCache = cache;
+    public FetchDNS() {
     }
+
     
+    public void initialTasks(StateProvider p) {
+        this.crawlHostCache = p.get(this, SERVER_CACHE);
+    }
     
     protected boolean shouldProcess(ProcessorURI curi) {
         return curi.getUURI().getScheme().equals("dns");

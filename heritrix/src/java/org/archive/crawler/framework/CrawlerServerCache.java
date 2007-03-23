@@ -3,26 +3,39 @@ package org.archive.crawler.framework;
 import org.archive.processors.fetcher.DefaultServerCache;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
-import org.archive.state.Dependency;
+import org.archive.settings.file.BdbModule;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
-public class CrawlerServerCache extends DefaultServerCache {
-   
-    
+import com.sleepycat.je.DatabaseException;
+
+// FIXME: Move down to processors
+public class CrawlerServerCache extends DefaultServerCache 
+implements Initializable {
+
     private static final long serialVersionUID = 1L;
 
 
-    @Dependency
-    final public static Key<CrawlController> CONTROLLER =
-        Key.make(CrawlController.class, null);
+    @Immutable
+    final public static Key<BdbModule> BDB =
+        Key.make(BdbModule.class, null);
     
     
-    public CrawlerServerCache(CrawlController c) throws Exception {
-        super(c.getBigMap("servers", String.class, CrawlServer.class),
-                c.getBigMap("hosts", String.class, CrawlHost.class));
+    public CrawlerServerCache() {
     }
     
-    
+
+    public void initialTasks(StateProvider provider) {
+        BdbModule bdb = provider.get(this, BDB);
+        try {
+            this.servers = bdb.getBigMap("servers", String.class, CrawlServer.class);
+            this.hosts = bdb.getBigMap("hosts", String.class, CrawlHost.class);
+        } catch (DatabaseException e) {
+            throw new IllegalStateException(e);
+        }
+    }
     
     
     

@@ -24,6 +24,7 @@
 package org.archive.settings;
 
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -226,4 +227,7 @@ public class MemorySheetManager extends SheetManager {
     public void save() {}
 
 
+    public File getDirectory() {
+        return new File(".");
+    }
 }

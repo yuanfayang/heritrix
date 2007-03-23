@@ -30,7 +30,9 @@ import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -86,11 +88,15 @@ public abstract class StateProcessorTestBase extends TestCase {
      */
     public void testDefaultLocale() {
         Map<String,Key<Object>> keys = KeyManager.getKeys(getModuleClass());
+        List<String> problems = new ArrayList<String>();
         for (Key k: keys.values()) {
-            String n = k.getFieldName();
-            TestCase.assertNotNull(n, k.getName(Locale.ENGLISH));
-            TestCase.assertNotNull(n, k.getDescription(Locale.ENGLISH));
+            String name = k.getName(Locale.ENGLISH);
+            String desc = k.getDescription(Locale.ENGLISH);
+            if (name == null || desc == null) {
+                problems.add(k.getFieldName());
+            }
         }
+        TestCase.assertTrue(problems.toString(), problems.isEmpty());
     }
 
     

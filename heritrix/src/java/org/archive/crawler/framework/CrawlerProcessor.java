@@ -29,28 +29,34 @@ import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
-import org.archive.state.Dependency;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
-public abstract class CrawlerProcessor extends Processor {
+public abstract class CrawlerProcessor extends Processor
+implements Initializable {
 
     
-    final protected CrawlController controller;
+    protected CrawlController controller;
     
     
     /**
      * The crawl controller.
      */
-    @Dependency
+    @Immutable
     final public static Key<CrawlController> CONTROLLER = 
         Key.make(CrawlController.class, null);
     
     
     
-    public CrawlerProcessor(CrawlController controller) {
-        this.controller = controller;
+    public CrawlerProcessor() {
     }
     
+    
+    public void initialTasks(StateProvider provider) {
+        this.controller = provider.get(this, CONTROLLER);
+    }
     
     protected CrawlServer getServerFor(ProcessorURI curi) {
         ServerCache cache = controller.getServerCache();

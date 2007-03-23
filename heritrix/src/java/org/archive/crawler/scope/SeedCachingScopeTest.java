@@ -99,7 +99,7 @@ public class SeedCachingScopeTest extends StateProcessorTestBase {
 
    @Override
    protected Object makeModule() {
-       return new SeedCachingScope(controller);
+       return new SeedCachingScope();
    }
    
    
@@ -173,7 +173,7 @@ public class SeedCachingScopeTest extends StateProcessorTestBase {
        fw.close();
        boolean found = false;
        CrawlController c = controller;
-       SeedCachingScope sl = new UnitTestSeedCachingScope(c, seedsfile);
+       SeedCachingScope sl = new UnitTestSeedCachingScope(seedsfile);
        for (Iterator i = sl.seedsIterator(); i.hasNext();) {
            UURI uuri = (UURI)i.next();
            if (uuri.getHost() == null) {
@@ -195,7 +195,7 @@ public class SeedCachingScopeTest extends StateProcessorTestBase {
    throws Exception {
        CrawlController c = controller;
        if (sl == null) {
-           sl = new UnitTestSeedCachingScope(c, this.seedsfile);
+           sl = new UnitTestSeedCachingScope(this.seedsfile);
        }
        int count = 0;
        for (Iterator i = sl.seedsIterator(); i.hasNext();) {
@@ -223,13 +223,13 @@ class UnitTestSeedCachingScope extends SeedCachingScope {
     private File seedsfile;
 
     
-    public UnitTestSeedCachingScope(CrawlController c) {
-        this(c, new File("seeds.txt"));
+    public UnitTestSeedCachingScope() {
+        this(new File("seeds.txt"));
     }
     
     
-    public UnitTestSeedCachingScope(CrawlController c, File seedsfile) {
-        super(c);
+    public UnitTestSeedCachingScope(File seedsfile) {
+        super();
         this.seedsfile = seedsfile;
     }
     

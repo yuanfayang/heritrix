@@ -45,13 +45,13 @@ import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
-import org.archive.settings.file.Checkpointable;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
@@ -168,7 +168,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         try {
             List<ModuleListener> list = new ArrayList<ModuleListener>();
             list.add(jmxListener);
-            list.add(ListModuleListener.make(Checkpointable.class));
+            list.add(ListModuleListener.make(CrawlStatusListener.class));
             fsm = new FileSheetManager(bootstrap, true, list);
         } catch (DatabaseException e) {
             IOException io = new IOException();

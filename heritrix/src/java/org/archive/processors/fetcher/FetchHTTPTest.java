@@ -46,7 +46,8 @@ public class FetchHTTPTest extends ProcessorTestBase {
     
     @Override
     protected Processor makeModule() {
-        FetchHTTP result = new FetchHTTP(null, null); // FIXME
+        FetchHTTP result = new FetchHTTP();
+        // FIXME: Set up server cache, credential store...
         result.initialTasks(new ExampleStateProvider());
         return result;
     }

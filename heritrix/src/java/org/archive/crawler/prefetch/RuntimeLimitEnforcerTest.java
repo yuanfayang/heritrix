@@ -45,7 +45,7 @@ public class RuntimeLimitEnforcerTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new RuntimeLimitEnforcer(controller);
+        return new RuntimeLimitEnforcer();
     }
     
     

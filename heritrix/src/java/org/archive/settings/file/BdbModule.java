@@ -48,7 +48,8 @@ import java.util.logging.Logger;
 import org.archive.crawler.util.CheckpointUtils;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.RecoverAction;
-import org.archive.state.Dependency;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.Module;
@@ -67,8 +68,8 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
-public class BdbModule implements Module, Checkpointable, Serializable, 
-Closeable {
+public class BdbModule implements Module, Initializable, Checkpointable, 
+Serializable, Closeable {
 
     final private static Logger LOGGER = 
         Logger.getLogger(BdbModule.class.getName()); 
@@ -78,19 +79,19 @@ Closeable {
      */
     private static final long serialVersionUID = 1L;
 
-    @Dependency
-    final public static Key<BdbConfig> CONFIG = 
-        Key.make(BdbConfig.class, null);
+    @Immutable
+    final public static Key<String> DIR = Key.make("state");
     
-    @Dependency
-    final public static Key<StateProvider> PROVIDER =
-        Key.make(StateProvider.class, null);
+    @Immutable
+    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(60); 
+    
+    @Immutable
+    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
+        Key.make(true);
     
     static {
         KeyManager.addKeys(BdbModule.class);
     }
-    
-    final private BdbConfig config;
     
     private boolean checkpointCopy;
     
@@ -108,18 +109,20 @@ Closeable {
         new ConcurrentHashMap<String,CachedBdbMap>();
     
     
-    public BdbModule(BdbConfig bdbConfig, StateProvider provider) 
-    throws DatabaseException {
-        if (bdbConfig == null) {
-            throw new IllegalArgumentException("config may not be null");
-        }
-        this.config = bdbConfig;
-        this.checkpointCopy = provider.get(config, BdbConfig.CHECKPOINT_COPY_BDBJE_LOGS);
-        cachePercent = provider.get(config, BdbConfig.BDB_CACHE_PERCENT);
-        path = provider.get(config, BdbConfig.DIR);
-        setUp(path, cachePercent, true);
+    public BdbModule() {
     }
+
     
+    public void initialTasks(StateProvider provider) {
+        checkpointCopy = provider.get(this, CHECKPOINT_COPY_BDBJE_LOGS);
+        cachePercent = provider.get(this, BDB_CACHE_PERCENT);
+        path = provider.get(this, DIR);
+        try {
+            setUp(path, cachePercent, true);
+        } catch (DatabaseException e) {
+            throw new IllegalStateException(e);
+        }
+    }
     
     private void setUp(String path, int cachePercent, boolean create) 
     throws DatabaseException {
@@ -157,11 +160,6 @@ Closeable {
     }
 
 
-    public BdbConfig getBdbConfig() {
-        return config;
-    }
-
-
     public <K,V> Map<K,V> getBigMap(String dbName, 
             Class<? super K> key, Class<? super V> value) 
     throws DatabaseException {
@@ -189,7 +187,7 @@ Closeable {
         if (in instanceof CheckpointRecovery) {
             CheckpointRecovery cr = (CheckpointRecovery)in;
             path = cr.translatePath(path);
-            cr.setState(this.config, BdbConfig.DIR, path);
+            cr.setState(this, DIR, path);
         }
         try {
             setUp(path, this.cachePercent, false);

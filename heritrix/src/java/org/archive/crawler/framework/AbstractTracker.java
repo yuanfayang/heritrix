@@ -24,9 +24,13 @@ import java.util.EventObject;
 import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.scope.SeedModule;
 import org.archive.state.Global;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.Module;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -49,8 +53,8 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
  */
-public abstract class AbstractTracker 
-implements StatisticsTracking, CrawlStatusListener, Serializable, Module {
+public abstract class AbstractTracker implements StatisticsTracking, 
+CrawlStatusListener, Serializable, Module, Initializable {
 
 
     /**
@@ -59,11 +63,17 @@ implements StatisticsTracking, CrawlStatusListener, Serializable, Module {
     @Global
     final public static Key<Integer> INTERVAL_SECONDS = Key.make(20);
 
+    
+    @Immutable
+    final public static Key<CrawlController> CONTROLLER = 
+        Key.make(CrawlController.class, null);
 
+    
+    
     /** A reference to the CrawlContoller of the crawl that we are to track
      * statistics for.
      */
-    final protected transient CrawlController controller;
+    protected CrawlController controller;
 
     // Keep track of time.
     protected long crawlerStartTime;
@@ -79,11 +89,13 @@ implements StatisticsTracking, CrawlStatusListener, Serializable, Module {
     /**
      * Constructor.
      */
-    public AbstractTracker(CrawlController controller) {
-        this.controller = controller;
-        this.controller.addCrawlStatusListener(this);
+    public AbstractTracker() {
     }
 
+    
+    public void initialTasks(StateProvider p) {
+        this.controller = p.get(this, CONTROLLER);
+    }
     
     /**
      * Start thread.  Will call logActivity() at intervals specified by
@@ -110,7 +122,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable, Module {
                 Thread.sleep(getLogWriteInterval() * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                controller.runtimeErrors.log(Level.INFO,
+                controller.getLoggerModule().getRuntimeErrors().log(Level.INFO,
                     "Periodic stat logger interrupted while sleeping.");
             }
 

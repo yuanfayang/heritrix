@@ -1,3 +1,21 @@
+rules-description:
+The list of canonicalization rules to apply to URIs before making decisions
+about them.
+
+
+manager-description:
+The sheet manager used to configure this BdbFrontier.  It will also be used
+to look up context-specific settings for discovered URIs.
+
+
+seeds-description:
+The seeds module used to prepare the seeds for crawling.
+
+
+logger-module-description:
+The logger module of the crawl; used to log various error conditions.
+
+
 delay-factor-description:
 How many multiples of last fetch elapsed time to wait before recontacting 
 same server. 

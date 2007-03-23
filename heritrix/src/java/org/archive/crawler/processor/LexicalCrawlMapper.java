@@ -107,8 +107,8 @@ public class LexicalCrawlMapper extends CrawlMapper {
     /**
      * Constructor.
      */
-    public LexicalCrawlMapper(CrawlController c) {
-        super(c);
+    public LexicalCrawlMapper() {
+        super();
     }
 
 

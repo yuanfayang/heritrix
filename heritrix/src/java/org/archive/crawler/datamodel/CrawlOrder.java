@@ -66,14 +66,6 @@ public class CrawlOrder implements Module, Serializable {
 
 
     /**
-     * Directory where crawler log files will be kept. If this path is a 
-     * relative path, it will be relative to the {@link #DISK_PATH}.
-     */
-    @Expert @Immutable
-    final public static Key<String> LOGS_PATH = Key.make("logs"); 
-
-
-    /**
      * Directory where crawler checkpoint files will be kept. If this 
      * path is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
@@ -157,13 +149,6 @@ public class CrawlOrder implements Module, Serializable {
     final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
         Key.makeNull(RobotsHonoringPolicy.class);
 
-    /**
-     * Ordered list of url canonicalization rules.  Rules are applied in the 
-     * order listed from top to bottom.
-     */
-    @Immutable
-    final public static Key<List<CanonicalizationRule>> RULES = 
-        Key.makeList(CanonicalizationRule.class);
 
 
 

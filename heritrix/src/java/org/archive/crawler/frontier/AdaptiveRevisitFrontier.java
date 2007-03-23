@@ -41,9 +41,9 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -51,11 +51,10 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
-import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.net.UURI;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
@@ -63,12 +62,14 @@ import org.archive.processors.util.ServerCacheUtil;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;
+import org.archive.settings.file.BdbModule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
+import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
 
 /**
  * A Frontier that will repeatedly visit all encountered URIs. 
@@ -83,14 +84,30 @@ import org.archive.util.ArchiveUtils;
  * @author Kristinn Sigurdsson
  */
 public class AdaptiveRevisitFrontier  
-implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
-        AdaptiveRevisitAttributeConstants, CrawlStatusListener, HasUriReceiver {
+implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
 
     private static final long serialVersionUID = -3L;
 
     private static final Logger logger =
         Logger.getLogger(AdaptiveRevisitFrontier.class.getName());
 
+    
+    @Immutable
+    final public static Key<CrawlController> CONTROLLER = 
+        Key.make(CrawlController.class, null);
+    
+    @Immutable
+    final public static Key<BdbModule> BDB =
+        Key.make(BdbModule.class, null);
+    
+    @Immutable
+    final public static Key<SeedModule> SEEDS =
+        Key.make(SeedModule.class, null);
+    
+    @Immutable
+    final public static Key<UriUniqFilter> URI_UNIQ_FILTER =
+        Key.make(UriUniqFilter.class, null);
+    
     /** How many multiples of last fetch elapsed time to wait before recontacting
      * same server */
     final public static Key<Float> DELAY_FACTOR = Key.make((float)5.0);
@@ -132,16 +149,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
     @Expert
     final public static Key<Boolean> QUEUE_IGNORE_WWW = 
         Key.make(false);
-    
-    /** Should the Frontier use a seperate 'already included' datastructure
-     *  or rely on the queues'. 
-     */
-    @Immutable @Expert
-    final public static Key<Boolean> USE_URI_UNIQ_FILTER = 
-        Key.make(false);
 
     
     private CrawlController controller;
+    private SeedModule seeds;
+    private BdbModule bdb;
     
     private AdaptiveRevisitQueueList hostQueues;
     
@@ -174,39 +186,26 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
         return sheet.get(this, key);
     }
     
-    public synchronized void initialize(CrawlController c)
-            throws FatalConfigurationException, IOException {
-        controller = c;
-        controller.addCrawlStatusListener(this);
+    public synchronized void initialTasks(StateProvider provider) {
+        controller = provider.get(this, CONTROLLER);
 
         queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
+        alreadyIncluded = provider.get(this, URI_UNIQ_FILTER);
         
-        hostQueues = new AdaptiveRevisitQueueList(c.getBdbEnvironment(),
-            c.getClassCatalog());
+        seeds = provider.get(this, SEEDS);
+        bdb = provider.get(this, BDB);
         
-        if(get(USE_URI_UNIQ_FILTER)){
-            alreadyIncluded = createAlreadyIncluded();
-        } else {
-            alreadyIncluded = null;
-        }
+        try {
+            hostQueues = new AdaptiveRevisitQueueList(bdb.getEnvironment(),
+                bdb.getClassCatalog());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }        
         
         loadSeeds();
     }
 
-    /**
-     * Create a UriUniqFilter that will serve as record 
-     * of already seen URIs.
-     *
-     * @return A UURISet that will serve as a record of already seen URIs
-     * @throws IOException
-     */
-    protected UriUniqFilter createAlreadyIncluded() throws IOException {
-        UriUniqFilter uuf = new BdbUriUniqFilter(
-                this.controller.getBdbModule());
-        uuf.setDestination(this);
-        return uuf;
-    }
-    
+
     /**
      * Loads the seeds
      * <p>
@@ -215,7 +214,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
     public void loadSeeds() {
         Writer ignoredWriter = new StringWriter();
         // Get the seeds to refresh.
-        Iterator iter = this.controller.getScope().seedsIterator(ignoredWriter);
+        Iterator iter = seeds.seedsIterator(ignoredWriter);
         while (iter.hasNext()) {
             CandidateURI caUri =
                 CandidateURI.createSeedCandidateURI((UURI)iter.next());
@@ -325,7 +324,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
             // This is a feature.  This is handling for case where a seed
             // gets immediately redirected to another page.  What we're doing
             // is treating the immediate redirect target as a seed.
-            this.controller.getScope().addSeed(curi);
+            seeds.addSeed(curi);
             // And it needs rapid scheduling.
             curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
@@ -561,7 +560,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
         if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
         	Collection<Throwable> x = curi.getNonFatalFailures();
         	for (Throwable e: x) {
-        		controller.localErrors.log(Level.WARNING, curi.toString(), e);
+                    controller.getLoggerModule().getLocalErrors()
+                     .log(Level.WARNING, curi.toString(), e);
         	}
             // once logged, discard
             curi.getData().remove(A_LOCALIZED_ERRORS);
@@ -601,7 +601,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
         }
         
         Object array[] = { curi };
-        controller.uriProcessing.log(
+        controller.getLoggerModule().getUriProcessing().log(
             Level.INFO,
             curi.getUURI().toString(),
             array);
@@ -695,14 +695,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
         // send to basic log
         curi.aboutToLog();
         Object array[] = { curi };
-        this.controller.uriProcessing.log(
+        this.controller.getLoggerModule().getUriProcessing().log(
             Level.INFO,
             curi.getUURI().toString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
-            this.controller.runtimeErrors.log(
+            this.controller.getLoggerModule().getRuntimeErrors().log(
                 Level.WARNING,
                 curi.getUURI().toString(),
                 array);
@@ -739,7 +739,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
         // send to basic log
         curi.aboutToLog();
         Object array[] = { curi };
-        controller.uriProcessing.log(
+        controller.getLoggerModule().getUriProcessing().log(
             Level.INFO,
             curi.getUURI().toString(),
             array);

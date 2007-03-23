@@ -16,36 +16,31 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ExampleInvalidDependency1.java
- * Created on January 8, 2007
+ * SheetList.java
+ * Created on December 12, 2006
  *
- * $Header$
+ * $Id: SheetList.java 4795 2006-12-12 23:42:09Z paul_jack $
  */
-package org.archive.state;
+package org.archive.settings;
+
+import java.util.ArrayList;
+
+import org.archive.settings.Sheet;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 
-/**
- * An example of an invalid module.  It's invalid because it defines a
- * dependency, but no constructor that takes that dependency.
- *  
- * <p>This class really only exists for unit testing purposes.  FIXME:
- * We really need a separate test source directory for this sort of thing.
- *
- * @author pjack
- */
-public class ExampleInvalidDependency1 {
+class SheetList extends ArrayList<Sheet> implements StateProvider {
 
-    
-    @Dependency
-    final public static Key<ExampleConcreteProcessor> X = 
-        Key.make(new ExampleConcreteProcessor());
-    
-    
-    static {
-        KeyManager.addKeys(ExampleInvalidDependency1.class);
-    }
-    
-    
-    public ExampleInvalidDependency1() {
+    private static final long serialVersionUID = 1L;
+
+    public <T> T get(Object module, Key<T> key) {
+        for (Sheet sheet: this) {
+            T result = sheet.get(module, key);
+            if (result != null) {
+                return result;
+            }
+        }
+        return key.getDefaultValue();
     }
 }

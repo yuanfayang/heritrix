@@ -27,8 +27,11 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.util.LogUtils;
+import org.archive.processors.Processor;
 import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRule;
 import org.archive.state.Expert;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -39,10 +42,14 @@ import org.archive.state.StateProvider;
  * @author stack
  * @version $Date$, $Revision$
  */
-public abstract class Scoper extends CrawlerProcessor {
+public abstract class Scoper extends Processor {
     private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
     
+
+    protected DecideRule scope;
+    protected CrawlerLoggerModule loggerModule;
+
 
     /**
      * If enabled, override default logger for this class (Default logger writes
@@ -56,6 +63,15 @@ public abstract class Scoper extends CrawlerProcessor {
     final public static Key<Boolean> OVERRIDE_LOGGER = Key.make(false);
 
     
+    @Immutable
+    final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
+        Key.make(CrawlerLoggerModule.class, null);
+    
+    
+    @Immutable
+    final public static Key<DecideRule> SCOPE =
+        Key.make(DecideRule.class, null);
+    
     // FIXME: Weirdo log overriding might not work on a per-subclass basis,
     // we may need to cut and paste it to the three subclasses, or eliminate
     // it in favor of java.util.logging best practice.
@@ -66,24 +82,23 @@ public abstract class Scoper extends CrawlerProcessor {
 
     /**
      * Constructor.
-     * 
-     * @param controller   the CrawlController
      */
-    public Scoper(CrawlController controller) {
-        super(controller);
+    public Scoper() {
+        super();
     }
 
 
     @Override
     public void initialTasks(StateProvider defaults) {
-        super.initialTasks(defaults);
+        this.scope = defaults.get(this, SCOPE);
+        this.loggerModule = defaults.get(this, LOGGER_MODULE);
         if (!defaults.get(this, OVERRIDE_LOGGER)) {
             return;
         }
 
         // Set up logger for this instance.  May have special directives
         // since this class can log scope-rejected URLs.
-        LogUtils.createFileLogger(getController().getLogsDir(),
+        LogUtils.createFileLogger(loggerModule.getLogsDir(),
             this.getClass().getName(),
             Logger.getLogger(this.getClass().getName()));
     }
@@ -97,8 +112,7 @@ public abstract class Scoper extends CrawlerProcessor {
      */
     protected boolean isInScope(CandidateURI caUri) {
         boolean result = false;
-        CrawlScope scope = getController().getScope();
-        getController().setStateProvider(caUri);
+// FIXME!:        getController().setStateProvider(caUri);
         DecideResult dr = scope.decisionFor(caUri.asProcessorURI());
         if (dr == DecideResult.ACCEPT) {
             result = true;
@@ -124,7 +138,5 @@ public abstract class Scoper extends CrawlerProcessor {
     }
 
 
-    protected CrawlController getController() {
-        return controller;
-    }
+
 }

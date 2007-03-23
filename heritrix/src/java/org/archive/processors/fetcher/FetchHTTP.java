@@ -64,8 +64,8 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
+import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
@@ -89,9 +89,9 @@ import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.io.RecorderTooMuchHeaderException;
-import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -107,8 +107,7 @@ import org.archive.util.Recorder;
  * @author others
  * @version $Id$
  */
-public class FetchHTTP extends Processor implements CoreAttributeConstants,
-        FetchStatusCodes, CrawlStatusListener {
+public class FetchHTTP extends Processor implements Initializable, CrawlStatusListener {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(FetchHTTP.class, 1);
@@ -309,7 +308,7 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     /**
      * Used to store credentials.
      */
-    @Dependency
+    @Immutable
     final public static Key<CredentialStore> CREDENTIAL_STORE =
         Key.make(CredentialStore.class, null);
     
@@ -317,7 +316,7 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     /**
      * Used to do DNS lookups.
      */
-    @Dependency
+    @Immutable
     final public static Key<ServerCache> SERVER_CACHE =
         Key.make(ServerCache.class, null);
     
@@ -350,16 +349,14 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     private transient SSLSocketFactory sslfactory = null;
     private String trustLevel;
 
-    final private CredentialStore credentialStore;
+    private CredentialStore credentialStore;
 
-    final private ServerCache serverCache;
+    private ServerCache serverCache;
 
     /**
      * Constructor.
      */
-    public FetchHTTP(ServerCache cache, CredentialStore cs) {
-        this.serverCache = cache;
-        this.credentialStore = cs;
+    public FetchHTTP() {
     }
 
     protected void innerProcess(final ProcessorURI curi)
@@ -1034,6 +1031,10 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
 
     public void initialTasks(StateProvider defaults) {
         super.initialTasks(defaults);
+        
+        this.serverCache = defaults.get(this, SERVER_CACHE);
+        this.credentialStore = defaults.get(this, CREDENTIAL_STORE);
+
         // this.getController().addCrawlStatusListener(this);
         configureHttp(defaults);
 

@@ -40,9 +40,10 @@ public class PathListerTest extends PathTestBase {
     public void ntestQ() throws Exception {
 //        String expected = load(sheetName + ".resolved.txt");
         StringWriter sw = new StringWriter();
-        PathListConsumer consumer = new FilePathListConsumer(sw);
+        FilePathListConsumer consumer = new FilePathListConsumer(sw);
+        consumer.setIncludeSheets(true);
         PathLister.getAll((SingleSheet)
-                offlineManager.getSheet("override1"), consumer);
+                offlineManager.getSheet("override2"), consumer);
         String result = sw.toString();
         System.out.println(result);
         
@@ -73,7 +74,8 @@ public class PathListerTest extends PathTestBase {
     private void runResolve(String sheetName) throws IOException {
         String expected = load(sheetName + ".resolved.txt");
         StringWriter sw = new StringWriter();
-        PathListConsumer consumer = new FilePathListConsumer(sw);
+        FilePathListConsumer consumer = new FilePathListConsumer(sw);
+        consumer.setIncludeSheets(true);
         
         PathLister.resolveAll(offlineManager.getSheet(sheetName), consumer);
         String result = sw.toString();
@@ -84,6 +86,8 @@ public class PathListerTest extends PathTestBase {
 
         sw = new StringWriter();
         consumer = new FilePathListConsumer(sw);
+        consumer.setIncludeSheets(true);
+        
         PathLister.resolveAll(manager.getSheet(sheetName), consumer);
         result = sw.toString();
         System.out.println("ONLINE SHEET: " + sheetName);
@@ -97,7 +101,8 @@ public class PathListerTest extends PathTestBase {
     private void runGet(String sheetName) throws IOException {
         String expected = load(sheetName + ".get.txt");
         StringWriter sw = new StringWriter();
-        PathListConsumer consumer = new FilePathListConsumer(sw);
+        FilePathListConsumer consumer = new FilePathListConsumer(sw);
+        consumer.setIncludeSheets(true);
         SingleSheet ss = (SingleSheet)manager.getSheet(sheetName);
         PathLister.getAll(ss, consumer);
         String result = sw.toString();
@@ -114,4 +119,6 @@ public class PathListerTest extends PathTestBase {
         }
         return sb.toString();
     }
+
+
 }

@@ -26,7 +26,14 @@
 package org.archive.crawler.writer;
 
 
+import java.io.File;
+
 import org.archive.crawler.framework.CrawlerProcessorTestBase;
+import org.archive.crawler.framework.WriterPoolProcessor;
+import org.archive.processors.DefaultDirectoryModule;
+import org.archive.processors.fetcher.DefaultServerCache;
+import org.archive.state.ExampleStateProvider;
+import org.archive.util.TmpDirTestCase;
 
 
 /**
@@ -44,10 +51,20 @@ public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBas
     
     
     @Override
-    protected Object makeModule() {
-        ExperimentalWARCWriterProcessor result;
-        result = new ExperimentalWARCWriterProcessor(controller);
-        result.initialTasks(controller);
+    protected Object makeModule() throws Exception {
+        File tmp = TmpDirTestCase.tmpDir();
+        tmp = new File(tmp, "ARCWriterProcessTest");
+        tmp.mkdirs();
+
+        ExampleStateProvider sp = new ExampleStateProvider();
+        DefaultDirectoryModule dir = new DefaultDirectoryModule();
+        sp.set(dir, DefaultDirectoryModule.DIRECTORY, tmp.getAbsolutePath());
+        
+        
+        ExperimentalWARCWriterProcessor result = new ExperimentalWARCWriterProcessor();
+        sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
+        sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
+        result.initialTasks(sp);
         return result;
     }
     

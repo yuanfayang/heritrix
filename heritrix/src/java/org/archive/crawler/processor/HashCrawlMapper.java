@@ -73,8 +73,8 @@ public class HashCrawlMapper extends CrawlMapper {
     /**
      * Constructor.
      */
-    public HashCrawlMapper(CrawlController controller) {
-        super(controller);
+    public HashCrawlMapper() {
+        super();
     }
 
     /**

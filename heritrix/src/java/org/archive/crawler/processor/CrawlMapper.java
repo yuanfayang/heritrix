@@ -152,8 +152,8 @@ implements FetchStatusCodes {
      * Constructor.
      * @param name Name of this processor.
      */
-    public CrawlMapper(CrawlController controller) {
-        super(controller);
+    public CrawlMapper() {
+        super();
     }
 
     

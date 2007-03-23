@@ -30,16 +30,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.scope.SeedListener;
+import org.archive.crawler.scope.SeedModule;
 import org.archive.net.UURI;
+import org.archive.processors.DirectoryModule;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
-import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
@@ -61,7 +62,7 @@ import org.archive.util.SurtPrefixSet;
  * @author gojomo
  */
 public class SurtPrefixedDecideRule extends DecideRule 
-        implements SeedListener {
+        implements SeedListener, Initializable {
 
     private static final long serialVersionUID = 3L;
 
@@ -82,6 +83,7 @@ public class SurtPrefixedDecideRule extends DecideRule
      */
     final public static Key<Boolean> SEEDS_AS_SURT_PREFIXES = Key.make(true);
 
+    
 
     /**
      * Dump file to save SURT prefixes actually used: Useful debugging SURTs.
@@ -111,23 +113,39 @@ public class SurtPrefixedDecideRule extends DecideRule
     final public static Key<Boolean> ALSO_CHECK_VIA = 
         Key.make(false);
 
-    @Dependency
-    final public static Key<CrawlController> CONTROLLER = 
-        Key.make(CrawlController.class, null);
+    
+    @Immutable
+    final public static Key<DirectoryModule> DIRECTORY = 
+        Key.make(DirectoryModule.class, null);
+    
+    
+    @Immutable 
+    final public static Key<SeedModule> SEEDS = 
+        Key.make(SeedModule.class, null);
+    
     
     protected SurtPrefixSet surtPrefixes = null;
 
     
-    final private CrawlController controller;
+    private DirectoryModule directory;
+    
+    private SeedModule seeds;
+    
+    //private CrawlController controller;
 
 
     /**
      * Usual constructor. 
      */
-    public SurtPrefixedDecideRule(CrawlController controller) {
-        this.controller = controller;
+    public SurtPrefixedDecideRule() {
     }
 
+    
+    public void initialTasks(StateProvider provider) {
+        this.directory = provider.get(this, DIRECTORY);
+        this.seeds = provider.get(this, SEEDS);
+        this.buildSurtPrefixSet(provider);
+    }
 
     /**
      * Evaluate whether given object's URI is covered by the SURT prefix set
@@ -183,11 +201,9 @@ public class SurtPrefixedDecideRule extends DecideRule
     protected void dumpSurtPrefixSet(StateProvider uri) {
         // dump surts to file, if appropriate
         String dumpPath = uri.get(this, SURTS_DUMP_FILE);
+        dumpPath = directory.toAbsolutePath(dumpPath);
         if (dumpPath.length() > 0) {
             File dump = new File(dumpPath);
-            if (!dump.isAbsolute()) {
-                dump = new File(controller.getDisk(), dumpPath);
-            }
             try {
                 FileWriter fw = new FileWriter(dump);
                 try {
@@ -211,12 +227,10 @@ public class SurtPrefixedDecideRule extends DecideRule
         FileReader fr = null;
 
         // read SURTs from file, if appropriate
-        String sourcePath = uri.get(this, SURTS_SOURCE_FILE);
+        String sourcePath = uri.get(this, SURTS_SOURCE_FILE);        
         if (sourcePath.length() > 0) {
+            sourcePath = directory.toAbsolutePath(sourcePath);
             File source = new File(sourcePath);
-            if (!source.isAbsolute()) {
-                source = new File(controller.getDisk(), sourcePath);
-            }
             try {
                 fr = new FileReader(source);
                 try {
@@ -270,9 +284,8 @@ public class SurtPrefixedDecideRule extends DecideRule
      * @return Seed list file
      */
     protected File getSeedfile() {
-        CrawlScope scope = controller.getScope();
-        scope.addSeedListener(this);
-        return scope.getSeedfile();
+        seeds.addSeedListener(this);
+        return seeds.getSeedfile();
     }
 
     public synchronized void addedSeed(final CandidateURI curi) {

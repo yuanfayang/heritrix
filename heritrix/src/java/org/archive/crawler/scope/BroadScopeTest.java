@@ -45,7 +45,7 @@ public class BroadScopeTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new BroadScope(controller);
+        return new BroadScope();
     }
     
     

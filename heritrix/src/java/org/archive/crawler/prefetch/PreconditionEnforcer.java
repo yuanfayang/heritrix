@@ -94,8 +94,8 @@ public class PreconditionEnforcer
     final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.make(true);
     
     
-    public PreconditionEnforcer(CrawlController controller) {
-        super(controller);
+    public PreconditionEnforcer() {
+        super();
     }
 
     
