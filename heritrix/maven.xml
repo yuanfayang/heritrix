@@ -9,9 +9,11 @@
     xmlns:ant="jelly:ant">
 
     <preGoal name="xdoc:jelly-transform">
+        <!--
         <attainGoal name="faq"/>
         <attainGoal name="heritrix-javadoc"/>
         <attainGoal name="docbook"/>
+        -->
     </preGoal> 
 
     <postGoal name="sdocbook:transform">
@@ -272,29 +274,6 @@
             <include name="*heritrix"/>
           </fileset>
         </chmod>
-
-        <attainGoal name="copy_webapps"/>
-
-        <!--Compile jsp pages into a jar.
-            TODO: Make this conditional.
-         -->
-        <attainGoal name="jspc" />
-
-        <!--Now create war files of what is in build directory.-->
-        <property name="webapps.dir" value="${maven.build.dir}/webapps" />
-        <war destfile="${maven.build.dir}/admin.war"
-            webxml="${webapps.dir}/admin/WEB-INF/web.xml"
-            basedir="${webapps.dir}/admin" />
-        <war destfile="${maven.build.dir}/selftest.war"
-            webxml="${webapps.dir}/selftest/WEB-INF/web.xml"
-            basedir="${webapps.dir}/selftest" />
-
-        <!--Copy over the just made war files into the distribution copy.-->
-        <copy todir="${maven.dist.bin.assembly.dir}/webapps">
-          <fileset dir="${maven.build.dir}">
-            <include name="*.war"/>
-          </fileset>
-        </copy>
 
     </postGoal>
 
