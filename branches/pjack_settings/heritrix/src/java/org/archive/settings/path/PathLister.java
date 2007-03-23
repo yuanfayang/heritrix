@@ -152,17 +152,9 @@ public class PathLister {
             ptype = module.getClass();
         }
         
-        // Always list dependencies first
-        Collection<Key<Object>> deps = KeyManager.getDependencyKeys(ptype);
-        for (Key<Object> k: deps) {
-            handleKey(path, module, k);
-        }
-        
         Collection<Key<Object>> declared = KeyManager.getKeys(ptype).values();
         for (Key<Object> k: declared) {
-            if (!k.isDependency()) {
-                handleKey(path, module, k);
-            }
+            handleKey(path, module, k);
         }
     }
 

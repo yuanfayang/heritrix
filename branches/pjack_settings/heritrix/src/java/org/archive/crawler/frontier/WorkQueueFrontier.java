@@ -45,21 +45,19 @@ import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.EndedException;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.net.UURI;
 import org.archive.settings.Sheet;
-import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.collections.StoredIterator;
@@ -79,8 +77,7 @@ import java.util.concurrent.TimeUnit;
  * @author Christian Kohlschuetter
  */
 public abstract class WorkQueueFrontier extends AbstractFrontier
-implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
-        Serializable {
+implements HasUriReceiver, Serializable {
 	private static final long serialVersionUID = 570384305871965843L;
 	
     public class WakeTask extends TimerTask {
@@ -205,50 +202,41 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
 
     
     public <T> T get(Key<T> key) {
-        Sheet def = controller.getSheetManager().getDefault();
-        return def.get(this, key);
+        return global.get(this, key);
     }
 
     
     /**
      * The UriUniqFilter to use.
      */
-    @Dependency
+    @Immutable
     public final static Key<UriUniqFilter> URI_UNIQ_FILTER =
         Key.make(UriUniqFilter.class, null);
     
     
     /**
-     * Create the CommonFrontier
-     * 
-     * @param name
-     * @param description
+     * Constructor.
      */
-    public WorkQueueFrontier(
-            CrawlController c,
-            QueueAssignmentPolicy qap,
-            UriUniqFilter uuf) 
-    throws FatalConfigurationException, IOException {
-        super(c, qap);
-        this.alreadyIncluded = uuf;
+    public WorkQueueFrontier() {
+        super();
+    }
+    
+    
+    public void initialTasks(StateProvider provider) {
+        super.initialTasks(provider);
+        this.alreadyIncluded = provider.get(this, URI_UNIQ_FILTER);
         alreadyIncluded.setDestination(this);
         
-        this.targetSizeForReadyQueues = get(TARGET_READY_BACKLOG);
+        this.targetSizeForReadyQueues = provider.get(this, TARGET_READY_BACKLOG);
         if (this.targetSizeForReadyQueues < 1) {
             this.targetSizeForReadyQueues = 1;
         }
-        this.wakeTimer = new Timer("waker for " + c.toString());
+        this.wakeTimer = new Timer("waker for " + controller.toString());
         
         try {
             initAllQueues(false);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw (FatalConfigurationException)
-                new FatalConfigurationException(e.getMessage()).initCause(e);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw (FatalConfigurationException)
-                new FatalConfigurationException(e.getMessage()).initCause(e);
+            throw new IllegalStateException(e);
         }
         
         loadSeeds();
@@ -264,24 +252,27 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             this.allQueues = Collections.synchronizedMap(
                     new HashMap<String,WorkQueue>());
         } else {
-            this.allQueues = controller.getBigMap("allqueues",
-                    String.class, WorkQueue.class);
-            if (logger.isLoggable(Level.FINE)) {
-                Iterator i = this.allQueues.keySet().iterator();
-                try {
-                    for (; i.hasNext();) {
-                        logger.fine((String) i.next());
-                    }
-                } finally {
-                    StoredIterator.close(i);
-                }
-            }
+            this.initAllQueues();
+//            this.allQueues = controller.getBigMap("allqueues",
+//                    String.class, WorkQueue.class);
+//            if (logger.isLoggable(Level.FINE)) {
+//                Iterator i = this.allQueues.keySet().iterator();
+//                try {
+//                    for (; i.hasNext();) {
+//                        logger.fine((String) i.next());
+//                    }
+//                } finally {
+//                    StoredIterator.close(i);
+//                }
+//            }
         }
 //        this.alreadyIncluded = createAlreadyIncluded();
         initQueue(recycle);
         
     }
 
+    
+    protected abstract void initAllQueues() throws DatabaseException;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
@@ -673,7 +664,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(this); 
         // TODO: consider confusing cross-effects of this and IP-based politeness
-        controller.setStateProvider(contextUri);
+        StateProvider p = contextUri.getStateProvider();
+        if (p == null) {
+            contextUri.setStateProvider(manager);
+        }
         queue.setSessionBalance(contextUri.get(this, BALANCE_REPLENISH_AMOUNT));
         // reset total budget (it may have changed)
         // TODO: is this the best way to be sensitive to potential mid-crawl changes
@@ -803,7 +797,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // if exception, also send to crawlErrors
             if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
                 Object[] array = { curi };
-                controller.runtimeErrors.log(Level.WARNING, curi.getUURI()
+                loggerModule.getRuntimeErrors().log(Level.WARNING, curi.getUURI()
                         .toString(), array);
             }
             // TODO: consider reinstating forget-uri
@@ -814,12 +808,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // if exception, also send to crawlErrors
             if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
                 Object[] array = { curi };
-                this.controller.runtimeErrors.log(Level.WARNING, curi.getUURI()
+                this.loggerModule.getRuntimeErrors().log(Level.WARNING, curi.getUURI()
                         .toString(), array);
             }
             incrementFailedFetchCount();
             // let queue note error
-            controller.setStateProvider(curi);
+            setStateProvider(curi);
             wq.noteError(curi.get(this, ERROR_PENALTY_AMOUNT));
             doJournalFinishedFailure(curi);
             wq.expend(getCost(curi)); // failures cost

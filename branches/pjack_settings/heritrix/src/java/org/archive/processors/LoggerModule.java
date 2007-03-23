@@ -17,50 +17,25 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * BdbConfig.java
+ * LoggerModule.java
  *
- * Created on Feb 15, 2007
+ * Created on Mar 16, 2007
  *
  * $Id:$
  */
-package org.archive.settings.file;
 
-import java.io.Serializable;
+package org.archive.processors;
 
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import java.util.logging.Logger;
+
 import org.archive.state.Module;
 
 /**
  * @author pjack
  *
  */
-public class BdbConfig implements Module, Serializable {
+public interface LoggerModule extends Module {
 
-    
-    
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
+    Logger getLogger(String name);
 
-    @Immutable
-    final public static Key<String> DIR = Key.make("state");
-    
-    @Immutable
-    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(60); 
-    
-    @Immutable
-    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-        Key.make(true);
-    
-    static {
-        KeyManager.addKeys(BdbConfig.class);
-    }
-    
-    public BdbConfig() {
-    }
-    
-    
 }

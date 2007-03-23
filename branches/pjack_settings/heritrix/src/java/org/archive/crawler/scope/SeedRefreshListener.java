@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,31 +17,27 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * SheetList.java
- * Created on December 12, 2006
+ * SeedRefreshListener.java
  *
- * $Id$
+ * Created on Mar 20, 2007
+ *
+ * $Id:$
  */
-package org.archive.crawler.framework;
 
-import java.util.ArrayList;
+package org.archive.crawler.scope;
 
-import org.archive.settings.Sheet;
-import org.archive.state.Key;
-import org.archive.state.StateProvider;
+import java.util.Iterator;
 
+import org.archive.net.UURI;
 
-class SheetList extends ArrayList<Sheet> implements StateProvider {
+/**
+ * @author pjack
+ *
+ */
+public interface SeedRefreshListener {
 
-    private static final long serialVersionUID = 1L;
-
-    public <T> T get(Object module, Key<T> key) {
-        for (Sheet sheet: this) {
-            T result = sheet.get(module, key);
-            if (result != null) {
-                return result;
-            }
-        }
-        return key.getDefaultValue();
-    }
+    
+    void seedsRefreshed(Iterator<UURI> seeds);
+    
+    
 }

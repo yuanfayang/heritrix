@@ -24,12 +24,12 @@
 package org.archive.crawler.scope;
 
 
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 /**
  * DecidingScope: a Scope which makes its accept/reject decision based on 
@@ -46,8 +46,8 @@ public class DecidingScope extends CrawlScope {
     final public static Key<DecideRuleSequence> DECIDE_RULES = Key.make(new DecideRuleSequence());
     public static final String ATTR_DECIDE_RULES = "decide-rules";
 
-    public DecidingScope(CrawlController c) {
-        super(c);
+    public DecidingScope() {
+        super();
     }
 
     

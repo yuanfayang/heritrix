@@ -25,11 +25,9 @@ package org.archive.settings;
 
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,12 +35,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.processors.DefaultDirectoryModule;
+import org.archive.processors.DirectoryModule;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.KeyTypes;
 import org.archive.state.StateProvider;
+import org.archive.surt.SURTTokenizer;
 
 
 /**
@@ -50,7 +51,8 @@ import org.archive.state.StateProvider;
  * 
  * @author pjack
  */
-public abstract class SheetManager implements StateProvider, Serializable {
+public abstract class SheetManager 
+implements StateProvider, Serializable, DirectoryModule {
 
     final public static Logger LOGGER = 
         Logger.getLogger(SheetManager.class.getName());
@@ -284,38 +286,10 @@ public abstract class SheetManager implements StateProvider, Serializable {
     public String getCrawlName() {
         return "unknown"; // FIXME: Make this abstract 
     }
-    
-    
-    public File getWorkingDirectory() {
-        return new File("."); // FIXME: Make this abstract
-    }
 
     
     public boolean isOnline() {
         return true; // FIXME: Make this abstract
-    }
-
-    
-    public List<Object> getDependencies(Object module) {
-        Class c;
-        if (module instanceof Offline) {
-            c = ((Offline)module).getType();
-        } else {
-            c = module.getClass();
-        }
-        if (KeyTypes.isSimple(c)) {
-            return Collections.emptyList();
-        }
-        List<Key<Object>> deps = KeyManager.getDependencyKeys(c);
-        if (deps.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        List<Object> result = new ArrayList<Object>();
-        for (Key<Object> k: deps) {
-            result.add(getDefault().resolve(module, k).getValue());
-        }
-        return result;
     }
 
 
@@ -345,4 +319,48 @@ public abstract class SheetManager implements StateProvider, Serializable {
             LOGGER.log(Level.WARNING, "ModuleListener raised exception.", e);
         }
     }
+    
+
+    public String toAbsolutePath(String path) {
+        return DefaultDirectoryModule.toAbsolutePath(getDirectory(), path);
+    }
+    
+    
+    public String toRelativePath(String path) {
+        return DefaultDirectoryModule.toRelativePath(getDirectory(), path);
+    }
+
+    
+    /**
+     * Returns the configuration for the given URI.
+     * 
+     * @param uri
+     * @return
+     */
+    public StateProvider findConfig(String uri) {
+        SURTTokenizer st;
+        try {
+            st = new SURTTokenizer(uri.toString());
+        } catch (URIException e) {
+            throw new IllegalArgumentException(e);
+        }
+        
+        SheetList list = null;
+        for (String s = st.nextSearch(); s != null; s = st.nextSearch()) {
+            Sheet sheet = getAssociation(s);
+            if (sheet != null) {
+                if (list == null) {
+                    list = new SheetList();
+                }
+                list.add(sheet);
+            }
+        }
+        if (list == null) {
+            return getDefault();
+        }
+        
+        list.add(getDefault());
+        return list;
+    }    
+    
 }

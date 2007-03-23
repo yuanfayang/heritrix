@@ -62,25 +62,11 @@ public class KeyManagerTest extends TestCase {
         expected.remove("division-by-zero-result");
         assertEquals(expected, m.keySet());
         
-        m = KeyManager.getKeys(ExampleDependentModule.class);
-        expected.add("runnable");
-        expected.add("charsequence");
-        assertEquals(expected, m.keySet());
-        
         // Classes were initialized by above code
         Set<Key> expectedKeys = new HashSet<Key>();
         expectedKeys.add(ExampleAbstractProcessor.LEFT);
         expectedKeys.add(ExampleAbstractProcessor.RIGHT);
-        expectedKeys.add(ExampleDependentModule.CHARSEQUENCE);
-        expectedKeys.add(ExampleDependentModule.RUNNABLE);
-        assertEquals(expectedKeys, new HashSet<Key>(m.values()));
-        assertTrue(KeyManager.getDependencyConstructor(
-                ExampleDependentModule.class) != null);
-        assertEquals(2, 
-                KeyManager.getDependencyKeys(ExampleDependentModule.class).size());
 
-        expectedKeys.remove(ExampleDependentModule.CHARSEQUENCE);
-        expectedKeys.remove(ExampleDependentModule.RUNNABLE);        
         m = KeyManager.getKeys(ExampleAbstractProcessor.class);
         assertEquals(expectedKeys, new HashSet<Key>(m.values()));
         
@@ -88,8 +74,6 @@ public class KeyManagerTest extends TestCase {
         expectedKeys.add(ExampleConcreteProcessor.DIVISION_BY_ZERO_RESULT);
         m = KeyManager.getKeys(ExampleConcreteProcessor.class);
         assertEquals(expectedKeys, new HashSet<Key>(m.values()));
-        
-        
         
         try {
             m = KeyManager.getKeys(ExampleInvalidProcessor1.class);
@@ -121,34 +105,7 @@ public class KeyManagerTest extends TestCase {
         } catch (ExceptionInInitializerError e) {
             // Expected; make sure cause was InvalidKey
             assertTrue(e.getCause() instanceof InvalidKeyException);
-        }
-        
-        
-        try {
-            m = KeyManager.getKeys(ExampleInvalidDependency1.class);
-            fail();
-        } catch (ExceptionInInitializerError e) {
-            // Expected; make sure cause was DependencyException
-            assertTrue(e.getCause() instanceof DependencyException);
-        }
-
-        
-        try {
-            m = KeyManager.getKeys(ExampleInvalidDependency2.class);
-            fail();
-        } catch (ExceptionInInitializerError e) {
-            // Expected; make sure cause was DependencyException
-            assertTrue(e.getCause() instanceof DependencyException);
-        }
-
-        try {
-            m = KeyManager.getKeys(ExampleInvalidDependency3.class);
-            fail();
-        } catch (ExceptionInInitializerError e) {
-            // Expected; make sure cause was DependencyException
-            assertTrue(e.getCause() instanceof DependencyException);
-        }
-
+        }        
     }
     
     

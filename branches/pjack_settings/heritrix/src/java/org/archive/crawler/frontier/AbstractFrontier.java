@@ -43,15 +43,16 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlOrder;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.net.UURI;
@@ -60,11 +61,11 @@ import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.Sheet;
-import org.archive.state.Dependency;
+import org.archive.settings.SheetManager;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -75,12 +76,12 @@ import org.archive.util.ArchiveUtils;
  * @author gojomo
  */
 public abstract class AbstractFrontier 
-implements CrawlStatusListener, Frontier, FetchStatusCodes,
-        CoreAttributeConstants, Serializable {
+implements CrawlStatusListener, Frontier, Serializable, Initializable {
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
     protected CrawlController controller;
+    protected CrawlerLoggerModule loggerModule;
 
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
@@ -204,6 +205,10 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      */
     private transient FrontierJournal recover = null;
 
+    protected StateProvider global;
+    
+    protected SheetManager manager;
+    
     /** file collecting report of ignored seed-file entries (if any) */
     public static final String IGNORED_SEEDS_FILENAME = "seeds.ignored";
 
@@ -211,16 +216,40 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     /**
      * The crawl controller using this Frontier.
      */
-    @Dependency
+    @Immutable
     final public static Key<CrawlController> CONTROLLER = 
         Key.make(CrawlController.class, null);
+    
+    
+    @Immutable
+    final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
+        Key.make(CrawlerLoggerModule.class, null);
 
+    
+    @Immutable
+    final public static Key<SeedModule> SEEDS = 
+        Key.make(SeedModule.class, null);
+    
+    
+    /**
+     * Ordered list of url canonicalization rules.  Rules are applied in the 
+     * order listed from top to bottom.
+     */
+    @Immutable
+    final public static Key<List<CanonicalizationRule>> RULES = 
+        Key.makeList(CanonicalizationRule.class);
+    
+    @Immutable
+    final public static Key<SheetManager> MANAGER =
+        Key.make(SheetManager.class, null);
+
+    
 
     /**
      * Defines how to assign URIs to queues. Can assign by host, by ip, and into
      * one of a fixed set of buckets (1k).
      */
-    @Dependency
+    @Immutable
     final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
         Key.make(QueueAssignmentPolicy.class, null);
     
@@ -228,16 +257,23 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @param name Name of this frontier.
      * @param description Description for this frontier.
      */
-    public AbstractFrontier(CrawlController c, QueueAssignmentPolicy qap) throws IOException {
-        this.controller = c;
-        c.addCrawlStatusListener(this);
-        if (get(RECOVERY_LOG_ENABLED)) {
-            initJournal(controller.getLogsDir().getAbsolutePath());            
+    public AbstractFrontier() {
+    }
+
+    
+    public void initialTasks(StateProvider provider) {
+        this.global = provider;
+        this.controller = provider.get(this, CONTROLLER);
+        this.loggerModule = provider.get(this, LOGGER_MODULE);
+        this.queueAssignmentPolicy = provider.get(this, QUEUE_ASSIGNMENT_POLICY);
+        this.manager = provider.get(this, MANAGER);
+        if (provider.get(this, RECOVERY_LOG_ENABLED)) try {
+            initJournal(loggerModule.getLogsDir().getAbsolutePath());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
-        queueAssignmentPolicy = qap;
         pause();
     }
-    
     
     private void initJournal(String logsDisk) throws IOException {
         if (logsDisk != null) {
@@ -249,8 +285,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     
     
     public <T> T get(Key<T> key) {
-        Sheet sheet = controller.getSheetManager().getDefault();
-        return sheet.get(this, key);
+        return global.get(this, key);
     }
 
     public void start() {
@@ -272,21 +307,6 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         notifyAll();
     }
 
-    /*
-    public void initialize(CrawlController c)
-            throws FatalConfigurationException, IOException {
-        c.addCrawlStatusListener(this);
-        File logsDisk = null;
-        logsDisk = c.getLogsDir();
-        if (logsDisk != null) {
-            String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
-            if (get(RECOVERY_LOG_ENABLED)) {
-                this.recover = new RecoveryJournal(logsPath,
-                    FrontierJournal.LOGNAME_RECOVER);
-            }
-        }
-        queueAssignmentPolicy = get(QUEUE_ASSIGNMENT_POLICY);
-    }*/
 
     synchronized public void terminate() {
         shouldTerminate = true;
@@ -444,7 +464,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         Writer ignoredWriter = new StringWriter();
         logger.info("beginning");
         // Get the seeds to refresh.
-        Iterator iter = this.controller.getScope().seedsIterator(ignoredWriter);
+        Iterator iter = global.get(this, SEEDS).seedsIterator(ignoredWriter);
         int count = 0; 
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
@@ -497,8 +517,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             curi = CrawlURI.from(caUri, nextOrdinal++);
         }
         curi.setClassKey(getClassKey(curi));
-        StateProvider settings = controller.findConfig(caUri.getUURI());
-        curi.setStateProvider(settings);
+        curi.setStateProvider(manager);
         return curi;
     }
 
@@ -558,7 +577,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             // This is a feature. This is handling for case where a seed
             // gets immediately redirected to another page. What we're doing is
             // treating the immediate redirect target as a seed.
-            this.controller.getScope().addSeed(curi);
+            global.get(this, SEEDS).addSeed(curi);
             // And it needs rapid scheduling.
 	    if (curi.getSchedulingDirective() == CandidateURI.NORMAL)
                 curi.setSchedulingDirective(CandidateURI.MEDIUM);
@@ -726,10 +745,12 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      */
     protected void logLocalizedErrors(CrawlURI curi) {
         if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
-        	Collection<Throwable> x = curi.getNonFatalFailures();
-        	for (Throwable e: x) {
-        		controller.localErrors.log(Level.WARNING, curi.toString(), new Object[] { curi, e });
-        	}
+            Collection<Throwable> x = curi.getNonFatalFailures();
+            Logger le = loggerModule.getLocalErrors();
+            for (Throwable e : x) {
+                le.log(Level.WARNING, curi.toString(), 
+                        new Object[] { curi, e });
+            }
             // once logged, discard
             curi.getData().remove(A_LOCALIZED_ERRORS);
         }
@@ -793,7 +814,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected void log(CrawlURI curi) {
         curi.aboutToLog();
         Object array[] = {curi};
-        this.controller.uriProcessing.log(Level.INFO,
+        this.loggerModule.getUriProcessing().log(Level.INFO,
                 curi.getUURI().toString(), array);
     }
 
@@ -862,10 +883,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        StateProvider def = controller.getSheetManager().getDefault();
-        List<CanonicalizationRule> rules = 
-            controller.getOrderSetting(CrawlOrder.RULES);
-        return Canonicalizer.canonicalize(def, uuri.toString(), rules);
+        List<CanonicalizationRule> rules = global.get(this, RULES);
+        return Canonicalizer.canonicalize(global, uuri.toString(), rules);
     }
 
     /**
@@ -971,7 +990,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         boolean recoveryLogEnabled = get(RECOVERY_LOG_ENABLED);
         out.writeBoolean(recoveryLogEnabled);
         if (recoveryLogEnabled) {
-            out.writeUTF(controller.getLogsDir().getAbsolutePath());
+            out.writeUTF(loggerModule.getLogsDir().getAbsolutePath());
         }
     }
     
@@ -993,5 +1012,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     }
     
     
+    protected void setStateProvider(CandidateURI curi) {
+        StateProvider p = curi.getStateProvider();
+        if (p == null) {
+            curi.setStateProvider(manager);
+        }
+    }
     
 }

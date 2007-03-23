@@ -26,7 +26,6 @@ package org.archive.crawler.scope;
 
 import org.archive.crawler.datamodel.CandidateURI;
 //import org.archive.crawler.filter.OrFilter;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
@@ -84,8 +83,8 @@ public class ClassicScope extends CrawlScope {
     final public static Key<DecideRuleSequence> EXCLUDE_RULES = 
         Key.make(new DecideRuleSequence());
 
-    public ClassicScope(CrawlController c) {
-        super(c);
+    public ClassicScope() {
+        super();
         // Try to preserve the values of these attributes when we exchange
         // scopes.
         // FIXME: What?

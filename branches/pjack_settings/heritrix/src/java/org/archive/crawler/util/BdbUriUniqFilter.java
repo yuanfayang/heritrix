@@ -33,8 +33,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Dependency;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 import st.ata.util.FPGenerator;
 
@@ -67,8 +69,8 @@ import com.sleepycat.je.OperationStatus;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class BdbUriUniqFilter
-extends SetBasedUriUniqFilter implements Serializable {
+public class BdbUriUniqFilter extends SetBasedUriUniqFilter 
+implements Initializable, Serializable {
     private static final long serialVersionUID = -8099357538178524011L;
 
     private static Logger logger =
@@ -86,31 +88,23 @@ extends SetBasedUriUniqFilter implements Serializable {
     private static final String COLON_SLASH_SLASH = "://";
     
     
-    @Dependency
+    @Immutable
     public static final Key<BdbModule> BDB = 
         Key.make(BdbModule.class, null);
     
     
     private BdbModule bdb;
     
-    /**
-     * Shutdown default constructor.
-     */
-	protected BdbUriUniqFilter() {
-		super();
-	}
-
-        
-    public BdbUriUniqFilter(BdbModule bdb) 
-    throws IOException {
-        super();
-        this.bdb = bdb;
+    public BdbUriUniqFilter() {
+    }
+    
+    
+    public void initialTasks(StateProvider provider) {
+        this.bdb = provider.get(this, BDB);
         try {
             initialize(bdb.getEnvironment());
         } catch (DatabaseException e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
+            throw new IllegalStateException(e);
         }
     }
     

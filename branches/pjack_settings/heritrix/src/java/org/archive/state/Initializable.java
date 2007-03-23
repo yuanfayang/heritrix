@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,35 +17,21 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ExampleInvalidDependency1.java
- * Created on January 8, 2007
+ * Initializable.java
  *
- * $Header$
+ * Created on Mar 16, 2007
+ *
+ * $Id:$
  */
 package org.archive.state;
 
-
 /**
- * An example of an invalid module.  It's invalid because it defines no
- * dependencies, but provides a constructor that needs a module.
- *  
- * <p>This class really only exists for unit testing purposes.  FIXME:
- * We really need a separate test source directory for this sort of thing.
- *
  * @author pjack
+ *
  */
-public class ExampleInvalidDependency3 {
-
-    
-    final public static Key<ExampleConcreteProcessor> X = 
-        Key.make(new ExampleConcreteProcessor());
-    
-    static {
-        KeyManager.addKeys(ExampleInvalidDependency3.class);
-    }
+public interface Initializable {
     
     
-    public ExampleInvalidDependency3(ExampleConcreteProcessor x) {
-    }
+    void initialTasks(StateProvider provider);
 
 }

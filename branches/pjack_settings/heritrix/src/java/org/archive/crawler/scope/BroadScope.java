@@ -23,7 +23,6 @@
  */
 package org.archive.crawler.scope;
 
-import org.archive.crawler.framework.CrawlController;
 
 
 /**
@@ -56,8 +55,8 @@ public class BroadScope extends ClassicScope {
     /**
      * Constructor.
      */
-    public BroadScope(CrawlController c) {
-        super(c);
+    public BroadScope() {
+        super();
     }
 
 

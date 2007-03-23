@@ -23,9 +23,13 @@
  */
 package org.archive.settings.file;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.archive.settings.path.PathChange;
 import org.archive.state.KeyTypes;
@@ -163,6 +167,7 @@ public class SettingsSAX extends DefaultHandler {
     public void endElement(String uri, String local, String tag) 
     throws SettingsSAXException {
         if (tag.equals(ROOT)) {
+            
             return;
         }
         if (tag.equals(DEPENDENCIES)) {
@@ -246,6 +251,20 @@ public class SettingsSAX extends DefaultHandler {
             throw new SettingsSAXException(tag + " requires a " + VALUE +
                     " attribute.");
         }        
+    }
+
+    
+    public static void main(String args[]) throws Exception {
+        SettingsSAX sax = new SettingsSAX(new PathChangeListener() {
+            public void change(PathChange p) {
+                System.out.println(p.getPath() + "=" + p.getType() + ":" + p.getValue());
+            }
+        });
+        
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        SAXParser parser = factory.newSAXParser();
+        String path = "testdata/selftest/AuthSelfTest/profile/sheets/default.single";
+        parser.parse(new File(path), sax);
     }
 
 }

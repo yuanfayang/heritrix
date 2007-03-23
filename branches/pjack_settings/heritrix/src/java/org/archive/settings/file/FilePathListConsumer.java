@@ -14,9 +14,32 @@ public class FilePathListConsumer implements PathListConsumer {
 
     final Writer writer;
     
+    private char sheetsDelim = '\t';
+    private char pathDelim = '=';
+    private char typeDelim = ':';
+    private boolean includeSheets = false;
     
     public FilePathListConsumer(Writer writer) {
         this.writer = writer;
+    }
+    
+    
+    public void setIncludeSheets(boolean b) {
+        this.includeSheets = b;
+    }
+    
+    public void setSheetsDelim(char ch) {
+        this.sheetsDelim = ch;
+    }
+    
+    
+    public void setPathDelim(char ch) {
+        this.pathDelim = ch;
+    }
+    
+    
+    public void setTypeDelim(char ch) {
+        this.typeDelim = ch;
     }
     
     
@@ -35,16 +58,16 @@ public class FilePathListConsumer implements PathListConsumer {
         StringBuilder sb = new StringBuilder();
         writeHeader(sb, path, sheets);
         if (value == null) {
-            sb.append("reference:null");
+            sb.append("reference").append(typeDelim).append("null");
         } else if (KeyTypes.isSimple(value.getClass())) {
             String tag = KeyTypes.getSimpleTypeTag(value.getClass());
             String s = KeyTypes.toString(value);
-            sb.append(tag).append('\t').append(s);
+            sb.append(tag).append(typeDelim).append(s);
         } else if (seen != null) {
-            sb.append("reference").append('\t').append(seen);
+            sb.append("reference").append(typeDelim).append(seen);
         } else {
             Class c = Offline.getType(value);
-            sb.append("object").append('\t').append(c.getName());
+            sb.append("object").append(typeDelim).append(c.getName());
         }
         sb.append('\n');
         writer.write(sb.toString());
@@ -52,11 +75,14 @@ public class FilePathListConsumer implements PathListConsumer {
     
     
     private void writeHeader(StringBuilder sb, String path, List<Sheet> sheets) {
-        sb.append(sheets.get(0).getName());
-        for (int i = 1; i < sheets.size(); i++) {
-            sb.append(',').append(sheets.get(i).getName());
+        if (includeSheets) {
+            sb.append(sheets.get(0).getName());
+            for (int i = 1; i < sheets.size(); i++) {
+                sb.append(',').append(sheets.get(i).getName());
+            }
+            sb.append(sheetsDelim);
         }
-        sb.append('\t').append(path).append('\t');
+        sb.append(path).append(pathDelim);
     }
 
 }

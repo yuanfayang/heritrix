@@ -46,7 +46,7 @@ public class FrontierSchedulerTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new FrontierScheduler(new EmptyFrontier());
+        return new FrontierScheduler();
     }
     
     

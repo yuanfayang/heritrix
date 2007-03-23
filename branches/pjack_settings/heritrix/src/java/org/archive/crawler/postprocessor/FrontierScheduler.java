@@ -33,8 +33,9 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.frontier.EmptyFrontier;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
-import org.archive.state.Dependency;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -51,22 +52,24 @@ implements FetchStatusCodes {
     private static final long serialVersionUID = -3L;
 
     
-    final Frontier frontier;
+    Frontier frontier;
 
     
     /**
      * The frontier to use.
      */
-    @Dependency
+    @Immutable
     final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, 
             new EmptyFrontier());
 
     /**
      */
-    public FrontierScheduler(Frontier frontier) {
-        this.frontier = frontier;
+    public FrontierScheduler() {
     }
 
+    public void initialTasks(StateProvider provider) {
+        this.frontier = provider.get(this, FRONTIER);
+    }
     
     protected boolean shouldProcess(ProcessorURI puri) {
         return puri instanceof CrawlURI;

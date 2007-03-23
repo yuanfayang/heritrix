@@ -26,7 +26,6 @@ package org.archive.crawler.prefetch;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
@@ -87,8 +86,8 @@ implements FetchStatusCodes {
     /**
      * Constructor.
      */
-    public Preselector(CrawlController controller) {
-        super(controller);
+    public Preselector() {
+        super();
     }
 
     

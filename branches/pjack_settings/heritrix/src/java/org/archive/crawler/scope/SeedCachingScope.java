@@ -47,8 +47,8 @@ public class SeedCachingScope extends ClassicScope {
     //    Logger.getLogger(SeedCachingScope.class.getName());
     List<UURI> seeds = null; 
 
-    public SeedCachingScope(CrawlController c) {
-        super(c);
+    public SeedCachingScope() {
+        super();
     }
 
     /* (non-Javadoc)

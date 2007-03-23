@@ -25,7 +25,6 @@ package org.archive.crawler.deciderules;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
@@ -58,8 +57,8 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * Constructor.
      * @param name
      */
-    public ScopePlusOneDecideRule(CrawlController c) {
-        super(c);
+    public ScopePlusOneDecideRule() {
+        super();
     }
 
     /**

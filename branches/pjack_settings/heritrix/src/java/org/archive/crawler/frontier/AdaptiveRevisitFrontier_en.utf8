@@ -1,3 +1,20 @@
+bdb-description:
+The bdb module to use for the frontier.
+
+
+controller-description:
+The crawl controller.
+
+
+seeds-description:
+The seeds module used to prepare the seeds for crawling.
+
+
+uri-uniq-filter-description:
+The UriUniqFilter implementation used to determine if a URI has already been
+fetched.
+
+
 delay-factor-description:
 How many multiples of last fetch elapsed time to wait before recontacting 
 same server 

@@ -31,18 +31,21 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.settings.RecoverAction;
+import org.archive.settings.file.BdbModule;
 import org.archive.settings.file.Checkpointable;
+import org.archive.state.Immutable;
+import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
+import com.sleepycat.collections.StoredIterator;
 import com.sleepycat.je.DatabaseException;
 
 /**
@@ -63,9 +66,16 @@ implements Serializable, Checkpointable {
     /** all URIs scheduled to be crawled */
     protected transient BdbMultipleWorkQueues pendingUris;
 
+    @Immutable
+    final public static Key<BdbModule> BDB = Key.make(BdbModule.class, null);
+
     static {
         KeyManager.addKeys(BdbFrontier.class);
     }
+
+    
+    private BdbModule bdb;
+    
     
     /**
      * Create the single object (within which is one BDB database)
@@ -76,8 +86,8 @@ implements Serializable, Checkpointable {
      */
     private BdbMultipleWorkQueues createMultipleWorkQueues(boolean recycle)
     throws DatabaseException {
-        return new BdbMultipleWorkQueues(this.controller.getBdbEnvironment(),
-            this.controller.getClassCatalog(),
+        return new BdbMultipleWorkQueues(bdb.getEnvironment(),
+            bdb.getClassCatalog(),
             recycle);
     }
 
@@ -176,13 +186,16 @@ implements Serializable, Checkpointable {
     /**
      * Constructor.
      */
-    public BdbFrontier(CrawlController c,
-            QueueAssignmentPolicy qap,
-            UriUniqFilter alreadySeen)
-    throws FatalConfigurationException, IOException {
-        super(c, qap, alreadySeen);
+    public BdbFrontier() {
+        super();
     }
 
+    
+    public void initialTasks(StateProvider p) {
+        this.bdb = p.get(this, BDB);
+        super.initialTasks(p);
+    }
+    
     public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
     throws IOException {
         logger.fine("Started syncing already seen as part "
@@ -195,4 +208,20 @@ implements Serializable, Checkpointable {
         logger.fine("Finished syncing already seen as part of checkpoint.");
     }
 
+    
+    @Override
+    protected void initAllQueues() throws DatabaseException {
+        this.allQueues = bdb.getBigMap("allqueues",
+                String.class, WorkQueue.class);
+        if (logger.isLoggable(Level.FINE)) {
+            Iterator i = this.allQueues.keySet().iterator();
+            try {
+                for (; i.hasNext();) {
+                    logger.fine((String) i.next());
+                }
+            } finally {
+                StoredIterator.close(i);
+            }
+        }
+    }
 }

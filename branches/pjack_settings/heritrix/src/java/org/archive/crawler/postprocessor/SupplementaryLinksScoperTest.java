@@ -46,7 +46,7 @@ public class SupplementaryLinksScoperTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new SupplementaryLinksScoper(controller);
+        return new SupplementaryLinksScoper();
     }
     
     

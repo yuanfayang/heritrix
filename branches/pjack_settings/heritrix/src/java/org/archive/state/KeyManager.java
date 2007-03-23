@@ -24,18 +24,11 @@
 package org.archive.state;
 
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -115,21 +108,7 @@ final public class KeyManager {
         
         // Construct new map of superclass keys.
         Map<String,Key<Object>> discovered = new HashMap<String,Key<Object>>();
-        discovered.putAll(getKeys(c.getSuperclass()));
-        
-        // Remember dependencies for later processing.
-        Map<Class,Key<Object>> dependencies = new HashMap<Class,Key<Object>>();
-
-        // Pre-populate dependencies with superclass's dependencies.
-        List<Key<Object>> superDeps;
-        if (c.getSuperclass() != null) {
-            superDeps = getDependencyKeys(c.getSuperclass());
-        } else {
-            superDeps = Collections.emptyList();
-        }
-        for (Key<Object> k: superDeps) {
-            dependencies.put(k.getType(), k);
-        }
+        discovered.putAll(getKeys(c.getSuperclass()));        
         
         // Add keys declared by given class
         for (Field field: c.getDeclaredFields()) {
@@ -141,55 +120,13 @@ final public class KeyManager {
                 if (old != null) {
                     throw new DuplicateKeyException("duplicate key: " + name);
                 }
-                if (k.isDependency()) {
-                    old = dependencies.put(k.getType(), k);
-                    if (old != null) {
-                        throw new DependencyException("duplicate dependency: " 
-                                + k.getType());
-                    }
-                }
             }
         }
-
-        // Verify that there is a constructor that satisfies all the
-        // marked dependencies.
-        Constructor cons = depCons(c, dependencies.keySet());
-        
-        // Figure out which Dependency keys match which parameters in the
-        // constructor.
-        List<Key<Object>> depConsParams = depConsParams(cons, dependencies);
                 
         // Store the key-related data for the class for future reference
         discovered = Collections.unmodifiableMap(discovered);
-        kmd = new KeyManagerData(discovered, cons, depConsParams);
+        kmd = new KeyManagerData(discovered);
         keys.put(c, kmd);
-    }
-
-    
-    private static List<Key<Object>> depConsParams(Constructor cons, 
-            Map<Class,Key<Object>> dependencies) {
-        if (cons == null) {
-            // An abstract class won't have a dependency constructor,
-            // but we need to remember its dependency keys in case subclasses
-            // need them.  Since the constructor doesn't matter for an 
-            // abstract class, the dependency keys can be returned in any
-            // order.
-            List<Key<Object>> result = new ArrayList<Key<Object>>();
-            result.addAll(dependencies.values());
-            return Collections.unmodifiableList(result);
-        }
-        List<Key<Object>> depConsParams;
-        Class[] ptypes = cons.getParameterTypes();
-        if (ptypes.length == 0) {
-            depConsParams = Collections.emptyList();
-        } else {
-            depConsParams = new ArrayList<Key<Object>>(ptypes.length);
-            for (Class pt: ptypes) {
-                depConsParams.add(dependencies.get(pt));
-            }
-            depConsParams = Collections.unmodifiableList(depConsParams);
-        }
-        return depConsParams;
     }
     
 
@@ -293,78 +230,6 @@ final public class KeyManager {
             // This is impossible by contract.
             throw new AssertionError();
         }
-    }
-
-    
-
-    /**
-     * Returns the constructor that satisfies the given class's dependencies.
-     * 
-     * @param c
-     * @return
-     */
-    public static Constructor getDependencyConstructor(Class c) {
-        KeyManagerData kmd = lookup(c);
-        if (kmd != null) {
-            return kmd.depCons;
-        }
-        
-        try {
-            return c.getConstructor();
-        } catch (NoSuchMethodException e) {
-            throw new DependencyException(c.getName() + " does not define "
-                    + " a public, no-argument constructor.");
-        }
-    }
-    
-    
-    public static List<Key<Object>> getDependencyKeys(Class c) {
-        KeyManagerData kmd = lookup(c);
-        if (kmd != null) {
-            return kmd.depConsParams;
-        }
-        
-        return Collections.emptyList();
-    }
-
-    
-    private static Constructor depCons(Class c, Set<Class> params) {
-        if (Modifier.isAbstract(c.getModifiers())) {
-            return null;
-        }
-        
-        if (params.isEmpty()) {
-            try {
-                return c.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw new DependencyException(c.getName() + " requires " +
-                    "a no-argument constructor since it has no dependencies.");
-            }
-        }
-                
-        List<Constructor> results = new LinkedList<Constructor>();
-        for (Constructor cons: c.getConstructors()) {
-            if (isDepCons(cons, params)) {
-                results.add(cons);
-            }
-        }
-        switch (results.size()) {
-            case 0:
-                throw new DependencyException(c.getName() + " does not " 
-                    + " define a constructor that satisfies its dependencies.");
-            case 1:
-                return results.get(0);
-            default:
-                throw new DependencyException(c.getName() + " defines more "
-                    + "than one constructor that satisfies its dependencies.");
-        }
-    }
-
-    
-    private static boolean isDepCons(Constructor c, Set<Class> params) {
-        HashSet<Class> formal = new HashSet<Class>();
-        formal.addAll(Arrays.asList(c.getParameterTypes()));
-        return formal.equals(params);
     }
 
 

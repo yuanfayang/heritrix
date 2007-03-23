@@ -24,12 +24,7 @@
  */
 package org.archive.crawler.framework;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -38,24 +33,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.writer.EmptyMetadataProvider;
 import org.archive.crawler.writer.MetadataProvider;
 import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
+import org.archive.processors.DirectoryModule;
+import org.archive.processors.ProcessResult;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
-import org.archive.settings.CheckpointRecovery;
+import org.archive.processors.util.ServerCache;
+import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.RecoverAction;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 /**
@@ -64,12 +62,11 @@ import org.archive.state.StateProvider;
  * @author Parker Thompson
  * @author stack
  */
-public abstract class WriterPoolProcessor extends CrawlerProcessor
-implements CoreAttributeConstants {
+public abstract class WriterPoolProcessor extends Processor {
     
     
-    private static final Logger logger = 
-        Logger.getLogger(WriterPoolProcessor.class.getName());
+//    private static final Logger logger = 
+//        Logger.getLogger(WriterPoolProcessor.class.getName());
 
 
     /**
@@ -146,7 +143,20 @@ implements CoreAttributeConstants {
     @Immutable
     final public static Key<MetadataProvider> METADATA_PROVIDER = 
         Key.make(MetadataProvider.class, new EmptyMetadataProvider());
+    
+    @Immutable
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.make(ServerCache.class, null);
 
+    @Immutable
+    final public static Key<DirectoryModule> DIRECTORY =
+        Key.make(DirectoryModule.class, null);
+    
+    
+    static {
+        KeyManager.addKeys(WriterPoolProcessor.class);
+    }
+    
     /**
      * Reference to pool.
      */
@@ -158,6 +168,8 @@ implements CoreAttributeConstants {
     private long totalBytesWritten = 0;
 
     
+    private ServerCache serverCache;
+    private DirectoryModule directory;
     private WriterPoolSettings settings;
     private int maxActive;
     private int maxWait;
@@ -168,8 +180,8 @@ implements CoreAttributeConstants {
      * @param name Name of this processor.
      * @param description Description for this processor.
      */
-    public WriterPoolProcessor(CrawlController controller) {
-        super(controller);
+    public WriterPoolProcessor() {
+        super();
     }
 
 
@@ -177,6 +189,8 @@ implements CoreAttributeConstants {
     public synchronized void initialTasks(StateProvider context) {
         // Add this class to crawl state listeners and setup pool.
 //        controller.addCrawlStatusListener(this);
+        this.serverCache = context.get(this, SERVER_CACHE);
+        this.directory = context.get(this, DIRECTORY);
         this.maxActive = context.get(this, POOL_MAX_ACTIVE);
         this.maxWait = context.get(this, POOL_MAX_WAIT);
         this.settings = getWriterPoolSettings(context);
@@ -199,18 +213,20 @@ implements CoreAttributeConstants {
     protected abstract void setupPool(final AtomicInteger serial);
 
     
-    protected void checkBytesWritten(StateProvider context) {
+    protected ProcessResult checkBytesWritten(StateProvider context) {
         long max = context.get(this, TOTAL_BYTES_TO_WRITE);
         if (max <= 0) {
-            return;
+            return ProcessResult.PROCEED;
         }
         if (max <= this.totalBytesWritten) {
-            controller.requestCrawlStop(CrawlStatus.FINISHED_WRITE_LIMIT);
+            return ProcessResult.FINISH; // FIXME: Specify reason
+//            controller.requestCrawlStop(CrawlStatus.FINISHED_WRITE_LIMIT);
         }
+        return ProcessResult.PROCEED;
     }
     
     protected String getHostAddress(CrawlURI curi) {
-        CrawlHost h = getHostFor(curi);
+        CrawlHost h = ServerCacheUtil.getHostFor(serverCache, curi.getUURI());
         if (h == null) {
             throw new NullPointerException("Crawlhost is null for " +
                 curi + " " + curi.getVia());
@@ -371,10 +387,8 @@ implements CoreAttributeConstants {
         List<String> list = context.get(this, getPathKey());
         ArrayList<File> results = new ArrayList<File>();
         for (String path: list) {
-            File f = new File(path);
-            if (!f.isAbsolute()) {
-                f = new File(controller.getDisk(), path);
-            }
+            String p = directory.toAbsolutePath(path);
+            File f = new File(p);
             if (!f.exists()) {
                 try {
                     f.mkdirs();
@@ -422,5 +436,14 @@ implements CoreAttributeConstants {
         return km.toKey();
     }
 
+    
+    @Override
+    protected void innerProcess(ProcessorURI puri) {
+        throw new AssertionError();
+    }
+    
+    
+    @Override
+    protected abstract ProcessResult innerProcessResult(ProcessorURI uri);
     
 }

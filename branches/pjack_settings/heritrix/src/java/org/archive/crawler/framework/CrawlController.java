@@ -31,16 +31,12 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EventObject;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.FileHandler;
-import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,8 +47,6 @@ import javax.management.Notification;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.openmbeans.annotations.Bean;
@@ -62,43 +56,30 @@ import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.io.LocalErrorFormatter;
-import org.archive.crawler.io.RuntimeErrorFormatter;
-import org.archive.crawler.io.StatisticsLogFormatter;
-import org.archive.crawler.io.UriErrorFormatter;
-import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.crawler.url.CanonicalizationRule;
-import org.archive.crawler.util.CheckpointUtils;
-import org.archive.io.GenerationFileHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.DefaultDirectoryModule;
+import org.archive.processors.DirectoryModule;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.RecoverAction;
+import org.archive.settings.ListModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.BdbModule;
-import org.archive.settings.file.Checkpointable;
-import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
-import org.archive.surt.SURTTokenizer;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.FileUtils;
 import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
-
-import com.sleepycat.bind.serial.StoredClassCatalog;
-import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -113,7 +94,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Gordon Mohr
  */
 public class CrawlController extends Bean 
-implements Serializable, Reporter, StateProvider, Checkpointable {
+implements Serializable, Reporter, StateProvider, Initializable, 
+DirectoryModule {
+ 
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlController.class,1);
@@ -163,27 +146,26 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
     final public static Key<CredentialStore> CREDENTIAL_STORE = 
         Key.make(new CredentialStore());
 
-    
-    @Expert @Immutable
-    final public static Key<CrawlScope> SCOPE = 
-        Key.make(CrawlScope.class, null);
 
-    
     final public static Key<Map<String,Processor>> PROCESSORS =
         Key.makeMap(Processor.class);
 
     
-    @Dependency
+    @Immutable
     final public static Key<CrawlOrder> ORDER = Key.make(new CrawlOrder());
     
     
-    @Dependency
+    @Immutable
     final public static Key<SheetManager> SHEET_MANAGER = 
         Key.make(SheetManager.class, null);
+
     
-    @Dependency
-    final public static Key<BdbModule> BDB =
-        Key.make(BdbModule.class, null);
+    @Immutable
+    final public static Key<StatisticsTracker> STATISTICS_TRACKER = 
+        Key.make(StatisticsTracker.class, null);
+    
+    final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
+        Key.make(CrawlerLoggerModule.class, null);
     
     static {
         KeyManager.addKeys(CrawlController.class);
@@ -197,21 +179,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
     private final static Logger LOGGER =
         Logger.getLogger(CrawlController.class.getName());
 
-    // manifest support
-    /** abbrieviation label for config files in manifest */
-    public static final char MANIFEST_CONFIG_FILE = 'C';
-    /** abbrieviation label for report files in manifest */
-    public static final char MANIFEST_REPORT_FILE = 'R';
-    /** abbrieviation label for log files in manifest */
-    public static final char MANIFEST_LOG_FILE = 'L';
-
-    // key log names
-    private static final String LOGNAME_PROGRESS_STATISTICS =
-        "progress-statistics";
-    private static final String LOGNAME_URI_ERRORS = "uri-errors";
-    private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
-    private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
-    private static final String LOGNAME_CRAWL = "crawl";
 
     // key subcomponents which define and implement a crawl in progress
     //private transient CrawlOrder order;
@@ -230,6 +197,8 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      */
     private SheetManager sheetManager;
 
+    private CrawlerLoggerModule loggerModule;
+    
     // Used to enable/disable single-threaded operation after OOM
     private volatile transient boolean singleThreadMode = false; 
     private ReentrantLock singleThreadLock = null;
@@ -251,22 +220,11 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         NASCENT, RUNNING, PAUSED, PAUSING, CHECKPOINTING, 
         STOPPING, FINISHED, STARTED, PREPARING 
     }
-/*
-    private static final Object NASCENT = "NASCENT".intern();
-    private static final Object RUNNING = "RUNNING".intern();
-    private static final Object PAUSED = "PAUSED".intern();
-    private static final Object PAUSING = "PAUSING".intern();
-    private static final Object CHECKPOINTING = "CHECKPOINTING".intern();
-    private static final Object STOPPING = "STOPPING".intern();
-    private static final Object FINISHED = "FINISHED".intern();
-    private static final Object STARTED = "STARTED".intern();
-    private static final Object PREPARING = "PREPARING".intern();
-*/
+
     transient private State state = State.NASCENT;
 
     // disk paths
     transient private File disk;        // overall disk path
-    transient private File logsDisk;    // for log files
     
     /**
      * For temp files representing state of crawler (eg queues)
@@ -290,18 +248,8 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      */
     private Checkpointer checkpointer;
     
-    // Would be final but for Serialization
     private CrawlOrder order;
 
-    // Would be final but for Serialization
-    private BdbModule bdb;
-
-    
-    /**
-     * Gets set to checkpoint we're in recovering if in checkpoint recover
-     * mode.  Gets setup by {@link #getCheckpointRecover()}.
-     */
-    private transient Checkpoint checkpointRecover = null;
 
     // crawl limits
     private long maxBytes;
@@ -314,68 +262,12 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      */
     transient private StringBuffer manifest;
 
-    /**
-     * Record of fileHandlers established for loggers,
-     * assisting file rotation.
-     */
-    transient private Map<Logger,FileHandler> fileHandlers;
 
-    /** suffix to use on active logs */
-    public static final String CURRENT_LOG_SUFFIX = ".log";
 
-    /**
-     * Crawl progress logger.
-     *
-     * No exceptions.  Logs summary result of each url processing.
-     */
-    public transient Logger uriProcessing;
-
-    /**
-     * This logger contains unexpected runtime errors.
-     *
-     * Would contain errors trying to set up a job or failures inside
-     * processors that they are not prepared to recover from.
-     */
-    public transient Logger runtimeErrors;
-
-    /**
-     * This logger is for job-scoped logging, specifically errors which
-     * happen and are handled within a particular processor.
-     *
-     * Examples would be socket timeouts, exceptions thrown by extractors, etc.
-     */
-    public transient Logger localErrors;
-
-    /**
-     * Special log for URI format problems, wherever they may occur.
-     */
-    public transient Logger uriErrors;
-
-    /**
-     * Statistics tracker writes here at regular intervals.
-     */
-    private transient Logger progressStats;
-
-    /**
-     * Logger to hold job summary report.
-     *
-     * Large state reports made at infrequent intervals (e.g. job ending) go
-     * here.
-     */
-    public transient Logger reports;
 
     protected StatisticsTracking statistics = null;
 
-    /**
-     * List of crawl status listeners.
-     *
-     * All iterations need to synchronize on this object if they're to avoid
-     * concurrent modification exceptions.
-     * See {@link java.util.Collections#synchronizedList(List)}.
-     */
-    private List<CrawlStatusListener> registeredCrawlStatusListeners =
-        Collections.synchronizedList(new ArrayList<CrawlStatusListener>());
-    
+
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
     private transient CrawlURIDispositionListener
@@ -388,12 +280,14 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
 
     
 
-    public CrawlController(SheetManager manager, CrawlOrder order, 
-            BdbModule environment) 
-    throws InitializationException {
-        this.sheetManager = manager;
-        this.order = order;
-        this.bdb = environment;
+    public CrawlController() {
+    }
+    
+    public void initialTasks(StateProvider provider) {        
+        this.sheetManager = provider.get(this, SHEET_MANAGER);
+        this.order = provider.get(this, ORDER);
+        this.statistics = provider.get(this, STATISTICS_TRACKER);
+        this.loggerModule = provider.get(this, LOGGER_MODULE);
         sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
 
         this.singleThreadLock = new ReentrantLock();
@@ -413,9 +307,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             if (disk == null) {
                 setupDisk();
             }
-
-            onFailMessage = "Unable to create log file(s)";
-            setupLogs();
             
             // Figure if we're to do a checkpoint restore. If so, get the
             // checkpointRecover instance and then put into place the old bdb
@@ -433,27 +324,27 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             // than object serialization restoring settings because they'll
             // have already been constructed when comes time for object to ask
             // if its to recover itself. See ARCWriterProcessor for example.
-            onFailMessage = "Unable to test/run checkpoint recover";
-            this.checkpointRecover = getCheckpointRecover();
-            if (this.checkpointRecover == null) {
-                this.checkpointer =
-                    new Checkpointer(this, this.checkpointsDisk);
-            } else {
-                setupCheckpointRecover();
-            }
-            
-            onFailMessage = "Unable to setup bdb environment.";
-            
-            onFailMessage = "Unable to setup statistics";
-            //setupStatTracking();
-            
-            onFailMessage = "Unable to setup crawl modules";
-            setupCrawlModules();
+//            onFailMessage = "Unable to test/run checkpoint recover";
+//            this.checkpointRecover = getCheckpointRecover();
+//            if (this.checkpointRecover == null) {
+//                this.checkpointer =
+//                    new Checkpointer(this, this.checkpointsDisk);
+//            } else {
+//                setupCheckpointRecover();
+//            }
+//            
+//            onFailMessage = "Unable to setup bdb environment.";
+//            
+//            onFailMessage = "Unable to setup statistics";
+//            setupStatTracking();
+//            
+//            onFailMessage = "Unable to setup crawl modules";
+//            setupCrawlModules();
         } catch (Exception e) {
             String tmp = "On crawl: " + sheetManager.getCrawlName() + " " +
                 onFailMessage;
             LOGGER.log(Level.SEVERE, tmp, e);
-            throw new InitializationException(tmp, e);
+            throw new IllegalStateException(tmp, e);
         }
 
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
@@ -482,57 +373,45 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      * Copies bdb log files into state dir.
      * @throws IOException
      */
-    protected void setupCheckpointRecover()
-    throws IOException {
-        long started = System.currentTimeMillis();;
-        if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine("Starting recovery setup -- copying into place " +
-                "bdbje log files -- for checkpoint named " +
-                this.checkpointRecover.getDisplayName());
-        }
-        // Mark context we're in a recovery.
-        this.checkpointer.recover(this);
-        this.progressStats.info("CHECKPOINT RECOVER " +
-            this.checkpointRecover.getDisplayName());
-        // Copy the bdb log files to the state dir so we don't damage
-        // old checkpoint.  If thousands of log files, can take
-        // tens of minutes (1000 logs takes ~5 minutes to java copy,
-        // dependent upon hardware).  If log file already exists over in the
-        // target state directory, we do not overwrite -- we assume the log
-        // file in the target same as one we'd copy from the checkpoint dir.
-        File bdbSubDir = CheckpointUtils.
-            getBdbSubDirectory(this.checkpointRecover.getDirectory());
-        FileUtils.copyFiles(bdbSubDir, CheckpointUtils.getJeLogsFilter(),
-            getStateDisk(), true,
-            false);
-        if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.info("Finished recovery setup for checkpoint named " +
-                this.checkpointRecover.getDisplayName() + " in " +
-                (System.currentTimeMillis() - started) + "ms.");
-        }
-    }
+//    protected void setupCheckpointRecover()
+//    throws IOException {
+//        long started = System.currentTimeMillis();;
+//        if (LOGGER.isLoggable(Level.FINE)) {
+//            LOGGER.fine("Starting recovery setup -- copying into place " +
+//                "bdbje log files -- for checkpoint named " +
+//                this.checkpointRecover.getDisplayName());
+//        }
+//        // Mark context we're in a recovery.
+//        this.checkpointer.recover(this);
+//        this.loggerModule.getProgressStats().info("CHECKPOINT RECOVER " +
+//            this.checkpointRecover.getDisplayName());
+//        // Copy the bdb log files to the state dir so we don't damage
+//        // old checkpoint.  If thousands of log files, can take
+//        // tens of minutes (1000 logs takes ~5 minutes to java copy,
+//        // dependent upon hardware).  If log file already exists over in the
+//        // target state directory, we do not overwrite -- we assume the log
+//        // file in the target same as one we'd copy from the checkpoint dir.
+//        File bdbSubDir = CheckpointUtils.
+//            getBdbSubDirectory(this.checkpointRecover.getDirectory());
+//        FileUtils.copyFiles(bdbSubDir, CheckpointUtils.getJeLogsFilter(),
+//            getStateDisk(), true,
+//            false);
+//        if (LOGGER.isLoggable(Level.INFO)) {
+//            LOGGER.info("Finished recovery setup for checkpoint named " +
+//                this.checkpointRecover.getDisplayName() + " in " +
+//                (System.currentTimeMillis() - started) + "ms.");
+//        }
+//    }
     
     
-    public Environment getBdbEnvironment() {
-        return this.bdb.getEnvironment();
-    }
-    
-    public StoredClassCatalog getClassCatalog() {
-        return this.bdb.getClassCatalog();
-    }
+//    public Environment getBdbEnvironment() {
+//        return this.bdb.getEnvironment();
+//    }
+//    
+//    public StoredClassCatalog getClassCatalog() {
+//        return this.bdb.getClassCatalog();
+//    }
 
-    /**
-     * Register for CrawlStatus events.
-     *
-     * @param cl a class implementing the CrawlStatusListener interface
-     *
-     * @see CrawlStatusListener
-     */
-    public void addCrawlStatusListener(CrawlStatusListener cl) {
-        synchronized (this.registeredCrawlStatusListeners) {
-            this.registeredCrawlStatusListeners.add(cl);
-        }
-    }
 
     /**
      * Register for CrawlURIDisposition events.
@@ -664,8 +543,8 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         }
     }
 
-    private void setupCrawlModules() throws FatalConfigurationException,
-             AttributeNotFoundException, MBeanException, ReflectionException {
+//    private void setupCrawlModules() throws FatalConfigurationException,
+//             AttributeNotFoundException, MBeanException, ReflectionException {
 /*        if (scope == null) {
             scope = getOrderSetting(SCOPE);
             scope.initialize(this);
@@ -689,7 +568,7 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             }
         } */
 
-    }
+//    }
     
     protected void runFrontierRecover(String recoverPath)
             throws AttributeNotFoundException, MBeanException,
@@ -719,26 +598,14 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
 
     private void setupDisk() {
         String diskPath = get(order, CrawlOrder.DISK_PATH);
-        File file = new File(diskPath);
-        if (file.isAbsolute()) {
-            this.disk = file;
-        } else {
-            File workDir = sheetManager.getWorkingDirectory();
-            this.disk = new File(workDir, diskPath);
-        }
+        diskPath = sheetManager.toAbsolutePath(diskPath);
+        this.disk = new File(diskPath);
         this.disk.mkdirs();
-        this.logsDisk = getSettingsDir(CrawlOrder.LOGS_PATH);
         this.checkpointsDisk = getSettingsDir(CrawlOrder.CHECKPOINTS_PATH);
         this.stateDisk = getSettingsDir(CrawlOrder.STATE_PATH);
         this.scratchDisk = getSettingsDir(CrawlOrder.SCRATCH_PATH);
     }
     
-    /**
-     * @return The logging directory or null if problem reading the settings.
-     */
-    public File getLogsDir() {
-        return getSettingsDir(CrawlOrder.LOGS_PATH);
-    }
     
     /**
      * Return fullpath to the directory named by <code>key</code>
@@ -749,7 +616,7 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      * @return Full path to directory named by <code>key</code>.
      * @throws AttributeNotFoundException
      */
-    public File getSettingsDir(Key<String> key) {
+    private File getSettingsDir(Key<String> key) {
         String path = get(order, key);
         File f = new File(path);
         if (!f.isAbsolute()) {
@@ -818,84 +685,7 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         return fce;
     }
 
-    private void setupLogs() throws IOException {
-        String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
-        uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
-        runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
-            logsPath);
-        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
-        uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
-        progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." +
-            logsPath);
-
-        this.fileHandlers = new HashMap<Logger,FileHandler>();
-        setupLogFile(uriProcessing,
-            logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
-            new UriProcessingFormatter(), true);
-
-        setupLogFile(runtimeErrors,
-            logsPath + LOGNAME_RUNTIME_ERRORS + CURRENT_LOG_SUFFIX,
-            new RuntimeErrorFormatter(), true);
-
-        setupLogFile(localErrors,
-            logsPath + LOGNAME_LOCAL_ERRORS + CURRENT_LOG_SUFFIX,
-            new LocalErrorFormatter(), true);
-
-        setupLogFile(uriErrors,
-            logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
-            new UriErrorFormatter(), true);
-
-        setupLogFile(progressStats,
-            logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
-            new StatisticsLogFormatter(), true);
-
-    }
-
-    private void setupLogFile(Logger logger, String filename, Formatter f,
-            boolean shouldManifest) throws IOException, SecurityException {
-        GenerationFileHandler fh = new GenerationFileHandler(filename, true,
-            shouldManifest);
-        fh.setFormatter(f);
-        logger.addHandler(fh);
-        addToManifest(filename, MANIFEST_LOG_FILE, shouldManifest);
-        logger.setUseParentHandlers(false);
-        this.fileHandlers.put(logger, fh);
-    }
     
-    protected void rotateLogFiles(String generationSuffix)
-    throws IOException {
-        if (this.state != State.PAUSED && this.state != State.CHECKPOINTING) {
-            throw new IllegalStateException("Pause crawl before requesting " +
-                "log rotation.");
-        }
-        for (Iterator i = fileHandlers.keySet().iterator(); i.hasNext();) {
-            Logger l = (Logger)i.next();
-            GenerationFileHandler gfh =
-                (GenerationFileHandler)fileHandlers.get(l);
-            GenerationFileHandler newGfh =
-                gfh.rotate(generationSuffix, CURRENT_LOG_SUFFIX);
-            if (gfh.shouldManifest()) {
-                addToManifest((String) newGfh.getFilenameSeries().get(1),
-                    MANIFEST_LOG_FILE, newGfh.shouldManifest());
-            }
-            l.removeHandler(gfh);
-            l.addHandler(newGfh);
-            fileHandlers.put(l, newGfh);
-        }
-    }
-
-    /**
-     * Close all log files and remove handlers from loggers.
-     */
-    public void closeLogFiles() {
-       for (Iterator i = fileHandlers.keySet().iterator(); i.hasNext();) {
-            Logger l = (Logger)i.next();
-            GenerationFileHandler gfh =
-                (GenerationFileHandler)fileHandlers.get(l);
-            gfh.close();
-            l.removeHandler(gfh);
-        }
-    }
 
     /**
      * Sets the values for max bytes, docs and time based on crawl order. 
@@ -911,12 +701,7 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      * @return Object this controller is using to track crawl statistics
      */
     public StatisticsTracking getStatistics() {
-        try {
-            return statistics==null ?
-                    new StatisticsTracker(this): this.statistics;
-        } catch (FatalConfigurationException e) {
-            throw new RuntimeException(e); // FIXME
-        }
+        return statistics;
     }
     
     /**
@@ -928,49 +713,43 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      */
     protected void sendCrawlStateChangeEvent(State newState, 
             CrawlStatus status) {
-        synchronized (this.registeredCrawlStatusListeners) {
-            this.state = newState;
-            for (CrawlStatusListener l: registeredCrawlStatusListeners) {
-                switch (newState) {
-                    case PAUSED:
-                        l.crawlPaused(status.getDescription());
-                        break;
-                    case RUNNING:
-                        l.crawlResuming(status.getDescription());
-                        break;
-                    case PAUSING:
-                        l.crawlPausing(status.getDescription());
-                        break;
-                    case STARTED:
-                        l.crawlStarted(status.getDescription());
-                        break;
-                    case STOPPING:
-                        l.crawlEnding(status.getDescription());
-                        break;
-                    case FINISHED:
-                        l.crawlEnded(status.getDescription());
-                        break;
-                    case PREPARING:
-                        l.crawlResuming(status.getDescription());
-                        break;
-                    default:
-                        throw new RuntimeException("Unknown state: " + newState);
-                }
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("Sent " + newState + " to " + l);
-                }
+        this.state = newState;
+        List<CrawlStatusListener> registeredCrawlStatusListeners = 
+            ListModuleListener.get(sheetManager, CrawlStatusListener.class);
+        for (CrawlStatusListener l: registeredCrawlStatusListeners) {
+            switch (newState) {
+                case PAUSED:
+                    l.crawlPaused(status.getDescription());
+                    break;
+                case RUNNING:
+                    l.crawlResuming(status.getDescription());
+                    break;
+                case PAUSING:
+                    l.crawlPausing(status.getDescription());
+                    break;
+                case STARTED:
+                    l.crawlStarted(status.getDescription());
+                    break;
+                case STOPPING:
+                    l.crawlEnding(status.getDescription());
+                    break;
+                case FINISHED:
+                    l.crawlEnded(status.getDescription());
+                    break;
+                case PREPARING:
+                    l.crawlResuming(status.getDescription());
+                    break;
+                default:
+                    throw new RuntimeException("Unknown state: " + newState);
             }
-            Notification n = new Notification(
-                    newState.toString(), 
-                    this, 
-                    0,
-                    System.currentTimeMillis()
-                    );
-            emit(n); 
-            // FIXME: Should we ONLY use JMX notifications, and eliminate
-            // the old event framework?
-            LOGGER.fine("Sent " + newState);
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("Sent " + newState + " to " + l);
+            }
         }
+        sendNotification(newState.toString(), "");
+        // FIXME: Should we ONLY use JMX notifications, and eliminate
+        // the old event framework?
+        LOGGER.fine("Sent " + newState);
     }
     
     /**
@@ -1033,12 +812,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         runProcessorFinalTasks();
         // Ok, now we are ready to exit.
         sendCrawlStateChangeEvent(State.FINISHED, this.sExit);
-        synchronized (this.registeredCrawlStatusListeners) {
-            // Remove all listeners now we're done with them.
-            this.registeredCrawlStatusListeners.
-                removeAll(this.registeredCrawlStatusListeners);
-            this.registeredCrawlStatusListeners = null;
-        }
         
         List<Closeable> closeables = sheetManager.getCloseables();
         for (Closeable c: closeables) try {
@@ -1047,16 +820,9 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             LOGGER.log(Level.SEVERE, "Could not close " + c, e);
         }
 
-        closeLogFiles();
+        loggerModule.closeLogFiles();
         
         // Release reference to logger file handler instances.
-        this.fileHandlers = null;
-        this.uriErrors = null;
-        this.uriProcessing = null;
-        this.localErrors = null;
-        this.runtimeErrors = null;
-        this.progressStats = null;
-        this.reports = null;
         this.manifest = null;
 
         // Do cleanup.
@@ -1149,19 +915,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         return this.state == State.CHECKPOINTING;
     }
     
-    /**
-     * Run checkpointing.
-     * 
-     * <p>Default access only to be called by Checkpointer.
-     * @throws Exception
-     */
-    public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
-    throws IOException {
-        // Rotate off crawler logs.
-        LOGGER.fine("Rotating log files.");
-        rotateLogFiles(CURRENT_LOG_SUFFIX + "." +
-            this.checkpointer.getNextCheckpointName());
-    }
 
 
     /**
@@ -1174,13 +927,14 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      * mode and the pointed-to checkpoint was valid.
      * @see #isCheckpointRecover()
      */
-    public synchronized Checkpoint getCheckpointRecover() {
-        if (this.checkpointRecover != null) {
-            return this.checkpointRecover;
-        }
-        return getCheckpointRecover(this);
-    }
+//    public synchronized Checkpoint getCheckpointRecover() {
+//        if (this.checkpointRecover != null) {
+//            return this.checkpointRecover;
+//        }
+//        return getCheckpointRecover(this);
+//    }
     
+    /*
     public static Checkpoint getCheckpointRecover(CrawlController c) {
         String path = c.get(c.order, CrawlOrder.RECOVER_PATH);
         if (path == null || path.length() <= 0) {
@@ -1202,15 +956,15 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
     public static boolean isCheckpointRecover(CrawlController c) {
         return getCheckpointRecover(c) != null;
     }
-    
+    */
     /**
      * @return True if we're in checkpoint recover mode. Call
      * {@link #getCheckpointRecover()} to get at Checkpoint instance
      * that has info on checkpoint directory being recovered from.
      */
-    public boolean isCheckpointRecover() {
-        return this.checkpointRecover != null;
-    }
+//    public boolean isCheckpointRecover() {
+//        return this.checkpointRecover != null;
+//    }
 
     /**
      * Operator requested for crawl to stop.
@@ -1353,10 +1107,10 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
     /**
      * @return This crawl scope.
      */
-    public CrawlScope getScope() {
-        return get(this, SCOPE);
-//        return scope;
-    }
+//    public CrawlScope getScope() {
+//        return get(this, SCOPE);
+////        return scope;
+//    }
 
 
     /**
@@ -1413,7 +1167,7 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
     public void kickUpdate() {
         toePool.setSize(get(this, CrawlOrder.MAX_TOE_THREADS));
         
-        getScope().kickUpdate(this);
+        // getScope().kickUpdate(this);
         getFrontier().kickUpdate();
         for (Processor p: get(this, PROCESSORS).values()) {
             p.kickUpdate(this);
@@ -1466,25 +1220,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         toePool.killThread(threadNumber, replace);
     }
 
-    /**
-     * Add a file to the manifest of files used/generated by the current
-     * crawl.
-     * 
-     * TODO: Its possible for a file to be added twice if reports are
-     * force generated midcrawl.  Fix.
-     *
-     * @param file The filename (with absolute path) of the file to add
-     * @param type The type of the file
-     * @param bundle Should the file be included in a typical bundling of
-     *           crawler files.
-     *
-     * @see #MANIFEST_CONFIG_FILE
-     * @see #MANIFEST_LOG_FILE
-     * @see #MANIFEST_REPORT_FILE
-     */
-    public void addToManifest(String file, char type, boolean bundle) {
-        manifest.append(type + (bundle? "+": "-") + " " + file + "\n");
-    }
 
     /**
      * Evaluate if the crawl should stop because it is finished.
@@ -1516,10 +1251,8 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         // first since Modules that are constructed during defaultReadObject
         // may require those things.
         stream.writeObject(order);
-        stream.writeObject(bdb);
         
         stream.writeObject(disk);
-        stream.writeObject(logsDisk);
         stream.writeObject(checkpointsDisk);
         stream.writeObject(scratchDisk);
         stream.writeObject(stateDisk);
@@ -1531,11 +1264,9 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
     private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         this.order = (CrawlOrder)stream.readObject();
-        this.bdb = (BdbModule)stream.readObject();
         this.state = State.PAUSED;
         
         disk = (File)stream.readObject();
-        logsDisk = (File)stream.readObject();
         checkpointsDisk = (File)stream.readObject();
         scratchDisk = (File)stream.readObject();
         stateDisk = (File)stream.readObject();
@@ -1544,7 +1275,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         if (stream instanceof CheckpointRecovery) {
             CheckpointRecovery cr = (CheckpointRecovery)stream;
             this.disk = translate(cr, CrawlOrder.DISK_PATH, this.disk);
-            this.logsDisk = translate(cr, CrawlOrder.LOGS_PATH, this.logsDisk);
             this.checkpointsDisk = translate(cr, 
                     CrawlOrder.CHECKPOINTS_PATH, this.checkpointsDisk);
             this.scratchDisk = translate(cr, 
@@ -1552,12 +1282,9 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             this.stateDisk = translate(cr, 
                     CrawlOrder.STATE_PATH, this.stateDisk);
         }
-        this.setupLogs();
             
         stream.defaultReadObject();
-        // Setup status listeners
-        this.registeredCrawlStatusListeners =
-            Collections.synchronizedList(new ArrayList<CrawlStatusListener>());
+
         // Ensure no holdover singleThreadMode
         singleThreadMode = false; 
     }
@@ -1683,7 +1410,7 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
             return; 
         }
         Object[] array = {u, l};
-        uriErrors.log(Level.INFO, e.getMessage(), array);
+        loggerModule.getUriErrors().log(Level.INFO, e.getMessage(), array);
     }
     
     // 
@@ -1775,12 +1502,12 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      * if none available, returns instance of HashMap.
      * @throws Exception
      */
-    public <K,V> Map<K,V> getBigMap(final String dbName, 
-            final Class<? super K> keyClass,
-            final Class<? super V> valueClass)
-    throws DatabaseException {
-        return bdb.getBigMap(dbName, keyClass, valueClass);
-    }
+//    public <K,V> Map<K,V> getBigMap(final String dbName, 
+//            final Class<? super K> keyClass,
+//            final Class<? super V> valueClass)
+//    throws DatabaseException {
+//        return bdb.getBigMap(dbName, keyClass, valueClass);
+//    }
     
 
     /**
@@ -1799,7 +1526,7 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
      * @param msg Message to write the progress statistics log.
      */
     public void logProgressStatistics(final String msg) {
-        this.progressStats.info(msg);
+        loggerModule.getProgressStats().info(msg);
     }
 
     /**
@@ -1836,44 +1563,6 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
     }
 
     
-    public void setStateProvider(CandidateURI uri) {
-        if (uri.getStateProvider() == null) {
-            StateProvider sp = findConfig(uri.getUURI());
-            uri.setStateProvider(sp);
-        }
-    }
-    
-    /**
-     * Returns the configuration for the given URI.
-     * 
-     * @param uri
-     * @return
-     */
-    public StateProvider findConfig(UURI uri) {
-        SURTTokenizer st;
-        try {
-            st = new SURTTokenizer(uri.toString());
-        } catch (URIException e) {
-            throw new AssertionError(e);
-        }
-        
-        SheetList list = null;
-        for (String s = st.nextSearch(); s != null; s = st.nextSearch()) {
-            Sheet sheet = sheetManager.getAssociation(s);
-            if (sheet != null) {
-                if (list == null) {
-                    list = new SheetList();
-                }
-                list.add(sheet);
-            }
-        }
-        if (list == null) {
-            return sheetManager.getDefault();
-        }
-        
-        list.add(sheetManager.getDefault());
-        return list;
-    }
     
     
     public void checkUserAgentAndFrom() throws FatalConfigurationException {
@@ -1916,12 +1605,33 @@ implements Serializable, Reporter, StateProvider, Checkpointable {
         + " goes from CRAWLING to ENDED)",         
         types={ "PAUSED", "RUNNING", "PAUSING", "STARTED", "STOPPING", 
             "FINISHED", "PREPARING" })
-    private void emit(Notification n) {
+    void emit(Notification n) {
         sendNotification(n);
     }
 
 
-    public BdbModule getBdbModule() {
-        return bdb;
+//    public BdbModule getBdbModule() {
+//        return bdb;
+//    }
+
+
+    public CrawlerLoggerModule getLoggerModule() {
+        return loggerModule;
     }
+
+
+    public File getDirectory() {
+        return disk;
+    }
+
+    
+    public String toAbsolutePath(String path) {
+        return DefaultDirectoryModule.toAbsolutePath(getDirectory(), path);
+    }
+
+
+    public String toRelativePath(String path) {
+        return DefaultDirectoryModule.toRelativePath(getDirectory(), path);
+    }
+
 }

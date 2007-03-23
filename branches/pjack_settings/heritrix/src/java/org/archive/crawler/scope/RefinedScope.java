@@ -25,7 +25,6 @@
 package org.archive.crawler.scope;
 
 
-import org.archive.crawler.framework.CrawlController;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
@@ -51,8 +50,8 @@ public abstract class RefinedScope extends ClassicScope {
 //    Filter additionalFocusFilter;
 //    Filter transitiveFilter;
 
-    public RefinedScope(CrawlController c) {
-        super(c);
+    public RefinedScope() {
+        super();
     }
 
     /**

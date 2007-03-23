@@ -23,16 +23,15 @@
  */
 package org.archive.settings.path;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.archive.settings.Offline;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.path.PathValidator;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
@@ -54,6 +53,13 @@ public class PathChanger {
     final public static String REFERENCE_TAG = "reference";
     
     
+    private static class PendingInit {
+        Initializable module;
+        String path;
+    }
+    
+
+    private LinkedList<PendingInit> pendingInit = new LinkedList<PendingInit>();
 
     /**
      * Constructs a new PathChanger with the default set of transformers.
@@ -73,6 +79,7 @@ public class PathChanger {
         while (changes.hasNext()) {
             change(ss, changes.next());
         }
+        finish(ss);
     }
     
     
@@ -81,6 +88,8 @@ public class PathChanger {
         String path = pair.getPath();
         String typeTag = pair.getType();
         String value = pair.getValue();
+        
+        initIfNecessary(sheet, path);
         
         Object v;
         if (typeTag.equals(REFERENCE_TAG)) {
@@ -93,7 +102,24 @@ public class PathChanger {
 
         finish(sheet, path, v);        
     }
-
+    
+    
+    public void finish(SingleSheet sheet) {
+        initIfNecessary(sheet, ".");
+    }
+    
+    
+    private void initIfNecessary(SingleSheet sheet, String currentPath) {
+        while (!pendingInit.isEmpty()) {
+            PendingInit pi = pendingInit.getFirst();
+            if (currentPath.startsWith(pi.path)) {
+                return;
+            }
+            pendingInit.removeFirst();
+            pi.module.initialTasks(sheet);
+        }
+    }    
+    
     
     private Object makeReference(SingleSheet sheet, String value) {
         return PathValidator.validate(sheet, value);
@@ -108,73 +134,32 @@ public class PathChanger {
             throw new PathChangeException(e);
         }
     }
+
     
     private Object makeObject(SingleSheet sheet, PathChange pc) {
-        String path = pc.getPath();
-        String value = pc.getValue();
-
-        Class c;
-        try {
-            c = Class.forName(value);
-        } catch (ClassNotFoundException e) {
-            throw new PathChangeException("No such class: " + value);
-        }
-        
-        List<Key<Object>> dep = KeyManager.getDependencyKeys(c);
-        Constructor cons = KeyManager.getDependencyConstructor(c);
-        if (dep.isEmpty()) try {
-            return cons.newInstance();
-        } catch (InstantiationException e) {
-            throw new PathChangeException(e);
-        } catch (InvocationTargetException e) {
-            throw new PathChangeException(e);
-        } catch (IllegalAccessException e) {
-            throw new PathChangeException(e);
-        }
-        
-        Map<String,Object> depValues = new HashMap<String,Object>();
-        for (PathChange dpc: pc.getDependencies()) {
-            String dpath = dpc.getPath();
-            String dtag = dpc.getType();
-            String dvalue = dpc.getValue();
-            Object dv;
-            if (dtag.equals(OBJECT_TAG)) {
-                throw new PathChangeException(
-                        "  Dependency " + dpath + " must be constructed "
-                        + "before its dependent object " + path + ".");
-            } else if (dtag.equals(REFERENCE_TAG)) {
-                dv = makeReference(sheet, dvalue);
-            } else {
-                dv = makeSimple(dtag, dvalue);
-            }
-            depValues.put(dpath, dv);
-        }
-        
-        Object[] params = new Object[dep.size()];
-        for (int i = 0; i < dep.size(); i++) {
-            Key<Object> k = dep.get(i);
-            if (!depValues.containsKey(k.getFieldName())) {
-                throw new PathChangeException(path 
-                 + " does not define a dependency for " + k.getFieldName());
-            }
-            params[i] = depValues.get(k.getFieldName());
-        }
-        
-        Object result;
-        try {
-            result = cons.newInstance(params);
-        } catch (InstantiationException e) {
-            throw new PathChangeException(e);
-        } catch (InvocationTargetException e) {
-            throw new PathChangeException(e);
-        } catch (IllegalAccessException e) {
-            throw new PathChangeException(e);
-        }
-        
-        for (int i = 0; i < dep.size(); i++) {
-            sheet.set(result, dep.get(i), params[i]);
+        Object result = makeObject2(sheet, pc);
+        if (result instanceof Initializable) {
+            PendingInit pi = new PendingInit();
+            pi.path = pc.getPath();
+            pi.module = (Initializable)result;
+            pendingInit.addFirst(pi);
         }
         return result;
+    }
+    
+    
+    private Object makeObject2(SingleSheet sheet, PathChange pc) {
+        String value = pc.getValue();
+
+        try {
+            return Class.forName(value).newInstance();
+        } catch (ClassNotFoundException e) {
+            throw new PathChangeException("No such class: " + value);
+        } catch (InstantiationException e) {
+            throw new PathChangeException(e);
+        } catch (IllegalAccessException e) {
+            throw new PathChangeException(e);
+        }        
     }
     
 

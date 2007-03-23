@@ -45,7 +45,7 @@ public class PreconditionEnforcerTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new PreconditionEnforcer(controller);
+        return new PreconditionEnforcer();
     }
     
     

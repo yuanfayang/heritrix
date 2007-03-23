@@ -25,7 +25,6 @@
 package org.archive.crawler.deciderules;
 
 
-import org.archive.crawler.framework.CrawlController;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
@@ -47,8 +46,8 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
      * Usual constructor. 
      * @param name
      */
-    public OnHostsDecideRule(CrawlController c) {
-        super(c);
+    public OnHostsDecideRule() {
+        super();
     }
 
     /**

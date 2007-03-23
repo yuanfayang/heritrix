@@ -23,23 +23,16 @@
  */
 package org.archive.state;
 
-import java.lang.reflect.Constructor;
-import java.util.List;
 import java.util.Map;
 
 class KeyManagerData {
 
     
     final Map<String,Key<Object>> keys;
-    final Constructor depCons;
-    final List<Key<Object>> depConsParams;
     
     
-    public KeyManagerData(Map<String,Key<Object>> keys, Constructor depCons, 
-            List<Key<Object>> depConsParams) {
+    public KeyManagerData(Map<String,Key<Object>> keys) {
         this.keys = keys;
-        this.depCons = depCons;
-        this.depConsParams = depConsParams;
     }
     
     

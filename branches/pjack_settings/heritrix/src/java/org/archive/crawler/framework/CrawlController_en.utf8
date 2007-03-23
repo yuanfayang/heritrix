@@ -1,3 +1,13 @@
+logger-module-description:
+The logger module to use for the crawl.
+
+
+statistics-tracker-description:
+Statistics tracking modules.  Any number of specialized statistics 
+trackers that monitor a crawl and write logs, reports and/or provide 
+information to the user interface. 
+
+
 loggers-description:
 Statistics tracking modules.  Any number of specialized statistics 
 trackers that monitor a crawl and write logs, reports and/or provide 

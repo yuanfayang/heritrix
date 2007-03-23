@@ -45,11 +45,12 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.scope.SeedModule;
 import org.archive.net.UURI;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
-import org.archive.state.Dependency;
+import org.archive.settings.file.BdbModule;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
@@ -113,6 +114,19 @@ public class StatisticsTracker extends AbstractTracker
 implements CrawlURIDispositionListener, Serializable {
     private static final long serialVersionUID = 8004878315916392305L;
 
+
+    
+    @Immutable
+    final public static Key<SeedModule> SEEDS =
+        Key.make(SeedModule.class, null);
+
+    @Immutable
+    final public static Key<BdbModule> BDB =
+        Key.make(BdbModule.class, null);
+    
+    private SeedModule seeds;
+    private BdbModule bdb;
+    
     /**
      * Messages from the StatisticsTracker.
      */
@@ -186,32 +200,33 @@ implements CrawlURIDispositionListener, Serializable {
     // sExitMessage: only set at crawl-end
     private String sExitMessage = "Before crawl end";
 
-    
-    @Dependency
-    final public static Key<CrawlController> CONTROLLER =
-        Key.make(CrawlController.class, null);
-    
+
     static {
         KeyManager.addKeys(StatisticsTracker.class);
     }
 
-    public StatisticsTracker(CrawlController c)
-    throws FatalConfigurationException {
-        super(c);
+    public StatisticsTracker() {
+        
+    }
+    
+    @Override
+    public void initialTasks(StateProvider p) {
+        super.initialTasks(p);
+        this.seeds = p.get(this, SEEDS);
+        this.bdb = p.get(this, BDB);
         try {
-            this.sourceHostDistribution = c.getBigMap("sourceHostDistribution",
+            this.sourceHostDistribution = bdb.getBigMap("sourceHostDistribution",
             	    String.class, HashMap.class);
-            this.hostsDistribution = c.getBigMap("hostsDistribution",
+            this.hostsDistribution = bdb.getBigMap("hostsDistribution",
                 String.class, LongWrapper.class);
-            this.hostsBytes = c.getBigMap("hostsBytes", String.class,
+            this.hostsBytes = bdb.getBigMap("hostsBytes", String.class,
                 LongWrapper.class);
-            this.hostsLastFinished = c.getBigMap("hostsLastFinished",
+            this.hostsLastFinished = bdb.getBigMap("hostsLastFinished",
                 String.class, Long.class);
-            this.processedSeedsRecords = c.getBigMap("processedSeedsRecords",
+            this.processedSeedsRecords = bdb.getBigMap("processedSeedsRecords",
                     String.class, SeedRecord.class); 
         } catch (Exception e) {
-            throw new FatalConfigurationException("Failed setup of" +
-                " StatisticsTracker: " + e);
+            throw new IllegalStateException(e);
         }
         controller.addCrawlURIDispositionListener(this);
     }
@@ -807,7 +822,7 @@ implements CrawlURIDispositionListener, Serializable {
      */
     public Iterator<String> getSeeds() {
         List<String> seedsCopy = new Vector<String>();
-        Iterator<UURI> i = controller.getScope().seedsIterator();
+        Iterator<UURI> i = seeds.seedsIterator();
         while (i.hasNext()) {
             seedsCopy.add(i.next().toString());
         }
@@ -1015,8 +1030,8 @@ implements CrawlURIDispositionListener, Serializable {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
             writeReportTo(reportName, bw);
             bw.close();
-            controller.addToManifest(f.getAbsolutePath(),
-                CrawlController.MANIFEST_REPORT_FILE, true);
+            controller.getLoggerModule().addToManifest(f.getAbsolutePath(),
+                CrawlerLoggerModule.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to write " + f.getAbsolutePath() +
                 " at the end of crawl.", e);

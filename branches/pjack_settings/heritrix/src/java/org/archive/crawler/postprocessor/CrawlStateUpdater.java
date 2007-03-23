@@ -58,8 +58,8 @@ public class CrawlStateUpdater extends CrawlerProcessor implements
 
     
 
-    public CrawlStateUpdater(CrawlController controller) {
-        super(controller);
+    public CrawlStateUpdater() {
+        super();
     }
 
 

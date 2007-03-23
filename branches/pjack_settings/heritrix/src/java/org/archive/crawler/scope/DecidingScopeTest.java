@@ -45,7 +45,7 @@ public class DecidingScopeTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new DecidingScope(controller);
+        return new DecidingScope();
     }
     
     

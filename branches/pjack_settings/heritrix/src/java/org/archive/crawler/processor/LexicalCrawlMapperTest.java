@@ -45,7 +45,7 @@ public class LexicalCrawlMapperTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new LexicalCrawlMapper(controller);
+        return new LexicalCrawlMapper();
     }
     
     

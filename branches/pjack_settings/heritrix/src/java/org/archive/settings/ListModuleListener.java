@@ -31,6 +31,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +85,20 @@ public class ListModuleListener<T> implements ModuleListener, Serializable {
         return new ListModuleListener<T>(type);
     }
     
+    
+    public static <T> List<T> get(SheetManager mgr, Class<T> type) {
+        for (ModuleListener l: mgr.getModuleListeners()) {
+            if (l instanceof ListModuleListener) {
+                ListModuleListener lml = (ListModuleListener)l;
+                if (lml.getType().equals(type)) {
+                    @SuppressWarnings("unchecked")
+                    List<T> result = lml.getList();
+                    return result;
+                }
+            }
+        }
+        return Collections.emptyList();
+    }
     
     public Class<T> getType() {
         return type;

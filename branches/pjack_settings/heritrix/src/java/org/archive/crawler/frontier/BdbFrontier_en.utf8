@@ -1,4 +1,5 @@
+bdb-description:
+The bdb module to use for the frontier.
+
 uri-included-structure-description:
 URI-already-included to use (by class name) 
-
-

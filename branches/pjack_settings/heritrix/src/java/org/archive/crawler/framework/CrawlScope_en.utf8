@@ -1,9 +1,13 @@
+directory-description:
+The directory where the seed file will be found.
+
+
 controller-description:
 The crawl controller that owns this scope.
 
 
 seedsfile-description:
-File from which to extract seeds.
+File from which to extract seeds.  Relative to the directory module.
 
 
 reread-seeds-on-config-description:

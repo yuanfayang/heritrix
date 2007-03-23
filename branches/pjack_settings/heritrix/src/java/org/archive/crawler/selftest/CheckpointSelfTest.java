@@ -165,4 +165,12 @@ public class CheckpointSelfTest extends SelfTestBase {
 
     }
 
+
+    @Override
+    public void testSomething() throws Exception {
+
+    }
+
+    
+    
 }

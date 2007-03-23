@@ -45,7 +45,7 @@ public class PreselectorTest extends CrawlerProcessorTestBase {
     
     @Override
     protected Object makeModule() {
-        return new Preselector(controller);
+        return new Preselector();
     }
     
     

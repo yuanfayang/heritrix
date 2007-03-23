@@ -80,9 +80,6 @@ final public class Key<Value> implements Serializable {
     /** True if the property can be mutated. */
     transient private boolean immutable;
     
-    /** True if the property is a dependency for the class that defined it. */
-    transient private boolean dependency;
-    
     /**
      * Constructs a new key.
      * 
@@ -123,11 +120,6 @@ final public class Key<Value> implements Serializable {
             this.global = true;
             this.immutable = true;
         }
-        if (field.getAnnotation(Dependency.class) != null) {
-            this.global = true;
-            this.immutable = true;
-            this.dependency = true;
-        }
     }
 
 
@@ -157,13 +149,8 @@ final public class Key<Value> implements Serializable {
     public boolean isImmutable() {
         return immutable;
     }
-    
-    
-    public boolean isDependency() {
-        return dependency;
-    }
-    
-    
+
+
     /**
      * Returns the name of the Java field that declared this key.
      * 

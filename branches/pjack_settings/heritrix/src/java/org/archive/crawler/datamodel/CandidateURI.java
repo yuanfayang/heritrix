@@ -45,6 +45,7 @@ import org.archive.processors.extractor.HTMLLinkContext;
 import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
+import org.archive.settings.SheetManager;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -154,7 +155,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider, Proces
     private String classKey;
 
     
-    
+    private transient SheetManager manager;
     private transient StateProvider provider;
     
     
@@ -423,6 +424,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider, Proces
         CandidateURI newCaURI = new CandidateURI(u, getPathFromSeed() + link.getHopType().getHopChar(),
                 getUURI(), link.getContext());
         newCaURI.inheritFrom(this);
+        newCaURI.setStateProvider(manager);
         return newCaURI;
     }
 
@@ -684,8 +686,9 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider, Proces
     }
 
 
-    public void setStateProvider(StateProvider p) {
-        this.provider = p;
+    public void setStateProvider(SheetManager manager) {
+        this.manager = manager;
+        this.provider = manager.findConfig(toString());
     }
 
     

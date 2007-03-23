@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -114,6 +115,7 @@ public class Bean implements DynamicMBean, NotificationEmitter {
     final public static int INFO = MBeanOperationInfo.INFO;
     final public static int ACTION_INFO = MBeanOperationInfo.ACTION_INFO;
     
+    final private AtomicLong sequenceNumber = new AtomicLong();
     
     /**
      * Maps a class to its metadata.
@@ -306,4 +308,16 @@ public class Bean implements DynamicMBean, NotificationEmitter {
     public void sendNotification(Notification n) {
         emitter.sendNotification(n);
     }
+
+
+    public void sendNotification(String type, String message) {
+        Notification n = new Notification(
+                type, 
+                this, 
+                sequenceNumber.getAndIncrement(),
+                System.currentTimeMillis(),
+                message);
+        sendNotification(n);
+    }
+
 }

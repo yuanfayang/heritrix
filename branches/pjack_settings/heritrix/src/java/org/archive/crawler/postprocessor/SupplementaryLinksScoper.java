@@ -33,7 +33,6 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
@@ -72,8 +71,8 @@ public class SupplementaryLinksScoper extends Scoper {
     /**
      * @param name Name of this filter.
      */
-    public SupplementaryLinksScoper(CrawlController controller) {
-        super(controller);
+    public SupplementaryLinksScoper() {
+        super();
     }
 
     

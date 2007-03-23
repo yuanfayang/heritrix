@@ -43,10 +43,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.RecoverAction;
@@ -54,6 +50,7 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
+import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.Immutable;
@@ -61,8 +58,8 @@ import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+
+import static org.archive.settings.file.BdbModule.*;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -162,19 +159,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     final private static String ATTR_SHEETS = "sheets-dir";
     
-    final private static String ATTR_BDB = "bdb-dir";
-    
-    final private static String ATTR_BDB_PERCENT = "bdb-cache-percent";
+    final private static String BDB_PREFIX = "bdb-";
     
     /** The default name of the subdirectory that stores sheet files. */
     final private static String DEFAULT_SHEETS = "sheets";
-    
-    final private static String DEFAULT_BDB_PERCENT = 
-        String.valueOf(BdbConfig.BDB_CACHE_PERCENT.getDefaultValue());
-    
-    /** The default name of the subdirectory that stores the bdb database. */
-    final private static String DEFAULT_BDB = 
-        BdbConfig.DIR.getDefaultValue();
 
     /** The extension for files containing SingleSheet information. */
     final private static String SINGLE_EXT = ".single";
@@ -203,8 +191,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     private boolean online;
 
-    transient private SAXParserFactory saxParserFactory;
-    
 
     final private BdbModule bdb;
     
@@ -212,6 +198,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     
     final private int bdbCachePercent;
 
+    private boolean copyCheckpoint;
     
     public FileSheetManager() 
     throws IOException, DatabaseException {
@@ -238,29 +225,36 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     throws IOException, DatabaseException {
         super(listeners);
         this.mainConfig = main;
-        this.saxParserFactory = SAXParserFactory.newInstance();
         
         this.online = online;
         Properties p = load(main);
         
-        String path = p.getProperty(ATTR_BDB, DEFAULT_BDB);
+        String path = getBdbProperty(p, BdbModule.DIR);
         File f = new File(path);
         if (!f.isAbsolute()) {
             f = new File(mainConfig.getParent(), path);
         }
         
         this.bdbDir = f.getAbsolutePath();
-        this.bdbCachePercent = Integer.parseInt(p.getProperty(ATTR_BDB_PERCENT, 
-                DEFAULT_BDB_PERCENT));
-        
+        this.bdbCachePercent = Integer.parseInt(
+                getBdbProperty(p, BDB_CACHE_PERCENT));
+        String truthiness = getBdbProperty(p, CHECKPOINT_COPY_BDBJE_LOGS);
+        if (truthiness.equals("true")) {
+            this.copyCheckpoint = true;
+        } else if (truthiness.equals("false")) {
+            this.copyCheckpoint = false;
+        } else {
+            throw new IllegalStateException("Illegal boolean: " + truthiness);
+        }
         
         ExampleStateProvider dsp = new ExampleStateProvider();
-        BdbConfig config = new BdbConfig();
-        dsp.set(config, BdbConfig.DIR, this.bdbDir);
-        dsp.set(config, BdbConfig.BDB_CACHE_PERCENT, bdbCachePercent);
         
-        this.bdb = new BdbModule(config, dsp);
-
+        this.bdb = new BdbModule();
+        dsp.set(bdb, DIR, this.bdbDir);
+        dsp.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
+        dsp.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+        bdb.initialTasks(dsp);
+        
         String prop = p.getProperty(ATTR_SHEETS);
         this.sheetsDir = getRelative(main, prop, DEFAULT_SHEETS);
         validateDir(sheetsDir);
@@ -270,6 +264,12 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         reload();
     }
 
+    
+    private String getBdbProperty(Properties p, Key key) {
+        String propName = BDB_PREFIX + key.getFieldName();
+        String defValue = key.getDefaultValue().toString();
+        return p.getProperty(propName, defValue);
+    }
     
     private static List<ModuleListener> emptyList() {
         return Collections.emptyList();
@@ -541,31 +541,18 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      */
     private SingleSheet loadSingleSheet(String name) {
         File f = new File(sheetsDir, name + SINGLE_EXT);
-        BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(f));
-            SAXParser parser = saxParserFactory.newSAXParser();
-            InputSource source = new InputSource(br);
             SingleSheet r = createSingleSheet(name);
             if (name.equals(DEFAULT_SHEET_NAME)) {
                 setManagerDefaults(r);
             }
             sheets.put(name, r);
-            DefaultPathChangeListener dpcl = new DefaultPathChangeListener(r);
-            SettingsSAX sax = new SettingsSAX(dpcl);
-            parser.parse(source, sax);
+            SheetFileReader sfr = new SheetFileReader(new FileReader(f));
+            new PathChanger().change(r, sfr);
             return r;
-        } catch (SAXException e) {
-            LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
-            return null;
-        } catch (ParserConfigurationException e) {
-            LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
-            return null;
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
             return null;
-        } finally {
-            IoUtils.close(br);
         }
     }
 
@@ -700,15 +687,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private void setManagerDefaults(SingleSheet ss) {
         ss.set(this, MANAGER, this);
         ss.set(this, BDB, bdb);
-        ss.set(bdb, BdbModule.CONFIG, bdb.getBdbConfig());
-        ss.set(bdb, BdbModule.PROVIDER, this);
-        ss.set(bdb.getBdbConfig(), BdbConfig.DIR, bdbDir);
-        ss.set(bdb.getBdbConfig(), BdbConfig.BDB_CACHE_PERCENT, bdbCachePercent);
+        ss.set(bdb, DIR, bdbDir);
+        ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
+        ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
     }
     
     
-    @Override
-    public File getWorkingDirectory() {
+    public File getDirectory() {
         return mainConfig.getParentFile();
     }
 
@@ -736,7 +721,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private void readObject(ObjectInputStream inp) 
     throws IOException, ClassNotFoundException {
         inp.defaultReadObject();
-        this.saxParserFactory = SAXParserFactory.newInstance();
         if (inp instanceof CheckpointRecovery) {
             CheckpointRecovery cr = (CheckpointRecovery)inp;
             mainConfig = 

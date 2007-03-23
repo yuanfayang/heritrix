@@ -124,8 +124,8 @@ public class RuntimeLimitEnforcer
     final public static Key<Operation> END_OPERATION = Key.make(Operation.PAUSE);
 
     
-    public RuntimeLimitEnforcer(CrawlController controller) {
-        super(controller);
+    public RuntimeLimitEnforcer() {
+        super();
     }
 
     

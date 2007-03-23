@@ -42,7 +42,6 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.state.ExampleConcreteProcessor;
-import org.archive.state.ExampleDependentModule;
 
 import junit.framework.TestCase;
 
@@ -69,7 +68,6 @@ public class PathTestBase extends TestCase {
     List<DecideRule> jsRules;
 
     ExampleConcreteProcessor concrete;
-    ExampleDependentModule dependent;
 
     
     // Objects in sheet override1
@@ -101,7 +99,6 @@ public class PathTestBase extends TestCase {
     List<Offline> offlineJsRules;
 
     Offline<ExampleConcreteProcessor> offlineConcrete;
-    Offline<ExampleDependentModule> offlineDependent;
     
     List<Offline> offlineO1cssRules;
     Offline<AcceptDecideRule> offlineO1cssRule0;
@@ -155,9 +152,6 @@ public class PathTestBase extends TestCase {
 
         concrete = new ExampleConcreteProcessor();
         map.put("concrete", concrete);
-        dependent = new ExampleDependentModule(new StringBuilder(), 
-                new Thread());
-        map.put("dependent", dependent);
         
         SingleSheet override1 = manager.addSingleSheet("override1");
         o1cssRules = new ArrayList<DecideRule>();
@@ -215,12 +209,6 @@ public class PathTestBase extends TestCase {
 
         offlineConcrete = Offline.make(ExampleConcreteProcessor.class);
         map.put("concrete", concrete);
-        offlineDependent = Offline.make(ExampleDependentModule.class);
-        //defaults.setOffline(offlineDependent, ExampleDependentModule.CHARSEQUENCE, 
-        //        Offline.make(StringBuilder.class));
-        //defaults.setOffline(offlineDependent, ExampleDependentModule.RUNNABLE,
-        //        Offline.make(Thread.class));
-        map.put("dependent", offlineDependent);
         
         SingleSheet override1 = offlineManager.addSingleSheet("override1");
         offlineO1cssRules = new ArrayList<Offline>();

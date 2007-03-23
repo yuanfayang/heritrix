@@ -26,7 +26,14 @@
 package org.archive.crawler.writer;
 
 
-import org.archive.crawler.framework.CrawlerProcessorTestBase;
+import java.io.File;
+
+import org.archive.crawler.framework.WriterPoolProcessor;
+import org.archive.processors.DefaultDirectoryModule;
+import org.archive.processors.ProcessorTestBase;
+import org.archive.processors.fetcher.DefaultServerCache;
+import org.archive.state.ExampleStateProvider;
+import org.archive.util.TmpDirTestCase;
 
 
 /**
@@ -34,7 +41,7 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  *
  * @author pjack
  */
-public class ARCWriterProcessorTest extends CrawlerProcessorTestBase {
+public class ARCWriterProcessorTest extends ProcessorTestBase {
 
     
     @Override
@@ -44,11 +51,31 @@ public class ARCWriterProcessorTest extends CrawlerProcessorTestBase {
     
     
     @Override
-    protected Object makeModule() {
-        ARCWriterProcessor result = new ARCWriterProcessor(controller);
-        result.initialTasks(controller);
+    protected Object makeModule() throws Exception {
+        File tmp = TmpDirTestCase.tmpDir();
+        tmp = new File(tmp, "ARCWriterProcessTest");
+        tmp.mkdirs();
+
+        ExampleStateProvider sp = new ExampleStateProvider();
+        DefaultDirectoryModule dir = new DefaultDirectoryModule();
+        sp.set(dir, DefaultDirectoryModule.DIRECTORY, tmp.getAbsolutePath());
+        
+        
+        ARCWriterProcessor result = new ARCWriterProcessor();
+        sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
+        sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
+        result.initialTasks(sp);
         return result;
     }
+
+
+    @Override
+    protected void verifySerialization(Object first, byte[] firstBytes, 
+            Object second, byte[] secondBytes) throws Exception {
+
+    }
+    
+    
     
     
     // TODO TESTME!

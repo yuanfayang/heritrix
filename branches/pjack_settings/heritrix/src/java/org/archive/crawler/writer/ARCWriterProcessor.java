@@ -33,24 +33,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.CrawlController;
+import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 
 /**
@@ -63,8 +60,7 @@ import org.archive.state.StateProvider;
  *
  * @author Parker Thompson
  */
-public class ARCWriterProcessor extends WriterPoolProcessor
-implements CoreAttributeConstants, ARCConstants, FetchStatusCodes {
+public class ARCWriterProcessor extends WriterPoolProcessor {
 
     private static final long serialVersionUID = 3L;
 
@@ -98,8 +94,7 @@ implements CoreAttributeConstants, ARCConstants, FetchStatusCodes {
     /**
      * @param name Name of this writer.
      */
-    public ARCWriterProcessor(CrawlController c) {
-        super(c);
+    public ARCWriterProcessor() {
     }
     
     protected String [] getDefaultPath() {
@@ -145,7 +140,7 @@ implements CoreAttributeConstants, ARCConstants, FetchStatusCodes {
      *
      * @param curi CrawlURI to process.
      */
-    protected void innerProcess(ProcessorURI puri) {
+    protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         
         int recordLength = (int)curi.getContentSize();
@@ -183,10 +178,11 @@ implements CoreAttributeConstants, ARCConstants, FetchStatusCodes {
             logger.log(Level.SEVERE, "Failed write of Record: " +
                 curi.toString(), e);
         }
+        return ProcessResult.PROCEED;
     }
     
-    protected void write(CrawlURI curi, int recordLength, InputStream in,
-        String ip)
+    protected ProcessResult write(CrawlURI curi, int recordLength, 
+            InputStream in, String ip)
     throws IOException {
         WriterPoolMember writer = getPool().borrowFile();
         long position = writer.getPosition();
@@ -229,7 +225,7 @@ implements CoreAttributeConstants, ARCConstants, FetchStatusCodes {
                 getPool().returnFile(writer);
             }
         }
-        checkBytesWritten(curi);
+        return checkBytesWritten(curi);
     }
 
 

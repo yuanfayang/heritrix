@@ -182,7 +182,7 @@ public class QuotaEnforcer extends CrawlerProcessor implements FetchStatusCodes 
      * Constructor.
      */
     public QuotaEnforcer(CrawlController controller) {
-        super(controller);
+        super();
     }
     
     

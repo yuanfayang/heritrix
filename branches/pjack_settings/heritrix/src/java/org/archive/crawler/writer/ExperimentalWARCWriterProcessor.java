@@ -38,20 +38,18 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriterPool;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.extractor.Link;
 import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -92,8 +90,8 @@ FetchStatusCodes, WARCConstants {
     /**
      * @param name Name of this writer.
      */
-    public ExperimentalWARCWriterProcessor(CrawlController controller) {
-        super(controller);
+    public ExperimentalWARCWriterProcessor() {
+        super();
     }
 
 
@@ -151,20 +149,22 @@ FetchStatusCodes, WARCConstants {
      *            CrawlURI to process.
      * 
      */
-    protected void innerProcess(ProcessorURI puri) {
+    @Override
+    protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
-            write(scheme, curi);
+            return write(scheme, curi);
         } catch (IOException e) {
             curi.getNonFatalFailures().add(e);
             logger.log(Level.SEVERE, "Failed write of Record: " +
                 curi.toString(), e);
+            return ProcessResult.PROCEED;
         }
     }
     
-    protected void write(final String lowerCaseScheme, final CrawlURI curi)
+    protected ProcessResult write(final String lowerCaseScheme, final CrawlURI curi)
     throws IOException {
         WriterPoolMember writer = getPool().borrowFile();
         long position = writer.getPosition();
@@ -233,7 +233,7 @@ FetchStatusCodes, WARCConstants {
                 getPool().returnFile(writer);
             }
         }
-        checkBytesWritten(curi);
+        return checkBytesWritten(curi);
     }
     
     protected URI writeRequest(final ExperimentalWARCWriter w,

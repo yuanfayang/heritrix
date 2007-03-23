@@ -38,7 +38,6 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.scope.DecidingScope;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
-import org.archive.settings.file.BdbConfig;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.StateProcessorTestBase;
 import org.archive.util.IoUtils;
@@ -88,10 +87,8 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         MemorySheetManager manager = new MemorySheetManager();
         SingleSheet def = manager.getDefault();
         
-        BdbConfig config = new BdbConfig();
         File state = new File(tmp, "state");
         state.mkdirs();
-        def.set(config, BdbConfig.DIR, state.getAbsolutePath());
         
         CrawlOrder order = new CrawlOrder();
         Map<String,String> headers = new HashMap<String,String>();
@@ -101,15 +98,20 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
         def.set(order, CrawlOrder.HTTP_HEADERS, headers);
         
-        BdbModule bdb = new BdbModule(config, def); 
+        BdbModule bdb = new BdbModule();
+        def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
+        bdb.initialTasks(def);
         
-        CrawlController controller = new CrawlController(manager, order, bdb);
-        CrawlScope scope = new DecidingScope(controller);
+        CrawlController controller = new CrawlController();
+        CrawlScope scope = new DecidingScope();
+        scope.initialTasks(def);
         def.set(controller, CrawlController.SHEET_MANAGER, manager);
+//        def.set(controller, CrawlController.BDB, bdb);
         def.set(controller, CrawlController.ORDER, order);
-        def.set(controller, CrawlController.SCOPE, scope);
+//        def.set(controller, CrawlController.SCOPE, scope);
         def.set(controller, CrawlController.SERVER_CACHE, 
-                new CrawlerServerCache(controller));
+                new CrawlerServerCache());
+        controller.initialTasks(def);
         return controller;
     }
 

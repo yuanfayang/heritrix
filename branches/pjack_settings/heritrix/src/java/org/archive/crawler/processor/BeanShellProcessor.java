@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessorURI;
 import org.archive.settings.Sheet;
@@ -93,8 +92,8 @@ implements FetchStatusCodes {
     /**
      * Constructor.
      */
-    public BeanShellProcessor(CrawlController controller) {
-        super(controller);
+    public BeanShellProcessor() {
+        super();
     }
 
     protected boolean shouldProcess(ProcessorURI curi) {

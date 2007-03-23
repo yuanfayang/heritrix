@@ -25,9 +25,11 @@ package org.archive.crawler.util;
 
 import java.io.Serializable;
 
-import org.archive.state.Dependency;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.LongFPSet;
 
@@ -43,7 +45,7 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  */
 public class FPUriUniqFilter extends SetBasedUriUniqFilter 
-implements Serializable {
+implements Initializable, Serializable {
     // Be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class, 1);
@@ -55,7 +57,7 @@ implements Serializable {
     private transient FPGenerator fpgen = FPGenerator.std64;
     
     
-    @Dependency
+    @Immutable
     final public static Key<LongFPSet> LONG_FP_SET = 
         Key.make(LongFPSet.class, null);
 
@@ -63,7 +65,7 @@ implements Serializable {
     static {
         KeyManager.addKeys(FPUriUniqFilter.class);
     }
-    
+
     /**
      * Create FPUriUniqFilter wrapping given long set
      * 
@@ -71,6 +73,15 @@ implements Serializable {
      */
     public FPUriUniqFilter(LongFPSet fpset) {
         this.fpset = fpset;
+    }
+    
+    
+    public FPUriUniqFilter() {
+    }
+    
+    
+    public void initialTasks(StateProvider provider) {
+        this.fpset = provider.get(this, LONG_FP_SET);
     }
     
     private long getFp(CharSequence canonical) {

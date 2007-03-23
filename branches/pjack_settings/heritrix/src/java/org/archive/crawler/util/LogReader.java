@@ -32,7 +32,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.io.CompositeFileReader;
 import org.archive.util.ArchiveUtils;
 
@@ -868,14 +868,14 @@ public class LogReader
         NumberFormat fmt = new DecimalFormat("00000");
         String predecessorFilename =
             fileName.substring(0,fileName.length() 
-            - CrawlController.CURRENT_LOG_SUFFIX.length())
+            - CrawlerLoggerModule.CURRENT_LOG_SUFFIX.length())
             + fmt.format(seriesNumber);
         while((new File(predecessorFilename)).exists()) {
             filenames.add(new File(predecessorFilename));
             seriesNumber++;
             predecessorFilename =
                 fileName.substring(0,fileName.length()
-                - CrawlController.CURRENT_LOG_SUFFIX.length())
+                - CrawlerLoggerModule.CURRENT_LOG_SUFFIX.length())
                 + fmt.format(seriesNumber);
         }
         filenames.add(new File(fileName)); // add current file
