@@ -226,7 +226,7 @@
 
         <para>Preference is to have the bracket that opens functions and
         blocks on same line as function declaration or block test rather than
-        on a new line on of its own some. For example:<programlisting>if (true) {
+        on a new line of its own. For example:<programlisting>if (true) {
     return true;
 }</programlisting>and<programlisting>public void main (String [] args) {
     System.println("Hello world");
@@ -393,7 +393,7 @@ ${package_declaration}</programlisting></para>
 
       <para>The Heritrix web crawler is multi threaded. Every URI is handled
       by its own thread called a ToeThread. A ToeThread asks the Frontier for
-      a new URI, sends it through all the processors and the asks for a new
+      a new URI, sends it through all the processors and then asks for a new
       URI.</para>
     </sect2>
 
@@ -427,7 +427,7 @@ ${package_declaration}</programlisting></para>
         <para>The first chain is responsible for investigating if the URI could
         be crawled at this point. That includes checking if all preconditions
         are met (DNS-lookup, fetching robots.txt, authentication). It is also
-        possible to completely block the crawling of URIs that have passed
+        possible to completely block the crawling of URIs that have not passed
         through the scope check.</para>
 
         <para>In the <literal>Pre-fetch processing</literal> chain the
@@ -462,7 +462,7 @@ ${package_declaration}</programlisting></para>
 
         <para>The processors in this chain are responsible for getting the
         data from the remote server. There should be one processor for each
-        protocol that Heritrix support e.g. FetchHTTP.</para>
+        protocol that Heritrix supports: e.g. FetchHTTP.</para>
       </sect3>
 
       <sect3>
@@ -581,7 +581,7 @@ ${package_declaration}</programlisting></para>
       called refinements. An object of this type belongs to a global or per
       settings object and overrides the settings in its owners object if some
       criteria is met. These criteria could be that the URI in question
-      conforms to a regular expression or that it the settings are consulted
+      conforms to a regular expression or that the settings are consulted
       at a specific time of day limited by a time span.</para>
     </sect2>
 
@@ -729,7 +729,7 @@ ${package_declaration}</programlisting></para>
     ComplexType (or one of its descendants). When you write your own module
     you should inherit from <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ModuleType.html">ModuleType</ulink>
-    which is a subclass of ComplexType intended for be subclassed by all
+    which is a subclass of ComplexType intended to be subclassed by all
     modules in Heritrix.</para>
 
     <sect2>
@@ -838,7 +838,7 @@ t.setOverrideable(false);</programlisting> Here we add an attribute definition
 
       <para>In most cases when the module needs to access its own attributes,
       a CrawlURI is available. The right way to make sure that all the
-      overrides and refinements is considered is then to use the method <ulink
+      overrides and refinements are considered is then to use the method <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getAttribute(java.lang.String,%20org.archive.crawler.datamodel.CrawlURI)">getAttribute(String
       name, CrawlURI uri)</ulink> to get the attribute. Sometimes the context
       you are working in could be defined by other objects than the CrawlURI,
@@ -1129,7 +1129,7 @@ url="http://vefsofnun.bok.hi.is/deduplicator/index.html">deduplicator</ulink>
           <para>This method will most likely change name see <xref
           linkend="refactor_HTTPRecorder" /> for details.</para>
         </footnote> method. The recorder is referenced by the CrawlURI and
-      available to all the processors. Se <xref
+      available to all the processors. See <xref
       linkend="writing_a_processor" /> for an explanation on how to use the
       recorder.</para>
     </sect2>
@@ -1685,7 +1685,7 @@ public class MyFrontier extends ModuleType implements Frontier,
     methods acts as different type of filters that the URI will be checked
     against. In addition the CrawlScope class offers a list of exclude filters
     which can be set on every scope. If the URI is accepted (matches the test)
-    by any of the filters in the exclude list, it will be cinsidered being out
+    by any of the filters in the exclude list, it will be considered being out
     of scope. The implementation of the innerAccepts method in the CrawlSope
     is as follows:</para>
 
@@ -1815,7 +1815,7 @@ public class MyFrontier extends ModuleType implements Frontier,
         accessible via the WUI and is also written to file at the end of a
         crawl.</para>
 
-        <para>Generally processor would include the number of URIs that
+        <para>Generally, a processor would include the number of URIs that
         they've handled, the number of links extracted (for link extractors)
         or any other abitrary information of relevance to that
         processor.</para>
@@ -1982,7 +1982,7 @@ public class MyFrontier extends ModuleType implements Frontier,
       <sect3>
         <title>Writing to HttpRecorder</title>
 
-        <para>Before it can be written to a processor must get a reference to
+        <para>Before it can be written to a processor, it must get a reference to
         the current threads HttpRecorder. This is done by invoking the
         HttpRecorder class' static method <ulink
         url="http://crawler.archive.org/apidocs/org/archive/util/HttpRecorder.html#getHttpRecorder()">getHttpRecorder()</ulink>.
@@ -2205,7 +2205,7 @@ public class SimpleExtractor extends Processor
         <title>One processor, many threads</title>
 
         <para>For each processor only one instance is created per crawl. As
-        there are multiple threads running these processors must be carefully
+        there are multiple threads running, these processors must be carefully
         written so that no conflicts arise. This usually means that class
         variables can not be used for other things then gathering incremental
         statistics and data.</para>
@@ -2248,7 +2248,7 @@ public class SimpleExtractor extends Processor
         <filename>StatisticsTracking.options</filename>
         file under the conf/modules directory. The classes' full name (with
         package info) should be written in its own line, followed by a '|' and
-        a descriptive name (containing only [a-z,A-z]).</para>
+        a descriptive name (containing only [a-z,A-Z]).</para>
       </note></para>
 
     <sect2>
@@ -2502,7 +2502,7 @@ public class SimpleExtractor extends Processor
     previous release version has been tested and packaged.</para>
 
     <para>Version numbers are applied as tags of the form
-    "heritrix-#_#_#".  Branches occur at major transistions and are labeled
+    "heritrix-#_#_#".  Branches occur at major transitions and are labeled
     with the form "heritrix_#_#'.</para> 
 
     <para>When a particular development-version is thought
