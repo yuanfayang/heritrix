@@ -752,12 +752,12 @@ public class HttpConnection {
                 outputStream = new BufferedOutputStream(
                     socket.getOutputStream(), outbuffersize);
             } else {
-                inputStream = httpRecorder.inputWrap((InputStream)
-                    (new BufferedInputStream(socket.getInputStream(),
-                    inbuffersize)));
-                outputStream = httpRecorder.outputWrap((OutputStream)
-                    (new BufferedOutputStream(socket.getOutputStream(), 
-                    outbuffersize)));
+                inputStream = new BufferedInputStream(
+                        httpRecorder.inputWrap(socket.getInputStream()),
+                        inbuffersize);
+                outputStream = new BufferedOutputStream(
+                        httpRecorder.outputWrap(socket.getOutputStream()), 
+                        outbuffersize);
             }
             // END HERITRIX change.
 
