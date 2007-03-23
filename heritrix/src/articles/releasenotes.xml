@@ -12,6 +12,26 @@
     </authorgroup>
   </articleinfo>
 
+  <sect1 id="NEXT">
+    <title>Release TBD - TBD</title>
+
+    <abstract>
+      <para />
+    </abstract>
+
+    <sect2 id="NEXT_contributors">
+      <title>Contributors</title>
+
+      <para>Aside from the <ulink
+      url="http://crawler.archive.org/team-list.html">usual suspects</ulink>,
+      the following contributed to this release:<itemizedlist>
+          <listitem>
+            <para>Ahmed Ghouzia</para>
+          </listitem>
+        </itemizedlist></para>
+    </sect2>
+  </sect1>
+
   <sect1 id="1_12_0">
     <title>Release 1.12.0 - 3/16/2007</title>
 

@@ -354,7 +354,7 @@
           <sect5>
             <title>heritrix.cmdline.port</title>
 
-            <para>Value is port GUI is to run on.</para>
+            <para>Value is the port to run the GUI on.</para>
           </sect5>
 
           <sect5>
@@ -991,7 +991,7 @@ org.apache.commons.httpclient.level= SEVERE</programlisting>Here's an example
         </itemizedlist>
 
         <para>The following scopes are available, but the same effects can be
-        achieved more efficently, and in combination, with SurtPrefixScope.
+        achieved more efficiently, and in combination, with SurtPrefixScope.
         When SurtPrefixScope can be more easily understood and configured,
         these scopes may be removed entirely.</para>
 
@@ -1121,8 +1121,8 @@ org.apache.commons.httpclient.level= SEVERE</programlisting>Here's an example
                 <para><emphasis role="bold">path</emphasis>: accept if on same
                 host and a shared path-prefix as seeds</para>
               </listitem>
-            </itemizedlist>The <emphasis>transitive</emphasis> filter was
-          configured based on the various link-hops and embed-hops thresholds
+            </itemizedlist>The <emphasis>transitive</emphasis> filter configuration
+          was based on the various link-hops and embed-hop thresholds
           set by the operator.</para>
 
           <para>The <emphasis>exclusion</emphasis> filter was in fact a
@@ -1715,7 +1715,7 @@ org.apache.commons.httpclient.level= SEVERE</programlisting>Here's an example
 
             <para>Checks if a URI contains a repeated pattern.</para>
 
-            <para>This filter checks if a if a pattern is repeated a specific
+            <para>This filter checks if a pattern is repeated a specific
             number of times. The use is to avoid crawler traps where the
             server adds the same pattern to the requested URI like:</para>
 
@@ -2052,7 +2052,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           <para>Set the number of toe threads (see <xref
           linkend="toethreads" />).</para>
 
-          <para>If running a domain crawl smaller then 100 hosts a value
+          <para>If running a domain crawl smaller than 100 hosts a value
           approximately twice the number of hosts should be enough. Values
           larger then 150-200 are rarely worthwhile unless running on machines
           with exceptional resources.</para>
@@ -2176,7 +2176,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
             <para>Maximum number of non link hops at the end of the current
             URI's <xref linkend="discoverypath" />. Generally we don't want to
-            follow embeds, redirects and the like for more then a few (default
+            follow embeds, redirects and the like for more than a few (default
             5) hops in a row. Such deep embedded structures are usually
             crawler traps. Since embeds are usually treated with higher
             priority then links, getting stuck in this type of trap can be
