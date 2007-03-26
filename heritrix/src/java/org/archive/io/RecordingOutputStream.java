@@ -130,6 +130,11 @@ public class RecordingOutputStream extends OutputStream {
      */
     private OutputStream out = null;
 
+    // mark/reset support 
+    /** furthest position reached before any reset()s */
+    private long maxPosition = 0;
+    /** remembered position to reset() to */ 
+    private long markPosition = 0; 
 
     /**
      * Create a new RecordingOutputStream.
@@ -189,6 +194,11 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public void write(int b) throws IOException {
+        if(position<maxPosition) {
+            // revisiting previous content; do nothing but advance position
+            position++;
+            return; 
+        }
         if(recording) {
             record(b);
         }
@@ -198,17 +208,19 @@ public class RecordingOutputStream extends OutputStream {
         checkLimits();
     }
 
-    public void write(byte[] b) throws IOException {
-        if(recording) {
-            record(b, 0, b.length);
-        }
-        if (this.out != null) {
-            this.out.write(b);
-        }
-        checkLimits();
-    }
-
     public void write(byte[] b, int off, int len) throws IOException {
+        if(position < maxPosition) {
+            if(position+len<=maxPosition) {
+                // revisiting; do nothing but advance position
+                position += len;
+                return;
+            }
+            // consume part of the array doing nothing but advancing position
+            long consumeRange = maxPosition - position; 
+            position += consumeRange;
+            off += consumeRange;
+            len -= consumeRange; 
+        }
         if(recording) {
             record(b, off, len);
         }
@@ -217,7 +229,7 @@ public class RecordingOutputStream extends OutputStream {
         }
         checkLimits();
     }
-
+    
     /**
      * Check any enforced limits. For now, this only checks MAX_HEADER_MATERIAL
      * if markContentBegin() has not yet been called.
@@ -518,5 +530,27 @@ public class RecordingOutputStream extends OutputStream {
      */
     public boolean isOpen() {
         return this.out != null;
+    }
+    
+    /**
+     * When used alongside a mark-supporting RecordingInputStream, remember
+     * a position reachable by a future reset().
+     */
+    public void mark() {
+        // remember this position for subsequent reset()
+        this.markPosition = position; 
+    }
+    
+    /**
+     * When used alongside a mark-supporting RecordingInputStream, reset 
+     * the position to that saved by previous mark(). Until the position 
+     * again reached "new" material, none of the bytes pushed to this 
+     * stream will be digested or recorded. 
+     */
+    public void reset() {
+        // take note of furthest-position-reached to avoid double-recording
+        maxPosition = Math.max(maxPosition, position); 
+        // reset to previous position
+        position = markPosition;
     }
 }

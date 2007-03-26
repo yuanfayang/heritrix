@@ -400,4 +400,21 @@ public class RecordingInputStream
     {
         return this.in != null;
     }
+
+    @Override
+    public synchronized void mark(int readlimit) {
+        this.in.mark(readlimit); 
+        this.recordingOutputStream.mark(); 
+    }
+
+    @Override
+    public boolean markSupported() {
+        return this.in.markSupported(); 
+    }
+
+    @Override
+    public synchronized void reset() throws IOException {
+        this.in.reset();
+        this.recordingOutputStream.reset();
+    }
 }
