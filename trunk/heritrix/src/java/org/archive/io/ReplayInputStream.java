@@ -255,7 +255,7 @@ public class ReplayInputStream extends SeekInputStream
         if (p < 0) {
             throw new IOException("Negative seek offset.");
         }
-        if (p >= size) {
+        if (p > size) {
             throw new IOException("Desired position exceeds size.");
         }
         if (p < buffer.length) {
