@@ -343,55 +343,21 @@ class ByteReplayCharSequence implements ReplayCharSequence {
         super.finalize();
         close();
     }
-
-    /* (non-Javadoc)
-     * @see org.archive.io.EnhancedCharSequence#substring(int, int)
+    
+    /**
+     * Convenience method for getting a substring. 
+     * @deprecated please use subSequence() and then toString() directly 
      */
     public String substring(int offset, int len) {
-        StringBuffer ret = new StringBuffer(len);
-        // Add to offset start-of-content offset to get us over HTTP header
-        // if present.
-        offset += this.contentOffset;
-        if (offset < this.prefixBuffer.length) {
-            // Need something from the prefix buffer.
-            int from = offset;
-            // To the end of the buffer
-            int count = this.prefixBuffer.length - from;
-            if (offset + len < this.prefixBuffer.length) {
-                count = len; // length falls within the buffer.
-            } else {
-                // Will need more then is in the prefixBuffer.
-                offset = this.prefixBuffer.length + 1;
-                len = len - count;
-            }
-            // Since we are dealing with a byte buffer we'll have to use
-            // a String and then wrap up in a StringBuffer to concat with
-            // the backing file. TODO: This can probably be optimized.
-            //
-            // Also, force an 8-bit encoding.  Default jvm encoding is
-            // usually -- us context -- 7 bit ascii.  If we don't force
-            // 8-bit, characters above 127 are considered rubbish.
-            try {
-                ret.append(new String(this.prefixBuffer,from,count,
-                    DEFAULT_SINGLE_BYTE_ENCODING));
-            }
-            catch (UnsupportedEncodingException e) {
-                logger.severe("Failed encoding string: " + e.getMessage());
-            }
-        }
-        if (offset >= this.prefixBuffer.length) {
-            // TODO: Maybe better performance can be gained by reading
-            // blocks from files.
-            int to = offset + len;
-            for(int i = offset ; i < to ; i++) {
-                ret.append(charAt(i - this.contentOffset));
-            }
-        }
-
-        return ret.toString();
+        return subSequence(offset, offset+len).toString();
     }
-    
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
     public String toString() {
-        return substring(0, length());
+        StringBuilder sb = new StringBuilder(this.length());
+        sb.append(this);
+        return sb.toString();
     }
 }
