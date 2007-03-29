@@ -160,6 +160,18 @@ public class ReplayCharSequenceTest extends TmpDirTestCase
         assertEquals("Strings don't match",result,fileContent);
     }
     
+    public void testReplayCharSequenceByteToStringOverflow() throws IOException {
+        String fileContent = "Some file content. ";
+        byte [] buffer = fileContent.getBytes();
+        RecordingOutputStream ros = writeTestStream(
+                buffer,1,
+                "testReplayCharSequenceByteToString.txt",1);
+        String expectedContent = fileContent+fileContent;
+        ReplayCharSequence rcs = ros.getReplayCharSequence();
+        String result = rcs.toString();
+        assertEquals("Strings don't match", expectedContent, result);
+    }
+    
     public void testReplayCharSequenceByteToStringMulti() throws IOException {
         String fileContent = "Some file content";
         byte [] buffer = fileContent.getBytes("UTF-8");
