@@ -116,7 +116,7 @@ WriterPoolSettings, FetchStatusCodes {
         }
         
         // If no content, don't write record.
-        int recordLength = (int)curi.getContentSize();
+        long recordLength = curi.getContentSize();
         if (recordLength <= 0) {
         	// Write nothing.
         	return;
@@ -139,7 +139,7 @@ WriterPoolSettings, FetchStatusCodes {
         }
     }
     
-    protected void write(CrawlURI curi, int recordLength, InputStream in,
+    protected void write(CrawlURI curi, long recordLength, InputStream in,
         String ip)
     throws IOException {
         WriterPoolMember writer = getPool().borrowFile();

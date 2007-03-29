@@ -169,7 +169,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @param maxSize Maximum size for ARC files written.
      */
     public ARCWriter(final AtomicInteger serialNo, final List<File> dirs,
-    		final String prefix, final boolean cmprs, final int maxSize) {
+    		final String prefix, final boolean cmprs, final long maxSize) {
         this(serialNo, dirs, prefix, "", cmprs, maxSize, null);
     }
             
@@ -187,7 +187,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      */
     public ARCWriter(final AtomicInteger serialNo, final List<File> dirs,
     		final String prefix, final String suffix, final boolean cmprs,
-            final int maxSize, final List meta) {
+            final long maxSize, final List meta) {
         super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
         	ARC_FILE_EXTENSION);
         this.metadata = meta;
@@ -377,7 +377,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
     }
 
     public void write(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, int recordLength,
+            long fetchBeginTimeStamp, long recordLength,
             ByteArrayOutputStream baos)
     throws IOException {
         preWriteRecordTasks();
@@ -392,7 +392,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
     }
 
     public void write(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, int recordLength, InputStream in)
+            long fetchBeginTimeStamp, long recordLength, InputStream in)
     throws IOException {
         preWriteRecordTasks();
         try {
@@ -406,7 +406,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
     }
 
     public void write(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, int recordLength,
+            long fetchBeginTimeStamp, long recordLength,
             ReplayInputStream ris)
     throws IOException {
         preWriteRecordTasks();
@@ -446,7 +446,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @exception IOException
      */
     protected String getMetaLine(String uri, String contentType, String hostIP,
-        long fetchBeginTimeStamp, int recordLength)
+        long fetchBeginTimeStamp, long recordLength)
     throws IOException {
         if (fetchBeginTimeStamp <= 0) {
             throw new IOException("Bogus fetchBeginTimestamp: " +
@@ -456,7 +456,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
         return validateMetaLine(createMetaline(uri, hostIP, 
             ArchiveUtils.get14DigitDate(fetchBeginTimeStamp),
             MimetypeUtils.truncate(contentType),
-            Integer.toString(recordLength)));
+            Long.toString(recordLength)));
     }
     
     public String createMetaline(String uri, String hostIP,

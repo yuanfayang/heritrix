@@ -206,7 +206,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of each file",
-                new Integer(DEFAULT_MAX_FILE_SIZE)));
+                new Long(DEFAULT_MAX_FILE_SIZE)));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new StringList(ATTR_PATH, "Where to files. " +
@@ -385,9 +385,9 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     * to next boundary.
     * @return ARC maximum size.
     */
-    public int getMaxSize() {
+    public long getMaxSize() {
         Object obj = getAttributeUnchecked(ATTR_MAX_SIZE_BYTES);
-        return (obj == null)? DEFAULT_MAX_FILE_SIZE: ((Integer)obj).intValue();
+        return (obj == null)? DEFAULT_MAX_FILE_SIZE: ((Long)obj).longValue();
     }
 
     public String getPrefix() {

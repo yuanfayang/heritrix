@@ -92,7 +92,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     private List<File> writeDirs = null;
     private String prefix = DEFAULT_PREFIX;
     private String suffix = DEFAULT_SUFFIX;
-    private final int maxSize;
+    private final long maxSize;
     private final String extension;
 
     /**
@@ -151,7 +151,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      */
     public WriterPoolMember(AtomicInteger serialNo, 
             final List<File> dirs, final String prefix, 
-            final boolean cmprs, final int maxSize, final String extension) {
+            final boolean cmprs, final long maxSize, final String extension) {
         this(serialNo, dirs, prefix, "", cmprs, maxSize, extension);
     }
             
@@ -169,7 +169,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     public WriterPoolMember(AtomicInteger serialNo,
             final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final int maxSize, final String extension) {
+            final long maxSize, final String extension) {
         this.suffix = suffix;
         this.prefix = prefix;
         this.maxSize = maxSize;
