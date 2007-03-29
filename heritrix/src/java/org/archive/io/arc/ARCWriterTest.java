@@ -112,7 +112,7 @@ extends TmpDirTestCase implements ARCConstants {
     }
 
     private File writeRecords(String baseName, boolean compress,
-        int maxSize, int recordCount)
+        long maxSize, int recordCount)
     throws IOException {
         cleanUpOldFiles(baseName);
         File [] files = {getTmpDir()};

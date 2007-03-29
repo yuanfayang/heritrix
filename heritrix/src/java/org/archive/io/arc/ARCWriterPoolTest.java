@@ -133,7 +133,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
     
     private WriterPoolSettings getSettings(final boolean isCompressed) {
         return new WriterPoolSettings() {
-            public int getMaxSize() {
+            public long getMaxSize() {
                 return ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE;
             }
             

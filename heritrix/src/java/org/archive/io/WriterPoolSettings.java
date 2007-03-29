@@ -32,7 +32,7 @@ import java.util.List;
  * @version $Date$, $Revision$
  */
 public interface WriterPoolSettings {
-    public int getMaxSize();
+    public long getMaxSize();
     public String getPrefix();
     public String getSuffix(); 
     public List<File> getOutputDirs();

@@ -121,7 +121,7 @@ implements WARCConstants {
     public ExperimentalWARCWriter(final AtomicInteger serialNo,
     		final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final int maxSize, final List warcinfoData) {
+            final long maxSize, final List warcinfoData) {
         super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
         	WARC_FILE_EXTENSION);
         this.fileMetadata = warcinfoData;
