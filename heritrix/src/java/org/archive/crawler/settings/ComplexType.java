@@ -76,7 +76,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private transient ComplexType parent;
     private String description;
     private String absoluteName;
-    private final List<Type> definition = new ArrayList<Type>();
+    protected final List<Type> definition = new ArrayList<Type>();
     protected final Map<String,Type> definitionMap = new HashMap<String,Type>();
     private boolean initialized = false;
     private String[] preservedFields = new String[0];
