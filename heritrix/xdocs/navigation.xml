@@ -32,8 +32,8 @@
             href="http://crawler.sourceforge.net/cmdline-jmxclient" /> 
         <item name="Deduplicator"
             href="http://deduplicator.sourceforge.net" /> 
-        <item name="HDFS Writer Processor"
-            href="http://www.zvents.com/labs/hdfs_writer_processor" /> 
+        <item name="Hadoop DFS Writer Processor"
+            href="http://www.zvents.com/labs/heritrix_hadoop" /> 
       </item>
     </menu>
     <footer>
