@@ -559,9 +559,15 @@ implements FetchStatusCodes {
         clearAList();
     }
 
-    /** Get the size in bytes of this URI's content.
-     * This may be set at any time by any class and therefore should not be
-     * trusted. Primarily it exists to ease the calculation of statistics.
+    /** 
+     * Get the size in bytes of this URI's recorded content, inclusive
+     * of things like protocol headers. It is the responsibility of the 
+     * classes which fetch the URI to set this value accordingly -- it is 
+     * not calculated/verified within CrawlURI. 
+     * 
+     * This value is consulted in reporting/logging/writing-decisions.
+     * 
+     * @see #setContentSize()
      * @return contentSize
      */
     public long getContentSize(){
@@ -760,6 +766,15 @@ implements FetchStatusCodes {
     }
 
     /**
+     * Sets the 'content size' for the URI, which is considered inclusive
+     * of all recorded material (such as protocol headers). (In contrast,
+     * content-length matches the HTTP definition, that of the enclosed 
+     * content-body.)
+     * 
+     * Should be set by a fetcher or other processor as soon as the final 
+     * size of recorded content is known. Setting to an artificial/incorrect
+     * value may affect other reporting/processing. 
+     * 
      * @param l Content size.
      */
     public void setContentSize(long l) {

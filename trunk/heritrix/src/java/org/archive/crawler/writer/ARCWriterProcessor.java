@@ -115,10 +115,11 @@ WriterPoolSettings, FetchStatusCodes {
             return;
         }
         
-        // If no content, don't write record.
+        // If no recorded content at all, don't write record.
         long recordLength = curi.getContentSize();
         if (recordLength <= 0) {
-        	// Write nothing.
+        	// getContentSize() should be > 0 if any material (even just
+            // HTTP headers with zero-length body) is available. 
         	return;
         }
         
