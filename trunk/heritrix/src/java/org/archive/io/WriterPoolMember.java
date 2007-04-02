@@ -438,8 +438,8 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
 			final byte [] b)
 	throws IOException {
         int read = b.length;
-        int total = 0;
-        while((read = is.read(b,0,Math.min(b.length, (int)(limit-total)))) != -1
+        long total = 0;
+        while((read = is.read(b,0,(int)Math.min(b.length, (limit-total)))) != -1
         		&& total < limit) {
         	total += read;
             write(b, 0, read);

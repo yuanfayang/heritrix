@@ -104,11 +104,12 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             return;
         }
         
-        // If no content, don't write record.
-        int recordLength = (int)curi.getContentSize();
+        // If no recorded content at all, don't write record.
+        long recordLength = curi.getContentSize();
         if (recordLength <= 0) {
-        	// Write nothing.
-        	return;
+            // getContentSize() should be > 0 if any material (even just
+            // HTTP headers with zero-length body) is available. 
+            return;
         }
         
         String scheme = curi.getUURI().getScheme().toLowerCase();
