@@ -27,9 +27,9 @@ package org.archive.crawler.framework;
 
 import java.io.Serializable;
 
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
+
 
 /**
  * Record of all interesting info about the most-recent
@@ -57,7 +57,7 @@ public class SeedRecord implements CoreAttributeConstants, Serializable {
         this.statusCode = curi.getFetchStatus();
         this.disposition = disposition;
         if (statusCode==301 || statusCode == 302) {
-            for (CandidateURI cauri: curi.getOutCandidates()) {
+            for (CrawlURI cauri: curi.getOutCandidates()) {
                 if("location:".equalsIgnoreCase(cauri.getViaContext().
                 		toString())) {
                     redirectUri = cauri.toString();

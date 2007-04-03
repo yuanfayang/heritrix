@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -47,7 +47,7 @@ extends QueueAssignmentPolicy {
     
     private static final String DNS = "dns";
 
-    public String getClassKey(CrawlController controller, CandidateURI cauri) {
+    public String getClassKey(CrawlController controller, CrawlURI cauri) {
         String scheme = cauri.getUURI().getScheme();
         String candidate = null;
         try {

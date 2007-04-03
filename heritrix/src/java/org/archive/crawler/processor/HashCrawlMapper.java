@@ -25,8 +25,7 @@ package org.archive.crawler.processor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -78,13 +77,13 @@ public class HashCrawlMapper extends CrawlMapper {
     }
 
     /**
-     * Look up the crawler node name to which the given CandidateURI 
+     * Look up the crawler node name to which the given CrawlURI 
      * should be mapped. 
      * 
-     * @param cauri CandidateURI to consider
+     * @param cauri CrawlURI to consider
      * @return String node name which should handle URI
      */
-    protected String map(CandidateURI cauri) {
+    protected String map(CrawlURI cauri) {
         // get classKey, via frontier to generate if necessary
         String key = getController().getFrontier().getClassKey(cauri);
         Pattern reducePattern = cauri.get(this, REDUCE_PREFIX_PATTERN);

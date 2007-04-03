@@ -40,9 +40,10 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.archive.crawler.datamodel.CandidateURI;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.SchedulingConstants;
+
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
@@ -214,11 +215,11 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     public void loadSeeds() {
         Writer ignoredWriter = new StringWriter();
         // Get the seeds to refresh.
-        Iterator iter = seeds.seedsIterator(ignoredWriter);
+        Iterator<UURI> iter = seeds.seedsIterator(ignoredWriter);
         while (iter.hasNext()) {
-            CandidateURI caUri =
-                CandidateURI.createSeedCandidateURI((UURI)iter.next());
-            caUri.setSchedulingDirective(CandidateURI.MEDIUM);
+            CrawlURI caUri = new CrawlURI(iter.next());
+            caUri.setSeed(true);
+            caUri.setSchedulingDirective(SchedulingConstants.MEDIUM);
             schedule(caUri);
         }
         batchFlush();
@@ -228,7 +229,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
                 controller.getDisk());
     }
     
-    public String getClassKey(CandidateURI cauri) {
+    public String getClassKey(CrawlURI cauri) {
         String queueKey = cauri.get(this, FORCE_QUEUE_ASSIGNMENT);
             if ("".equals(queueKey)) {
                 // Typical case, barring overrides
@@ -248,7 +249,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      * Canonicalize passed uuri. Its would be sweeter if this canonicalize
      * function was encapsulated by that which it canonicalizes but because
      * settings change with context -- i.e. there may be overrides in operation
-     * for a particular URI -- its not so easy; Each CandidateURI would need a
+     * for a particular URI -- its not so easy; Each CrawlURI would need a
      * reference to the settings system. That's awkward to pass in.
      * 
      * @param uuri Candidate URI to canonicalize.
@@ -262,9 +263,9 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     }
 
     /**
-     * Canonicalize passed CandidateURI. This method differs from
+     * Canonicalize passed CrawlURI. This method differs from
      * {@link #canonicalize(UURI)} in that it takes a look at
-     * the CandidateURI context possibly overriding any canonicalization effect if
+     * the CrawlURI context possibly overriding any canonicalization effect if
      * it could make us miss content. If canonicalization produces an URL that
      * was 'alreadyseen', but the entry in the 'alreadyseen' database did
      * nothing but redirect to the current URL, we won't get the current URL;
@@ -273,10 +274,10 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      * redirecting to netarkivet.net (assuming stripWWW rule enabled).
      * <p>Note, this method under circumstance sets the forceFetch flag.
      * 
-     * @param cauri CandidateURI to examine.
+     * @param cauri CrawlURI to examine.
      * @return Canonicalized <code>cacuri</code>.
      */
-    protected String canonicalize(CandidateURI cauri) {
+    protected String canonicalize(CrawlURI cauri) {
         String canon = canonicalize(cauri.getUURI());
         if (cauri.isLocation()) {
             // If the via is not the same as where we're being redirected (i.e.
@@ -301,15 +302,11 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      * 
      * @param caUri The URI to schedule.
      */
-    protected void innerSchedule(CandidateURI caUri) {
-        CrawlURI curi;
-        if(caUri instanceof CrawlURI) {
-            curi = (CrawlURI) caUri;
-        } else {
-            curi = CrawlURI.from(caUri,System.currentTimeMillis());
-            curi.getData().put(A_TIME_OF_NEXT_PROCESSING,
-                System.currentTimeMillis());
-            // New CrawlURIs get 'current time' as the time of next processing.
+    protected void innerSchedule(CrawlURI curi) {
+        // New CrawlURIs get 'current time' as the time of next processing.
+        if (!curi.containsDataKey(A_TIME_OF_NEXT_PROCESSING)) {
+            curi.getData().put(A_TIME_OF_NEXT_PROCESSING, 
+                    System.currentTimeMillis());
         }
         
         if(curi.getClassKey() == null){
@@ -326,7 +323,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
             // is treating the immediate redirect target as a seed.
             seeds.addSeed(curi);
             // And it needs rapid scheduling.
-            curi.setSchedulingDirective(CandidateURI.MEDIUM);
+            curi.setSchedulingDirective(SchedulingConstants.MEDIUM);
         }
         
         // Optionally preferencing embeds up to MEDIUM
@@ -335,10 +332,10 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
-                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
+                    && curi.getSchedulingDirective() == SchedulingConstants.NORMAL) {
                 // number of embed hops falls within the preferenced range, and
                 // uri is not already MEDIUM -- so promote it
-                curi.setSchedulingDirective(CandidateURI.MEDIUM);
+                curi.setSchedulingDirective(SchedulingConstants.MEDIUM);
                 prefEmbed = true;
             }
         }
@@ -378,7 +375,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         return hq;
     }
 
-    protected void batchSchedule(CandidateURI caUri) {
+    protected void batchSchedule(CrawlURI caUri) {
         threadWaiting.getQueue().enqueue(caUri);
     }
 
@@ -389,7 +386,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     private void innerBatchFlush() {
         Queue q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
-            CandidateURI caUri = (CandidateURI)q.dequeue();
+            CrawlURI caUri = (CrawlURI)q.dequeue();
             if(alreadyIncluded != null){
                 String cannon = canonicalize(caUri);
                 System.out.println("Cannon of " + caUri + " is " + cannon);
@@ -492,9 +489,9 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     }
 
     /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CrawlURI)
      */
-    public void schedule(CandidateURI caURI) {
+    public void schedule(CrawlURI caURI) {
         batchSchedule(caURI);        
     }
 
@@ -613,7 +610,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         // the curi.
         controller.fireCrawledURISuccessfulEvent(curi);
         
-        curi.setSchedulingDirective(CandidateURI.NORMAL);
+        curi.setSchedulingDirective(SchedulingConstants.NORMAL);
 
         // Set time of next processing
         cdata.put(A_TIME_OF_NEXT_PROCESSING, 
@@ -710,7 +707,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         failedFetchCount++;
         
         // Put the failed URI at the very back of the queue.
-        curi.setSchedulingDirective(CandidateURI.NORMAL);
+        curi.setSchedulingDirective(SchedulingConstants.NORMAL);
         // TODO: reconsider this
         curi.getData().put(A_TIME_OF_NEXT_PROCESSING, Long.MAX_VALUE);
 
@@ -749,7 +746,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         // Todo: consider timout before retrying disregarded elements.
         //       Possibly add a setting to the WaitEvaluators?
         curi.getData().put(A_TIME_OF_NEXT_PROCESSING, Long.MAX_VALUE); 
-        curi.setSchedulingDirective(CandidateURI.NORMAL);
+        curi.setSchedulingDirective(SchedulingConstants.NORMAL);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         // Ready the URI for reserialization.
@@ -1031,18 +1028,18 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     }
 
     private static class ThreadLocalQueue
-    extends ThreadLocal<Queue<CandidateURI>> implements Serializable {
+    extends ThreadLocal<Queue<CrawlURI>> implements Serializable {
 
         private static final long serialVersionUID = 8268977225156462059L;
 
-        protected Queue<CandidateURI> initialValue() {
-            return new MemQueue<CandidateURI>();
+        protected Queue<CrawlURI> initialValue() {
+            return new MemQueue<CrawlURI>();
         }
 
         /**
          * @return Queue of 'batched' items
          */
-        public Queue<CandidateURI> getQueue() {
+        public Queue<CrawlURI> getQueue() {
             return get();
         }
     }
@@ -1159,9 +1156,9 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     }
 
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver#receive(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver#receive(org.archive.crawler.datamodel.CrawlURI)
      */
-    public void receive(CandidateURI item) {
+    public void receive(CrawlURI item) {
         System.out.println("Received " + item);
         innerSchedule(item);        
     }

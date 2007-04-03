@@ -30,7 +30,6 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
@@ -49,12 +48,12 @@ import org.archive.util.fingerprint.ArrayLongFPCache;
 import st.ata.util.FPGenerator;
 
 /**
- * A simple crawl splitter/mapper, dividing up CandidateURIs/CrawlURIs
+ * A simple crawl splitter/mapper, dividing up CrawlURIs/CrawlURIs
  * between crawlers by diverting some range of URIs to local log files
  * (which can then be imported to other crawlers). 
  * 
  * May operate on a CrawlURI (typically early in the processing chain) or
- * its CandidateURI outlinks (late in the processing chain, after 
+ * its CrawlURI outlinks (late in the processing chain, after 
  * LinksScoper), or both (if inserted and configured in both places). 
  * 
  * <p>Applies a map() method, supplied by a concrete subclass, to
@@ -194,14 +193,14 @@ implements FetchStatusCodes {
         
         if (curi.getOutLinks().size() > 0 && curi.get(this, CHECK_OUTLINKS)) {
             // consider outlinks for mapping
-            Iterator<CandidateURI> iter = curi.getOutCandidates().iterator(); 
+            Iterator<CrawlURI> iter = curi.getOutCandidates().iterator(); 
             while(iter.hasNext()) {
-                CandidateURI cauri = iter.next();
+                CrawlURI cauri = iter.next();
                 if (decideToMapOutlink(cauri)) {
-                    // apply mapping to the CandidateURI
+                    // apply mapping to the CrawlURI
                     String target = map(cauri);
                     if(!localName.equals(target)) {
-                        // CandidateURI is mapped to somewhere other than here
+                        // CrawlURI is mapped to somewhere other than here
                         iter.remove();
                         divertLog(cauri,target);
                     } else {
@@ -213,9 +212,9 @@ implements FetchStatusCodes {
         return ProcessResult.PROCEED;
     }
     
-    protected boolean decideToMapOutlink(CandidateURI cauri) {
+    protected boolean decideToMapOutlink(CrawlURI cauri) {
         DecideRule rule = cauri.get(this, OUTLINK_DECIDE_RULES);
-        boolean rejected = rule.decisionFor(cauri.asProcessorURI())
+        boolean rejected = rule.decisionFor(cauri)
                 .equals(DecideResult.REJECT);
         return !rejected;
     }
@@ -242,22 +241,22 @@ implements FetchStatusCodes {
     }
 
     /**
-     * Look up the crawler node name to which the given CandidateURI 
+     * Look up the crawler node name to which the given CrawlURI 
      * should be mapped. 
      * 
-     * @param cauri CandidateURI to consider
+     * @param cauri CrawlURI to consider
      * @return String node name which should handle URI
      */
-    protected abstract String map(CandidateURI cauri);
+    protected abstract String map(CrawlURI cauri);
 
     
     /**
-     * Note the given CandidateURI in the appropriate diversion log. 
+     * Note the given CrawlURI in the appropriate diversion log. 
      * 
-     * @param cauri CandidateURI to append to a diversion log
+     * @param cauri CrawlURI to append to a diversion log
      * @param target String node name (log name) to receive URI
      */
-    protected synchronized void divertLog(CandidateURI cauri, String target) {
+    protected synchronized void divertLog(CrawlURI cauri, String target) {
         if(recentlySeen(cauri)) {
             return;
         }
@@ -270,10 +269,10 @@ implements FetchStatusCodes {
      * Consult the cache to determine if the given URI
      * has been recently seen -- entering it if not. 
      * 
-     * @param cauri CandidateURI to test
+     * @param cauri CrawlURI to test
      * @return true if URI was already in the cache; false otherwise 
      */
-    private boolean recentlySeen(CandidateURI cauri) {
+    private boolean recentlySeen(CrawlURI cauri) {
         long fp = FPGenerator.std64.fp(cauri.toString());
         return ! cache.add(fp);
     }

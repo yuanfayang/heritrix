@@ -36,7 +36,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.util.fingerprint.ArrayLongFPCache;
 
@@ -54,12 +54,12 @@ import st.ata.util.FPGenerator;
 public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
     /**
      * Represents a long fingerprint and (possibly) its corresponding
-     * CandidateURI, awaiting the next merge in a 'pending' state. 
+     * CrawlURI, awaiting the next merge in a 'pending' state. 
      */
     public class PendingItem implements Comparable {
         long fp;
-        CandidateURI caUri;
-        public PendingItem(long fp, CandidateURI value) {
+        CrawlURI caUri;
+        public PendingItem(long fp, CrawlURI value) {
             this.fp = fp;
             this.caUri = value;
         }
@@ -135,9 +135,9 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
     }
     
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#add(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.datamodel.UriUniqFilter#add(java.lang.String, org.archive.crawler.datamodel.CrawlURI)
      */
-    public synchronized void add(String key, CandidateURI value) {
+    public synchronized void add(String key, CrawlURI value) {
         profileLog(key);
         long fp = createFp(key); 
         if(! quickCheck(fp)) {
@@ -151,14 +151,14 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
     }
 
     /**
-     * Place the given FP/CandidateURI pair into the pending set, awaiting
+     * Place the given FP/CrawlURI pair into the pending set, awaiting
      * a merge to determine if it's actually accepted. 
      * 
      * @param fp long fingerprint
-     * @param value CandidateURI or null, if fp only needs merging (as when 
-     * CandidateURI was already forced in
+     * @param value CrawlURI or null, if fp only needs merging (as when 
+     * CrawlURI was already forced in
      */
-    protected void pend(long fp, CandidateURI value) {
+    protected void pend(long fp, CrawlURI value) {
         // special case for first batch of adds
         if(count()==0) {
             if(pendingSet.add(new PendingItem(fp,null))==false) {
@@ -199,17 +199,17 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
 
 
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addNow(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.datamodel.UriUniqFilter#addNow(java.lang.String, org.archive.crawler.datamodel.CrawlURI)
      */
-    public void addNow(String key, CandidateURI value) {
+    public void addNow(String key, CrawlURI value) {
         add(key, value);
         flush();
     }
     
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addForce(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.datamodel.UriUniqFilter#addForce(java.lang.String, org.archive.crawler.datamodel.CrawlURI)
      */
-    public void addForce(String key, CandidateURI value) {
+    public void addForce(String key, CrawlURI value) {
         add(key,null); // dummy pend
         this.receiver.receive(value);
     }
@@ -222,9 +222,9 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
     }
 
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#forget(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.datamodel.UriUniqFilter#forget(java.lang.String, org.archive.crawler.datamodel.CrawlURI)
      */
-    public void forget(String key, CandidateURI value) {
+    public void forget(String key, CrawlURI value) {
         throw new UnsupportedOperationException();
     }
 
@@ -242,7 +242,7 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
 
     /**
      * Perform a merge of all 'pending' items to the overall fingerprint list. 
-     * If the pending item is new, and has an associated CandidateURI, pass that
+     * If the pending item is new, and has an associated CrawlURI, pass that
      * URI along to the 'receiver' (frontier) for queueing. 
      * 
      * @return number of pending items actually added 

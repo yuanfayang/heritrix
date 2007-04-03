@@ -27,7 +27,6 @@ package org.archive.crawler.framework;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
@@ -162,20 +161,20 @@ public interface Frontier extends Module, Reporter {
     boolean isEmpty();
 
     /**
-     * Schedules a CandidateURI.
+     * Schedules a CrawlURI.
      *
      * <p>This method accepts one URI and schedules it immediately. This has
      * nothing to do with the priority of the URI being scheduled. Only that
      * it will be placed in it's respective queue at once. For priority
-     * scheduling see {@link CandidateURI#setSchedulingDirective(int)}
+     * scheduling see {@link CrawlURI#setSchedulingDirective(int)}
      *
      * <p>This method should be synchronized in all implementing classes.
      *
      * @param caURI The URI to schedule.
      *
-     * @see CandidateURI#setSchedulingDirective(int)
+     * @see CrawlURI#setSchedulingDirective(int)
      */
-    public void schedule(CandidateURI caURI);
+    public void schedule(CrawlURI caURI);
 
     /**
      * Report a URI being processed as having finished processing.
@@ -427,11 +426,11 @@ public interface Frontier extends Module, Reporter {
     public FrontierJournal getFrontierJournal();
     
     /**
-     * @param cauri CandidateURI for which we're to calculate and
+     * @param cauri CrawlURI for which we're to calculate and
      * set class key.
      * @return Classkey for <code>cauri</code>.
      */
-    public String getClassKey(CandidateURI cauri);
+    public String getClassKey(CrawlURI cauri);
 
     /**
      * Request that the Frontier load (or reload) crawl seeds, 

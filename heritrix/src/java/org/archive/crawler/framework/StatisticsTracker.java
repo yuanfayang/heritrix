@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.crawler.framework.CrawlController;
@@ -762,8 +763,8 @@ implements CrawlURIDispositionListener, Serializable {
                 ServerCacheUtil.getHostFor(sc, curi.getUURI()).getHostName(),
                 curi.getContentSize());
         
-        if (curi.getData().containsKey(CrawlURI.A_SOURCE_TAG)) {
-        	saveSourceStats((String)curi.getData().get(CrawlURI.A_SOURCE_TAG),
+        if (curi.getData().containsKey(A_SOURCE_TAG)) {
+        	saveSourceStats((String)curi.getData().get(A_SOURCE_TAG),
                         ServerCacheUtil.getHostFor(sc, curi.getUURI()).
                     getHostName()); 
         }

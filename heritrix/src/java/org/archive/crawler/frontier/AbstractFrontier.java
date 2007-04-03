@@ -42,9 +42,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.archive.crawler.datamodel.CandidateURI;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.SchedulingConstants;
+
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -468,8 +469,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         int count = 0; 
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
-            CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
-            caUri.setSchedulingDirective(CandidateURI.MEDIUM);
+            CrawlURI caUri = new CrawlURI(u);
+            caUri.setSeed(true);
+            caUri.setSchedulingDirective(SchedulingConstants.MEDIUM);
             if (get(SOURCE_TAG_SEEDS)) {
                 caUri.setSourceTag(caUri.toString());
             }
@@ -509,12 +511,10 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         }
     }
 
-    protected CrawlURI asCrawlUri(CandidateURI caUri) {
-        CrawlURI curi;
-        if (caUri instanceof CrawlURI) {
-            curi = (CrawlURI)caUri;
-        } else {
-            curi = CrawlURI.from(caUri, nextOrdinal++);
+    protected CrawlURI asCrawlUri(CrawlURI curi) {
+        if (curi.getOrdinal() == 0) {
+            nextOrdinal++;
+            curi.setOrdinal(nextOrdinal);
         }
         curi.setClassKey(getClassKey(curi));
         curi.setStateProvider(manager);
@@ -579,8 +579,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
             // treating the immediate redirect target as a seed.
             global.get(this, SEEDS).addSeed(curi);
             // And it needs rapid scheduling.
-	    if (curi.getSchedulingDirective() == CandidateURI.NORMAL)
-                curi.setSchedulingDirective(CandidateURI.MEDIUM);
+	    if (curi.getSchedulingDirective() == SchedulingConstants.NORMAL)
+                curi.setSchedulingDirective(SchedulingConstants.MEDIUM);
         }
 
         // optionally preferencing embeds up to MEDIUM
@@ -588,10 +588,10 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
-                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
+                    && curi.getSchedulingDirective() == SchedulingConstants.NORMAL) {
                 // number of embed hops falls within the preferenced range, and
                 // uri is not already MEDIUM -- so promote it
-                curi.setSchedulingDirective(CandidateURI.MEDIUM);
+                curi.setSchedulingDirective(SchedulingConstants.MEDIUM);
             }
         }
     }
@@ -876,7 +876,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * Canonicalize passed uuri. Its would be sweeter if this canonicalize
      * function was encapsulated by that which it canonicalizes but because
      * settings change with context -- i.e. there may be overrides in operation
-     * for a particular URI -- its not so easy; Each CandidateURI would need a
+     * for a particular URI -- its not so easy; Each CrawlURI would need a
      * reference to the settings system. That's awkward to pass in.
      * 
      * @param uuri Candidate URI to canonicalize.
@@ -888,9 +888,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     }
 
     /**
-     * Canonicalize passed CandidateURI. This method differs from
+     * Canonicalize passed CrawlURI. This method differs from
      * {@link #canonicalize(UURI)} in that it takes a look at
-     * the CandidateURI context possibly overriding any canonicalization effect if
+     * the CrawlURI context possibly overriding any canonicalization effect if
      * it could make us miss content. If canonicalization produces an URL that
      * was 'alreadyseen', but the entry in the 'alreadyseen' database did
      * nothing but redirect to the current URL, we won't get the current URL;
@@ -899,10 +899,10 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * redirecting to netarkivet.net (assuming stripWWW rule enabled).
      * <p>Note, this method under circumstance sets the forceFetch flag.
      * 
-     * @param cauri CandidateURI to examine.
+     * @param cauri CrawlURI to examine.
      * @return Canonicalized <code>cacuri</code>.
      */
-    protected String canonicalize(CandidateURI cauri) {
+    protected String canonicalize(CrawlURI cauri) {
         String canon = canonicalize(cauri.getUURI());
         if (cauri.isLocation()) {
             // If the via is not the same as where we're being redirected (i.e.
@@ -927,7 +927,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * @param cauri CrawlURI we're to get a key for.
      * @return a String token representing a queue
      */
-    public String getClassKey(CandidateURI cauri) {
+    public String getClassKey(CrawlURI cauri) {
         String queueKey = get(FORCE_QUEUE_ASSIGNMENT);
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
@@ -1012,11 +1012,13 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     }
     
     
-    protected void setStateProvider(CandidateURI curi) {
+    protected void setStateProvider(CrawlURI curi) {
         StateProvider p = curi.getStateProvider();
         if (p == null) {
             curi.setStateProvider(manager);
         }
     }
+    
+    
     
 }

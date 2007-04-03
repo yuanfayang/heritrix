@@ -25,7 +25,7 @@ package org.archive.crawler.framework;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.util.LogUtils;
 import org.archive.processors.Processor;
 import org.archive.processors.deciderules.DecideResult;
@@ -37,8 +37,8 @@ import org.archive.state.StateProvider;
 
 /**
  * Base class for Scopers.
- * Scopers test CandidateURIs against a scope.
- * Scopers allow logging of rejected CandidateURIs.
+ * Scopers test CrawlURIs against a scope.
+ * Scopers allow logging of rejected CrawlURIs.
  * @author stack
  * @version $Date$, $Revision$
  */
@@ -105,15 +105,15 @@ public abstract class Scoper extends Processor {
 
 
     /**
-     * Schedule the given {@link CandidateURI CandidateURI} with the Frontier.
-     * @param caUri The CandidateURI to be scheduled.
-     * @return true if CandidateURI was accepted by crawl scope, false
+     * Schedule the given {@link CrawlURI CrawlURI} with the Frontier.
+     * @param caUri The CrawlURI to be scheduled.
+     * @return true if CrawlURI was accepted by crawl scope, false
      * otherwise.
      */
-    protected boolean isInScope(CandidateURI caUri) {
+    protected boolean isInScope(CrawlURI caUri) {
         boolean result = false;
 // FIXME!:        getController().setStateProvider(caUri);
-        DecideResult dr = scope.decisionFor(caUri.asProcessorURI());
+        DecideResult dr = scope.decisionFor(caUri);
         if (dr == DecideResult.ACCEPT) {
             result = true;
             if (LOGGER.isLoggable(Level.FINER)) {
@@ -126,11 +126,11 @@ public abstract class Scoper extends Processor {
     }
     
     /**
-     * Called when a CandidateUri is ruled out of scope.
+     * Called when a CrawlURI is ruled out of scope.
      * Override if you don't want logs as coming from this class.
-     * @param caUri CandidateURI that is out of scope.
+     * @param caUri CrawlURI that is out of scope.
      */
-    protected void outOfScope(CandidateURI caUri) {
+    protected void outOfScope(CrawlURI caUri) {
         if (!LOGGER.isLoggable(Level.INFO)) {
             return;
         }

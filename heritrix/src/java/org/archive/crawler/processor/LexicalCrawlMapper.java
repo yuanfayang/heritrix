@@ -34,8 +34,7 @@ import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -44,12 +43,12 @@ import org.archive.util.iterator.RegexpLineIterator;
 
 
 /**
- * A simple crawl splitter/mapper, dividing up CandidateURIs/CrawlURIs
+ * A simple crawl splitter/mapper, dividing up CrawlURIs/CrawlURIs
  * between crawlers by diverting some range of URIs to local log files
  * (which can then be imported to other crawlers). 
  * 
  * May operate on a CrawlURI (typically early in the processing chain) or
- * its CandidateURI outlinks (late in the processing chain, after 
+ * its CrawlURI outlinks (late in the processing chain, after 
  * LinksScoper), or both (if inserted and configured in both places). 
  * 
  * <p>Uses lexical comparisons of classKeys to map URIs to crawlers. The
@@ -113,13 +112,13 @@ public class LexicalCrawlMapper extends CrawlMapper {
 
 
     /**
-     * Look up the crawler node name to which the given CandidateURI 
+     * Look up the crawler node name to which the given CrawlURI 
      * should be mapped. 
      * 
-     * @param cauri CandidateURI to consider
+     * @param cauri CrawlURI to consider
      * @return String node name which should handle URI
      */
-    protected String map(CandidateURI cauri) {
+    protected String map(CrawlURI cauri) {
         // get classKey, via frontier to generate if necessary
         String classKey = getController().getFrontier().getClassKey(cauri);
         SortedMap tail = map.tailMap(classKey);

@@ -25,7 +25,7 @@
 package org.archive.crawler.deciderules;
 
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.MatchesRegExpDecideRule;
@@ -33,7 +33,7 @@ import org.archive.processors.deciderules.MatchesRegExpDecideRule;
 
 /**
  * Rule applies configured decision to any CrawlURI class key -- i.e.
- * {@link CandidateURI#getClassKey()} -- matches matches supplied regexp.
+ * {@link CrawlURI#getClassKey()} -- matches matches supplied regexp.
  *
  * @author gojomo
  */
@@ -54,7 +54,7 @@ public class ClassKeyMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
     
     @Override
     protected String getString(ProcessorURI uri) {
-        CandidateURI curi = (CandidateURI)uri;
+        CrawlURI curi = (CrawlURI)uri;
         return controller.getFrontier().getClassKey(curi);
     }
 

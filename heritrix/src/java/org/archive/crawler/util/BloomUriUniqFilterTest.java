@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -63,11 +63,11 @@ implements UriUniqFilter.HasUriReceiver {
 
     public void testAdding() throws URIException {
         this.filter.add(this.getUri(),
-            new CandidateURI(UURIFactory.getInstance(this.getUri())));
+            new CrawlURI(UURIFactory.getInstance(this.getUri())));
         this.filter.addNow(this.getUri(),
-            new CandidateURI(UURIFactory.getInstance(this.getUri())));
+            new CrawlURI(UURIFactory.getInstance(this.getUri())));
         this.filter.addForce(this.getUri(),
-            new CandidateURI(UURIFactory.getInstance(this.getUri())));
+            new CrawlURI(UURIFactory.getInstance(this.getUri())));
         // Should only have add 'this' once.
         assertTrue("Count is off", this.filter.count() == 1);
     }
@@ -89,7 +89,7 @@ implements UriUniqFilter.HasUriReceiver {
                     count + ".archive.org/" + count + "/index.html");
             assertFalse("already contained "+u.toString(),filter.bloom.contains(u.toString()));
             logger.fine("adding "+u.toString());
-            filter.add(u.toString(), new CandidateURI(u));
+            filter.add(u.toString(), new CrawlURI(u));
             assertTrue("not in bloom",filter.bloom.contains(u.toString()));
             if (count > 0 && ((count % 100) == 0)) {
                 list.add(u);
@@ -101,7 +101,7 @@ implements UriUniqFilter.HasUriReceiver {
         start = System.currentTimeMillis();
         for (Iterator i = list.iterator(); i.hasNext();) {
             UURI uuri = (UURI)i.next();
-            filter.add(uuri.toString(), new CandidateURI(uuri));
+            filter.add(uuri.toString(), new CrawlURI(uuri));
         }
         logger.fine("Readded subset " + list.size() + " in " +
                 (System.currentTimeMillis() - start));
@@ -118,11 +118,11 @@ implements UriUniqFilter.HasUriReceiver {
 // FORGET CURRENTLY UNSUPPORTED IN BloomUriUniqFilter
 //    public void testForget() throws URIException {
 //        this.filter.forget(this.getUri(),
-//                new CandidateURI(UURIFactory.getInstance(this.getUri())));
+//                new CrawlURI(UURIFactory.getInstance(this.getUri())));
 //        assertTrue("Didn't forget", this.filter.count() == 0);
 //    }
 
-    public void receive(CandidateURI item) {
+    public void receive(CrawlURI item) {
         this.received = true;
     }
 

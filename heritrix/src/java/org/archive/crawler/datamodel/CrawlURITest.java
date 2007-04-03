@@ -30,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.TmpDirTestCase;
 
@@ -45,7 +46,7 @@ public class CrawlURITest extends TmpDirTestCase {
         super.setUp();
         final String url = "http://www.dh.gov.uk/Home/fs/en";
         this.seed = new CrawlURI(UURIFactory.getInstance(url));
-        this.seed.setSchedulingDirective(CandidateURI.MEDIUM);
+        this.seed.setSchedulingDirective(SchedulingConstants.MEDIUM);
         this.seed.setSeed(true);
         // Force caching of string.
         this.seed.toString();
@@ -78,8 +79,8 @@ public class CrawlURITest extends TmpDirTestCase {
             CrawlURI deserializedCuri = (CrawlURI)ois.readObject();
             deserializedCuri = (CrawlURI)ois.readObject();
             deserializedCuri = (CrawlURI)ois.readObject();
-            assertTrue("Deserialized not equal to original",
-                this.seed.toString().equals(deserializedCuri.toString()));
+            assertEquals("Deserialized not equal to original",
+                this.seed.toString(), deserializedCuri.toString());
             String host = this.seed.getUURI().getHost();
             assertTrue("Deserialized host not null",
                 host != null && host.length() >= 0);
@@ -90,9 +91,9 @@ public class CrawlURITest extends TmpDirTestCase {
     
     public void testCandidateURIWithLoadedAList()
     throws URIException {
-        CandidateURI c = CandidateURI.
-            createSeedCandidateURI(UURIFactory.
-                getInstance("http://www.archive.org"));
+        UURI uuri = UURIFactory.getInstance("http://www.archive.org");
+        CrawlURI c = new CrawlURI(uuri);
+        c.setSeed(true);
         c.getData().put("key", "value");
         CrawlURI curi = new CrawlURI(c, 0);
         assertTrue("Didn't find AList item",

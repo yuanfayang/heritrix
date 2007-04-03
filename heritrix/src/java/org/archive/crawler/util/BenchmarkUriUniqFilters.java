@@ -30,7 +30,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.util.fingerprint.MemLongFPSet;
 
@@ -110,9 +110,9 @@ public class BenchmarkUriUniqFilters implements UriUniqFilter.HasUriReceiver {
     }
 
     /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver#receive(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver#receive(org.archive.crawler.datamodel.CrawlURI)
      */
-    public void receive(CandidateURI item) {
+    public void receive(CrawlURI item) {
         if(out!=null) {
             try {
                 // we assume all tested filters are immediate passthrough so

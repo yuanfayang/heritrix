@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.processors.fetcher.FetchStats;
 import org.archive.util.ArchiveUtils;
@@ -1068,13 +1068,13 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
             ret.append(" URI:                " + tmp.toString() + "\n");
             switch(tmp.getSchedulingDirective()){
-                case CandidateURI.HIGHEST : 
+                case SchedulingConstants.HIGHEST : 
                     ret.append("  Sched. directive:  HIGHEST\n"); break;
-                case CandidateURI.HIGH : 
+                case SchedulingConstants.HIGH : 
                     ret.append("  Sched. directive:  HIGH\n"); break;
-                case CandidateURI.MEDIUM : 
+                case SchedulingConstants.MEDIUM : 
                     ret.append("  Sched. directive:  MEDIUM\n"); break;
-                case CandidateURI.NORMAL : 
+                case SchedulingConstants.NORMAL : 
                     ret.append("  Sched. directive:  NORMAL\n"); break;
             }
             ret.append("  Next processing:   ");
@@ -1145,16 +1145,16 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             // sort order
             int directiveToWrite;
             switch (directive) {
-            case CandidateURI.HIGHEST:
+            case SchedulingConstants.HIGHEST:
                 directiveToWrite = 0;
                 break;
-            case CandidateURI.HIGH:
+            case SchedulingConstants.HIGH:
                 directiveToWrite = 1;
                 break;
-            case CandidateURI.MEDIUM:
+            case SchedulingConstants.MEDIUM:
                 directiveToWrite = 2;
                 break;
-            case CandidateURI.NORMAL:
+            case SchedulingConstants.NORMAL:
                 directiveToWrite = 3;
                 break;
             default:

@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
@@ -57,7 +57,7 @@ import org.archive.util.DevUtils;
  *
  * It is essentially a Filter which determines, looking at
  * the totality of information available about a
- * CandidateURI/CrawlURI instamce, if that URI should be
+ * CrawlURI/CrawlURI instamce, if that URI should be
  * scheduled for crawling.
  *
  * Dynamic information inherent in the discovery of the
@@ -169,7 +169,7 @@ public abstract class CrawlScope extends DecideRule implements Initializable {
      * @return true if URI is a seed.
      */
     protected boolean isSeed(Object o) {
-        return o instanceof CandidateURI && ((CandidateURI) o).isSeed();
+        return o instanceof CrawlURI && ((CrawlURI) o).isSeed();
     }
 
     /**
@@ -271,10 +271,10 @@ public abstract class CrawlScope extends DecideRule implements Initializable {
      * affects the Scope's seed record (and decisions which
      * flow from seeds). 
      *
-     * @param curi CandidateUri to add
+     * @param curi CrawlURI to add
      * @return true if successful, false if add failed for any reason
      */
-    public boolean addSeed(final CandidateURI curi) {
+    public boolean addSeed(final CrawlURI curi) {
         File f = getSeedfile();
         if (f != null) {
             try {
