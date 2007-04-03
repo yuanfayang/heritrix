@@ -198,6 +198,7 @@
         <copy todir="${maven.build.dir}/webapps" filtering="true">
           <fileset dir="${maven.src.dir}/webapps">
             <exclude name="**/*.gif"/>
+            <exclude name="**/*.ico"/>
             <exclude name="**/*.jpg"/>
             <exclude name="**/*.png"/>
             <exclude name="**/*.swf"/>
@@ -207,6 +208,7 @@
         <copy todir="${maven.build.dir}/webapps" filtering="false">
           <fileset dir="${maven.src.dir}/webapps">
             <include name="**/*.gif"/>
+            <include name="**/*.ico"/>
             <include name="**/*.jpg"/>
             <include name="**/*.png"/>
             <exclude name="**/*.swf"/>
