@@ -1424,7 +1424,7 @@ org.apache.commons.httpclient.level= SEVERE</programlisting>Here's an example
         Post-processing chain. This is however not enforced, so users must
         take care to construct logical processor chains.</para>
 
-        <graphic fileref="processing_steps.png" format="PNG" />
+        <graphic fileref="../processing_steps.png" format="PNG" />
 
         <para>Most of the processors are fairly self explanatory, however the
         first and last two merit a little bit more attention.</para>
