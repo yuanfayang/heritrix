@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.frontier;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -262,6 +263,7 @@ public class BdbMultipleWorkQueues {
                     + BdbWorkQueue.getPrefixClassKey(headKey.getData()));
             return null;
         }
+       
         try {
             retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
         } catch (RuntimeExceptionWrapper rw) {
@@ -303,7 +305,8 @@ public class BdbMultipleWorkQueues {
         }
         return status;
     }
-    
+
+
     /**
      * Put the given CrawlURI in at the appropriate place. 
      * 
@@ -418,6 +421,39 @@ public class BdbMultipleWorkQueues {
         return new DatabaseEntry(keyData);
     }
     
+    
+    static String insertKeyToString(DatabaseEntry holderKey) {
+        StringBuilder result = new StringBuilder();
+        byte[] data = holderKey.getData();
+        int p = findFirstZero(data);
+        result.append(new String(data, 0, p));
+        
+        java.io.ByteArrayInputStream binp = 
+            new java.io.ByteArrayInputStream(data, p + 1, data.length);
+        java.io.DataInputStream dinp = new java.io.DataInputStream(binp);
+        long l = 0;
+        try {
+            l = dinp.readLong();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        result.append(" blah=").append(l);
+        
+        return result.toString();
+    }
+    
+    
+    private static int findFirstZero(byte[] b) {
+        for (int i = 0; i < b.length; i++) {
+            if (b[i] == 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     /**
      * Delete the given CrawlURI from persistent store. Requires
      * the key under which it was stored be available. 
@@ -427,7 +463,8 @@ public class BdbMultipleWorkQueues {
      */
     public void delete(CrawlURI item) throws DatabaseException {
         OperationStatus status;
-        status = pendingUrisDB.delete(null, (DatabaseEntry) item.getHolderKey());
+        DatabaseEntry de = (DatabaseEntry)item.getHolderKey();
+        status = pendingUrisDB.delete(null, de);
         if (status != OperationStatus.SUCCESS) {
             LOGGER.severe("expected item not present: "
                     + item
@@ -435,7 +472,6 @@ public class BdbMultipleWorkQueues {
                     + (new BigInteger(((DatabaseEntry) item.getHolderKey())
                             .getData())).toString(16) + ")");
         }
-
     }
     
     /**

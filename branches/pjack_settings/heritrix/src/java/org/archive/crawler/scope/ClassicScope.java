@@ -24,7 +24,7 @@
 package org.archive.crawler.scope;
 
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 //import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.processors.ProcessorURI;
@@ -95,12 +95,12 @@ public class ClassicScope extends CrawlScope {
 
 
     /**
-     * Returns whether the given object (typically a CandidateURI) falls within
+     * Returns whether the given object (typically a CrawlURI) falls within
      * this scope.
      * 
      * @param o
      *            Object to test.
-     * @return Whether the given object (typically a CandidateURI) falls within
+     * @return Whether the given object (typically a CrawlURI) falls within
      *         this scope.
      */
     protected final DecideResult innerDecide(ProcessorURI o) {
@@ -181,13 +181,13 @@ public class ClassicScope extends CrawlScope {
      * @return true if too many hops.
      */
     protected boolean exceedsMaxHops(ProcessorURI o) {
-        if (!(o instanceof CandidateURI)) {
+        if (!(o instanceof CrawlURI)) {
             return false;
         }
 
         int maxLinkHops = o.get(this, MAX_LINK_HOPS);
 
-        CandidateURI cand = (CandidateURI) o;
+        CrawlURI cand = (CrawlURI) o;
 
         String path = cand.getPathFromSeed();
         int linkCount = 0;

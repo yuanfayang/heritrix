@@ -27,7 +27,7 @@ package org.archive.crawler.util;
 import java.io.Serializable;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.BloomFilter;
 import org.archive.util.BloomFilter32bitSplit;
 
@@ -125,9 +125,9 @@ implements Serializable {
         bloom = new BloomFilter32bitSplit(n,d);
     }
 
-    public void forget(String canonical, CandidateURI item) {
+    public void forget(String canonical, CrawlURI item) {
         // TODO? could use in-memory exception list of currently-forgotten items
-        LOGGER.severe("forget(\""+canonical+"\",CandidateURI) not supported");
+        LOGGER.severe("forget(\""+canonical+"\",CrawlURI) not supported");
     }
 
     

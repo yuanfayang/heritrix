@@ -286,8 +286,7 @@ public class SurtPrefixSet extends TreeSet<String> {
      * @param object CandidateURI or UURI
      * @return SURT form of URI for evaluation, or null if unavailable
      */
-    public static String getCandidateSurt(Object object) {
-        UURI u = UURI.from(object);
+    public static String getCandidateSurt(UURI u) {
         if (u == null) {
             return null;
         }

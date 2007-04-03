@@ -26,6 +26,8 @@ package org.archive.crawler.datamodel;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,18 +43,24 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
-import org.archive.crawler.util.Transform;
+import static org.archive.crawler.datamodel.SchedulingConstants.*;
+import static org.archive.crawler.datamodel.FetchStatusCodes.*;
+import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.Rfc2617Credential;
+import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
+import org.archive.processors.extractor.LinkContext;
+import org.archive.settings.SheetManager;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
+import org.archive.util.Reporter;
 
 
 /**
@@ -67,21 +75,60 @@ import org.archive.util.Recorder;
  *
  * @author Gordon Mohr
  */
-public class CrawlURI extends CandidateURI
-implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
+public class CrawlURI implements ProcessorURI, Reporter, Serializable {
 
     private static final long serialVersionUID = 3L;
 
 
     public static final int UNCALCULATED = -1;
     
-    // INHERITED FROM CANDIDATEURI
-    // uuri: core identity: the "usable URI" to be crawled
-    // isSeed
-    // inScopeVersion
-    // pathFromSeed
-    // via
 
+    /**
+     * The URI being crawled.  It's transient to save space when storing to BDB.
+     */
+    private transient UURI uuri;
+
+    
+    /** Seed status */
+    private boolean isSeed = false;
+
+    
+    /** String of letters indicating how this URI was reached from a seed.
+     * <pre>
+     * P precondition
+     * R redirection
+     * E embedded (as frame, src, link, codebase, etc.)
+     * X speculative embed (as from javascript, some alternate-format extractors
+     * L link</pre>
+     * For example LLLE (an embedded image on a page 3 links from seed).
+     */
+    private String pathFromSeed;
+    
+    /**
+     * Where this URI was (presently) discovered. . Transient to allow
+     * more efficient custom serialization
+     */
+    private transient UURI via;
+
+    /**
+     * Context of URI's discovery, as per the 'context' in Link
+     */
+    private LinkContext viaContext;
+
+    
+    private int schedulingDirective = NORMAL;
+
+    
+    /**
+     * Frontier/Scheduler lifecycle info.
+     * This is an identifier set by the Frontier for its
+     * purposes. Usually its the name of the Frontier queue
+     * this URI gets queued to.  Values can be host + port
+     * or IP, etc.
+     */
+    private String classKey;
+
+    
     // Processing progress
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
@@ -117,6 +164,31 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     private long contentSize = UNCALCULATED;
     private long contentLength = UNCALCULATED;
 
+    
+    /**
+     * Flexible dynamic attributes list.
+     * <p>
+     * The attribute list is a flexible map of key/value pairs for storing
+     * status of this URI for use by other processors. By convention the
+     * attribute list is keyed by constants found in the
+     * {@link CoreAttributeConstants} interface.  Use this list to carry
+     * data or state produced by custom processors rather change the
+     * classes {@link CrawlURI} or this class, CrawlURI.
+     *
+     * Transient to allow more efficient custom serialization.
+     * 
+     * Package-protected so CrawlURI can access it directly.
+     */
+    transient Map<String,Object> data;
+
+    
+    private transient SheetManager manager;
+    private transient StateProvider provider;
+
+
+    private boolean forceRevisit = false; // even if already visited
+
+    
     /**
      * Current http recorder.
      *
@@ -186,23 +258,64 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * @param uuri the UURI to base this CrawlURI on.
      */
     public CrawlURI(UURI uuri) {
-        super(uuri);
+        this.uuri = uuri;
     }
 
+    
     /**
-     * Create a new instance of CrawlURI from a {@link CandidateURI}
+     * @param u uuri instance this CrawlURI wraps.
+     * @param pathFromSeed
+     * @param via
+     * @param viaContext
+     */
+    public CrawlURI(UURI u, String pathFromSeed, UURI via,
+            LinkContext viaContext) {
+        this.uuri = u;
+        this.pathFromSeed = pathFromSeed;
+        this.via = via;
+        this.viaContext = viaContext;
+    }
+
+    
+    /**
+     * Create a new instance of CrawlURI from a {@link CrawlURI}
      *
-     * @param caUri the CandidateURI to base this CrawlURI on.
+     * @param caUri the CrawlURI to base this CrawlURI on.
      * @param o Monotonically increasing number within a crawl.
      */
-    public CrawlURI(CandidateURI caUri, long o) {
-        super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
+    public CrawlURI(CrawlURI caUri, long o) {
+        this(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
             caUri.getViaContext());
         ordinal = o;
         setSeed(caUri.isSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
         this.data = caUri.data;
     }
+    
+    
+    /**
+     * @return Returns the schedulingDirective.
+     */
+    public int getSchedulingDirective() {
+        return schedulingDirective;
+    }
+
+
+    /** 
+     * @param priority The schedulingDirective to set.
+     */
+    public void setSchedulingDirective(int priority) {
+        this.schedulingDirective = priority;
+    }
+
+    
+    public boolean containsDataKey(String key) {
+        if (data == null) {
+                return false;
+        }
+        return data.containsKey(key);
+    }
+
 
     /**
      * Takes a status code and converts it into a human readable string.
@@ -730,19 +843,19 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     /**
-     * Make a <code>CrawlURI</code> from the passed <code>CandidateURI</code>.
+     * Make a <code>CrawlURI</code> from the passed <code>CrawlURI</code>.
      *
      * Its safe to pass a CrawlURI instance.  In this case we just return it
      * as a result. Otherwise, we create new CrawlURI instance.
      *
      * @param caUri Candidate URI.
      * @param ordinal
-     * @return A crawlURI made from the passed CandidateURI.
+     * @return A crawlURI made from the passed CrawlURI.
      */
-    public static CrawlURI from(CandidateURI caUri, long ordinal) {
-        return (caUri instanceof CrawlURI)?
-            (CrawlURI)caUri: new CrawlURI(caUri, ordinal);
-    }
+//    public static CrawlURI from(CrawlURI caUri, long ordinal) {
+//        return (caUri instanceof CrawlURI)?
+//            (CrawlURI)caUri: new CrawlURI(caUri, ordinal);
+//    }
 
 
     /**
@@ -905,6 +1018,11 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     public long getOrdinal() {
         return ordinal;
     }
+    
+    
+    public void setOrdinal(long o) {
+        this.ordinal = o;
+    }
 
     /** spot for an integer cost to be placed by external facility (frontier).
      *  cost is truncated to 8 bits at times, so should not exceed 255 */
@@ -928,19 +1046,19 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
     /** 
      * All discovered outbound Links (navlinks, embeds, etc.) 
-     * Can either contain Link instances or CandidateURI instances, or both.
+     * Can either contain Link instances or CrawlURI instances, or both.
      * The LinksScoper processor converts Link instances in this collection
-     * to CandidateURI instances. 
+     * to CrawlURI instances. 
      */
     transient Collection<Link> outLinks = new HashSet<Link>();
     
     
-    transient Collection<CandidateURI> outCandidates = new HashSet<CandidateURI>();
+    transient Collection<CrawlURI> outCandidates = new HashSet<CrawlURI>();
     
     /**
      * Returns discovered links.  The returned collection might be empty if
      * no links were discovered, or if something like LinksScoper promoted
-     * the links to CandidateURIs.
+     * the links to CrawlURIs.
      * 
      * @return Collection of all discovered outbound Links
      */
@@ -952,11 +1070,11 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     /**
      * Returns discovered candidate URIs.  The returned collection will be
      * emtpy until something like LinksScoper promotes discovered Links
-     * into CandidateURIs.
+     * into CrawlURIs.
      * 
      * @return  Collection of candidate URIs
      */
-    public Collection<CandidateURI> getOutCandidates() {
+    public Collection<CrawlURI> getOutCandidates() {
         return outCandidates;
     }
     
@@ -1006,6 +1124,9 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
+        stream.writeUTF(uuri.toString());
+        stream.writeObject((via == null) ? null : via.getURI());
+        stream.writeObject((data==null || data.isEmpty()) ? null : data);
         stream.writeObject((outLinks.isEmpty()) ? null : outLinks);
         stream.writeObject((outCandidates.isEmpty()) ? null : outCandidates);
     }
@@ -1021,16 +1142,52 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
         stream.defaultReadObject();
+        uuri = readUuri(stream.readUTF());
+        via = readUuri((String)stream.readObject());
+        @SuppressWarnings("unchecked")
+        Map<String,Object> temp = (Map<String,Object>)stream.readObject();
+        this.data = temp;
+        
         @SuppressWarnings("unchecked")
         HashSet<Link> ol = (HashSet<Link>) stream.readObject();
         outLinks = (ol == null) ? new HashSet<Link>() : ol;
         @SuppressWarnings("unchecked")
-        HashSet<CandidateURI> oc = (HashSet<CandidateURI>)stream.readObject();
-        outCandidates = (oc == null) ? new HashSet<CandidateURI>() : oc;
+        HashSet<CrawlURI> oc = (HashSet<CrawlURI>)stream.readObject();
+        outCandidates = (oc == null) ? new HashSet<CrawlURI>() : oc;
     }
 
     
     
+    /**
+     * Read a UURI from a String, handling a null or URIException
+     * 
+     * @param u String or null from which to create UURI
+     * @return the best UURI instance creatable
+     */
+    protected UURI readUuri(String u) {
+        if (u == null) {
+            return null;
+        }
+        try {
+            return UURIFactory.getInstance(u);
+        } catch (URIException ux) {
+            // simply continue to next try
+        }
+        try {
+            // try adding an junk scheme
+            return UURIFactory.getInstance("invalid:" + u);
+        } catch (URIException ux) {
+            ux.printStackTrace();
+            // ignored; method continues
+        }
+        try {
+            // return total junk
+            return UURIFactory.getInstance("invalid:");
+        } catch (URIException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
     
 
 
@@ -1196,4 +1353,351 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     	getData().put(A_TIME_OF_NEXT_PROCESSING, t);
     }
     
+    
+    public Map<String,Object> getData() {
+        if (data == null) {
+            data = new HashMap<String,Object>();
+        }
+        return data;
+    }
+
+    
+    /**
+     * Set the <tt>isSeed</tt> attribute of this URI.
+     * @param b Is this URI a seed, true or false.
+     */
+    public void setSeed(boolean b) {
+        this.isSeed = b;
+        if (this.isSeed) {
+            if(pathFromSeed==null) {
+                this.pathFromSeed = "";
+            }
+//          seeds created on redirect must have a via to be recognized; don't clear
+//            setVia(null);
+        }
+    }
+
+    
+    /**
+     * @return Whether seeded.
+     */
+    public boolean isSeed() {
+        return this.isSeed;
+    }
+
+    
+    /**
+     * @return UURI
+     */
+    public UURI getUURI() {
+        return this.uuri;
+    }
+
+    
+    /**
+     * @return path (hop-types) from seed
+     */
+    public String getPathFromSeed() {
+        return this.pathFromSeed;
+    }
+
+    /**
+     * @return URI via which this one was discovered
+     */
+    public UURI getVia() {
+        return this.via;
+    }
+    
+    
+    public void setVia(UURI via) {
+        this.via = via;
+    }
+
+
+    /**
+     * @return CharSequence context in which this one was discovered
+     */
+    public LinkContext getViaContext() {
+        return this.viaContext;
+    }
+
+    
+    /**
+     * @return True if this CrawlURI was result of a redirect:
+     * i.e. Its parent URI redirected to here, this URI was what was in 
+     * the 'Location:' or 'Content-Location:' HTTP Header.
+     */
+    public boolean isLocation() {
+        return this.pathFromSeed != null && this.pathFromSeed.length() > 0 &&
+            this.pathFromSeed.charAt(this.pathFromSeed.length() - 1) ==
+                Hop.REFER.getHopChar();
+    }
+
+    
+    public void setStateProvider(SheetManager manager) {
+        this.manager = manager;
+        this.provider = manager.findConfig(toString());
+    }
+    
+    
+    public StateProvider getStateProvider() {
+        return provider;
+    }
+
+    
+    public <T> T get(Object module, Key<T> key) {
+        if (provider == null) {
+            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
+        }
+        return provider.get(module, key);
+    }
+
+
+    //
+    // Reporter implementation
+    //
+
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+    
+    public void singleLineReportTo(PrintWriter w) {
+        String className = this.getClass().getName();
+        className = className.substring(className.lastIndexOf(".")+1);
+        w.print(className);
+        w.print(" ");
+        w.print(getUURI().toString());
+        w.print(" ");
+        w.print(pathFromSeed);
+        w.print(" ");
+        w.print(flattenVia());
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return "className uri hopsPath viaUri";
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#getReports()
+     */
+    public String[] getReports() {
+        // none but default: empty options
+        return new String[] {};
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.lang.String, java.io.Writer)
+     */
+    public void reportTo(String name, PrintWriter writer) {
+        singleLineReportTo(writer);
+        writer.print("\n");
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
+
+    
+    /**
+     * Method returns string version of this URI's referral URI.
+     * @return String version of referral URI
+     */
+    public String flattenVia() {
+        return (via == null)? "": via.toString();
+    }
+
+    
+    public String getSourceTag() {
+        return (String)getData().get(A_SOURCE_TAG);
+    }
+    
+    
+    public void setSourceTag(String sourceTag) {
+        getData().put(A_SOURCE_TAG, sourceTag);
+        makeHeritable(A_SOURCE_TAG);
+    }
+
+    
+    /** Make the given key 'heritable', meaning its value will be 
+     * added to descendant CrawlURIs. Only keys with immutable
+     * values should be made heritable -- the value instance may 
+     * be shared until the AList is serialized/deserialized. 
+     * 
+     * @param key to make heritable
+     */
+    public void makeHeritable(String key) {
+        @SuppressWarnings("unchecked")
+        List<String> heritableKeys = (List<String>)data.get(A_HERITABLE_KEYS);
+        if (heritableKeys == null) {
+            heritableKeys = new ArrayList<String>();
+            data.put(A_HERITABLE_KEYS, heritableKeys);
+        }
+        heritableKeys.add(key);
+    }
+    
+    /** Make the given key non-'heritable', meaning its value will 
+     * not be added to descendant CrawlURIs. Only meaningful if
+     * key was previously made heritable.  
+     * 
+     * @param key to make non-heritable
+     */
+    public void makeNonHeritable(String key) {
+        List heritableKeys = (List)data.get(A_HERITABLE_KEYS);
+        if(heritableKeys == null) {
+            return;
+        }
+        heritableKeys.remove(key);
+        if(heritableKeys.size()==1) {
+            // only remaining heritable key is itself; disable completely
+            data.remove(A_HERITABLE_KEYS);
+        }
+    }
+
+    
+    /**
+     * Get the token (usually the hostname + port) which indicates
+     * what "class" this CrawlURI should be grouped with,
+     * for the purposes of ensuring only one item of the
+     * class is processed at once, all items of the class
+     * are held for a politeness period, etc.
+     *
+     * @return Token (usually the hostname) which indicates
+     * what "class" this CrawlURI should be grouped with.
+     */
+    public String getClassKey() {
+        return classKey;
+    }
+
+    public void setClassKey(String key) {
+        classKey = key;
+    }
+
+    
+    /**
+     * If this method returns true, this URI should be fetched even though
+     * it already has been crawled. This also implies
+     * that this URI will be scheduled for crawl before any other waiting
+     * URIs for the same host.
+     *
+     * This value is used to refetch any expired robots.txt or dns-lookups.
+     *
+     * @return true if crawling of this URI should be forced
+     */
+    public boolean forceFetch() {
+        return forceRevisit;
+    }
+
+   /**
+     * Method to signal that this URI should be fetched even though
+     * it already has been crawled. Setting this to true also implies
+     * that this URI will be scheduled for crawl before any other waiting
+     * URIs for the same host.
+     *
+     * This value is used to refetch any expired robots.txt or dns-lookups.
+     *
+     * @param b set to true to enforce the crawling of this URI
+     */
+    public void setForceFetch(boolean b) {
+        forceRevisit = b;
+    }
+
+    
+    /**
+     * Tally up the number of transitive (non-simple-link) hops at
+     * the end of this CrawlURI's pathFromSeed.
+     * 
+     * In some cases, URIs with greater than zero but less than some
+     * threshold such hops are treated specially. 
+     * 
+     * <p>TODO: consider moving link-count in here as well, caching
+     * calculation, and refactoring CrawlScope.exceedsMaxHops() to use this. 
+     * 
+     * @return Transhop count.
+     */
+    public int getTransHops() {
+        String path = getPathFromSeed();
+        int transCount = 0;
+        for(int i=path.length()-1;i>=0;i--) {
+            if(path.charAt(i)==Hop.NAVLINK.getHopChar()) {
+                break;
+            }
+            transCount++;
+        }
+        return transCount;
+    }
+
+    
+    /**
+     * Inherit (copy) the relevant keys-values from the ancestor. 
+     * 
+     * @param ancestor
+     */
+    protected void inheritFrom(CrawlURI ancestor) {
+        Map<String,Object> adata = ancestor.getData();
+        @SuppressWarnings("unchecked")
+        List<String> heritableKeys = (List<String>)adata.get(A_HERITABLE_KEYS);
+        Map<String,Object> thisData = getData();
+        if (heritableKeys != null) {
+            for (String key: heritableKeys) {
+                thisData.put(key, adata.get(key));
+            }
+        }
+    }
+    
+    /**
+     * Utility method for creation of CandidateURIs found extracting
+     * links from this CrawlURI.
+     * @param baseUURI BaseUURI for <code>link</code>.
+     * @param link Link to wrap CandidateURI in.
+     * @return New candidateURI wrapper around <code>link</code>.
+     * @throws URIException
+     */
+    public CrawlURI createCrawlURI(UURI baseUURI, Link link)
+    throws URIException {
+        UURI u = (link.getDestination() instanceof UURI)?
+            (UURI)link.getDestination():
+            UURIFactory.getInstance(baseUURI,
+                link.getDestination().toString());
+        CrawlURI newCaURI = new CrawlURI(u, 
+                getPathFromSeed() + link.getHopType().getHopChar(),
+                getUURI(), link.getContext());
+        newCaURI.inheritFrom(this);
+        newCaURI.setStateProvider(manager);
+        return newCaURI;
+    }
+
+
+    /**
+     * Utility method for creation of CandidateURIs found extracting
+     * links from this CrawlURI.
+     * @param baseUURI BaseUURI for <code>link</code>.
+     * @param link Link to wrap CandidateURI in.
+     * @param scheduling How new CandidateURI should be scheduled.
+     * @param seed True if this CandidateURI is a seed.
+     * @return New candidateURI wrapper around <code>link</code>.
+     * @throws URIException
+     */
+    public CrawlURI createCrawlURI(UURI baseUURI, Link link,
+        int scheduling, boolean seed)
+    throws URIException {
+        final CrawlURI caURI = createCrawlURI(baseUURI, link);
+        caURI.setSchedulingDirective(scheduling);
+        caURI.setSeed(seed);
+        return caURI;
+    }
+
+    
+    /**
+     * @return The UURI this CandidateURI wraps as a string 
+     */
+    public String toString() {
+        return getUURI().toString();
+    }
+
 }

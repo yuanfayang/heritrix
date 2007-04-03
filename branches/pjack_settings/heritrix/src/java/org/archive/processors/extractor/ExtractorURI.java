@@ -103,7 +103,12 @@ public class ExtractorURI extends Extractor {
      * @param wref Link to examine for internal URIs
      */
     protected void extractLink(ProcessorURI curi, Link wref) {
-        UURI source = UURI.from(wref.getDestination());
+        UURI source = null;
+        try {
+            source = UURIFactory.getInstance(wref.getDestination().toString());
+        } catch (URIException e) {
+            LOGGER.log(Level.FINE,"bad URI",e);
+        }
         if(source == null) {
             // shouldn't happen
             return; 

@@ -44,15 +44,13 @@ import java.util.logging.Logger;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
-import org.archive.crawler.datamodel.CandidateURI;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import static org.archive.crawler.datamodel.FetchStatusCodes.*;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.net.UURI;
-import org.archive.settings.Sheet;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -60,7 +58,6 @@ import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
-import com.sleepycat.collections.StoredIterator;
 import com.sleepycat.je.DatabaseException;
 
 import java.util.concurrent.BlockingQueue;
@@ -314,14 +311,14 @@ implements HasUriReceiver, Serializable {
 
 
     /**
-     * Arrange for the given CandidateURI to be visited, if it is not
+     * Arrange for the given CrawlURI to be visited, if it is not
      * already scheduled/completed.
      *
-     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CrawlURI)
      */
-    public void schedule(CandidateURI caUri) {
+    public void schedule(CrawlURI caUri) {
         // Canonicalization may set forceFetch flag.  See
-        // #canonicalization(CandidateURI) javadoc for circumstance.
+        // #canonicalization(CrawlURI) javadoc for circumstance.
         String canon = canonicalize(caUri);
         if (caUri.forceFetch()) {
             alreadyIncluded.addForce(canon, caUri);
@@ -331,15 +328,15 @@ implements HasUriReceiver, Serializable {
     }
 
     /**
-     * Accept the given CandidateURI for scheduling, as it has
+     * Accept the given CrawlURI for scheduling, as it has
      * passed the alreadyIncluded filter. 
      * 
      * Choose a per-classKey queue and enqueue it. If this
      * item has made an unready queue ready, place that 
      * queue on the readyClassQueues queue. 
-     * @param caUri CandidateURI.
+     * @param caUri CrawlURI.
      */
-    public void receive(CandidateURI caUri) {
+    public void receive(CrawlURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
         applySpecialHandling(curi);
         sendToQueue(curi);
@@ -348,9 +345,9 @@ implements HasUriReceiver, Serializable {
     }
 
 	/* (non-Javadoc)
-	 * @see org.archive.crawler.frontier.AbstractFrontier#asCrawlUri(org.archive.crawler.datamodel.CandidateURI)
+	 * @see org.archive.crawler.frontier.AbstractFrontier#asCrawlUri(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	protected CrawlURI asCrawlUri(CandidateURI caUri) {
+	protected CrawlURI asCrawlUri(CrawlURI caUri) {
 		CrawlURI curi = super.asCrawlUri(caUri);
 		// force cost to be calculated, pre-insert
 		getCost(curi);
@@ -526,6 +523,8 @@ implements HasUriReceiver, Serializable {
         while (true) { // loop left only by explicit return or exception
             long now = System.currentTimeMillis();
 
+            //this.reportTo(new java.io.PrintWriter(new java.io.OutputStreamWriter(System.out)));
+            
             // Do common checks for pause, terminate, bandwidth-hold
             preNext(now);
             

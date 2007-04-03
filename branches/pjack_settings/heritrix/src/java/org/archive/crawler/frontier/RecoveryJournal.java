@@ -45,7 +45,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
 import org.archive.net.UURI;
@@ -401,7 +401,7 @@ implements FrontierJournal {
                                 null;
                             LinkContext viaContext = (args.length > 4)?
                                     new HTMLLinkContext(args[4].toString()): null;
-                            CandidateURI caUri = new CandidateURI(u, 
+                            CrawlURI caUri = new CrawlURI(u, 
                                     pathFromSeed, via, viaContext);
                             frontier.schedule(caUri);
                             

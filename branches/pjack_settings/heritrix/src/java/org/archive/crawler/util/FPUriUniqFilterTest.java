@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -65,11 +65,11 @@ implements UriUniqFilter.HasUriReceiver {
     
     public void testAdding() throws URIException {
         this.filter.add(this.getUri(),
-            new CandidateURI(UURIFactory.getInstance(this.getUri())));
+            new CrawlURI(UURIFactory.getInstance(this.getUri())));
         this.filter.addNow(this.getUri(),
-            new CandidateURI(UURIFactory.getInstance(this.getUri())));
+            new CrawlURI(UURIFactory.getInstance(this.getUri())));
         this.filter.addForce(this.getUri(),
-            new CandidateURI(UURIFactory.getInstance(this.getUri())));
+            new CrawlURI(UURIFactory.getInstance(this.getUri())));
         // Should only have add 'this' once.
         assertTrue("Count is off", this.filter.count() == 1);
     }
@@ -87,7 +87,7 @@ implements UriUniqFilter.HasUriReceiver {
         for (; count < MAX_COUNT; count++) {
         	UURI u = UURIFactory.getInstance("http://www" +
         			count + ".archive.org/" + count + "/index.html");
-        	this.filter.add(u.toString(), new CandidateURI(u));
+        	this.filter.add(u.toString(), new CrawlURI(u));
         	if (count > 0 && ((count % 100) == 0)) {
         		list.add(u);
         	}
@@ -98,7 +98,7 @@ implements UriUniqFilter.HasUriReceiver {
         start = System.currentTimeMillis();
         for (Iterator i = list.iterator(); i.hasNext();) {
             UURI uuri = (UURI)i.next();
-            this.filter.add(uuri.toString(), new CandidateURI(uuri));
+            this.filter.add(uuri.toString(), new CrawlURI(uuri));
         }
         this.logger.info("Added random " + list.size() + " in " +
         		(System.currentTimeMillis() - start));
@@ -106,7 +106,7 @@ implements UriUniqFilter.HasUriReceiver {
         start = System.currentTimeMillis();
         for (Iterator i = list.iterator(); i.hasNext();) {
             UURI uuri = (UURI)i.next();
-            this.filter.add(uuri.toString(), new CandidateURI(uuri));
+            this.filter.add(uuri.toString(), new CrawlURI(uuri));
         }
         this.logger.info("Deleted random " + list.size() + " in " +
             (System.currentTimeMillis() - start));
@@ -122,11 +122,11 @@ implements UriUniqFilter.HasUriReceiver {
     
     public void testForget() throws URIException {
         this.filter.forget(this.getUri(),
-                new CandidateURI(UURIFactory.getInstance(this.getUri())));
+                new CrawlURI(UURIFactory.getInstance(this.getUri())));
         assertTrue("Didn't forget", this.filter.count() == 0);
     }
     
-	public void receive(CandidateURI item) {
+	public void receive(CrawlURI item) {
 		this.received = true;
 	}
 

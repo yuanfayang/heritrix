@@ -33,7 +33,7 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.state.KeyManager;
 
@@ -87,7 +87,7 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializab
         }
     }
     
-    public void add(String key, CandidateURI value) {
+    public void add(String key, CrawlURI value) {
         profileLog(key);
         if (setAdd(key)) {
             this.receiver.receive(value);
@@ -102,11 +102,11 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializab
         }
     }
 
-    public void addNow(String key, CandidateURI value) {
+    public void addNow(String key, CrawlURI value) {
         add(key, value);
     }
     
-    public void addForce(String key, CandidateURI value) {
+    public void addForce(String key, CrawlURI value) {
         profileLog(key);
         setAdd(key);
         this.receiver.receive(value);
@@ -117,7 +117,7 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializab
         setAdd(key);
     }
 
-    public void forget(String key, CandidateURI value) {
+    public void forget(String key, CrawlURI value) {
         setRemove(key);
     }
 

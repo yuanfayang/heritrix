@@ -70,7 +70,7 @@ public interface UriUniqFilter {
      * already included list.
      * @param value item to add.
      */
-    public void add(String key, CandidateURI value);
+    public void add(String key, CrawlURI value);
     
     /**
      * Immediately add uri.
@@ -79,7 +79,7 @@ public interface UriUniqFilter {
      * already included list.
      * @param value item to add.
      */
-    public void addNow(String key, CandidateURI value);
+    public void addNow(String key, CrawlURI value);
     
     /**
      * Add given uri, all the way through to underlying destination, even 
@@ -95,7 +95,7 @@ public interface UriUniqFilter {
      * already included list.
      * @param value item to add.
      */
-    public void addForce(String key, CandidateURI value);
+    public void addForce(String key, CrawlURI value);
     
     /**
      * Note item as seen, without passing through to receiver.
@@ -112,7 +112,7 @@ public interface UriUniqFilter {
      * already included list.
      * @param value item to add.
      */
-    public void forget(String key, CandidateURI value);
+    public void forget(String key, CrawlURI value);
     
     /**
      * Request that any pending items be added/dropped. Implementors
@@ -144,6 +144,6 @@ public interface UriUniqFilter {
         /**
          * @param item Candidate uri tem that is 'visiting'.
          */
-        public void receive(CandidateURI item);
+        public void receive(CrawlURI item);
     }
 }

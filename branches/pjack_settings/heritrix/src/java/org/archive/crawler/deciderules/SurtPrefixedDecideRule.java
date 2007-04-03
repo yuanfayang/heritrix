@@ -29,7 +29,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.net.UURI;
@@ -288,7 +288,7 @@ public class SurtPrefixedDecideRule extends DecideRule
         return seeds.getSeedfile();
     }
 
-    public synchronized void addedSeed(final CandidateURI curi) {
+    public synchronized void addedSeed(final CrawlURI curi) {
         SurtPrefixSet newSurtPrefixes = (SurtPrefixSet) surtPrefixes.clone();
         newSurtPrefixes.add(prefixFrom(curi.toString()));
         surtPrefixes = newSurtPrefixes;

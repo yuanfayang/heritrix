@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
@@ -147,7 +147,7 @@ public class SeedModule implements Initializable {
      * @return true if URI is a seed.
      */
     protected boolean isSeed(Object o) {
-        return o instanceof CandidateURI && ((CandidateURI) o).isSeed();
+        return o instanceof CrawlURI && ((CrawlURI) o).isSeed();
     }
 
     /**
@@ -252,7 +252,7 @@ public class SeedModule implements Initializable {
      * @param curi CandidateUri to add
      * @return true if successful, false if add failed for any reason
      */
-    public boolean addSeed(final CandidateURI curi) {
+    public boolean addSeed(final CrawlURI curi) {
         File f = getSeedfile();
         if (f != null) {
             try {

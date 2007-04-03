@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
@@ -67,7 +66,7 @@ public class EmptyFrontier implements Frontier, Serializable {
         return 0;
     }
 
-    public String getClassKey(CandidateURI cauri) {
+    public String getClassKey(CrawlURI cauri) {
         return null;
     }
 
@@ -117,7 +116,7 @@ public class EmptyFrontier implements Frontier, Serializable {
         return 0;
     }
 
-    public void schedule(CandidateURI caURI) {
+    public void schedule(CrawlURI caURI) {
     }
 
     public void start() {

@@ -24,7 +24,7 @@
 */
 package org.archive.processors.deciderules;
 
-import org.archive.crawler.datamodel.CandidateURI;
+
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.extractor.Hop;
 import org.archive.state.Key;
@@ -33,7 +33,7 @@ import org.archive.state.Key;
 
 /**
  * Rule ACCEPTs any CrawlURIs whose path-from-seed ('hopsPath' -- see
- * {@link CandidateURI#getPathFromSeed()}) ends 
+ * {@link CrawlURI#getPathFromSeed()}) ends 
  * with at least one, but not more than, the given number of 
  * non-navlink ('L') hops. 
  * 

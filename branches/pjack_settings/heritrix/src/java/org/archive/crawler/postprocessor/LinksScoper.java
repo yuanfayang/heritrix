@@ -29,8 +29,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import static org.archive.crawler.datamodel.SchedulingConstants.*;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessorURI;
@@ -44,13 +44,13 @@ import org.archive.state.Key;
 /**
  * Determine which extracted links are within scope.
  * TODO: To test scope, requires that Link be converted to
- * a CandidateURI.  Make it so don't have to make a CandidateURI to test
+ * a CrawlURI.  Make it so don't have to make a CrawlURI to test
  * if Link is in scope.
- * <p>Since this scoper has to create CandidateURIs, no sense
- * discarding them since later in the processing chain CandidateURIs rather
+ * <p>Since this scoper has to create CrawlURIs, no sense
+ * discarding them since later in the processing chain CrawlURIs rather
  * than Links are whats needed scheduling extracted links w/ the
- * Frontier (Frontier#schedule expects CandidateURI, not Link).  This class
- * replaces Links w/ the CandidateURI that wraps the Link in the CrawlURI.
+ * Frontier (Frontier#schedule expects CrawlURI, not Link).  This class
+ * replaces Links w/ the CrawlURI that wraps the Link in the CrawlURI.
  *
  * @author gojomo
  * @author stack
@@ -141,7 +141,7 @@ implements FetchStatusCodes {
         
         for (Link wref: curi.getOutLinks()) try {
             int directive = getSchedulingFor(curi, wref, preferenceDepthHops);
-            CandidateURI caURI = curi.createCandidateURI(curi.getBaseURI(), 
+            CrawlURI caURI = curi.createCrawlURI(curi.getBaseURI(), 
                     wref, directive, 
                     considerAsSeed(curi, wref, redirectsNewSeeds));
             if (isInScope(caURI)) {
@@ -153,7 +153,7 @@ implements FetchStatusCodes {
         }
         curi.getOutLinks().clear();
         
-//        Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
+//        Collection<CrawlURI> inScopeLinks = new HashSet<CrawlURI>();
 //        for (final Iterator i = curi.getOutObjects().iterator(); i.hasNext();) {
 //            Object o = i.next();
 //            if(o instanceof Link){
@@ -161,8 +161,8 @@ implements FetchStatusCodes {
 //                try {
 //                    final int directive = getSchedulingFor(curi, wref, 
 //                        preferenceDepthHops);
-//                    final CandidateURI caURI =
-//                        curi.createCandidateURI(curi.getBaseURI(), wref, 
+//                    final CrawlURI caURI =
+//                        curi.createCrawlURI(curi.getBaseURI(), wref, 
 //                            directive, 
 //                            considerAsSeed(curi, wref, redirectsNewSeeds));
 //                    if (isInScope(caURI)) {
@@ -172,8 +172,8 @@ implements FetchStatusCodes {
 //                    getController().logUriError(e, curi.getUURI(), 
 //                        wref.getDestination().toString());
 //                }
-//            } else if(o instanceof CandidateURI){
-//                CandidateURI caURI = (CandidateURI)o;
+//            } else if(o instanceof CrawlURI){
+//                CrawlURI caURI = (CrawlURI)o;
 //                if(isInScope(caURI)){
 //                    inScopeLinks.add(caURI);
 //                }
@@ -188,14 +188,14 @@ implements FetchStatusCodes {
     
     /**
      * The CrawlURI has a prerequisite; apply scoping and update
-     * Link to CandidateURI in manner analogous to outlink handling. 
+     * Link to CrawlURI in manner analogous to outlink handling. 
      * @param curi CrawlURI with prereq to consider
      */
     protected void handlePrerequisite(CrawlURI curi) {
         try {
-            // Create prerequisite CandidateURI
-            CandidateURI caUri =
-                curi.createCandidateURI(curi.getBaseURI(),
+            // Create prerequisite CrawlURI
+            CrawlURI caUri =
+                curi.createCrawlURI(curi.getBaseURI(),
                     (Link) curi.getPrerequisiteUri());
             int prereqPriority = curi.getSchedulingDirective() - 1;
             if (prereqPriority < 0) {
@@ -207,7 +207,7 @@ implements FetchStatusCodes {
             caUri.setForceFetch(true);
 // FIXME!!!            getController().setStateProvider(caUri);
             if(isInScope(caUri)) {
-                // replace link with CandidateURI
+                // replace link with CrawlURI
                 curi.setPrerequisiteUri(caUri);
             } else {
                 // prerequisite is out-of-scope; mark CrawlURI as error,
@@ -224,7 +224,7 @@ implements FetchStatusCodes {
         }
     }
 
-    protected void outOfScope(CandidateURI caUri) {
+    protected void outOfScope(CrawlURI caUri) {
         super.outOfScope(caUri);
         if (!LOGGER.isLoggable(Level.INFO)) {
             return;
@@ -271,20 +271,19 @@ implements FetchStatusCodes {
             case REFER:
                 // Treat redirects somewhat urgently
                 // This also ensures seed redirects remain seed priority
-                return (preferenceDepthHops >= 0 ? CandidateURI.HIGH :
-                    CandidateURI.MEDIUM);
+                return (preferenceDepthHops >= 0 ? HIGH : MEDIUM);
             default:
                 if (preferenceDepthHops == 0)
-                    return CandidateURI.HIGH;
+                    return HIGH;
                     // this implies seed redirects are treated as path
                     // length 1, which I belive is standard.
                     // curi.getPathFromSeed() can never be null here, because
                     // we're processing a link extracted from curi
                 if (preferenceDepthHops > 0 && 
                     curi.getPathFromSeed().length() + 1 <= preferenceDepthHops)
-                    return CandidateURI.HIGH;
+                    return HIGH;
                 // Everything else normal (at least for now)
-                return CandidateURI.NORMAL;
+                return NORMAL;
         }
     }
 }

@@ -25,8 +25,8 @@
 package org.archive.crawler.frontier;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.net.UURIFactory;
 
 import com.sleepycat.je.tree.Key;
@@ -49,34 +49,34 @@ public class BdbMultipleWorkQueuesTest extends TestCase {
      */
     public void testCalculateInsertKey() throws URIException {
         for (long ordinalOrigin = 1; ordinalOrigin < Long.MAX_VALUE / 4; ordinalOrigin <<= 1) {
-            CandidateURI cauri1 = 
-                new CandidateURI(UURIFactory.getInstance("http://archive.org/foo"));
+            CrawlURI cauri1 = 
+                new CrawlURI(UURIFactory.getInstance("http://archive.org/foo"));
             CrawlURI curi1 = new CrawlURI(cauri1, ordinalOrigin);
             curi1.setClassKey("foo");
             byte[] key1 = 
                 BdbMultipleWorkQueues.calculateInsertKey(curi1).getData();
-            CandidateURI cauri2 = 
-                new CandidateURI(UURIFactory.getInstance("http://archive.org/bar"));
+            CrawlURI cauri2 = 
+                new CrawlURI(UURIFactory.getInstance("http://archive.org/bar"));
             CrawlURI curi2 = new CrawlURI(cauri2, ordinalOrigin + 1);
             curi2.setClassKey("foo");
             byte[] key2 = 
                 BdbMultipleWorkQueues.calculateInsertKey(curi2).getData();
-            CandidateURI cauri3 = 
-                new CandidateURI(UURIFactory.getInstance("http://archive.org/baz"));
+            CrawlURI cauri3 = 
+                new CrawlURI(UURIFactory.getInstance("http://archive.org/baz"));
             CrawlURI curi3 = new CrawlURI(cauri3, ordinalOrigin + 2);
             curi3.setClassKey("foo");
-            curi3.setSchedulingDirective(CandidateURI.HIGH);
+            curi3.setSchedulingDirective(SchedulingConstants.HIGH);
             byte[] key3 = 
                 BdbMultipleWorkQueues.calculateInsertKey(curi3).getData();
-            CandidateURI cauri4 = 
-                new CandidateURI(UURIFactory.getInstance("http://archive.org/zle"));
+            CrawlURI cauri4 = 
+                new CrawlURI(UURIFactory.getInstance("http://archive.org/zle"));
             CrawlURI curi4 = new CrawlURI(cauri4, ordinalOrigin + 3);
             curi4.setClassKey("foo");
             curi4.setHolderCost(2);
             byte[] key4 = 
                 BdbMultipleWorkQueues.calculateInsertKey(curi4).getData();
-            CandidateURI cauri5 = 
-                new CandidateURI(UURIFactory.getInstance("http://archive.org/gru"));
+            CrawlURI cauri5 = 
+                new CrawlURI(UURIFactory.getInstance("http://archive.org/gru"));
             CrawlURI curi5 = new CrawlURI(cauri5, ordinalOrigin + 4);
             curi5.setClassKey("foo");
             curi5.setHolderCost(1);

@@ -26,7 +26,7 @@
 package org.archive.crawler.frontier;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.processors.util.CrawlHost;
 
@@ -41,7 +41,7 @@ public class BucketQueueAssignmentPolicy extends QueueAssignmentPolicy {
     private static final int DEFAULT_QUEUES_HOSTS_MODULO = 1021;
 
     public String getClassKey(final CrawlController controller,
-        final CandidateURI curi) {
+        final CrawlURI curi) {
         
         CrawlHost host;
         try {

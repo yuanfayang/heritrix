@@ -31,7 +31,7 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessorURI;
@@ -42,7 +42,7 @@ import org.archive.state.Key;
 
 
 /**
- * Run CandidateURI links carried in the passed CrawlURI through a filter
+ * Run CrawlURI links carried in the passed CrawlURI through a filter
  * and 'handle' rejections.
  * Used to do supplementary processing of links after they've been scope
  * processed and ruled 'in-scope' by LinkScoper.  An example of
@@ -89,15 +89,15 @@ public class SupplementaryLinksScoper extends Scoper {
             return;
         }
         
-        Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
-        Iterator<CandidateURI> iter = curi.getOutCandidates().iterator();
+        Collection<CrawlURI> inScopeLinks = new HashSet<CrawlURI>();
+        Iterator<CrawlURI> iter = curi.getOutCandidates().iterator();
         while (iter.hasNext()) {
-            CandidateURI cauri = iter.next();
+            CrawlURI cauri = iter.next();
             if (!isInScope(cauri)) {
                 iter.remove();
             }
         }
-//        for (CandidateURI cauri: curi.getOutCandidates()) {
+//        for (CrawlURI cauri: curi.getOutCandidates()) {
 //            if (isInScope(cauri)) {
 //                inScopeLinks.add(cauri);
 //            }
@@ -107,8 +107,8 @@ public class SupplementaryLinksScoper extends Scoper {
 //        curi.replaceOutlinks(inScopeLinks);
     }
     
-    protected boolean isInScope(CandidateURI caUri) {
-        // TODO: Fix filters so work on CandidateURI.
+    protected boolean isInScope(CrawlURI caUri) {
+        // TODO: Fix filters so work on CrawlURI.
         CrawlURI curi = (caUri instanceof CrawlURI)?
             (CrawlURI)caUri:
             new CrawlURI(caUri.getUURI());
@@ -126,10 +126,10 @@ public class SupplementaryLinksScoper extends Scoper {
     }
     
     /**
-     * Called when a CandidateUri is ruled out of scope.
-     * @param caUri CandidateURI that is out of scope.
+     * Called when a CrawlURI is ruled out of scope.
+     * @param caUri CrawlURI that is out of scope.
      */
-    protected void outOfScope(CandidateURI caUri) {
+    protected void outOfScope(CrawlURI caUri) {
         if (!LOGGER.isLoggable(Level.INFO)) {
             return;
         }

@@ -26,7 +26,7 @@
 package org.archive.crawler.postprocessor;
 
 
-import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Frontier;
@@ -39,7 +39,7 @@ import org.archive.state.StateProvider;
 
 
 /**
- * 'Schedule' with the Frontier CandidateURIs being carried by the passed
+ * 'Schedule' with the Frontier CrawlURIs being carried by the passed
  * CrawlURI.
  * Adds either prerequisites or whatever is in CrawlURI outlinks to the
  * Frontier.  Run a Scoper ahead of this processor so only links that
@@ -85,21 +85,21 @@ implements FetchStatusCodes {
         }
 
         synchronized(this) {
-            for (CandidateURI cauri: curi.getOutCandidates()) {
+            for (CrawlURI cauri: curi.getOutCandidates()) {
                 schedule(cauri);
             }
         }
     }
 
     protected void handlePrerequisites(CrawlURI curi) {
-        schedule((CandidateURI)curi.getPrerequisiteUri());
+        schedule((CrawlURI)curi.getPrerequisiteUri());
     }
 
     /**
-     * Schedule the given {@link CandidateURI CandidateURI} with the Frontier.
-     * @param caUri The CandidateURI to be scheduled.
+     * Schedule the given {@link CrawlURI CrawlURI} with the Frontier.
+     * @param caUri The CrawlURI to be scheduled.
      */
-    protected void schedule(CandidateURI caUri) {
+    protected void schedule(CrawlURI caUri) {
         frontier.schedule(caUri);
     }
 }

@@ -48,14 +48,14 @@ public class CandidateURITest extends TestCase {
     
     private void doOneSerialization(final String urlStr)
     throws IOException, ClassNotFoundException {
-        CandidateURI cauri =
-            new CandidateURI(UURIFactory.getInstance(urlStr));
+        CrawlURI cauri =
+            new CrawlURI(UURIFactory.getInstance(urlStr));
         cauri = serialize(cauri);
         assertEquals(urlStr + " doesn't serialize", urlStr,
             cauri.getUURI().toString());  
     }
     
-    private CandidateURI serialize(CandidateURI cauri)
+    private CrawlURI serialize(CrawlURI cauri)
     throws IOException, ClassNotFoundException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -64,6 +64,6 @@ public class CandidateURITest extends TestCase {
         oos.close();
         ByteArrayInputStream bais =
             new ByteArrayInputStream(baos.toByteArray());
-        return (CandidateURI)(new ObjectInputStream(bais)).readObject();
+        return (CrawlURI)(new ObjectInputStream(bais)).readObject();
     }
 }
