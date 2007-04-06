@@ -174,58 +174,58 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
                 DEFAULT_FORCE_RETIRE)); 
         
         String maxFetchSuccessesDesc = "Maximum number of fetch successes " +
-            "(e.g. 200 responses) to collect from one $CATEGORY. " +
+            "(e.g. 200 responses) to collect from one CATEGORY. " +
             "Default is -1, meaning no limit.";
         String maxSuccessKbDesc = "Maximum amount of fetch success content " +
-            "(e.g. 200 responses) in KB to collect from one $CATEGORY. " +
+            "(e.g. 200 responses) in KB to collect from one CATEGORY. " +
             "Default is -1, meaning no limit.";
         String maxFetchResponsesDesc = "Maximum number of fetch responses " +
-            "(incl. error responses) to collect from one $CATEGORY. " +
+            "(incl. error responses) to collect from one CATEGORY. " +
             "Default is -1, meaning no limit.";
         String maxAllKbDesc = "Maximum amount of response content " +
-            "(incl. error responses) in KB to collect from one $CATEGORY. " +
+            "(incl. error responses) in KB to collect from one CATEGORY. " +
             "Default is -1, meaning no limit.";
         // server successes
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_FETCH_SUCCESSES,
-            maxFetchSuccessesDesc.replaceAll("$CATEGORY","server"),
+            maxFetchSuccessesDesc.replaceAll("CATEGORY","server"),
             DEFAULT_SERVER_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_SUCCESS_KB,
-            maxSuccessKbDesc.replaceAll("$CATEGORY","server"),
+            maxSuccessKbDesc.replaceAll("CATEGORY","server"),
             DEFAULT_SERVER_MAX_SUCCESS_KB));
         // server all-responses
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_FETCH_RESPONSES,
-            maxFetchResponsesDesc.replaceAll("$CATEGORY","server"),
+            maxFetchResponsesDesc.replaceAll("CATEGORY","server"),
             DEFAULT_SERVER_MAX_FETCH_RESPONSES));
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_ALL_KB,
-            maxAllKbDesc.replaceAll("$CATEGORY","server"),
+            maxAllKbDesc.replaceAll("CATEGORY","server"),
             DEFAULT_SERVER_MAX_ALL_KB));
         // host successes
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_FETCH_SUCCESSES,
-            maxFetchSuccessesDesc.replaceAll("$CATEGORY","host"),
+            maxFetchSuccessesDesc.replaceAll("CATEGORY","host"),
             DEFAULT_HOST_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_SUCCESS_KB,
-            maxSuccessKbDesc.replaceAll("$CATEGORY","host"),
+            maxSuccessKbDesc.replaceAll("CATEGORY","host"),
             DEFAULT_HOST_MAX_SUCCESS_KB));
         // host all-responses
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_FETCH_RESPONSES,
-            maxFetchResponsesDesc.replaceAll("$CATEGORY","host"),
+            maxFetchResponsesDesc.replaceAll("CATEGORY","host"),
             DEFAULT_HOST_MAX_FETCH_RESPONSES));
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_ALL_KB,
-            maxAllKbDesc.replaceAll("$CATEGORY","host"),
+            maxAllKbDesc.replaceAll("CATEGORY","host"),
             DEFAULT_HOST_MAX_ALL_KB));        
         // group successes
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_FETCH_SUCCESSES,
-            maxFetchSuccessesDesc.replaceAll("$CATEGORY","group (queue)"),
+            maxFetchSuccessesDesc.replaceAll("CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_SUCCESS_KB,
-            maxSuccessKbDesc.replaceAll("$CATEGORY","group (queue)"),
+            maxSuccessKbDesc.replaceAll("CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_SUCCESS_KB));
         // group all-responses
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_FETCH_RESPONSES,
-            maxFetchResponsesDesc.replaceAll("$CATEGORY","group (queue)"),
+            maxFetchResponsesDesc.replaceAll("CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_FETCH_RESPONSES));
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_ALL_KB,
-            maxAllKbDesc.replaceAll("$CATEGORY","group (queue)"),
+            maxAllKbDesc.replaceAll("CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_ALL_KB));  
        
     }
