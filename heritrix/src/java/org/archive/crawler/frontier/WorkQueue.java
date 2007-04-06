@@ -109,7 +109,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
     public synchronized void enqueue(final WorkQueueFrontier frontier,
         CrawlURI curi) {
         try {
-            insert(frontier, curi);
+            insert(frontier, curi, false);
         } catch (IOException e) {
             //FIXME better exception handling
             e.printStackTrace();
@@ -342,7 +342,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
      */
     public void update(final WorkQueueFrontier frontier, CrawlURI curi) {
         try {
-            insert(frontier, curi);
+            insert(frontier, curi, true);
         } catch (IOException e) {
             //FIXME better exception handling
             e.printStackTrace();
@@ -363,9 +363,10 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
      * @param curi CrawlURI to insert.
      * @throws IOException
      */
-    private void insert(final WorkQueueFrontier frontier, CrawlURI curi)
+    private void insert(final WorkQueueFrontier frontier, CrawlURI curi, 
+            boolean overwriteIfPresent)
         throws IOException {
-        insertItem(frontier, curi);
+        insertItem(frontier, curi, overwriteIfPresent);
         lastQueued = curi.toString();
     }
 
@@ -378,7 +379,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
      * @throws IOException  if there was a problem while inserting the item
      */
     protected abstract void insertItem(final WorkQueueFrontier frontier,
-        CrawlURI curi) throws IOException;
+        CrawlURI curi, boolean expectedPresent) throws IOException;
 
     /**
      * Delete URIs matching the given pattern from this queue. 
