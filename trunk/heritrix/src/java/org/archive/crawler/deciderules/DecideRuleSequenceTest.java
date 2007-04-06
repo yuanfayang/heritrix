@@ -441,4 +441,56 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         rules.addElement(null, dr);
         return dr;
     }
+    
+    public void testContentTypeMatchesRegexpDecideRule() throws Exception{
+        ContentTypeMatchesRegExpDecideRule dr = new ContentTypeMatchesRegExpDecideRule("CTMREDRtest");
+        DecideRule v = addDecideRule(dr);
+        
+        v.setAttribute(new Attribute(MatchesRegExpDecideRule.ATTR_REGEXP,"text/html"));
+        UURI uuri = UURIFactory.getInstance("http://www.archive.org");
+        CrawlURI crawlUri = new CrawlURI(uuri);
+
+        // no content type - let curi pass
+        Object decision = this.rule.decisionFor(crawlUri);
+        assertTrue("URI Expect " + DecideRule.PASS + " for " + crawlUri +
+                " but got " + decision, decision == DecideRule.PASS);
+        
+        // non-matching content type - let curi pass
+        crawlUri.setContentType("application/pdf");
+        decision = this.rule.decisionFor(crawlUri);
+        assertTrue("URI Expect " + DecideRule.PASS + " for " + crawlUri +
+                " but got " + decision, decision == DecideRule.PASS);
+          
+        // matching content type - accept curi
+        crawlUri.setContentType("text/html");
+        decision = this.rule.decisionFor(crawlUri);
+        assertTrue("URI Expect " + DecideRule.ACCEPT + " for " + crawlUri +
+                " but got " + decision, decision == DecideRule.ACCEPT);
+    }
+    
+    public void testContentTypeNotMatchesRegexpDecideRule() throws Exception{
+        ContentTypeNotMatchesRegExpDecideRule dr = new ContentTypeNotMatchesRegExpDecideRule("CTNMREDRtest");
+        DecideRule v = addDecideRule(dr);
+        
+        v.setAttribute(new Attribute(MatchesRegExpDecideRule.ATTR_REGEXP,"text/html"));
+        UURI uuri = UURIFactory.getInstance("http://www.archive.org");
+        CrawlURI crawlUri = new CrawlURI(uuri);
+
+        // no content type - let curi pass
+        Object decision = this.rule.decisionFor(crawlUri);
+        assertTrue("URI Expect " + DecideRule.PASS + " for " + crawlUri +
+                " but got " + decision, decision == DecideRule.PASS);
+        
+        // matching content type - let curi pass
+        crawlUri.setContentType("text/html");
+        decision = this.rule.decisionFor(crawlUri);
+        assertTrue("URI Expect " + DecideRule.PASS + " for " + crawlUri +
+                " but got " + decision, decision == DecideRule.PASS);
+        
+        // non-matching content type - accept curi
+        crawlUri.setContentType("application/pdf");
+        decision = this.rule.decisionFor(crawlUri);
+        assertTrue("URI Expect " + DecideRule.ACCEPT + " for " + crawlUri +
+                " but got " + decision, decision == DecideRule.ACCEPT);
+    }
 }
