@@ -421,6 +421,9 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         	}
             r.addLabelValue("via", curi.flattenVia());
             r.addLabelValue("pathFromSeed", curi.getPathFromSeed());
+            if (curi.containsKey(A_SOURCE_TAG)) {
+                r.addLabelValue("sourceTag", curi.getString(A_SOURCE_TAG));
+            }
         }
         
         // Add outlinks though they are effectively useless without anchor text.
