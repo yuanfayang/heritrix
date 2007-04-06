@@ -416,7 +416,7 @@ implements ARCConstants {
     }
     
     protected boolean isLegitimateIPValue(final String ip) {
-        if (ip == "-") {
+        if ("-".equals(ip)) {
             return true;
         }
         Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
