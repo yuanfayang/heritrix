@@ -129,4 +129,7 @@ public interface CoreAttributeConstants {
     public static final String A_ETAG_HEADER = "etag"; 
     /** key for status (when in history) */
     public static final String A_STATUS = "status"; 
+    /** reference length (content length or virtual length */
+    public static final String A_REFERENCE_LENGTH = "reference-length";
+
 }
