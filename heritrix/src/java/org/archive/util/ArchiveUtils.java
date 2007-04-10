@@ -29,11 +29,13 @@ package org.archive.util;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -517,26 +519,24 @@ public class ArchiveUtils {
      * @param precision How many characters to include after '.'
      * @return the double as a string.
      */
-    public static String doubleToString(double val, int precision){
-        String tmp = Double.toString(val);
-        if(tmp.indexOf(".")!=-1){
-            // Need to handle the part after '.'
-            if(precision<=0){
-                tmp = tmp.substring(0,tmp.indexOf('.'));
-            } else {
-                if(tmp.length()>tmp.indexOf('.')+precision+1){
-                    // Need to trim
-                    tmp = tmp.substring(0,tmp.indexOf('.')+precision+1);
-                }
-            }
-        }
-        return tmp;
+    public static String doubleToString(double val, int maxFractionDigits){
+        return doubleToString(val, maxFractionDigits, 0);
+    }
+
+    private static String doubleToString(double val, int maxFractionDigits, int minFractionDigits) {
+        NumberFormat f = NumberFormat.getNumberInstance(Locale.US); 
+        f.setMaximumFractionDigits(maxFractionDigits);
+        f.setMinimumFractionDigits(minFractionDigits);
+        return f.format(val); 
     }
 
     /**
-     * Takes an amount of bytes and formats it for display. This involves
-     * converting it to Kb, Mb or Gb if the amount is enough to qualify for
-     * the next level.
+     * Takes a byte size and formats it for display with 'friendly' units. 
+     * <p>
+     * This involves converting it to the largest unit 
+     * (of B, KB, MB, GB, TB) for which the amount will be > 1.
+     * <p>
+     * Additionally, at least 2 significant digits are always displayed. 
      * <p>
      * Displays as bytes (B): 0-1023
      * Displays as kilobytes (KB): 1024 - 2097151 (~2Mb)
@@ -544,33 +544,30 @@ public class ArchiveUtils {
      * Displays as gigabytes (GB): 4294967296 - infinity
      * <p>
      * Negative numbers will be returned as '0 B'.
-     * <p>
-     * All values will be approximated down (i.e. 2047 bytes are 1 KB)
      *
      * @param amount the amount of bytes
      * @return A string containing the amount, properly formated.
      */
-    public static String formatBytesForDisplay(long amount){
-        long kbStartAt = 1024;
-        long mbStartAt = 1024*1024*2;
-        long gbStartAt = ((long)1024*1024)*1024*4;
+    public static String formatBytesForDisplay(long amount) {
+        double displayAmount = (double) amount;
+        int unitPowerOf1024 = 0; 
 
-        if(amount < 0){
+        if(amount <= 0){
             return "0 B";
         }
-        else if(amount < kbStartAt){
-            // Display as bytes.
-            return amount + " B";
-        } else if(amount < mbStartAt) {
-            // Display as kilobytes
-            return Long.toString((long)(((double)amount/1024)))+" KB";
-        } else if(amount < gbStartAt) {
-            // Display as megabytes
-            return Long.toString((long)(((double)amount/(1024*1024))))+" MB";
-        } else {
-            // Display as gigabytes
-            return Long.toString((long)(((double)amount/(1024*1024*1024))))+" GB";
+        
+        while(displayAmount>=1024 && unitPowerOf1024 < 4) {
+            displayAmount = displayAmount / 1024;
+            unitPowerOf1024++;
         }
+        
+        // TODO: get didactic, make these KiB, MiB, GiB, TiB
+        final String[] units = { " B", " KB", " MB", " GB", " TB" };
+        
+        // ensure at least 2 significant digits (#.#) for small displayValues
+        int fractionDigits = (displayAmount < 10) ? 1 : 0; 
+        return doubleToString(displayAmount, fractionDigits, fractionDigits) 
+                   + units[unitPowerOf1024];
     }
 
     /**
