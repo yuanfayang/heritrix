@@ -520,6 +520,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         return disregardedUriCount;
     }
 
+    /** @deprecated misnomer; use StatisticsTracking figures instead */
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }

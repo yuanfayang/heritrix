@@ -764,12 +764,25 @@ implements FetchStatusCodes {
         }
         return this.contentLength;
     }
+    
+    /**
+     * Get size of data recorded (transferred)
+     *
+     * @return recorded data size
+     */
+    public long getRecordedSize() {
+        return (getHttpRecorder() != null)
+                    ?  getHttpRecorder().getRecordedInput().getSize()
+                    // if unavailable fall back on content-size
+                    : getContentSize(); 
+    }
 
     /**
      * Sets the 'content size' for the URI, which is considered inclusive
-     * of all recorded material (such as protocol headers). (In contrast,
-     * content-length matches the HTTP definition, that of the enclosed 
-     * content-body.)
+     * of all recorded material (such as protocol headers) or even material
+     * 'virtually' considered (as in material from a previous fetch 
+     * confirmed unchanged with a server). (In contrast, content-length 
+     * matches the HTTP definition, that of the enclosed content-body.)
      * 
      * Should be set by a fetcher or other processor as soon as the final 
      * size of recorded content is known. Setting to an artificial/incorrect
