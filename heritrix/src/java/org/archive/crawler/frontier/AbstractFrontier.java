@@ -34,6 +34,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -76,7 +77,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected transient CrawlController controller;
 
     /** ordinal numbers to assign to created CrawlURIs */
-    protected long nextOrdinal = 1;
+    protected AtomicLong nextOrdinal = new AtomicLong(1); 
 
     /** should the frontier hold any threads asking for URIs? */
     protected boolean shouldPause = false;
@@ -589,7 +590,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         if (caUri instanceof CrawlURI) {
             curi = (CrawlURI)caUri;
         } else {
-            curi = CrawlURI.from(caUri, nextOrdinal++);
+            curi = CrawlURI.from(caUri, nextOrdinal.getAndIncrement());
         }
         curi.setClassKey(getClassKey(curi));
         return curi;
