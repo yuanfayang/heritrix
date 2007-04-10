@@ -714,8 +714,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     .getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
                 // Add name of recover file.  We're hardcoding it as
                 // 'recover.gz'.
-                recover = new File(dir, FrontierJournal.LOGNAME_RECOVER +
-                    RecoveryJournal.GZIP_SUFFIX);
+                recover = new File(dir, FrontierJournal.LOGNAME_RECOVER);
             } else if (recovery != null && recovery.length() > 0) {
                 // Must be name of a checkpoint to use.
                 recover = new File(baseOn.getSettingsHandler().
