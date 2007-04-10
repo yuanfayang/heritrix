@@ -247,19 +247,29 @@ public class ArchiveUtilsTest extends TestCase {
             ArchiveUtils.doubleToString(test, 65).equals("12.345"));
     }
 
-    public void testFormatBytesForDisplay(){
-        long kb = 1024;
-        long mb = 1024*1024*2;
-        long gb = ((long)1024*1024)*1024*4;
 
-        assertEquals("formating negative number","0 B",ArchiveUtils.formatBytesForDisplay(-1));
-        assertEquals("formating byte - lower bound","0 B",ArchiveUtils.formatBytesForDisplay(0));
-        assertEquals("formating byte - upper bound","1023 B",ArchiveUtils.formatBytesForDisplay(kb-1));
-        assertEquals("formating kilobyte - lower bound","1 KB",ArchiveUtils.formatBytesForDisplay(kb));
-        assertEquals("formating kilobyte - upper bound","2047 KB",ArchiveUtils.formatBytesForDisplay(mb-1));
-        assertEquals("formating megabyte - lower bound","2 MB",ArchiveUtils.formatBytesForDisplay(mb));
-        assertEquals("formating megabyte - upper bound","4095 MB",ArchiveUtils.formatBytesForDisplay(gb-1));
-        assertEquals("formating gigabyte - lower bound","4 GB",ArchiveUtils.formatBytesForDisplay(gb));
+    public void testFormatBytesForDisplayPrecise(){
+        assertEquals("formating negative number", "0 B", ArchiveUtils
+                .formatBytesForDisplay(-1)); 
+        assertEquals("0 bytes", "0 B", ArchiveUtils
+                .formatBytesForDisplay(0));
+        assertEquals("1023 bytes", "1,023 B", ArchiveUtils
+                .formatBytesForDisplay(1023));
+        assertEquals("1025 bytes", "1.0 KB", ArchiveUtils
+                .formatBytesForDisplay(1025));
+        // expected display values taken from Google calculator
+        assertEquals("10,000 bytes", "9.8 KB",
+                ArchiveUtils.formatBytesForDisplay(10000));
+        assertEquals("1,000,000 bytes", "977 KB",
+                ArchiveUtils.formatBytesForDisplay(1000000));
+        assertEquals("100,000,000 bytes", "95 MB",
+                ArchiveUtils.formatBytesForDisplay(100000000));
+        assertEquals("100,000,000,000 bytes", "93 GB",
+                ArchiveUtils.formatBytesForDisplay(100000000000L));
+        assertEquals("100,000,000,000,000 bytes", "91 TB",
+                ArchiveUtils.formatBytesForDisplay(100000000000000L));
+        assertEquals("100,000,000,000,000,000 bytes", "90,949 TB",
+                ArchiveUtils.formatBytesForDisplay(100000000000000000L));
     }
 
     /*
