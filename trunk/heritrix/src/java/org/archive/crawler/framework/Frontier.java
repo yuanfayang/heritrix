@@ -277,6 +277,7 @@ public interface Frontier extends Reporter {
      * Total number of bytes contained in all URIs that have been processed.
      *
      * @return The total amounts of bytes in all processed URIs.
+     * @deprecated misnomer; consult StatisticsTracker instead
      */
     public long totalBytesWritten();
 
