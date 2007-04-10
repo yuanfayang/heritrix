@@ -103,12 +103,23 @@ public interface StatisticsTracking extends Runnable {
     
 
     /**
-     * Returns the total number of uncompressed bytes written to disk.  This may
-     * be different from the actual number if you are using compression.
-     *
+     * Returns the total number of uncompressed bytes processed. Stored
+     * data may be much smaller due to compression or duplicate-reduction
+     * policies. 
+     * 
      * @return The total number of uncompressed bytes written to disk
+     * @deprecated misnomer; use totalBytesCrawled instead
      */
     public long totalBytesWritten();
+    
+    /**
+     * Returns the total number of uncompressed bytes crawled. Stored
+     * data may be much smaller due to compression or duplicate-reduction
+     * policies. 
+     * 
+     * @return The total number of uncompressed bytes crawled
+     */
+    public long totalBytesCrawled();
     
     /**
      * Total amount of time spent actively crawling so far.<p>

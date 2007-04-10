@@ -46,8 +46,10 @@ import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Histotable;
 import org.archive.util.LongWrapper;
 import org.archive.util.MimetypeUtils;
 import org.archive.util.PaddingStringBuffer;
@@ -142,6 +144,9 @@ implements CrawlURIDispositionListener, Serializable {
     /*
      * Cumulative data
      */
+    /** tally sizes novel, verified (same hash), vouched (not-modified) */ 
+    protected CrawledBytesHistotable crawledBytes = new CrawledBytesHistotable();
+    
     /** Keep track of the file types we see (mime type -> count) */
     protected Hashtable<String,LongWrapper> mimeTypeDistribution
      = new Hashtable<String,LongWrapper>();
@@ -240,7 +245,7 @@ implements CrawlURIDispositionListener, Serializable {
         queuedUriCount = queuedUriCount();
         downloadFailures = failedFetchAttempts();
         downloadDisregards = disregardedFetchAttempts();
-        totalProcessedBytes = totalBytesWritten();
+        totalProcessedBytes = totalBytesCrawled();
         congestionRatio = congestionRatio();
         deepestUri = deepestUri();
         averageDepth = averageDepth();
@@ -702,10 +707,21 @@ implements CrawlURIDispositionListener, Serializable {
             controller.getFrontier().queuedUriCount() : queuedUriCount;
     }
 
+    /** @deprecated use totalBytesCrawled */ 
     public long totalBytesWritten() {
+        // return totalBytesCrawled(); 
         return shouldrun && this.controller != null &&
                 this.controller.getFrontier() != null?
             controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
+    }
+    
+    public long totalBytesCrawled() {
+        return shouldrun ?
+            crawledBytes.getTotal() : totalProcessedBytes;
+    }
+    
+    public String crawledBytesSummary() {
+        return crawledBytes.summary();
     }
 
     /**
@@ -723,6 +739,9 @@ implements CrawlURIDispositionListener, Serializable {
 
     public void crawledURISuccessful(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_SUCCESS);
+        // save crawled bytes tally
+        crawledBytes.accumulate(curi);
+        
         // Save status codes
         incrementMapCount(statusCodeDistribution,
             Integer.toString(curi.getFetchStatus()));
@@ -994,6 +1013,25 @@ implements CrawlURIDispositionListener, Serializable {
         writer.print("\nTotal Raw Data Size in Bytes: " + totalProcessedBytes +
                 " (" + ArchiveUtils.formatBytesForDisplay(totalProcessedBytes) +
                 ") \n");
+        writer.print("Novel Bytes: " 
+                + crawledBytes.get(CrawledBytesHistotable.NOVEL)
+                + " (" + ArchiveUtils.formatBytesForDisplay(
+                        crawledBytes.get(CrawledBytesHistotable.NOVEL))
+                +  ") \n");
+        if(crawledBytes.containsKey(CrawledBytesHistotable.DUPLICATE)) {
+            writer.print("Duplicate-by-hash Bytes: " 
+                    + crawledBytes.get(CrawledBytesHistotable.DUPLICATE)
+                    + " (" + ArchiveUtils.formatBytesForDisplay(
+                            crawledBytes.get(CrawledBytesHistotable.DUPLICATE))
+                    +  ") \n");
+        }
+        if(crawledBytes.containsKey(CrawledBytesHistotable.NOTMODIFIED)) {
+            writer.print("Not-modified Bytes: " 
+                    + crawledBytes.get(CrawledBytesHistotable.NOTMODIFIED)
+                    + " (" + ArchiveUtils.formatBytesForDisplay(
+                            crawledBytes.get(CrawledBytesHistotable.NOTMODIFIED))
+                    +  ") \n");
+        }
     }
     
     protected void writeProcessorsReportTo(PrintWriter writer) {

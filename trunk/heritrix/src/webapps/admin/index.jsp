@@ -213,7 +213,7 @@
                                 </tr>
                             </table>
                             <%= end %> total downloaded and queued<br>      
-                    		<%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%> uncompressed data received
+                    		<%=stats.crawledBytesSummary()%>
                             </center>
             <%
                 }
