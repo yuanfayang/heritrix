@@ -92,11 +92,17 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
              <artifactId>heritrix</artifactId>
              <version>${project.version}</version>
           </dependency>
+          <dependency>
+             <groupId>org.archive.crawler</groupId>
+             <artifactId>commons</artifactId>
+             <version>${project.version}</version>
+          </dependency>
        </dependencies>
     </dependencyManagement>
 
   <modules>
     <module>heritrix</module>
+    <module>commons</module>
   </modules>
 
     <distributionManagement>

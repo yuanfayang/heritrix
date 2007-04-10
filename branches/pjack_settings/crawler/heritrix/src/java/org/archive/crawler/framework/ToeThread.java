@@ -37,6 +37,7 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.processors.Processor;
 import org.archive.processors.fetcher.HostResolver;
 import org.archive.state.StateProvider;
+import org.archive.io.SinkHandlerLogThread;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.Recorder;
@@ -54,7 +55,7 @@ import com.sleepycat.util.RuntimeExceptionWrapper;
  */
 public class ToeThread extends Thread
 implements CoreAttributeConstants, FetchStatusCodes, RecorderMarker,
-Reporter, ProgressStatisticsReporter, HostResolver {
+Reporter, ProgressStatisticsReporter, HostResolver, SinkHandlerLogThread {
     private static final String STEP_NASCENT = "NASCENT";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
     private static final String STEP_FINISHED = "FINISHED";
