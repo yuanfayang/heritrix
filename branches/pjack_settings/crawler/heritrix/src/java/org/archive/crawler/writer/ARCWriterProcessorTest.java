@@ -29,7 +29,7 @@ package org.archive.crawler.writer;
 import java.io.File;
 
 import org.archive.crawler.framework.WriterPoolProcessor;
-import org.archive.processors.DefaultDirectoryModule;
+import org.archive.state.DefaultDirectoryModule;
 import org.archive.processors.ProcessorTestBase;
 import org.archive.processors.fetcher.DefaultServerCache;
 import org.archive.state.ExampleStateProvider;

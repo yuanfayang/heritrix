@@ -36,7 +36,7 @@ import org.archive.settings.file.FilePathListConsumer;
 public class PathListerTest extends PathTestBase {
 
 
-
+/*
     public void ntestQ() throws Exception {
 //        String expected = load(sheetName + ".resolved.txt");
         StringWriter sw = new StringWriter();
@@ -119,6 +119,6 @@ public class PathListerTest extends PathTestBase {
         }
         return sb.toString();
     }
-
+*/
 
 }

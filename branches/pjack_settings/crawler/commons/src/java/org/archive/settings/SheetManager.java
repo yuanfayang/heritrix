@@ -36,8 +36,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.processors.DefaultDirectoryModule;
-import org.archive.processors.DirectoryModule;
+import org.archive.state.DefaultDirectoryModule;
+import org.archive.state.DirectoryModule;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
 import org.archive.state.Key;

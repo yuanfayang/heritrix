@@ -1,4 +1,4 @@
-package org.archive.crawler.util;
+package org.archive.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;

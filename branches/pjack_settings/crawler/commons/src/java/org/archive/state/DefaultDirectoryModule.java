@@ -23,7 +23,7 @@
  *
  * $Id:$
  */
-package org.archive.processors;
+package org.archive.state;
 
 
 import java.io.File;

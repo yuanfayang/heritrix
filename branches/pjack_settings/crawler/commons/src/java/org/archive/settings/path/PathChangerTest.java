@@ -26,14 +26,14 @@ package org.archive.settings.path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.processors.deciderules.DecideRule;
-import org.archive.processors.deciderules.DecideRuleSequence;
-import org.archive.processors.extractor.ExtractorHTML;
+//import org.archive.processors.deciderules.DecideRule;
+//import org.archive.processors.deciderules.DecideRuleSequence;
+//import org.archive.processors.extractor.ExtractorHTML;
 import org.archive.settings.SingleSheet;
 
 public class PathChangerTest extends PathTestBase {
 
-
+/*
     public void testOnlineChange() {
         SingleSheet defaults = manager.getDefault();
         List<PathChange> list = new ArrayList<PathChange>();
@@ -85,5 +85,5 @@ public class PathChangerTest extends PathTestBase {
         assertEquals(0, r.size());
 
     }
-
+*/
 }
