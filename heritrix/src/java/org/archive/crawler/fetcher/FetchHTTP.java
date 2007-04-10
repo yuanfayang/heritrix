@@ -114,6 +114,8 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
 import org.archive.util.bdbje.EnhancedEnvironment;
 
+import st.ata.util.AList;
+
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.StringBinding;
@@ -542,7 +544,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
             // Set the response charset into the HttpRecord if available.
             setCharacterEncoding(rec, method);
-            curi.setContentSize(rec.getRecordedInput().getSize());
+            setSizes(curi, rec);
         }
  
         if (digestContent) {
@@ -581,6 +583,33 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 rec.getRecordedInput().close();
             } catch (IOException e) {
                 logger.log(Level.SEVERE,"second-chance RIS close failed",e);
+            }
+        }
+    }
+
+    /**
+     * Update CrawlURI internal sizes based on current transaction (and
+     * in the case of 304s, history) 
+     * 
+     * @param curi CrawlURI
+     * @param rec HttpRecorder
+     */
+    protected void setSizes(final CrawlURI curi, HttpRecorder rec) {
+        // set reporting size
+        curi.setContentSize(rec.getRecordedInput().getSize());
+        // special handling for 304-not modified
+        if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED
+                && curi.containsKey(A_FETCH_HISTORY)) {
+            AList history[] = curi.getAList().getAListArray(A_FETCH_HISTORY);
+            if (history[0] != null
+                    && history[0]
+                            .containsKey(CoreAttributeConstants.A_REFERENCE_LENGTH)) {
+                long referenceLength = history[0].getLong(A_REFERENCE_LENGTH);
+                // carry-forward previous 'reference-length' for future
+                curi.putLong(A_REFERENCE_LENGTH, referenceLength);
+                // increase content-size to virtual-size for reporting
+                curi.setContentSize(rec.getRecordedInput().getSize()
+                        + referenceLength);
             }
         }
     }

@@ -24,6 +24,8 @@ package org.archive.crawler.processor.recrawl;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
+import org.apache.commons.httpclient.HttpState;
+import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
@@ -83,6 +85,16 @@ public class FetchHistoryProcessor extends Processor implements CoreAttributeCon
                 (HttpMethodBase) curi.getObject(A_HTTP_TRANSACTION);
             saveHeader(A_ETAG_HEADER,method,latestFetch);
             saveHeader(A_LAST_MODIFIED_HEADER,method,latestFetch);
+            // save reference length (real or virtual)
+            long referenceLength; 
+            if(curi.containsKey(A_REFERENCE_LENGTH) ) {
+                // reuse previous length if available (see FetchHTTP#setSizes). 
+                referenceLength = curi.getLong(A_REFERENCE_LENGTH);
+            } else {
+                // normally, use content-length
+                referenceLength = curi.getContentLength();
+            }
+            latestFetch.putLong(A_REFERENCE_LENGTH,referenceLength);
         }
         
         // get or create proper-sized history array
