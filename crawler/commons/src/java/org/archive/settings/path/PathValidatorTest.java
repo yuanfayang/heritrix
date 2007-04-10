@@ -54,7 +54,7 @@ import org.archive.settings.SingleSheet;
  */
 public class PathValidatorTest extends PathTestBase {
 
-
+/*
     public void testValidate() {
         validateDefaults();
         validateOverride1();
@@ -293,5 +293,5 @@ public class PathValidatorTest extends PathTestBase {
         assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
         assertTrue(offlineJsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));        
     }
-
+*/
 }

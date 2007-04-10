@@ -28,7 +28,6 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-import org.archive.crawler.framework.ToeThread;
 
 /**
  * Version of LogRecord used by SinkHandler.
@@ -54,9 +53,10 @@ public class SinkHandlerLogRecord extends LogRecord {
         // if available, append current processor name to message
         // [ 1108006 ] alerts should show current processor
         // http://sourceforge.net/tracker/index.php?func=detail&aid=1108006&group_id=73833&atid=539102
-        if(Thread.currentThread() instanceof ToeThread) {
+        if(Thread.currentThread() instanceof SinkHandlerLogThread) {
             String newMessage = this.getMessage();
-            ToeThread tt = (ToeThread) Thread.currentThread();
+            SinkHandlerLogThread tt = 
+                (SinkHandlerLogThread) Thread.currentThread();
             newMessage = newMessage + " (in thread '"+tt.getName()+"'";
             if(tt.getCurrentProcessorName().length()>0) {
                 newMessage = newMessage + "; in processor '"

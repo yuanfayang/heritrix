@@ -23,7 +23,7 @@
  */
 package org.archive.settings;
 
-import org.archive.crawler.util.Transformer;
+import org.archive.util.Transformer;
 
 public class Identity {
 

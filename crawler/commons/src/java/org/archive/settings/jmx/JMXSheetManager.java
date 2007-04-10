@@ -34,8 +34,8 @@ import java.util.Set;
 
 import javax.management.openmbean.CompositeData;
 
-import org.archive.crawler.util.Transform;
-import org.archive.crawler.util.Transformer;
+import org.archive.util.Transform;
+import org.archive.util.Transformer;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;

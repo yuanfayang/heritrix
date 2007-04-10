@@ -48,7 +48,7 @@ import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.io.GenerationFileHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.processors.DirectoryModule;
+import org.archive.state.DirectoryModule;
 import org.archive.processors.LoggerModule;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.RecoverAction;

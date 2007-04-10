@@ -45,7 +45,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.util.CheckpointUtils;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.RecoverAction;
 import org.archive.state.Immutable;
@@ -276,7 +275,7 @@ Serializable, Closeable {
 
     private void processBdbLogs(final File checkpointDir,
             final String lastBdbCheckpointLog) throws IOException {
-        File bdbDir = CheckpointUtils.getBdbSubDirectory(checkpointDir);
+        File bdbDir = getBdbSubDirectory(checkpointDir);
         if (!bdbDir.exists()) {
             bdbDir.mkdir();
         }
@@ -288,7 +287,13 @@ Serializable, Closeable {
             boolean pastLastLogFile = false;
             Set<String> srcFilenames = null;
             do {
-                FilenameFilter filter = CheckpointUtils.getJeLogsFilter();
+                FilenameFilter filter = new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return name != null 
+                            && name.toLowerCase().endsWith(".jdb");
+                    }
+                };
+
                 srcFilenames =
                     new HashSet<String>(Arrays.asList(new File(path).list(filter)));
                 List tgtFilenames = Arrays.asList(bdbDir.list(filter));
@@ -368,6 +373,12 @@ Serializable, Closeable {
         }
     }
 
+
+    private static File getBdbSubDirectory(File checkpointDir) {
+        return new File(checkpointDir, "bdbje-logs");
+    }
+
+
     private static class BdbRecover implements RecoverAction {
 
         private static final long serialVersionUID = 1L;
@@ -380,7 +391,7 @@ Serializable, Closeable {
         
         public void recoverFrom(File checkpointDir, 
             CheckpointRecovery recovery) throws Exception {
-            File bdbDir = CheckpointUtils.getBdbSubDirectory(checkpointDir);
+            File bdbDir = getBdbSubDirectory(checkpointDir);
             path = recovery.translatePath(path);
             FileUtils.copyFiles(bdbDir, new File(path));
         }

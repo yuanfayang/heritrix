@@ -41,7 +41,7 @@ import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
-import org.archive.processors.DirectoryModule;
+import org.archive.state.DirectoryModule;
 import org.archive.processors.deciderules.DecideRule;
 import org.archive.state.Expert;
 import org.archive.state.Global;

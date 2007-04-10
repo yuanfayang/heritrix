@@ -28,14 +28,14 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+/*
 import org.archive.processors.deciderules.AcceptDecideRule;
 import org.archive.processors.deciderules.DecideRule;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.processors.deciderules.RejectDecideRule;
 import org.archive.processors.extractor.ExtractorCSS;
 import org.archive.processors.extractor.ExtractorHTML;
-import org.archive.processors.extractor.ExtractorJS;
+import org.archive.processors.extractor.ExtractorJS;*/
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
@@ -46,7 +46,7 @@ import org.archive.state.ExampleConcreteProcessor;
 import junit.framework.TestCase;
 
 public class PathTestBase extends TestCase {
-
+/*
     SheetManager manager;
 
     // Objects in the default sheet
@@ -226,5 +226,5 @@ public class PathTestBase extends TestCase {
         offlineManager.addSheetBundle("bundle", Arrays.asList(new Sheet[] { override2, override1 }));        
     }
 
-
+*/
 }

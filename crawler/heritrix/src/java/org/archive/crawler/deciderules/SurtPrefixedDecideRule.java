@@ -33,7 +33,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.net.UURI;
-import org.archive.processors.DirectoryModule;
+import org.archive.state.DirectoryModule;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
