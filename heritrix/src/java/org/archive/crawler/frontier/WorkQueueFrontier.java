@@ -860,7 +860,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         log(curi);
 
         if (curi.isSuccess()) {
-            totalProcessedBytes += curi.getContentSize();
+            totalProcessedBytes += curi.getRecordedSize();
             incrementSucceededFetchCount();
             // Let everyone know in case they want to do something before we strip the curi.
             controller.fireCrawledURISuccessfulEvent(curi);
