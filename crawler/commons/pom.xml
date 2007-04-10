@@ -7,9 +7,9 @@
 </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.archive.crawler</groupId>
-  <artifactId>heritrix</artifactId>
+  <artifactId>commons</artifactId>
   <packaging>jar</packaging>
-  <name>Heritrix</name>
+  <name>Archive Commons Code Libraries</name>
     <repositories>
     <repository>
       <releases>
@@ -30,13 +30,13 @@
   </repositories>
   
   <dependencies>
-        <dependency>
-             <groupId>org.archive.crawler</groupId>
-             <artifactId>commons</artifactId>
-             <version>2.0.0-SNAPSHOT</version>
-             <scope>compile</scope>
-        </dependency>
 <!--        <dependency>
+             <groupId>commons-httpclient</groupId>
+             <artifactId>commons-httpclient</artifactId>
+             <version>3.0.1</version>
+             <scope>provided</scope>
+        </dependency> -->
+        <dependency>
              <groupId>commons-lang</groupId>
              <artifactId>commons-lang</artifactId>
              <version>2.1</version>
@@ -108,7 +108,7 @@
               <version>4.1.34</version>
               <scope>compile</scope>
         </dependency>
-        <dependency>
+<!--        <dependency>
               <groupId>tomcat</groupId>
               <artifactId>jasper-runtime</artifactId>
               <version>4.1.30</version>
@@ -119,7 +119,7 @@
               <artifactId>jasper-compiler</artifactId>
               <version>4.1.30</version>
               <scope>compile</scope>
-        </dependency>
+        </dependency> -->
         <dependency>
               <groupId>poi</groupId>
               <artifactId>poi</artifactId>
@@ -142,7 +142,7 @@
               <groupId>ant</groupId>
               <artifactId>ant</artifactId>
               <version>1.6.2</version>
-              <scope>compile</scope>
+              <scope>compile</scope><!-- FIXME -->
         </dependency>
         <dependency>
               <groupId>junit</groupId>
@@ -150,12 +150,12 @@
               <version>3.8.2</version>
               <scope>compile</scope>
         </dependency>
-        <dependency>
+<!--        <dependency>
               <groupId>commons-pool</groupId>
               <artifactId>commons-pool</artifactId>
               <version>1.3</version>
               <scope>compile</scope>
-        </dependency>
+        </dependency> -->
         <dependency>
               <groupId>fastutil</groupId>
               <artifactId>fastutil</artifactId>
@@ -191,12 +191,51 @@
               <artifactId>javaswf</artifactId>
               <version>CVS-SNAPSHOT-1</version>
               <scope>compile</scope>        
-        </dependency> -->
+        </dependency>
 
   </dependencies>
   <build>
     <sourceDirectory>src/java</sourceDirectory>
     <plugins>
+
+      <plugin>
+         <groupId>org.apache.maven.plugins</groupId>
+         <artifactId>maven-dependency-plugin</artifactId>
+         <executions>
+           <execution>
+             <id>unpack</id>
+             <phase>process-resources</phase>
+             <goals>
+               <goal>unpack</goal>
+             </goals>
+             <configuration>
+               <artifactItems>
+                 <artifactItem>
+                   <groupId>commons-httpclient</groupId>
+                   <artifactId>commons-httpclient</artifactId>
+                   <version>3.0.1</version>
+                   <type>jar</type>
+                   <overWrite>true</overWrite>
+                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                 </artifactItem>
+                 <artifactItem>
+                   <groupId>commons-pool</groupId>
+                   <artifactId>commons-pool</artifactId>
+                   <version>1.3</version>
+                   <type>jar</type>
+                   <overWrite>true</overWrite>
+                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                 </artifactItem>
+               </artifactItems>
+<!--               <outputDirectory>${project.build.directory}/wars</outputDirectory>
+               <overWriteReleases>true</overWriteReleases>
+               <overWriteSnapshots>true</overWriteSnapshots> -->
+             </configuration>
+           </execution>
+         </executions>
+       </plugin>
+
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
