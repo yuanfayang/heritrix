@@ -278,4 +278,48 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
     </contributor>
   </contributors>
 
+
+  <reporting>
+    <outputDirectory>target/site</outputDirectory>
+    <plugins>
+<!--      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>dependencies</report>
+              <report>project-team</report>
+              <report>mailing-list</report>
+              <report>cim</report>
+              <report>issue-tracking</report>
+              <report>license</report>
+              <report>scm</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin> -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <source>
+                ${basedir}/src/java
+            </source>
+            <overview>
+                ${basedir}/src/site/overview.html
+            </overview>
+            <aggregate>
+                true
+            </aggregate>
+            <links>
+              <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+              <link>
+            </links>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+
+
 </project>
