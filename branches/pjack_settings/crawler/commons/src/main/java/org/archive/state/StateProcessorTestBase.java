@@ -50,7 +50,7 @@ public abstract class StateProcessorTestBase extends TestCase {
 
     
     public StateProcessorTestBase() {
-        KeyMetadataMaker.makeDefaultLocale(new File("src/java"), 
+        KeyMetadataMaker.makeDefaultLocale(new File("src/main/java"), 
                 getModuleClass());
     }
 
