@@ -11,6 +11,11 @@
   <artifactId>commons</artifactId>
   <packaging>jar</packaging>
   <name>Archive Commons Code Libraries</name>
+  <description>
+    The Archive Commons Code Libraries project contains general Java utility
+    libraries.
+  </description>
+
     <repositories>
     <repository>
       <releases>
