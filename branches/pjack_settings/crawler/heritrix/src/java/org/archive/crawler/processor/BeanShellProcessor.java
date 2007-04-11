@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.FetchStatusCodes;
+//import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessorURI;
 import org.archive.settings.Sheet;
@@ -57,8 +57,7 @@ import bsh.Interpreter;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class BeanShellProcessor extends CrawlerProcessor 
-implements FetchStatusCodes {
+public class BeanShellProcessor extends CrawlerProcessor {
 
     private static final long serialVersionUID = 3L;
 

@@ -25,7 +25,6 @@ package org.archive.processors.util;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.fetcher.DefaultServerCache;
@@ -57,12 +56,11 @@ public class ServerCacheTest extends TestCase {
     private void testHostServer(DefaultServerCache servers, String uri)
     throws URIException {
         UURI uuri = UURIFactory.getInstance(uri);
-        CrawlURI curi = new CrawlURI(uuri);
         ServerCacheUtil.getServerFor(servers, uuri);
         ServerCacheUtil.getHostFor(servers, uuri);;
         assertTrue("cache lost server",
-            servers.containsServer(CrawlServer.getServerKey(curi.getUURI())));
+            servers.containsServer(CrawlServer.getServerKey(uuri)));
         assertTrue("cache lost host",
-            servers.containsHost(curi.getUURI().getHost()));
+            servers.containsHost(uuri.toString()));
     }
 }

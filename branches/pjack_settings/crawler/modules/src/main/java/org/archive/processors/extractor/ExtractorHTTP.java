@@ -26,7 +26,6 @@ package org.archive.processors.extractor;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
@@ -37,8 +36,7 @@ import org.archive.processors.ProcessorURI.FetchType;
  * Extracts URIs from HTTP response headers.
  * @author gojomo
  */
-public class ExtractorHTTP extends Extractor
-implements CoreAttributeConstants {
+public class ExtractorHTTP extends Extractor {
 
     private static final long serialVersionUID = 3L;
 

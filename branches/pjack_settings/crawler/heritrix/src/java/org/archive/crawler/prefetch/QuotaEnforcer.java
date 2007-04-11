@@ -23,7 +23,7 @@
 package org.archive.crawler.prefetch;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.fetcher.FetchStats;
@@ -39,7 +39,7 @@ import org.archive.state.Key;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class QuotaEnforcer extends CrawlerProcessor implements FetchStatusCodes {
+public class QuotaEnforcer extends CrawlerProcessor {
 
     private static final long serialVersionUID = 3L;
 

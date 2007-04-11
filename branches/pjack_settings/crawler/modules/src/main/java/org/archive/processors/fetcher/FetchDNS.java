@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
-import static org.archive.crawler.datamodel.FetchStatusCodes.*;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;

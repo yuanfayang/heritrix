@@ -64,8 +64,8 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import static org.archive.crawler.datamodel.FetchStatusCodes.*;
+import static org.archive.processors.fetcher.FetchErrors.*;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
@@ -76,7 +76,6 @@ import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
-import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
@@ -107,7 +106,7 @@ import org.archive.util.Recorder;
  * @author others
  * @version $Id$
  */
-public class FetchHTTP extends Processor implements Initializable, CrawlStatusListener {
+public class FetchHTTP extends Processor implements Initializable {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(FetchHTTP.class, 1);
@@ -1035,7 +1034,6 @@ public class FetchHTTP extends Processor implements Initializable, CrawlStatusLi
         this.serverCache = defaults.get(this, SERVER_CACHE);
         this.credentialStore = defaults.get(this, CREDENTIAL_STORE);
 
-        // this.getController().addCrawlStatusListener(this);
         configureHttp(defaults);
 
         CookieStorage cm = defaults.get(this, COOKIE_STORAGE);
@@ -1453,70 +1451,6 @@ public class FetchHTTP extends Processor implements Initializable, CrawlStatusLi
     protected HttpClient getHttp() {
         return this.http;
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
-     */
-    public void crawlStarted(String message) {
-        // TODO Auto-generated method stub
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
-     */
-    public void crawlCheckpoint(StateProvider defaults, File checkpointDir) {
-        // TODO Auto-generated method stub
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
-     */
-    public void crawlEnding(String sExitMessage) {
-        // TODO Auto-generated method stub
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
-    public void crawlEnded(String sExitMessage) {
-        this.http = null;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-     */
-    public void crawlPausing(String statusMessage) {
-        // TODO Auto-generated method stub
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-     */
-    public void crawlPaused(String statusMessage) {
-        // TODO Auto-generated method stub
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-     */
-    public void crawlResuming(String statusMessage) {
-        // TODO Auto-generated method stub
-    }
-
 
     private static String getServerKey(ProcessorURI uri) {
         try {

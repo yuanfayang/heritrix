@@ -32,5 +32,6 @@ public interface SinkHandlerLogThread {
 
     String getName();
     String getCurrentProcessorName();
+    int getSerialNumber();
 
 }

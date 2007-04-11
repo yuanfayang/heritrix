@@ -230,6 +230,10 @@ implements ProcessorURI {
         return userAgent;
     }
 
+    public void setUserAgent(String ua) {
+        this.userAgent = ua;
+    }
+
     public UURI getVia() {
         return via;
     }
@@ -344,4 +348,10 @@ implements ProcessorURI {
     public HttpMethod getHttpMethod() {
         return this.httpMethod;
     }
+
+
+    public int getFetchAttempts() {
+        return 1; // FIXME
+    }
+
 }

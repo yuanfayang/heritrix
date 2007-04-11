@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.framework.ToeThread;
+import org.archive.io.SinkHandlerLogThread;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
@@ -97,8 +97,13 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
     protected boolean innerExtract(ProcessorURI curi){
         File tempFile;
 
-
-        int sn = ((ToeThread)Thread.currentThread()).getSerialNumber();
+        int sn;
+	Thread thread = Thread.currentThread();
+        if (thread instanceof SinkHandlerLogThread) {
+            sn = ((SinkHandlerLogThread)thread).getSerialNumber();
+        } else {
+            sn = System.identityHashCode(thread);
+        }
         File tempDir = tempDirProvider.getScratchDisk();
         tempFile = new File(tempDir, "tt" + sn + "tmp.pdf");
 

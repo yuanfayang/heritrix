@@ -29,10 +29,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.processors.Processor;
 import org.archive.processors.fetcher.HostResolver;
@@ -54,8 +54,9 @@ import com.sleepycat.util.RuntimeExceptionWrapper;
  * @author Gordon Mohr
  */
 public class ToeThread extends Thread
-implements CoreAttributeConstants, FetchStatusCodes, RecorderMarker,
-Reporter, ProgressStatisticsReporter, HostResolver, SinkHandlerLogThread {
+implements RecorderMarker, Reporter, ProgressStatisticsReporter, 
+           HostResolver, SinkHandlerLogThread {
+
     private static final String STEP_NASCENT = "NASCENT";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
     private static final String STEP_FINISHED = "FINISHED";

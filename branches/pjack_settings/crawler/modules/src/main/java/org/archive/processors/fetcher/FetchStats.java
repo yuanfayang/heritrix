@@ -27,7 +27,6 @@ package org.archive.processors.fetcher;
 import java.io.Serializable;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.processors.ProcessorURI;
 
 /**

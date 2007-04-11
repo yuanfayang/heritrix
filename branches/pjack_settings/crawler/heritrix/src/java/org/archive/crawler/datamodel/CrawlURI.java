@@ -44,7 +44,7 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import static org.archive.crawler.datamodel.SchedulingConstants.*;
-import static org.archive.crawler.datamodel.FetchStatusCodes.*;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;

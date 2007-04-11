@@ -28,7 +28,7 @@ package org.archive.crawler.postprocessor;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.frontier.EmptyFrontier;
 import org.archive.processors.Processor;
@@ -46,8 +46,7 @@ import org.archive.state.StateProvider;
  * are in-scope get scheduled.
  * @author stack
  */
-public class FrontierScheduler extends Processor
-implements FetchStatusCodes {
+public class FrontierScheduler extends Processor {
 
     private static final long serialVersionUID = -3L;
 
