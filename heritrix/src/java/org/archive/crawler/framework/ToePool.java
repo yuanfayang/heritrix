@@ -58,6 +58,7 @@ public class ToePool extends ThreadGroup implements Reporter {
     public ToePool(CrawlController c) {
         super("ToeThreads");
         this.controller = c;
+        setDaemon(true);
     }
     
     public void cleanup() {
