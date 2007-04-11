@@ -40,7 +40,8 @@ import junit.framework.TestCase;
 public class DocTest extends TestCase {
 
     
-    final private static File TEST_DIR = new File("testdata/ms");
+    final private static File TEST_DIR = 
+        new File("src/test/org/archive/util/ms");
 
     
     // Rename to testAgainstPOI to actually run the test.

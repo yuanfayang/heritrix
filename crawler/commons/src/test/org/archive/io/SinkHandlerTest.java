@@ -38,6 +38,7 @@ public class SinkHandlerTest extends TestCase {
     
     protected void setUp() throws Exception {
         super.setUp();
+        Class.forName("org.archive.io.SinkHandler");
         String logConfig = "handlers = " +
             "org.archive.io.SinkHandler\n" +
             "org.archive.io.SinkHandler.level = ALL";
