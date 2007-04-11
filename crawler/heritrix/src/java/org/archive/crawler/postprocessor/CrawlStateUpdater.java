@@ -26,7 +26,7 @@ package org.archive.crawler.postprocessor;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import static org.archive.processors.fetcher.CoreAttributeConstants.*;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.processors.fetcher.FetchStatusCodes.*;
