@@ -227,4 +227,9 @@ public class PathTestBase extends TestCase {
     }
 
 */
+ 
+    // Shut up, junit.
+    public void testNothing() {
+        
+    }
 }
