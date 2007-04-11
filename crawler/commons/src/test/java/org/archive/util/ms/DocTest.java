@@ -1,3 +1,4 @@
+
 /* DocTest
 *
 * Created on September 12, 2006
@@ -41,7 +42,7 @@ public class DocTest extends TestCase {
 
     
     final private static File TEST_DIR = 
-        new File("src/test/org/archive/util/ms");
+        new File("src/test/java/org/archive/util/ms");
 
     
     // Rename to testAgainstPOI to actually run the test.
