@@ -83,6 +83,7 @@ public interface ProcessorURI extends StateProvider {
     Map<String,Object> getData();
     
     String getUserAgent();
+    void setUserAgent(String ua);
     String getFrom();
 
     long getContentSize();
@@ -125,4 +126,5 @@ public interface ProcessorURI extends StateProvider {
 
     LinkContext getViaContext();
 
+    int getFetchAttempts();
 }

@@ -33,7 +33,8 @@ import java.util.Set;
 import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.processors.ProcessorURI;
+import static org.archive.processors.ProcessorURI.FetchType.*;
 import org.archive.io.ReplayInputStream;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -121,12 +122,13 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
      * @throws IOException
      */
     public void updateRobots(RobotsHonoringPolicy honoringPolicy, 
-            CrawlURI curi) {
+            ProcessorURI curi) {
 
         robotsFetched = System.currentTimeMillis();
 
+	ProcessorURI.FetchType ft = curi.getFetchType();
         boolean gotSomething = curi.getFetchStatus() > 0
-                && curi.isHttpTransaction();
+                && (ft == HTTP_GET || ft == HTTP_POST);
         if (!gotSomething && curi.getFetchAttempts() < MIN_ROBOTS_RETRIES) {
             // robots.txt lookup failed, no reason to consider IGNORE yet
             validRobots = false;
@@ -147,7 +149,8 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
             return;
         }
         
-        if (!curi.is2XXSuccess()) {
+	int fetchStatus = curi.getFetchStatus();
+        if (fetchStatus < 200 || fetchStatus >= 300) {
             // Not found or anything but a status code in the 2xx range is
             // treated as giving access to all of a sites' content.
             // This is the prevailing practice of Google, since 4xx

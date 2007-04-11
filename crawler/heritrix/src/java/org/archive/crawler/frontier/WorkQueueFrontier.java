@@ -46,7 +46,7 @@ import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import static org.archive.crawler.datamodel.FetchStatusCodes.*;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.exceptions.EndedException;

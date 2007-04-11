@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -99,8 +98,8 @@ public class CredentialStore implements Module, Serializable {
 
 
     /**
-     * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
-     * context.  If null, we use global context.
+     * @param context Pass a ProcessorURI.  Used to set
+     * context.
      * @return An iterator or null.
      */
     public Collection<Credential> getAll(StateProvider context) {
@@ -109,8 +108,7 @@ public class CredentialStore implements Module, Serializable {
     }
 
     /**
-     * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
-     * context.  If null, we use global context.
+     * @param context  Used to set context.
      * @param name Name to give the manufactured credential.  Should be unique
      * else the add of the credential to the list of credentials will fail.
      * @return Returns <code>name</code>'d credential.
@@ -127,13 +125,12 @@ public class CredentialStore implements Module, Serializable {
      * Return set made up of all credentials of the passed
      * <code>type</code>.
      *
-     * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
-     * context.  If null, we use global context.
+     * @param context   Used to set context.  
      * @param type Type of the list to return.  Type is some superclass of
      * credentials.
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public Set subset(CrawlURI context, Class type) {
+    public Set subset(ProcessorURI context, Class type) {
         return subset(context, type, null);
     }
 
@@ -141,8 +138,7 @@ public class CredentialStore implements Module, Serializable {
      * Return set made up of all credentials of the passed
      * <code>type</code>.
      *
-     * @param context Pass a CrawlURI or a CrawlerSettings.  Used to set
-     * context.  If null, we use global context.
+     * @param context  Used to set context.  
      * @param type Type of the list to return.  Type is some superclass of
      * credentials.
      * @param rootUri RootUri to match.  May be null.  In this case we return

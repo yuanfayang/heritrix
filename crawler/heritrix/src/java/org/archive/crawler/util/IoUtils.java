@@ -32,9 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Target;
-import org.apache.tools.ant.taskdefs.Expand;
 import org.archive.net.UURI;
 
 /**
@@ -92,9 +89,9 @@ public class IoUtils {
      * @param zipFile File to unzip.
      * @param destinationDir Where to unzip to.
      */
-    public static void unzip(File zipFile, File destinationDir) {
+/*    public static void unzip(File zipFile, File destinationDir) {
         unzip(zipFile, destinationDir, true);
-    }
+    } */
      
     /**
      * Use ant to unjar.
@@ -102,7 +99,7 @@ public class IoUtils {
      * @param destinationDir Where to unzip to.
      * @param overwrite Whether to overwrite existing content.
      */
-    public static void unzip(File zipFile, File destinationDir,
+/*    public static void unzip(File zipFile, File destinationDir,
             boolean overwrite) {
         final class Expander extends Expand {
                 public Expander() {
@@ -118,5 +115,5 @@ public class IoUtils {
         expander.setDest(destinationDir);
         expander.setOverwrite(overwrite);
         expander.execute();
-    }
+    } */
 }

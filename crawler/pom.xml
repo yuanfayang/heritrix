@@ -89,20 +89,26 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
        <dependencies>
           <dependency>
              <groupId>org.archive.crawler</groupId>
-             <artifactId>heritrix</artifactId>
+             <artifactId>commons</artifactId>
              <version>${project.version}</version>
           </dependency>
           <dependency>
              <groupId>org.archive.crawler</groupId>
-             <artifactId>commons</artifactId>
+             <artifactId>modules</artifactId>
+             <version>${project.version}</version>
+          </dependency>
+          <dependency>
+             <groupId>org.archive.crawler</groupId>
+             <artifactId>heritrix</artifactId>
              <version>${project.version}</version>
           </dependency>
        </dependencies>
     </dependencyManagement>
 
   <modules>
-    <module>heritrix</module>
     <module>commons</module>
+    <module>modules</module>
+    <module>heritrix</module>
   </modules>
 
     <distributionManagement>
@@ -314,7 +320,6 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
             </aggregate>
             <links>
               <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
-              <link>
             </links>
         </configuration>
       </plugin>

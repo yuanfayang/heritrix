@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.net.ftp.FTPCommand;
-import org.archive.crawler.datamodel.FetchStatusCodes;
 
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayCharSequence;

@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.crawler.datamodel.SchedulingConstants.*;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
@@ -55,8 +55,7 @@ import org.archive.state.Key;
  * @author gojomo
  * @author stack
  */
-public class LinksScoper extends Scoper
-implements FetchStatusCodes {
+public class LinksScoper extends Scoper {
 
     private static final long serialVersionUID = -3L;
 

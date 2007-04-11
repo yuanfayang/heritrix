@@ -42,7 +42,6 @@ import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.net.UURI;
@@ -86,10 +85,12 @@ import org.archive.util.IoUtils;
    
    @author Howard Lee Gayle
 */
-public class MirrorWriterProcessor
-extends Processor implements CoreAttributeConstants {
+public class MirrorWriterProcessor extends Processor {
 
     private static final long serialVersionUID = 3L;
+
+
+    final public static String A_MIRROR_PATH = "mirror-path";
 
     
     /**

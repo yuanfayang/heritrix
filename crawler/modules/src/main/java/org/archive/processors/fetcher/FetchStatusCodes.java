@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.datamodel;
+package org.archive.processors.fetcher;
 
 /**
  * Constant flag codes to be used, in lieu of per-protocol

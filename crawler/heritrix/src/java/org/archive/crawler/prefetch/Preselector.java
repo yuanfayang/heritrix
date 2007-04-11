@@ -25,7 +25,7 @@ package org.archive.crawler.prefetch;
 
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
@@ -44,8 +44,7 @@ import org.archive.util.TextUtils;
  * @author gojomo
  *
  */
-public class Preselector extends Scoper
-implements FetchStatusCodes {
+public class Preselector extends Scoper {
 
     private static final long serialVersionUID = 3L;
 

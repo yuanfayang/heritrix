@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessResult;
@@ -68,8 +68,8 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public abstract class CrawlMapper extends CrawlerProcessor 
-implements FetchStatusCodes {
+public abstract class CrawlMapper extends CrawlerProcessor {
+
     /**
      * PrintWriter which remembers the File to which it writes. 
      */

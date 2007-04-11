@@ -26,10 +26,10 @@ package org.archive.crawler.postprocessor;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
+import static org.archive.processors.fetcher.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
@@ -48,8 +48,7 @@ import org.archive.processors.ProcessorURI;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class CrawlStateUpdater extends CrawlerProcessor implements
-        CoreAttributeConstants, FetchStatusCodes {
+public class CrawlStateUpdater extends CrawlerProcessor {
 
     private static final long serialVersionUID = -1072728147960180091L;
 

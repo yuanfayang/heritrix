@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.crawler.datamodel.FetchStatusCodes.*;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;

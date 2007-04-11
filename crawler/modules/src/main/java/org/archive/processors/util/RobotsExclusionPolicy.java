@@ -37,8 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.Robotstxt;
+import org.archive.processors.ProcessorURI;
 import org.archive.state.StateProvider;
 
 /**
@@ -146,7 +145,7 @@ public class RobotsExclusionPolicy implements Serializable {
         this.type = type;
     }
 
-    public boolean disallows(CrawlURI curi, String userAgent) {
+    public boolean disallows(ProcessorURI curi, String userAgent) {
         if (this == ALLOWALL)
             return false;
         if (this == DENYALL)

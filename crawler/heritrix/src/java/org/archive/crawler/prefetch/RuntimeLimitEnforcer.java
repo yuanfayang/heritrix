@@ -27,7 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlStatus;
 import org.archive.crawler.framework.CrawlerProcessor;
@@ -63,8 +63,7 @@ import org.archive.state.Key;
  * 
  * @author Kristinn Sigur&eth;sson
  */
-public class RuntimeLimitEnforcer 
-                extends CrawlerProcessor implements FetchStatusCodes {
+public class RuntimeLimitEnforcer extends CrawlerProcessor {
 
     private static final long serialVersionUID = 3L;
     
