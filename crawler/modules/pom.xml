@@ -71,7 +71,7 @@ be used in applications other than Heritrix, however.
           -->
           <useSystemClassLoader>true</useSystemClassLoader>
           <excludes>
-            <exclude>**/Test*.java</exclude>
+            <exclude>**/TestAll.java</exclude>
           </excludes>
         </configuration>
       </plugin>

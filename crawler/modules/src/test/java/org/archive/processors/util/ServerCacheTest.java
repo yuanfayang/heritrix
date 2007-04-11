@@ -61,6 +61,6 @@ public class ServerCacheTest extends TestCase {
         assertTrue("cache lost server",
             servers.containsServer(CrawlServer.getServerKey(uuri)));
         assertTrue("cache lost host",
-            servers.containsHost(uuri.toString()));
+            servers.containsHost(uuri.getHost()));
     }
 }
