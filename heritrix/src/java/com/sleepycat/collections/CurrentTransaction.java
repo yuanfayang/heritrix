@@ -8,6 +8,7 @@
 
 package com.sleepycat.collections;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.WeakHashMap;
@@ -71,10 +72,14 @@ public class CurrentTransaction {
      */
     static CurrentTransaction getInstanceInternal(Environment env) {
         synchronized (envMap) {
-            CurrentTransaction myEnv = (CurrentTransaction) envMap.get(env);
+            CurrentTransaction myEnv = null;
+            WeakReference myEnvRef = (WeakReference) envMap.get(env);
+            if (myEnvRef != null) {
+                myEnv = (CurrentTransaction) myEnvRef.get();
+            }
             if (myEnv == null) {
                 myEnv = new CurrentTransaction(env);
-                envMap.put(env, myEnv);
+                envMap.put(env, new WeakReference(myEnv));
             }
             return myEnv;
         }
