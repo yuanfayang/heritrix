@@ -94,8 +94,8 @@
         scm:<system>:<system specific connection string> 
      -->
     <repository>
-       <connection>scm:svn:https://archive-access.svn.sourceforge.net/svnroot/archive-crawler</connection>
-        <url>https://archive-access.svn.sourceforge.net/svnroot/archive-crawler</url>
+       <connection>scm:svn:https://archive-crawler.svn.sourceforge.net/svnroot/archive-crawler</connection>
+        <url>https://archive-crawler.svn.sourceforge.net/svnroot/archive-crawler</url>
     </repository>
 
     <versions />
@@ -331,14 +331,14 @@
          </dependency>
         <dependency>
             <id>je</id>
-            <version>3.2.13</version>
+            <version>3.2.23</version>
             <url>http://www.oracle.com/technology/products/berkeley-db/je/index.html</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
                 <description>Berkeley DB Java Edition.  
-                Copyright (c) 2006 Oracle.  
+                Copyright (c) 2007 Oracle.  
                 All rights reserved.  See above link for how to obtain source.  
                 </description>
                 <license>http://www.oracle.com/technology/software/products/berkeley-db/htdocs/jeoslicense.html
