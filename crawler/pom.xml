@@ -76,8 +76,12 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
     </mailingLists>
 
     <scm>
-       <connection>scm:svn:https://archive-access.svn.sourceforge.net/svnroot/archive-crawler</connection>
-        <url>https://archive-access.svn.sourceforge.net/svnroot/archive-crawler</url>
+       <connection>
+       scm:svn:https://archive-crawler.svn.sourceforge.net/svnroot/archive-crawler/branches/pjack_settings/crawler
+       </connection>
+       <url>
+       https://archive-crawler.svn.sourceforge.net/svnroot/archive-crawler/branches/pjack_settings/crawler
+       </url>
        <tag>pjack_settings</tag>
     </scm>
 
