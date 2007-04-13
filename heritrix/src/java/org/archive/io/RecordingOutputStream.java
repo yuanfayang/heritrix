@@ -176,6 +176,8 @@ public class RecordingOutputStream extends OutputStream {
         }
         this.out = wrappedStream;
         this.position = 0;
+        this.markPosition = 0;
+        this.maxPosition = 0; 
         this.size = 0;
         this.contentBeginMark = -1;
         // ensure recording turned on
