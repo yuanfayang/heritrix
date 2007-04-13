@@ -28,6 +28,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 
 import org.archive.util.TmpDirTestCase;
 
@@ -51,7 +53,7 @@ public class RecordingInputStreamTest extends TmpDirTestCase
 
     /**
      * Test readFullyOrUntil soft (no exception) and hard (exception) 
-     * length cutoffs.
+     * length cutoffs, timeout, and rate-throttling. 
      * 
      * @throws IOException
      * @throws InterruptedException
@@ -65,7 +67,8 @@ public class RecordingInputStreamTest extends TmpDirTestCase
                 "abcdefghijklmnopqrstuvwxyz".getBytes());
         // test soft max
         ris.open(bais);
-        ris.readFullyOrUntil(7,10,0,0);
+        ris.setLimits(10,0,0);
+        ris.readFullyOrUntil(7);
         ris.close();
         ReplayInputStream res = ris.getReplayInputStream();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -77,7 +80,8 @@ public class RecordingInputStreamTest extends TmpDirTestCase
         ris.open(bais);
         boolean exceptionThrown = false; 
         try {
-            ris.readFullyOrUntil(13,10,0,0);
+            ris.setLimits(10,0,0);
+            ris.readFullyOrUntil(13);
         } catch (RecorderLengthExceededException ex) {
             exceptionThrown = true;
         }
@@ -87,6 +91,48 @@ public class RecordingInputStreamTest extends TmpDirTestCase
         res.readFullyTo(baos);
         assertEquals("hard max cutoff","abcdefghijk",
                 new String(baos.toByteArray()));
-        // TODO: test timeout?  
+        // test timeout
+        PipedInputStream pin = new PipedInputStream(); 
+        PipedOutputStream pout = new PipedOutputStream(pin); 
+        ris.open(pin);
+        exceptionThrown = false; 
+        trickle("abcdefghijklmnopqrstuvwxyz".getBytes(),pout);
+        try {
+            ris.setLimits(0,5000,0);
+            ris.readFullyOrUntil(0);
+        } catch (RecorderTimeoutException ex) {
+            exceptionThrown = true;
+        }
+        assertTrue("timeout exception",exceptionThrown);
+        ris.close();
+        // test rate limit
+        bais = new ByteArrayInputStream(new byte[1024*2*5]);
+        ris.open(bais);
+        long startTime = System.currentTimeMillis();
+        ris.setLimits(0,0,2);
+        ris.readFullyOrUntil(0);
+        long endTime = System.currentTimeMillis(); 
+        long duration = endTime - startTime; 
+        assertTrue("read too fast: "+duration,duration>=5000);
+        ris.close();
+    }
+
+    protected void trickle(final byte[] bytes, final PipedOutputStream pout) {
+        new Thread() {
+            public void run() {
+                try {
+                    for (int i = 0; i < bytes.length; i++) {
+                        Thread.sleep(1000);
+                        pout.write(bytes[i]);
+                    }
+                    pout.close();
+                } catch (IOException e) {
+                    // do nothing
+                } catch (Exception e) {
+                    System.err.print(e); 
+                }                
+            }
+        }.start();
+        
     }
 }

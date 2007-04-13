@@ -351,7 +351,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         long timeout = (long)getTimeout(curi) * 1000;
         int maxRate = getFetchBandwidth(curi);
         RecordingInputStream input = recorder.getRecordedInput();
-        input.readFullyOrUntil(softMax, hardMax, timeout, maxRate);
+        input.setLimits(hardMax, timeout, maxRate); 
+        input.readFullyOrUntil(softMax);
     }
     
     
