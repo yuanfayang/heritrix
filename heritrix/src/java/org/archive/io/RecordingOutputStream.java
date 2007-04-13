@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.util.IoUtils;
 
@@ -66,6 +68,9 @@ import org.archive.util.IoUtils;
  *
  */
 public class RecordingOutputStream extends OutputStream {
+    protected static Logger logger =
+        Logger.getLogger(RecordingOutputStream.class.getName());
+    
     /**
      * Size of recording.
      *
@@ -119,6 +124,15 @@ public class RecordingOutputStream extends OutputStream {
      */
     protected static final long MAX_HEADER_MATERIAL = 1024*1024; // 1MB
     
+    // configurable max length, max time limits
+    /** maximum length of material to record before throwing exception */ 
+    protected long maxLength = Long.MAX_VALUE;
+    /** maximum time to record before throwing exception */ 
+    protected long timeoutMs = Long.MAX_VALUE;
+    /** maximum rate to record (adds delays to hit target rate) */ 
+    protected long maxRateBytesPerMs = Long.MAX_VALUE;
+    /** time recording begins for timeout, rate calculations */ 
+    protected long startTime = Long.MAX_VALUE;
     
     /**
      * When recording HTTP, where the content-body starts.
@@ -193,6 +207,7 @@ public class RecordingOutputStream extends OutputStream {
             
             this.diskStream = new RecyclingFastBufferedOutputStream(fis, bufStreamBuf);
         }
+        startTime = System.currentTimeMillis();
     }
 
     public void write(int b) throws IOException {
@@ -233,15 +248,34 @@ public class RecordingOutputStream extends OutputStream {
     }
     
     /**
-     * Check any enforced limits. For now, this only checks MAX_HEADER_MATERIAL
-     * if markContentBegin() has not yet been called.
+     * Check any enforced limits. 
      */
-    protected void checkLimits() throws RecorderTooMuchHeaderException {
+    protected void checkLimits() throws RecorderIOException {
+        // too much material before finding end of headers? 
         if (contentBeginMark<0) {
             // no mark yet
             if(position>MAX_HEADER_MATERIAL) {
                 throw new RecorderTooMuchHeaderException();
             }
+        }
+        // overlong?
+        if(position>maxLength) {
+            throw new RecorderLengthExceededException(); 
+        }
+        // taking too long? 
+        long duration = System.currentTimeMillis() - startTime + 1; // !divzero
+        if(duration>timeoutMs) {
+            throw new RecorderTimeoutException(); 
+        }
+        // need to throttle reading to hit max configured rate? 
+        if(position/duration > maxRateBytesPerMs) {
+            long desiredDuration = position / maxRateBytesPerMs;
+            try {
+                Thread.sleep(desiredDuration-duration);
+            } catch (InterruptedException e) {
+                logger.log(Level.WARNING,
+                        "bandwidth throttling sleep interrupted", e);
+            } 
         }
     }
 
@@ -554,5 +588,37 @@ public class RecordingOutputStream extends OutputStream {
         maxPosition = Math.max(maxPosition, position); 
         // reset to previous position
         position = markPosition;
+    }
+    
+    /**
+     * Set limits on length, time, and rate to enforce.
+     * 
+     * @param length
+     * @param milliseconds
+     * @param rateKBps
+     */
+    public void setLimits(long length, long milliseconds, long rateKBps) {
+        maxLength = (length>0) ? length : Long.MAX_VALUE;
+        timeoutMs = (milliseconds>0) ? milliseconds : Long.MAX_VALUE;
+        maxRateBytesPerMs = (rateKBps>0) ? rateKBps*1024/1000 : Long.MAX_VALUE;
+    }
+    
+    /**
+     * Reset limits to effectively-unlimited defaults
+     */
+    public void resetLimits() {
+        maxLength = Long.MAX_VALUE;
+        timeoutMs = Long.MAX_VALUE;
+        maxRateBytesPerMs = Long.MAX_VALUE;
+    }
+    
+    /**
+     * Return number of bytes that could be recorded without hitting 
+     * length limit
+     * 
+     * @return long byte count
+     */
+    public long getRemainingLength() {
+        return maxLength - position; 
     }
 }

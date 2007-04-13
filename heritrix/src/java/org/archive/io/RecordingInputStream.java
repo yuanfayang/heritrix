@@ -177,85 +177,34 @@ public class RecordingInputStream
      * @throws RecorderTimeoutException
      * @throws InterruptedException
      */
-    public void readFullyOrUntil(long softMaxLength, long hardMaxLength,
-	long timeout, int maxBytesPerMs)
+    public void readFullyOrUntil(long softMaxLength)
         throws IOException, RecorderLengthExceededException,
             RecorderTimeoutException, InterruptedException {
         // Check we're open before proceeding.
         if (!isOpen()) {
             // TODO: should this be a noisier exception-raising error? 
             return;
-        }
+        } 
 
-        // We need the rate limit in ms per byte, so turn it over
-        double minMsPerByte = 0.0;
-        if (maxBytesPerMs != 0) {
-            minMsPerByte = ((double)1.0)/(double)maxBytesPerMs;
-        }
-
-        long maxLength;
-        if ( softMaxLength>0 && hardMaxLength>0) {
-            // both maxes set; use lower of softMax or hardMax+1
-            maxLength = Math.min(softMaxLength,hardMaxLength+1);
-        } else if(softMaxLength>0 && hardMaxLength<=0) {
-            // softMax only; set max to softMax
-            maxLength = softMaxLength;
-        } else if(softMaxLength<=0 && hardMaxLength>0) {
-            // hardMax only; set max to read as 1 past max
-            maxLength = hardMaxLength+1;
-        } else { // => (softMaxLength<=0 && hardMaxLength<=0) 
-            // no maxes
-            maxLength = -1;
-        }
-
-        long timeoutTime;
-        long startTime = System.currentTimeMillis();
-
-        if(timeout > 0) {
-            timeoutTime = startTime + timeout;
-        } else {
-            timeoutTime = Long.MAX_VALUE;
-        }
-
-        long totalReadingTime = 0L;
         long totalBytes = 0L;
         long bytesRead = -1L;
-        int maxToRead = -1; 
+        long maxToRead = -1; 
         while (true) {
             try {
-                maxToRead = (maxLength <= 0) 
+                // read no more than soft max
+                maxToRead = (softMaxLength <= 0) 
                     ? drainBuffer.length 
-                    : (int) Math.min(drainBuffer.length, maxLength - totalBytes);
-                // Now, decide if (and for how long) to sleep, prior to reading,
-                // in order to yield the average fetch rate desired.
-                if (minMsPerByte != 0.0 && totalBytes > 0L) {
-                    // We've already fetched something, so we can estimate the
-                    // actual bandwidth we've been getting. This number is used
-                    // to figure out how many ms we need to wait before
-                    // starting the next read.  We want the stats at the end of
-                    // that read to be within the specified bounds.
-                    double actualMsPerByte =
-                        ((double)totalReadingTime)/(double)totalBytes;
-                    // Calculate the minimum time
-                    long minTime =
-                        (long)((totalBytes + maxToRead) * minMsPerByte);
-                    // Calculate the actual time spent, plus the estimated time
-                    // for the bytes to read
-                    long estTime = System.currentTimeMillis() - startTime +
-                        (long)(maxToRead * actualMsPerByte);
-                    // If estTime <  minTime, sleep for the difference
-                    if (estTime < minTime) {
-                        Thread.sleep(minTime - estTime);
-                    }
-                }
-
-                long readStartTime = System.currentTimeMillis();
-                bytesRead = read(drainBuffer,0,maxToRead);
+                    : Math.min(drainBuffer.length, softMaxLength - totalBytes);
+                // nor more than hard max
+                maxToRead = Math.min(maxToRead, recordingOutputStream.getRemainingLength());
+                // but always at least 1 (to trigger hard max exception
+                maxToRead = Math.max(maxToRead, 1);
+                
+                bytesRead = read(drainBuffer,0,(int)maxToRead);
                 if (bytesRead == -1) {
                     break;
                 }
                 totalBytes += bytesRead;
-                totalReadingTime += System.currentTimeMillis() - readStartTime;
 
                 if (Thread.interrupted()) {
                     throw new InterruptedException("Interrupted during IO");
@@ -268,13 +217,11 @@ public class RecordingInputStream
                 // timeout (below).  One reason for this timeout is 
                 // servers that keep up the connection, 'keep-alive', even
                 // though we asked them to not keep the connection open.
-                if (System.currentTimeMillis() < timeoutTime) {
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("Socket timed out after " +
-                            (timeoutTime - startTime) + "ms: " +
-                            e.getMessage());
-                    }
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE, "socket timeout", e); 
                 }
+                // check for overall timeout
+                recordingOutputStream.checkLimits();
             } catch (SocketException se) {
                 throw se;
             } catch (NullPointerException e) {
@@ -286,14 +233,9 @@ public class RecordingInputStream
                 throw new NullPointerException("Stream " + this.in + ", " +
                     e.getMessage() + " " + Thread.currentThread().getName());
             }
-            if (System.currentTimeMillis() >= timeoutTime) {
-                throw new RecorderTimeoutException("Timedout after " +
-                    (timeoutTime - startTime) + "ms.");
-            }
-            if (hardMaxLength > 0 && totalBytes >= hardMaxLength) {
-                throw new RecorderLengthExceededException();
-            }
-            if (maxLength > 0 && totalBytes >= maxLength) {
+            
+            // if have read 'enough', just finish
+            if (softMaxLength > 0 && totalBytes >= softMaxLength) {
                 break; // return
             }
         }
@@ -416,5 +358,12 @@ public class RecordingInputStream
     public synchronized void reset() throws IOException {
         this.in.reset();
         this.recordingOutputStream.reset();
+    }
+
+    /**
+     *  Set limits to be enforced by internal recording-out
+     */
+    public void setLimits(long hardMax, long timeoutMs, long maxRateKBps) {
+        recordingOutputStream.setLimits(hardMax, timeoutMs, maxRateKBps);
     }
 }

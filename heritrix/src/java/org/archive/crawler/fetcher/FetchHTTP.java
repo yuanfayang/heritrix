@@ -487,6 +487,14 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         boolean addedCredentials = populateCredentials(curi, method);
         method.setDoAuthentication(addedCredentials);
         
+        // set hardMax on bytes (if set by operator)
+        long hardMax = getMaxLength(curi);
+        // set overall timeout (if set by operator)
+        long timeoutMs = 1000 * getTimeout(curi);
+        // Get max fetch rate (bytes/ms). It comes in in KB/sec
+        long maxRateKBps = getMaxFetchRate(curi);
+        rec.getRecordedInput().setLimits(hardMax, timeoutMs, maxRateKBps);
+        
         try {
             this.http.executeMethod(customConfigOrNull, method);
         } catch (RecorderTooMuchHeaderException ex) {
@@ -506,20 +514,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         
         // set softMax on bytes to get (if implied by content-length) 
         long softMax = method.getResponseContentLength();
-        
-        // set hardMax on bytes (if set by operator)
-        long hardMax = getMaxLength(curi);
-
-	// Get max fetch rate (bytes/ms). It comes in in KB/sec, which
-	// requires nothing to normalize.
-        int maxFetchRate = getMaxFetchRate(curi);
 
         try {
             if (!method.isAborted()) {
                 // Force read-to-end, so that any socket hangs occur here,
                 // not in later modules.
-                rec.getRecordedInput().readFullyOrUntil(softMax,
-                        hardMax, 1000 * getTimeout(curi), maxFetchRate);
+                rec.getRecordedInput().readFullyOrUntil(softMax);
             }
         } catch (RecorderTimeoutException ex) {
             doAbort(curi, method, TIMER_TRUNC);
