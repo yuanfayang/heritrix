@@ -175,6 +175,15 @@ public class Heritrix {
                 }
             }
         }
+        
+        try {
+            Object eternity = new Object();
+            synchronized (eternity) {
+                eternity.wait();
+            }
+        } catch (InterruptedException e) {
+            
+        }
     }
     
     

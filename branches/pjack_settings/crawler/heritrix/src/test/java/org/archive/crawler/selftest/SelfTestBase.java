@@ -68,6 +68,8 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
 //    protected HeritrixThread heritrixThread;
     protected Server httpServer;
+    
+    protected HeritrixThread heritrixThread;
 
     
     protected void open() throws Exception {
@@ -77,7 +79,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         
         // Make sure the project directory contains a selftest profile 
         // and content for the self test.
-        File src = new File("testdata/selftest/" + name);
+        File src = getTestDataDir();
         if (!src.exists()) {
             throw new Exception("No selftest directory for " + name);
         }
@@ -190,7 +192,8 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // Launch heritrix in its own thread.
         // By interrupting the thread, we can gracefully clean up the test.
         String[] args = { path };
-        Heritrix.main(args);
+        heritrixThread = new HeritrixThread(args);
+        heritrixThread.start();
 
         // Wait up to 20 seconds for the main OpenMBean to appear.
         ObjectName cjm = JmxUtils.makeObjectName(
@@ -219,6 +222,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         ObjectName cjm = getCrawlJobManager();
         server.invoke(cjm, "close", new Object[0], new String[0]);
+        heritrixThread.interrupt();
     }
 
     protected void waitForCrawlFinish() throws Exception {
@@ -226,7 +230,29 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     protected File getSrcHtdocs() {
-        return new File("testdata/selftest/" + getSelfTestName() + "/htdocs");
+        return new File(getTestDataDir(), "htdocs");
+    }
+    
+    
+    protected File getTestDataDir() {
+        File r = new File("testdata");
+        if (!r.exists()) {
+            r = new File("heritrix");
+            r = new File(r, "testdata");
+            if (!r.exists()) {
+                throw new IllegalStateException(
+                        "Can't find selfest testdata " +
+                        "(tried testdata/selftest and " +
+                        "heritrix/testdata/selftest)");
+            }
+        }
+        r = new File(r, "selftest");
+        r = new File(r, getSelfTestName());
+        if (!r.exists()) {
+            throw new IllegalStateException("No testdata directory: " 
+                    + r.getAbsolutePath());
+        }
+        return r;
     }
     
     
@@ -379,6 +405,31 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         }
         LOGGER.finest(result.toString());
         return result;
+    }
+
+
+    static class HeritrixThread extends Thread{
+        
+        String[] args;
+        Exception exception;
+
+        public HeritrixThread(String args[]) {
+            this.args = args;
+        }
+        
+        
+        public void run() {
+            try {
+                Heritrix.main(args);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.exception = e;
+            }
+        }
+        
+        public Exception getStartUpException() {
+            return exception;
+        }
     }
 
 }
