@@ -89,7 +89,7 @@ public class TestUtils {
         String cname = c.getName();
         int p = cname.lastIndexOf('.');
         String dir = cname.substring(0, p).replace('.', File.separatorChar);
-        String root = "src/java/".replace('/', File.separatorChar);
+        String root = "heritrix/src/test/java/".replace('/', File.separatorChar);
         File src = new File(root);
         return makeSuite(src, new File(root + dir));
     }
