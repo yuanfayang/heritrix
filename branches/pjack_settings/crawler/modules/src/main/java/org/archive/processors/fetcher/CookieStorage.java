@@ -29,10 +29,10 @@ import java.util.SortedMap;
 
 import org.apache.commons.httpclient.Cookie;
 
-public abstract class CookieStorage {
+public interface CookieStorage {
 
-    public abstract SortedMap<String,Cookie> loadCookiesMap();
+    SortedMap<String,Cookie> loadCookiesMap();
 
-    public abstract void saveCookiesMap(Map<String,Cookie> map);
+    void saveCookiesMap(Map<String,Cookie> map);
 
 }
