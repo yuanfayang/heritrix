@@ -114,12 +114,19 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
     <module>heritrix</module>
   </modules>
 
+
     <distributionManagement>
+        <repository>
+            <id>repository</id>
+            <name>Repository</name>
+            <!--Pass as command-line system property to maven-->
+            <url>${repository.url}</url>
+        </repository>
         <site>
             <id>website</id>
             <name>Website</name>
             <!--Pass as command-line system property to maven-->
-            <url>${website.url}</url>
+            <url>${website.url}/projects/${artifactId}</url>
         </site>
     </distributionManagement>
 
