@@ -30,7 +30,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.httpclient.Cookie;
 
-public class SimpleCookieStorage extends CookieStorage {
+public class SimpleCookieStorage implements CookieStorage {
 
     
     final private SortedMap<String,Cookie> map = new TreeMap<String,Cookie>();

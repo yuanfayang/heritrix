@@ -24,7 +24,6 @@
  */
 package org.archive.processors.fetcher;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -148,16 +147,7 @@ public class FetchHTTP extends Processor implements Initializable {
      */
     final public static Key<Long> MAX_LENGTH_BYTES = Key.make(0L);
 
-    /**
-     * File to preload cookies from.
-     */
-    // final public static Key<String> LOAD_COOKIES_FROM_FILE =
-    // Key.make("");
-    /**
-     * When crawl finishes save cookies to this file.
-     */
-    // final public static Key<String> SAVE_COOKIES_FROM_FILE =
-    // Key.make("");
+
     /**
      * Accept Headers to include in each request. Each must be the complete
      * header, e.g., 'Accept-Language: en'.
@@ -213,11 +203,7 @@ public class FetchHTTP extends Processor implements Initializable {
      */
     private int recoveryRetries = 0;
 
-    /**
-     * Count of crawl uris handled. Would like to be 'long', but longs aren't
-     * atomic
-     */
-    // private int curisHandled = 0;
+
     /**
      * DecideRules applied after receipt of HTTP response headers but before we
      * start to download the body. If any filter returns FALSE, the fetch is
@@ -293,10 +279,7 @@ public class FetchHTTP extends Processor implements Initializable {
      */
     final public static Key<Boolean> IGNORE_COOKIES = Key.make(false);
 
-    /**
-     * Store cookies in BDB-backed map.
-     */
-    // final public static Key<Boolean> USE_BDB_FOR_COOKIES = Key.make(true);
+
     /**
      * Local IP address or hostname to use when making connections (binding
      * sockets). When not specified, uses default local address(es).
@@ -318,16 +301,7 @@ public class FetchHTTP extends Processor implements Initializable {
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE =
         Key.make(ServerCache.class, null);
-    
-    
-    /**
-     * Database backing cookie map, if using BDB
-     */
-    // protected Database cookieDb;
-    /**
-     * Name of cookie BDB Database
-     */
-    // public static final String COOKIEDB_NAME = "http_cookies";
+
     /*
      * FIXME: This needs to live somewhere else static {
      * Protocol.registerProtocol("http", new Protocol("http", new
@@ -1077,14 +1051,6 @@ public class FetchHTTP extends Processor implements Initializable {
      * Perform any final cleanup related to the HttpClient instance.
      */
     protected void cleanupHttp() {
-        // if(cookieDb!=null) {
-        // try {
-        // cookieDb.close();
-        // } catch (DatabaseException e) {
-        // // TODO Auto-generated catch block
-        // e.printStackTrace();
-        // }
-        // }
     }
 
     protected void configureHttp(StateProvider defaults) {
@@ -1162,25 +1128,6 @@ public class FetchHTTP extends Processor implements Initializable {
         hcmp.setParameter(SSL_FACTORY_KEY, this.sslfactory);
     }
 
-    /**
-     * Set the HttpClient HttpState instance to use a BDB-backed StoredSortedMap
-     * for cookie storage, if that option is chosen.
-     */
-    /*
-     * private void configureHttpCookies(StateProvider defaults) { // If
-     * Bdb-backed cookies chosen, replace map in HttpState if(defaults.get(this,
-     * USE_BDB_FOR_COOKIES)) { try { Environment env =
-     * getController().getBdbEnvironment(); StoredClassCatalog classCatalog =
-     * getController().getClassCatalog(); DatabaseConfig dbConfig = new
-     * DatabaseConfig(); dbConfig.setTransactional(false);
-     * dbConfig.setAllowCreate(true); cookieDb = env.openDatabase(null,
-     * COOKIEDB_NAME, dbConfig); StoredSortedMap cookiesMap = new
-     * StoredSortedMap(cookieDb, new StringBinding(), new
-     * SerialBinding(classCatalog, Cookie.class), true);
-     * this.http.getState().setCookiesMap(cookiesMap); } catch
-     * (DatabaseException e) { // TODO Auto-generated catch block
-     * logger.severe(e.getMessage()); e.printStackTrace(); } } }
-     */
 
     /**
      * @param curi
@@ -1199,55 +1146,6 @@ public class FetchHTTP extends Processor implements Initializable {
         return curi.get(this, MAX_LENGTH_BYTES);
     }
 
-    /**
-     * Load cookies from a file before the first fetch.
-     * <p>
-     * The file is a text file in the Netscape's 'cookies.txt' file format.<br>
-     * Example entry of cookies.txt file:<br>
-     * <br>
-     * www.archive.org FALSE / FALSE 1074567117 details-visit texts-cralond<br>
-     * <br>
-     * Each line has 7 tab-separated fields:<br>
-     * <li>1. DOMAIN: The domain that created and have access to the cookie
-     * value.
-     * <li>2. FLAG: A TRUE or FALSE value indicating if hosts within the given
-     * domain can access the cookie value.
-     * <li>3. PATH: The path within the domain that the cookie value is valid
-     * for.
-     * <li>4. SECURE: A TRUE or FALSE value indicating if to use a secure
-     * connection to access the cookie value.
-     * <li>5. EXPIRATION: The expiration time of the cookie value (unix style.)
-     * <li>6. NAME: The name of the cookie value
-     * <li>7. VALUE: The cookie value
-     * 
-     * @param cookiesFile
-     *            file in the Netscape's 'cookies.txt' format.
-     */
-    /*
-     * public void loadCookies(String cookiesFile) { // Do nothing if
-     * cookiesFile is not specified. if (cookiesFile == null ||
-     * cookiesFile.length() <= 0) { return; } RandomAccessFile raf = null; try {
-     * raf = new RandomAccessFile(cookiesFile, "r"); String[] cookieParts;
-     * String line; Cookie cookie = null; while ((line = raf.readLine()) !=
-     * null) { // Line that starts with # is commented line, therefore skip it.
-     * if (!line.startsWith("#")) { cookieParts = line.split("\\t"); if
-     * (cookieParts.length == 7) { // Create cookie with not expiration date (-1
-     * value). // TODO: add this as an option. cookie = new
-     * Cookie(cookieParts[0], cookieParts[5], cookieParts[6], cookieParts[2],
-     * -1, Boolean.valueOf(cookieParts[3]).booleanValue());
-     * 
-     * if (cookieParts[1].toLowerCase().equals("true")) {
-     * cookie.setDomainAttributeSpecified(true); } else {
-     * cookie.setDomainAttributeSpecified(false); }
-     * this.http.getState().addCookie(cookie); logger.fine( "Adding cookie: " +
-     * cookie.toExternalForm()); } } } } catch (FileNotFoundException e) { // We
-     * should probably throw FatalConfigurationException.
-     * System.out.println("Could not find file: " + cookiesFile + " (Element: " +
-     * ATTR_LOAD_COOKIES + ")"); } catch (IOException e) { // We should probably
-     * throw FatalConfigurationException. e.printStackTrace(); } finally { try {
-     * if (raf != null) { raf.close(); } } catch (IOException e) {
-     * e.printStackTrace(); } } }
-     */
 
     /*
      * (non-Javadoc)
@@ -1264,99 +1162,6 @@ public class FetchHTTP extends Processor implements Initializable {
         return ret.toString();
     }
 
-    /**
-     * Load cookies from the file specified in the order file.
-     * 
-     * <p>
-     * The file is a text file in the Netscape's 'cookies.txt' file format.<br>
-     * Example entry of cookies.txt file:<br>
-     * <br>
-     * www.archive.org FALSE / FALSE 1074567117 details-visit texts-cralond<br>
-     * <br>
-     * Each line has 7 tab-separated fields:<br>
-     * <li>1. DOMAIN: The domain that created and have access to the cookie
-     * value.
-     * <li>2. FLAG: A TRUE or FALSE value indicating if hosts within the given
-     * domain can access the cookie value.
-     * <li>3. PATH: The path within the domain that the cookie value is valid
-     * for.
-     * <li>4. SECURE: A TRUE or FALSE value indicating if to use a secure
-     * connection to access the cookie value.
-     * <li>5. EXPIRATION: The expiration time of the cookie value (unix style.)
-     * <li>6. NAME: The name of the cookie value
-     * <li>7. VALUE: The cookie value
-     */
-    /*
-     * public void loadCookies(StateProvider defaults) {
-     * loadCookies(defaults.get(this, LOAD_COOKIES_FROM_FILE)); }
-     */
-
-    /**
-     * Saves cookies to the file specified in the order file.
-     * 
-     * Output file is in the Netscape 'cookies.txt' format.
-     * 
-     */
-    /*
-     * public void saveCookies() { try { saveCookies((String)
-     * getAttribute(ATTR_SAVE_COOKIES)); } catch (MBeanException e) {
-     * logger.warning(e.getLocalizedMessage()); } catch (ReflectionException e) {
-     * logger.warning(e.getLocalizedMessage()); } catch
-     * (AttributeNotFoundException e) { logger.warning(e.getLocalizedMessage()); } }
-     */
-
-    /**
-     * Saves cookies to a file.
-     * 
-     * Output file is in the Netscape 'cookies.txt' format.
-     * 
-     * @param saveCookiesFile
-     *            output file.
-     */
-    /*
-     * public void saveCookies(String saveCookiesFile) { // Do nothing if
-     * cookiesFile is not specified. if (saveCookiesFile == null ||
-     * saveCookiesFile.length() <= 0) { return; }
-     * 
-     * FileOutputStream out = null; try { out = new FileOutputStream(new
-     * File(saveCookiesFile)); @SuppressWarnings("unchecked") Map<String,Cookie>
-     * cookies = http.getState().getCookiesMap(); String tab ="\t"; out.write("#
-     * Heritrix Cookie File\n".getBytes()); out.write( "# This file is the
-     * Netscape cookies.txt format\n\n".getBytes()); for (Cookie cookie:
-     * cookies.values()) { MutableString line = new MutableString(1024 * 2); //
-     * Guess an initial size line.append(cookie.getDomain()); line.append(tab);
-     * line.append( cookie.isDomainAttributeSpecified() == true ? "TRUE" :
-     * "FALSE"); line.append(tab); line.append(cookie.getPath());
-     * line.append(tab); line.append( cookie.getSecure() == true ? "TRUE" :
-     * "FALSE"); line.append(tab); line.append(cookie.getName());
-     * line.append(tab); line.append(cookie.getValue()); line.append("\n");
-     * out.write(line.toString().getBytes()); } } catch (FileNotFoundException
-     * e) { // We should probably throw FatalConfigurationException.
-     * System.out.println("Could not find file: " + saveCookiesFile + "
-     * (Element: " + this.SAVE_COOKIES_FROM_FILE + ")"); } catch (IOException e) {
-     * e.printStackTrace(); } finally { try { if (out != null) { out.close(); } }
-     * catch (IOException e) { e.printStackTrace(); } } }
-     */
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
-     */
-    /*
-     * protected void listUsedFiles(List<String> list) { // List the cookies
-     * files // Add seed file try { String tmp =
-     * (String)getAttribute(ATTR_LOAD_COOKIES); if(tmp != null && tmp.length() >
-     * 0){ File file = getSettingsHandler().
-     * getPathRelativeToWorkingDirectory(tmp); list.add(file.getAbsolutePath()); }
-     * tmp = (String)getAttribute(ATTR_SAVE_COOKIES); if(tmp != null &&
-     * tmp.length() > 0){ File file = getSettingsHandler().
-     * getPathRelativeToWorkingDirectory(tmp); list.add(file.getAbsolutePath()); } }
-     * catch (AttributeNotFoundException e) { // TODO Auto-generated catch block
-     * e.printStackTrace(); } catch (MBeanException e) { // TODO Auto-generated
-     * catch block e.printStackTrace(); } catch (ReflectionException e) { //
-     * TODO Auto-generated catch block e.printStackTrace(); } }
-     */
 
     private void setAcceptHeaders(ProcessorURI curi, HttpMethod get) {
         List<String> acceptHeaders = curi.get(this, ACCEPT_HEADERS);
