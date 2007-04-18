@@ -1,8 +1,10 @@
-/* $Id$
+/* ConfiguredDecideRule
 *
-* Created on Sep 4, 2006
+* $Id: ConfiguredDecideRule.java 4649 2006-09-25 17:16:55Z paul_jack $
 *
-* Copyright (C) 2006 Olaf Freyer.
+* Created on Mar 3, 2005
+*
+* Copyright (C) 2005 Internet Archive.
 *
 * This file is part of the Heritrix web crawler (crawler.archive.org).
 *
@@ -22,24 +24,36 @@
 */
 package org.archive.processors.deciderules;
 
-
 import org.archive.processors.ProcessorURI;
+import org.archive.state.Key;
 
 
+/**
+ * Rule which can be configured to ACCEPT or REJECT at
+ * operator's option.  
+ *
+ * @author gojomo
+ */
+public class ConfiguredDecideRule extends DecideRule {
 
-public class FetchStatusMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
-
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = -7084695808452312555L;
 
     
-    /**
-     * Usual constructor. 
-     */
-    public FetchStatusMatchesRegExpDecideRule() {
+    final public static Key<DecideResult> DECISION = 
+        Key.make(DecideResult.ACCEPT);
+    
+    
+    public ConfiguredDecideRule() {
     }
 
-
-    protected String getString(ProcessorURI uri) {
-        return Integer.toString(uri.getFetchStatus());
+    
+    protected DecideResult innerDecide(ProcessorURI uri) {
+        return onlyDecision(uri);
     }
+
+    
+    public DecideResult onlyDecision(ProcessorURI uri) {
+        return uri.get(this, DECISION);
+    }
+
 }

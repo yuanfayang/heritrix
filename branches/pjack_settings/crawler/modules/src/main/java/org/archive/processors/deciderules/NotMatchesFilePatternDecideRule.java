@@ -1,8 +1,8 @@
-/* AcceptRule
+/* NotMatchesFilePatternDecideRule
 *
-* $Id$
+* $Id: NotMatchesFilePatternDecideRule.java 4649 2006-09-25 17:16:55Z paul_jack $
 *
-* Created on Apr 1, 2005
+* Created on Apr 4, 2005
 *
 * Copyright (C) 2005 Internet Archive.
 *
@@ -25,56 +25,37 @@
 package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
-import org.archive.state.Key;
-
 
 
 /**
- * Rule REJECTs any CrawlURIs whose total number of hops (length of the 
- * hopsPath string, traversed links of any type) is over a threshold.
- * Otherwise returns PASS.
+ * Rule applies configured decision to any URIs which do *not*
+ * match the supplied (file-pattern) regexp.
  *
  * @author gojomo
  */
-public class TooManyHopsDecideRule extends PredicatedRejectDecideRule {
+public class NotMatchesFilePatternDecideRule
+extends MatchesFilePatternDecideRule {
 
-    private static final long serialVersionUID = 3L;
-
-    
-    /**
-     * Max path depth for which this filter will match.
-     */
-    final public static Key<Integer> MAX_HOPS = Key.make(20);
-
-    
-    /**
-     * Default access so available to test code.
-     */
-    static final Integer DEFAULT_MAX_HOPS = new Integer(20);
+    private static final long serialVersionUID = -8161371026787859554L;
+    //private static final Logger logger =
+    //    Logger.getLogger(NotMatchesRegExpDecideRule.class.getName());
 
     /**
      * Usual constructor. 
+     * @param name
      */
-    public TooManyHopsDecideRule() {
+    public NotMatchesFilePatternDecideRule() {
     }
-
+    
     /**
-     * Evaluate whether given object is over the threshold number of
-     * hops.
+     * Evaluate whether given object's string version does not match 
+     * configured regexp (by reversing the superclass's answer).
      * 
-     * @param object
-     * @return true if the mx-hops is exceeded
+     * @param object Object to make decision about.
+     * @return true if the regexp is not matched
      */
     @Override
     protected boolean evaluate(ProcessorURI uri) {
-        String hops = uri.getPathFromSeed();
-        if (hops == null) {
-            return false;
-        }
-        if (hops.length() <= uri.get(this, MAX_HOPS)) {
-            return false;
-        }
-        return true;
+        return ! super.evaluate(uri);
     }
-
 }

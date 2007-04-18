@@ -36,7 +36,7 @@ import org.archive.state.Key;
  *
  * @author gojomo
  */
-public class TooManyPathSegmentsDecideRule extends DecideRule {
+public class TooManyPathSegmentsDecideRule extends PredicatedRejectDecideRule {
 
     private static final long serialVersionUID = 3L;
 
@@ -61,7 +61,7 @@ public class TooManyPathSegmentsDecideRule extends DecideRule {
      * @return true if the path-segments is exceeded
      */
     @Override
-    protected DecideResult innerDecide(ProcessorURI curi) {
+    protected boolean evaluate(ProcessorURI curi) {
         String uri = curi.toString();
         int count = 0;
         int threshold = curi.get(this, MAX_PATH_DEPTH);
@@ -70,10 +70,10 @@ public class TooManyPathSegmentsDecideRule extends DecideRule {
                 count++;
             }
             if (count > threshold) {
-                return DecideResult.ACCEPT;
+                return true;
             }
         }
-        return DecideResult.PASS;
+        return false;
     }
 
 }

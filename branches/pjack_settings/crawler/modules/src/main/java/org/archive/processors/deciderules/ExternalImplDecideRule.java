@@ -30,6 +30,9 @@ import org.archive.state.Key;
  * of the ExternalImplInterface.
  * If no implementation specified, or none found, returns
  * configured decision.
+ * 
+ * FIXME: The new settings system makes this class obsolete, no?
+ * 
  * @author stack
  * @version $Date$, $Revision$
  */
