@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,41 +17,36 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * DecideRuleSequence.java
- * Created on October 5, 2006
+ * PredicatedAcceptDecideRule.java
  *
- * $Header$
+ * Created on Apr 17, 2007
+ *
+ * $Id:$
  */
+
 package org.archive.processors.deciderules;
-
-
-import java.util.List;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
+/**
+ * PredicatedDecideRule whose default decision is REJECT.
+ * 
+ * @author pjack
+ */
+public abstract class PredicatedAcceptDecideRule extends PredicatedDecideRule {
 
-public class DecideRuleSequence extends DecideRule {
+    final public static Key<DecideResult> DECISION = 
+        Key.make(DecideResult.ACCEPT);
 
-    private static final long serialVersionUID = 3L;
-
-    final public static Key<List<DecideRule>> RULES = 
-        Key.makeList(DecideRule.class);
-
-
-    public DecideResult innerDecide(ProcessorURI uri) {
-        DecideResult result = DecideResult.PASS;
-        List<DecideRule> rules = uri.get(this, RULES);
-        for (DecideRule rule: rules) {
-            if (rule.onlyDecision(uri) != result) {
-                DecideResult r = rule.decisionFor(uri);
-                if (r != DecideResult.PASS) {
-                    result = r;
-                }
-            }
-        }
-        return result;
+    @Override
+    protected DecideResult getDefaultDecision(ProcessorURI uri) {
+        return uri.get(this, DECISION);
     }
-
-
+    
+    @Override
+    public DecideResult onlyDecision(ProcessorURI uri) {
+        return uri.get(this, DECISION);
+    }
+    
 }

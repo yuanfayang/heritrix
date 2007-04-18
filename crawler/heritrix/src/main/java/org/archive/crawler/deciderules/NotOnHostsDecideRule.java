@@ -1,10 +1,10 @@
-/* HasViaDecideRule
+/* NotOnHostsDecideRule
 *
-* $Id$
+* $Id: NotOnHostsDecideRule.java 4649 2006-09-25 17:16:55Z paul_jack $
 *
-* Created on Aug 11, 2006
+* Created on Apr 5, 2005
 *
-* Copyright (C) 2006 Internet Archive.
+* Copyright (C) 2005 Internet Archive.
 *
 * This file is part of the Heritrix web crawler (crawler.archive.org).
 *
@@ -22,35 +22,39 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.processors.deciderules;
+package org.archive.crawler.deciderules;
 
 import org.archive.processors.ProcessorURI;
 
 
-
 /**
- * Rule applies the configured decision for any URI which has a 'via' 
- * (essentially, any URI that was a seed or some kinds of mid-crawl adds).
+ * Rule applies configured decision to any URIs that
+ * are *not* on one of the hosts in the configured set of
+ * hosts, filled from the seed set. 
  *
  * @author gojomo
  */
-public class HasViaDecideRule extends PredicatedAcceptDecideRule {
+public class NotOnHostsDecideRule extends OnHostsDecideRule {
 
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 1512825197255050412L;
+
 
     /**
      * Usual constructor. 
-     * @param name Name of this DecideRule.
      */
-    public HasViaDecideRule() {
+    public NotOnHostsDecideRule() {
     }
 
     /**
-     * Evaluate whether given object is over the threshold number of
-     * hops.
+     * Evaluate whether given object's URI is NOT in the set of
+     * hosts -- simply reverse superclass's determination
+     * 
+     * @param object Object to evaluate
+     * @return true if URI not in set
      */
     @Override
-    protected boolean evaluate(ProcessorURI uri) {
-        return uri.getVia() != null;
+    protected boolean evaluate(ProcessorURI object) {
+        boolean superDecision = super.evaluate(object);
+        return !superDecision;
     }
 }

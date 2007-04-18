@@ -22,7 +22,6 @@
  */
 package org.archive.processors.deciderules;
 
-import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
@@ -51,7 +50,7 @@ import org.xbill.DNS.Address;
  * 
  * @author Igor Ranitovic
  */
-public class ExternalGeoLocationDecideRule extends DecideRule {
+public class ExternalGeoLocationDecideRule extends PredicatedAcceptDecideRule {
 
     private static final long serialVersionUID = 3L;
 
@@ -59,23 +58,14 @@ public class ExternalGeoLocationDecideRule extends DecideRule {
         Logger.getLogger(ExternalGeoLocationDecideRule.class.getName());
 
 
-    /**
-     * Name of implementation of ExternalGeoLookupInterface class to
-     * instantiate.
-     */
-    final public static Key<Class> IMPLEMENTATION_CLASS = Key.make(null); 
-
+    final public static Key<ExternalGeoLookupInterface> LOOKUP = 
+        Key.make(ExternalGeoLookupInterface.class, null);
 
     /**
      * Country code name.
      */
     final public static Key<String> COUNTRY_CODE = Key.make("--");
 
-
-    private String countryCode;
-    private ExternalGeoLookupInterface implementation = null;
-
-    
     final private ServerCache serverCache;
 
     public ExternalGeoLocationDecideRule(ServerCache cache) {
@@ -83,10 +73,12 @@ public class ExternalGeoLocationDecideRule extends DecideRule {
     }
 
     
-    protected DecideResult innerDecide(ProcessorURI uri) {        
-        ExternalGeoLookupInterface impl = getConfiguredImplementation(uri);
+    @Override
+    protected boolean evaluate(ProcessorURI uri) {
+        String countryCode = uri.get(this, COUNTRY_CODE);
+        ExternalGeoLookupInterface impl = uri.get(this, LOOKUP);
         if (impl == null) {
-            return DecideResult.PASS;
+            return false;
         }
         CrawlHost crawlHost = null;
         String host;
@@ -95,9 +87,8 @@ public class ExternalGeoLocationDecideRule extends DecideRule {
             host = uri.getUURI().getHost();
             crawlHost = serverCache.getHostFor(host);
             if (crawlHost.getCountryCode() != null) {
-                return (crawlHost.getCountryCode().equals(countryCode)) 
-                        ? DecideResult.ACCEPT
-                        : DecideResult.PASS;
+                return (crawlHost.getCountryCode().equals(countryCode))
+                        ? true : false;
             }
             address = crawlHost.getIP();
             if (address == null) {
@@ -107,7 +98,7 @@ public class ExternalGeoLocationDecideRule extends DecideRule {
             if (crawlHost.getCountryCode().equals(countryCode)) {
                 LOGGER.fine("Country Code Lookup: " + " " + host
                         + crawlHost.getCountryCode());
-                return DecideResult.ACCEPT;
+                return true;
             }
         } catch (UnknownHostException e) {
             LOGGER.log(Level.FINE, "Failed dns lookup " + uri, e);
@@ -118,42 +109,7 @@ public class ExternalGeoLocationDecideRule extends DecideRule {
             LOGGER.log(Level.FINE, "Failed to parse hostname " + uri, e);
         }
 
-        return DecideResult.PASS;
+        return false;
     }
     
-    /**
-     * Get implementation, if one specified. If none specified, will keep trying
-     * to find one. Will be messy if the provided class is not-instantiable
-     * 
-     * @param o
-     *            A context object.
-     * @return Instance of <code>ExternalGeoLookupInterface</code> or null.
-     */
-    protected synchronized ExternalGeoLookupInterface
-            getConfiguredImplementation(ProcessorURI uri) {
-        Class c = uri.get(this, IMPLEMENTATION_CLASS);
-        if (c == null) {
-            implementation = null;
-            return null;
-        }
-
-        if (c.isInstance(implementation)) {
-            return implementation;
-        }
-
-        try {
-            countryCode = uri.get(this, COUNTRY_CODE);
-            Constructor cons = c.getConstructor(String.class);
-            Object obj = cons.newInstance(countryCode);
-            if (!(obj instanceof ExternalGeoLookupInterface)) {
-                LOGGER.severe("Implementation " + c.getName() + 
-                    " does not implement ExternalGeoLookupInterface");
-            }
-            implementation = (ExternalGeoLookupInterface)obj;
-            return implementation;
-        } catch (Exception e) {
-            LOGGER.severe(e.getMessage());
-            return null;
-        } 
-    }
 }

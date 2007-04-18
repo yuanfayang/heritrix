@@ -43,7 +43,7 @@ import org.archive.state.Key;
  * 
  * @see MatchesRegExpDecideRule
  */
-public class MatchesListRegExpDecideRule extends DecideRule {
+public class MatchesListRegExpDecideRule extends PredicatedAcceptDecideRule {
 
     
     private static final long serialVersionUID = 3L;
@@ -76,10 +76,11 @@ public class MatchesListRegExpDecideRule extends DecideRule {
      * Evaluate whether given object's string version
      * matches configured regexps
      */
-    protected DecideResult innerDecide(ProcessorURI uri) {
+    @Override
+    protected boolean evaluate(ProcessorURI uri) {
         List<Pattern> regexps = uri.get(this, REGEXP_LIST);
         if(regexps.size()==0){
-            return DecideResult.PASS;
+            return false;
         }
 
         String str = uri.toString();
@@ -97,20 +98,20 @@ public class MatchesListRegExpDecideRule extends DecideRule {
                 if(listLogicOR){
                     // OR based and we just got a match, done!
                     logger.fine("Matched: " + str);
-                    return DecideResult.ACCEPT;
+                    return true;
                 }
             } else {
                 if(listLogicOR == false){
                     // AND based and we just found a non-match, done!
-                    return DecideResult.PASS;
+                    return false;
                 }
             }
         }
         
         if (listLogicOR) {
-            return DecideResult.PASS;
+            return false;
         } else {
-            return DecideResult.ACCEPT;
+            return true;
         }
     }
     

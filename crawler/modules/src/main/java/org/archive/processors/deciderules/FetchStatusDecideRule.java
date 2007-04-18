@@ -35,7 +35,7 @@ import org.archive.state.Key;
  *
  * @author gojomo
  */
-public class FetchStatusDecideRule extends DecideRule {
+public class FetchStatusDecideRule extends PredicatedAcceptDecideRule {
 
     private static final long serialVersionUID = 3L;
 
@@ -56,12 +56,9 @@ public class FetchStatusDecideRule extends DecideRule {
      * Evaluate whether given object is over the threshold number of
      * hops.
      */
-    protected DecideResult innerDecide(ProcessorURI uri) {
-        if (uri.getFetchStatus() == uri.get(this, TARGET_STATUS)) {
-            return DecideResult.ACCEPT;
-        } else {
-            return DecideResult.PASS;
-        }
+    @Override
+    protected boolean evaluate(ProcessorURI uri) {
+        return uri.getFetchStatus() == uri.get(this, TARGET_STATUS);
     }
 
 }

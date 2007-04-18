@@ -35,8 +35,7 @@ import org.archive.crawler.scope.SeedModule;
 import org.archive.net.UURI;
 import org.archive.state.DirectoryModule;
 import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.DecideResult;
-import org.archive.processors.deciderules.DecideRule;
+import org.archive.processors.deciderules.PredicatedAcceptDecideRule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -61,7 +60,7 @@ import org.archive.util.SurtPrefixSet;
  * 
  * @author gojomo
  */
-public class SurtPrefixedDecideRule extends DecideRule 
+public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule 
         implements SeedListener, Initializable {
 
     private static final long serialVersionUID = 3L;
@@ -153,10 +152,11 @@ public class SurtPrefixedDecideRule extends DecideRule
      * @param object Item to evaluate.
      * @return true if item, as SURT form URI, is prefixed by an item in the set
      */
-    protected DecideResult innerDecide(ProcessorURI uri) {
+    @Override
+    protected boolean evaluate(ProcessorURI uri) {
         if (uri.get(this, ALSO_CHECK_VIA)) {
-            if (innerDecide(uri, uri.getVia()) == DecideResult.ACCEPT) {
-                return DecideResult.ACCEPT;
+            if (innerDecide(uri, uri.getVia())) {
+                return true;
             }
         }
 
@@ -164,16 +164,16 @@ public class SurtPrefixedDecideRule extends DecideRule
     }
     
     
-    private DecideResult innerDecide(StateProvider context, UURI uuri) {
+    private boolean innerDecide(StateProvider context, UURI uuri) {
         String candidateSurt;
         candidateSurt = SurtPrefixSet.getCandidateSurt(uuri);
         if (candidateSurt == null) {
-            return DecideResult.PASS;
+            return false;
         }
         if (getPrefixes(context).containsPrefixOf(candidateSurt)) {
-            return DecideResult.ACCEPT;
+            return true;
         } else {
-            return DecideResult.PASS;
+            return false;
         }
     }
 

@@ -1,8 +1,8 @@
-/* MatchesRegExpDecideRule
+/* NotSurtPrefixedDecideRule
 *
-* $Id$
+* $Id: NotSurtPrefixedDecideRule.java 4649 2006-09-25 17:16:55Z paul_jack $
 *
-* Created on Apr 4, 2005
+* Created on Apr 5, 2005
 *
 * Copyright (C) 2005 Internet Archive.
 *
@@ -22,52 +22,42 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.processors.deciderules;
-
-import java.util.regex.Pattern;
+package org.archive.crawler.deciderules;
 
 import org.archive.processors.ProcessorURI;
-import org.archive.state.Key;
 
 
 /**
- * Rule applies configured decision to any ProcessorURIs whose String URI
- * matches the supplied regexp.
+ * Rule applies configured decision to any URIs that, when 
+ * expressed in SURT form, do *not* begin with one of the prefixes
+ * in the configured set. 
+ * 
+ * The set can be filled with SURT prefixes implied or
+ * listed in the seeds file, or another external file. 
  *
  * @author gojomo
  */
-public class MatchesRegExpDecideRule extends PredicatedAcceptDecideRule {
+public class NotSurtPrefixedDecideRule extends SurtPrefixedDecideRule {
 
-    private static final long serialVersionUID = 2L;
-    
-    public static final Key<Pattern> REGEXP = Key.make(Pattern.compile("."));
+    private static final long serialVersionUID = -7491388438128566377L;
 
+    //private static final Logger logger =
+    //    Logger.getLogger(NotSurtPrefixedDecideRule.class.getName());
     /**
      * Usual constructor. 
+     * @param name
      */
-    public MatchesRegExpDecideRule() {
+    public NotSurtPrefixedDecideRule() {
     }
-    
-    
+
     /**
-     * Evaluate whether given object's string version
-     * matches configured regexp
+     * Evaluate whether given object's URI is NOT in the SURT
+     * prefix set -- simply reverse superclass's determination
      * 
      * @param object
      * @return true if regexp is matched
      */
-    @Override
-    protected boolean evaluate(ProcessorURI uri) {
-        Pattern p = getPattern(uri);
-        return p.matcher(getString(uri)).matches();
-    }
-
-    
-    protected Pattern getPattern(ProcessorURI uri) {
-        return uri.get(this, REGEXP);
-    }
-    
-    protected String getString(ProcessorURI uri) {
-        return uri.toString();
+    protected boolean evaluate(ProcessorURI object) {
+        return !super.evaluate(object);
     }
 }

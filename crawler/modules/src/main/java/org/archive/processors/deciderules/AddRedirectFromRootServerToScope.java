@@ -28,7 +28,8 @@ import org.archive.net.UURI;
 import org.archive.processors.ProcessorURI;
 
 
-public class AddRedirectFromRootServerToScope extends DecideRule {
+public class AddRedirectFromRootServerToScope 
+extends PredicatedAcceptDecideRule {
 
     private static final long serialVersionUID = 3L;
 
@@ -40,22 +41,22 @@ public class AddRedirectFromRootServerToScope extends DecideRule {
     }
 
     @Override
-    protected DecideResult innerDecide(ProcessorURI uri) {
+    protected boolean evaluate(ProcessorURI uri) {
         UURI via = uri.getVia();
         if (via == null) {
-            return DecideResult.PASS;
+            return false;
         }
         try {
             if (uri.getUURI().getHostBasename().equals(via.getHostBasename())
                     && uri.isLocation() && via.getPath().equals(SLASH)) {
                 uri.setSeed(true);
                 LOGGER.info("Adding " + uri + " to seeds via " + via);
-                return DecideResult.ACCEPT;
+                return true;
             }
         } catch (URIException e) {
             e.printStackTrace();
         }
-        return DecideResult.PASS;
+        return false;
     }
 
 

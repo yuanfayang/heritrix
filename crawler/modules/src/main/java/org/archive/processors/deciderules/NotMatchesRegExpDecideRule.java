@@ -1,10 +1,10 @@
-/* HasViaDecideRule
+/* NotMatchesRegExpDecideRule
 *
-* $Id$
+* $Id: NotMatchesRegExpDecideRule.java 4649 2006-09-25 17:16:55Z paul_jack $
 *
-* Created on Aug 11, 2006
+* Created on Apr 4, 2005
 *
-* Copyright (C) 2006 Internet Archive.
+* Copyright (C) 2005 Internet Archive.
 *
 * This file is part of the Heritrix web crawler (crawler.archive.org).
 *
@@ -27,30 +27,34 @@ package org.archive.processors.deciderules;
 import org.archive.processors.ProcessorURI;
 
 
-
 /**
- * Rule applies the configured decision for any URI which has a 'via' 
- * (essentially, any URI that was a seed or some kinds of mid-crawl adds).
+ * Rule applies configured decision to any URIs which do *not*
+ * match the supplied regexp.
  *
  * @author gojomo
  */
-public class HasViaDecideRule extends PredicatedAcceptDecideRule {
+public class NotMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
 
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = -2085313401991694306L;
+    //private static final Logger logger =
+    //    Logger.getLogger(NotMatchesRegExpDecideRule.class.getName());
+
 
     /**
      * Usual constructor. 
-     * @param name Name of this DecideRule.
      */
-    public HasViaDecideRule() {
+    public NotMatchesRegExpDecideRule(String name) {
     }
 
     /**
-     * Evaluate whether given object is over the threshold number of
-     * hops.
+     * Evaluate whether given object's string version does not match 
+     * configured regexp (by reversing the superclass's answer).
+     * 
+     * @param object Object to make decision about.
+     * @return true if the regexp is not matched
      */
     @Override
-    protected boolean evaluate(ProcessorURI uri) {
-        return uri.getVia() != null;
+    protected boolean evaluate(ProcessorURI object) {
+        return ! super.evaluate(object);
     }
 }

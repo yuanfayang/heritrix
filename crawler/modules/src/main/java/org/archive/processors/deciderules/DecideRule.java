@@ -37,9 +37,6 @@ public abstract class DecideRule implements Module, Serializable {
 
     
     final public static Key<Boolean> ENABLED = Key.make(true);
-    
-    final public static Key<Boolean> INVERT = Key.make(false);
-    
 
     
     public DecideRule() {
@@ -55,11 +52,8 @@ public abstract class DecideRule implements Module, Serializable {
         if (result == DecideResult.PASS) {
             return result;
         }
-        if (uri.get(this, INVERT)) {
-            return DecideResult.invert(result);
-        } else {
-            return result;
-        }
+
+        return result;
     }
     
     
@@ -73,4 +67,5 @@ public abstract class DecideRule implements Module, Serializable {
     public void kickUpdate(StateProvider provider) {
         
     }
+
 }

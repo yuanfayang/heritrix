@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: FetchStatusNotMatchesRegExpDecideRule.java 4649 2006-09-25 17:16:55Z paul_jack $
 *
 * Created on Sep 4, 2006
 *
@@ -22,24 +22,31 @@
 */
 package org.archive.processors.deciderules;
 
-
 import org.archive.processors.ProcessorURI;
 
 
+public class FetchStatusNotMatchesRegExpDecideRule
+extends FetchStatusMatchesRegExpDecideRule {
 
-public class FetchStatusMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
-
-    private static final long serialVersionUID = 3L;
-
+    private static final long serialVersionUID = -2220182698344063577L;
+//    private  final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
      * Usual constructor. 
+     * @param name
      */
-    public FetchStatusMatchesRegExpDecideRule() {
+    public FetchStatusNotMatchesRegExpDecideRule() {
     }
 
-
-    protected String getString(ProcessorURI uri) {
-        return Integer.toString(uri.getFetchStatus());
+    /**
+     * Evaluate whether given object's FetchStatus does not match 
+     * configured regexp (by reversing the superclass's answer).
+     * 
+     * @param object Object to make decision about.
+     * @return true if the regexp is not matched
+     */
+    @Override
+    protected boolean evaluate(ProcessorURI object) {
+        return ! super.evaluate(object);
     }
 }
