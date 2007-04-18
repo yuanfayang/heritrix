@@ -38,6 +38,13 @@
    <fileSet>
      <directory>src/main/conf</directory>
      <outputDirectory>/conf</outputDirectory>
+     <excludes>
+       <exclude>profiles</exclude>
+     </excludes>
+   </fileSet>
+   <fileSet>
+     <directory>src/main/conf/profiles</directory>
+     <outputDirectory>/profiles</outputDirectory>
    </fileSet>
   </fileSets>
 </assembly>
