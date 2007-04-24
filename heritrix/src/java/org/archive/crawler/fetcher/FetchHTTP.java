@@ -291,18 +291,19 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 "read."));
         
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
-            "If the fetch is not completed in this number of seconds,"
-            + " give up (and retry later). For optimal configuration, " +
-            " ensure this value is > " + ATTR_TIMEOUT_SECONDS + ".",
+            "If the fetch is not completed in this number of seconds, "
+            + "even if it is making progress, give up. The URI will be "
+            + "annotated as timeTrunc. Set to zero for no timeout. "
+            + "(This is not recommended: threads could wait indefinitely "
+            + "for the fetch to end.)",
             DEFAULT_TIMEOUT_SECONDS));
         Type e = addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
-            "If the socket is unresponsive for this number of milliseconds, " +
-            " give up.  Set to zero for no timeout (Not." +
-            " recommended. Could hang a thread on an unresponsive server)." +
-            " This timeout is used timing out socket opens " +
-            " and for timing out each socket read.  Make sure this " +
-            " value is < " + ATTR_TIMEOUT_SECONDS + " for optimal " +
-            " configuration: ensures at least one retry read.",
+            "If a socket is unresponsive for this number of milliseconds, " +
+            "give up on that connects/read. (This does not necessarily give " +
+            "up on the fetch immediately; connects are subject to retries " +
+            "and reads will be retried until " + ATTR_TIMEOUT_SECONDS +
+            " have elapsed. Set to zero for no socket timeout. (This is " +
+            "note recommended: a socket operation could hand indefinitely.",
                 DEFAULT_SOTIMEOUT_MS));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_FETCH_BANDWIDTH_MAX,
