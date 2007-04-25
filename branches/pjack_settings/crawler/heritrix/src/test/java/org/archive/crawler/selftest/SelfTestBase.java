@@ -192,7 +192,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     protected void startHeritrix(String path) throws Exception {
         // Launch heritrix in its own thread.
         // By interrupting the thread, we can gracefully clean up the test.
-        String[] args = { path };
+        String[] args = { "-j", path + "/jobs", "-p", path + "/profiles" };
         heritrixThread = new HeritrixThread(args);
         heritrixThread.start();
 
