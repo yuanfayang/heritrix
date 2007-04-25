@@ -26,8 +26,10 @@
 package org.archive.settings.jmx;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.DynamicMBean;
 import javax.management.InstanceAlreadyExistsException;
@@ -168,4 +170,10 @@ public class JMXModuleListener implements ModuleListener, Serializable {
         }
         return result;
     }
+
+
+    public Set<Object> getModules() {
+        return new HashSet<Object>(counts.keySet());
+    }
+
 }

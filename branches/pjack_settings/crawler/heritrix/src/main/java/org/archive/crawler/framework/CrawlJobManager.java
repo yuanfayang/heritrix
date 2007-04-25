@@ -105,4 +105,8 @@ public interface CrawlJobManager extends Closeable {
 
     @Operation(desc="Deregisters this CrawlJobManager from the MBeanServer.")
     void close();
+
+    @Operation(desc="Invokes System.exit to terminate the JVM.")
+    void systemExit();
+
 }
