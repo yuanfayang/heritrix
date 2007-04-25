@@ -61,9 +61,12 @@ import com.sleepycat.je.CheckpointConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.DbInternal;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.SecondaryConfig;
+import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
@@ -107,6 +110,8 @@ Serializable, Closeable {
     private Map<String,CachedBdbMap> bigMaps = 
         new ConcurrentHashMap<String,CachedBdbMap>();
     
+    private Map<String,Database> databases =
+        new ConcurrentHashMap<String,Database>();
     
     public BdbModule() {
     }
@@ -143,7 +148,7 @@ Serializable, Closeable {
         this.classCatalog = new StoredClassCatalog(classCatalogDB);
     }
 
-    
+    /*
     public Environment getEnvironment() {
         return bdbEnvironment;
     }
@@ -152,8 +157,71 @@ Serializable, Closeable {
     public Database getClassCatalogDB() {
         return classCatalogDB;
     }
+    */
+
+    
+    public Database openDatabase(String name, boolean recycle) 
+    throws DatabaseException {
+        if (databases.containsKey(name)) {
+            throw new IllegalStateException("Database already exists: " +name);
+        }
+        DatabaseConfig config = new DatabaseConfig();
+        config.setAllowCreate(!recycle);
+        return openDatabase(name, config, recycle);
+    }
     
     
+    public void closeDatabase(Database db) {
+        try {
+            closeDatabase(db.getDatabaseName());
+        } catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Error getting db name", e);            
+        }
+    }
+    
+    public void closeDatabase(String name) {
+        Database db = databases.remove(name);
+        if (db == null) {
+            throw new IllegalStateException("No such database: " + name);
+        }
+        try {
+            db.close();
+        } catch (DatabaseException e) {
+            LOGGER.log(Level.SEVERE, "Error closing db " + name, e);
+        }
+    }
+    
+    
+    public Database openDatabase(String name, DatabaseConfig config, 
+            boolean recycle) 
+    throws DatabaseException {        
+        if (databases.containsKey(name)) {
+            throw new IllegalStateException("Database already exists: " +name);
+        }
+        if (!recycle) {
+            try {
+                bdbEnvironment.truncateDatabase(null, name, false);
+            } catch (DatabaseNotFoundException e) {
+                // Ignored
+            }
+        }
+        Database result = bdbEnvironment.openDatabase(null, name, config);
+        databases.put(name, result);
+        return result;
+    }
+    
+    
+    public SecondaryDatabase openSecondaryDatabase(String name, Database db, 
+            SecondaryConfig config) throws DatabaseException {
+        if (databases.containsKey(name)) {
+            throw new IllegalStateException("Database already exists: " +name);
+        }
+        SecondaryDatabase result = bdbEnvironment.openSecondaryDatabase(null, 
+                name, db, config);
+        databases.put(name, result);
+        return result;
+    }
+
     public StoredClassCatalog getClassCatalog() {
         return classCatalog;
     }
@@ -356,7 +424,13 @@ Serializable, Closeable {
             me.getValue().sync();
             me.getValue().close();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error closing " + me.getKey(), e);
+            LOGGER.log(Level.SEVERE, "Error closing bigMap " + me.getKey(), e);
+        }
+
+        for (Map.Entry<String,Database> me: databases.entrySet()) try {
+            me.getValue().close();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error closing db " + me.getKey(), e);            
         }
 
         try {

@@ -30,6 +30,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.processors.fetcher.FetchStats;
+import org.archive.settings.file.BdbModule;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.bind.EntryBinding;
@@ -46,7 +47,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.SecondaryConfig;
@@ -158,7 +158,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
     protected EntryBinding crawlURIBinding;
     // Cursors into databases
 
-    
+    private BdbModule bdb;
     
     /**
      * Constructor
@@ -179,9 +179,10 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      * @throws IOException if an error occurs opening/creating the 
      *         database
      */
-    public AdaptiveRevisitHostQueue(String hostName, Environment env,
+    public AdaptiveRevisitHostQueue(String hostName, BdbModule env,
             StoredClassCatalog catalog, int valence)
     throws IOException {
+        this.bdb = env;
         try{
             if(valence < 1) {
                 this.valence = 1;
@@ -204,7 +205,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setTransactional(false); 
             dbConfig.setAllowCreate(true);
-            primaryUriDB = env.openDatabase(null, hostName, dbConfig);
+            primaryUriDB = env.openDatabase(hostName, dbConfig, true);
     
             this.classCatalog = catalog;
             
@@ -212,8 +213,8 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             DatabaseConfig dbConfig2 = new DatabaseConfig();
             dbConfig2.setTransactional(false); 
             dbConfig2.setAllowCreate(true);
-            processingUriDB = env.openDatabase(null, 
-                    hostName + "/processing", dbConfig2);
+            processingUriDB = env.openDatabase( 
+                    hostName + "/processing", dbConfig2, true);
             
             // Create a primitive binding for the primary key (URI string) 
             primaryKeyBinding = TupleBinding.getPrimitiveBinding(String.class);
@@ -227,7 +228,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             secConfig.setSortedDuplicates(true);
             secConfig.setKeyCreator(
                     new OrderOfProcessingKeyCreator(classCatalog,CrawlURI.class));
-            secondaryUriDB = env.openSecondaryDatabase(null, 
+            secondaryUriDB = env.openSecondaryDatabase(
                 hostName+"/timeOfProcessing", primaryUriDB, secConfig);
             
             // Check if we are opening an existing DB...
@@ -938,17 +939,10 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      * 
      * @throws IOException if an error occurs closing a database object
      */
-    public void close() throws IOException{
-        try{
-            secondaryUriDB.close();
-            processingUriDB.close();
-            primaryUriDB.close();
-        } catch (DatabaseException e) {
-            // Blanket catch all DBExceptions and convert to IOExceptions.
-            IOException e2 = new IOException(e.getMessage());
-            e2.setStackTrace(e.getStackTrace()); //preserve original stacktrace
-            throw e2; 
-        }
+    public void close() throws IOException {
+        bdb.closeDatabase(secondaryUriDB);
+        bdb.closeDatabase(processingUriDB);
+        bdb.closeDatabase(primaryUriDB);
     }
     
     
@@ -1178,3 +1172,4 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
     }
 
 }
+ 

@@ -64,10 +64,10 @@ import org.archive.state.DirectoryModule;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
 import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.Finishable;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
-import org.archive.settings.file.BdbModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -808,18 +808,11 @@ DirectoryModule {
      */
     protected void completeStop() {
         LOGGER.fine("Entered complete stop.");
+
         // Run processors' final tasks
         runProcessorFinalTasks();
-        // Ok, now we are ready to exit.
-        sendCrawlStateChangeEvent(State.FINISHED, this.sExit);
-        
-        List<Closeable> closeables = sheetManager.getCloseables();
-        for (Closeable c: closeables) try {
-            c.close();
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Could not close " + c, e);
-        }
 
+        sheetManager.closeModules();
         loggerModule.closeLogFiles();
         
         // Release reference to logger file handler instances.
@@ -835,7 +828,6 @@ DirectoryModule {
         if (this.sheetManager !=  null) {
             this.sheetManager.cleanup();
         }
-        this.sheetManager = null;
         this.reserveMemory = null;
         if (this.serverCache != null) {
             this.serverCache.cleanup();
@@ -855,7 +847,14 @@ DirectoryModule {
             // still the case even after adding the above toePool#cleanup call.
         }
         this.toePool = null;
+
+
         LOGGER.fine("Finished crawl.");
+
+
+        // Ok, now we are ready to exit.
+        sendCrawlStateChangeEvent(State.FINISHED, this.sExit);
+        this.sheetManager = null;
     }
     
     synchronized void completePause() {
@@ -1634,4 +1633,5 @@ DirectoryModule {
         return DefaultDirectoryModule.toRelativePath(getDirectory(), path);
     }
 
+    
 }

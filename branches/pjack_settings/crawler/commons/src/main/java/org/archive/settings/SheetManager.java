@@ -66,6 +66,9 @@ implements StateProvider, Serializable, DirectoryModule {
     final private List<ModuleListener> moduleListeners = 
         new CopyOnWriteArrayList<ModuleListener>();
     
+    final private ListModuleListener<Finishable> finishables = 
+        ListModuleListener.make(Finishable.class);
+    
     final private ListModuleListener<Checkpointable> checkpointables =
         ListModuleListener.make(Checkpointable.class);
     
@@ -88,6 +91,7 @@ implements StateProvider, Serializable, DirectoryModule {
         offlineThis = Offline.make(getClass());
         moduleListeners.add(checkpointables);
         moduleListeners.add(closeables);
+        moduleListeners.add(finishables);
         KeyManager.addKeys(getClass());
     }
     
@@ -99,6 +103,10 @@ implements StateProvider, Serializable, DirectoryModule {
     
     public List<Closeable> getCloseables() {
         return closeables.getList();
+    }
+    
+    public List<Finishable> getFinishables() {
+        return finishables.getList();
     }
     
     public SheetManager(Collection<ModuleListener> listeners) {
@@ -362,5 +370,34 @@ implements StateProvider, Serializable, DirectoryModule {
         list.add(getDefault());
         return list;
     }    
+
     
+    /**
+     * Closes any modules that require special cleanup.  First, this method
+     * invokes {@link Finishable#finalTasks} on any {@link Finishable} 
+     * module being managed by this SheetManager.
+     * 
+     * <p>After all Finishable modules have run their final tasks, this 
+     * method invokes {@link Closeable#close} on any {@link Closeable} 
+     * module being managed by this SheetManager.
+     * 
+     * <p>Any exceptions encountered are logged with a SEVERE level, but
+     * otherwise ignored; this method never raises an exception.
+     */
+    public void closeModules() {
+        List<Finishable> finishables = this.getFinishables();
+        for (Finishable f: finishables) try {
+            f.finalTasks(this);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Could not finish " + f, e);            
+        }
+        
+        List<Closeable> closeables = this.getCloseables();
+        for (Closeable c: closeables) try {
+            c.close();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Could not close " + c, e);
+        }
+    }
+
 }

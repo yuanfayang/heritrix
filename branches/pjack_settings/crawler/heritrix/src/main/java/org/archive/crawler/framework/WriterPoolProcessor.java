@@ -24,6 +24,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -62,7 +63,8 @@ import org.archive.state.StateProvider;
  * @author Parker Thompson
  * @author stack
  */
-public abstract class WriterPoolProcessor extends Processor {
+public abstract class WriterPoolProcessor extends Processor 
+implements Closeable {
     
     
 //    private static final Logger logger = 
@@ -441,9 +443,13 @@ public abstract class WriterPoolProcessor extends Processor {
     protected void innerProcess(ProcessorURI puri) {
         throw new AssertionError();
     }
-    
-    
+
+
     @Override
     protected abstract ProcessResult innerProcessResult(ProcessorURI uri);
+
     
+    public void close() {
+        this.pool.close();
+    }
 }

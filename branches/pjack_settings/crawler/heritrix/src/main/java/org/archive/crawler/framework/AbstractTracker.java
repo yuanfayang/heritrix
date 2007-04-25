@@ -18,13 +18,14 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.Closeable;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.EventObject;
 import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.scope.SeedModule;
+import org.archive.settings.Finishable;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
@@ -54,7 +55,7 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.admin.StatisticsTracker
  */
 public abstract class AbstractTracker implements StatisticsTracking, 
-CrawlStatusListener, Serializable, Module, Initializable {
+CrawlStatusListener, Serializable, Module, Initializable, Finishable {
 
 
     /**
@@ -294,8 +295,12 @@ CrawlStatusListener, Serializable, Module, Initializable {
         progressStatisticsEvent(new EventObject(this));
         logNote("CRAWL ENDED - " + sExitMessage);
         shouldrun = false;
+    }
+    
+    
+    public void finalTasks(StateProvider p) {
         dumpReports();
-        finalCleanup();
+        finalCleanup();        
     }
 
     public void crawlStarted(String message) {

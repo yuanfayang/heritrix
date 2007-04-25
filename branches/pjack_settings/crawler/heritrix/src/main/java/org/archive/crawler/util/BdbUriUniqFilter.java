@@ -45,7 +45,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
@@ -102,7 +101,7 @@ implements Initializable, Serializable {
     public void initialTasks(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
         try {
-            initialize(bdb.getEnvironment());
+            initialize(bdb.openDatabase(DB_NAME, false));
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
@@ -142,7 +141,11 @@ implements Initializable, Serializable {
         }
         try {
             createdEnvironment = true;
-            initialize(new Environment(bdbEnv, envConfig));
+            Environment env = new Environment(bdbEnv, envConfig);
+            DatabaseConfig config = new DatabaseConfig();
+            config.setAllowCreate(true);
+            Database db = env.openDatabase(null, DB_NAME, config);
+            initialize(db);
         } catch (DatabaseException e) {
             throw new IOException(e.getMessage());
         }
@@ -153,15 +156,8 @@ implements Initializable, Serializable {
      * @param env Environment to use.
      * @throws DatabaseException
      */
-    protected void initialize(Environment env) throws DatabaseException {
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(true);
-        try {
-            env.truncateDatabase(null, DB_NAME, false);
-        } catch (DatabaseNotFoundException e) {
-            // Ignored
-        }
-        open(env, dbConfig);
+    protected void initialize(Database db) throws DatabaseException {
+        open(db);
     }
     
     /**
@@ -170,41 +166,40 @@ implements Initializable, Serializable {
      * @param env DB Environment to use.
      * @throws DatabaseException
      */
-    public void reopen(final Environment env)
+    public void reopen(Database db)
     throws DatabaseException {
-        open(env, null);
+        open(db);
     }
     
-    protected void open(final Environment env, final DatabaseConfig dbConfig)
+    protected void open(final Database db)
     throws DatabaseException {
-        this.alreadySeen = env.openDatabase(null, DB_NAME, dbConfig);
+        this.alreadySeen = db;
         this.value = new DatabaseEntry("".getBytes());
     }
     
     public synchronized void close() {
         Environment env = null;
         if (this.alreadySeen != null) {
-        	try {
+            try {
                 env = this.alreadySeen.getEnvironment();
                 if (logger.isLoggable(Level.INFO)) {
-                    logger.info("Count of alreadyseen on close " +
-                        Long.toString(count));
+                    logger.info("Count of alreadyseen on close "
+                            + Long.toString(count));
                 }
-				this.alreadySeen.close();
-			} catch (DatabaseException e) {
-				logger.severe(e.getMessage());
-			}
+            } catch (DatabaseException e) {
+                logger.severe(e.getMessage());
+            }
             this.alreadySeen = null;
         }
         if (env != null && createdEnvironment) {
             try {
-				// This sync flushes whats in RAM.  Its expensive operation.
-				// Without, data can be lost.  Not for transactional operation.
-				env.sync();
-				env.close();
-			} catch (DatabaseException e) {
-				logger.severe(e.getMessage());
-			}
+                // This sync flushes whats in RAM. Its expensive operation.
+                // Without, data can be lost. Not for transactional operation.
+                env.sync();
+                env.close();
+            } catch (DatabaseException e) {
+                logger.severe(e.getMessage());
+            }
         }
     }
     
@@ -311,7 +306,7 @@ implements Initializable, Serializable {
         input.defaultReadObject();        
 
         try {
-            reopen(bdb.getEnvironment());
+            reopen(bdb.openDatabase(DB_NAME, false));
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);

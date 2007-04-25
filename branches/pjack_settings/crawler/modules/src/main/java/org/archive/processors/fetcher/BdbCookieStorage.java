@@ -47,14 +47,12 @@ import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
 
 /**
  * @author pjack
  *
  */
-public class BdbCookieStorage 
-implements CookieStorage, Initializable, Closeable {
+public class BdbCookieStorage implements CookieStorage, Initializable {
 
     
     final private static Logger LOGGER = 
@@ -80,25 +78,15 @@ implements CookieStorage, Initializable, Closeable {
     }
 
 
-    public void close() {
-        if (cookieDb != null) try {
-            cookieDb.close();
-        } catch (DatabaseException e) {
-            LOGGER.log(Level.SEVERE, "Error closing cookieDb", e);
-        }
-    }
-
-
     public void initialTasks(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
         String dbName = provider.get(this, COOKIEDB_NAME);
         try {
-            Environment env = bdb.getEnvironment();
             StoredClassCatalog classCatalog = bdb.getClassCatalog();
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setTransactional(false);
             dbConfig.setAllowCreate(true);
-            cookieDb = env.openDatabase(null, dbName, dbConfig);
+            cookieDb = bdb.openDatabase(dbName, dbConfig, true);
             cookies = new StoredSortedMap(cookieDb,
                     new StringBinding(), new SerialBinding(classCatalog,
                             Cookie.class), true);

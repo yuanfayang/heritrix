@@ -38,11 +38,8 @@ import org.archive.util.ArchiveUtils;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.DatabaseNotFoundException;
-import com.sleepycat.je.Environment;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.util.RuntimeExceptionWrapper;
 
@@ -80,24 +77,10 @@ public class BdbMultipleWorkQueues {
      * @param recycle True if we are to reuse db content if any.
      * @throws DatabaseException
      */
-    public BdbMultipleWorkQueues(Environment env,
-        StoredClassCatalog classCatalog, final boolean recycle)
+    public BdbMultipleWorkQueues(Database db,
+        StoredClassCatalog classCatalog)
     throws DatabaseException {
-        // Open the database. Create it if it does not already exist. 
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(!recycle);
-        if (!recycle) {
-            try {
-                env.truncateDatabase(null, "pending", false);
-            } catch (DatabaseNotFoundException e) {
-                // Ignored
-            }
-        }
-        // Make database deferred write: URLs that are added then removed 
-        // before a page-out is required need never cause disk IO.
-        dbConfig.setDeferredWrite(true);
-
-        this.pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
+        this.pendingUrisDB = db;
         crawlUriBinding =
             new RecyclingSerialBinding(classCatalog, CrawlURI.class);
     }
@@ -500,11 +483,11 @@ public class BdbMultipleWorkQueues {
      *
      */
     public void close() {
-        try {
+/*        try {
             this.pendingUrisDB.close();
         } catch (DatabaseException e) {
             e.printStackTrace();
-        }
+        } */
     }
     
     /**

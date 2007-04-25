@@ -195,13 +195,14 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         
         seeds = provider.get(this, SEEDS);
         bdb = provider.get(this, BDB);
-        
+
         try {
-            hostQueues = new AdaptiveRevisitQueueList(bdb.getEnvironment(),
+            hostQueues = new AdaptiveRevisitQueueList(bdb,
                 bdb.getClassCatalog());
         } catch (IOException e) {
             throw new IllegalStateException(e);
-        }        
+        }
+
         
         loadSeeds();
     }

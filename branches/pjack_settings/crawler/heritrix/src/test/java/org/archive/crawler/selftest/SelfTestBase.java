@@ -145,6 +145,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         boolean fail = false;
         try {
             open();
+            verifyCommon();
             verify();
         } finally {
             try {
@@ -275,6 +276,11 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     protected File getArcDir() {
         return new File(getJobDir(), "arcs");
     }
+    
+    
+    protected File getLogsDir() {
+        return new File(getJobDir(), "logs");
+    }
 
 
 
@@ -306,7 +312,6 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         ObjectName name = new ObjectName(query);
         Set set = server.queryNames(null, name);
         while (set.isEmpty() == exist) {
-            System.out.println(set + " vs " + exist);
             count++;
             if (count > 40) {
                 throw new IllegalStateException("Could not find " + 
@@ -371,6 +376,41 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         waiter.waitUntilNotification(0);
     }
 
+    
+    protected void verifyArcsClosed() {
+        File arcsDir = getArcDir();
+        if (!arcsDir.exists()) {
+            throw new IllegalStateException("Missing arc dir " + 
+                    arcsDir.getAbsolutePath());
+        }
+        for (File f: arcsDir.listFiles()) {
+            String fn = f.getName();
+            if (fn.endsWith(".open")) {
+                throw new IllegalStateException(
+                        "Arc file not closed at end of crawl: " + f.getName());
+            }
+        }
+    }
+    
+    
+    protected void verifyLogFileEmpty(String logFileName) {
+        File logsDir = getLogsDir();
+        File log = new File(logsDir, logFileName);
+        if (log.length() != 0) {
+            throw new IllegalStateException("Log " + logFileName + 
+                    " isn't empty.");
+        }
+    }
+    
+    
+    protected void verifyCommon() {
+        verifyLogFileEmpty("uri-errors.log");
+        verifyLogFileEmpty("runtime-errors.log");
+        verifyLogFileEmpty("local-errors.log");
+        verifyArcsClosed();
+    }
+    
+    
     
     protected List<ArchiveRecordHeader> headersInArcs() throws IOException {
         List<ArchiveRecordHeader> result = new ArrayList<ArchiveRecordHeader>();

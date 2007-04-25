@@ -27,6 +27,8 @@ import java.io.File;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.settings.file.BdbModule;
+import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 import org.archive.util.FileUtils;
 
@@ -48,6 +50,13 @@ public class AdaptiveRevisitHostQueueTest
 extends TmpDirTestCase
 implements AdaptiveRevisitAttributeConstants {
     public void testHQ() throws Exception {
+        String dir = new File(getTmpDir(), "AR").getAbsolutePath();
+        BdbModule bdb = new BdbModule();
+        ExampleStateProvider dsp = new ExampleStateProvider();
+        dsp.set(bdb, BdbModule.DIR, dir);
+        bdb.initialTasks(dsp);
+
+        /*
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setTransactional(true); 
         envConfig.setAllowCreate(true);    
@@ -57,14 +66,15 @@ implements AdaptiveRevisitAttributeConstants {
         }
         envDir.mkdirs();
         Environment env = new Environment(envDir, envConfig);
+        */
+        
         // Open the class catalog database. Create it if it does not
         // already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
-        StoredClassCatalog catalog =
-            new StoredClassCatalog(env.openDatabase(null, "classes", dbConfig));
+        StoredClassCatalog catalog = bdb.getClassCatalog();
         AdaptiveRevisitHostQueue hq =
-            new AdaptiveRevisitHostQueue("bok.hi.is", env, catalog, 1);
+            new AdaptiveRevisitHostQueue("bok.hi.is", bdb, catalog, 1);
 
 
         // Make the CrawlUris
@@ -285,7 +295,7 @@ implements AdaptiveRevisitAttributeConstants {
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_BUSY);
         hq.close();
         
-        hq = new AdaptiveRevisitHostQueue("bok.hi.is", env, catalog, 2);
+        hq = new AdaptiveRevisitHostQueue("bok.hi.is", bdb, catalog, 2);
         
         assertEquals("Size of HQ after reopening should now be 4",
                 4, hq.getSize());
@@ -347,7 +357,7 @@ implements AdaptiveRevisitAttributeConstants {
          */
         hq.close();
         catalog.close();
-        env.close();
+        bdb.close();
         cleanUpOldFiles("AR");
     }
     

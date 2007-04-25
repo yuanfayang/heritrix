@@ -30,6 +30,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.settings.file.BdbModule;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -42,7 +43,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
@@ -71,7 +71,7 @@ public class AdaptiveRevisitQueueList implements Reporter {
     // TODO: Handle HQs becoming empty.
     
     /** The Environment for the BerkleyDB databases in the HQs */
-    private final Environment env;
+    private final BdbModule env;
     private final StoredClassCatalog catalog;
     /** Contains host names for all HQs. Name is key, valence is value */
     private Database hostNamesDB;
@@ -87,7 +87,7 @@ public class AdaptiveRevisitQueueList implements Reporter {
         Logger.getLogger(AdaptiveRevisitQueueList.class.getName());
 
     
-    public AdaptiveRevisitQueueList(Environment env,
+    public AdaptiveRevisitQueueList(BdbModule env,
             StoredClassCatalog catalog)
     throws IOException {
         Cursor cursor = null;
@@ -105,7 +105,7 @@ public class AdaptiveRevisitQueueList implements Reporter {
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setTransactional(false);
             dbConfig.setAllowCreate(true);
-            hostNamesDB = env.openDatabase(null, "hostNames", dbConfig);
+            hostNamesDB = env.openDatabase("hostNames", dbConfig, true);
 
             // Read any existing hostNames and create relevant HQs
             cursor = hostNamesDB.openCursor(null, null);

@@ -437,12 +437,14 @@ implements Map<K,V>, Serializable {
      */
     public synchronized void clear() {
         this.memMap.clear();
-        this.diskMap.clear();
-        this.diskMapSize = 0;
-        try {
-            close();
-        } catch (DatabaseException e) {
-            e.printStackTrace();
+        if (db != null) {
+            this.diskMap.clear();
+            this.diskMapSize = 0;
+            try {
+                close();
+            } catch (DatabaseException e) {
+                e.printStackTrace();
+            }
         }
     }
 
