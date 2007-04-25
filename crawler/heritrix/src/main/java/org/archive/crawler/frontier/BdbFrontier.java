@@ -46,6 +46,8 @@ import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.collections.StoredIterator;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 
 /**
@@ -86,9 +88,14 @@ implements Serializable, Checkpointable {
      */
     private BdbMultipleWorkQueues createMultipleWorkQueues(boolean recycle)
     throws DatabaseException {
-        return new BdbMultipleWorkQueues(bdb.getEnvironment(),
-            bdb.getClassCatalog(),
-            recycle);
+        DatabaseConfig dbConfig = new DatabaseConfig();
+        dbConfig.setAllowCreate(!recycle);
+        // Make database deferred write: URLs that are added then removed 
+        // before a page-out is required need never cause disk IO.
+        dbConfig.setDeferredWrite(true);
+        Database db = bdb.openDatabase("pending", dbConfig, recycle);
+        
+        return new BdbMultipleWorkQueues(db, bdb.getClassCatalog());
     }
 
 

@@ -22,6 +22,7 @@
   */
 package org.archive.crawler.frontier;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -74,7 +75,7 @@ import java.util.concurrent.TimeUnit;
  * @author Christian Kohlschuetter
  */
 public abstract class WorkQueueFrontier extends AbstractFrontier
-implements HasUriReceiver, Serializable {
+implements Closeable, HasUriReceiver, Serializable {
 	private static final long serialVersionUID = 570384305871965843L;
 	
     public class WakeTask extends TimerTask {
@@ -274,7 +275,7 @@ implements HasUriReceiver, Serializable {
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
      */
-    public void crawlEnded(String sExitMessage) {
+    public void close() {
         // Cleanup.  CrawlJobs persist after crawl has finished so undo any
         // references.
         if (this.alreadyIncluded != null) {
@@ -305,7 +306,7 @@ implements HasUriReceiver, Serializable {
 //        this.costAssignmentPolicy = null;
         
         // Clearing controller is a problem. We get NPEs in #preNext.
-        super.crawlEnded(sExitMessage);
+//        super.crawlEnded(sExitMessage);
         //this.controller = null;
     }
 
