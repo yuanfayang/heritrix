@@ -151,7 +151,8 @@ public class Heritrix {
 
         try {
             MBeanServer server = ManagementFactory.getPlatformMBeanServer();        
-            CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(start, server);
+            CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(
+                    start, server, Thread.currentThread());
             registerJndi(cjm.getObjectName());
             out.println("CrawlJobManager registered at " + cjm.getObjectName());
         } catch (Exception e) {

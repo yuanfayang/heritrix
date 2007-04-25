@@ -86,12 +86,17 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
     final private ObjectName oname;
     
-    public CrawlJobManagerImpl(File rootDir, MBeanServer server) {
+    final private Thread heritrixThread;
+    
+    public CrawlJobManagerImpl(File rootDir, 
+            MBeanServer server,
+            Thread heritrixThread) {
         super(CrawlJobManager.class);
         this.rootDir = rootDir;
         this.jobs = new HashMap<String,CrawlController>();
         this.server = server;
         this.oname = register(NAME, TYPE, this);
+        this.heritrixThread = heritrixThread;
     }
     
 
@@ -164,7 +169,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         File bootstrap = new File(dest, BOOTSTRAP);
         FileSheetManager fsm;
-        JMXModuleListener jmxListener = new JMXModuleListener(DOMAIN, job, server);
+        final JMXModuleListener jmxListener = new JMXModuleListener(DOMAIN, job, server);
         try {
             List<ModuleListener> list = new ArrayList<ModuleListener>();
             list.add(jmxListener);
@@ -178,7 +183,14 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
         JMXSheetManager jmx = new JMXSheetManager(fsm);
         final ObjectName smName = jmxListener.nameOf(jmx); // register(job, "SheetManager", jmx);
-
+        try {
+            server.registerMBean(jmx, smName);
+        } catch (Exception e) {
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
+        }
+        
         // Find the crawlcontroller.
         Sheet sheet = fsm.getDefault();
         Object o = PathValidator.validate(sheet, "root.controller");
@@ -197,8 +209,10 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                 ccName, 
                 new NotificationListener() {
                     public void handleNotification(Notification n, Object o) {
-                        unregister(ccName);
                         unregister(smName);
+                        for (Object m: jmxListener.getModules()) {
+                            unregister(jmxListener.nameOf(m));
+                        }
                         jobs.remove(job);
                     }
                 }, new NotificationFilter() {
@@ -325,6 +339,18 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     public void close() {
+        if (!jobs.isEmpty()) {
+            throw new IllegalStateException("Cannot close CrawlJobManager " + 
+                    "when jobs are still active.");
+        }
         unregister(oname);
+        if (heritrixThread != null) {
+            heritrixThread.interrupt();
+        }
+    }
+
+
+    public void systemExit() {
+        System.exit(1);
     }
 }
