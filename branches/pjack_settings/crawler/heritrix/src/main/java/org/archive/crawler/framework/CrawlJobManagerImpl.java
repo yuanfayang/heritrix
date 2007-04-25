@@ -80,7 +80,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     // If null, no JMX registrations occur
     private MBeanServer server;
     
-    final private File rootDir;
+    final private File jobsDir;
+    
+    final private File profilesDir;
     
     final private Map<String,CrawlController> jobs;
 
@@ -88,15 +90,21 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
     final private Thread heritrixThread;
     
-    public CrawlJobManagerImpl(File rootDir, 
-            MBeanServer server,
-            Thread heritrixThread) {
+    public CrawlJobManagerImpl(CrawlJobManagerConfig config) {
         super(CrawlJobManager.class);
-        this.rootDir = rootDir;
+        this.server = config.getServer();
+        if (server == null) {
+            throw new IllegalArgumentException("MBeanServer must not be null.");
+        }
+        this.profilesDir = new File(config.getProfilesDirectory());
+        if (!profilesDir.isDirectory()) {
+            throw new IllegalArgumentException("Profiles directory unreadable: " 
+                    + profilesDir.getAbsolutePath());
+        }
+        this.jobsDir = new File(config.getJobsDirectory());
         this.jobs = new HashMap<String,CrawlController>();
-        this.server = server;
         this.oname = register(NAME, TYPE, this);
-        this.heritrixThread = heritrixThread;
+        this.heritrixThread = config.getHeritrixThread();
     }
     
 
@@ -282,12 +290,12 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     private File getProfilesDir() {
-        return new File(rootDir, "profiles");
+        return profilesDir;
     }
     
     
     private File getJobsDir() {
-        return new File(rootDir, "jobs");
+        return jobsDir;
     }
 
 

@@ -29,19 +29,24 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.naming.CompoundName;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.NoInitialContextException;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.archive.crawler.framework.CrawlJobManagerConfig;
 import org.archive.crawler.framework.CrawlJobManagerImpl;
 import org.archive.util.JndiUtils;
 
@@ -104,9 +109,50 @@ public class Heritrix {
 
     
     private static void usage() {
-        System.err.println("Usage: java org.archive.crawler.Heritrix [dir]");
+        HelpFormatter hf = new HelpFormatter();
+        hf.printHelp("Heritrix", options());
     }
     
+    
+    private static Options options() {
+        Options options = new Options();
+        options.addOption("j", "jobs-dir", true, "The jobs directory.  " +
+                        "Defaults to ./jobs");
+        options.addOption("p", "profiles-dir", true, "The profiles " +
+                        "directory.  Defaults to ./profiles");
+        options.addOption("h", "heritrix-properties", true, 
+                "The full path to the heritrix properties file " + 
+                "(eg, conf/heritrix.properties).  If present, this file " +
+                "will be used to configure Java logging.  Defaults to " +
+                "./conf/heritrix.properties");
+        return options;
+    }
+    
+    
+    private static File getDefaultPropertiesFile() {
+        File confDir = new File(CONF);
+        File props = new File(confDir, PROPERTIES);
+        return props;
+    }
+    
+    
+    private static CommandLine getCommandLine(String[] args) {
+        CommandLineParser clp = new GnuParser();
+        CommandLine cl;
+        try {
+            cl = clp.parse(options(), args);
+        } catch (ParseException e) {
+            usage();
+            return null;
+        }
+        
+        if (cl.getArgList().size() != 0) {
+            usage();
+            return null;
+        }
+
+        return cl;
+    }
 
     /**
      * Launch program.
@@ -117,9 +163,22 @@ public class Heritrix {
      */
     public static void main(String[] args)
     throws Exception {
-        if (args.length > 1) {
-            usage();
-            return;
+        CrawlJobManagerConfig config = new CrawlJobManagerConfig();
+        File properties = getDefaultPropertiesFile();
+        
+        CommandLine cl = getCommandLine(args);
+        if (cl == null) return;
+
+        if (cl.hasOption('j')) {
+            config.setJobsDirectory(cl.getOptionValue('j'));
+        }
+        
+        if (cl.hasOption('p')) {
+            config.setProfilesDirectory(cl.getOptionValue('p'));
+        }
+        
+        if (cl.hasOption('h')) {
+            properties = new File(cl.getOptionValue('h'));
         }
 
         PrintStream out;
@@ -129,19 +188,9 @@ public class Heritrix {
             File startLog = new File(getHeritrixHome(), STARTLOG);
             out = new PrintStream(new FileOutputStream(startLog));
         }
-
         
-        File start;
-        if (args.length == 0) {
-            start = new File(".");
-        } else {
-            start = new File(args[0]);
-        }
-        
-        File conf = new File(start, CONF);
-        File heritrixProperties = new File(conf, PROPERTIES);
-        if (heritrixProperties.exists()) {
-            FileInputStream finp = new FileInputStream(heritrixProperties);
+        if (properties.exists()) {
+            FileInputStream finp = new FileInputStream(properties);
             LogManager.getLogManager().readConfiguration(finp);
         }
         
@@ -150,9 +199,7 @@ public class Heritrix {
         TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
 
         try {
-            MBeanServer server = ManagementFactory.getPlatformMBeanServer();        
-            CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(
-                    start, server, Thread.currentThread());
+            CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(config);
             registerJndi(cjm.getObjectName());
             out.println("CrawlJobManager registered at " + cjm.getObjectName());
         } catch (Exception e) {

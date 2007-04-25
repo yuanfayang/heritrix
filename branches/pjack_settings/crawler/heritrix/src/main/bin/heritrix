@@ -59,6 +59,8 @@ then
     HERITRIX_HOME=`cd "$PRGDIR/.." ; pwd`
 fi
 
+cd $HERITRIX_HOME
+
 # Find JAVA_HOME.
 if [ -z "$JAVA_HOME" ]
 then
