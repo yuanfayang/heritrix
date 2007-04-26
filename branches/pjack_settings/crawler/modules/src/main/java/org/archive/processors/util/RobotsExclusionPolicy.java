@@ -72,14 +72,14 @@ public class RobotsExclusionPolicy implements Serializable {
 
     private transient Type type = Type.NORMAL;
 
-    public static RobotsExclusionPolicy ALLOWALL =
+    final public static RobotsExclusionPolicy ALLOWALL =
         new RobotsExclusionPolicy(Type.ALLOWALL);
-    public static RobotsExclusionPolicy DENYALL =
+    final public static RobotsExclusionPolicy DENYALL =
         new RobotsExclusionPolicy(Type.DENYALL);
 
     private LinkedList<String> userAgents = null;
     private HashMap<String,List<String>> disallows = null;
-    transient RobotsHonoringPolicy honoringPolicy = null;
+    RobotsHonoringPolicy honoringPolicy = null; // was transient
 
     private String lastUsedUserAgent = null;
     private List<String> userAgentsToTest = null;
@@ -105,7 +105,6 @@ public class RobotsExclusionPolicy implements Serializable {
     }
 
 
-
     /**
      * @param settings 
      * @param u
@@ -119,7 +118,9 @@ public class RobotsExclusionPolicy implements Serializable {
         disallows = d;
         this.honoringPolicy = honoringPolicy;
 
-        if(honoringPolicy == null) return;
+        if(honoringPolicy == null) {
+            return;
+        }
 
         // If honoring policy is most favored user agent, all rules should be checked
         if(honoringPolicy.isType(context, RobotsHonoringPolicy.Type.MOST_FAVORED)) {
