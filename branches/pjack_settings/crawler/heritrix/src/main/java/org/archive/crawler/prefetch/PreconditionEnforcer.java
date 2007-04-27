@@ -32,7 +32,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.processors.fetcher.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
@@ -191,7 +190,7 @@ public class PreconditionEnforcer
         // test against robots.txt if available
         CrawlServer cs = getServerFor(curi);
         if (cs.isValidRobots()) {
-            String ua = controller.getUserAgent(curi);
+            String ua = controller.getUserAgent();
             if(cs.getRobots().disallows(curi, ua)) {
                 if(curi.get(this, CALCULATE_ROBOTS_ONLY)) {
                     // annotate URI as excluded, but continue to process normally
