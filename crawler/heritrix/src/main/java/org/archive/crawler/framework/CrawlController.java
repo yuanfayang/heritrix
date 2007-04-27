@@ -1589,8 +1589,13 @@ DirectoryModule {
     }
 
     
-    public String getUserAgent(StateProvider p) {
-        return p.get(order, CrawlOrder.HTTP_HEADERS).get("user-agent");
+    public String getUserAgent() {
+        return sheetManager.get(order, CrawlOrder.HTTP_HEADERS).get("user-agent");
+    }
+    
+    
+    public String getFrom() {
+        return sheetManager.get(order, CrawlOrder.HTTP_HEADERS).get("from");
     }
 
 

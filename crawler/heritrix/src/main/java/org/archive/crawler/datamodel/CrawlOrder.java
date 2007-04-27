@@ -30,10 +30,8 @@ package org.archive.crawler.datamodel;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;

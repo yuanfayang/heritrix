@@ -36,7 +36,6 @@ import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.processors.Processor;
 import org.archive.processors.fetcher.HostResolver;
-import org.archive.state.StateProvider;
 import org.archive.io.SinkHandlerLogThread;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
@@ -287,6 +286,12 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
             controller.get(controller, CrawlController.PROCESSORS);
         currentCuri.setStateProvider(controller.getSheetManager());
         currentCuri.setRecorder(httpRecorder);
+        if (currentCuri.getUserAgent() == null) {
+            currentCuri.setUserAgent(controller.getUserAgent());
+        }        
+        if (currentCuri.getFrom() == null) {
+            currentCuri.setFrom(controller.getFrom());
+        }
         try {
             for (Map.Entry<String,Processor> me: localProcessors.entrySet()) {
                 setStep(STEP_ABOUT_TO_BEGIN_PROCESSOR);

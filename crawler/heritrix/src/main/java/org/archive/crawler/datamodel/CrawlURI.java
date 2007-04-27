@@ -572,9 +572,12 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     /**
      * Set a fetched uri's content type.
      *
-     * @param ct Contenttype.  May be null.
+     * @param ct Contenttype.
      */
     public void setContentType(String ct) {
+        if (ct == null) {
+            ct = "unknown";
+        }
         this.contentType = ct;
     }
 
