@@ -159,11 +159,7 @@ DirectoryModule {
     final public static Key<SheetManager> SHEET_MANAGER = 
         Key.make(SheetManager.class, null);
 
-    
-    @Immutable
-    final public static Key<StatisticsTracker> STATISTICS_TRACKER = 
-        Key.make(StatisticsTracker.class, null);
-    
+
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
         Key.make(CrawlerLoggerModule.class, null);
     
@@ -265,7 +261,7 @@ DirectoryModule {
 
 
 
-    protected StatisticsTracking statistics = null;
+//    protected StatisticsTracking statistics = null;
 
 
     // Since there is a high probability that there will only ever by one
@@ -286,7 +282,6 @@ DirectoryModule {
     public void initialTasks(StateProvider provider) {        
         this.sheetManager = provider.get(this, SHEET_MANAGER);
         this.order = provider.get(this, ORDER);
-        this.statistics = provider.get(this, STATISTICS_TRACKER);
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
 
@@ -663,19 +658,6 @@ DirectoryModule {
     */
 
     
-    protected void restoreStatisticsTracker(List<StatisticsTracking> loggers,
-        String replaceName)
-    throws FatalConfigurationException {
-        try {
-            // Add the deserialized statstracker to the settings system.
-            // FIXME: Remove old stattracker
-            //loggers.removeElement(loggers.globalSettings(), replaceName);
-            loggers.add(this.statistics);
-         } catch (Exception e) {
-             throw convertToFatalConfigurationException(e);
-         }
-    }
-    
     protected FatalConfigurationException
             convertToFatalConfigurationException(Exception e) {
         FatalConfigurationException fce =
@@ -701,7 +683,14 @@ DirectoryModule {
      * @return Object this controller is using to track crawl statistics
      */
     public StatisticsTracking getStatistics() {
-        return statistics;
+        List<StatisticsTracking> statTrackers = sheetManager.get(this, LOGGERS);
+        if (statTrackers == null) {
+            return null;
+        }
+        if (statTrackers.isEmpty()) {
+            return null;
+        }
+        return statTrackers.get(0);
     }
     
     /**
@@ -796,7 +785,7 @@ DirectoryModule {
         // A proper exit will change this value.
         this.sExit = CrawlStatus.FINISHED_ABNORMAL;
         
-        Thread statLogger = new Thread(statistics);
+        Thread statLogger = new Thread(getStatistics());
         statLogger.setName("StatLogger");
         statLogger.start();
         
@@ -818,8 +807,6 @@ DirectoryModule {
         // Release reference to logger file handler instances.
         this.manifest = null;
 
-        // Do cleanup.
-        this.statistics = null;
 //        this.frontier = null;
         this.disk = null;
         this.scratchDisk = null;
@@ -880,8 +867,7 @@ DirectoryModule {
             // Hit the max document download limit!
             this.sExit = CrawlStatus.FINISHED_DOCUMENT_LIMIT;
             return false;
-        } else if (maxTime > 0 &&
-                statistics.crawlDuration() >= maxTime * 1000) {
+        } else if (maxTime > 0 && getStatistics().crawlDuration() >= maxTime * 1000) {
             // Hit the max byte download limit!
             this.sExit = CrawlStatus.FINISHED_TIME_LIMIT;
             return false;
