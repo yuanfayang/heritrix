@@ -22,10 +22,12 @@
  */
 package org.archive.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Logger;
 
+import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 
 /**
@@ -240,9 +242,10 @@ public class ReplayCharSequenceTest extends TmpDirTestCase
      */
     private RecordingOutputStream writeTestStream(byte[] content, 
             int memReps, String baseName, int fileReps) throws IOException {
+        String backingFilename = FileUtils.maybeRelative(getTmpDir(),baseName).getAbsolutePath();
         RecordingOutputStream ros = new RecordingOutputStream(
                 content.length * memReps,
-                baseName);
+                backingFilename);
         ros.open();
         for(int i = 0; i < (memReps+fileReps); i++) {
             // fill buffer (repeat MULTIPLIER times) and 
