@@ -27,6 +27,7 @@
 package org.archive.crawler.selftest;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import org.archive.io.arc.ARCReaderFactory;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.FileUtils;
+import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
 import org.archive.util.JmxWaiter;
 import org.archive.util.TmpDirTestCase;
@@ -403,13 +405,32 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
-    protected void verifyCommon() {
+    protected void verifyCommon() throws Exception {
         verifyLogFileEmpty("uri-errors.log");
         verifyLogFileEmpty("runtime-errors.log");
         verifyLogFileEmpty("local-errors.log");
+        verifyProgressStatistics();
         verifyArcsClosed();
     }
     
+    
+    protected void verifyProgressStatistics() throws IOException {
+        File logs = new File(getJobDir(), "logs");
+        File statsFile = new File(logs, "progress-statistics.log");
+        String stats = IoUtils.readFullyAsString(new FileInputStream(statsFile));
+        if (!stats.contains("CRAWL RESUMED - Preparing")) {
+            fail("progress-statistics.log has no Preparing line.");
+        }
+        if (!stats.contains("CRAWL RESUMED - Running")) {
+            fail("progress-statistics.log has no Running line.");
+        }
+        if (!stats.contains("CRAWL ENDING - Finished")) {
+            fail("progress-statistics.log has missing/wrong Finished line.");
+        }
+        if (!stats.contains("doc/s(avg)")) {
+            fail("progress-statistics.log has no legend.");
+        }
+    }
     
     
     protected List<ArchiveRecordHeader> headersInArcs() throws IOException {
