@@ -428,7 +428,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         
         // Add outlinks though they are effectively useless without anchor text.
         Collection<Link> links = curi.getOutLinks();
-        if (links != null || links.size() > 0) {
+        if (links != null && links.size() > 0) {
             for (Link link: links) {
                 r.addLabelValue("outlink", link.toString());
             }

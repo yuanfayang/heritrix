@@ -258,7 +258,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             r.addLabelValue("pathFromSeed", curi.getPathFromSeed());
         }
         Collection<Link> links = curi.getOutLinks();
-        if (links != null || links.size() > 0) {
+        if (links != null && links.size() > 0) {
             for (Link link: links) {
                 r.addLabelValue("outlink", link.toString());
             }
