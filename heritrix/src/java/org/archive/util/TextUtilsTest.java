@@ -111,5 +111,14 @@ public class TextUtilsTest extends TestCase {
         cs = TextUtils.unescapeHtml(entityQuote);
         assertEquals(cs, "aaa\"aaa");
     }
+    
+    public void testUnescapeHtmlWithDanglingAmpersand() {
+        final String mixedEncodedAmpersand1 = "aaa&aaa&amp;aaa";
+        CharSequence cs = TextUtils.unescapeHtml(mixedEncodedAmpersand1);
+        assertEquals(cs,"aaa&aaa&aaa");
+        final String mixedEncodedAmpersand2 = "aaa&aaa&amp;aaa&amp;aaa";
+        cs = TextUtils.unescapeHtml(mixedEncodedAmpersand2);
+        assertEquals(cs,"aaa&aaa&aaa&aaa");
+    } 
 }
 
