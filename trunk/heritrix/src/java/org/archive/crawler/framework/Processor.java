@@ -61,6 +61,8 @@ public class Processor extends ModuleType {
      * Key to use asking settings for decide-rules value.
      */
     public static final String ATTR_DECIDE_RULES = "decide-rules";
+    /** local name for decide-rules */
+    protected String attrDecideRules; 
 
     /**
      * Key to use asking settings for enabled value.
@@ -80,8 +82,9 @@ public class Processor extends ModuleType {
         super(name, description);
         addElementToDefinition(new SimpleType(ATTR_ENABLED,
             "Is processor enabled", new Boolean(true)));
+        attrDecideRules = getName()+"#"+ATTR_DECIDE_RULES;
         addElementToDefinition(
-            new DecideRuleSequence(ATTR_DECIDE_RULES,
+            new DecideRuleSequence(attrDecideRules,
                 "DecideRules which, if their final decision is REJECT, " +
                 "prevent this Processor from running."));
     }
@@ -162,7 +165,7 @@ public class Processor extends ModuleType {
 
     protected DecideRule getDecideRule(Object o) {
         try {
-            return (DecideRule)getAttribute(o, ATTR_DECIDE_RULES);
+            return (DecideRule)getAttribute(o, attrDecideRules);
         } catch (AttributeNotFoundException e) {
             throw new RuntimeException(e);
         }
