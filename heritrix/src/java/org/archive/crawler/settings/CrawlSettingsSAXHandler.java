@@ -516,7 +516,7 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
                                 + locator.getLineNumber() + ", column: "
                                 + locator.getColumnNumber()
                                 + " is not defined in '"
-                                + parentModule.getName() + "'.",ise);
+                                + parentModule.getName() + "'.");
                         throw new SAXException(new AttributeNotFoundException(
                                 ise.getMessage()));
                     }
