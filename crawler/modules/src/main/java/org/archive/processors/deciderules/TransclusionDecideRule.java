@@ -24,7 +24,10 @@
 */
 package org.archive.processors.deciderules;
 
-
+import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.extractor.Link;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.extractor.Hop;
 import org.archive.state.Key;
@@ -33,7 +36,7 @@ import org.archive.state.Key;
 
 /**
  * Rule ACCEPTs any CrawlURIs whose path-from-seed ('hopsPath' -- see
- * {@link CrawlURI#getPathFromSeed()}) ends 
+ * {@link CandidateURI#getPathFromSeed()}) ends 
  * with at least one, but not more than, the given number of 
  * non-navlink ('L') hops. 
  * 
@@ -50,21 +53,24 @@ import org.archive.state.Key;
  *
  * @author gojomo
  */
-public class TransclusionDecideRule extends DecideRule {
+public class TransclusionDecideRule extends PredicatedAcceptDecideRule {
 
-    private static final long serialVersionUID = 3L;
-
+    private static final long serialVersionUID = -3975688876990558918L;
 
     /**
-     * Maximum number of non-navlink ('L') hops.
+     * Maximum number of non-navlink (non-'L') hops to ACCEPT.
      */
-    final public static Key<Integer> MAX_TRANS_HOPS = Key.make(3);
+    private static final Key<Integer> MAX_TRANS_HOPS = Key.make(3);
 
     
+    /**
+     * Maximum number of speculative ('X') hops to ACCEPT.
+     */
+    private static final Key<Integer> MAX_SPECULATIVE_HOPS = Key.make(1);
+
 
     /**
      * Usual constructor. 
-     * @param name Name of this DecideRule.
      */
     public TransclusionDecideRule() {
     }
@@ -76,27 +82,33 @@ public class TransclusionDecideRule extends DecideRule {
      * @param object Object to make decision on.
      * @return true if the transitive hops >0 and <= max
      */
-    @Override
-    protected DecideResult innerDecide(ProcessorURI curi) {
+    protected boolean evaluate(ProcessorURI curi) {
         String hopsPath = curi.getPathFromSeed();
         if (hopsPath == null || hopsPath.length() == 0) {
-            return DecideResult.PASS; 
+            return false; 
         }
         int count = 0;
+        int specCount = 0; 
         for (int i = hopsPath.length() - 1; i >= 0; i--) {
-            if (hopsPath.charAt(i) != Hop.NAVLINK.getHopChar()) {
-                // TODO: count some hops for more (to bias against chains 
-                // of them, eg 'X' speculative links that might really be
-                // navlinks)
+            char c = hopsPath.charAt(i);
+            if (c != Hop.NAVLINK.getHopChar()) {
                 count++;
+                if(c == Hop.SPECULATIVE.getHopChar()) {
+                    specCount++;
+                }
             } else {
                 break;
             }
         }
-        if (count <= curi.get(this, MAX_TRANS_HOPS)) {
-            return DecideResult.ACCEPT;
+        if (count <= 0) {
+            return false;
         }
-        return DecideResult.PASS;
+        
+        if (specCount > curi.get(this, MAX_SPECULATIVE_HOPS)) {
+            return false;
+        }
+        
+        return count <= curi.get(this, MAX_TRANS_HOPS);
     }
 
 
