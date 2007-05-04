@@ -24,10 +24,6 @@
 */
 package org.archive.processors.deciderules;
 
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.extractor.Link;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.extractor.Hop;
 import org.archive.state.Key;
