@@ -27,6 +27,7 @@ package org.archive.processors.deciderules;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.extractor.Hop;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 
@@ -56,14 +57,18 @@ public class TransclusionDecideRule extends PredicatedAcceptDecideRule {
     /**
      * Maximum number of non-navlink (non-'L') hops to ACCEPT.
      */
-    private static final Key<Integer> MAX_TRANS_HOPS = Key.make(3);
+    public static final Key<Integer> MAX_TRANS_HOPS = Key.make(3);
 
     
     /**
      * Maximum number of speculative ('X') hops to ACCEPT.
      */
-    private static final Key<Integer> MAX_SPECULATIVE_HOPS = Key.make(1);
+    public static final Key<Integer> MAX_SPECULATIVE_HOPS = Key.make(1);
 
+    
+    static {
+        KeyManager.addKeys(TransclusionDecideRule.class);
+    }
 
     /**
      * Usual constructor. 
