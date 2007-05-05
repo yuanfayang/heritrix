@@ -12,24 +12,43 @@
     </authorgroup>
   </articleinfo>
 
-  <sect1 id="NEXT">
-    <title>Release TBD - TBD</title>
+  <sect1 id="1_12_1">
+    <title>Release 1.12.1 - 5/5/2007</title>
 
     <abstract>
-      <para />
+      <para>Release 1.12.1 is primarily a bug-fix release. A total of 21 bugs 
+      have been addressed, including an object-retention issue when running 
+      multiple jobs in sequence, a failure to enforce fetch timeouts on certain
+      malformed server responses, and decide-rule overrides disappearing when 
+      basing jobs on earlier jobs/profiles. There are also several enhancements, 
+      such as reporting the volume of data evaluated but not transferred/stored
+      when using duplicate-reduction features.</para>
     </abstract>
 
-    <sect2 id="NEXT_contributors">
+    <sect2 id="1_12_1_contributors">
       <title>Contributors</title>
 
       <para>Aside from the <ulink
       url="http://crawler.archive.org/team-list.html">usual suspects</ulink>,
-      the following contributed to this release:<itemizedlist>
+      the following people contributed to this release:<itemizedlist>
           <listitem>
             <para>Ahmed Ghouzia</para>
           </listitem>
         </itemizedlist></para>
     </sect2>
+    
+    <sect2 id="1_12_0_changes">
+      <title>All tracked changes</title>
+
+        <para>A dynamic list of all tracked changes marked as fixed in 1.12.1
+        is available at: <ulink
+        url="http://webteam.archive.org/confluence/display/Heritrix/Issues+with+%27Fix+Version%27+1.12.1">
+        Issues with 'Fix Version' 1.12.1.</ulink></para>
+      </sect3>
+
+    </sect2>
+    
+    
   </sect1>
 
   <sect1 id="1_12_0">
@@ -78,7 +97,7 @@
     <sect2 id="1_12_0_limitations">
       <title>Known Limitations/Issues</title>
 
-      <sect3 id="1_10_0_limitations_bdb_nfs">
+      <sect3 id="1_12_0_limitations_bdb_nfs">
         <title>java.io.IOException: No locks available</title>
 
         <para>See <xref linkend="bdb_nfs" /> in 1.8.0 Release Notes.</para>
@@ -158,7 +177,6 @@
         with 'Fix Version' 1.12.0.</ulink></para>
       </sect3>
 
-      <sect3></sect3>
     </sect2>
   </sect1>
 
