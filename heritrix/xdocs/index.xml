@@ -49,6 +49,11 @@
       <a href="http://webteam.archive.org/confluence/display/Heritrix/Issues+with+%27Fix+Version%27+1.12.1">
       list of fixed issues</a> for details.
     </p>
+    <p>Additional notes about 1.12.1 which may be updated with information 
+    post-release are available 
+    <a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.12.1">
+    on the Heritrix wiki</a>. 
+    </p>
     </subsection>
     
     <subsection name="Release 1.12.0 03/16/2007">
