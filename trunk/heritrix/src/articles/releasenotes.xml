@@ -13,7 +13,7 @@
   </articleinfo>
 
   <sect1 id="1_12_1">
-    <title>Release 1.12.1 - 5/5/2007</title>
+    <title>Release 1.12.1 - 5/6/2007</title>
 
     <abstract>
       <para>Release 1.12.1 is primarily a bug-fix release. A total of 21 bugs 
@@ -37,7 +37,7 @@
         </itemizedlist></para>
     </sect2>
     
-    <sect2 id="1_12_0_changes">
+    <sect2 id="1_12_1_changes">
       <title>All tracked changes</title>
 
         <para>A dynamic list of all tracked changes marked as fixed in 1.12.1
