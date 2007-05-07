@@ -9,7 +9,7 @@
     </icon>
     <display-name>Heritrix Console</display-name>
     <description>Heritrix Administration Console</description>
-    <filter> 
+<!--    <filter> 
         <filter-name>RootFilter</filter-name> 
         <filter-class>org.archive.crawler.admin.ui.RootFilter</filter-class> 
         <init-param>
@@ -24,7 +24,7 @@
     <listener>
         <listener-class>org.archive.crawler.WebappLifecycle
         </listener-class>
-    </listener>
+    </listener> -->
     <!--
         This is configuration for the beanshell servlet. Uncomment this
         servlet-name and the below 'bshservlet' servlet-mapping to enable.
@@ -46,9 +46,8 @@
         <servlet-name>bshservlet</servlet-name>
         <url-pattern>/bsh</url-pattern>
     </servlet-mapping>
-    -->
+
     <session-config>
-        <!--Make timeout be a day-long-->
         <session-timeout>1440</session-timeout>
     </session-config>
     <security-constraint>
@@ -82,5 +81,5 @@
         <description>Role used to get access to the Heritrix Console.
         </description>
         <role-name>admin</role-name>
-    </security-role>
+    </security-role> -->
 </web-app>
