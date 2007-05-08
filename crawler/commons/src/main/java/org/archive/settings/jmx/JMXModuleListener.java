@@ -26,6 +26,8 @@
 package org.archive.settings.jmx;
 
 import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -147,13 +149,48 @@ public class JMXModuleListener implements ModuleListener, Serializable {
     
 
     public ObjectName nameOf(Object o) {
-        return JmxUtils.makeObjectName(
-                domain, 
-                this.name, 
-                o.getClass().getName(), 
-                INSTANCE, String.valueOf(System.identityHashCode(o)));
+        return nameOf(this.domain, this.name, o);
     }
 
+    
+    public static ObjectName nameOf(String domain, String name, Object o) {
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            host = ".unknown";
+        }
+        String port = System.getProperty("com.sun.management.jmxremote.port");
+        return JmxUtils.makeObjectName(
+                domain, 
+                name, 
+                o.getClass().getName(), 
+                INSTANCE, String.valueOf(System.identityHashCode(o)),
+                JmxUtils.HOST, host,
+                JmxUtils.JMX_PORT, port);        
+    }
+    
+    
+    public static String getHost() {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            return ".unknown";
+        }
+    }
+    
+    
+    public static int getPort() {
+        String port = System.getProperty("com.sun.management.jmxremote.port");
+        try {
+            return Integer.parseInt(port);
+        } catch (RuntimeException e) {
+            return -1;
+        }
+        
+    }
+    
+    
 
     public static JMXModuleListener get(SheetManager mgr) {
         JMXModuleListener result = null;
