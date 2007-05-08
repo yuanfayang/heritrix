@@ -161,6 +161,9 @@ public class JMXModuleListener implements ModuleListener, Serializable {
             host = ".unknown";
         }
         String port = System.getProperty("com.sun.management.jmxremote.port");
+        if (port == null) {
+            port = "-1";
+        }
         return JmxUtils.makeObjectName(
                 domain, 
                 name, 

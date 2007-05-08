@@ -199,11 +199,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         heritrixThread.start();
 
         // Wait up to 20 seconds for the main OpenMBean to appear.
-        ObjectName cjm = JmxUtils.makeObjectName(
-                CrawlJobManagerImpl.DOMAIN,
-                CrawlJobManagerImpl.NAME, 
-                CrawlJobManagerImpl.TYPE);
-        waitFor(cjm);
+        ObjectName cjm = getCrawlJobManager();
 
         // Tell the CrawlJobManager to launch a new job based on the 
         // default profile.
@@ -308,7 +304,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
 
     
-    protected static void waitFor(String query, boolean exist) throws Exception {
+    protected static ObjectName waitFor(String query, boolean exist) throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         int count = 0;
         ObjectName name = new ObjectName(query);
@@ -324,7 +320,12 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             if (set.size() > 1) {
                 throw new IllegalStateException(set.size() + " matches for " + query);
             }
-        }        
+        }
+        if (set.isEmpty()) {
+            return null;
+        } else {
+            return (ObjectName)set.iterator().next();
+        }
     }
     
     
@@ -344,12 +345,13 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
     
     protected static ObjectName getCrawlJobManager() throws Exception {
-        ObjectName cjm = JmxUtils.makeObjectName(
-                CrawlJobManagerImpl.DOMAIN,
-                CrawlJobManagerImpl.NAME, 
-                CrawlJobManagerImpl.TYPE);
-        waitFor(cjm);
-        return cjm;
+        return waitFor("org.archive.crawler:*,name=CrawlJobManager", true);
+//        ObjectName cjm = JmxUtils.makeObjectName(
+//                CrawlJobManagerImpl.DOMAIN,
+//                CrawlJobManagerImpl.NAME, 
+//                CrawlJobManagerImpl.TYPE);
+//        waitFor(cjm);
+//        return cjm;
     }
     
     
