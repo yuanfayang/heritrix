@@ -207,4 +207,49 @@ public class Zen {
         }
         return Arrays.equals(m1.getParameterTypes(), m2.getParameterTypes());
     }
+
+
+    public static boolean isAccessor(Method m) {
+        int mods = m.getModifiers();
+        if (!Modifier.isPublic(mods)) {
+            return false;
+        }
+        if (Modifier.isStatic(mods)) {
+            return false;
+        }
+        if (Modifier.isAbstract(mods)) {
+            return false;
+        }
+        if (m.getParameterTypes().length > 0) {
+            return false;
+        }
+        if (m.getReturnType() == Void.TYPE) {
+            return false;
+        }
+        String name = m.getName();
+        return name.startsWith("get") || name.startsWith("is");
+    }
+
+    
+    public static boolean isMutator(Method m) {
+        int mods = m.getModifiers();
+        if (!Modifier.isPublic(mods)) {
+            return false;
+        }
+        if (Modifier.isStatic(mods)) {
+            return false;
+        }
+        if (Modifier.isAbstract(mods)) {
+            return false;
+        }
+        if (m.getParameterTypes().length != 1) {
+            return false;
+        }
+        if (m.getReturnType() != Void.TYPE) {
+            return false;
+        }
+        String name = m.getName();
+        return name.startsWith("set");
+    }
+
 }

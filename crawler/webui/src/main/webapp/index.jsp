@@ -1,0 +1,1 @@
+<% response.sendRedirect(request.getContextPath() + "/home/do_show_home.jsp"); %>
