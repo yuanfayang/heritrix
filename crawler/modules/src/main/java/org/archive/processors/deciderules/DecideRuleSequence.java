@@ -25,6 +25,8 @@ package org.archive.processors.deciderules;
 
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
@@ -32,6 +34,9 @@ import org.archive.state.Key;
 
 public class DecideRuleSequence extends DecideRule {
 
+    final private static Logger LOGGER = 
+        Logger.getLogger(DecideRuleSequence.class.getName());
+    
     private static final long serialVersionUID = 3L;
 
     final public static Key<List<DecideRule>> RULES = 
@@ -41,13 +46,22 @@ public class DecideRuleSequence extends DecideRule {
     public DecideResult innerDecide(ProcessorURI uri) {
         DecideResult result = DecideResult.PASS;
         List<DecideRule> rules = uri.get(this, RULES);
-        for (DecideRule rule: rules) {
+        int max = rules.size();
+        for (int i = 0; i < max; i++) {
+            DecideRule rule = rules.get(i);
             if (rule.onlyDecision(uri) != result) {
                 DecideResult r = rule.decisionFor(uri);
+                if (LOGGER.isLoggable(Level.FINEST)) {
+                    LOGGER.finest("DecideRule #" + i + " " + 
+                            rule.getClass().getName() + " returned " + r);
+                }
                 if (r != DecideResult.PASS) {
                     result = r;
                 }
             }
+        }
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("DecideRuleSequence returned " + result);
         }
         return result;
     }
