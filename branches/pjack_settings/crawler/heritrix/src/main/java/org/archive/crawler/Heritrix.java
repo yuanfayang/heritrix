@@ -200,7 +200,7 @@ public class Heritrix {
 
         try {
             CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(config);
-            registerJndi(cjm.getObjectName());
+            registerJndi(cjm.getObjectName(), out);
             out.println("CrawlJobManager registered at " + cjm.getObjectName());
         } catch (Exception e) {
             // Show any exceptions in STARTLOG.
@@ -261,25 +261,24 @@ public class Heritrix {
 
     
 
-    protected static void registerJndi(final ObjectName name)
+    protected static void registerJndi(final ObjectName name, PrintStream out)
     throws NullPointerException, NamingException {
     	Context c = getJndiContext();
     	if (c == null) {
-    		return;
+    	    out.println("No JNDI context.");
+            return;
     	}
         CompoundName key = JndiUtils.bindObjectName(c, name);
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Bound '"  + key + "' to '" + JndiUtils.
+        out.println("Bound '"  + key + "' to '" + JndiUtils.
                getCompoundName(c.getNameInNamespace()).toString()
                + "' jndi context");
-        }
     }
     
-    protected static void deregisterJndi(final ObjectName name)
+    protected static void deregisterJndi(final ObjectName name, PrintStream out)
     throws NullPointerException, NamingException {
     	Context c = getJndiContext();
     	if (c == null) {
-    		return;
+            return;
     	}
         CompoundName key = JndiUtils.unbindObjectName(c, name);
         if (logger.isLoggable(Level.FINE)) {
@@ -296,9 +295,9 @@ public class Heritrix {
     protected static Context getJndiContext() throws NamingException {
     	Context c = null;
     	try {
-    		c = JndiUtils.getSubContext(CrawlJobManagerImpl.DOMAIN);
+    	    c = JndiUtils.getSubContext(CrawlJobManagerImpl.DOMAIN);
     	} catch (NoInitialContextException e) {
-    		logger.fine("No JNDI Context: " + e.toString());
+    	    logger.fine("No JNDI Context: " + e.toString());
     	}
     	return c;
     }
