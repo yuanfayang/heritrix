@@ -127,3 +127,36 @@ a:hover.underLineOnHover {
 .legendTitle {
 	color:black;
 }
+
+
+table.info {
+    border: solid black 1px;
+    border-collapse: collapse;    
+    width: 100%;
+}
+
+th.info {
+    border: solid black 1px;
+    border-collapse: collapse;    
+    padding: 2px;
+}
+
+
+td.info0 {
+    border: solid black 1px;
+    border-collapse: collapse;    
+    padding: 2px;
+}
+
+td.info1 {
+    border: solid black 1px;
+    border-collapse: collapse;    
+    background-color: #FFFFCC;
+    padding: 2px;
+}
+
+.nospace {
+    display:inline;
+    margin:0px;
+    padding:0px;
+}
