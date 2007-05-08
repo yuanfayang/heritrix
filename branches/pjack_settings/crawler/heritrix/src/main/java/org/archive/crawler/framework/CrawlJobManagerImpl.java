@@ -103,7 +103,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
         this.jobsDir = new File(config.getJobsDirectory());
         this.jobs = new HashMap<String,CrawlController>();
-        this.oname = register(NAME, TYPE, this);
+        this.oname = JMXModuleListener.nameOf(DOMAIN, NAME, this);
+        register(this, oname);
         this.heritrixThread = config.getHeritrixThread();
     }
     
@@ -144,7 +145,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
 
         JMXSheetManager jmx = new JMXSheetManager(fsm);
-        register(profile, "SheetManager", jmx);
+        ObjectName name = JMXModuleListener.nameOf(DOMAIN, profile, jmx);
+        register(jmx, name);
     }
 
     
@@ -249,9 +251,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     
-    private ObjectName register(String name, String type, Object o) {
+    private ObjectName register(Object o, ObjectName oname) {
         try {
-            ObjectName oname = name(name, type);
             server.registerMBean(o, oname);
             return oname;
         } catch (InstanceAlreadyExistsException e) {
@@ -361,4 +362,6 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     public void systemExit() {
         System.exit(1);
     }
+
+
 }
