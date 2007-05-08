@@ -30,7 +30,7 @@ import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
 /**
- * PredicatedDecideRule whose default decision is ACCEPT.
+ * PredicatedDecideRule whose default decision is REJECT.
  * 
  * @author pjack
  */
