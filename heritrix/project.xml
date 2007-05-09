@@ -371,14 +371,20 @@
             </properties>
         </dependency>
         <dependency>
-            <id>commons-io</id>
+            <id>commons-io-local</id>
             <version>1.3.1</version>
             <url>http://jakarta.apache.org/commons/io/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>IO helper classes. 
+                <description>IO helper classes.
+                Need to give this component an id other than the natural
+                one of 'commons-io' because of bug in 1.0.2 maven;
+                our project.properties override that forces maven to use
+                a local copy rather than pull one from the net is causing
+                it confusion on initial setup (This feature worked fine in
+                earlier mavens).
                 </description>
                 <license>Apache 2.0
                 http://www.apache.org/licenses/LICENSE-2.0</license>
