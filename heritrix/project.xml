@@ -371,6 +371,20 @@
             </properties>
         </dependency>
         <dependency>
+            <id>commons-io</id>
+            <version>1.3.1</version>
+            <url>http://jakarta.apache.org/commons/io/</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <ear.bundle>true</ear.bundle>
+                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+                <description>IO helper classes. 
+                </description>
+                <license>Apache 2.0
+                http://www.apache.org/licenses/LICENSE-2.0</license>
+            </properties>
+        </dependency>
+        <dependency>
             <id>commons-lang-local</id>
             <version>2.3</version>
             <url>http://jakarta.apache.org/commons/lang/</url>
