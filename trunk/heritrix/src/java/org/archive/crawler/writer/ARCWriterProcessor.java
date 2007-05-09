@@ -48,6 +48,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.io.IOUtils;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -123,12 +124,12 @@ WriterPoolSettings, FetchStatusCodes {
         	return;
         }
         
-        
+        ReplayInputStream ris = null; 
         try {
             if(shouldWrite(curi)) {
-                InputStream is = curi.getHttpRecorder().getRecordedInput().
-                getReplayInputStream();
-                write(curi, recordLength, is, getHostAddress(curi));
+                ris = curi.getHttpRecorder().getRecordedInput()
+                        .getReplayInputStream();
+                write(curi, recordLength, ris, getHostAddress(curi));
             } else {
                 logger.info("does not write " + curi.toString());
             }
@@ -137,6 +138,8 @@ WriterPoolSettings, FetchStatusCodes {
                 curi.toString());
             logger.log(Level.SEVERE, "Failed write of Record: " +
                 curi.toString(), e);
+        } finally {
+            IOUtils.closeQuietly(ris); 
         }
     }
     
