@@ -28,10 +28,13 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -54,7 +57,7 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
-import org.archive.settings.jmx.JMXSheetManager;
+import org.archive.settings.jmx.JMXSheetManagerImpl;
 import org.archive.settings.path.PathValidator;
 import org.archive.util.FileUtils;
 
@@ -144,7 +147,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManager jmx = new JMXSheetManager(fsm);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(fsm);
         ObjectName name = JMXModuleListener.nameOf(DOMAIN, profile, jmx);
         register(jmx, name);
     }
@@ -191,7 +194,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManager jmx = new JMXSheetManager(fsm);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(fsm);
         final ObjectName smName = jmxListener.nameOf(jmx); // register(job, "SheetManager", jmx);
         try {
             server.registerMBean(jmx, smName);
@@ -363,5 +366,17 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         System.exit(1);
     }
 
+
+    public String[] listActiveJobs() {
+        return jobs.keySet().toArray(new String[0]);
+    }
+
+
+    public String[] listCompletedJobs() {
+        Set<String> result = new HashSet<String>();
+        result.addAll(Arrays.asList(jobsDir.list()));
+        result.removeAll(jobs.keySet());
+        return result.toArray(new String[0]);
+    }
 
 }

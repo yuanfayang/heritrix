@@ -44,6 +44,13 @@ public interface CrawlJobManager extends Closeable {
     @Operation(desc="Lists all jobs.")
     public String[] listAllJobs();
 
+    @Operation(desc="Lists active jobs.")
+    public String[] listActiveJobs();
+
+    @Operation(desc="Lists completed jobs.")
+    public String[] listCompletedJobs();
+
+    
     @Operation(desc="Lists all profiles.")
     public String[] listProfiles();
     

@@ -27,9 +27,16 @@
 package org.archive.crawler.webui;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
+import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.QueryExp;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -73,6 +80,84 @@ public class Misc {
             throw new IllegalStateException(e);
         } catch (IOException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    
+    public static void setCrawler(HttpServletRequest request) {
+        String host = request.getParameter("host");
+        int port = Integer.parseInt(request.getParameter("port"));
+        int id = Integer.parseInt(request.getParameter("id"));
+        request.setAttribute("host", host);
+        request.setAttribute("port", port);
+        request.setAttribute("id", id);
+    }
+
+
+    public static void close(JMXConnector conn) {
+        if (conn == null) {
+            return;
+        }
+        try {
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    
+    public static Set<ObjectName> find(JMXConnector jmxc, String query) {
+        try {
+            MBeanServerConnection conn = jmxc.getMBeanServerConnection();
+            @SuppressWarnings("unchecked")
+            Set<ObjectName> set = conn.queryNames(null, new ObjectName(query));
+            return set;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalStateException(e);
+        }
+        
+    }
+    
+    public static ObjectName findUnique(
+            JMXConnector jmxc, 
+            String query) {
+        Set<ObjectName> set = find(jmxc, query);
+        int size = set.size();
+        if (size == 1) {
+            return (ObjectName)set.iterator().next();
+        }
+        throw new IllegalStateException("Expected unique MBean for " 
+                + query + " but found " + set);
+    }
+
+
+
+    protected static ObjectName waitFor(
+            JMXConnector jmxc, 
+            String query, 
+            boolean exist) throws Exception {
+        MBeanServerConnection server = jmxc.getMBeanServerConnection();
+        int count = 0;
+        ObjectName name = new ObjectName(query);
+        Set set = server.queryNames(null, name);
+        while (set.isEmpty() == exist) {
+            count++;
+            if (count > 40) {
+                throw new IllegalStateException("Could not find " + 
+                        name + " after 20 seconds.");
+            }
+            Thread.sleep(500);
+            set = server.queryNames(null, name);
+            if (set.size() > 1) {
+                throw new IllegalStateException(set.size() + " matches for " + query);
+            }
+        }
+        if (set.isEmpty()) {
+            return null;
+        } else {
+            return (ObjectName)set.iterator().next();
         }
     }
 

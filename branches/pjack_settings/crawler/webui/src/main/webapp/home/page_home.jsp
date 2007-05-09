@@ -1,5 +1,6 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
+<%@ page import="org.archive.crawler.webui.Text" %>
 <%
 
 Collection<Crawler> crawlers = (Collection)request.getAttribute("crawlers");
@@ -34,9 +35,9 @@ boolean jndiWarning = (Boolean)request.getAttribute("jndiWarning");
 
 <td class="info<%=row%>">
 <% if (crawler.getError() == null) { %>
-    <a href="do_view_crawler.jsp?<%=crawler.getQueryString()%>">
+    <a href="<%=request.getContextPath()%>/crawler_area/do_show_crawler.jsp?<%=crawler.getQueryString()%>">
 <% } %>
-<%=crawler.getHost()%>:<%=crawler.getPort()%>#<%=crawler.getIdentityHashCode()%>
+<%=Text.html(crawler.getLegend())%>
 <% if (crawler.getError() == null) { %>
     </a>
 <% } %>
