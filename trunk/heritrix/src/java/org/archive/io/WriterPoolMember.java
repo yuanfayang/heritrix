@@ -463,12 +463,13 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
         long tot = 0;
         while ((tot < recordLength || !enforceLength)
                 && (read = is.read(scratchbuffer)) != -1) {
-            tot += read;
+            int write = read; 
             if (enforceLength) {
                 // never write more than enforced length
-                read = (int) Math.min(read, recordLength - tot);
+                write = (int) Math.min(write, recordLength - tot);
             }
-            write(scratchbuffer, 0, read);
+            tot += read;
+            write(scratchbuffer, 0, write);
         }
         if (enforceLength && tot != recordLength) {
             throw new IOException("Read " + tot + " but expected "
