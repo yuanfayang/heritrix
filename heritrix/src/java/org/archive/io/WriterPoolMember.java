@@ -118,6 +118,13 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      */
     private static NumberFormat serialNoFormatter = new DecimalFormat("00000");
     
+    
+    /**
+     * Buffer to reuse writing streams.
+     */
+    private final byte [] scratchbuffer = new byte[4 * 1024];
+ 
+    
     /**
      * Constructor.
      * Takes a stream. Use with caution. There is no upperbound check on size.
@@ -419,37 +426,56 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
 		this.out.write(b);
 	}
 	
-	protected void readFullyFrom(final InputStream is, final long recordLength,
-			final byte [] b)
-	throws IOException {
-        int read = b.length;
-        int total = 0;
-        while((read = is.read(b)) != -1 && total < recordLength) {
-        	total += read;
-            write(b, 0, read);
-        }
-        if (total != recordLength) {
-        	throw new IOException("Read " + total + " but expected " +
-        	    recordLength);
-        }
-	}
-	
+	/**
+     * @deprecated Use {@link #copyFrom(InputStream,long,boolean)} instead
+     */
+    protected void readFullyFrom(final InputStream is, final long recordLength,
+    		final byte [] b)
+    throws IOException {
+        copyFrom(is, recordLength, true);
+    }
+
+    /**
+     * @deprecated Use {@link #copyFrom(InputStream,long,boolean)} instead
+     */
 	protected void readToLimitFrom(final InputStream is, final long limit,
 			final byte [] b)
 	throws IOException {
-        int read = b.length;
-        long total = 0;
-        while((read = is.read(b,0,(int)Math.min(b.length, (limit-total)))) != -1
-        		&& total < limit) {
-        	total += read;
-            write(b, 0, read);
-        }
-        if (total != limit) {
-        	throw new IOException("Read " + total + " but expected " +
-        	    limit);
-        }
+        copyFrom(is, limit, true);
 	}
-	
+
+    /**
+     * Copy bytes from the provided InputStream to the target file/stream being
+     * written.
+     * 
+     * @param is
+     *            InputStream to copy bytes from
+     * @param recordLength
+     *            expected number of bytes to copy
+     * @param enforceLength
+     *            whether to throw an exception if too many/too few bytes are
+     *            available from stream
+     * @throws IOException
+     */
+    protected void copyFrom(final InputStream is, final long recordLength,
+            boolean enforceLength) throws IOException {
+        int read = scratchbuffer.length;
+        long tot = 0;
+        while ((tot < recordLength || !enforceLength)
+                && (read = is.read(scratchbuffer)) != -1) {
+            tot += read;
+            if (enforceLength) {
+                // never write more than enforced length
+                read = (int) Math.min(read, recordLength - tot);
+            }
+            write(scratchbuffer, 0, read);
+        }
+        if (enforceLength && tot != recordLength) {
+            throw new IOException("Read " + tot + " but expected "
+                    + recordLength);
+        }
+    }
+
     public void close() throws IOException {
         if (this.out == null) {
             return;

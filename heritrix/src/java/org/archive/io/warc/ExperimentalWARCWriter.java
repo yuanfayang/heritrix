@@ -243,7 +243,7 @@ implements WARCConstants {
             if (contentStream != null && contentLength > 0) {
                 // Write out the header/body separator.
                 write(CRLF_BYTES); // TODO: should this be written even for zero-length?
-            	readToLimitFrom(contentStream, contentLength, this.readbuffer);
+            	copyFrom(contentStream, contentLength, true);
             }
             
             // Write out the two blank lines at end of all records.

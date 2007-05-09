@@ -26,6 +26,7 @@
 package org.archive.io.arc;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -124,11 +125,6 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      */
     private static final Pattern METADATA_LINE_PATTERN =
         Pattern.compile("^\\S+ \\S+ \\S+ \\S+ \\S+(" + LINE_SEPARATOR + "?)$");
-
-    /**
-     * Buffer to reuse writing streams.
-     */
-    private final byte [] readbuffer = new byte[4 * 1024];
     
     private List metadata = null;
     
@@ -376,60 +372,65 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
         return result;
     }
 
+    /**
+     * @deprecated use input-stream version directly instead
+     */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, long recordLength,
             ByteArrayOutputStream baos)
     throws IOException {
-        preWriteRecordTasks();
-        try {
-            write(getMetaLine(uri, contentType, hostIP,
-                fetchBeginTimeStamp, recordLength).getBytes(UTF8));
-            baos.writeTo(getOutputStream());
-            write(LINE_SEPARATOR);
-        } finally {
-            postWriteRecordTasks();
-        }
+        write(uri, contentType, hostIP, fetchBeginTimeStamp, recordLength, 
+                new ByteArrayInputStream(baos.toByteArray()), false);
     }
-
+    
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, long recordLength, InputStream in)
     throws IOException {
-        preWriteRecordTasks();
-        try {
-            write(getMetaLine(uri, contentType, hostIP,
-                    fetchBeginTimeStamp, recordLength).getBytes(UTF8));
-            readFullyFrom(in, recordLength, this.readbuffer);
-            write(LINE_SEPARATOR);
-        } finally {
-            postWriteRecordTasks();
-        }
+        write(uri,contentType,hostIP,fetchBeginTimeStamp,recordLength,in,true);
     }
-
+    
+    /**
+     * Write a record with the given metadata/content.
+     * 
+     * @param uri
+     *            URI for metadata-line
+     * @param contentType
+     *            MIME content-type for metadata-line
+     * @param hostIP
+     *            IP for metadata-line
+     * @param fetchBeginTimeStamp
+     *            timestamp for metadata-line
+     * @param recordLength
+     *            length for metadata-line; also may be enforced
+     * @param in
+     *            source InputStream for record content
+     * @param enforceLength
+     *            whether to enforce the declared length; should be true
+     *            unless intentionally writing bad records for testing
+     * @throws IOException
+     */
     public void write(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, long recordLength,
-            ReplayInputStream ris)
-    throws IOException {
+            long fetchBeginTimeStamp, long recordLength, InputStream in,
+            boolean enforceLength) throws IOException {
         preWriteRecordTasks();
         try {
-            write(getMetaLine(uri, contentType, hostIP,
-                    fetchBeginTimeStamp, recordLength).getBytes(UTF8));
-            try {
-                ris.readFullyTo(getOutputStream());
-                long remaining = ris.remaining();
-                // Should be zero at this stage.  If not, something is
+            write(getMetaLine(uri, contentType, hostIP, fetchBeginTimeStamp,
+                    recordLength).getBytes(UTF8));
+            copyFrom(in, recordLength, enforceLength);
+            if (in instanceof ReplayInputStream) {
+                // check for consumption of entire recorded material
+                long remaining = ((ReplayInputStream) in).remaining();
+                // Should be zero at this stage. If not, something is
                 // wrong.
                 if (remaining != 0) {
-                    String message = "Gap between expected and actual: " +
-                        remaining + LINE_SEPARATOR + DevUtils.extraInfo() +
-                        " writing arc " + this.getFile().getAbsolutePath();
+                    String message = "Gap between expected and actual: "
+                            + remaining + LINE_SEPARATOR + DevUtils.extraInfo()
+                            + " writing arc "
+                            + this.getFile().getAbsolutePath();
                     DevUtils.warnHandle(new Throwable(message), message);
                     throw new IOException(message);
                 }
-            } finally {
-                ris.close();
-            } 
-            
-            // Write out trailing newline
+            }
             write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
