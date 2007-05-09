@@ -58,9 +58,11 @@ class Metadata {
     private Map<String,Method> operations;
     private Map<String,Method> accessors;
     private Map<String,Method> mutators;
+    private Class cls;
     
     
     public Metadata(Class<?> c) {
+        this.cls = c;
         info = new Info();
         info.name = c.getName();
         Header h = c.getAnnotation(Header.class);
@@ -80,6 +82,10 @@ class Metadata {
         info = null;
     }
 
+    
+    public Class getType() {
+        return cls;
+    }
     
     
     public OpenMBeanInfoSupport getOpenMBeanInfo() {

@@ -44,6 +44,7 @@ import javax.management.ObjectName;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.SheetManager;
 import org.archive.util.JmxUtils;
+import org.archive.util.TypeSubstitution;
 
 /**
  * @author pjack
@@ -164,10 +165,17 @@ public class JMXModuleListener implements ModuleListener, Serializable {
         if (port == null) {
             port = "-1";
         }
+        Class type;
+        if (o instanceof TypeSubstitution) {
+            type = ((TypeSubstitution)o).getActualClass();
+        } else {
+            type = o.getClass();
+        }
+        
         return JmxUtils.makeObjectName(
                 domain, 
                 name, 
-                o.getClass().getName(), 
+                type.getName(), 
                 INSTANCE, String.valueOf(System.identityHashCode(o)),
                 JmxUtils.HOST, host,
                 JmxUtils.JMX_PORT, port);        

@@ -45,6 +45,8 @@ import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ReflectionException;
 
+import org.archive.util.TypeSubstitution;
+
 
 /**
  * Supporting class for creating annotation-based open MBeans.  There are two
@@ -108,7 +110,8 @@ import javax.management.ReflectionException;
  * @author pjack
  *
  */
-public class Bean implements DynamicMBean, NotificationEmitter {
+public class Bean 
+implements DynamicMBean, NotificationEmitter, TypeSubstitution {
 
     
     final public static int ACTION = MBeanOperationInfo.ACTION;
@@ -320,4 +323,8 @@ public class Bean implements DynamicMBean, NotificationEmitter {
         sendNotification(n);
     }
 
+    
+    public Class getActualClass() {
+        return metadata.getType();
+    }
 }
