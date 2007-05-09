@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.naming.Context;
 import javax.naming.NameClassPair;
@@ -191,6 +192,7 @@ public class Home {
             if (c.getHost().equals(host) 
             && (c.getPort() == port)
             && (c.getIdentityHashCode() == id)) {
+                request.setAttribute("crawler", c);
                 return c;
             }
         }
@@ -251,7 +253,7 @@ public class Home {
         NamingEnumeration<NameClassPair> enu = context.list("");
         while (enu.hasMore()) {
             NameClassPair pair = enu.next();
-            ObjectName oname = new ObjectName(":" + pair.getName());
+            ObjectName oname = new ObjectName("org.archive.crawler:" + pair.getName());
             String name = oname.getKeyProperty(JmxUtils.NAME);
             if ((name != null) && name.equals("CrawlJobManager")) {
                 Crawler crawler = Crawler.fromObjectName(oname);
