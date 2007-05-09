@@ -391,4 +391,20 @@ public class Crawler implements Comparable {
     public String toString() {
         return host + ":" + port + "#" + id;
     }
+    
+    
+    public String getLegend() {
+        return host + ":" + port + "#" + id;
+    }
+
+
+    public JMXConnector connect() {
+        try {
+            return Misc.connect(host, port, username, password);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
 }
+

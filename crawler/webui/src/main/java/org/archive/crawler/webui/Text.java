@@ -26,6 +26,8 @@
 
 package org.archive.crawler.webui;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.archive.util.TextUtils;
 
 /**
@@ -43,5 +45,56 @@ public class Text {
     public static String html(Object s) {
         return TextUtils.escapeForHTML(s.toString());
     }
+    
+    
+    public static Object get(HttpServletRequest request, String attr) {
+        Object r = request.getAttribute(attr);
+        if (r == null) {
+            throw new IllegalStateException("Missing required request attribute: " + attr);
+        }
+        return r;
+    }
+    
+    
+    public static String parentPath(String path) {
+        int p = path.indexOf('.');
+        if (p < 0) {
+            return "";
+        } else {
+            return path.substring(0, p);
+        }
+    }
+    
+    
+    public static int countSegments(String path) {
+        String[] all = path.split("\\.");
+        return all.length;
+    }
+    
+    
+    public static String jobQueryString(HttpServletRequest request) {
+        StringBuilder r = new StringBuilder();
+        Crawler c = (Crawler)get(request, "crawler");
+        r.append(c.getQueryString());
+        
+        String job = (String)request.getAttribute("job");
+        if (job == null) {
+            job = (String)request.getAttribute("profile");
+            if (job == null) {
+                throw new IllegalStateException(
+                        "Must specify job or profile in request.");
+            }
+            r.append("&profile=").append(job);
+        } else {
+            r.append("&job=").append(job);
+        }
+        
+        return r.toString();
+    }
 
+    
+    public static String sheetQueryString(HttpServletRequest request) {
+        String sheet = (String)get(request, "sheet");
+        return jobQueryString(request) + "&sheet=" + sheet;
+    }
 }
