@@ -45,6 +45,7 @@ import java.util.logging.Logger;
 
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.ModuleListener;
+import org.archive.settings.Offline;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
@@ -685,11 +686,22 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     
     private void setManagerDefaults(SingleSheet ss) {
-        ss.set(this, MANAGER, this);
-        ss.set(this, BDB, bdb);
-        ss.set(bdb, DIR, bdbDir);
-        ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
-        ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+        if (isOnline()) {
+            ss.set(this, MANAGER, this);
+            ss.set(this, BDB, bdb);
+            ss.set(bdb, DIR, bdbDir);
+            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
+            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+        } else {
+            @SuppressWarnings("unchecked")
+            Offline<SheetManager> manager = (Offline)getManagerModule();
+            Offline<BdbModule> bdb = Offline.make(BdbModule.class);
+            ss.setOffline(manager, MANAGER, manager);
+            ss.setOffline(manager, BDB, bdb);
+            ss.set(bdb, DIR, bdbDir);
+            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
+            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+        }
     }
     
     

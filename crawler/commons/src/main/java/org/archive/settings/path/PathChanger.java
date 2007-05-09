@@ -137,6 +137,7 @@ public class PathChanger {
 
     
     private Object makeObject(SingleSheet sheet, PathChange pc) {
+        
         Object result = makeObject2(sheet, pc);
         if (result instanceof Initializable) {
             PendingInit pi = new PendingInit();
@@ -152,7 +153,12 @@ public class PathChanger {
         String value = pc.getValue();
 
         try {
-            return Class.forName(value).newInstance();
+            Class<?> c = Class.forName(value);
+            if (!online(sheet, c)) {
+                Offline offline = Offline.make(c);
+                return offline;
+            }
+            return c.newInstance();
         } catch (ClassNotFoundException e) {
             throw new PathChangeException("No such class: " + value);
         } catch (InstantiationException e) {
@@ -160,6 +166,17 @@ public class PathChanger {
         } catch (IllegalAccessException e) {
             throw new PathChangeException(e);
         }        
+    }
+    
+    
+    private boolean online(SingleSheet sheet, Class c) {
+        if (Map.class.isAssignableFrom(c)) {
+            return true;
+        }
+        if (List.class.isAssignableFrom(c)) {
+            return true;
+        }
+        return sheet.getSheetManager().isOnline();
     }
     
 
@@ -172,7 +189,7 @@ public class PathChanger {
         if (p < 0) {
             previousPath = "";
             lastToken = path;
-            previous = sheet.getSheetManager();
+            previous = sheet.getSheetManager().getManagerModule();
         } else {
             previousPath = path.substring(0, p);
             lastToken = path.substring(p + 1);
