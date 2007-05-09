@@ -136,9 +136,9 @@
         <sect4>
           <title>Hardware</title>
 
-          <para>Default a java heap of 256MB RAM, which is usually suitable
+          <para>A default java heap is 256MB RAM, which is usually suitable
           for crawls that range over hundreds of hosts. Assign more -- see
-          <xref linkend="java_opts" /> for how -- of your available ram to the
+          <xref linkend="java_opts" /> for how -- of your available RAM to the
           heap if you are crawling thousands of hosts or experience Java
           out-of-memory problems.</para>
         </sect4>
