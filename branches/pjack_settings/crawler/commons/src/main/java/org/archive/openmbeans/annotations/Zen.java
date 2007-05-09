@@ -217,9 +217,6 @@ public class Zen {
         if (Modifier.isStatic(mods)) {
             return false;
         }
-        if (Modifier.isAbstract(mods)) {
-            return false;
-        }
         if (m.getParameterTypes().length > 0) {
             return false;
         }
@@ -237,9 +234,6 @@ public class Zen {
             return false;
         }
         if (Modifier.isStatic(mods)) {
-            return false;
-        }
-        if (Modifier.isAbstract(mods)) {
             return false;
         }
         if (m.getParameterTypes().length != 1) {
