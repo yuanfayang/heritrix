@@ -34,6 +34,7 @@ import java.util.Map;
 import org.archive.settings.Offline;
 import org.archive.settings.Resolved;
 import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -81,6 +82,9 @@ public class PathLister {
         this.resolve = resolve;
         this.consumer = c;
         this.alreadySeen = new IdentityHashMap<Object,String>();
+        alreadySeen.put(
+                sheet.getSheetManager().getManagerModule(),
+                SheetManager.MANAGER.getFieldName());
     }
     
 
@@ -140,6 +144,9 @@ public class PathLister {
     private void handleModule(
             String path,
             Object module) {
+        if (module == null) {
+            return;
+        }
         if (alreadySeen(module, path)) {
             return;
         }
