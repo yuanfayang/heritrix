@@ -24,6 +24,7 @@
  */
 package org.archive.io.arc;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,6 +37,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.NullInputStream;
+import org.apache.commons.io.output.NullOutputStream;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
@@ -57,8 +61,8 @@ extends TmpDirTestCase implements ARCConstants {
     /**
      * Prefix to use for ARC files made by JUNIT.
      */
-    private static final String PREFIX =
-        /* TODO DEFAULT_ARC_FILE_PREFIX*/ "IAH";
+    private static final String SUFFIX =
+        /* TODO DEFAULT_ARC_FILE_PREFIX*/ "JUNIT";
     
     private static final String SOME_URL = "http://www.archive.org/test/";
 
@@ -117,7 +121,7 @@ extends TmpDirTestCase implements ARCConstants {
         cleanUpOldFiles(baseName);
         File [] files = {getTmpDir()};
         ARCWriter arcWriter = new ARCWriter(SERIAL_NO, Arrays.asList(files),
-            baseName + '-' + PREFIX, compress, maxSize);
+            baseName + '-' + SUFFIX, compress, maxSize);
         assertNotNull(arcWriter);
         for (int i = 0; i < recordCount; i++) {
             writeRandomHTTPRecord(arcWriter, i);
@@ -222,11 +226,28 @@ extends TmpDirTestCase implements ARCConstants {
         validate(arcFile, recordCount + 1 /*Header record*/);
     }
     
+    public void testWriteGiantRecord() throws IOException {
+        File [] files = {getTmpDir()};
+        PrintStream dummyStream = new PrintStream(new NullOutputStream());
+        ARCWriter arcWriter = new ARCWriter(SERIAL_NO, dummyStream,
+                new File("dummy"),
+                false, null, null);
+        assertNotNull(arcWriter);
+
+        // Start the record with an arbitrary 14-digit date per RFC2540
+        long now = System.currentTimeMillis();
+        long recordLength = org.apache.commons.io.FileUtils.ONE_GB * 3;
+       
+        arcWriter.write("dummy:uri", "application/octet-stream",
+            "0.1.2.3", now, recordLength, new NullInputStream(recordLength));
+        arcWriter.close();
+        }
+    
     private void runCheckARCFileSizeTest(String baseName, boolean compress)
     throws FileNotFoundException, IOException  {
         writeRecords(baseName, compress, 1024, 15);
         // Now validate all files just created.
-        File [] files = FileUtils.getFilesWithPrefix(getTmpDir(), PREFIX);
+        File [] files = FileUtils.getFilesWithPrefix(getTmpDir(), SUFFIX);
         for (int i = 0; i < files.length; i++) {
             validate(files[i], -1);
         }
@@ -238,18 +259,20 @@ extends TmpDirTestCase implements ARCConstants {
             compress, DEFAULT_MAX_ARC_FILE_SIZE);
     }
     
-    protected static ByteArrayOutputStream getBaos(String str)
+    protected static ByteArrayInputStream getBais(String str)
     throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(str.getBytes());
-        return baos;
+        return new ByteArrayInputStream(str.getBytes());
     }
     
+    /**
+     * Writes a record, suppressing normal length-checks (so that 
+     * intentionally malformed records may be written). 
+     */
     protected static void writeRecord(ARCWriter writer, String url,
-        String type, int len, ByteArrayOutputStream baos)
+        String type, int len, ByteArrayInputStream bais)
     throws IOException {
         writer.write(url, type, "192.168.1.1", (new Date()).getTime(), len,
-            baos);
+            bais, false);
     }
     
     protected int iterateRecords(ARCReader r)
@@ -273,14 +296,14 @@ extends TmpDirTestCase implements ARCConstants {
     	ARCWriter writer = createARCWriter(name, compressed);
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html",
-            content.length(), getBaos(content));
+            content.length(), getBais(content));
         return writer;
     }
     
     public void testSpaceInURL() {
         String eMessage = null;
         try {
-            holeyUrl("testSpaceInURL-" + PREFIX, false, " ");
+            holeyUrl("testSpaceInURL-" + SUFFIX, false, " ");
         } catch (IOException e) {
             eMessage = e.getMessage();
         }
@@ -291,7 +314,7 @@ extends TmpDirTestCase implements ARCConstants {
     public void testTabInURL() {        
         String eMessage = null;
         try {
-            holeyUrl("testTabInURL-" + PREFIX, false, "\t");
+            holeyUrl("testTabInURL-" + SUFFIX, false, "\t");
         } catch (IOException e) {
             eMessage = e.getMessage();
         }
@@ -304,9 +327,8 @@ extends TmpDirTestCase implements ARCConstants {
     	ARCWriter writer = createArcWithOneRecord(name, compress);
         // Add some bytes on the end to mess up the record.
         String content = getContent();
-        ByteArrayOutputStream baos = getBaos(content);
         writeRecord(writer, SOME_URL + urlInsert + "/index.html", "text/html",
-            content.length(), baos);
+            content.length(), getBais(content));
         writer.close();
     }
     
@@ -317,14 +339,14 @@ extends TmpDirTestCase implements ARCConstants {
 //    }
     
     public void testLengthTooShortCompressed() throws IOException {
-        lengthTooShort("testLengthTooShortCompressed-" + PREFIX, true, false);
+        lengthTooShort("testLengthTooShortCompressed-" + SUFFIX, true, false);
     }
     
     public void testLengthTooShortCompressedStrict()
     throws IOException {      
         String eMessage = null;
         try {
-            lengthTooShort("testLengthTooShortCompressedStrict-" + PREFIX,
+            lengthTooShort("testLengthTooShortCompressedStrict-" + SUFFIX,
                 true, true);
         } catch (RuntimeException e) {
             eMessage = e.getMessage();
@@ -338,12 +360,11 @@ extends TmpDirTestCase implements ARCConstants {
     	ARCWriter writer = createArcWithOneRecord(name, compress);
         // Add some bytes on the end to mess up the record.
         String content = getContent();
-        ByteArrayOutputStream baos = getBaos(content);
-        baos.write("SOME TRAILING BYTES".getBytes());
+        ByteArrayInputStream bais = getBais(content+"SOME TRAILING BYTES");
         writeRecord(writer, SOME_URL, "text/html",
-            content.length(), baos);
+            content.length(), bais);
         writeRecord(writer, SOME_URL, "text/html",
-            content.length(), getBaos(content));
+            content.length(), getBais(content));
         writer.close();
         
         // Catch System.err into a byte stream.
@@ -372,14 +393,14 @@ extends TmpDirTestCase implements ARCConstants {
     
     public void testLengthTooLongCompressed()
     throws IOException {
-        lengthTooLong("testLengthTooLongCompressed-" + PREFIX,
+        lengthTooLong("testLengthTooLongCompressed-" + SUFFIX,
             true, false);
     }
     
     public void testLengthTooLongCompressedStrict() {
         String eMessage = null;
         try {
-            lengthTooLong("testLengthTooLongCompressed-" + PREFIX,
+            lengthTooLong("testLengthTooLongCompressed-" + SUFFIX,
                 true, true);
         } catch (IOException e) {
             eMessage = e.getMessage();
@@ -395,9 +416,9 @@ extends TmpDirTestCase implements ARCConstants {
         // Add a record with a length that is too long.
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html",
-            content.length() + 10, getBaos(content));
+            content.length() + 10, getBais(content));
         writeRecord(writer, SOME_URL, "text/html",
-            content.length(), getBaos(content));
+            content.length(), getBais(content));
         writer.close();
         
         // Catch System.err.
@@ -420,18 +441,11 @@ extends TmpDirTestCase implements ARCConstants {
     	ARCWriter writer = createArcWithOneRecord("testGapError", true);
         String content = getContent();
         // Make a 'weird' RIS that returns bad 'remaining' length
-        // after the call to readFullyTo.
+        // awhen remaining should be 0
         ReplayInputStream ris = new ReplayInputStream(content.getBytes(),
                 content.length(), null) {
-            private boolean readFullyToCalled = false;
-            public void readFullyTo(OutputStream os)
-            throws IOException {
-                super.readFullyTo(os);
-                this.readFullyToCalled = true;
-            }
-            
             public long remaining() {
-                return (this.readFullyToCalled)? -1: super.remaining();
+                return (super.remaining()==0) ? -1 : super.remaining();
             }
         };
         String message = null;
@@ -440,6 +454,8 @@ extends TmpDirTestCase implements ARCConstants {
             (new Date()).getTime(), content.length(), ris);
         } catch (IOException e) {
             message = e.getMessage();
+        } finally {
+            IOUtils.closeQuietly(ris);
         }
         writer.close();
         assertTrue("No gap when should be",
@@ -461,7 +477,7 @@ extends TmpDirTestCase implements ARCConstants {
             "test", compress, DEFAULT_MAX_ARC_FILE_SIZE);
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html", content.length(),
-            getBaos(content));
+            getBais(content));
         writer.close();
         return writer.getFile();
     }

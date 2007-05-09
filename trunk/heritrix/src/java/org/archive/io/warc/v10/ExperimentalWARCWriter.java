@@ -267,7 +267,7 @@ implements WARCConstants {
             write(header);
             write(namedFieldsBlock);
             if (contentStream != null && contentLength > 0) {
-            	readFullyFrom(contentStream, contentLength, this.readbuffer);
+            	copyFrom(contentStream, contentLength, true);
             }
             
             // Write out the two blank lines at end of all records.
