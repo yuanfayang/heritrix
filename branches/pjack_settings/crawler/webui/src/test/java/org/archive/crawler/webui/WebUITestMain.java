@@ -2,7 +2,6 @@ package org.archive.crawler.webui;
 
 import java.io.File;
 
-import org.archive.util.TmpDirTestCase;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.bio.SocketConnector;
@@ -11,7 +10,7 @@ import org.mortbay.jetty.handler.HandlerList;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 
-public class WebUITest extends TmpDirTestCase {
+public class WebUITestMain {
 
     
     

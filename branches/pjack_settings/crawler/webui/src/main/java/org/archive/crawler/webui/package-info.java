@@ -42,7 +42,7 @@
  * <b>Rationales</b>
  * 
  * <ul>
- * <li>You can debug it in Eclipse.  Use {@link WebUITest#main(String[])}.</li>
+ * <li>You can debug it in Eclipse.  Use {@link WebUITestMain#main(String[])}.</li>
  * <li>This only relies on standard servlet/jsp APIs.</li>
  * <li>These conventions can co-exist with the existing code.  We don't have 
  * to re-write everything.</li>
