@@ -98,7 +98,8 @@ public class CrawlerArea {
         } finally {
             remote.close();
         }
-        showCrawler(sc, request, response);
+        request.setAttribute("job", job);
+        Console.showJobConsole(sc, request, response);
     }
     
     

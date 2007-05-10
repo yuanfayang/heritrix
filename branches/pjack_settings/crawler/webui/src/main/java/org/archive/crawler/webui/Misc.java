@@ -27,16 +27,13 @@
 package org.archive.crawler.webui;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-import javax.management.QueryExp;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -132,9 +129,19 @@ public class Misc {
                 + query + " but found " + set);
     }
 
+    
+    public static <T> T find(
+            JMXConnector jmxc, 
+            String jobName, 
+            Class<T> cls) {
+        String query = "org.archive.crawler:*,name=" + jobName + ",type=" +
+        cls.getName();
+        ObjectName oname = findUnique(jmxc, query);
+        return Remote.make(jmxc, oname, cls).getObject();
+    }
 
 
-    protected static ObjectName waitFor(
+    public static ObjectName waitFor(
             JMXConnector jmxc, 
             String query, 
             boolean exist) throws Exception {
