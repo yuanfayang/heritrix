@@ -14,29 +14,17 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
+<!--    <dependency>
       <groupId>tomcat</groupId>
       <artifactId>servlet</artifactId>
       <version>4.1.34</version>
       <scope>provided</scope>
-    </dependency>
-<!--    <dependency>
-      <groupId>jetty</groupId>
-      <artifactId>jasper-compiler</artifactId>
-      <version>4.2.20RC0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>jetty</groupId>
-      <artifactId>jasper-runtime</artifactId>
-      <version>4.2.20RC0</version>
-      <scope>test</scope>
     </dependency> -->
     <dependency>
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
       <version>1.6.5</version>
-      <scope>provided</scope>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>jboss</groupId>
