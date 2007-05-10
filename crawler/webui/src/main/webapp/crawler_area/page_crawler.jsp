@@ -38,12 +38,19 @@ int row = 1;
 <table class="info">
 <% for (String job: active) { %>
 <% row = -row + 1; %>
+<% String jqs = crawler.getQueryString() + "&job=" + job; %>
 <tr>
 <td class="info<%=row%>">
 <%=job%>
 </td>
 <td class="info<%=row%>">
-Console | Sheets | Seeds | Reports | Logs
+<a 
+   title="View and control the current status for this job."
+   href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=jqs%>">
+   Console
+</a>
+|
+Sheets | Seeds | Reports | Logs
 </td>
 </tr>
 <% } %>

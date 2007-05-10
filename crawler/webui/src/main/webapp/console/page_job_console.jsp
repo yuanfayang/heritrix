@@ -1,16 +1,23 @@
-<%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.admin.CrawlJob" %>
-<%@ page import="org.archive.crawler.Heritrix" %>
-<%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
+<%@ page import="org.archive.crawler.webui.Text" %>
+<%@ page import="org.archive.crawler.webui.Crawler" %>
+<%@ page import="org.archive.crawler.framework.StatisticsTracking" %>
+<%@ page import="org.archive.crawler.framework.JobController" %>
 <%@ page import="org.archive.util.ArchiveUtils" %>
-<%@ page import="org.archive.util.TextUtils" %>
-<%@ page import="javax.servlet.jsp.JspWriter" %>
-<%!
-	private void printTime(final JspWriter out,long time)
-    throws java.io.IOException {
-	    out.println(ArchiveUtils.formatMillisecondsToConventional(time,false));
-	}
+<!-- @include file="/include/handler.jsp" -->
+
+<% 
+
+Crawler crawler = (Crawler)Text.get(request, "crawler");
+StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
+JobController controller = (JobController)Text.get(request, "controller");
+String job = (String)Text.get(request, "job");
+
+String qs = crawler.getQueryString() + "&job=" + job;
+
 %>
+
+
+
 <%
     String sAction = request.getParameter("action");
     if(sAction != null) {
@@ -30,7 +37,7 @@
     int tab = 0;
 %>
 
-<%@include file="/include/head.jsp"%>
+<!-- @include file="/include/head.jsp" -->
     
     <script type="text/javascript">
         function doTerminateCurrentJob(){
@@ -44,12 +51,13 @@
     <fieldset style="width: 750px">
         <legend> 
         <b><span class="legendTitle">Crawler Status:</span> 
-        <%= handler.isRunning() 
+        <span class="status crawling"><%=controller.getCrawlStatusString()%></span>
+        <!-- = handler.isRunning() 
             ? "<span class='status crawling'>CRAWLING JOBS</span></b> | "
               +"<a href='"+request.getContextPath()+"/console/action.jsp?action=stop'>Hold</a>"
             : "<span class='status holding'>HOLDING JOBS</span></b> | "
               +"<a href='"+request.getContextPath()+"/console/action.jsp?action=start'>Start</a>"
-        %> </b>
+        --> </b>
         </legend>
         <div style="float:right;padding-right:50px;">
 	        <b>Memory</b><br>
@@ -64,20 +72,21 @@
 	    </div>
         <b>Jobs</b>
         <div style="padding-left:20px">
-			<%= handler.getCurrentJob()!=null
+            <%=controller.getCrawlStatusString()%>: <i><%=job%></i>
+			<!--= handler.getCurrentJob()!=null
 			    ? shortJobStatus+": <i>"
 			      +handler.getCurrentJob().getJobName()+"</i>"
 			    : ((handler.isRunning()) ? "None available" : "None running")
-			 %><br>
-	        <%= handler.getPendingJobs().size() %> pending,
-	        <%= handler.getCompletedJobs().size() %> completed
+			 <br>
+	        <= handler.getPendingJobs().size() > pending,
+	        <= handler.getCompletedJobs().size() > completed -->
         </div>
 
-        <b>Alerts:</b>
+        <b>Alerts:</b> 0 (0 new) <!-- FIXME
 	        <a style="color: #000000" 
-	            href="<%=request.getContextPath()%>/console/alerts.jsp">
-	            <%=heritrix.getAlertsCount()%> (<%=heritrix.getNewAlertsCount()%> new)
-	        </a>
+	            href="<=request.getContextPath()>/console/alerts.jsp">
+	            <=heritrix.getAlertsCount()> (<=heritrix.getNewAlertsCount()> new)
+	        </a> -->
 	        
          </fieldset>
             <%
@@ -93,7 +102,7 @@
                     end = 1;
 	            }
                 
-                if(handler.getCurrentJob() != null)
+                if (true) //handler.getCurrentJob() != null)
                 {
                     final long timeElapsed, timeRemain;
                     if(stats == null) {
@@ -111,46 +120,52 @@
             <fieldset style="width: 750px">
                <legend>
                <b><span class="legendTitle">Job Status:</span>
-               <%= 
+               <%=controller.getCrawlStatusString()%>
+               <!--= 
                "<span class='status "
                +shortJobStatus+"'>"
                +shortJobStatus+"</span>"
-               %>
+               -->
                </b> 
-<%      
-    if(handler.isCrawling()) {
-	    if ((handler.getCurrentJob().getStatus().
-                equals(CrawlJob.STATUS_PAUSED) ||
-            handler.getCurrentJob().getStatus().
-			    equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))) {
-            out.println("| <a href='/console/action.jsp?action=resume'>" +
-                "Resume</a>");
-            out.println(" | ");
-            out.println("<a href=\"");
-            out.println(request.getContextPath());
-            out.println("/console/action.jsp?action=checkpoint\">" +
-                "Checkpoint</a>");
-        } else if (!handler.getCurrentJob().isCheckpointing()) {
-            out.println("| <a href=\"");
-            out.println(request.getContextPath());
-            out.println("/console/action.jsp?action=pause\">Pause</a> ");
-            if (!handler.getCurrentJob().getStatus().
-                   equals(CrawlJob.STATUS_PENDING)) {
-                out.println(" | ");
-                out.println("<a href=\"");
-                out.println(request.getContextPath());
-                out.println("/console/action.jsp?action=checkpoint\">" +
-                    "Checkpoint</a>");
-            }
-        }
-        out.println(" | <a href='javascript:doTerminateCurrentJob()'>" +
-            "Terminate</a>");
-    }
-%>
-               </legend>
+           
+<a>
+<% String status = controller.getCrawlStatusString(); %>
+<% if (status.equals("PREPARING")) { %>
+    <a 
+    title="Start the crawl."
+    href="<%=request.getContextPath()%>/console/do_start.jsp?<%=qs%>">
+    Start
+    </a>
+<% } else if (status.equals("PAUSED") || status.equals("PAUSING")) { %> 
+    <a 
+    title="Resume the crawl."
+    href="<%=request.getContextPath()%>/console/do_resume.jsp?<%=qs%>">
+    Resume
+    </a>
+    |
+    <a 
+    title="Checkpoint the crawl."
+    href="<%=request.getContextPath()%>/console/do_checkpoint.jsp?<%=qs%>">
+    Checkpoint
+    </a>
+<% } else if (!status.equals("CHECKPOINTING")) { %>
+    <a 
+    title="Pause the crawl."
+    href="<%=request.getContextPath()%>/console/do_pause.jsp?<%=qs%>">
+    Pause
+    </a>
+<% } %>
+|
+    <a 
+    title="Terminates the crawl."
+    href="<%=request.getContextPath()%>/console/do_stop.jsp?<%=qs%>">
+    Terminate
+    </a>
+
+</legend>
 
                 <%
-                  if(handler.isCrawling() && stats != null)
+                  if(stats != null)
                   {
                 %>
                 	<div style="float:right; padding-right:50px;">
@@ -209,7 +224,7 @@
                                     <td class='queuedBar' align="left" width="<%= (int) ((100-ratio)/2) %>%">
                                     <%= ratio <= 50 ? "&nbsp;<b>"+ratio+"</b>%" : "" %>
                                     </td>
-                                    <td width="25%" nowrap>&nbsp;<%= stats.queuedUriCount() %> queued</td>
+                                    <td width="25%" nowrap>&nbsp;<%=stats.queuedUriCount()%> queued</td>
                                 </tr>
                             </table>
                             <%= end %> total downloaded and queued<br>      
@@ -217,8 +232,7 @@
                             </center>
             <%
                 }
-                if (handler.getCurrentJob() != null &&
-                	handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED)) {
+                if (controller.getCrawlStatusString().equals("PAUSED")) {
             %>
             		<b>Paused Operations</b>
             		<div class='indent'>
@@ -240,12 +254,7 @@
             &nbsp;
     </td></tr>
     <tr><td>
-        <% if (heritrix.isCommandLine()) {  
-            // Print the shutdown only if we were started from command line.
-            // It makes no sense when in webcontainer mode.
-         %>
-        <a href="<%=request.getContextPath()%>/console/shutdown.jsp">Shut down Heritrix software</a> |
-        <% } %>
-        <a href="<%=request.getContextPath()%>/index.jsp?action=logout">Logout</a>
+
+        <!-- a href="<%=request.getContextPath()%>/index.jsp?action=logout">Logout</a -->
     </td></tr></table>
-<%@include file="/include/foot.jsp"%>
+<!-- include file="/include/foot.jsp" -->
