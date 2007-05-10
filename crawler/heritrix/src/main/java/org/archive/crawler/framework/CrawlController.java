@@ -23,7 +23,6 @@
  */
 package org.archive.crawler.framework;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -51,7 +50,6 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Emitter;
-import org.archive.openmbeans.annotations.Operation;
 import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
@@ -64,10 +62,10 @@ import org.archive.state.DirectoryModule;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.Finishable;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
+import org.archive.settings.SingleSheet;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -95,7 +93,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class CrawlController extends Bean 
 implements Serializable, Reporter, StateProvider, Initializable, 
-DirectoryModule {
+DirectoryModule, JobController {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
@@ -212,6 +210,7 @@ DirectoryModule {
     private transient CrawlStatus sExit;
 
     
+    // FIXME: Make this an outer class.
     private static enum State {
         NASCENT, RUNNING, PAUSED, PAUSING, CHECKPOINTING, 
         STOPPING, FINISHED, STARTED, PREPARING 
@@ -277,6 +276,7 @@ DirectoryModule {
     
 
     public CrawlController() {
+        super(JobController.class);
     }
     
     public void initialTasks(StateProvider provider) {        
@@ -772,7 +772,6 @@ DirectoryModule {
     /** 
      * Operator requested crawl begin
      */
-    @Operation(desc="Start the crawl.")
     public void requestCrawlStart() {
         setupToePool();
         runProcessorInitialTasks();
@@ -881,7 +880,6 @@ DirectoryModule {
      * @throws IllegalStateException Thrown if crawl is not in paused state
      * (Crawl must be first paused before checkpointing).
      */
-    @Operation(desc="Request a checkpoint.")
     public synchronized void requestCrawlCheckpoint()
     throws IllegalStateException {
         if (this.checkpointer == null) {
@@ -954,7 +952,6 @@ DirectoryModule {
     /**
      * Operator requested for crawl to stop.
      */
-    @Operation(desc="Aborts the crawl.")
     public synchronized void requestCrawlStop() {
         requestCrawlStop(CrawlStatus.ABORTED);
     }
@@ -991,7 +988,6 @@ DirectoryModule {
     /**
      * Stop the crawl temporarly.
      */
-    @Operation(desc="Stop the crawl temporarily.")
     public synchronized void requestCrawlPause() {
         if (state == State.PAUSING || state == State.PAUSED) {
             // Already about to pause
@@ -1026,7 +1022,6 @@ DirectoryModule {
     /**
      * Resume crawl from paused state
      */
-    @Operation(desc="Resume crawl from paused state.")
     public void requestCrawlResume() {
         if (this.toePool == null) {
             this.setupToePool();
@@ -1544,7 +1539,8 @@ DirectoryModule {
     
     
     public <T> T get(Object module, Key<T> key) {
-        return sheetManager.getDefault().get(module, key);
+        SingleSheet def = sheetManager.getDefault();
+        return def.get(module, key);
     }
 
     
@@ -1625,4 +1621,7 @@ DirectoryModule {
     }
 
     
+    public String getCrawlStatusString() {
+        return this.state.toString();
+    }
 }

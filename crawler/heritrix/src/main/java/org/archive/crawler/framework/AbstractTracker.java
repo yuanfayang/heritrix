@@ -18,13 +18,14 @@
  */
 package org.archive.crawler.framework;
 
-import java.io.Closeable;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.EventObject;
 import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Finishable;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -54,8 +55,9 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
  */
-public abstract class AbstractTracker implements StatisticsTracking, 
-CrawlStatusListener, Serializable, Module, Initializable, Finishable {
+public abstract class AbstractTracker extends Bean 
+implements StatisticsTracking, CrawlStatusListener, Serializable, Module, 
+Initializable, Finishable {
 
 
     /**
@@ -91,6 +93,7 @@ CrawlStatusListener, Serializable, Module, Initializable, Finishable {
      * Constructor.
      */
     public AbstractTracker() {
+        super(StatisticsTracking.class);
     }
 
     
