@@ -78,8 +78,9 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Crawler c = Home.getCrawler(request);
-        request.setAttribute("crawler", c);
+        Home.getCrawler(request);
+        String profile = request.getParameter("profile");
+        request.setAttribute("profile", profile);
         Misc.forward(request, response, "page_launch_profile.jsp");
     }
     

@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
+import javax.servlet.jsp.JspWriter;
 
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.util.JmxUtils;
@@ -335,6 +336,19 @@ public class Crawler implements Comparable {
     public String getQueryString() {
         // FIXME escape query string
         return "host=" + host + "&port=" + port + "&id=" + id;
+    }
+    
+    
+    public void printFormFields(JspWriter out) throws IOException {
+        out.print("<input type=\"hidden\" name=\"host\" value=\"");
+        out.print(Text.attr(host));
+        out.println("\">");
+        out.print("<input type=\"hidden\" name=\"port\" value=\"");
+        out.print(port);
+        out.println("\">");
+        out.print("<input type=\"hidden\" name=\"id\" value=\"");
+        out.print(id);
+        out.println("\">");
     }
     
     

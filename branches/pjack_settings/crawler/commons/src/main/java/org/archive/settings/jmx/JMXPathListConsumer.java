@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.management.openmbean.CompositeData;
 
+import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
 import org.archive.settings.path.PathListConsumer;
 import org.archive.state.KeyTypes;
@@ -28,7 +29,7 @@ public class JMXPathListConsumer implements PathListConsumer {
         if (KeyTypes.isSimple(value.getClass())) {
             addSimple(path, snames, value);
         } else {
-            addSimple(path + "._impl", snames, value.getClass().getName());
+            addSimple(path, snames, Offline.getType(value).getName());
         }
     }
     
