@@ -21,6 +21,9 @@ package org.archive.crawler.framework;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.archive.openmbeans.annotations.Attribute;
+import org.archive.openmbeans.annotations.Operation;
+
 /**
  * An interface for objects that want to collect statistics on
  * running crawls. An implementation of this is referenced in the
@@ -92,6 +95,9 @@ public interface StatisticsTracking extends Runnable {
      *
      * @return The length of time - in msec - that this crawl has been running.
      */
+    @Operation(desc="Returns how long the current crawl has been running " +
+                "(excluding any time spent paused/suspended/stopped) " +
+                "since it began.")
     public long crawlDuration();
 
     /**
@@ -106,6 +112,9 @@ public interface StatisticsTracking extends Runnable {
      *
      * @return The total number of uncompressed bytes written to disk
      */
+    @Operation(desc="Returns the total number of uncompressed bytes written " +
+                "to disk.  This may be different from the actual number if " +
+                "you are using compression.")        
     public long totalBytesWritten();
     
     /**
@@ -116,6 +125,8 @@ public interface StatisticsTracking extends Runnable {
      * time spent paused.
      * @return Total amount of time (in msec.) spent crawling so far.
      */
+    @Attribute(desc="Total amount of time spent actively crawling so far.", 
+            def="0")
     public long getCrawlerTotalElapsedTime();
     
     /**
@@ -125,6 +136,9 @@ public interface StatisticsTracking extends Runnable {
      * @return The rate per second of documents gathered during the last
      * snapshot
      */
+    @Operation(desc="Returns an estimate of recent document download rates " +
+                "based on a queue of recently seen CrawlURIs (as of last " +
+                "snapshot).")
     public double currentProcessedDocsPerSec();
     
     /**
@@ -133,6 +147,9 @@ public interface StatisticsTracking extends Runnable {
      *
      * @return  The rate per second of documents gathered so far
      */
+    @Operation(desc="Returns the number of documents that have been " +
+                "processed per second over the life of the crawl " +
+                "(as of last snapshot)")
     public double processedDocsPerSec();
     
     /**
@@ -141,6 +158,8 @@ public interface StatisticsTracking extends Runnable {
      *
      * @return The rate per second of KB gathered so far
      */
+    @Operation(desc="Calculates the rate that data, in kb, has been " +
+                "processed over the life of the crawl (as of last snapshot.)")
     public long processedKBPerSec();
 
     /**
@@ -151,6 +170,10 @@ public interface StatisticsTracking extends Runnable {
      *
      * @return The rate per second of KB gathered during the last snapshot
      */
+    @Operation(desc="Calculates an estimate of the rate, in kb, at which " +
+        "documents are currently being processed by the crawler.  For more " +
+        "accurate estimates set a larger queue size, or get " +
+        "and average multiple values (as of last snapshot).")
     public int currentProcessedKBPerSec();
     
     /**
@@ -158,6 +181,7 @@ public interface StatisticsTracking extends Runnable {
      * 
      * @return The number of active (non-paused) threads
      */
+    @Operation(desc="Returns the number of active (non-paused threads.")
     public int activeThreadCount();
     
     /**
@@ -170,16 +194,26 @@ public interface StatisticsTracking extends Runnable {
      *
      * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
+    @Operation(desc="Returns the number of sucessfully processed URIs. " +
+            "If the crawl is not running, this will return the value of the " +
+            "last snapshot.")
     public long successfullyFetchedCount();
     
     /**
      * @return Total number of URIs (processed + queued +
      * currently being processed)
      */
+    @Operation(desc="Returns the total number of URIs (processed + queued + " +
+                "currently being processed).")
     public long totalCount();
     
+    @Operation(desc="Returns the congestion ratio.")
     public float congestionRatio();
+    
+    @Operation(desc="Returns the deepest URI.")
     public long deepestUri();
+    
+    @Operation(desc="Returns the average depth.")
     public long averageDepth();
     
     /**
@@ -212,4 +246,28 @@ public interface StatisticsTracking extends Runnable {
      * @return Map of progress-statistics.
      */
     public Map getProgressStatistics();
+
+
+    /**
+     * Get the total number of ToeThreads (sleeping and active)
+     *
+     * @return The total number of ToeThreads
+     */
+    @Operation(desc="Get the total number of ToeThreads (sleeping and active).")
+    public int threadCount();
+
+    
+    /**
+     * Number of URIs <i>queued</i> up and waiting for processing.
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value
+     * of the last snapshot.
+     *
+     * @return Number of URIs queued up and waiting for processing.
+     *
+     * @see org.archive.crawler.framework.Frontier#queuedUriCount()
+     */
+    @Operation(desc="Returns the number of URIs queued up and waiting for processing.")
+    public long queuedUriCount();
+
 }

@@ -213,7 +213,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // Above invocation should have created a new SheetManager and a new
         // CrawlController for the job.  Find the CrawlController.
         
-        waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.CrawlController", true);
+        waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.JobController", true);
     }
     
     
@@ -336,7 +336,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         for (ObjectName name: set) {
             if (name.getDomain().equals("org.archive.crawler")
                     && name.getKeyProperty("name").equals("the_job")
-                    && name.getKeyProperty("type").equals("org.archive.crawler.framework.CrawlController")) {
+                    && name.getKeyProperty("type").equals("org.archive.crawler.framework.JobController")) {
                 return name;
             }
         }
