@@ -1,7 +1,7 @@
 /*
  * ArchiveUtils
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/util/ArchiveUtils.java,v 1.38 2007/01/23 00:29:48 gojomo Exp $
  *
  * Created on Jul 7, 2003
  *
@@ -29,43 +29,53 @@ package org.archive.util;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
  * Miscellaneous useful methods.
  *
- *
- * @author gojomo
+ * @author gojomo & others
  */
 public class ArchiveUtils {
 
     /**
      * Arc-style date stamp in the format yyyyMMddHHmm and UTC time zone.
      */
-    public static final SimpleDateFormat TIMESTAMP12;
+    private static final ThreadLocal<SimpleDateFormat> 
+        TIMESTAMP12 = threadLocalDateFormat("yyyyMMddHHmm");;
+    
     /**
      * Arc-style date stamp in the format yyyyMMddHHmmss and UTC time zone.
      */
-    public static final SimpleDateFormat TIMESTAMP14;
+    private static final ThreadLocal<SimpleDateFormat> 
+       TIMESTAMP14 = threadLocalDateFormat("yyyyMMddHHmmss");
     /**
      * Arc-style date stamp in the format yyyyMMddHHmmssSSS and UTC time zone.
      */
-    public static final SimpleDateFormat TIMESTAMP17;
+    private static final ThreadLocal<SimpleDateFormat> 
+        TIMESTAMP17 = threadLocalDateFormat("yyyyMMddHHmmssSSS");
+
     /**
      * Log-style date stamp in the format yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
      * UTC time zone is assumed.
      */
-    public static final SimpleDateFormat TIMESTAMP17ISO8601Z;
+    private static final ThreadLocal<SimpleDateFormat> 
+        TIMESTAMP17ISO8601Z = threadLocalDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    
     /**
      * Log-style date stamp in the format yyyy-MM-dd'T'HH:mm:ss'Z'
      * UTC time zone is assumed.
      */
-    public static final SimpleDateFormat TIMESTAMP14ISO8601Z;
+    private static final ThreadLocal<SimpleDateFormat>
+        TIMESTAMP14ISO8601Z = threadLocalDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    
     /**
      * Default character to use padding strings.
      */
@@ -75,18 +85,16 @@ public class ArchiveUtils {
     private static final int HOUR_IN_MS = 60 * 60 * 1000;
     /** milliseconds in a day */
     private static final int DAY_IN_MS = 24 * HOUR_IN_MS;
-
-    // Initialize fomatters with pattern and time zone
-    static {
-        TimeZone TZ = TimeZone.getTimeZone("GMT");
-        TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");
-        TIMESTAMP12.setTimeZone(TZ);
-        TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");
-        TIMESTAMP14.setTimeZone(TZ);
-        TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-        TIMESTAMP17.setTimeZone(TZ);
-        TIMESTAMP17ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        TIMESTAMP14ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    
+    private static ThreadLocal<SimpleDateFormat> threadLocalDateFormat(final String pattern) {
+        ThreadLocal<SimpleDateFormat> tl = new ThreadLocal<SimpleDateFormat>() {
+            protected SimpleDateFormat initialValue() {
+                SimpleDateFormat df = new SimpleDateFormat(pattern);
+                df.setTimeZone(TimeZone.getTimeZone("GMT"));
+                return df;
+            }
+        };
+        return tl;
     }
     
     public static int MAX_INT_CHAR_WIDTH =
@@ -99,7 +107,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get17DigitDate(){
-        return TIMESTAMP17.format(new Date());
+        return TIMESTAMP17.get().format(new Date());
     }
 
     /**
@@ -109,7 +117,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get14DigitDate(){
-        return TIMESTAMP14.format(new Date());
+        return TIMESTAMP14.get().format(new Date());
     }
 
     /**
@@ -119,7 +127,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get12DigitDate(){
-        return TIMESTAMP12.format(new Date());
+        return TIMESTAMP12.get().format(new Date());
     }
 
     /**
@@ -131,7 +139,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String getLog17Date(){
-        return TIMESTAMP17ISO8601Z.format(new Date());
+        return TIMESTAMP17ISO8601Z.get().format(new Date());
     }
     
     /**
@@ -144,7 +152,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String getLog17Date(long date){
-        return TIMESTAMP17ISO8601Z.format(new Date(date));
+        return TIMESTAMP17ISO8601Z.get().format(new Date(date));
     }
     
     /**
@@ -156,7 +164,20 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String getLog14Date(){
-        return TIMESTAMP14ISO8601Z.format(new Date());
+        return TIMESTAMP14ISO8601Z.get().format(new Date());
+    }
+    
+    /**
+     * Utility function for creating log timestamps, in
+     * W3C/ISO8601 format, assuming UTC. 
+     * 
+     * Format is yyyy-MM-dd'T'HH:mm:ss'Z'
+     * @param date long timestamp to format.
+     * 
+     * @return the date stamp
+     */
+    public static String getLog14Date(long date){
+        return TIMESTAMP14ISO8601Z.get().format(new Date(date));
     }
     
     /**
@@ -168,56 +189,116 @@ public class ArchiveUtils {
      * 
      * @return the date stamp
      */
-    public static String getLog14Date(long date){
-        return TIMESTAMP14ISO8601Z.format(new Date(date));
+    public static String getLog14Date(Date date){
+        return TIMESTAMP14ISO8601Z.get().format(date);
     }
     
     /**
      * Utility function for creating arc-style date stamps
-     * in the format yyyMMddHHmmssSSS.
+     * in the format yyyyMMddHHmmssSSS.
      * Date stamps are in the UTC time zone
      *
      * @param date milliseconds since epoc
      * @return the date stamp
      */
     public static String get17DigitDate(long date){
-        return TIMESTAMP17.format(new Date(date));
+        return TIMESTAMP17.get().format(new Date(date));
     }
     
     public static String get17DigitDate(Date date){
-        return TIMESTAMP17.format(date);
+        return TIMESTAMP17.get().format(date);
     }
 
     /**
      * Utility function for creating arc-style date stamps
-     * in the format yyyMMddHHmmss.
+     * in the format yyyyMMddHHmmss.
      * Date stamps are in the UTC time zone
      *
      * @param date milliseconds since epoc
      * @return the date stamp
      */
     public static String get14DigitDate(long date){
-        return TIMESTAMP14.format(new Date(date));
+        return TIMESTAMP14.get().format(new Date(date));
     }
 
     public static String get14DigitDate(Date d) {
-        return TIMESTAMP14.format(d);
+        return TIMESTAMP14.get().format(d);
     }
 
     /**
      * Utility function for creating arc-style date stamps
-     * in the format yyyMMddHHmm.
+     * in the format yyyyMMddHHmm.
      * Date stamps are in the UTC time zone
      *
      * @param date milliseconds since epoc
      * @return the date stamp
      */
     public static String get12DigitDate(long date){
-        return TIMESTAMP12.format(new Date(date));
+        return TIMESTAMP12.get().format(new Date(date));
     }
     
     public static String get12DigitDate(Date d) {
-        return TIMESTAMP12.format(d);
+        return TIMESTAMP12.get().format(d);
+    }
+    
+    /**
+     * Parses an ARC-style date.  If passed String is < 12 characters in length,
+     * we pad.  At a minimum, String should contain a year (>=4 characters).
+     * Parse will also fail if day or month are incompletely specified.  Depends
+     * on the above getXXDigitDate methods.
+     * @param A 4-17 digit date in ARC style (<code>yyyy</code> to
+     * <code>yyyyMMddHHmmssSSS</code>) formatting.  
+     * @return A Date object representing the passed String. 
+     * @throws ParseException
+     */
+    public static Date getDate(String d) throws ParseException {
+        Date date = null;
+        if (d == null) {
+            throw new IllegalArgumentException("Passed date is null");
+        }
+        switch (d.length()) {
+        case 14:
+            date = ArchiveUtils.parse14DigitDate(d);
+            break;
+
+        case 17:
+            date = ArchiveUtils.parse17DigitDate(d);
+            break;
+
+        case 12:
+            date = ArchiveUtils.parse12DigitDate(d);
+            break;
+           
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            throw new ParseException("Date string must at least contain a" +
+                "year: " + d, d.length());
+            
+        default:
+            if (!(d.startsWith("19") || d.startsWith("20"))) {
+                throw new ParseException("Unrecognized century: " + d, 0);
+            }
+            if (d.length() < 8 && (d.length() % 2) != 0) {
+                throw new ParseException("Incomplete month/date: " + d,
+                    d.length());
+            }
+            StringBuilder sb = new StringBuilder(d);
+            if (sb.length() < 8) {
+                for (int i = sb.length(); sb.length() < 8; i += 2) {
+                    sb.append("01");
+                }
+            }
+            if (sb.length() < 12) {
+                for (int i = sb.length(); sb.length() < 12; i++) {
+                    sb.append("0");
+                }
+            }
+            date = ArchiveUtils.parse12DigitDate(sb.toString());
+        }
+
+        return date;
     }
 
     /**
@@ -230,8 +311,8 @@ public class ArchiveUtils {
      * @return the Date corresponding to the date stamp string
      * @throws ParseException if the inputstring was malformed
      */
-    public static Date parse17DigitDate(String date) throws ParseException{
-        return TIMESTAMP17.parse(date);
+    public static Date parse17DigitDate(String date) throws ParseException {
+        return TIMESTAMP17.get().parse(date);
     }
 
     /**
@@ -245,7 +326,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse14DigitDate(String date) throws ParseException{
-        return TIMESTAMP14.parse(date);
+        return TIMESTAMP14.get().parse(date);
     }
 
     /**
@@ -259,7 +340,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse12DigitDate(String date) throws ParseException{
-        return TIMESTAMP12.parse(date);
+        return TIMESTAMP12.get().parse(date);
     }
     
     /**
@@ -438,26 +519,24 @@ public class ArchiveUtils {
      * @param precision How many characters to include after '.'
      * @return the double as a string.
      */
-    public static String doubleToString(double val, int precision){
-        String tmp = Double.toString(val);
-        if(tmp.indexOf(".")!=-1){
-            // Need to handle the part after '.'
-            if(precision<=0){
-                tmp = tmp.substring(0,tmp.indexOf('.'));
-            } else {
-                if(tmp.length()>tmp.indexOf('.')+precision+1){
-                    // Need to trim
-                    tmp = tmp.substring(0,tmp.indexOf('.')+precision+1);
-                }
-            }
-        }
-        return tmp;
+    public static String doubleToString(double val, int maxFractionDigits){
+        return doubleToString(val, maxFractionDigits, 0);
+    }
+
+    private static String doubleToString(double val, int maxFractionDigits, int minFractionDigits) {
+        NumberFormat f = NumberFormat.getNumberInstance(Locale.US); 
+        f.setMaximumFractionDigits(maxFractionDigits);
+        f.setMinimumFractionDigits(minFractionDigits);
+        return f.format(val); 
     }
 
     /**
-     * Takes an amount of bytes and formats it for display. This involves
-     * converting it to Kb, Mb or Gb if the amount is enough to qualify for
-     * the next level.
+     * Takes a byte size and formats it for display with 'friendly' units. 
+     * <p>
+     * This involves converting it to the largest unit 
+     * (of B, KB, MB, GB, TB) for which the amount will be > 1.
+     * <p>
+     * Additionally, at least 2 significant digits are always displayed. 
      * <p>
      * Displays as bytes (B): 0-1023
      * Displays as kilobytes (KB): 1024 - 2097151 (~2Mb)
@@ -465,33 +544,30 @@ public class ArchiveUtils {
      * Displays as gigabytes (GB): 4294967296 - infinity
      * <p>
      * Negative numbers will be returned as '0 B'.
-     * <p>
-     * All values will be approximated down (i.e. 2047 bytes are 1 KB)
      *
      * @param amount the amount of bytes
      * @return A string containing the amount, properly formated.
      */
-    public static String formatBytesForDisplay(long amount){
-        long kbStartAt = 1024;
-        long mbStartAt = 1024*1024*2;
-        long gbStartAt = ((long)1024*1024)*1024*4;
+    public static String formatBytesForDisplay(long amount) {
+        double displayAmount = (double) amount;
+        int unitPowerOf1024 = 0; 
 
-        if(amount < 0){
+        if(amount <= 0){
             return "0 B";
         }
-        else if(amount < kbStartAt){
-            // Display as bytes.
-            return amount + " B";
-        } else if(amount < mbStartAt) {
-            // Display as kilobytes
-            return Long.toString((long)(((double)amount/1024)))+" KB";
-        } else if(amount < gbStartAt) {
-            // Display as megabytes
-            return Long.toString((long)(((double)amount/(1024*1024))))+" MB";
-        } else {
-            // Display as gigabytes
-            return Long.toString((long)(((double)amount/(1024*1024*1024))))+" GB";
+        
+        while(displayAmount>=1024 && unitPowerOf1024 < 4) {
+            displayAmount = displayAmount / 1024;
+            unitPowerOf1024++;
         }
+        
+        // TODO: get didactic, make these KiB, MiB, GiB, TiB
+        final String[] units = { " B", " KB", " MB", " GB", " TB" };
+        
+        // ensure at least 2 significant digits (#.#) for small displayValues
+        int fractionDigits = (displayAmount < 10) ? 1 : 0; 
+        return doubleToString(displayAmount, fractionDigits, fractionDigits) 
+                   + units[unitPowerOf1024];
     }
 
     /**
