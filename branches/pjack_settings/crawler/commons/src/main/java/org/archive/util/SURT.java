@@ -58,8 +58,8 @@ import java.util.regex.Matcher;
  * is vanishingly rare for case-variance to be meaningful, while URI case-
  * variance often arises from people's confusion or sloppiness, and they
  * only correct it insofar as necessary to avoid blatant problems. Thus 
- * SURT form is considered to be flattened to all lowercase, and thus not
- * completely reversible. 
+ * the usual SURT form is considered to be flattened to all lowercase, and 
+ * not completely reversible. 
  * 
  * @author gojomo
  */
@@ -72,12 +72,15 @@ public class SURT {
     // 1: scheme://
     // 2: userinfo (if present)
     // 3: @ (if present)
-    // 4: host
-    // 5: :port
-    // 6: path
+    // 4: dotted-quad host
+    // 5: other host
+    // 6: :port
+    // 7: path
     static String URI_SPLITTER = 
-            "^(\\w+://)(?:([-\\w\\.!~\\*'\\(\\)%;:&=+$,]+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$";
-    //        1           2                                 3   4      5       6
+            "^(\\w+://)(?:([-\\w\\.!~\\*'\\(\\)%;:&=+$,]+?)(@))?"+
+    //        1           2                                 3    
+            "(?:((?:\\d{1,3}\\.){3}\\d{1,3})|(\\S+?))(:\\d+)?(/\\S*)?$";
+    //           4                            5       6       7
     
     // RFC2396 
     //       reserved    = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
@@ -89,7 +92,18 @@ public class SURT {
     //       escaped     = "%" hex hex
 
 
-    
+    /**
+     * Utility method for creating the SURT form of the URI in the
+     * given String.
+     * 
+     * By default, does not preserve casing. 
+     * 
+     * @param s String URI to be converted to SURT form
+     * @return SURT form 
+     */
+    public static String fromURI(String s) {
+        return fromURI(s,false);
+    }
     
     /**
      * Utility method for creating the SURT form of the URI in the
@@ -104,9 +118,10 @@ public class SURT {
      * evaluation.
      * 
      * @param s String URI to be converted to SURT form
+     * @param preserveCase whether original case should be preserved
      * @return SURT form 
      */
-    public static String fromURI(String s) {
+    public static String fromURI(String s, boolean preserveCase) {
         Matcher m = TextUtils.getMatcher(URI_SPLITTER,s);
         if(!m.matches()) {
             // not an authority-based URI scheme; return unchanged
@@ -120,24 +135,32 @@ public class SURT {
         append(builder,s,m.start(1),m.end(1)); // scheme://
         builder.append(BEGIN_TRANSFORMED_AUTHORITY); // '('
         
-        int hostSegEnd = m.end(4);
-        int hostStart = m.start(4); 
-        for(int i = m.end(4)-1; i>=hostStart; i--) {
-            if(s.charAt(i-1)!=DOT && i > hostStart) {
-                continue;
+        if(m.start(4)>-1) {
+            // dotted-quad ip match: don't reverse
+            append(builder,s,m.start(4),m.end(4));
+        } else {
+            // other hostname match: do reverse
+            int hostSegEnd = m.end(5);
+            int hostStart = m.start(5); 
+            for(int i = m.end(5)-1; i>=hostStart; i--) {
+                if(s.charAt(i-1)!=DOT && i > hostStart) {
+                    continue;
+                }
+                append(builder,s,i,hostSegEnd); // rev host segment
+                builder.append(TRANSFORMED_HOST_DELIM);     // ','
+                hostSegEnd = i-1;
             }
-            append(builder,s,i,hostSegEnd); // rev host segment
-            builder.append(TRANSFORMED_HOST_DELIM);     // ','
-            hostSegEnd = i-1;
         }
 
-        append(builder,s,m.start(5),m.end(5)); // :port
+        append(builder,s,m.start(6),m.end(6)); // :port
         append(builder,s,m.start(3),m.end(3)); // at
         append(builder,s,m.start(2),m.end(2)); // userinfo
         builder.append(END_TRANSFORMED_AUTHORITY); // ')'
-        append(builder,s,m.start(6),m.end(6)); // path
-        for(int i = 0; i < builder.length(); i++) {
-            builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
+        append(builder,s,m.start(7),m.end(7)); // path
+        if (!preserveCase) {
+            for(int i = 0; i < builder.length(); i++) {
+                builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
+            }
         }
         TextUtils.recycleMatcher(m);
         return builder.toString();

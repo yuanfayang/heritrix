@@ -5,8 +5,7 @@
  *
  * $Id$
  *
- *
- * Copyright (C) 2003 Internet Archive.
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -41,60 +40,134 @@ import java.util.TreeSet;
  * 
  * @author gojomo
  */
-public class Histotable {
-	HashMap<Object,LongWrapper> totals = new HashMap<Object,LongWrapper>();
-
-    // sorted by count
-	TreeSet<Map.Entry<Object,LongWrapper>> sorted = 
-      new TreeSet<Map.Entry<Object,LongWrapper>>(
-       new Comparator<Map.Entry<Object,LongWrapper>>() {
-        public int compare(Map.Entry<Object,LongWrapper> e1, 
-                Map.Entry<Object,LongWrapper> e2) {
-            long firstVal = e1.getValue().longValue;
-            long secondVal = e2.getValue().longValue;
-            if (firstVal < secondVal) { return 1; }
-            if (secondVal < firstVal) { return -1; }
-            // If the values are the same, sort by keys.
-            String firstKey = (String) ((Map.Entry) e1).getKey();
-            String secondKey = (String) ((Map.Entry) e2).getKey();
-            return firstKey.compareTo(secondKey);
-        }
-    });
-	
-	/**
-	 * Record one more occurence of the given object key.
-	 * 
-	 * @param key Object key.
-	 */
-	public void tally(Object key) {
-        if (totals.containsKey(key)) {
-            totals.get(key).longValue += 1;
+public class Histotable<K> extends HashMap<K,Long> {    
+    private static final long serialVersionUID = 310306238032568623L;
+    
+    /**
+     * Record one more occurence of the given object key.
+     * 
+     * @param key Object key.
+     */
+    public void tally(K key) {
+        tally(key,1L);
+    }
+    
+    /**
+     * Record <i>count</i> more occurence(s) of the given object key.
+     * 
+     * @param key Object key.
+     */
+    public void tally(K key,long count) {
+        if (containsKey(key)) {
+            put(key,get(key) + count);
         } else {
             // if we didn't find this key add it
-            totals.put(key, new LongWrapper(1));
+            put(key, count);
         }
-	}
-	
-	/**
-	 * @return Return an up-to-date sorted version of the totalled info.
-	 */
-	public TreeSet getSorted() {
-		if(sorted.size()<totals.size()) {
-			sorted.clear();
-	        sorted.addAll(totals.entrySet());
-		}
-		return sorted;
-	}
-	
-	/**
-	 * Utility method to convert a key-&gt;LongWrapper(count) into
-	 * the string "count key".
-	 * 
-	 * @param e Map key.
-	 * @return String 'count key'.
-	 */
-	public static String entryString(Object e) {
-		Map.Entry entry = (Map.Entry) e;
-		return ((LongWrapper)entry.getValue()).longValue + " " + entry.getKey();
-	}
+    }
+    
+    /**
+     * @return Return an up-to-date sorted version of the totalled info.
+     */
+    public TreeSet getSortedByCounts() {
+        // sorted by count
+        TreeSet<Map.Entry<K,Long>> sorted = 
+          new TreeSet<Map.Entry<K,Long>>(
+           new Comparator<Map.Entry<K,Long>>() {
+            public int compare(Map.Entry<K,Long> e1, 
+                    Map.Entry<K,Long> e2) {
+                long firstVal = e1.getValue();
+                long secondVal = e2.getValue();
+                if (firstVal < secondVal) { return 1; }
+                if (secondVal < firstVal) { return -1; }
+                // If the values are the same, sort by keys.
+                String firstKey = (String) ((Map.Entry) e1).getKey();
+                String secondKey = (String) ((Map.Entry) e2).getKey();
+                return firstKey.compareTo(secondKey);
+            }
+        });
+        
+        sorted.addAll(entrySet());
+        return sorted;
+    }
+    
+    /**
+     * @return Return an up-to-date sorted version of the totalled info.
+     */
+    public TreeSet getSortedByKeys() {
+        TreeSet<Map.Entry<K,Long>> sorted = 
+          new TreeSet<Map.Entry<K,Long>>(
+           new Comparator<Map.Entry<K,Long>>() {
+            @SuppressWarnings("unchecked")
+            public int compare(Map.Entry<K,Long> e1, 
+                    Map.Entry<K,Long> e2) {
+                K firstKey = e1.getKey();
+                K secondKey = e2.getKey();
+                // If the values are the same, sort by keys.
+                return ((Comparable<K>)firstKey).compareTo(secondKey);
+            }
+        });   
+        sorted.addAll(entrySet());
+        return sorted;
+    }
+    
+    /**
+     * Return the largest value of any key that is larger than 0. If no 
+     * values or no value larger than zero, return zero. 
+     * 
+     * @return long largest value or zero if none larger than zero
+     */
+    public long getLargestValue() {
+        long largest = 0; 
+        for (Long el : values()) {
+            if (el > largest) {
+                largest = el;
+            }
+        }
+        return largest;
+    }
+    
+    /**
+     * Return the total of all tallies. 
+     * 
+     * @return long total of all tallies
+     */
+    public long getTotal() {
+        long total = 0; 
+        for (Long el : values()) {
+            total += el; 
+        }
+        return total;
+    }
+    
+    /**
+     * Utility method to convert a key-&gt;Long into
+     * the string "count key".
+     * 
+     * @param e Map key.
+     * @return String 'count key'.
+     */
+    public static String entryString(Object e) {
+        Map.Entry entry = (Map.Entry) e;
+        return entry.getValue() + " " + entry.getKey();
+    }
+    
+    public long add(Histotable<K> ht) {
+        long net = 0;
+        for (K key : ht.keySet()) {
+            long change = ht.get(key);
+            net += change;
+            tally(key,change);
+        }
+        return net;
+    }
+    public long subtract(Histotable<K> ht) {
+        long net = 0; 
+        for (K key : ht.keySet()) {
+            long change = ht.get(key);
+            net -= change;
+            tally(key,-change);
+        }
+        return net;
+    }
 }

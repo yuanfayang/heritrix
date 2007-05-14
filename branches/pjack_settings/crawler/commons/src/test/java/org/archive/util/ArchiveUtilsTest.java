@@ -25,6 +25,10 @@
 
 package org.archive.util;
 
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.text.ParseException;
 
 import junit.framework.Test;
@@ -130,6 +134,33 @@ public class ArchiveUtilsTest extends TestCase {
             fail("Could not parse a date : " + e.getMessage());
         }
     }
+    
+    public void testTooShortParseDigitDate() throws ParseException {
+        String d = "X";
+        boolean b = false;
+        try {
+            ArchiveUtils.getDate(d);
+        } catch (ParseException e) {
+            b = true;
+        }
+        assertTrue(b);
+        
+        Date date = ArchiveUtils.getDate("1999");
+        assertTrue(date.getTime() == 915148800000L);
+        
+        b = false;
+        try {
+            ArchiveUtils.getDate("19991");
+        } catch (ParseException e) {
+            b = true;
+        }
+        assertTrue(b);
+        
+        ArchiveUtils.getDate("19990101");
+        ArchiveUtils.getDate("1999010101");
+        ArchiveUtils.getDate("19990101010101"); 
+        ArchiveUtils.getDate("1960"); 
+    }
 
     /** check that parse12DigitDate doesn't accept a bad date */
     public void testBad12Date() {
@@ -216,19 +247,29 @@ public class ArchiveUtilsTest extends TestCase {
             ArchiveUtils.doubleToString(test, 65).equals("12.345"));
     }
 
-    public void testFormatBytesForDisplay(){
-        long kb = 1024;
-        long mb = 1024*1024*2;
-        long gb = ((long)1024*1024)*1024*4;
 
-        assertEquals("formating negative number","0 B",ArchiveUtils.formatBytesForDisplay(-1));
-        assertEquals("formating byte - lower bound","0 B",ArchiveUtils.formatBytesForDisplay(0));
-        assertEquals("formating byte - upper bound","1023 B",ArchiveUtils.formatBytesForDisplay(kb-1));
-        assertEquals("formating kilobyte - lower bound","1 KB",ArchiveUtils.formatBytesForDisplay(kb));
-        assertEquals("formating kilobyte - upper bound","2047 KB",ArchiveUtils.formatBytesForDisplay(mb-1));
-        assertEquals("formating megabyte - lower bound","2 MB",ArchiveUtils.formatBytesForDisplay(mb));
-        assertEquals("formating megabyte - upper bound","4095 MB",ArchiveUtils.formatBytesForDisplay(gb-1));
-        assertEquals("formating gigabyte - lower bound","4 GB",ArchiveUtils.formatBytesForDisplay(gb));
+    public void testFormatBytesForDisplayPrecise(){
+        assertEquals("formating negative number", "0 B", ArchiveUtils
+                .formatBytesForDisplay(-1)); 
+        assertEquals("0 bytes", "0 B", ArchiveUtils
+                .formatBytesForDisplay(0));
+        assertEquals("1023 bytes", "1,023 B", ArchiveUtils
+                .formatBytesForDisplay(1023));
+        assertEquals("1025 bytes", "1.0 KB", ArchiveUtils
+                .formatBytesForDisplay(1025));
+        // expected display values taken from Google calculator
+        assertEquals("10,000 bytes", "9.8 KB",
+                ArchiveUtils.formatBytesForDisplay(10000));
+        assertEquals("1,000,000 bytes", "977 KB",
+                ArchiveUtils.formatBytesForDisplay(1000000));
+        assertEquals("100,000,000 bytes", "95 MB",
+                ArchiveUtils.formatBytesForDisplay(100000000));
+        assertEquals("100,000,000,000 bytes", "93 GB",
+                ArchiveUtils.formatBytesForDisplay(100000000000L));
+        assertEquals("100,000,000,000,000 bytes", "91 TB",
+                ArchiveUtils.formatBytesForDisplay(100000000000000L));
+        assertEquals("100,000,000,000,000,000 bytes", "90,949 TB",
+                ArchiveUtils.formatBytesForDisplay(100000000000000000L));
     }
 
     /*
@@ -323,6 +364,46 @@ public class ArchiveUtilsTest extends TestCase {
     public static void testZeroPadInteger() {
         assertEquals(ArchiveUtils.zeroPadInteger(1), "0000000001");
         assertEquals(ArchiveUtils.zeroPadInteger(1000000000), "1000000000");
+    }
+    
+    /**
+     * Test stable behavior of date formatting under heavy concurrency. 
+     * 
+     * @throws InterruptedException
+     */
+    public static void testDateFormatConcurrency() throws InterruptedException {        
+        final int COUNT = 1000;
+        Thread [] ts = new Thread[COUNT];
+        final Semaphore allDone = new Semaphore(-COUNT+1);
+        final AtomicInteger failures = new AtomicInteger(0); 
+        for (int i = 0; i < COUNT; i++) {
+            Thread t = new Thread() {
+                public void run() {
+                    long n = System.currentTimeMillis();
+                    final String d = ArchiveUtils.get17DigitDate(n);
+                    for (int i = 0; i < 1000; i++) {
+                        try {
+                            sleep(10);
+                        } catch (InterruptedException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        String d2 = ArchiveUtils.get17DigitDate(n);
+                        if(!d.equals(d2)) {
+                            failures.incrementAndGet();
+                            break; 
+                        }
+                    }
+                    allDone.release();
+                }
+            };
+            ts[i] = t;
+            ts[i].setName(Integer.toString(i));
+            ts[i].start();
+            while(!ts[i].isAlive()) /* Wait for thread to spin up*/;
+        }
+        allDone.acquire(); // wait for all threads to finish
+        assertEquals(failures.get()+" format mismatches",0,failures.get()); 
     }
 }
 

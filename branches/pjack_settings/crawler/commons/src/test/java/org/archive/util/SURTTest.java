@@ -98,5 +98,17 @@ public class SURTTest extends TestCase {
                 "http://(com,example,www,)/foo@bar",
                 SURT.fromURI("http://www.example.com/foo@bar"));  
     }
+    
+    /**
+     * Verify that dotted-quad numeric IP address is unreversed as per change
+     * requested in: [ 1572391 ] SURTs for IP-address URIs unhelpful
+     * 
+     * @throws URIException
+     */
+    public void testDottedQuadAuthority() throws URIException {
+        assertEquals("dotted-quad IP authority",
+                "http://(127.2.34.5)/foo",
+                SURT.fromURI("http://127.2.34.5/foo"));  
+    }
 }
 
