@@ -78,12 +78,12 @@
               <version>2.3</version>
               <scope>compile</scope>
         </dependency>
-        <dependency>
+<!--        <dependency>
               <groupId>com.sleepycat</groupId>
               <artifactId>je</artifactId>
               <version>3.2.13</version>
               <scope>compile</scope>
-        </dependency>
+        </dependency> -->
         <dependency>  
               <groupId>org.dnsjava</groupId>
               <artifactId>dnsjava</artifactId>
@@ -218,6 +218,17 @@
                    <overWrite>true</overWrite>
                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
                  </artifactItem>
+                 <artifactItem>
+                   <groupId>com.sleepycat</groupId>
+                   <artifactId>je</artifactId>
+                   <version>3.2.13</version>
+                   <type>jar</type>
+                   <overWrite>true</overWrite>
+                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                 </artifactItem>
+
+
+
                </artifactItems>
              </configuration>
            </execution>
