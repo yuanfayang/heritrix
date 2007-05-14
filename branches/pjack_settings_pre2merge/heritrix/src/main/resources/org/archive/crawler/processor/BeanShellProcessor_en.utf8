@@ -1,0 +1,8 @@
+isolate-threads-description:
+Whether each ToeThread should get its own independent script context, or 
+they should share synchronized access to one context. Default is true, 
+meaning each threads gets its own isolated context. 
+
+
+script-file-description:
+BeanShell script file.

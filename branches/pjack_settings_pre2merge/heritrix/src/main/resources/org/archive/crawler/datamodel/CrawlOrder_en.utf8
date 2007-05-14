@@ -1,0 +1,117 @@
+class-description:
+Heritrix crawl order. This forms the root of the settings hierarchy.
+
+
+settings-directory-description:
+Directory where override settings are kept. The settings for many modules can 
+be overridden based on the domain or subdomain of the URI being processed. 
+This setting specifies a file level directory to store those settings. The path
+is relative to 'disk-path' unless an absolute path is provided.
+
+
+disk-path-description:
+Directory where logs, arcs and other run time files will
+be kept. If this path is a relative path, it will be
+relative to the crawl order.
+
+
+logs-path-description:
+Directory where crawler log files will be kept. If this path is a relative
+path, it will be relative to the 'disk-path'.
+
+
+checkpoints-path-description:
+Directory where crawler checkpoint files will be kept. If this path is a 
+relative path, it will be relative to the 'disk-path'.
+# non-overrideable, expert, "checkpoints"
+
+state-path-description:
+Directory where crawler-state files will be kept. If this path is a relative 
+path, it will be relative to the 'disk-path'.
+# non-overrideable, expert, "state"
+
+scratch-path-description:
+Directory where discardable temporary files will be kept. If this path is a 
+relative path, it will be relative to the 'disk-path'.
+# non-overrideable, expert, "scratch"
+
+max-bytes-download-description:
+Maximum number of bytes to download. Once this number is exceeded the crawler 
+will stop. A value of zero means no upper limit.
+
+max-document-download-description:
+Maximum number of documents to download. Once this number is exceeded the 
+crawler will stop. A value of zero means no upper limit.
+
+max-time-sec-description:
+Maximum amount of time to crawl (in seconds). Once this much time has elapsed 
+the crawler will stop. A value of zero means no upper limit.
+        
+max-toe-threads-description:
+Maximum number of threads processing URIs at the same time.
+
+recorder-out-buffer-description:
+Size in bytes of in-memory buffer to record outbound traffic. One such buffer 
+is reserved for every ToeThread.
+
+recorder-in-buffer-description:
+Size in bytes of in-memory buffer to record inbound traffic. One such buffer 
+is reserved for every ToeThread.
+        
+bdb-cache-percent-description:
+Percentage of heap to allocate to BerkeleyDB JE cache. Default of zero means 
+no preference (accept BDB's default, usually 60%, or the je.maxMemoryPercent 
+property value).
+
+http-headers-description
+HTTP headers. Information that will be used when constructing the HTTP headers 
+of the crawler's HTTP requests.
+
+frontier-description:
+The frontier to use for the crawl.
+
+rules-description:
+Ordered list of url canonicalization rules.  Rules are applied in the order
+listed from top to bottom.
+
+loggers-description:
+Statistics tracking modules.  Any number of specialized statistics trackers
+that monitor a crawl and write logs, reports and/or provide information to
+the user interface.
+
+recover-path-description:
+Optional. Points at recover log (or recover.gz log) OR the checkpoint directory
+to use recovering a crawl.
+
+checkpoint-copy-bdbje-logs-description:
+When true, on a checkpoint, we copy off the bdbje log files to the checkpoint 
+directory. To recover a checkpoint, just set the recover-path to point at the 
+checkpoint directory to recover.  This is default setting.  But if crawl is 
+large, copying bdbje log files can take tens of minutes and even upwards of an 
+hour (Copying bdbje log files will consume bulk of time checkpointing). If 
+this setting is false, we do NOT copy bdbje logs on checkpoint AND we set 
+bdbje to NEVER delete log files (instead we have it rename files-to-delete 
+with a '.del' extension). Assumption is that when this setting is false, 
+an external process is managing the removal of bdbje log files and that come 
+time to recover from a checkpoint, the files that comprise a checkpoint are 
+manually assembled. This is an expert setting.
+
+recover-retain-failures-description:
+When recovering via the recover.log, should failures in the log be retained in 
+the recovered crawl, preventing the corresponding URIs from being retried. 
+Default is false, meaning failures are forgotten, and the corresponding URIs 
+will be retried in the recovered crawl.
+
+credential-store-description:
+The credential store.
+
+recorder-out-buffer-bytes-description:
+Size in bytes of in-memory buffer to record outbound traffic. One such 
+buffer is reserved for every ToeThread. 
+
+recorder-in-buffer-bytes-description:
+Size in bytes of in-memory buffer to record inbound traffic. One such 
+buffer is reserved for every ToeThread.
+
+robots-honoring-policy-description:
+Determines how robots.txt is to be handled.
