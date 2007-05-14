@@ -1,0 +1,14 @@
+accept-non-dns-resolves-description:
+If a DNS lookup fails, whether or not to fallback to InetAddress 
+resolution, which may use local 'hosts' files or other mechanisms. 
+
+
+server-cache-description:
+Used to do DNS lookups. 
+
+
+sha1-content-description:
+Whether or not to perform an on-the-fly SHA1 hash of retrieved 
+content-bodies. 
+
+

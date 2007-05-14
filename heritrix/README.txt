@@ -10,15 +10,13 @@ $Id$
 5.0 Release History
 6.0 License
 
-
 1.0 Introduction
 Heritrix is the Internet Archive's open-source, extensible, web-scale,
 archival-quality web crawler project. Heritrix (sometimes spelled heretrix, or
 misspelled or missaid as heratrix/heritix/heretix/heratix) is an archaic word
 for heiress (woman who inherits). Since our crawler seeks to collect and
 preserve the digital artifacts of our culture for the benefit of future
-researchers and generations, this name seemed apt.
-
+researchers and generations, this name seemed apt. 
 
 2.0 Webmasters!
 Heritrix is designed to respect the robots.txt 
@@ -27,11 +25,9 @@ tags <http://www.robotstxt.org/wc/exclusion.html#meta>. If you notice our
 crawler behaving poorly, please send us email at archive-crawler-agent *at*
 lists *dot* sourceforge *dot* net. 
 
-
 3.0 Getting Started
 See the User Manual at ./docs/articles/user_manual/index.html or at
 <http://crawler.archive.org/articles/user_manual/index.html>.
-
 
 4.0 Developer Documentation
 See ./docs/articles/developer_manual/index.html or

@@ -1,0 +1,6 @@
+invert-description:
+FIXME -- this was a bad idea and needs removed
+
+enabled-description:
+Whether or not this decide rule is enabled.  Disabled rules always evaluate
+to PASS.

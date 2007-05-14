@@ -1,0 +1,16 @@
+treat-frames-as-embed-links-description:
+If enabled, FRAME/IFRAME SRC-links are treated as embedded resources
+(IMG etc.), otherwise they are treated as navigational links.
+
+ignore-form-action-urls-description:
+If enabled, links appearing as the ACTION attribute in HTML FORMs are not
+extracted.
+
+overly-eager-link-detection-description:
+If disabled (default is enabled), possible links will not be queued if they are
+placed in (somewhat) unlikely places (Currently, just ignores URLs in HTML
+value attributes.
+
+ignore-unexpected-html-description:
+If enabled, html that is detected in unusual or unexpected
+places is not considerd for processing.
