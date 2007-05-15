@@ -78,9 +78,14 @@ remote server and can be of assistance to webmasters trying to figure how
 a crawler got to a particular area on a site. 
 
 
-sha1-content-description:
-Whether or not to perform an on-the-fly SHA1 hash of retrieved 
-content-bodies. 
+digest-content-description:
+Whether or not to perform an on-the-fly digest hash of retrieved
+content-bodies.
+ 
+
+digest-algorithm-description:
+Which algorithm (for example MD5 or SHA-1) to use to perform an
+on-the-fly digest hash of retrieved content-bodies.
 
 
 sotimeout-ms-description:

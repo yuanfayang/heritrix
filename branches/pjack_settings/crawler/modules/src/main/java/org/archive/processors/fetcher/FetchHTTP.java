@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -164,11 +165,20 @@ public class FetchHTTP extends Processor implements Initializable {
             .make("ISO-8859-1");
 
     /**
-     * Whether or not to perform an on-the-fly SHA1 hash of retrieved
+     * Whether or not to perform an on-the-fly digest hash of retrieved
      * content-bodies.
      */
     @Expert
-    final public static Key<Boolean> SHA1_CONTENT = Key.make(true);
+    final public static Key<Boolean> DIGEST_CONTENT = Key.make(true);
+ 
+ 
+    /**
+     * Which algorithm (for example MD5 or SHA-1) to use to perform an
+     * on-the-fly digest hash of retrieved content-bodies.
+     */
+    @Expert
+    final public static Key<String> DIGEST_ALGORITHM = Key.make("sha1");
+
 
     /**
      * The maximum KB/sec to use when fetching data from a server. The default
@@ -341,12 +351,14 @@ public class FetchHTTP extends Processor implements Initializable {
         Recorder rec = curi.getRecorder();
 
         // Shall we get a digest on the content downloaded?
-        boolean sha1Content = curi.get(this, SHA1_CONTENT);
-        if (sha1Content) {
-            rec.getRecordedInput().setSha1Digest();
+        boolean digestContent = curi.get(this, DIGEST_CONTENT);
+        String algorithm = null;
+        if (digestContent) {
+            algorithm = curi.get(this, DIGEST_ALGORITHM);
+            rec.getRecordedInput().setDigest(algorithm);
         } else {
             // clear
-            rec.getRecordedInput().setDigest(null);
+            rec.getRecordedInput().setDigest((MessageDigest)null);
         }
 
         // Below we do two inner classes that add check of midfetch
@@ -385,6 +397,14 @@ public class FetchHTTP extends Processor implements Initializable {
         boolean addedCredentials = populateCredentials(curi, method);
         method.setDoAuthentication(addedCredentials);
 
+        // set hardMax on bytes (if set by operator)
+        long hardMax = getMaxLength(curi);
+        // set overall timeout (if set by operator)
+        long timeoutMs = 1000 * getTimeout(curi);
+        // Get max fetch rate (bytes/ms). It comes in in KB/sec
+        long maxRateKBps = getMaxFetchRate(curi);
+        rec.getRecordedInput().setLimits(hardMax, timeoutMs, maxRateKBps);
+
         try {
             this.http.executeMethod(customConfigOrNull, method);
         } catch (RecorderTooMuchHeaderException ex) {
@@ -405,19 +425,11 @@ public class FetchHTTP extends Processor implements Initializable {
         // set softMax on bytes to get (if implied by content-length)
         long softMax = method.getResponseContentLength();
 
-        // set hardMax on bytes (if set by operator)
-        long hardMax = getMaxLength(curi);
-
-        // Get max fetch rate (bytes/ms). It comes in in KB/sec, which
-        // requires nothing to normalize.
-        int maxFetchRate = getMaxFetchRate(curi);
-
         try {
             if (!method.isAborted()) {
                 // Force read-to-end, so that any socket hangs occur here,
                 // not in later modules.
-                rec.getRecordedInput().readFullyOrUntil(softMax, hardMax,
-                        1000 * getTimeout(curi), maxFetchRate);
+                rec.getRecordedInput().readFullyOrUntil(softMax);
             }
         } catch (RecorderTimeoutException ex) {
             doAbort(curi, method, TIMER_TRUNC);
@@ -445,7 +457,10 @@ public class FetchHTTP extends Processor implements Initializable {
             curi.setContentSize(rec.getRecordedInput().getSize());
         }
 
-        curi.setContentDigest(SHA1, rec.getRecordedInput().getDigestValue());
+        if (digestContent) {
+            curi.setContentDigest(algorithm, 
+                rec.getRecordedInput().getDigestValue());
+        }
         if (logger.isLoggable(Level.INFO)) {
             logger.info(((curi.getFetchType() == HTTP_POST) ? "POST" : "GET")
                     + " " + curi.getUURI().toString() + " "
