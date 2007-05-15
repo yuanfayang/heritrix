@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -35,7 +36,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.archive.util.MimetypeUtils;
 
 
@@ -121,7 +123,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      */
     protected InputStream getInputStream(final File f, final long offset)
     throws IOException {
-        return new RepositionableBufferedInputStream(
+        return new RandomAccessBufferedInputStream(
             new RandomAccessInputStream(f, offset));
     }
 
@@ -338,6 +340,10 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     }
     
     /**
+     * Returns an ArchiveRecord iterator.
+     * Of note, on IOException, especially if ZipException reading compressed
+     * ARCs, rather than fail the iteration, try moving to the next record.
+     * If {@link ArchiveReader#strict} is not set, this will usually succeed.
      * @return An iterator over ARC records.
      */
     public Iterator<ArchiveRecord> iterator() {
@@ -411,35 +417,25 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     }
     
     /**
-     * Class that adds PositionableStream methods to a BufferedInputStream.
+     * Add buffering to RandomAccessInputStream.
      */
-    protected class RepositionableBufferedInputStream
-    extends BufferedInputStream
-    		implements RepositionableStream {
+    protected class RandomAccessBufferedInputStream
+    extends BufferedInputStream implements RepositionableStream {
 
-        public RepositionableBufferedInputStream(InputStream is)
+        public RandomAccessBufferedInputStream(RandomAccessInputStream is)
         		throws IOException {
             super(is);
-            doStreamCheck();
         }
 
-        public RepositionableBufferedInputStream(InputStream is, int size)
+        public RandomAccessBufferedInputStream(RandomAccessInputStream is, int size)
         		throws IOException {
             super(is, size);
-            doStreamCheck();
-        }
-        
-        private void doStreamCheck() throws IOException {
-            if (!(this.in instanceof RepositionableStream)) {
-                throw new IOException(
-                    "Passed stream must implement PositionableStream");
-            }
         }
 
         public long position() throws IOException {
             // Current position is the underlying files position
             // minus the amount thats in the buffer yet to be read.
-            return ((RepositionableStream)this.in).position() -
+            return ((RandomAccessInputStream)this.in).position() -
             	(this.count - this.pos);
         }
 
@@ -447,7 +443,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
             // Force refill of buffer whenever there's been a seek.
             this.pos = 0;
             this.count = 0;
-            ((RepositionableStream)this.in).position(position);
+            ((RandomAccessInputStream)this.in).position(position);
         }
     }
     
@@ -458,6 +454,8 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      * @author stack
      */
     protected class ArchiveRecordIterator implements Iterator<ArchiveRecord> {
+        private final Logger logger =
+            Logger.getLogger(this.getClass().getName());
         /**
          * @return True if we have more records to read.
          * @exception RuntimeException Can throw an IOException wrapped in a
@@ -470,7 +468,20 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
             try {
                 cleanupCurrentRecord();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                if (isStrict()) {
+                    throw new RuntimeException(e);
+                }
+                if (e instanceof EOFException) {
+                    logger.warning("Premature EOF cleaning up " + 
+                        currentRecord.getHeader().toString() + ": " +
+                        e.getMessage());
+                    return false;
+                }
+                // If not strict, try going again.  We might be able to skip
+                // over the bad record.
+                logger.warning("Trying skip of failed record cleanup of " +
+                    currentRecord.getHeader().toString() + ": " +
+                    e.getMessage());
             }
             return innerHasNext();
         }
@@ -502,18 +513,19 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
                 return exceptionNext();
             } catch (IOException e) {
                 if (!isStrict()) {
-                    // Retry once.
+                    // Retry though an IOE.  Maybe we will succeed reading
+                    // subsequent record.
                     try {
                         if (hasNext()) {
-                            getLogger().warning("Retrying (Current offset " +
-                                offset + "): " +  e.getMessage());
+                            getLogger().warning("Bad Record. Trying skip " +
+                                "(Current offset " +  offset + "): " +
+                                e.getMessage());
                             return exceptionNext();
                         }
-                        // There is no next and we don't have a record
-                        // to return.  Throw the recoverable.
-                        throw new RuntimeException("Retried but " +
-                            "no next record (Offset " + offset + ")",
-                            e);
+                        // Else we are at last record.  Iterator#next is
+                        // expecting value. We do not have one. Throw exception.
+                        throw new RuntimeException("Retried but no next " + 
+                            "record (Offset " + offset + ")", e);
                     } catch (IOException e1) {
                         throw new RuntimeException("After retry (Offset " +
                                 offset + ")", e1);
@@ -582,8 +594,15 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     /**
      * @return short name of Archive file.
      */
+    public String getFileName() {
+        return (new File(getReaderIdentifier())).getName();
+    }
+
+    /**
+     * @return short name of Archive file.
+     */
     public String getStrippedFileName() {
-    	return getStrippedFileName((new File(getReaderIdentifier())).getName(),
+        return getStrippedFileName(getFileName(),
     		getDotFileExtension());
     }
     
@@ -687,7 +706,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      * @throws IOException
      * @return True if handled.
      */
-    protected boolean outputRecord(final String format)
+    public boolean outputRecord(final String format)
     throws IOException {
     	boolean result = true;
         if (format.equals(CDX)) {
@@ -710,4 +729,45 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      */
     public abstract void dump(final boolean compress)
     throws IOException, java.text.ParseException;
+    
+    /**
+     * @return an ArchiveReader that will delete a local file on close.  Used
+     * when we bring Archive files local and need to clean up afterward.
+     */
+    public abstract ArchiveReader getDeleteFileOnCloseReader(final File f);
+    
+    /**
+     * Output passed record using passed format specifier.
+     * @param r ARCReader instance to output.
+     * @param format What format to use outputting.
+     * @throws IOException
+     */
+    protected static void outputRecord(final ArchiveReader r,
+        final String format)
+    throws IOException {
+        if (!r.outputRecord(format)) {
+            throw new IOException("Unsupported format" +
+                " (or unsupported on a single record): " + format);
+        }
+    }
+    
+    /**
+     * @return Base Options object filled out with help, digest, strict, etc.
+     * options.
+     */
+    protected static Options getOptions() {
+        Options options = new Options();
+        options.addOption(new Option("h","help", false,
+            "Prints this message and exits."));
+        options.addOption(new Option("o","offset", true,
+            "Outputs record at this offset into file."));
+        options.addOption(new Option("d","digest", true,
+            "Pass true|false. Expensive. Default: true (SHA-1)."));
+        options.addOption(new Option("s","strict", false,
+            "Strict mode. Fails parse if incorrectly formatted file."));
+        options.addOption(new Option("f","format", true,
+            "Output options: 'cdx', cdxfile', 'dump', 'gzipdump'," +
+            "'or 'nohead'. Default: 'cdx'."));
+        return options;
+    }
 }

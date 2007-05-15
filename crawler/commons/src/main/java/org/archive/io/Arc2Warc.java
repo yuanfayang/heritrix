@@ -43,8 +43,8 @@ import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecord;
-import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.io.warc.WARCConstants;
+import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.util.FileUtils;
 import org.archive.util.anvl.ANVLRecord;
 
@@ -175,7 +175,7 @@ public class Arc2Warc {
        HelpFormatter formatter = new HelpFormatter();
        
        // If no args, print help.
-       if (cmdlineOptions.length <= 0) {
+       if (cmdlineArgs.size() <= 0) {
            usage(formatter, options, 0);
        }
 

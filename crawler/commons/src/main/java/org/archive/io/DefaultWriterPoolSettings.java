@@ -47,7 +47,7 @@ implements WriterPoolSettings, Serializable {
     private static final long serialVersionUID = 1L;
 
 
-    private int maxSize;
+    private long maxSize;
     private List metadata = new ArrayList();;
     transient private List<File> outputDirs = new ArrayList<File>();
     private String prefix;
@@ -69,12 +69,12 @@ implements WriterPoolSettings, Serializable {
     }
     
     
-    public int getMaxSize() {
+    public long getMaxSize() {
         return maxSize;
     }
     
     
-    public void setMaxSize(int maxSize) {
+    public void setMaxSize(long maxSize) {
         this.maxSize = maxSize;
     }
     

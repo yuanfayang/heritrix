@@ -31,7 +31,8 @@ import java.util.List;
 import org.archive.io.ArchiveFileConstants;
 
 /**
- * WARC Constants used by readers and writers.
+ * WARC Constants used by WARC readers and writers.
+ * Below constants are used by version 0.10 and 0.12 of WARC Reader/Writer.
  * @author stack
  * @version $Revision$ $Date$
  */
@@ -47,13 +48,14 @@ public interface WARCConstants extends ArchiveFileConstants {
 	 * WARC files and records begin with this sequence.
 	 */
 	public static final String WARC_MAGIC = "WARC/";
+    public static final String WARC_010_MAGIC = "WARC/";
     
     /**
      * Hard-coded version for WARC files made with this code.
      * Setting to 0.10 because differs from 0.9 spec.  See accompanying
      * package documentation.
      */
-	public static final String WARC_VERSION = "0.10";
+	public static final String WARC_VERSION = "0.12";
     
     /**
      * Assumed maximum size of a Header Line.
@@ -109,6 +111,10 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String DEFAULT_ENCODING = "ISO-8859-1";
     public static final String HEADER_LINE_ENCODING = DEFAULT_ENCODING;
     
+    // TODO: Revisit. 8859 isn't correct, especially if we settle on RFC822
+    // headers
+    public static final String WARC_HEADER_ENCODING = HEADER_LINE_ENCODING;
+    
     public static final String [] HEADER_FIELD_KEYS = {
         VERSION_FIELD_KEY,
         LENGTH_FIELD_KEY,
@@ -127,7 +133,7 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String RESOURCE = "resource";
     public static final String REQUEST = "request";
     public static final String METADATA = "metadata";
-    public static final String REVISIT = "revist";
+    public static final String REVISIT = "revisit";
     public static final String CONVERSION = "conversion";
     public static final String CONTINUATION = "continuation";
     
@@ -154,6 +160,7 @@ public interface WARCConstants extends ArchiveFileConstants {
      * WARC-ID
      */
     public static final String WARC_ID = WARC_MAGIC + WARC_VERSION;
+    public static final String WARC_010_ID = WARC_010_MAGIC + "0.10";
         
     /**
      * Header field seperator character.
@@ -177,7 +184,7 @@ public interface WARCConstants extends ArchiveFileConstants {
     
     public static final String NAMED_FIELD_IP_LABEL = "IP-Address";
     public static final String NAMED_FIELD_CHECKSUM_LABEL = "Checksum";
-    public static final String NAMED_FIELD_RELATED_LABEL = "Related-Record-ID";
+    public static final String NAMED_FIELD_RELATED_LABEL = "References";
     public static final String NAMED_FIELD_WARCFILENAME = "Filename";
     public static final String NAMED_FIELD_DESCRIPTION = "Description";
     public static final String NAMED_FIELD_FILEDESC = "ARC-FileDesc";
@@ -188,6 +195,38 @@ public interface WARCConstants extends ArchiveFileConstants {
         "long-headers";
     public static final String NAMED_FIELD_TRUNCATED_VALUE_UNSPECIFIED = null;
     
+    // Headers new to version 0.12 of spec.
+    public static final String HEADER_KEY_URI = "WARC-Subject-URI";
+    public static final String HEADER_KEY_DATE = "WARC-Date";
+    public static final String HEADER_KEY_TYPE = "WARC-Type";
+    public static final String HEADER_KEY_IP = "WARC-IP-Address";   
+    public static final String HEADER_KEY_CHECKSUM = "WARC-Content-Digest";
+    public static final String HEADER_KEY_CONCURRENT_TO =
+        "WARC-Concurrent-To";
+    public static final String HEADER_KEY_TRUNCATED = "WARC-Truncated";
+    public static final String HEADER_KEY_PROFILE = "WARC-Profile";
+    public static final String HEADER_KEY_FILENAME = "WARC-Filename";
+    public static final String HEADER_KEY_ETAG = "WARC-Etag";
+    public static final String HEADER_KEY_LAST_MODIFIED = "WARC-Last-Modified";
+    
+    public static final String PROFILE_REVISIT_IDENTICAL_DIGEST = 
+    	"http://netpreserve.org/warc/0.12/revisit/identical-content-digest";
+    public static final String PROFILE_REVISIT_NOT_MODIFIED = 
+    	"http://netpreserve.org/warc/0.12/revisit/server-not-modified";
+    public static final String PROFILE_CONVERSION_SOFTWARE_COMMAND = 
+    	"http://netpreserve.org/warc/0.12/conversion/software-command";
+    
+    public static final String MIME_VERSION = "MIME-Version: 1.0";
+    public static final String CONTENT_ID = "Content-ID";
+    public static final String CONTENT_LENGTH = "Content-Length";
+    public static final String CONTENT_TYPE = "Content-Type";
+    public static final String CONTENT_DESCRIPTION = "Content-Description";
+    
+    public static final String COLON_SPACE = ": ";
+    // TODO: This is not in spec. Fix.
+    public static final String TRUNCATED_VALUE_UNSPECIFIED = "unspecified";
+    
+    
     /**
      * To be safe, lets use application type rather than message. Regards 
      * 'message/http', RFC says "...provided that it obeys the MIME restrictions
@@ -197,7 +236,7 @@ public interface WARCConstants extends ArchiveFileConstants {
      * @see <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html#sec19.1">rfc2616 section 19.1</a>
      */
     public static final String HTTP_REQUEST_MIMETYPE =
-    	"application/http;msgtype=request";
+    	"application/http; msgtype=request";
     public static final String HTTP_RESPONSE_MIMETYPE =
-    	"application/http;msgtype=response";
+    	"application/http; msgtype=response";
 }

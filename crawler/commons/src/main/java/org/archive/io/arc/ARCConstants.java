@@ -42,7 +42,7 @@ public interface ARCConstants extends ArchiveFileConstants {
     /**
      * Default maximum ARC file size.
      */
-    public static final int DEFAULT_MAX_ARC_FILE_SIZE = 100000000;
+    public static final long DEFAULT_MAX_ARC_FILE_SIZE = 100000000;
     
     /**
      * Maximum length for a metadata line.

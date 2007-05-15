@@ -92,7 +92,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     private List<File> writeDirs = null;
     private String prefix = DEFAULT_PREFIX;
     private String suffix = DEFAULT_SUFFIX;
-    private final int maxSize;
+    private final long maxSize;
     private final String extension;
 
     /**
@@ -117,6 +117,13 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * Pads serial number with zeros.
      */
     private static NumberFormat serialNoFormatter = new DecimalFormat("00000");
+    
+    
+    /**
+     * Buffer to reuse writing streams.
+     */
+    private final byte [] scratchbuffer = new byte[4 * 1024];
+ 
     
     /**
      * Constructor.
@@ -151,7 +158,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      */
     public WriterPoolMember(AtomicInteger serialNo, 
             final List<File> dirs, final String prefix, 
-            final boolean cmprs, final int maxSize, final String extension) {
+            final boolean cmprs, final long maxSize, final String extension) {
         this(serialNo, dirs, prefix, "", cmprs, maxSize, extension);
     }
             
@@ -169,7 +176,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     public WriterPoolMember(AtomicInteger serialNo,
             final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final int maxSize, final String extension) {
+            final long maxSize, final String extension) {
         this.suffix = suffix;
         this.prefix = prefix;
         this.maxSize = maxSize;
@@ -419,21 +426,57 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
 		this.out.write(b);
 	}
 	
-	protected void readFullyFrom(final InputStream is, final long recordLength,
+	/**
+     * @deprecated Use {@link #copyFrom(InputStream,long,boolean)} instead
+     */
+    protected void readFullyFrom(final InputStream is, final long recordLength,
+    		final byte [] b)
+    throws IOException {
+        copyFrom(is, recordLength, true);
+    }
+
+    /**
+     * @deprecated Use {@link #copyFrom(InputStream,long,boolean)} instead
+     */
+	protected void readToLimitFrom(final InputStream is, final long limit,
 			final byte [] b)
 	throws IOException {
-        int read = b.length;
-        int total = 0;
-        while((read = is.read(b)) != -1 && total < recordLength) {
-        	total += read;
-            write(b, 0, read);
-        }
-        if (total != recordLength) {
-        	throw new IOException("Read " + total + " but expected " +
-        	    recordLength);
-        }
+        copyFrom(is, limit, true);
 	}
-	
+
+    /**
+     * Copy bytes from the provided InputStream to the target file/stream being
+     * written.
+     * 
+     * @param is
+     *            InputStream to copy bytes from
+     * @param recordLength
+     *            expected number of bytes to copy
+     * @param enforceLength
+     *            whether to throw an exception if too many/too few bytes are
+     *            available from stream
+     * @throws IOException
+     */
+    protected void copyFrom(final InputStream is, final long recordLength,
+            boolean enforceLength) throws IOException {
+        int read = scratchbuffer.length;
+        long tot = 0;
+        while ((tot < recordLength || !enforceLength)
+                && (read = is.read(scratchbuffer)) != -1) {
+            int write = read; 
+            if (enforceLength) {
+                // never write more than enforced length
+                write = (int) Math.min(write, recordLength - tot);
+            }
+            tot += read;
+            write(scratchbuffer, 0, write);
+        }
+        if (enforceLength && tot != recordLength) {
+            throw new IOException("Read " + tot + " but expected "
+                    + recordLength);
+        }
+    }
+
     public void close() throws IOException {
         if (this.out == null) {
             return;

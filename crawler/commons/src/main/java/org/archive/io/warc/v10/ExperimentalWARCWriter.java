@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.io.UTF8Bytes;
 import org.archive.io.WriterPoolMember;
+import org.archive.io.warc.WARCConstants;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -44,6 +47,11 @@ import org.archive.util.anvl.ANVLRecord;
 
 /**
  * <b>Experimental</b> WARC implementation.
+ * 
+ * Based on unreleased version 0.9 of <a 
+ * href="http://archive-access.sourceforge.net//warc/warc_file_format.html">WARC
+ * File Format</a> document.  Specification and implementation subject to
+ * change.
  *
  * <p>Assumption is that the caller is managing access to this
  * ExperimentalWARCWriter ensuring only one thread accessing this WARC instance
@@ -72,6 +80,12 @@ implements WARCConstants {
             e.printStackTrace();
         }
     };
+    
+    /**
+     * Formatter for the length.
+     */
+    private static NumberFormat RECORD_LENGTH_FORMATTER =
+        new DecimalFormat(PLACEHOLDER_RECORD_LENGTH_STRING);
     
     /**
      * Metadata.
@@ -105,6 +119,7 @@ implements WARCConstants {
             final List warcinfoData)
     throws IOException {
         super(serialNo, out, f, cmprs, a14DigitDate);
+        // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
             
@@ -124,6 +139,7 @@ implements WARCConstants {
             final long maxSize, final List warcinfoData) {
         super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
         	WARC_FILE_EXTENSION);
+        // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
     
@@ -143,17 +159,17 @@ implements WARCConstants {
         }
     }
     
-    protected String checkHeaderValue(final String value)
+    protected String checkHeaderLineParameters(final String parameter)
     throws IOException {
-        for (int i = 0; i < value.length(); i++) {
-        	final char c = value.charAt(i);
-        	baseCharacterCheck(c, value);
+        for (int i = 0; i < parameter.length(); i++) {
+        	final char c = parameter.charAt(i);
+        	baseCharacterCheck(c, parameter);
         	if (Character.isWhitespace(c)) {
                 throw new IOException("Contains disallowed white space 0x" +
-                    Integer.toHexString(c) + ": " + value);
+                    Integer.toHexString(c) + ": " + parameter);
         	}
         }
-        return value;
+        return parameter;
     }
     
     protected String checkHeaderLineMimetypeParameter(final String parameter)
@@ -181,68 +197,76 @@ implements WARCConstants {
         return sb.toString();
     }
 
-    protected String createRecordHeader(final String type,
+    protected byte [] createRecordHeaderline(final String type,
     		final String url, final String create14DigitDate,
     		final String mimetype, final URI recordId,
-    		final ANVLRecord xtraHeaders, final long contentLength)
+    		final int namedFieldsLength, final long contentLength)
     throws IOException {
     	final StringBuilder sb =
     		new StringBuilder(2048/*A SWAG: TODO: Do analysis.*/);
-    	sb.append(WARC_ID).append(CRLF);
-        sb.append(HEADER_KEY_TYPE).append(COLON_SPACE).append(type).
-            append(CRLF);
-        // Do not write a subject-uri if not one present.
-        if (url != null && url.length() > 0) {
-            sb.append(HEADER_KEY_URI).append(COLON_SPACE).
-                append(checkHeaderValue(url)).append(CRLF);
-        }
-        sb.append(HEADER_KEY_DATE).append(COLON_SPACE).
-            append(create14DigitDate).append(CRLF);
-        if (xtraHeaders != null) {
-            for (final Iterator i = xtraHeaders.iterator(); i.hasNext();) {
-                sb.append(i.next()).append(CRLF);
-            }
-        }
-
-        // TODO: Is MIME Version needed.
-        sb.append(MIME_VERSION).append(CRLF);
-        sb.append(CONTENT_ID).append(COLON_SPACE).append('<').
-            append(recordId.toString()).append('>').append(CRLF);
-        if (contentLength > 0) {
-            sb.append(CONTENT_TYPE).append(COLON_SPACE).append(
-                checkHeaderLineMimetypeParameter(mimetype)).append(CRLF);
-        }
-        sb.append(CONTENT_LENGTH).append(COLON_SPACE).
-            append(Long.toString(contentLength)).append(CRLF);
+    	sb.append(WARC_010_ID);
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(PLACEHOLDER_RECORD_LENGTH_STRING);
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(type);
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(checkHeaderLineParameters(url));
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(checkHeaderLineParameters(create14DigitDate));
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	// 0.9 of spec. has mimetype second-to-last and recordid last on
+    	// header line.  Here we swap their positions and allow writing
+    	// of full mimetypes rather than the curtailed type we used write into
+    	// ARCs.  These two deviations to be proposed as amendments to spec 0.9.
+    	sb.append(checkHeaderLineParameters(recordId.toString()));
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(checkHeaderLineMimetypeParameter(mimetype));
+        // Add terminating CRLF.
+        sb.append(CRLF);
     	
-    	return sb.toString();
+    	long length = sb.length() + namedFieldsLength + contentLength;
+    	
+    	// Insert length and pad out to fixed width with zero prefix to
+        // highlight 'fixed-widthness' of length.
+    	int start = WARC_010_ID.length() + 1 /*HEADER_FIELD_SEPARATOR */;
+        int end = start + PLACEHOLDER_RECORD_LENGTH_STRING.length();
+    	String lenStr = RECORD_LENGTH_FORMATTER.format(length);
+    	sb.replace(start, end, lenStr);
+
+        return sb.toString().getBytes(HEADER_LINE_ENCODING);
     }
 
     protected void writeRecord(final String type, final String url,
     		final String create14DigitDate, final String mimetype,
-    		final URI recordId, ANVLRecord xtraHeaders,
+    		final URI recordId, ANVLRecord namedFields,
             final InputStream contentStream, final long contentLength)
     throws IOException {
     	if (!TYPES_LIST.contains(type)) {
     		throw new IllegalArgumentException("Unknown record type: " + type);
     	}
     	if (contentLength == 0 &&
-                (xtraHeaders == null || xtraHeaders.size() <= 0)) {
-    		throw new IllegalArgumentException("Cannot write record " +
-    		    "of content-length zero and base headers only.");
+                (namedFields == null || namedFields.size() <= 0)) {
+    		throw new IllegalArgumentException("Cannot have a record made " +
+    		    "of a Header line only (Content and Named Fields are empty).");
     	}
     	
         preWriteRecordTasks();
         try {
-            final String header = createRecordHeader(type, url,
-            	create14DigitDate, mimetype, recordId, xtraHeaders,
+        	if (namedFields == null) {
+        		// Use the empty anvl record so the length of blank line on
+        		// end gets counted as part of the record length.
+        		namedFields = ANVLRecord.EMPTY_ANVL_RECORD;
+        	}
+        	
+        	// Serialize metadata first so we have metadata length.
+        	final byte [] namedFieldsBlock = namedFields.getUTF8Bytes();
+        	// Now serialize the Header line.
+            final byte [] header = createRecordHeaderline(type, url,
+            	create14DigitDate, mimetype, recordId, namedFieldsBlock.length,
             	contentLength);
-            // TODO: Revisit endcoding of header.
-            write(header.getBytes(WARC_HEADER_ENCODING));
-            
+            write(header);
+            write(namedFieldsBlock);
             if (contentStream != null && contentLength > 0) {
-                // Write out the header/body separator.
-                write(CRLF_BYTES); // TODO: should this be written even for zero-length?
             	copyFrom(contentStream, contentLength, true);
             }
             
@@ -294,9 +318,9 @@ implements WARCConstants {
         		filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
         }
         ANVLRecord record = new ANVLRecord(2);
-        record.addLabelValue(HEADER_KEY_FILENAME, filename);
+        record.addLabelValue(NAMED_FIELD_WARCFILENAME, filename);
         if (description != null && description.length() > 0) {
-        	record.addLabelValue(CONTENT_DESCRIPTION, description);
+        	record.addLabelValue(NAMED_FIELD_DESCRIPTION, description);
         }
         // Add warcinfo body.
         byte [] warcinfoBody = null;
@@ -311,7 +335,7 @@ implements WARCConstants {
         	}
         	warcinfoBody = baos.toByteArray();
         }
-        URI uri = writeWarcinfoRecord("text/xml", record,
+        URI uri = writeWarcinfoRecord("text/plain", record,
             new ByteArrayInputStream(warcinfoBody), warcinfoBody.length);
         // TODO: If at start of file, and we're writing compressed,
         // write out our distinctive GZIP extensions.
@@ -335,7 +359,7 @@ implements WARCConstants {
     	final long fileMetadataLength)
     throws IOException {
     	final URI recordid = generateRecordId(TYPE, WARCINFO);
-    	writeWarcinfoRecord(ArchiveUtils.getLog14Date(), mimetype, recordid,
+    	writeWarcinfoRecord(ArchiveUtils.get14DigitDate(), mimetype, recordid,
             namedFields, fileMetadata, fileMetadataLength);
     	return recordid;
     }
@@ -355,7 +379,7 @@ implements WARCConstants {
         final String mimetype, final URI recordId, final ANVLRecord namedFields,
     	final InputStream fileMetadata, final long fileMetadataLength)
     throws IOException {
-    	writeRecord(WARCINFO, null, create14DigitDate, mimetype,
+    	writeRecord(WARCINFO, recordId.toString(), create14DigitDate, mimetype,
         	recordId, namedFields, fileMetadata, fileMetadataLength);
     }
     
@@ -397,17 +421,6 @@ implements WARCConstants {
             final long responseLength)
     throws IOException {
         writeRecord(RESPONSE, url, create14DigitDate,
-            mimetype, recordId, namedFields, response,
-            responseLength);
-    }
-    
-    public void writeRevisitRecord(final String url,
-            final String create14DigitDate, final String mimetype,
-            final URI recordId,
-            final ANVLRecord namedFields, final InputStream response,
-            final long responseLength)
-    throws IOException {
-        writeRecord(REVISIT, url, create14DigitDate,
             mimetype, recordId, namedFields, response,
             responseLength);
     }

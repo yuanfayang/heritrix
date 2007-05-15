@@ -120,7 +120,7 @@ public class Warc2Arc {
                    continue;
                }
                String ip = (String)r.getHeader().
-                   getHeaderValue((WARCConstants.NAMED_FIELD_IP_LABEL));
+                   getHeaderValue((WARCConstants.HEADER_KEY_IP));
                long length = r.getHeader().getLength();
                int offset = r.getHeader().getContentBegin();
                // This mimetype is not exactly what you'd expect to find in
@@ -128,8 +128,9 @@ public class Warc2Arc {
                // need to parse the HTTP Headers.  Thats messy.  Not doing for
                // now.
                String mimetype = r.getHeader().getMimetype();
-               long time = ArchiveUtils.getSecondsSinceEpoch(r.getHeader().
-                   getDate()).getTime();
+               // Clean out ISO time string '-', 'T', ':', and 'Z' characters.
+               String t = r.getHeader().getDate().replaceAll("[-T:Z]", "");
+               long time = ArchiveUtils.getSecondsSinceEpoch(t).getTime();
                writer.write(r.getHeader().getUrl(), mimetype, ip, time,
                    (int)(length - offset), r);
 		   }
@@ -187,7 +188,7 @@ public class Warc2Arc {
        HelpFormatter formatter = new HelpFormatter();
        
        // If no args, print help.
-       if (cmdlineOptions.length < 0) {
+       if (cmdlineArgs.size() < 0) {
            usage(formatter, options, 0);
        }
 

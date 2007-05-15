@@ -31,6 +31,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.archive.util.IoUtils;
 
 
 /**
@@ -64,6 +68,9 @@ import java.security.NoSuchAlgorithmException;
  *
  */
 public class RecordingOutputStream extends OutputStream {
+    protected static Logger logger =
+        Logger.getLogger(RecordingOutputStream.class.getName());
+    
     /**
      * Size of recording.
      *
@@ -117,6 +124,15 @@ public class RecordingOutputStream extends OutputStream {
      */
     protected static final long MAX_HEADER_MATERIAL = 1024*1024; // 1MB
     
+    // configurable max length, max time limits
+    /** maximum length of material to record before throwing exception */ 
+    protected long maxLength = Long.MAX_VALUE;
+    /** maximum time to record before throwing exception */ 
+    protected long timeoutMs = Long.MAX_VALUE;
+    /** maximum rate to record (adds delays to hit target rate) */ 
+    protected long maxRateBytesPerMs = Long.MAX_VALUE;
+    /** time recording begins for timeout, rate calculations */ 
+    protected long startTime = Long.MAX_VALUE;
     
     /**
      * When recording HTTP, where the content-body starts.
@@ -128,6 +144,11 @@ public class RecordingOutputStream extends OutputStream {
      */
     private OutputStream out = null;
 
+    // mark/reset support 
+    /** furthest position reached before any reset()s */
+    private long maxPosition = 0;
+    /** remembered position to reset() to */ 
+    private long markPosition = 0; 
 
     /**
      * Create a new RecordingOutputStream.
@@ -169,6 +190,8 @@ public class RecordingOutputStream extends OutputStream {
         }
         this.out = wrappedStream;
         this.position = 0;
+        this.markPosition = 0;
+        this.maxPosition = 0; 
         this.size = 0;
         this.contentBeginMark = -1;
         // ensure recording turned on
@@ -184,9 +207,15 @@ public class RecordingOutputStream extends OutputStream {
             
             this.diskStream = new RecyclingFastBufferedOutputStream(fis, bufStreamBuf);
         }
+        startTime = System.currentTimeMillis();
     }
 
     public void write(int b) throws IOException {
+        if(position<maxPosition) {
+            // revisiting previous content; do nothing but advance position
+            position++;
+            return; 
+        }
         if(recording) {
             record(b);
         }
@@ -196,17 +225,19 @@ public class RecordingOutputStream extends OutputStream {
         checkLimits();
     }
 
-    public void write(byte[] b) throws IOException {
-        if(recording) {
-            record(b, 0, b.length);
-        }
-        if (this.out != null) {
-            this.out.write(b);
-        }
-        checkLimits();
-    }
-
     public void write(byte[] b, int off, int len) throws IOException {
+        if(position < maxPosition) {
+            if(position+len<=maxPosition) {
+                // revisiting; do nothing but advance position
+                position += len;
+                return;
+            }
+            // consume part of the array doing nothing but advancing position
+            long consumeRange = maxPosition - position; 
+            position += consumeRange;
+            off += consumeRange;
+            len -= consumeRange; 
+        }
         if(recording) {
             record(b, off, len);
         }
@@ -215,17 +246,36 @@ public class RecordingOutputStream extends OutputStream {
         }
         checkLimits();
     }
-
+    
     /**
-     * Check any enforced limits. For now, this only checks MAX_HEADER_MATERIAL
-     * if markContentBegin() has not yet been called.
+     * Check any enforced limits. 
      */
-    protected void checkLimits() throws RecorderTooMuchHeaderException {
+    protected void checkLimits() throws RecorderIOException {
+        // too much material before finding end of headers? 
         if (contentBeginMark<0) {
             // no mark yet
             if(position>MAX_HEADER_MATERIAL) {
                 throw new RecorderTooMuchHeaderException();
             }
+        }
+        // overlong?
+        if(position>maxLength) {
+            throw new RecorderLengthExceededException(); 
+        }
+        // taking too long? 
+        long duration = System.currentTimeMillis() - startTime + 1; // !divzero
+        if(duration>timeoutMs) {
+            throw new RecorderTimeoutException(); 
+        }
+        // need to throttle reading to hit max configured rate? 
+        if(position/duration > maxRateBytesPerMs) {
+            long desiredDuration = position / maxRateBytesPerMs;
+            try {
+                Thread.sleep(desiredDuration-duration);
+            } catch (InterruptedException e) {
+                logger.log(Level.WARNING,
+                        "bandwidth throttling sleep interrupted", e);
+            } 
         }
     }
 
@@ -343,12 +393,18 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public ReplayInputStream getReplayInputStream() throws IOException {
+        return getReplayInputStream(0);
+    }
+    
+    public ReplayInputStream getReplayInputStream(long skip) throws IOException {
         // If this method is being called, then assumption must be that the
         // stream is closed. If it ain't, then the stream gotten won't work
         // -- the size will zero so any attempt at a read will get back EOF.
         assert this.out == null: "Stream is still open.";
-        return new ReplayInputStream(this.buffer, this.size,
-            this.contentBeginMark, this.backingFilename);
+        ReplayInputStream replay = new ReplayInputStream(this.buffer, 
+                this.size, this.contentBeginMark, this.backingFilename);
+        replay.skip(skip);
+        return replay; 
     }
 
     /**
@@ -358,9 +414,7 @@ public class RecordingOutputStream extends OutputStream {
      * @return An RIS.
      */
     public ReplayInputStream getContentReplayInputStream() throws IOException {
-        ReplayInputStream replay = getReplayInputStream();
-        replay.skip(this.contentBeginMark);
-        return replay;
+        return getReplayInputStream(this.contentBeginMark);
     }
 
     public long getSize() {
@@ -377,6 +431,13 @@ public class RecordingOutputStream extends OutputStream {
         startDigest();
     }
 
+    /**
+     * Return stored content-begin-mark (which is also end-of-headers)
+     */
+    public long getContentBegin() {
+        return this.contentBeginMark;
+    }
+    
     /**
      * Starts digesting recorded data, if a MessageDigest has been
      * set.
@@ -448,18 +509,52 @@ public class RecordingOutputStream extends OutputStream {
         return getReplayCharSequence(null);
     }
 
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding) 
+    throws IOException {
+        return getReplayCharSequence(characterEncoding, this.contentBeginMark);
+    }
+    
     /**
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call
      * close on returned RCS when done.
      * @throws IOException
      */
-    public ReplayCharSequence getReplayCharSequence(String characterEncoding)
-    		throws IOException {
-        return ReplayCharSequenceFactory.getInstance().
-        	getReplayCharSequence(this.buffer, this.size,
-        	        this.contentBeginMark, this.backingFilename,
-                    characterEncoding);
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding, 
+            long startOffset) throws IOException {
+        // TODO: handled transfer-encoding: chunked content-bodies properly
+        float maxBytesPerChar = IoUtils.encodingMaxBytesPerChar(characterEncoding);
+        if(maxBytesPerChar<=1) {
+            // single
+            // TODO: take into account single-byte encoding may be non-default
+            return new ByteReplayCharSequence(
+                    this.buffer, 
+                    this.size, 
+                    startOffset,
+                    this.backingFilename);
+        } else {
+            // multibyte 
+            if(this.size <= this.buffer.length) {
+                // raw data is all in memory; do in memory
+                return new MultiByteReplayCharSequence(
+                        this.buffer, 
+                        this.size, 
+                        startOffset,
+                        characterEncoding);
+                
+            } else {
+                // raw data overflows to disk; use temp file
+                ReplayInputStream ris = getReplayInputStream(startOffset);
+                ReplayCharSequence rcs = new MultiByteReplayCharSequence(
+                        ris, 
+                        this.backingFilename,
+                        characterEncoding);
+                ris.close(); 
+                return rcs;
+            }
+            
+        }
+        
     }
 
     public long getResponseContentLength() {
@@ -471,5 +566,59 @@ public class RecordingOutputStream extends OutputStream {
      */
     public boolean isOpen() {
         return this.out != null;
+    }
+    
+    /**
+     * When used alongside a mark-supporting RecordingInputStream, remember
+     * a position reachable by a future reset().
+     */
+    public void mark() {
+        // remember this position for subsequent reset()
+        this.markPosition = position; 
+    }
+    
+    /**
+     * When used alongside a mark-supporting RecordingInputStream, reset 
+     * the position to that saved by previous mark(). Until the position 
+     * again reached "new" material, none of the bytes pushed to this 
+     * stream will be digested or recorded. 
+     */
+    public void reset() {
+        // take note of furthest-position-reached to avoid double-recording
+        maxPosition = Math.max(maxPosition, position); 
+        // reset to previous position
+        position = markPosition;
+    }
+    
+    /**
+     * Set limits on length, time, and rate to enforce.
+     * 
+     * @param length
+     * @param milliseconds
+     * @param rateKBps
+     */
+    public void setLimits(long length, long milliseconds, long rateKBps) {
+        maxLength = (length>0) ? length : Long.MAX_VALUE;
+        timeoutMs = (milliseconds>0) ? milliseconds : Long.MAX_VALUE;
+        maxRateBytesPerMs = (rateKBps>0) ? rateKBps*1024/1000 : Long.MAX_VALUE;
+    }
+    
+    /**
+     * Reset limits to effectively-unlimited defaults
+     */
+    public void resetLimits() {
+        maxLength = Long.MAX_VALUE;
+        timeoutMs = Long.MAX_VALUE;
+        maxRateBytesPerMs = Long.MAX_VALUE;
+    }
+    
+    /**
+     * Return number of bytes that could be recorded without hitting 
+     * length limit
+     * 
+     * @return long byte count
+     */
+    public long getRemainingLength() {
+        return maxLength - position; 
     }
 }
