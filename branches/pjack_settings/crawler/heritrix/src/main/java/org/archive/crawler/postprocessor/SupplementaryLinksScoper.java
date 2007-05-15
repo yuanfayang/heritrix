@@ -61,7 +61,9 @@ public class SupplementaryLinksScoper extends Scoper {
     
 
     /**
-     * Rules to apply to each link carried by the URI.
+     * DecideRules which if their final decision on a link is
+     * REJECT, cause the link to be ruled out-of-scope, even 
+     * if it had previously been accepted by the main scope.
      */
     @Expert
     final public static Key<DecideRuleSequence> LINK_RULES = 
