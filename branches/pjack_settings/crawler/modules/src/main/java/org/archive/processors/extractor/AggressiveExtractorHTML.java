@@ -51,18 +51,11 @@ extends ExtractorHTML {
 
     protected void processScript(ProcessorURI curi, CharSequence sequence,
             int endOfOpenTag) {
-         // first, get attributes of script-open tag
-        // as per any other tag
-        processGeneralTag(curi, sequence.subSequence(0,6),
-            sequence.subSequence(0, endOfOpenTag));
+        super.processScript(curi, sequence, endOfOpenTag);
         // then, proccess entire javascript code as html code
         // this may cause a lot of false positves
         processGeneralTag(curi, sequence.subSequence(0,6),
             sequence.subSequence(endOfOpenTag, sequence.length()));
-        // finally, apply best-effort string-analysis heuristics
-        // against any code present (false positives are OK)
-        processScriptCode(curi, sequence.subSequence(endOfOpenTag,
-            sequence.length()));
     }
 
     /* (non-Javadoc)
