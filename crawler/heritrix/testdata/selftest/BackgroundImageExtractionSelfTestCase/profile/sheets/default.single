@@ -117,7 +117,6 @@ root.controller.processors.HTTP.accept-headers=object:java.util.ArrayList
 root.controller.processors.HTTP.http-proxy-host=string:
 root.controller.processors.HTTP.http-proxy-port=int:0
 root.controller.processors.HTTP.default-encoding=string:ISO-8859-1
-root.controller.processors.HTTP.sha1-content=boolean:true
 root.controller.processors.HTTP.send-referer=boolean:true
 root.controller.processors.HTTP.send-range=boolean:false
 root.controller.processors.HTTP.send-connection-close=boolean:true

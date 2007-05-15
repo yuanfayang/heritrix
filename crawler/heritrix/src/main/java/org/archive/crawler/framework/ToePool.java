@@ -206,7 +206,7 @@ public class ToePool extends ThreadGroup implements Reporter {
      */
     protected void standardReportTo(PrintWriter writer) {
         writer.print("Toe threads report - "
-                + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+                + ArchiveUtils.get12DigitDate() + "\n");
         writer.print(" Job being crawled: "
                 + this.controller.getSheetManager().getCrawlName() + "\n");
         writer.print(" Number of toe threads in pool: " + getToeCount() + " ("
@@ -257,7 +257,7 @@ public class ToePool extends ThreadGroup implements Reporter {
     }
 
     public void singleLineReportTo(PrintWriter w) {
-        Histotable ht = new Histotable();
+        Histotable<Object> ht = new Histotable<Object>();
         Thread[] toes = getToes();
         for (int i = 0; i < toes.length; i++) {
 
@@ -269,7 +269,7 @@ public class ToePool extends ThreadGroup implements Reporter {
                 ht.tally(tt.getStep());
             }
         }
-        TreeSet sorted = ht.getSorted();
+        TreeSet sorted = ht.getSortedByCounts();
         w.print(getToeCount());
         w.print(" threads: ");        
         w.print(Histotable.entryString(sorted.first()));
