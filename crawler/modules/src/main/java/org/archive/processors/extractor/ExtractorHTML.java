@@ -84,7 +84,7 @@ public class ExtractorHTML extends ContentExtractor {
       
       static final String RELEVANT_TAG_EXTRACTOR =
           "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
-          "|((style[^>]*+)>[^<]*+</style)" + // 3, 4
+          "|((style[^>]*+)>.*?</style)" + // 3, 4
           "|(((meta)|(?:\\w{1,"+MAX_ELEMENT_LENGTH+"}))\\s+[^>]*+)" + // 5, 6, 7
           "|(!--.*?--))>"; // 8 
 
@@ -179,6 +179,17 @@ public class ExtractorHTML extends ContentExtractor {
     @Expert
     public static final Key<Boolean> IGNORE_FORM_ACTION_URLS =
         Key.make(false);
+
+
+    /**
+     * If true, in-page Javascript is scanned for strings that
+     * appear likely to be URIs. This typically finds both valid
+     * and invalid URIs, and attempts to fetch the invalid URIs
+     * sometimes generates webmaster concerns over odd crawler
+     * behavior. Default is true.
+     */
+    @Expert
+    public static final Key<Boolean> EXTRACT_JAVASCRIPT = Key.make(true);
     
 
     /**
@@ -331,8 +342,8 @@ public class ExtractorHTML extends ContentExtractor {
                 }
             } else if (attr.start(10) > -1) {
                 // VALUE, with possibility of URI
-                if (TextUtils.matches(LIKELY_URI_PATH, value)
-                        && overlyEagerLinkDetection) {
+                if (overlyEagerLinkDetection
+                        && TextUtils.matches(LIKELY_URI_PATH, value)) {
                     CharSequence context = elementContext(element,
                         attr.group(10));
                     processLink(curi,value, context);
@@ -384,21 +395,18 @@ public class ExtractorHTML extends ContentExtractor {
         }
     }
 
-    // finds strings in javascript likely to be URIs/paths
-    // guessing based on '.' in string, so if highly likely to
-    // get gifs/etc, unable to get many other paths
-    // will find false positives
-    // TODO: add '/' check, suppress strings being concatenated via '+'?
-    static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
-     "(\\\\{0,8}+\"|\\\\{0,8}+\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
 
     /**
-     * @param curi
-     * @param cs
+     * Extract the (java)script source in the given CharSequence.
+     *
+     * @param curi  source CrawlURI
+     * @param cs    CharSequence of javascript code
      */
     protected void processScriptCode(ProcessorURI curi, CharSequence cs) {
-        this.numberOfLinksExtracted +=
-            ExtractorJS.considerStrings(curi, cs, false);
+        if (curi.get(this, EXTRACT_JAVASCRIPT)) {
+            this.numberOfLinksExtracted +=
+                ExtractorJS.considerStrings(curi, cs, false);
+        }
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";
@@ -627,9 +635,6 @@ public class ExtractorHTML extends ContentExtractor {
 
     protected void processScript(ProcessorURI curi, CharSequence sequence,
             int endOfOpenTag) {
-        // for now, do nothing
-        // TODO: best effort extraction of strings
-
         // first, get attributes of script-open tag
         // as per any other tag
         processGeneralTag(curi,sequence.subSequence(0,6),

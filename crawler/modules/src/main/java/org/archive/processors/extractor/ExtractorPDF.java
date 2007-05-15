@@ -49,6 +49,8 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
 
     private static final long serialVersionUID = 3L;
 
+    private static final Logger LOGGER =
+        Logger.getLogger(ExtractorPDF.class.getName());
 
     /**
      * The maximum size of PDF files to consider.  PDFs larger than this
@@ -56,9 +58,6 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
      */
     final public static Key<Long> MAX_SIZE_TO_PARSE = Key.make(5*1024*1024L);
     
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
-
 
     final private AtomicLong numberOfLinksExtracted = new AtomicLong(0);
 
@@ -147,7 +146,7 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
         
         numberOfLinksExtracted.addAndGet(uris.size());
 
-        logger.fine(curi+" has "+uris.size()+" links.");
+        LOGGER.fine(curi+" has "+uris.size()+" links.");
         // Set flag to indicate that link extraction is completed.
         return true;
     }

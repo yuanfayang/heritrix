@@ -82,6 +82,13 @@ public class ExtractorImpliedURI extends Extractor {
      */
     final public static Key<String> BUILD_PATTERN = Key.make("");
 
+
+    /**
+     * If true, all URIs that match trigger regular expression are removed 
+     * from the list of extracted URIs. Default is false.
+     */
+    final public static Key<Boolean> REMOVE_TRIGGER_URIS = Key.make(false);
+
     
     final AtomicLong linksExtracted = new AtomicLong();
 
@@ -122,6 +129,22 @@ public class ExtractorImpliedURI extends Extractor {
                     Link out = new Link(src, target, lc, hop);
                     links.add(out);
                     linksExtracted.incrementAndGet();
+
+                    boolean removeTriggerURI = 
+                        curi.get(this, REMOVE_TRIGGER_URIS);
+                    // remove trigger URI from the outlinks if configured so.
+                    if (removeTriggerURI) {
+                       if (curi.getOutLinks().remove(link)) {
+                               LOGGER.log(Level.FINE, link.getDestination() + 
+                                     " has been removed from " + 
+                                     link.getSource() + " outlinks list.");
+                               linksExtracted.decrementAndGet();
+                       } else {
+                               LOGGER.log(Level.FINE, "Failed to remove " + 
+                                      link.getDestination() + " from " + 
+                                      link.getSource()+ " outlinks list.");
+                       }
+                    }
                 } catch (URIException e) {
                     LOGGER.log(Level.FINE, "bad URI", e);
                 }

@@ -1,16 +1,28 @@
 treat-frames-as-embed-links-description:
-If enabled, FRAME/IFRAME SRC-links are treated as embedded resources
-(IMG etc.), otherwise they are treated as navigational links.
+If true, FRAME/IFRAME SRC-links are treated as embedded resources (like
+IMG, 'E' hop-type), otherwise they are treated as navigational links.
+Default is true.
+
 
 ignore-form-action-urls-description:
-If enabled, links appearing as the ACTION attribute in HTML FORMs are not
-extracted.
+If true, URIs appearing as the ACTION attribute in HTML FORMs are
+ignored. Default is false.
+
 
 overly-eager-link-detection-description:
-If disabled (default is enabled), possible links will not be queued if they are
-placed in (somewhat) unlikely places (Currently, just ignores URLs in HTML
-value attributes.
+If true, strings that look like URIs found in unusual places (such as
+form VALUE attributes) will be extracted. This typically finds both
+valid and invalid URIs, and attempts to fetch the invalid URIs sometimes
+generate webmaster concerns over odd crawler behavior. Default is true.
+
 
 ignore-unexpected-html-description:
-If enabled, html that is detected in unusual or unexpected
-places is not considerd for processing.
+If true, URIs which end in typical non-HTML extensions (such as .gif)
+will not be scanned as if it were HTML. Default is true.
+
+
+extract-javascript-description:
+If true, in-page Javascript is scanned for strings that appear likely to
+be URIs. This typically finds both valid and invalid URIs, and attempts
+to fetch the invalid URIs sometimes generates webmaster concerns over
+odd crawler behavior. Default is true.
