@@ -337,7 +337,7 @@ implements CrawlURIDispositionListener, Serializable {
      */
     public String getProgressStatisticsLine(Date now) {
         return new PaddingStringBuffer()
-            .append(ArchiveUtils.TIMESTAMP14ISO8601Z.format(now))
+            .append(ArchiveUtils.getLog14Date(now))
             .raAppend(32, discoveredUriCount)
             .raAppend(44, queuedUriCount)
             .raAppend(57, downloadedUriCount)

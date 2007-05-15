@@ -1446,7 +1446,7 @@ DirectoryModule, JobController {
     protected void reportProcessorsTo(PrintWriter writer) {
         writer.print(
             "Processors report - "
-                + ArchiveUtils.TIMESTAMP12.format(new Date())
+                + ArchiveUtils.get12DigitDate()
                 + "\n");
         writer.print("  Job being crawled:    " + sheetManager.getCrawlName()
                 + "\n");
