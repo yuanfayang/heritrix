@@ -22,6 +22,8 @@
  */
 package org.archive.io;
 
+import it.unimi.dsi.fastutil.io.RepositionableStream;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,9 +31,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.ParseException;
-import java.util.Iterator;
-import java.util.List;
 
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.warc.WARCReaderFactory;
@@ -49,6 +48,11 @@ import org.archive.util.IoUtils;
  * @version $Date$ $Revision$
  */
 public class ArchiveReaderFactory implements ArchiveFileConstants {
+	/**
+	 * Offset value for when we want to stream all.
+	 */
+	private final static int STREAM_ALL = -1;
+	
 	private static final ArchiveReaderFactory factory =
 		new ArchiveReaderFactory();
 	
@@ -75,8 +79,15 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     
     protected ArchiveReader getArchiveReader(final String arcFileOrUrl)
     throws MalformedURLException, IOException {
+    	return getArchiveReader(arcFileOrUrl, STREAM_ALL);
+    }
+    
+    protected ArchiveReader getArchiveReader(final String arcFileOrUrl,
+    	final long offset)
+    throws MalformedURLException, IOException {
     	return UURI.hasScheme(arcFileOrUrl)?
-    		get(new URL(arcFileOrUrl)): get(new File(arcFileOrUrl));
+    		get(new URL(arcFileOrUrl), offset):
+    			get(new File(arcFileOrUrl), offset);
     }
     
     /**
@@ -101,7 +112,7 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
      */
     public static ArchiveReader get(final File f, final long offset)
     throws IOException {
-    	return ArchiveReaderFactory.factory.getArchiveReader(f, 0);
+    	return ArchiveReaderFactory.factory.getArchiveReader(f, offset);
 	}
     
     protected ArchiveReader getArchiveReader(final File f,
@@ -119,7 +130,11 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     /**
      * Wrap a Reader around passed Stream.
      * @param s Identifying String for this Stream used in error messages.
-     * @param is Stream.
+     * Must be a string that ends with the name of the file we're to put
+     * an ArchiveReader on.  This code looks at file endings to figure
+     * whether to return an ARC or WARC reader.
+     * @param is Stream.  Stream will be wrapped with implementation of
+     * RepositionableStream unless already supported.
      * @param atFirstRecord Are we at first Record?
      * @return ArchiveReader.
      * @throws IOException
@@ -131,11 +146,32 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
         	atFirstRecord);
     }
     
+    /**
+     * @param is
+     * @return If passed <code>is</code> is
+     * {@link RepositionableInputStream}, returns <code>is</code>, else we
+     * wrap <code>is</code> with {@link RepositionableStream}.
+     */
+    protected InputStream asRepositionable(final InputStream is) {
+        if (is instanceof RepositionableStream) {
+            return is;
+        }
+        // RepositionableInputStream calls mark on each read so can back up at
+        // least the read amount.  Needed for gzip inflater overinflations
+        // reading into the next gzip member.
+        return new RepositionableInputStream(is, 16 * 1024);
+    }
+    
     protected ArchiveReader getArchiveReader(final String id, 
     		final InputStream is, final boolean atFirstRecord)
     throws IOException {
-    	// Default to compressed WARC.
-    	return WARCReaderFactory.get(id, is, atFirstRecord);
+    	final InputStream stream = asRepositionable(is);
+        if (ARCReaderFactory.isARCSuffix(id)) {
+            return ARCReaderFactory.get(id, stream, atFirstRecord);
+        } else if (WARCReaderFactory.isWARCSuffix(id)) {
+            return WARCReaderFactory.get(id, stream, atFirstRecord);
+        }
+        throw new IOException("Unknown extension (Not ARC nor WARC): " + id);
     }
     
     /**
@@ -161,18 +197,14 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
             throw new IOException("This method only handles HTTP connections.");
         }
         addUserAgent((HttpURLConnection)connection);
-        // Use a Range request (Assumes HTTP 1.1 on other end). If length <= 0,
-        // add open-ended range header to the request.  Else, because end-byte
-        // is inclusive, subtract 1.
-        connection.addRequestProperty("Range", "bytes=" + offset + "-");
-        // TODO: Get feedback on this ArchiveReader maker. If fetching single
-        // record remotely, might make sense to do a slimmed down
-        // ArchiveReader getter.
-        // Good if size 2 * inflator buffer to avoid buffer boundaries
-        // (TODO: Implement better handling across buffer boundaries).
-        return getArchiveReader(f.toString(),
-            new RepositionableInputStream(connection.getInputStream(),
-                16 * 1024),
+        if (offset != STREAM_ALL) {
+        	// Use a Range request (Assumes HTTP 1.1 on other end). If
+        	// length >= 0, add open-ended range header to the request.  Else,
+        	// because end-byte is inclusive, subtract 1.
+        	connection.addRequestProperty("Range", "bytes=" + offset + "-");
+        }
+        
+        return getArchiveReader(f.toString(), connection.getInputStream(),
             (offset == 0));
     }
     
@@ -201,6 +233,14 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
                 return get(f, 0);
             }
         }
+       
+        String scheme = u.getProtocol();
+        if (scheme.startsWith("http") || scheme.equals("s3")) {
+            // Try streaming if http or s3 URLs rather than copying local
+        	// and then reading (Passing an offset will get us an Reader
+        	// that wraps a Stream).
+            return get(u, STREAM_ALL);
+        }
         
         return makeARCLocal(u.openConnection());
     }
@@ -209,14 +249,27 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     throws IOException {
         File localFile = null;
         if (connection instanceof HttpURLConnection) {
-            // If http url connection, bring down the resouce local.
-            localFile = File.createTempFile(ArchiveReader.class.getName(),
-            	".tmp", FileUtils.TMPDIR);
-            connection.connect();
+            // If http url connection, bring down the resource local.
+            String p = connection.getURL().getPath();
+            int index = p.lastIndexOf('/');
+            if (index >= 0) {
+                // Name file for the file we're making local.
+                localFile = new File(FileUtils.TMPDIR, p.substring(index + 1));
+                if (localFile.exists()) {
+                    // If file of same name already exists in TMPDIR, then
+                    // clean it up (Assuming only reason a file of same name in
+                    // TMPDIR is because we failed a previous download).
+                    localFile.delete();
+                }
+            } else {
+                localFile = File.createTempFile(ArchiveReader.class.getName(),
+                    ".tmp", FileUtils.TMPDIR);
+            }
             addUserAgent((HttpURLConnection)connection);
+            connection.connect();
             try {
                 IoUtils.readFullyToFile(connection.getInputStream(), localFile,
-                        new byte[16 * 1024]);
+                    new byte[16 * 1024]);
             } catch (IOException ioe) {
                 localFile.delete();
                 throw ioe;
@@ -244,96 +297,8 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
             throw e;
         }
         
-        // Assign to final variables so can assign in inner class.
-        final ArchiveReader r = reader;
-        final File f = localFile;
-        
         // Return a delegate that does cleanup of downloaded file on close.
-        return new ArchiveReader() {
-            private final ArchiveReader delegate = r;
-            private File archiveFile = f;
-            
-            public void close() throws IOException {
-                this.delegate.close();
-                if (this.archiveFile != null) {
-                    if (archiveFile.exists()) {
-                    	archiveFile.delete();
-                    }
-                    this.archiveFile = null;
-                }
-            }
-            
-            public ArchiveRecord get(long o) throws IOException {
-                return this.delegate.get(o);
-            }
-            
-            public boolean isDigest() {
-                return this.delegate.isDigest();
-            }
-            
-            public boolean isStrict() {
-                return this.delegate.isStrict();
-            }
-            
-            public Iterator<ArchiveRecord> iterator() {
-                return this.delegate.iterator();
-            }
-            
-            public void setDigest(boolean d) {
-                this.delegate.setDigest(d);
-            }
-            
-            public void setStrict(boolean s) {
-                this.delegate.setStrict(s);
-            }
-            
-            public List validate() throws IOException {
-                return this.delegate.validate();
-            }
-
-			@Override
-			public ArchiveRecord get() throws IOException {
-				return this.delegate.get();
-			}
-
-			@Override
-			public String getVersion() {
-				return this.delegate.getVersion();
-			}
-
-			@Override
-			public List validate(int noRecords) throws IOException {
-				return this.delegate.validate(noRecords);
-			}
-
-			@Override
-			protected ArchiveRecord createArchiveRecord(InputStream is,
-					long offset)
-			throws IOException {
-				return this.delegate.createArchiveRecord(is, offset);
-			}
-
-			@Override
-			protected void gotoEOR(ArchiveRecord record) throws IOException {
-				this.delegate.gotoEOR(record);
-			}
-
-			@Override
-			public void dump(boolean compress)
-			throws IOException, ParseException {
-				this.delegate.dump(compress);
-			}
-
-			@Override
-			public String getDotFileExtension() {
-				return this.delegate.getDotFileExtension();
-			}
-
-			@Override
-			public String getFileExtension() {
-				return this.delegate.getFileExtension();
-			}
-        };
+        return reader.getDeleteFileOnCloseReader(localFile);
     }
     
     protected void addUserAgent(final HttpURLConnection connection) {

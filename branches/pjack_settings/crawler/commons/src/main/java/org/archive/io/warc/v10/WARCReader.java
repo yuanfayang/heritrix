@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc;
+package org.archive.io.warc.v10;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
     @Override
     protected void initialize(String i) {
         super.initialize(i);
-        setVersion(WARC_VERSION);
+        setVersion("0.10");
     }
     
     /**
@@ -68,7 +68,7 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
                 "in here");
         }
 
-        // Records end in 2*CRLF.  Suck it up.
+        // Records end in 2*CRLF.  Such it up.
         readExpectedChar(getIn(), CRLF.charAt(0));
         readExpectedChar(getIn(), CRLF.charAt(1));
         readExpectedChar(getIn(), CRLF.charAt(0));
@@ -158,6 +158,21 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
             throw new IOException("Unsupported format: " + format);
     	}
     }
+    
+    /**
+     * Output passed record using passed format specifier.
+     * @param r ARCReader instance to output.
+     * @param format What format to use outputting.
+     * @throws IOException
+     */
+    protected static void outputRecord(final WARCReader r,
+    	final String format)
+    throws IOException {
+    	if (!r.outputRecord(format)) {
+            throw new IOException("Unsupported format" +
+                " (or unsupported on a single record): " + format);
+    	}
+    }
 
     /**
      * Generate a CDX index file for an ARC file.
@@ -197,7 +212,18 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
      */
     public static void main(String [] args)
     throws ParseException, IOException, java.text.ParseException {
-        Options options = getOptions();
+        Options options = new Options();
+        options.addOption(new Option("h","help", false,
+            "Prints this message and exits."));
+        options.addOption(new Option("o","offset", true,
+            "Outputs record at this offset into arc file."));
+        options.addOption(new Option("d","digest", true,
+            "Pass true|false. Expensive. Default: true (SHA-1)."));
+        options.addOption(new Option("s","strict", false,
+            "Strict mode. Fails parse if incorrectly formatted WARC."));
+        options.addOption(new Option("f","format", true,
+            "Output options: 'cdx', cdxfile', 'dump', 'gzipdump'," +
+            "'or 'nohead'. Default: 'cdx'."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();

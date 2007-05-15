@@ -223,6 +223,10 @@ implements ARCConstants {
                     getVersion(), offset), bodyOffset, isDigest(),
                     isStrict(), isParseHttpHeaders()));
         } catch (IOException e) {
+            if (e instanceof RecoverableIOException) {
+                // Don't mess with RecoverableIOExceptions.  Let them out.
+                throw e;
+            }
             IOException newE = new IOException(e.getMessage() + " (Offset " +
                     offset + ").");
             newE.setStackTrace(e.getStackTrace());
@@ -259,11 +263,11 @@ implements ARCConstants {
     private int getTokenizedHeaderLine(final InputStream stream,
             List<String> list) throws IOException {
         // Preallocate usual line size.
-        // TODO: Replace StringBuffer with more lightweight.  We burn
-        // alot of our parse CPU in this method.
-        StringBuffer buffer = new StringBuffer(2048 + 20);
+        StringBuilder buffer = new StringBuilder(2048 + 20);
         int read = 0;
+        int previous = -1;
         for (int c = -1; true;) {
+        	previous = c;
             c = stream.read();
             if (c == -1) {
                 throw new RecoverableIOException("Hit EOF before header EOL.");
@@ -291,10 +295,15 @@ implements ARCConstants {
                 // LOOP TERMINATION.
                 break;
             } else if (c == HEADER_FIELD_SEPARATOR) {
+            	if (!isStrict() && previous == HEADER_FIELD_SEPARATOR) {
+            		// Early ARCs sometimes had multiple spaces between fields.
+            		continue;
+            	}
                 if (list != null) {
                     list.add(buffer.toString());
                 }
-                buffer = new StringBuffer();
+                // reset to empty
+                buffer.setLength(0);
             } else {
                 buffer.append((char)c);
             }
@@ -329,14 +338,43 @@ implements ARCConstants {
         if (keys.size() != values.size()) {
             List<String> originalValues = values;
             if (!isStrict()) {
-                values = fixSpaceInMetadataLine(values, keys.size());
-            }
+                values = fixSpaceInURL(values, keys.size());
+                // If values still doesn't match key size, try and do
+                // further repair.
+	            if (keys.size() != values.size()) {
+	            	// Early ARCs had a space in mimetype.
+	            	if (values.size() == (keys.size() + 1) &&
+	            			values.get(4).toLowerCase().startsWith("charset=")) {
+	            		List<String> nuvalues =
+	            			new ArrayList<String>(keys.size());
+	            		nuvalues.add(0, values.get(0));
+	            		nuvalues.add(1, values.get(1));
+	            		nuvalues.add(2, values.get(2));
+	            		nuvalues.add(3, values.get(3) + values.get(4));
+	            		nuvalues.add(4, values.get(5));
+	            		values = nuvalues;
+	            	} else if((values.size() + 1) == keys.size() &&
+                            isLegitimateIPValue(values.get(1)) &&
+                            isDate(values.get(2)) && isNumber(values.get(3))) {
+                        // Mimetype is empty.
+                        List<String> nuvalues =
+                            new ArrayList<String>(keys.size());
+                        nuvalues.add(0, values.get(0));
+                        nuvalues.add(1, values.get(1));
+                        nuvalues.add(2, values.get(2));
+                        nuvalues.add(3, "-");
+                        nuvalues.add(4, values.get(3));
+                        values = nuvalues;
+                    }
+	            }
+        	}
             if (keys.size() != values.size()) {
                 throw new IOException("Size of field name keys does" +
                     " not match count of field values: " + values);
             }
             // Note that field was fixed on stderr.
-            logStdErr(Level.WARNING, "Fixed spaces in metadata URL." +
+            logStdErr(Level.WARNING, "Fixed spaces in metadata line at " +
+            	"offset " + offset +
                 " Original: " + originalValues + ", New: " + values);
         }
         
@@ -361,6 +399,30 @@ implements ARCConstants {
         return new ARCRecordMetaData(getReaderIdentifier(), headerFields);
     }
     
+    protected boolean isDate(final String date) {
+        if (date.length() != 14) {
+            return false;
+        }
+        return isNumber(date);
+    }
+    
+    protected boolean isNumber(final String n) {
+        for (int i = 0; i < n.length(); i++) {
+            if (!Character.isDigit(n.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    protected boolean isLegitimateIPValue(final String ip) {
+        if ("-".equals(ip)) {
+            return true;
+        }
+        Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
+        return m != null && m.matches();
+    }
+    
     /**
      * Fix space in URLs.
      * The ARCWriter used to write into the ARC URLs with spaces in them.
@@ -374,44 +436,37 @@ implements ARCConstants {
      * @return New list if we successfully fixed up values or original if
      * fixup failed.
      */
-    protected List<String> fixSpaceInMetadataLine(List<String> values,
-    		int requiredSize) {
+    protected List<String> fixSpaceInURL(List<String> values, int requiredSize) {
         // Do validity check. 3rd from last is a date of 14 numeric
-        // characters.  The 4th from last is IP, all before the IP
+        // characters. The 4th from last is IP, all before the IP
         // should be concatenated together with a '%20' joiner.
         // In the below, '4' is 4th field from end which has the IP.
         if (!(values.size() > requiredSize) || values.size() < 4) {
             return values;
         }
         // Test 3rd field is valid date.
-        String date = (String)values.get(values.size() - 3);
-        if (date.length() != 14) {
+        if (!isDate((String) values.get(values.size() - 3))) {
             return values;
         }
-        for (int i = 0; i < date.length(); i++) {
-            if (!Character.isDigit(date.charAt(i))) {
-                return values;
-            }
-        }
+
         // Test 4th field is valid IP.
-        String ip = (String)values.get(values.size() - 4);
-        Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
-        if (ip == "-" || m.matches()) {
-            List<String> newValues = new ArrayList<String>(requiredSize);
-            StringBuffer url = new StringBuffer();
-            for (int i = 0; i < (values.size() - 4); i++) {
-                if (i > 0) {
-                    url.append("%20");
-                }
-                url.append(values.get(i));
-            } 
-            newValues.add(url.toString());
-            for (int i = values.size() - 4; i < values.size(); i++) {
-                newValues.add(values.get(i));
-            }
-            values =  newValues;
+        if (!isLegitimateIPValue((String) values.get(values.size() - 4))) {
+            return values;
         }
-        return values;
+
+        List<String> newValues = new ArrayList<String>(requiredSize);
+        StringBuffer url = new StringBuffer();
+        for (int i = 0; i < (values.size() - 4); i++) {
+            if (i > 0) {
+                url.append("%20");
+            }
+            url.append(values.get(i));
+        }
+        newValues.add(url.toString());
+        for (int i = values.size() - 4; i < values.size(); i++) {
+            newValues.add(values.get(i));
+        }
+        return newValues;
     }
     
 	protected boolean isAlignedOnFirstRecord() {
@@ -454,7 +509,7 @@ implements ARCConstants {
 		return result;
 	}
     
-    protected boolean outputRecord(final String format) throws IOException {
+    public boolean outputRecord(final String format) throws IOException {
 		boolean result = super.outputRecord(format);
 		if (result) {
 			return result;
@@ -514,6 +569,99 @@ implements ARCConstants {
         // System.out.println(System.currentTimeMillis() - start);
     }
     
+    /**
+     * @return an ArchiveReader that will delete a local file on close.  Used
+     * when we bring Archive files local and need to clean up afterward.
+     */
+    public ARCReader getDeleteFileOnCloseReader(final File f) {
+        final ARCReader d = this;
+        return new ARCReader() {
+            private final ARCReader delegate = d;
+            private File archiveFile = f;
+            
+            public void close() throws IOException {
+                this.delegate.close();
+                if (this.archiveFile != null) {
+                    if (archiveFile.exists()) {
+                        archiveFile.delete();
+                    }
+                    this.archiveFile = null;
+                }
+            }
+            
+            public ArchiveRecord get(long o) throws IOException {
+                return this.delegate.get(o);
+            }
+            
+            public boolean isDigest() {
+                return this.delegate.isDigest();
+            }
+            
+            public boolean isStrict() {
+                return this.delegate.isStrict();
+            }
+            
+            public Iterator<ArchiveRecord> iterator() {
+                return this.delegate.iterator();
+            }
+            
+            public void setDigest(boolean d) {
+                this.delegate.setDigest(d);
+            }
+            
+            public void setStrict(boolean s) {
+                this.delegate.setStrict(s);
+            }
+            
+            public List validate() throws IOException {
+                return this.delegate.validate();
+            }
+
+            @Override
+            public ArchiveRecord get() throws IOException {
+                return this.delegate.get();
+            }
+
+            @Override
+            public String getVersion() {
+                return this.delegate.getVersion();
+            }
+
+            @Override
+            public List validate(int noRecords) throws IOException {
+                return this.delegate.validate(noRecords);
+            }
+
+            @Override
+            protected ARCRecord createArchiveRecord(InputStream is,
+                    long offset)
+            throws IOException {
+                return this.delegate.createArchiveRecord(is, offset);
+            }
+
+            @Override
+            protected void gotoEOR(ArchiveRecord record) throws IOException {
+                this.delegate.gotoEOR(record);
+            }
+
+            @Override
+            public void dump(boolean compress)
+            throws IOException, java.text.ParseException {
+                this.delegate.dump(compress);
+            }
+
+            @Override
+            public String getDotFileExtension() {
+                return this.delegate.getDotFileExtension();
+            }
+
+            @Override
+            public String getFileExtension() {
+                return this.delegate.getFileExtension();
+            }
+        };
+    }
+    
     // Static methods follow.
 
     /**
@@ -544,21 +692,6 @@ implements ARCConstants {
     throws IOException, java.text.ParseException {
     	if (!reader.output(format)) {
             throw new IOException("Unsupported format: " + format);
-    	}
-    }
-    
-    
-    /**
-     * Output passed record using passed format specifier.
-     * @param r ARCReader instance to output.
-     * @param format What format to use outputting.
-     * @throws IOException
-     */
-    protected static void outputRecord(final ARCReader r, final String format)
-    throws IOException {
-    	if (!r.outputRecord(format)) {
-            throw new IOException("Unsupported format" +
-                " (or unsupported on a single record): " + format);
     	}
     }
 
@@ -604,20 +737,8 @@ implements ARCConstants {
      */
     public static void main(String [] args)
     throws ParseException, IOException, java.text.ParseException {
-        Options options = new Options();
-        options.addOption(new Option("h","help", false,
-            "Prints this message and exits."));
-        options.addOption(new Option("o","offset", true,
-            "Outputs record at this offset into arc file."));
-        options.addOption(new Option("d","digest", true,
-            "Pass true|false. Expensive. Default: true (SHA-1)."));
-        options.addOption(new Option("s","strict", false,
-            "Strict mode. Fails parse if incorrectly formatted ARC."));
-        options.addOption(new Option("p","parse", true,
-        	"Pass true|false to parse HTTP Headers. Default: false."));
-        options.addOption(new Option("f","format", true,
-            "Output options: 'cdx', 'cdxfile', 'dump', 'gzipdump', " +
-            "'header', or 'nohead'. Default: 'cdx'."));
+        Options options = getOptions();
+        options.addOption(new Option("p","parse", false, "Parse headers."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
@@ -651,7 +772,7 @@ implements ARCConstants {
                     break;
                     
                 case 'p':
-                	parse = getTrueOrFalse(cmdlineOptions[i].getValue());
+                	parse = true;
                     break;
                     
                 case 'd':
@@ -686,8 +807,8 @@ implements ARCConstants {
                 System.out.println("Error: Pass one arcfile only.");
                 usage(formatter, options, 1);
             }
-            ARCReader arc = ARCReaderFactory.get(
-            	new File((String)cmdlineArgs.get(0)), offset);
+            ARCReader arc = ARCReaderFactory.get((String)cmdlineArgs.get(0),
+            	offset);
             arc.setStrict(strict);
             // We must parse headers if we need to skip them.
             if (format.equals(NOHEAD) || format.equals(HEADER)) {

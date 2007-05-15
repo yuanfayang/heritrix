@@ -35,6 +35,7 @@ import org.apache.commons.httpclient.StatusLine;
 import org.apache.commons.httpclient.util.EncodingUtil;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
+import org.archive.io.RecoverableIOException;
 
 
 /**
@@ -187,7 +188,19 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
             statusBytes.length - eolCharCount, ARCConstants.DEFAULT_ENCODING);
         if ((statusLine == null) ||
                 !StatusLine.startsWithHTTP(statusLine)) {
-            throw new IOException("Failed parse of http status line.");
+            if (statusLine.startsWith("DELETED")) {
+                // Some old ARCs have deleted records like following:
+                // http://vireo.gatech.edu:80/ebt-bin/nph-dweb/dynaweb/SGI_Developer/SGITCL_PG/@Generic__BookTocView/11108%3Btd%3D2 130.207.168.42 19991010131803 text/html 29202
+                // DELETED_TIME=20000425001133_DELETER=Kurt_REASON=alexalist
+                // (follows ~29K spaces)
+                // For now, throw a RecoverableIOException so if iterating over
+                // records, we keep going.  TODO: Later make a legitimate
+                // ARCRecord from the deleted record rather than throw
+                // exception.
+                throw new DeletedARCRecordIOException(statusLine);
+            } else {
+                throw new IOException("Failed parse of http status line.");
+            }
         }
         this.httpStatus = new StatusLine(statusLine);
         
@@ -233,6 +246,13 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         this.getMetaData().setStatusCode(Integer.toString(getStatusCode()));
         bais.reset();
         return bais;
+    }
+    
+    private static class DeletedARCRecordIOException
+    extends RecoverableIOException {
+        public DeletedARCRecordIOException(final String reason) {
+            super(reason);
+        }
     }
     
     /**

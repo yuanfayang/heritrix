@@ -120,7 +120,6 @@ public class ReplayInputStream extends SeekInputStream
             return c;
         }
         int c = diskStream.read();
-        System.out.println(position + " " + c);
         if (c >= 0) {
             position++;
         }
@@ -161,6 +160,44 @@ public class ReplayInputStream extends SeekInputStream
             c = read(buf);
         }
     }
+    
+    /*
+     * Like 'readFullyTo', but only reads the header-part.
+     * Starts from the beginning each time it is called.
+     */
+    public void readHeaderTo(OutputStream os) throws IOException {
+        position = 0;
+        byte[] buf = new byte[(int)responseBodyStart];
+        int c = read(buf,0,buf.length);
+        if(c != -1) {
+            os.write(buf,0,c);
+        }
+    }
+
+    /*
+     * Like 'readFullyTo', but only reads the content-part.
+     */
+    public void readContentTo(OutputStream os) throws IOException {
+        setToResponseBodyStart();
+        byte[] buf = new byte[4096];
+        int c = read(buf);
+        while (c != -1) {
+            os.write(buf,0,c);
+            c = read(buf);            
+        }
+    }
+    
+    public void readContentTo(OutputStream os, int maxSize) throws IOException {
+        setToResponseBodyStart();
+        byte[] buf = new byte[4096];
+        int c = read(buf);
+        int tot = 0;
+        while (c != -1 && tot < maxSize) {
+            os.write(buf,0,c);
+            c = read(buf);
+            tot += c;
+        }
+    }
 
     /* (non-Javadoc)
      * @see java.io.InputStream#close()
@@ -179,6 +216,24 @@ public class ReplayInputStream extends SeekInputStream
     public long getSize()
     {
         return size;
+    }
+    
+    /**
+     * Total size of header.
+     * @return the size of the header.
+     */
+    public long getHeaderSize()
+    {
+        return responseBodyStart;
+    }
+    
+    /**
+     * Total size of content.
+     * @return the size of the content.
+     */
+    public long getContentSize()
+    {
+        return size - responseBodyStart;
     }
 
     /**
@@ -200,7 +255,7 @@ public class ReplayInputStream extends SeekInputStream
         if (p < 0) {
             throw new IOException("Negative seek offset.");
         }
-        if (p >= size) {
+        if (p > size) {
             throw new IOException("Desired position exceeds size.");
         }
         if (p < buffer.length) {

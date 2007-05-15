@@ -1,7 +1,7 @@
 /*
  * ExperimentalWARCWriterTest
  *
- * $Id$
+ * $Id: ExperimentalWARCWriterTest.java 4554 2006-08-30 02:35:48Z stack-sf $
  *
  * Created on July 27th, 2006
  *
@@ -41,6 +41,7 @@ import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.UTF8Bytes;
 import org.archive.io.WriterPoolMember;
+import org.archive.io.warc.WARCConstants;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.TmpDirTestCase;
@@ -49,7 +50,7 @@ import org.archive.util.anvl.ANVLRecord;
 /**
  * Test Writer and Reader.
  * @author stack
- * @version $Date$ $Version$
+ * @version $Date: 2006-08-29 19:35:48 -0700 (Tue, 29 Aug 2006) $ $Version$
  */
 public class ExperimentalWARCWriterTest
 extends TmpDirTestCase implements WARCConstants {
@@ -64,17 +65,17 @@ extends TmpDirTestCase implements WARCConstants {
     
     public void testCheckHeaderLineValue() throws Exception {
         ExperimentalWARCWriter writer = new ExperimentalWARCWriter();
-        writer.checkHeaderLineParameters("one");
+        writer.checkHeaderValue("one");
         IOException exception = null;
         try {
-            writer.checkHeaderLineParameters("with space");
+            writer.checkHeaderValue("with space");
         } catch(IOException e) {
             exception = e;
         }
        assertNotNull(exception);
        exception = null;
        try {
-           writer.checkHeaderLineParameters("with\0x0000controlcharacter");
+           writer.checkHeaderValue("with\0x0000controlcharacter");
        } catch(IOException e) {
            exception = e;
        }
@@ -85,10 +86,11 @@ extends TmpDirTestCase implements WARCConstants {
         ExperimentalWARCWriter writer = new ExperimentalWARCWriter();
         writer.checkHeaderLineMimetypeParameter("text/xml");
         writer.checkHeaderLineMimetypeParameter("text/xml+rdf");
-        writer.checkHeaderLineMimetypeParameter(
-        	"text/plain; charset=SHIFT-JIS");
-        System.out.println(writer.checkHeaderLineMimetypeParameter(
-    		"multipart/mixed; \r\n        boundary=\"simple boundary\""));
+        assertEquals(writer.checkHeaderLineMimetypeParameter(
+        	"text/plain; charset=SHIFT-JIS"), "text/plain; charset=SHIFT-JIS");
+        assertEquals(writer.checkHeaderLineMimetypeParameter(
+    		"multipart/mixed; \r\n        boundary=\"simple boundary\""),
+            "multipart/mixed; boundary=\"simple boundary\"");
     }
     
     public void testWriteRecord() throws IOException {

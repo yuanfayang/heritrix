@@ -1,8 +1,8 @@
-/* ReplayCharSequenceFactoryTest
+/* ReplayCharSequenceTest
  *
- * Created on Mar 8, 2004
+ * Created on Dec 26, 2006
  *
- * Copyright (C) 2004 Internet Archive.
+ * Copyright (C) 2006 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -22,23 +22,21 @@
  */
 package org.archive.io;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Date;
 import java.util.logging.Logger;
 
+import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 
 /**
- * Test the ReplayCharSequence factory.
+ * Test ReplayCharSequences.
  *
- * @author stack
+ * @author stack, gojomo
  * @version $Revision$, $Date$
  */
-public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
+public class ReplayCharSequenceTest extends TmpDirTestCase
 {
     /**
      * Logger.
@@ -57,12 +55,6 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
      */
     private byte [] regularBuffer = null;
 
-    /**
-     * Instance of the replay char sequence factory.
-     */
-    private ReplayCharSequenceFactory factory = null;
-
-
     /*
      * @see TestCase#setUp()
      */
@@ -71,9 +63,8 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         super.setUp();
         this.regularBuffer =
             fillBufferWithRegularContent(new byte [BUFFER_SIZE]);
-        this.factory = ReplayCharSequenceFactory.getInstance();
     }
-
+    
     public void testShiftjis() throws IOException {
 
         // Here's the bytes for the JIS encoding of the Japanese form of Nihongo
@@ -86,14 +77,12 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         // Here is nihongo converted to JVM encoding.
         String nihongo = new String(bytes_nihongo, ENCODING);
 
-        String fileName =
-            writeShiftjisFile("testShiftjis", bytes_nihongo).
-                getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-                bytes_nihongo, bytes_nihongo.length +
-                    (bytes_nihongo.length * MULTIPLIER),
-                0, fileName, ENCODING);
-
+        RecordingOutputStream ros = writeTestStream(
+                bytes_nihongo,MULTIPLIER,
+                "testShiftjis",MULTIPLIER);
+        // TODO: check for existence of overflow file?
+        ReplayCharSequence rcs = ros.getReplayCharSequence(ENCODING);
+            
         // Now check that start of the rcs comes back in as nihongo string.
         String rcsStr = rcs.subSequence(0, nihongo.length()).toString();
         assertTrue("Nihongo " + nihongo + " does not equal converted string" +
@@ -111,14 +100,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
 
     public void testGetReplayCharSequenceByteZeroOffset() throws IOException {
 
-        String fileName =
-            writeRegularFile("testGetReplayCharSequenceByteZeroOffset").
-                getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-                this.regularBuffer,
-                this.regularBuffer.length +
-                    (this.regularBuffer.length * MULTIPLIER),
-                0, fileName, null);
+        RecordingOutputStream ros = writeTestStream(
+                regularBuffer,MULTIPLIER,
+                "testGetReplayCharSequenceByteZeroOffset",MULTIPLIER);
+        ReplayCharSequence rcs = ros.getReplayCharSequence();
 
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
@@ -127,14 +112,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
 
     public void testGetReplayCharSequenceByteOffset() throws IOException {
 
-        String fileName =
-            writeRegularFile("testGetReplayCharSequenceByteOffset").
-                getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-                this.regularBuffer,
-                this.regularBuffer.length +
-                    (this.regularBuffer.length * MULTIPLIER),
-                SEQUENCE_LENGTH, fileName, null);
+        RecordingOutputStream ros = writeTestStream(
+                regularBuffer,MULTIPLIER,
+                "testGetReplayCharSequenceByteOffset",MULTIPLIER);
+        ReplayCharSequence rcs = ros.getReplayCharSequence(null,SEQUENCE_LENGTH);
 
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
@@ -144,14 +125,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     public void testGetReplayCharSequenceMultiByteZeroOffset()
         throws IOException {
 
-        String fileName =
-            writeRegularFile("testGetReplayCharSequenceMultiByteZeroOffset").
-                getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-                this.regularBuffer,
-                this.regularBuffer.length +
-                    (this.regularBuffer.length * MULTIPLIER),
-                0, fileName, "UTF-8");
+        RecordingOutputStream ros = writeTestStream(
+                regularBuffer,MULTIPLIER,
+                "testGetReplayCharSequenceMultiByteZeroOffset",MULTIPLIER);
+        ReplayCharSequence rcs = ros.getReplayCharSequence("UTF-8");
 
         for (int i = 0; i < MULTIPLIER; i++) {
             accessingCharacters(rcs);
@@ -160,46 +137,62 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
 
     public void testGetReplayCharSequenceMultiByteOffset() throws IOException {
 
-        String fileName =
-            writeRegularFile("testGetReplayCharSequenceMultiByteOffset").
-                getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-                this.regularBuffer,
-                this.regularBuffer.length +
-                    (this.regularBuffer.length * MULTIPLIER),
-                SEQUENCE_LENGTH, fileName, "UTF-8");
+        RecordingOutputStream ros = writeTestStream(
+                regularBuffer,MULTIPLIER,
+                "testGetReplayCharSequenceMultiByteOffset",MULTIPLIER);
+        ReplayCharSequence rcs = ros.getReplayCharSequence("UTF-8", SEQUENCE_LENGTH);
 
-        for (int i = 0; i < MULTIPLIER; i++) {
-            accessingCharacters(rcs);
+        try {
+            for (int i = 0; i < MULTIPLIER; i++) {
+                accessingCharacters(rcs);
+            }
+        } finally {
+            rcs.close();
         }
     }
     
     public void testReplayCharSequenceByteToString() throws IOException {
         String fileContent = "Some file content";
         byte [] buffer = fileContent.getBytes();
-        File f = new File(getTmpDir(),
-            "testReplayCharSequenceByteToString.txt");
-        String fileName =
-            writeFile(f, buffer, buffer.length).getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-            buffer, buffer.length, 0, fileName, null);
+        RecordingOutputStream ros = writeTestStream(
+                buffer,1,
+                "testReplayCharSequenceByteToString.txt",0);
+        ReplayCharSequence rcs = ros.getReplayCharSequence();
         String result = rcs.toString();
-        assertTrue("Strings don't match " + result + " " + fileContent,
-            fileContent.equals(result));
+        assertEquals("Strings don't match",result,fileContent);
+    }
+    
+    public void testReplayCharSequenceByteToStringOverflow() throws IOException {
+        String fileContent = "Some file content. ";
+        byte [] buffer = fileContent.getBytes();
+        RecordingOutputStream ros = writeTestStream(
+                buffer,1,
+                "testReplayCharSequenceByteToString.txt",1);
+        String expectedContent = fileContent+fileContent;
+        ReplayCharSequence rcs = ros.getReplayCharSequence();
+        String result = rcs.toString();
+        assertEquals("Strings don't match", expectedContent, result);
     }
     
     public void testReplayCharSequenceByteToStringMulti() throws IOException {
         String fileContent = "Some file content";
         byte [] buffer = fileContent.getBytes("UTF-8");
-        File f = new File(getTmpDir(),
-            "testReplayCharSequenceByteToStringMulti.txt");
-        String fileName =
-            writeFile(f, buffer, buffer.length).getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-            buffer, buffer.length, 0, fileName, "UTF-8");
-        String result = rcs.toString();
-        assertTrue("Strings don't match " + result + " " + fileContent,
-                fileContent.equals(result));
+        final int MULTIPLICAND = 10;
+        StringBuilder sb =
+            new StringBuilder(MULTIPLICAND * fileContent.length());
+        for (int i = 0; i < MULTIPLICAND; i++) {
+            sb.append(fileContent);
+        }
+        String expectedResult = sb.toString();
+        RecordingOutputStream ros = writeTestStream(
+                buffer,1,
+                "testReplayCharSequenceByteToStringMulti.txt",MULTIPLICAND-1);
+        for (int i = 0; i < 3; i++) {
+            ReplayCharSequence rcs = ros.getReplayCharSequence("UTF-8");
+            String result = rcs.toString();
+            assertEquals("Strings don't match", result, expectedResult);
+            rcs.close();
+        }
     }
     
     /**
@@ -244,51 +237,29 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
 
     /**
      * @param baseName
-     * @param buffer
-     * @return Write a shiftjis file w/ japanese characters.
+     * @return RecordingOutputStream
      * @throws IOException
      */
-    private File writeShiftjisFile(String baseName, byte [] buffer)
-            throws IOException {
-        File file = new File(getTmpDir(), baseName + ".shiftjisContent.txt");
-        writeFile(file, buffer, MULTIPLIER);
-        return file;
-    }
-
-    /**
-     * @param baseName
-     * @return Regular file reference.
-     * @throws IOException
-     */
-    private File writeRegularFile(String baseName) throws IOException {
-        // Write a single-byte file of regular content.
-        File file = new File(getTmpDir(), baseName + ".regularContent.txt");
-        writeFile(file, this.regularBuffer, MULTIPLIER);
-        return file;
-    }
-
-    /**
-     * Write a file.
-     *
-     * @param file File to write.
-     * @param buffer Regular content to write.
-     * @param count Number of times to write the buffer.
-     * @return <code>file</code>.
-     * @throws IOException
-     */
-    private File writeFile(File file, byte [] buffer, int count)
-            throws IOException {
-        FileOutputStream fos = new FileOutputStream(file);
-        OutputStream bos = new BufferedOutputStream(fos);
-        for( int i = 0; i < count; i++) {
-            bos.write(buffer);
+    private RecordingOutputStream writeTestStream(byte[] content, 
+            int memReps, String baseName, int fileReps) throws IOException {
+        String backingFilename = FileUtils.maybeRelative(getTmpDir(),baseName).getAbsolutePath();
+        RecordingOutputStream ros = new RecordingOutputStream(
+                content.length * memReps,
+                backingFilename);
+        ros.open();
+        for(int i = 0; i < (memReps+fileReps); i++) {
+            // fill buffer (repeat MULTIPLIER times) and 
+            // overflow to disk (also MULTIPLIER times)
+            ros.write(content);
         }
-        bos.close();
-        return file;
+        ros.close();
+        return ros; 
     }
 
+
     /**
-     * Fill a buffer w/ regular progression of characters.
+     * Fill a buffer w/ regular progression of single-byte 
+     * (and <= 127) characters.
      * @param buffer Buffer to fill.
      * @return The buffer we filled.
      */
