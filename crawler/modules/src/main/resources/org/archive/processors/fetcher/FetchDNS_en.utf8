@@ -7,8 +7,12 @@ server-cache-description:
 Used to do DNS lookups. 
 
 
-sha1-content-description:
-Whether or not to perform an on-the-fly SHA1 hash of retrieved 
-content-bodies. 
+digest-content-description:
+Whether or not to perform an on-the-fly digest hash of retrieved
+content-bodies.
 
+ 
+digest-algorithm-description:
+Which algorithm (for example MD5 or SHA-1) to use to perform an
+on-the-fly digest hash of retrieved content-bodies.
 

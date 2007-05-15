@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -92,11 +93,20 @@ public class FetchDNS extends Processor implements Initializable {
         Key.make(ServerCache.class, null);
     
     /**
-     * Whether or not to perform an on-the-fly SHA1 hash of retrieved
+     * Whether or not to perform an on-the-fly digest hash of retrieved
      * content-bodies.
      */
     @Expert
-    final public static Key<Boolean> SHA1_CONTENT = Key.make(true);
+    final public static Key<Boolean> DIGEST_CONTENT = Key.make(true);
+
+
+    /**
+     * Which algorithm (for example MD5 or SHA-1) to use to perform an 
+     * on-the-fly digest hash of retrieved content-bodies.
+     */
+    @Expert
+    final public static Key<String> DIGEST_ALGORITHM = Key.make("sha1");
+
 
     private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES
         = 6 * 60 * 60; // 6 hrs
@@ -241,14 +251,21 @@ public class FetchDNS extends Processor implements Initializable {
 
         Recorder rec = curi.getRecorder();
         // Shall we get a digest on the content downloaded?
-        boolean sha1Content = curi.get(this, SHA1_CONTENT);
-        if (sha1Content) {
-            rec.getRecordedInput().setSha1Digest();
+        boolean digestContent = curi.get(this, DIGEST_CONTENT);
+        String algorithm = null;
+        if (digestContent) {
+            algorithm = curi.get(this, DIGEST_ALGORITHM);
+            rec.getRecordedInput().setDigest(algorithm);
         } else {
-            rec.getRecordedInput().setDigest(null);
+            rec.getRecordedInput().setDigest((MessageDigest)null);
         }
         InputStream is = curi.getRecorder().inputWrap(
                 new ByteArrayInputStream(dnsRecord));
+
+        if (digestContent) {
+            rec.getRecordedInput().startDigest();
+        }
+
         // Reading from the wrapped stream, behind the scenes, will write
         // files into scratch space
         try {
@@ -260,8 +277,11 @@ public class FetchDNS extends Processor implements Initializable {
             rec.closeRecorders();
         }
         curi.setContentSize(dnsRecord.length);
-        curi.setContentDigest(FetchHTTP.SHA1, rec.getRecordedInput()
-                .getDigestValue());
+
+        if (digestContent) {
+            curi.setContentDigest(algorithm,
+                rec.getRecordedInput().getDigestValue());
+        }
     }
     
     protected byte [] getDNSRecord(final long fetchStart,
