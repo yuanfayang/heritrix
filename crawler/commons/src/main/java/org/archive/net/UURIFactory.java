@@ -181,7 +181,7 @@ public class UURIFactory extends URI {
     public static final String BACKSLASH = "\\";
     public static final String BACKSLASH_PATTERN = "\\\\";
     public static final String ESCAPED_BACKSLASH = "%5C";
-    public static final String NEWLINE = "\n+|\r+";
+    public static final String STRAY_SPACING = "[\n\r\t]+";
     public static final String IMPROPERESC_REPLACE = "%25$1";
     public static final String IMPROPERESC =
         "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
@@ -412,8 +412,8 @@ public class UURIFactory extends URI {
             uri = TextUtils.replaceAll(BACKSLASH_PATTERN, uri, SLASH);
         }
         
-        // Kill newlines etc
-        uri = TextUtils.replaceAll(NEWLINE, uri, EMPTY_STRING);
+        // Remove stray TAB/CR/LF
+        uri = TextUtils.replaceAll(STRAY_SPACING, uri, EMPTY_STRING);
         
         // Test for the case of more than two slashes after the http(s) scheme.
         // Replace with two slashes as mozilla does if found.
@@ -458,6 +458,9 @@ public class UURIFactory extends URI {
             if (base == null) {
                 throw new URIException("Relative URI but no base: " + uri);
             }
+        } else {
+        	checkHttpSchemeSpecificPartSlashPrefix(base, uriScheme,
+        		uriSchemeSpecificPart);
         }
         
         // fixup authority portion: lowercase/IDN-punycode any domain; 
@@ -540,6 +543,35 @@ public class UURIFactory extends URI {
         appendNonNull(s, uriPath, "", false);
         appendNonNull(s, uriQuery, "?", false);
         return s.toString();
+    }
+    
+    /**
+     * If http(s) scheme, check scheme specific part begins '//'.
+     * @throws URIException 
+     * @see http://www.faqs.org/rfcs/rfc1738.html Section 3.1. Common Internet
+     * Scheme Syntax
+     */
+    protected void checkHttpSchemeSpecificPartSlashPrefix(final URI base,
+    		final String scheme, final String schemeSpecificPart)
+    throws URIException {
+    	// Only apply this check if no base.
+    	if (base != null) {
+    		return;
+    	}
+    	if (scheme == null || scheme.length() <= 0) {
+    		return;
+    	}
+    	if (!scheme.equals("http") && !scheme.equals("https")) {
+    		return;
+    	}
+    	if (!schemeSpecificPart.startsWith("//")) {
+    		throw new URIException("http scheme specific part must " +
+    		    "begin '//': " + schemeSpecificPart);
+    	}
+    	if (schemeSpecificPart.length() <= 2) {
+    		throw new URIException("http scheme specific part is " +
+        		"too short: " + schemeSpecificPart);
+    	}
     }
     
     /**
