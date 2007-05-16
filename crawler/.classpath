@@ -47,5 +47,6 @@
 	<classpathentry kind="var" path="M2_REPO/jetty/jasper-compiler/4.2.20RC0/jasper-compiler-4.2.20RC0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/jetty/jasper-runtime/4.2.20RC0/jasper-runtime-4.2.20RC0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/ant/ant/1.6.5/ant-1.6.5.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-io/commons-io/1.3.1/commons-io-1.3.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
