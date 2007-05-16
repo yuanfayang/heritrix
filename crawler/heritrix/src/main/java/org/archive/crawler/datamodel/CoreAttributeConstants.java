@@ -102,6 +102,7 @@ public interface CoreAttributeConstants {
     /** local override of proxy port */ 
     public static final String A_HTTP_PROXY_PORT = "http-proxy-port";
 
+
     /**
      * Fetch truncation codes present in {@link CrawlURI} annotations.
      * All truncation annotations have a <code>TRUNC_SUFFIX</code> suffix (TODO:
@@ -109,7 +110,26 @@ public interface CoreAttributeConstants {
      * against {@link CrawlURI}).
      */
     public static final String TRUNC_SUFFIX = "Trunc";
-    public static final String HEADER_TRUNC = "header" + TRUNC_SUFFIX;
+    // headerTrunc
+    public static final String HEADER_TRUNC = "header" + TRUNC_SUFFIX; 
+    // timeTrunc
     public static final String TIMER_TRUNC = "time" + TRUNC_SUFFIX;
+    // lenTrunc
     public static final String LENGTH_TRUNC = "len" + TRUNC_SUFFIX;
+
+    /* Duplication-reduction / recrawl / history constants */
+    
+    /** fetch history array */ 
+    public static final String A_FETCH_HISTORY = "fetch-history";
+    /** content digest */
+    public static final String A_CONTENT_DIGEST = "content-digest";
+	/** header name (and AList key) for last-modified timestamp */
+    public static final String A_LAST_MODIFIED_HEADER = "last-modified";
+	/** header name (and AList key) for ETag */
+    public static final String A_ETAG_HEADER = "etag"; 
+    /** key for status (when in history) */
+    public static final String A_STATUS = "status"; 
+    /** reference length (content length or virtual length */
+    public static final String A_REFERENCE_LENGTH = "reference-length";
+
 }

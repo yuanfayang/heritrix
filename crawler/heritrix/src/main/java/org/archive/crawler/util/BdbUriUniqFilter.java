@@ -80,6 +80,8 @@ implements Initializable, Serializable {
     protected long lastCacheMissDiff = 0;
     protected transient Database alreadySeen = null;
     protected transient DatabaseEntry value = null;
+    static protected DatabaseEntry ZERO_LENGTH_ENTRY = 
+        new DatabaseEntry(new byte[0]);
     private static final String DB_NAME = "alreadySeenUrl";
     protected long count = 0;
     private long aggregatedLookupTime = 0;
@@ -101,7 +103,9 @@ implements Initializable, Serializable {
     public void initialTasks(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
         try {
-            initialize(bdb.openDatabase(DB_NAME, false));
+            DatabaseConfig config = getDatabaseConfig();
+            config.setAllowCreate(false);
+            initialize(bdb.openDatabase(DB_NAME, config, false));
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
@@ -142,7 +146,7 @@ implements Initializable, Serializable {
         try {
             createdEnvironment = true;
             Environment env = new Environment(bdbEnv, envConfig);
-            DatabaseConfig config = new DatabaseConfig();
+            DatabaseConfig config = getDatabaseConfig();
             config.setAllowCreate(true);
             Database db = env.openDatabase(null, DB_NAME, config);
             initialize(db);
@@ -158,6 +162,15 @@ implements Initializable, Serializable {
      */
     protected void initialize(Database db) throws DatabaseException {
         open(db);
+    }
+
+    /**
+     * @return DatabaseConfig to use
+     */
+    protected DatabaseConfig getDatabaseConfig() {
+        DatabaseConfig dbConfig = new DatabaseConfig();
+        dbConfig.setDeferredWrite(true);
+        return dbConfig;
     }
     
     /**
@@ -179,19 +192,24 @@ implements Initializable, Serializable {
     
     public synchronized void close() {
         Environment env = null;
-        if (this.alreadySeen != null) {
-            try {
-                env = this.alreadySeen.getEnvironment();
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("Count of alreadyseen on close "
-                            + Long.toString(count));
-                }
-            } catch (DatabaseException e) {
-                logger.severe(e.getMessage());
-            }
-            this.alreadySeen = null;
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("Count of alreadyseen on close "
+                    + Long.toString(count));
         }
         if (env != null && createdEnvironment) {
+            // Only manually close database if it were created via a
+            // constructor, and not via a BdbModule. Databases created by a 
+            // BdbModule will be closed by that BdbModule.
+            if (this.alreadySeen != null) {
+                try {
+                    env = this.alreadySeen.getEnvironment();
+                    alreadySeen.sync();
+                    alreadySeen.close();
+                } catch (DatabaseException e) {
+                    logger.severe(e.getMessage());
+                }
+                this.alreadySeen = null;
+            }
             try {
                 // This sync flushes whats in RAM. Its expensive operation.
                 // Without, data can be lost. Not for transactional operation.
@@ -244,7 +262,7 @@ implements Initializable, Serializable {
             if (logger.isLoggable(Level.INFO)) {
                 started = System.currentTimeMillis();
             }
-            status = alreadySeen.putNoOverwrite(null, key, value);
+            status = alreadySeen.putNoOverwrite(null, key, ZERO_LENGTH_ENTRY);
             if (logger.isLoggable(Level.INFO)) {
                 aggregatedLookupTime +=
                     (System.currentTimeMillis() - started);
@@ -298,6 +316,13 @@ implements Initializable, Serializable {
     }
 
     private void writeObject(ObjectOutputStream output) throws IOException {
+        // sync deferred-write database
+        try {
+            alreadySeen.sync();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
         output.defaultWriteObject();
     }
 
@@ -306,6 +331,8 @@ implements Initializable, Serializable {
         input.defaultReadObject();        
 
         try {
+            DatabaseConfig config = getDatabaseConfig();
+            config.setAllowCreate(false);
             reopen(bdb.openDatabase(DB_NAME, false));
         } catch (DatabaseException e) {
             IOException io = new IOException();

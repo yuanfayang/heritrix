@@ -34,6 +34,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -75,6 +76,13 @@ Serializable, Closeable {
 
     final private static Logger LOGGER = 
         Logger.getLogger(BdbModule.class.getName()); 
+
+    
+    private static class DatabasePlusConfig {
+        public Database database;
+        public DatabaseConfig config;
+    }
+    
     
     /**
      * 
@@ -110,8 +118,9 @@ Serializable, Closeable {
     private Map<String,CachedBdbMap> bigMaps = 
         new ConcurrentHashMap<String,CachedBdbMap>();
     
-    private Map<String,Database> databases =
-        new ConcurrentHashMap<String,Database>();
+    private Map<String,DatabasePlusConfig> databases =
+        new ConcurrentHashMap<String,DatabasePlusConfig>();
+
     
     public BdbModule() {
     }
@@ -143,6 +152,7 @@ Serializable, Closeable {
         // already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(create);
+        config.setDeferredWrite(true);
         this.classCatalogDB = this.bdbEnvironment.
             openDatabase(null, "classes", dbConfig);
         this.classCatalog = new StoredClassCatalog(classCatalogDB);
@@ -180,11 +190,15 @@ Serializable, Closeable {
     }
     
     public void closeDatabase(String name) {
-        Database db = databases.remove(name);
-        if (db == null) {
+        DatabasePlusConfig dpc = databases.remove(name);
+        if (dpc == null) {
             throw new IllegalStateException("No such database: " + name);
         }
+        Database db = dpc.database;
         try {
+            if (dpc.config.getDeferredWrite()) {
+                db.sync();
+            }
             db.close();
         } catch (DatabaseException e) {
             LOGGER.log(Level.SEVERE, "Error closing db " + name, e);
@@ -205,9 +219,11 @@ Serializable, Closeable {
                 // Ignored
             }
         }
-        Database result = bdbEnvironment.openDatabase(null, name, config);
-        databases.put(name, result);
-        return result;
+        DatabasePlusConfig dpc = new DatabasePlusConfig();
+        dpc.database = bdbEnvironment.openDatabase(null, name, config);
+        dpc.config = config;
+        databases.put(name, dpc);
+        return dpc.database;
     }
     
     
@@ -218,7 +234,10 @@ Serializable, Closeable {
         }
         SecondaryDatabase result = bdbEnvironment.openSecondaryDatabase(null, 
                 name, db, config);
-        databases.put(name, result);
+        DatabasePlusConfig dpc = new DatabasePlusConfig();
+        dpc.database = result;
+        dpc.config = config;
+        databases.put(name, dpc);
         return result;
     }
 
@@ -427,10 +446,11 @@ Serializable, Closeable {
             LOGGER.log(Level.SEVERE, "Error closing bigMap " + me.getKey(), e);
         }
 
-        for (Map.Entry<String,Database> me: databases.entrySet()) try {
-            me.getValue().close();
+        List<String> dbNames = new ArrayList<String>(databases.keySet());
+        for (String dbName: dbNames) try {
+            closeDatabase(dbName);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error closing db " + me.getKey(), e);            
+            LOGGER.log(Level.SEVERE, "Error closing db " + dbName, e);
         }
 
         try {
