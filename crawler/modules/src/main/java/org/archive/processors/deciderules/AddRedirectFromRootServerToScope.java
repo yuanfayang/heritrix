@@ -47,8 +47,18 @@ extends PredicatedAcceptDecideRule {
             return false;
         }
         try {
-            if (uri.getUURI().getHostBasename().equals(via.getHostBasename())
-                    && uri.isLocation() && via.getPath().equals(SLASH)) {
+            String chost = uri.getUURI().getHostBasename();
+            if (chost == null) {
+                return false;
+            }
+            
+            String viaHost = via.getHostBasename();
+            if (viaHost == null) {
+                return false;
+            }
+            
+            if (chost.equals(viaHost) && uri.isLocation() 
+                    && via.getPath().equals(SLASH)) {
                 uri.setSeed(true);
                 LOGGER.info("Adding " + uri + " to seeds via " + via);
                 return true;
