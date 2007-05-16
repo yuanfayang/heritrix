@@ -354,4 +354,8 @@ implements ProcessorURI {
         return 1; // FIXME
     }
 
+    
+    public boolean containsDataKey(String k) {
+        return data.containsKey(k);
+    }
 }
