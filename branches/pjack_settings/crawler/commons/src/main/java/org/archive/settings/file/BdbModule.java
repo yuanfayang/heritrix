@@ -152,7 +152,6 @@ Serializable, Closeable {
         // already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(create);
-        config.setDeferredWrite(true);
         this.classCatalogDB = this.bdbEnvironment.
             openDatabase(null, "classes", dbConfig);
         this.classCatalog = new StoredClassCatalog(classCatalogDB);
