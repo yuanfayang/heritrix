@@ -117,19 +117,5 @@ public interface CoreAttributeConstants {
     // lenTrunc
     public static final String LENGTH_TRUNC = "len" + TRUNC_SUFFIX;
 
-    /* Duplication-reduction / recrawl / history constants */
-    
-    /** fetch history array */ 
-    public static final String A_FETCH_HISTORY = "fetch-history";
-    /** content digest */
-    public static final String A_CONTENT_DIGEST = "content-digest";
-	/** header name (and AList key) for last-modified timestamp */
-    public static final String A_LAST_MODIFIED_HEADER = "last-modified";
-	/** header name (and AList key) for ETag */
-    public static final String A_ETAG_HEADER = "etag"; 
-    /** key for status (when in history) */
-    public static final String A_STATUS = "status"; 
-    /** reference length (content length or virtual length */
-    public static final String A_REFERENCE_LENGTH = "reference-length";
 
 }
