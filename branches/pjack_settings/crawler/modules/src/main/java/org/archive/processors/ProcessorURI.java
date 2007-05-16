@@ -25,7 +25,6 @@ package org.archive.processors;
 
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,6 +79,7 @@ public interface ProcessorURI extends StateProvider {
     
     Recorder getRecorder();
 
+    boolean containsDataKey(String attr);
     Map<String,Object> getData();
     
     String getUserAgent();
