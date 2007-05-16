@@ -24,9 +24,10 @@
 */
 package org.archive.processors.deciderules.recrawl;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
+
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.PredicatedRejectDecideRule;
+import static org.archive.processors.deciderules.recrawl.RecrawlAttributeConstants.*;
 
 import st.ata.util.AList;
 
@@ -36,8 +37,8 @@ import st.ata.util.AList;
  *
  * @author gojomo
  */
-public class IdenticalDigestDecideRule extends PredicatedRejectDecideRule 
-implements CoreAttributeConstants {
+public class IdenticalDigestDecideRule extends PredicatedRejectDecideRule {
+
     private static final long serialVersionUID = 4275993790856626949L;
 
     /**
@@ -70,11 +71,11 @@ implements CoreAttributeConstants {
         if(curi.containsDataKey(A_FETCH_HISTORY)) {
             AList[] history = (AList[])curi.getData().get(A_FETCH_HISTORY);
             return history[0] != null 
-                   && history[0].containsKey(CoreAttributeConstants.A_CONTENT_DIGEST)
+                   && history[0].containsKey(A_CONTENT_DIGEST)
                    && history[1] != null
-                   && history[1].containsKey(CoreAttributeConstants.A_CONTENT_DIGEST)
-                   && history[0].getString(CoreAttributeConstants.A_CONTENT_DIGEST).equals(
-                           history[1].getString(CoreAttributeConstants.A_CONTENT_DIGEST));
+                   && history[1].containsKey(A_CONTENT_DIGEST)
+                   && history[0].getString(A_CONTENT_DIGEST).equals(
+                           history[1].getString(A_CONTENT_DIGEST));
         } else {
             return false;
         }
