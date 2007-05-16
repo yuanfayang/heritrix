@@ -22,12 +22,10 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.processors.recrawl;
+package org.archive.processors.deciderules.recrawl;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.PredicatedDecideRule;
 import org.archive.processors.deciderules.PredicatedRejectDecideRule;
 
 import st.ata.util.AList;
