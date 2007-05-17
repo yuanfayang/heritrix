@@ -87,7 +87,7 @@
 <!--        <dependency>
               <groupId>com.sleepycat</groupId>
               <artifactId>je</artifactId>
-              <version>3.2.13</version>
+              <version>3.2.23</version>
               <scope>compile</scope>
         </dependency> -->
         <dependency>  
@@ -227,7 +227,7 @@
                  <artifactItem>
                    <groupId>com.sleepycat</groupId>
                    <artifactId>je</artifactId>
-                   <version>3.2.13</version>
+                   <version>3.2.23</version>
                    <type>jar</type>
                    <overWrite>true</overWrite>
                    <outputDirectory>${project.build.directory}/classes</outputDirectory>

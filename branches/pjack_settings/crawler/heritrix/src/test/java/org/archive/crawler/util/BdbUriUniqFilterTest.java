@@ -66,7 +66,9 @@ implements UriUniqFilter.HasUriReceiver {
         // Remove any bdb that already exists.
         this.bdbDir = new File(getTmpDir(), this.getClass().getName());
         if (this.bdbDir.exists()) {
-        	FileUtils.deleteDir(bdbDir);
+        	if (!FileUtils.deleteDir(bdbDir)) {
+                    throw new RuntimeException();
+                }
         }
 		this.filter = new BdbUriUniqFilter(bdbDir, 50);
 		this.filter.setDestination(this);
@@ -184,11 +186,13 @@ implements UriUniqFilter.HasUriReceiver {
         assertFalse("Receiver was called", this.received);
     }
     
-    public void testForget() throws URIException {
+    public void testForgetOnEmpty() throws URIException {
         this.filter.forget(this.getUri(),
             new CrawlURI(UURIFactory.getInstance(getUri())));
-        assertTrue("Didn't forget", this.filter.count() == 0);
+        assertEquals("Didn't forget", 0, this.filter.count());
     }
+    
+    // TODO: Add testForget when non-empty
     
 	public void receive(CrawlURI item) {
 		this.received = true;
