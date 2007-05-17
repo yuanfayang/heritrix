@@ -45,6 +45,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
@@ -104,7 +105,7 @@ implements Initializable, Serializable {
         this.bdb = provider.get(this, BDB);
         try {
             DatabaseConfig config = getDatabaseConfig();
-            config.setAllowCreate(false);
+            config.setAllowCreate(true);
             initialize(bdb.openDatabase(DB_NAME, config, false));
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
@@ -148,13 +149,21 @@ implements Initializable, Serializable {
             Environment env = new Environment(bdbEnv, envConfig);
             DatabaseConfig config = getDatabaseConfig();
             config.setAllowCreate(true);
+            try {
+                env.truncateDatabase(null, DB_NAME, false);
+            } catch (DatabaseNotFoundException e) {
+                // ignored
+            }
             Database db = env.openDatabase(null, DB_NAME, config);
             initialize(db);
         } catch (DatabaseException e) {
-            throw new IOException(e.getMessage());
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
         }
     }
-    
+
+
     /**
      * Method shared by constructors.
      * @param env Environment to use.
@@ -191,15 +200,15 @@ implements Initializable, Serializable {
     }
     
     public synchronized void close() {
-        Environment env = null;
         if (logger.isLoggable(Level.INFO)) {
             logger.info("Count of alreadyseen on close "
                     + Long.toString(count));
         }
-        if (env != null && createdEnvironment) {
+        if (createdEnvironment) {
             // Only manually close database if it were created via a
             // constructor, and not via a BdbModule. Databases created by a 
             // BdbModule will be closed by that BdbModule.
+            Environment env = null;
             if (this.alreadySeen != null) {
                 try {
                     env = this.alreadySeen.getEnvironment();
@@ -210,13 +219,15 @@ implements Initializable, Serializable {
                 }
                 this.alreadySeen = null;
             }
-            try {
-                // This sync flushes whats in RAM. Its expensive operation.
-                // Without, data can be lost. Not for transactional operation.
-                env.sync();
-                env.close();
-            } catch (DatabaseException e) {
-                logger.severe(e.getMessage());
+            if (env != null) {
+                try {
+                    // This sync flushes whats in RAM. Its expensive operation.
+                    // Without, data can be lost. Not for transactional operation.
+                    env.sync();
+                    env.close();
+                } catch (DatabaseException e) {
+                    logger.severe(e.getMessage());
+                }
             }
         }
     }
