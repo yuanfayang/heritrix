@@ -22,6 +22,9 @@
  */
 package org.archive.crawler.prefetch;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.CrawlController;
@@ -43,8 +46,8 @@ public class QuotaEnforcer extends CrawlerProcessor {
 
     private static final long serialVersionUID = 3L;
 
-    //private static final Logger LOGGER =
-    //    Logger.getLogger(QuotaEnforcer.class.getName());
+    private static final Logger LOGGER =
+        Logger.getLogger(QuotaEnforcer.class.getName());
     
     // indexed table of reused string categorical names/keys
     protected static final int SERVER = 0;
@@ -224,6 +227,12 @@ public class QuotaEnforcer extends CrawlerProcessor {
     protected boolean checkQuotas(final CrawlURI curi,
             final FetchStats.HasFetchStats hasStats,
             final int CAT) {
+        if (hasStats == null) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine(curi.toString() + " null stats category: " + CAT);
+            }
+            return false;
+        }
         FetchStats substats = hasStats.getSubstats();
         long[] actuals = new long[] {
                 -1, // dummy
@@ -232,10 +241,10 @@ public class QuotaEnforcer extends CrawlerProcessor {
                 substats.getFetchResponses(),
                 substats.getTotalBytes()/1024,
         };
-        for(int q=SUCCESSES; q<=RESPONSE_KB;q++) {
+        for(int q=SUCCESSES; q<=RESPONSE_KB; q++) {
             @SuppressWarnings("unchecked")
             Key<Long> key = keys[CAT][q];
-            if(applyQuota(curi, key, actuals[q])) {
+            if (applyQuota(curi, key, actuals[q])) {
                 return true; 
             }
         }
