@@ -44,9 +44,9 @@ import org.archive.util.IoUtils;
 class KeyMetadataMaker {
 
     
-    public static void makeDefaultLocale(File srcDir, Class c) {
+    public static void makeDefaultLocale(File srcDir, File resDir, Class c) {
         String cpath = c.getName().replace('.', '/');
-        File dest = new File(srcDir, cpath + "_en.utf8");
+        File dest = new File(resDir, cpath + "_en.utf8");
         if (dest.exists()) {
             return;
         }
@@ -70,7 +70,7 @@ class KeyMetadataMaker {
             return;
         }
         
-                
+        System.out.println("Writing key field metadata to " + dest.getAbsolutePath());
         OutputStreamWriter osw = null;
         try {
             osw = new OutputStreamWriter(new FileOutputStream(dest), "UTF-8");

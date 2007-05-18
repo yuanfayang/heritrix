@@ -51,17 +51,24 @@ public class ListModuleListener<T> implements ModuleListener, Serializable {
     private static final long serialVersionUID = 1L;
 
     
-    private Class<T> type;
+    final private Class<T> type;
     private transient Map<T,Object> objects = new WeakHashMap<T,Object>();
 
     
 
     public ListModuleListener(Class<T> type) {
+        if (type == null) {
+            throw new IllegalArgumentException("type must not be null.");
+        }
         this.type = type;
     }
     
     
     public void moduleChanged(Object old, Object newModule) {
+        if (newModule == null) {
+            // old is being removed
+            return;
+        }
         if (!type.isAssignableFrom(newModule.getClass())) {
             return;
         }
