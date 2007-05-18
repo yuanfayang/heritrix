@@ -100,10 +100,6 @@
         <configuration>
           <source>1.5</source>
           <target>1.5</target>
-          <!--
-          <compilerArgument> -verbose -cp ../nutchwax-thirdparty/nutch/build/classes</compilerArgument>
-          <compilerArgument> -verbose -classpath ../nutchwax-thirdparty/nutch/build/classes</compilerArgument>
-          -->
         </configuration>
       </plugin>
 
@@ -111,14 +107,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <!--
-                We need to useSystemClassLoader so SinkHandlerTest will work.
-                (SinkHandlerTest creates a custom LogHandler, and the
-                java.util.logging system mandates that LogHandlers are loaded
-                by the system class loader, not the current context class
-                loader.
-          -->
-          <useSystemClassLoader>true</useSystemClassLoader>
           <excludes>
             <exclude>**/TestAll.java</exclude>
           </excludes>

@@ -36,6 +36,60 @@
   </repositories>
   
   <dependencies>
+  
+  
+        <!--
+        
+             This project requires "overlays".  There are custom patches we
+             apply to existing jar files from other projects (Apache).  Those
+             projects would not/could not accept our patches, so 
+           
+             Maven doesn't have any sort of notion for this.  It should be 
+             a simple matter of ordering classpath elements, but alas.  
+             
+             We wanted to avoid checking in the complete source code for these
+             other projects into our source control, so it would be obvious
+             which classes we actually altered to suit our needs.
+             
+             I tried a number of things to make overlay jars work in maven.
+             Here's what finally worked:
+             
+             I manually explode the jar files, then manually delete the few class
+             files that we overlay (including any inner class files).  I then
+             rejar the class files minus the ones we want to generate at 
+             compile-time.  I use a name archive-overlay-X-V.jar, where X
+             is the original artifact name, and V is the original version.
+             
+             I then manually install these jars into our maven repository.
+             So the below dependencies are these strange, surgically altered
+             jars from other projects.
+             
+             It's ugly but it works.  If you make any additional changes to
+             these projects, or heavens forfend you actually want to upgrade
+             them to some later version, you will have to repeat the 
+             explode/delete/rejar/reinstall manual process.
+        -->
+  
+        <dependency>
+              <groupId>org.archive.overlays</groupId>
+              <artifactId>archive-overlay-je</artifactId>
+              <version>3.2.23</version>
+              <scope>compile</scope>
+        </dependency>
+        <dependency>
+              <groupId>org.archive.overlays</groupId>
+              <artifactId>archive-overlay-commons-httpclient</artifactId>
+              <version>3.0.1</version>
+              <scope>compile</scope>
+        </dependency>
+        <dependency>
+              <groupId>org.archive.overlays</groupId>
+              <artifactId>archive-overlay-commons-pool</artifactId>
+              <version>1.3</version>
+              <scope>compile</scope>
+        </dependency>
+  
+        <!-- These are normal dependencies. -->  
         <dependency>
              <groupId>commons-lang</groupId>
              <artifactId>commons-lang</artifactId>
@@ -84,48 +138,18 @@
               <version>2.3</version>
               <scope>compile</scope>
         </dependency>
-<!--        <dependency>
-              <groupId>com.sleepycat</groupId>
-              <artifactId>je</artifactId>
-              <version>3.2.23</version>
-              <scope>compile</scope>
-        </dependency> -->
         <dependency>  
               <groupId>org.dnsjava</groupId>
               <artifactId>dnsjava</artifactId>
               <version>1.6.2</version>
               <scope>compile</scope>
         </dependency>
-<!--        <dependency>
-              <groupId>jetty</groupId>
-              <artifactId>jetty</artifactId>
-              <version>6.0.2</version>
-              <scope>compile</scope>
-        </dependency> -->
-<!--        <dependency>
-              <groupId>jetty</groupId>
-              <artifactId>jetty-util</artifactId>
-              <version>6.0.2</version>
-              <scope>compile</scope>
-        </dependency> -->
         <dependency>
               <groupId>tomcat</groupId>
               <artifactId>servlet</artifactId>
               <version>4.1.34</version>
               <scope>compile</scope>
         </dependency>
-<!--        <dependency>
-              <groupId>tomcat</groupId>
-              <artifactId>jasper-runtime</artifactId>
-              <version>4.1.30</version>
-              <scope>compile</scope>
-        </dependency>
-        <dependency>
-              <groupId>tomcat</groupId>
-              <artifactId>jasper-compiler</artifactId>
-              <version>4.1.30</version>
-              <scope>compile</scope>
-        </dependency> -->
         <dependency>
               <groupId>poi</groupId>
               <artifactId>poi</artifactId>
@@ -144,12 +168,6 @@
               <version>1.3</version>
               <scope>compile</scope>
         </dependency>
-<!--        <dependency>
-              <groupId>ant</groupId>
-              <artifactId>ant</artifactId>
-              <version>1.6.2</version>
-              <scope>compile</scope>
-        </dependency> -->
         <dependency>
               <groupId>junit</groupId>
               <artifactId>junit</artifactId>
@@ -168,12 +186,6 @@
               <version>0.6.5</version>
               <scope>compile</scope>
         </dependency>
-<!--        <dependency>
-              <groupId>org.beanshell</groupId>
-              <artifactId>bsh</artifactId>
-              <version>2.0b4</version>
-              <scope>compile</scope>
-        </dependency> -->
         <dependency>
               <groupId>net.java.dev.jets3t</groupId>
               <artifactId>jets3t</artifactId>
@@ -195,53 +207,6 @@
   </dependencies>
   <build>
     <plugins>
-
-      <plugin>
-         <groupId>org.apache.maven.plugins</groupId>
-         <artifactId>maven-dependency-plugin</artifactId>
-         <executions>
-           <execution>
-             <id>unpack</id>
-             <phase>process-resources</phase>
-             <goals>
-               <goal>unpack</goal>
-             </goals>
-             <configuration>
-               <artifactItems>
-                 <artifactItem>
-                   <groupId>commons-httpclient</groupId>
-                   <artifactId>commons-httpclient</artifactId>
-                   <version>3.0.1</version>
-                   <type>jar</type>
-                   <overWrite>true</overWrite>
-                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                 </artifactItem>
-                 <artifactItem>
-                   <groupId>commons-pool</groupId>
-                   <artifactId>commons-pool</artifactId>
-                   <version>1.3</version>
-                   <type>jar</type>
-                   <overWrite>true</overWrite>
-                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                 </artifactItem>
-                 <artifactItem>
-                   <groupId>com.sleepycat</groupId>
-                   <artifactId>je</artifactId>
-                   <version>3.2.23</version>
-                   <type>jar</type>
-                   <overWrite>true</overWrite>
-                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                 </artifactItem>
-
-
-
-               </artifactItems>
-             </configuration>
-           </execution>
-         </executions>
-       </plugin>
-
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -256,11 +221,20 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!-- 
-                We need to useSystemClassLoader so SinkHandlerTest will work.
-                (SinkHandlerTest creates a custom LogHandler, and the
-                java.util.logging system mandates that LogHandlers are loaded
-                by the system class loader, not the current context class
-                loader.
+                There was a unit test, SinkHandlerTest, that required
+                useSystemClassLoader=true in order to work.
+                
+                SinkHandlerTest creates a custom LogHandler, and the 
+                java.util.logging system mandates that LogHandlers are 
+                loaded by the system class loader, not the current context
+                class loader.
+                
+                However, using the systemClassLoader means that we inherit
+                maven's CLASSPATH while running our test code.  This is a 
+                problem since maven uses an earlier version of 
+                commons-lang than we do.
+                
+                So I disabled the SinkHandler test, and set this back to false.
           -->
           <useSystemClassLoader>false</useSystemClassLoader>
           <excludes>
