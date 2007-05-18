@@ -50,10 +50,33 @@ public abstract class StateProcessorTestBase extends TestCase {
 
     
     public StateProcessorTestBase() {
-        KeyMetadataMaker.makeDefaultLocale(new File("src/main/java"), 
-                getModuleClass());
+        File srcDir = getProjectDir("src/main/java");
+        File resourceDir = getProjectDir("src/main/resources");
+        if ((srcDir != null) && (resourceDir != null)) {
+            KeyMetadataMaker.makeDefaultLocale(srcDir, resourceDir, 
+                    getModuleClass());
+        }
     }
 
+    
+    private File getProjectDir(String path) {
+        File r = new File(path);
+        if (r.exists()) {
+            return r;
+        }
+        String cname = getClass().getName();
+        if (cname.startsWith("org.archive.processors")) {
+            return new File("modules/" + path);
+        }
+        if (cname.startsWith("org.archive.deciderules")) {
+            return new File("modules/" + path);
+        }
+        if (cname.startsWith("org.archive.crawler")) {
+            return new File("heritrix/" + path);
+        }
+        return null;
+    }
+    
     
     protected abstract Class getModuleClass();
     
