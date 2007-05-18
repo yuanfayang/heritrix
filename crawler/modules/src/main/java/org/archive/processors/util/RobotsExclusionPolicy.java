@@ -162,9 +162,11 @@ public class RobotsExclusionPolicy implements Serializable {
             lastUsedUserAgent = userAgent;
             userAgentsToTest = new ArrayList<String>();
             Iterator iter = userAgents.iterator();
+            String lowerCaseUserAgent = userAgent.toLowerCase();
             while ( iter.hasNext() ) {
                 String ua = (String)iter.next();
-                if (userAgent.indexOf(ua)>-1) {
+                // ua in below is already lowercase. See Robotstxt.java line 60.
+                if (lowerCaseUserAgent.indexOf(ua)>-1) {
                     userAgentsToTest.add(ua);
                     break; // consider no more sections
                 }

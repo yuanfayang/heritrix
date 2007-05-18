@@ -31,6 +31,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utility class for parsing 'robots.txt' format directives, into a list
+ * of named user-agents and map from user-agents to disallowed paths. 
+ */
 public class Robotstxt {
     public static boolean parse(BufferedReader reader,
             final LinkedList<String> userAgents, 
@@ -38,7 +42,10 @@ public class Robotstxt {
     throws IOException {
         boolean hasErrors = false;
         String read;
+        // current is the disallowed paths for the preceding User-Agent(s)
         ArrayList<String> current = null;
+        // whether a non-'User-Agent' directive has been encountered
+        boolean hasDirectivesYet = false; 
         String catchall = null;
         while (reader != null) {
             do {
@@ -58,10 +65,11 @@ public class Robotstxt {
                 read = read.trim();
                 if (read.matches("(?i)^User-agent:.*")) {
                     String ua = read.substring(11).trim().toLowerCase();
-                    if (current == null || current.size() != 0) {
+                    if (current == null || hasDirectivesYet ) {
                         // only create new rules-list if necessary
                         // otherwise share with previous user-agent
                         current = new ArrayList<String>();
+                        hasDirectivesYet = false; 
                     }
                     if (ua.equals("*")) {
                         ua = "";
@@ -80,6 +88,33 @@ public class Robotstxt {
                     }
                     String path = read.substring(9).trim();
                     current.add(path);
+                    hasDirectivesYet = true; 
+                    continue;
+                }
+                if (read.matches("(?i)Crawl-delay:.*")) {
+                    if (current == null) {
+                        // buggy robots.txt
+                        hasErrors = true;
+                        continue;
+                    }
+                    // consider a crawl-delay, even though we don't 
+                    // yet understand it, as sufficient to end a 
+                    // grouping of User-Agent lines
+                    hasDirectivesYet = true;
+                    // TODO: understand/save/respect 'Crawl-Delay' 
+                    continue;
+                }
+                if (read.matches("(?i)Allow:.*")) {
+                    if (current == null) {
+                        // buggy robots.txt
+                        hasErrors = true;
+                        continue;
+                    }
+                    // consider an Allow, even though we don't 
+                    // yet understand it, as sufficient to end a 
+                    // grouping of User-Agent lines
+                    hasDirectivesYet = true;
+                    // TODO: understand/save/respect 'Allow' 
                     continue;
                 }
                 // unknown line; do nothing for now
