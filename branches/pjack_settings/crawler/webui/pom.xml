@@ -49,6 +49,19 @@
       <version>2.0.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>jetty</groupId>
+      <artifactId>jasper-compiler</artifactId>
+      <version>4.2.20RC0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>jetty</groupId>
+      <artifactId>jasper-runtime</artifactId>
+      <version>4.2.20RC0</version>
+      <scope>test</scope>
+    </dependency>
+    
   </dependencies>
   <build>
     <finalName>heritrix-webui</finalName>
