@@ -53,3 +53,10 @@ zero means no upper limit.
 metadata-provider-description:
 The source of metadata for written ARC files. Should be the crawl controller
 in a Heritrix crawl.
+
+
+skip-identical-digests-description:
+Whether to skip the writing of a record when URI history information is
+available and indicates the prior fetch had an identical content digest.
+Default is false.
+
