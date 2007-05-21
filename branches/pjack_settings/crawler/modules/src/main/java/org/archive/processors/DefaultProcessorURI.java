@@ -358,4 +358,10 @@ implements ProcessorURI {
     public boolean containsDataKey(String k) {
         return data.containsKey(k);
     }
+
+
+    public byte[] getContentDigest() {
+        return null; // FIXME
+    }
+
 }

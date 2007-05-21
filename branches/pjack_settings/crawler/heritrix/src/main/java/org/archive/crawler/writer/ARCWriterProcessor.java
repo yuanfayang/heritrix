@@ -33,9 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
@@ -48,6 +46,7 @@ import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
+import org.archive.util.IoUtils;
 
 
 /**
@@ -121,10 +120,11 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
             return false;
         }
         
-        // If no content, don't write record.
+        // If no recorded content at all, don't write record.
         long recordLength = curi.getContentSize();
         if (recordLength <= 0) {
-            // Write nothing.
+            // getContentSize() should be > 0 if any material (even just
+            // HTTP headers with zero-length body is available.
             return false;
         }
 
@@ -143,45 +143,28 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
     protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         
-        int recordLength = (int)curi.getContentSize();
+        long recordLength = curi.getContentSize();
         
-        String scheme = curi.getUURI().getScheme().toLowerCase();
+        ReplayInputStream ris = null;
         try {
-            // TODO: Since we made FetchDNS work like FetchHTTP, IF we
-            // move test for success of different schemes -- DNS, HTTP(S) and 
-            // soon FTP -- up into CrawlURI#isSuccess (Have it read list of
-            // supported schemes from heritrix.properties and cater to each's
-            // notions of 'success' appropriately), then we can collapse this
-            // if/else into a lone if (curi.isSuccess).  See WARCWriter for
-            // an example.
-            if ((scheme.equals("dns") &&
-            		curi.getFetchStatus() == S_DNS_SUCCESS)) {
-            	InputStream is = curi.getRecorder().getRecordedInput().
-            		getReplayInputStream();
-                write(curi, recordLength, is,
-                    (String)curi.getData().get(A_DNS_SERVER_IP_LABEL));
-            } else if ((scheme.equals("http") || scheme.equals("https")) &&
-            		curi.getFetchStatus() > 0 && curi.isHttpTransaction()) {
-                InputStream is = curi.getRecorder().getRecordedInput().
-            		getReplayInputStream();
-                write(curi, recordLength, is, getHostAddress(curi));
-            } else if (scheme.equals("ftp") && (curi.getFetchStatus() == 200)) {
-                InputStream is = curi.getRecorder().getRecordedInput().
-                 getReplayInputStream();
-                write(curi, recordLength, is, getHostAddress(curi));
+            if (shouldWrite(curi)) {
+                ris = curi.getRecorder().getRecordedInput()
+                        .getReplayInputStream();
+                return write(curi, recordLength, ris, getHostAddress(curi));
             } else {
-                logger.info("This writer does not write out scheme " + scheme +
-                    " content");
+                logger.info("does not write " + curi.toString());
             }
          } catch (IOException e) {
             curi.getNonFatalFailures().add(e);
             logger.log(Level.SEVERE, "Failed write of Record: " +
                 curi.toString(), e);
+        } finally {
+            IoUtils.close(ris);
         }
         return ProcessResult.PROCEED;
     }
     
-    protected ProcessResult write(CrawlURI curi, int recordLength, 
+    protected ProcessResult write(CrawlURI curi, long recordLength, 
             InputStream in, String ip)
     throws IOException {
         WriterPoolMember writer = getPool().borrowFile();
