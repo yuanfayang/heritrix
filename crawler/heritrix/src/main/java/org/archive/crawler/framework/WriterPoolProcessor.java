@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.writer.EmptyMetadataProvider;
 import org.archive.crawler.writer.MetadataProvider;
 import org.archive.io.DefaultWriterPoolSettings;
@@ -45,6 +46,8 @@ import org.archive.io.WriterPoolSettings;
 import org.archive.state.DirectoryModule;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
+import org.archive.processors.deciderules.recrawl.IdenticalDigestDecideRule;
+import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.ServerCache;
@@ -113,7 +116,7 @@ implements Closeable {
      * Max size of each file.
      */
     @Immutable
-    final public static Key<Integer> MAX_SIZE_BYTES = Key.make(100000000);
+    final public static Key<Long> MAX_SIZE_BYTES = Key.make(100000000L);
 
     
     /**
@@ -133,6 +136,19 @@ implements Closeable {
     final public static Key<Integer> POOL_MAX_WAIT = 
         Key.make(WriterPool.DEFAULT_MAXIMUM_WAIT);
 
+    
+    /**
+     * Whether to skip the writing of a record when URI history information is
+     * available and indicates the prior fetch had an identical content digest.
+     * Default is false.
+     */
+    final public static Key<Boolean> SKIP_IDENTICAL_DIGESTS = Key.make(false);
+
+
+    /**
+     * CrawlURI annotation indicating no record was written.
+     */
+    protected static final String ANNOTATION_UNWRITTEN = "unwritten";
 
     /**
      * Total file bytes to write to disk. Once the size of all files on disk has
@@ -227,7 +243,58 @@ implements Closeable {
         return ProcessResult.PROCEED;
     }
     
+    /**
+     * Whether the given CrawlURI should be written to archive files.
+     * Annotates CrawlURI with a reason for any negative answer.
+     * 
+     * @param curi CrawlURI
+     * @return true if URI should be written; false otherwise
+     */
+    protected boolean shouldWrite(CrawlURI curi) {
+        if (curi.get(this, SKIP_IDENTICAL_DIGESTS)
+            && IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
+            curi.getAnnotations().add(ANNOTATION_UNWRITTEN 
+                    + ":identicalDigest");
+            return false;
+        }
+        
+        boolean retVal;
+        String scheme = curi.getUURI().getScheme().toLowerCase();
+        // TODO: possibly move this sort of isSuccess() test into CrawlURI
+        if (scheme.equals("dns")) {
+            retVal = curi.getFetchStatus() == S_DNS_SUCCESS;
+        } else if (scheme.equals("http") || scheme.equals("https")) {
+            retVal = curi.getFetchStatus() > 0 && curi.isHttpTransaction();
+        } else if (scheme.equals("ftp")) {
+            retVal = curi.getFetchStatus() == 200;
+        } else {
+            curi.getAnnotations().add(ANNOTATION_UNWRITTEN
+                    + ":scheme");
+            return false;
+        }
+        
+        if (retVal == false) {
+            // status not deserving writing
+            curi.getAnnotations().add(ANNOTATION_UNWRITTEN + ":status");
+            return false;
+        }
+        
+        return true; 
+    }
+    
+    /**
+     * Return IP address of given URI suitable for recording (as in a
+     * classic ARC 5-field header line).
+     * 
+     * @param curi CrawlURI
+     * @return String of IP address
+     */
     protected String getHostAddress(CrawlURI curi) {
+        // special handling for DNS URIs: want address of DNS server
+        if (curi.getUURI().getScheme().toLowerCase().equals("dns")) {
+            return (String)curi.getData().get(A_DNS_SERVER_IP_LABEL);
+        }
+        // otherwise, host referenced in URI
         CrawlHost h = ServerCacheUtil.getHostFor(serverCache, curi.getUURI());
         if (h == null) {
             throw new NullPointerException("Crawlhost is null for " +

@@ -127,4 +127,6 @@ public interface ProcessorURI extends StateProvider {
     LinkContext getViaContext();
 
     int getFetchAttempts();
+    
+    byte[] getContentDigest();
 }

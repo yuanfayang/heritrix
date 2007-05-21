@@ -963,7 +963,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      * 
      * @return Digest value.
      */
-    public Object getContentDigest() {
+    public byte[] getContentDigest() {
         return contentDigest;
     }
     
