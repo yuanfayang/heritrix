@@ -26,10 +26,8 @@
 
 package org.archive.processors.fetcher;
 
-import java.io.Closeable;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
@@ -86,6 +84,7 @@ public class BdbCookieStorage implements CookieStorage, Initializable {
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setTransactional(false);
             dbConfig.setAllowCreate(true);
+            dbConfig.setDeferredWrite(true);
             cookieDb = bdb.openDatabase(dbName, dbConfig, true);
             cookies = new StoredSortedMap(cookieDb,
                     new StringBinding(), new SerialBinding(classCatalog,

@@ -89,18 +89,18 @@ on-the-fly digest hash of retrieved content-bodies.
 
 
 sotimeout-ms-description:
-If the socket is unresponsive for this number of milliseconds, give up. 
-Set to zero for no timeout (Not. recommended. Could hang a thread on an 
-unresponsive server). This timeout is used timing out socket opens and 
-for timing out each socket read. Make sure this value is < 
-timeout-seconds for optimal configuration: ensures at least one 
-retry read. 
+If a socket is unresponsive for this number of milliseconds, give up on that 
+connects/read. (This does not necessarily give up on the fetch immediately; 
+connects are subject to retries and reads will be retried until timeout-seconds
+have elapsed. Set to zero for no socket timeout. (This is 
+not recommended: a socket operation could hang indefinitely.)
 
 
 timeout-seconds-description:
-If the fetch is not completed in this number of seconds, give up (and 
-retry later). 
-
+If the fetch is not completed in this number of seconds, even if it is making 
+progress, give up. The URI will be annotated as timeTrunc. Set to zero for no 
+timeout. (This is not recommended: threads could wait indefinitely for the 
+fetch to end.)
 
 trust-level-description:
 SSL certificate trust level. Range is from the default 'open' (trust all 
@@ -116,4 +116,14 @@ Module used to store credentials.
 
 server-cache-description:
 Module used to cache server information, such as DNS results.
+
+
+send-if-modified-since-description:
+Send 'If-Modified-Since' header, if previous 'Last-Modified' fetch history 
+information is available in URI history.
+
+
+send-if-none-match-description:
+Send 'If-None-Match' header, if previous 'Etag' fetch history information
+is available in URI history.
 
