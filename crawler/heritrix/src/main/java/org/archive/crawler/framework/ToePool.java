@@ -24,7 +24,6 @@
 package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.TreeSet;
 
@@ -56,8 +55,9 @@ public class ToePool extends ThreadGroup implements Reporter {
      * @param c A reference to the CrawlController for the current crawl.
      */
     public ToePool(CrawlController c) {
-        super("ToeThreads");
+        super("ToeThreads");        
         this.controller = c;
+        setDaemon(true);
     }
     
     public void cleanup() {
