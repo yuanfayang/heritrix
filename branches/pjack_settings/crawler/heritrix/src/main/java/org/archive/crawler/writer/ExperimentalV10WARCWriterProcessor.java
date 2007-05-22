@@ -35,84 +35,42 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.HttpStatus;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.deciderules.recrawl.RecrawlAttributeConstants.*;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.processors.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.warc.ExperimentalWARCWriter;
 import static org.archive.io.warc.WARCConstants.*;
-import org.archive.io.warc.WARCWriterPool;
-import org.archive.state.Expert;
+
+import org.archive.io.warc.v10.ExperimentalWARCWriter;
+import org.archive.io.warc.v10.WARCWriterPool;
 import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
-import org.archive.state.KeyManager;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
 
+
 /**
  * Experimental WARCWriterProcessor.
- * Goes against the pending release of 0.12 of the WARC specification, the
- * "Marcel Marceau" release. See <a href="https://archive-access.svn.sourceforge.net/svnroot/archive-access/branches/gjm_warc_0_12/warc/warc_file_format.html">latest revision</a>
- * for current state.  The 0.10 WARC implemenation has been moved to
- * {@link ExperimentalV10WARCWriterProcessor}.
- * 
- * <p>TODO: Remove ANVLRecord. Rename NameValue or use RFC822
- * (commons-httpclient?) or find something else.
+ * Implements 0.10 version of the WARC Specification since superceded by
+ * version 0.12.
  * 
  * @author stack
+ * @deprecated See {@link ExperimentalWARCWriter}
  */
-public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
+public class ExperimentalV10WARCWriterProcessor extends WriterPoolProcessor {
 
+    private static final long serialVersionUID = 188656957531675821L;
 
-    private static final long serialVersionUID = 6182850087635847443L;
-
-    private static final Logger logger = 
-        Logger.getLogger(ExperimentalWARCWriterProcessor.class.getName());
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
     
-    /**
-     * Whether to write 'request' type records. Default is true.
-     */
-    @Expert
-    final public static Key<Boolean> WRITE_REQUESTS = Key.make(true);
-
-    
-    /**
-     * Whether to write 'metadata' type records. Default is true.
-     */
-    @Expert
-    final public static Key<Boolean> WRITE_METADATA = Key.make(true);
-
-
-    /**
-     * Whether to write 'revisit' type records when a URI's history indicates
-     * the previous fetch had an identical content digest. Default is true.
-     */
-    @Expert
-    final public static Key<Boolean> WRITE_REVISIT_FOR_IDENTICAL_DIGESTS =
-        Key.make(true);
-
-    
-    /**
-     * Whether to write 'revisit' type records when a 304-Not Modified response
-     * is received. Default is true.
-     */
-    @Expert
-    final public static Key<Boolean> WRITE_REVISIT_FOR_NOT_MODIFIED =
-        Key.make(true);
-
     
     /**
      * Where to save files. Supply absolute or relative path. If relative, files
@@ -124,10 +82,6 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     @Global
     final public static Key<List<String>> PATH = makePath();
 
-
-    static {
-        KeyManager.addKeys(ExperimentalWARCWriterProcessor.class);
-    }
     
     
     /**
@@ -135,17 +89,17 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
      */
     private static final String [] DEFAULT_PATH = {"warcs"};
 
-
     protected String [] getDefaultPath() {
         return DEFAULT_PATH;
     }
     
     /**
-     * Constructor.
+     * @param name Name of this writer.
      */
-    public ExperimentalWARCWriterProcessor() {
+    public ExperimentalV10WARCWriterProcessor() {
     }
 
+    
     @Override
     protected void setupPool(final AtomicInteger serialNo) {
         int maxActive = getMaxActive();
@@ -153,20 +107,19 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         WriterPoolSettings wps = getWriterPoolSettings();
         setPool(new WARCWriterPool(serialNo, wps, maxActive, maxWait));
     }
-
-
+    
     /**
      * Writes a CrawlURI and its associated data to store file.
      * 
      * Currently this method understands the following uri types: dns, http, and
      * https.
      * 
-     * @param curi CrawlURI to process.
+     * @param curi
+     *            CrawlURI to process.
      * 
      */
-    @Override
     protected ProcessResult innerProcessResult(ProcessorURI puri) {
-        CrawlURI curi = (CrawlURI)puri;
+        CrawlURI curi = (CrawlURI)puri;        
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
             if (shouldWrite(curi)) {
@@ -207,67 +160,34 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
             // 'transaction'.
             final URI baseid = getRecordID();
             final String timestamp =
-                ArchiveUtils.getLog14Date(curi.getFetchBeginTime());
+                ArchiveUtils.get14DigitDate(curi.getFetchBeginTime());
             if (lowerCaseScheme.startsWith("http")) {
                 // Add named fields for ip, checksum, and relate the metadata
                 // and request to the resource field.
-                // TODO: Use other than ANVL (or rename ANVL as NameValue or
-                // use RFC822 (commons-httpclient?).
-                ANVLRecord headers = new ANVLRecord(5);
+                ANVLRecord r = new ANVLRecord();
                 if (curi.getContentDigest() != null) {
-                    headers.addLabelValue(HEADER_KEY_CHECKSUM,
+                    // TODO: This is digest for content -- doesn't include
+                    // response headers.
+                    r.addLabelValue(NAMED_FIELD_CHECKSUM_LABEL,
                         curi.getContentDigestSchemeString());
                 }
-                headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
-                URI rid;
-                
-                if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
-                        curi.get(this, WRITE_REVISIT_FOR_IDENTICAL_DIGESTS)) {
-                    rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
-                            baseid, curi, headers);
-                } else if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED && 
-                        curi.get(this, WRITE_REVISIT_FOR_NOT_MODIFIED)) {
-                    rid = writeRevisitNotModified(w, timestamp,
-                            baseid, curi, headers);
-                } else {
-                    // Check for truncated annotation
-                    String value = null;
-                    Collection<String> anno = curi.getAnnotations();
-                    if (anno.contains(TIMER_TRUNC)) {
-                        value = NAMED_FIELD_TRUNCATED_VALUE_TIME;
-                    } else if (anno.contains(LENGTH_TRUNC)) {
-                        value = NAMED_FIELD_TRUNCATED_VALUE_LEN;
-                    } else if (anno.contains(HEADER_TRUNC)) {
-                        value = NAMED_FIELD_TRUNCATED_VALUE_HEAD;
-                    }
-                    // TODO: Add annotation for TRUNCATED_VALUE_UNSPECIFIED
-                    if (value != null) {
-                        headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
-                    }
-                    rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
-                    	baseid, curi, headers);
-                }
-                
-                headers = new ANVLRecord(1);
-                headers.addLabelValue(HEADER_KEY_CONCURRENT_TO,
-                    '<' + rid.toString() + '>');
-
-                if (curi.get(this, WRITE_REQUESTS)) {
-                    writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
-                            baseid, curi, headers);
-                }
-                if (curi.get(this, WRITE_METADATA)) {
-                    writeMetadata(w, timestamp, baseid, curi, headers);
-                } 
+                r.addLabelValue(NAMED_FIELD_IP_LABEL, getHostAddress(curi));
+                URI rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+                	baseid, curi, r);
+                r = new ANVLRecord(1);
+                r.addLabelValue(NAMED_FIELD_RELATED_LABEL, rid.toString());
+                writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
+                	baseid, curi, r);
+                writeMetadata(w, timestamp, baseid, curi, r);
             } else if (lowerCaseScheme.equals("dns")) {
-                ANVLRecord headers = null;
-                String ip = (String)curi.getData().get(A_DNS_SERVER_IP_LABEL);
+                String ip = curi.getDNSServerIPLabel();
+                ANVLRecord r = null;
                 if (ip != null && ip.length() > 0) {
-                    headers = new ANVLRecord(1);
-                    headers.addLabelValue(HEADER_KEY_IP, ip);
+                	r = new ANVLRecord();
+                    r.addLabelValue(NAMED_FIELD_IP_LABEL, ip);
                 }
                 writeResponse(w, timestamp, curi.getContentType(), baseid,
-                    curi, headers);
+                    curi, r);
             } else {
                 logger.warning("No handler for scheme " + lowerCaseScheme);
             }
@@ -328,79 +248,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return baseid;
     }
     
-    protected URI writeRevisitDigest(final ExperimentalWARCWriter w,
-            final String timestamp, final String mimetype,
-            final URI baseid, final CrawlURI curi,
-            final ANVLRecord namedFields) 
-    throws IOException {
-        long revisedLength = curi.getRecorder().getRecordedInput().getContentBegin();
-        revisedLength = revisedLength > 0 
-            ? revisedLength 
-            : curi.getRecorder().getRecordedInput().getSize();
-        namedFields.addLabelValue(
-        		HEADER_KEY_PROFILE, PROFILE_REVISIT_IDENTICAL_DIGEST);
-        namedFields.addLabelValue(
-        		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
-        ReplayInputStream ris =
-            curi.getRecorder().getRecordedInput().getReplayInputStream();
-        try {
-            w.writeRevisitRecord(curi.toString(), timestamp, mimetype, baseid,
-                namedFields, ris, revisedLength);
-        } finally {
-            if (ris != null) {
-                ris.close();
-            }
-        }
-        return baseid;
-    }
-    
-    protected URI writeRevisitNotModified(final ExperimentalWARCWriter w,
-            final String timestamp, 
-            final URI baseid, final CrawlURI curi,
-            final ANVLRecord namedFields) 
-    throws IOException {
-        namedFields.addLabelValue(
-        		HEADER_KEY_PROFILE, PROFILE_REVISIT_NOT_MODIFIED);
-        // save just enough context to understand basis of not-modified
-        if(curi.containsDataKey(A_HTTP_TRANSACTION)) {
-            HttpMethodBase method = 
-                (HttpMethodBase) curi.getData().get(A_HTTP_TRANSACTION);
-            saveHeader(A_ETAG_HEADER,method,namedFields,HEADER_KEY_ETAG);
-            saveHeader(A_LAST_MODIFIED_HEADER,method,namedFields,
-            		HEADER_KEY_LAST_MODIFIED);
-        }
-        // truncate to zero-length (all necessary info is above)
-        namedFields.addLabelValue(HEADER_KEY_TRUNCATED,
-            NAMED_FIELD_TRUNCATED_VALUE_LEN);
-        ReplayInputStream ris =
-            curi.getRecorder().getRecordedInput().getReplayInputStream();
-        try {
-            w.writeRevisitRecord(curi.toString(), timestamp, null, baseid,
-                namedFields, ris, 0);
-        } finally {
-            if (ris !=  null) {
-                ris.close();
-            }
-        }
-        return baseid;
-    }
-    
-    /**
-     * Save a header from the given HTTP operation into the 
-     * provider headers under a new name
-     * 
-     * @param origName header name to get if present
-     * @param method http operation containing headers
-     */
-    protected void saveHeader(String origName, HttpMethodBase method, 
-    		ANVLRecord headers, String newName) {
-        Header header = method.getResponseHeader(origName);
-        if(header!=null) {
-            headers.addLabelValue(newName, header.getValue());
-        }
-    }
-
-	protected URI writeMetadata(final ExperimentalWARCWriter w,
+    protected URI writeMetadata(final ExperimentalWARCWriter w,
             final String timestamp,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
@@ -408,8 +256,6 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         final URI uid = qualifyRecordID(baseid, TYPE, METADATA);
         // Get some metadata from the curi.
         // TODO: Get all curi metadata.
-        // TODO: Use other than ANVL (or rename ANVL as NameValue or use
-        // RFC822 (commons-httpclient?).
         ANVLRecord r = new ANVLRecord();
         if (curi.isSeed()) {
             r.addLabel("seed");
@@ -419,17 +265,26 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         	}
             r.addLabelValue("via", curi.flattenVia());
             r.addLabelValue("pathFromSeed", curi.getPathFromSeed());
-            if (curi.containsDataKey(A_SOURCE_TAG)) {
-                r.addLabelValue("sourceTag", curi.getSourceTag());
-            }
         }
-        
-        // Add outlinks though they are effectively useless without anchor text.
         Collection<Link> links = curi.getOutLinks();
         if (links != null && links.size() > 0) {
             for (Link link: links) {
                 r.addLabelValue("outlink", link.toString());
             }
+        }
+//      Check for truncated annotation
+        String value = null;
+        Collection<String> anno = curi.getAnnotations();
+        if (anno.contains(TIMER_TRUNC)) {
+            value = NAMED_FIELD_TRUNCATED_VALUE_TIME;
+        } else if (anno.contains(LENGTH_TRUNC)) {
+            value = NAMED_FIELD_TRUNCATED_VALUE_LEN;
+        } else if (anno.contains(HEADER_TRUNC)) {
+            value = NAMED_FIELD_TRUNCATED_VALUE_HEAD;
+        }
+        // TODO: Add annotation for TRUNCATED_VALUE_UNSPECIFIED
+        if (value != null) {
+            r.addLabelValue(NAMED_FIELD_TRUNCATED, value);
         }
         
         // TODO: Other curi fields to write to metadata.
@@ -471,6 +326,11 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         }
         return result;
     }  
+
+    public List getMetadata() {
+        // TODO: As ANVL?
+        return null;
+    }
 
 
     @Override
