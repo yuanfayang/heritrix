@@ -176,8 +176,8 @@ implements CookieStorage, Initializable, Closeable {
                 line.append(cookie.getSecure() == true ? "TRUE" : "FALSE"); 
                 line.append(tab); 
                 line.append(cookie.getName());
-                line.append(tab); 
-                line.append(cookie.getValue()); 
+                line.append(tab);                
+                line.append((null==cookie.getValue())?"":cookie.getValue()); 
                 line.append("\n");
                 out.write(line.toString().getBytes()); 
             } 

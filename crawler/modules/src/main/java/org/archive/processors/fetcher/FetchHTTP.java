@@ -66,6 +66,7 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import static org.archive.processors.fetcher.FetchErrors.*;
 import static org.archive.processors.fetcher.FetchStatusCodes.*;
+import static org.archive.processors.deciderules.recrawl.RecrawlAttributeConstants.*;
 import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
@@ -95,6 +96,8 @@ import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
+
+import st.ata.util.AList;
 
 /**
  * HTTP fetcher that uses <a
@@ -267,6 +270,22 @@ public class FetchHTTP extends Processor implements Initializable {
     @Expert
     final public static Key<Boolean> SEND_RANGE = Key.make(false);
 
+    
+    /**
+     * Send 'If-Modified-Since' header, if previous 'Last-Modified' fetch
+     * history information is available in URI history.
+     */
+    @Expert
+    final public static Key<Boolean> SEND_IF_MODIFIED_SINCE = Key.make(true);
+
+    /**
+     * Send 'If-None-Match' header, if previous 'Etag' fetch history information
+     * is available in URI history.
+     */
+    @Expert
+    final public static Key<Boolean> SEND_IF_NONE_MATCH = Key.make(true);
+
+    
     public static final String REFERER = "Referer";
 
     public static final String RANGE = "Range";
@@ -454,7 +473,7 @@ public class FetchHTTP extends Processor implements Initializable {
             curi.setFetchCompletedTime(System.currentTimeMillis());
             // Set the response charset into the HttpRecord if available.
             setCharacterEncoding(curi, rec, method);
-            curi.setContentSize(rec.getRecordedInput().getSize());
+            setSizes(curi, rec);
         }
 
         if (digestContent) {
@@ -498,6 +517,33 @@ public class FetchHTTP extends Processor implements Initializable {
         }
     }
 
+    /**
+     * Update CrawlURI internal sizes based on current transaction (and
+     * in the case of 304s, history) 
+     * 
+     * @param curi CrawlURI
+     * @param rec HttpRecorder
+     */
+    protected void setSizes(ProcessorURI curi, Recorder rec) {
+        // set reporting size
+        curi.setContentSize(rec.getRecordedInput().getSize());
+        // special handling for 304-not modified
+        if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED
+                && curi.containsDataKey(A_FETCH_HISTORY)) {
+            AList history[] = (AList[])curi.getData().get(A_FETCH_HISTORY);
+            if (history[0] != null
+                    && history[0]
+                            .containsKey(A_REFERENCE_LENGTH)) {
+                long referenceLength = history[0].getLong(A_REFERENCE_LENGTH);
+                // carry-forward previous 'reference-length' for future
+                curi.getData().put(A_REFERENCE_LENGTH, referenceLength);
+                // increase content-size to virtual-size for reporting
+                curi.setContentSize(rec.getRecordedInput().getSize()
+                        + referenceLength);
+            }
+        }
+    }
+    
     protected void doAbort(ProcessorURI curi, HttpMethod method,
             String annotation) {
         curi.getAnnotations().add(annotation);
@@ -698,6 +744,13 @@ public class FetchHTTP extends Processor implements Initializable {
             }
         }
 
+        if (!curi.isPrerequisite()) {
+            setConditionalGetHeader(curi, method, SEND_IF_MODIFIED_SINCE, 
+                    A_LAST_MODIFIED_HEADER, "If-Modified-Since");
+            setConditionalGetHeader(curi, method, SEND_IF_NONE_MATCH, 
+                    A_ETAG_HEADER, "If-None-Match");
+        }
+        
         // TODO: What happens if below method adds a header already
         // added above: e.g. Connection, Range, or Referer?
         setAcceptHeaders(curi, method);
@@ -705,6 +758,30 @@ public class FetchHTTP extends Processor implements Initializable {
         return configureProxy(curi);
     }
 
+    /**
+     * Set the given conditional-GET header, if the setting is enabled and
+     * a suitable value is available in the URI history. 
+     * @param curi source CrawlURI
+     * @param method HTTP operation pending
+     * @param setting true/false enablement setting name to consult
+     * @param sourceHeader header to consult in URI history
+     * @param targetHeader header to set if possible
+     */
+    protected void setConditionalGetHeader(ProcessorURI curi, HttpMethod method, 
+            Key<Boolean> setting, String sourceHeader, String targetHeader) {
+        if (curi.get(this, setting)) {
+            try {
+                AList[] history = (AList[])curi.getData().get(A_FETCH_HISTORY);
+                String previous = history[0].getString(sourceHeader);
+                if(previous!=null) {
+                    method.setRequestHeader(targetHeader, previous);
+                }
+            } catch (RuntimeException e) {
+                // for absent key, bad index, etc. just do nothing
+            }
+        }
+    }
+    
     /**
      * Setup proxy, based on attributes in ProcessorURI and settings, for this
      * ProcessorURI only.
