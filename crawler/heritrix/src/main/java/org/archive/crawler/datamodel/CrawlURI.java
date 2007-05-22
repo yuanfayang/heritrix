@@ -625,9 +625,15 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     	data = null;
     }
 
-    /** Get the size in bytes of this URI's content.
-     * This may be set at any time by any class and therefore should not be
-     * trusted. Primarily it exists to ease the calculation of statistics.
+    /**
+     * Get the size in bytes of this URI's recorded content, inclusive
+     * of things like protocol headers. It is the responsibility of the 
+     * classes which fetch the URI to set this value accordingly -- it is 
+     * not calculated/verified within CrawlURI. 
+     * 
+     * This value is consulted in reporting/logging/writing-decisions.
+     * 
+     * @see #setContentSize()
      * @return contentSize
      */
     public long getContentSize(){
@@ -721,9 +727,29 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         }
         return this.contentLength;
     }
+    
+    /**
+     * Get size of data recorded (transferred)
+     * 
+     * @return recorded data size
+     */
+    public long getRecordedSize() {
+        return (getRecorder() != null) ? getRecorder()
+                .getRecordedInput().getSize()
+                // if unavailable fall back on content-size
+                : getContentSize();
+    }
 
     /**
-     * @param l Content size.
+     * Sets the 'content size' for the URI, which is considered inclusive of all
+     * of all recorded material (such as protocol headers) or even material
+     * 'virtually' considered (as in material from a previous fetch 
+     * confirmed unchanged with a server). (In contrast, content-length 
+     * matches the HTTP definition, that of the enclosed content-body.)
+     * 
+     * Should be set by a fetcher or other processor as soon as the final size
+     * of recorded content is known. Setting to an artificial/incorrect value
+     * may affect other reporting/processing.
      */
     public void setContentSize(long l) {
         contentSize = l;
@@ -828,7 +854,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         this.data = getPersistentDataMap();
     }
     
-    private Map<String,Object> getPersistentDataMap() {
+    public Map<String,Object> getPersistentDataMap() {
     	if (data == null) {
     		return null;
     	}
@@ -836,9 +862,9 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     	Set<String> retain = new HashSet<String>(persistentKeys);
     	
     	if (containsDataKey(A_HERITABLE_KEYS)) {
-    		@SuppressWarnings("unchecked")
-        	List<String> heritable = (List<String>)getData().get(A_HERITABLE_KEYS);
-        	retain.addAll(heritable);
+    	    @SuppressWarnings("unchecked")
+            List<String> heritable = (List<String>)getData().get(A_HERITABLE_KEYS);
+            retain.addAll(heritable);
     	}
     	
     	result.keySet().retainAll(retain);
@@ -955,6 +981,9 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
     
     public String getContentDigestSchemeString() {
+        if (this.contentDigest == null) {
+            return null;
+        }
         return this.contentDigestScheme + ":" + getContentDigestString();
     }
 
@@ -968,6 +997,9 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
     
     public String getContentDigestString() {
+        if (this.contentDigest == null) {
+            return null;
+        }
         return Base32.encode(this.contentDigest);
     }
 
