@@ -519,4 +519,29 @@ implements Closeable {
     public void close() {
         this.pool.close();
     }
+
+
+    protected boolean shouldProcess(ProcessorURI uri) {
+        if (!(uri instanceof CrawlURI)) {
+            return false;
+        }
+        
+        CrawlURI curi = (CrawlURI)uri;
+        // If failure, or we haven't fetched the resource yet, return
+        if (curi.getFetchStatus() <= 0) {
+            return false;
+        }
+        
+        // If no recorded content at all, don't write record.
+        long recordLength = curi.getContentSize();
+        if (recordLength <= 0) {
+            // getContentSize() should be > 0 if any material (even just
+            // HTTP headers with zero-length body is available.
+            return false;
+        }
+        
+        return true;
+    }
+
+
 }
