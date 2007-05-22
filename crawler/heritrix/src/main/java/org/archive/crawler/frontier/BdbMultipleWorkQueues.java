@@ -296,7 +296,8 @@ public class BdbMultipleWorkQueues {
      * @param curi
      * @throws DatabaseException
      */
-    public void put(CrawlURI curi) throws DatabaseException {
+    public void put(CrawlURI curi, boolean overwriteIfPresent) 
+    throws DatabaseException {
         DatabaseEntry insertKey = (DatabaseEntry)curi.getHolderKey();
         if (insertKey == null) {
             insertKey = calculateInsertKey(curi);
@@ -308,7 +309,16 @@ public class BdbMultipleWorkQueues {
         if (LOGGER.isLoggable(Level.FINE)) {
             tallyAverageEntrySize(curi, value);
         }
-        pendingUrisDB.put(null, insertKey, value);
+        OperationStatus status;
+        if(overwriteIfPresent) {
+            status = pendingUrisDB.put(null, insertKey, value);
+        } else {
+            status = pendingUrisDB.putNoOverwrite(null, insertKey, value);
+        }
+        
+        if (status!=OperationStatus.SUCCESS) {
+            LOGGER.severe("failed; "+status+ " "+curi);
+        }
     }
     
     private long entryCount = 0;

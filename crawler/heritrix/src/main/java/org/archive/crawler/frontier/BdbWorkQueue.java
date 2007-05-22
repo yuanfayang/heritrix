@@ -141,11 +141,11 @@ implements Comparable, Serializable {
     }
 
     protected void insertItem(final WorkQueueFrontier frontier,
-            final CrawlURI curi) throws IOException {
+            final CrawlURI curi, boolean overwriteIfPresent) throws IOException {
         try {
             final BdbMultipleWorkQueues queues = ((BdbFrontier) frontier)
                 .getWorkQueues();
-            queues.put(curi);
+            queues.put(curi, overwriteIfPresent);
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("Inserted into " + getPrefixClassKey(this.origin) +
                     " (count " + Long.toString(getCount())+ "): " +
