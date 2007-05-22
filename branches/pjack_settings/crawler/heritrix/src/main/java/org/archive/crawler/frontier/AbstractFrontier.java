@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,7 +86,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     protected CrawlerLoggerModule loggerModule;
 
     /** ordinal numbers to assign to created CrawlURIs */
-    protected long nextOrdinal = 1;
+    protected AtomicLong nextOrdinal = new AtomicLong(1);
 
     /** should the frontier hold any threads asking for URIs? */
     protected boolean shouldPause = false;
@@ -449,6 +450,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         return disregardedUriCount;
     }
 
+    /** @deprecated misnomer; use StatisticsTracking figures instead */
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }
@@ -513,8 +515,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
 
     protected CrawlURI asCrawlUri(CrawlURI curi) {
         if (curi.getOrdinal() == 0) {
-            nextOrdinal++;
-            curi.setOrdinal(nextOrdinal);
+            curi.setOrdinal(nextOrdinal.getAndIncrement());
         }
         curi.setClassKey(getClassKey(curi));
         curi.setStateProvider(manager);
