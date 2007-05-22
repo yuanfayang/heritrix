@@ -24,36 +24,23 @@
  */
 package org.archive.crawler.frontier;
 
-import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 import it.unimi.dsi.mg4j.util.MutableString;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.io.CrawlerJournal;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.extractor.HTMLLinkContext;
 import org.archive.processors.extractor.LinkContext;
-import org.archive.settings.RecoverAction;
-import org.archive.util.ArchiveUtils;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -68,7 +55,7 @@ import java.util.concurrent.CountDownLatch;
  * 
  * @author gojomo
  */
-public class RecoveryJournal
+public class RecoveryJournal extends CrawlerJournal
 implements FrontierJournal {
     private static final Logger LOGGER = Logger.getLogger(
             RecoveryJournal.class.getName());
@@ -78,9 +65,6 @@ implements FrontierJournal {
     public final static String F_RESCHEDULE = "Fr ";
     public final static String F_SUCCESS = "Fs ";
     public final static String F_FAILURE = "Ff ";
-    public final static String LOG_ERROR = "E ";
-    public final static String LOG_TIMESTAMP = "T ";
-    public final int TIMESTAMP_INTERVAL = 10000; // timestamp every this many lines
     
     //  show recovery progress every this many lines
     private final static int PROGRESS_INTERVAL = 1000000; 
@@ -89,33 +73,7 @@ implements FrontierJournal {
     // crawl to begin, while enqueuing of other URIs from log
     // continues in background
     private static final long ENOUGH_TO_START_CRAWLING = 100000;
-    /**
-     * Stream on which we record frontier events.
-     */
-    private Writer out = null;
 
-    private long lines = 0;
-    
-    public static final String GZIP_SUFFIX = ".gz";
-    
-    /**
-     * File we're writing recovery to.
-     * Keep a reference in case we want to rotate it off.
-     */
-    private File gzipFile = null;
-    
-    /**
-     * Allocate a buffer for accumulating lines to write and reuse it.
-     */
-    private MutableString accumulatingBuffer =
-        new MutableString(1 + F_ADD.length() +
-                128 /*curi.toString().length()*/ +
-                1 +
-                8 /*curi.getPathFromSeed().length()*/ +
-                1 +
-                128 /*curi.flattenVia().length()*/);
-
-    
     /**
      * Create a new recovery journal at the given location
      * 
@@ -125,15 +83,10 @@ implements FrontierJournal {
      */
     public RecoveryJournal(String path, String filename)
     throws IOException {
-        this.gzipFile = new File(path, filename + GZIP_SUFFIX);
-        this.out = initialize(gzipFile);
+        super(path,filename);
+        timestamp_interval = 10000;
     }
-    
-    private Writer initialize (final File f)
-    throws FileNotFoundException, IOException {
-        return new OutputStreamWriter(new GZIPOutputStream(
-            new FastBufferedOutputStream(new FileOutputStream(f))));
-    }
+
 
     public synchronized void added(CrawlURI curi) {
         accumulatingBuffer.length(0);
@@ -179,51 +132,6 @@ implements FrontierJournal {
         writeLine(F_RESCHEDULE, curi.toString());
     }
 
-    private synchronized void writeLine(String string) {
-        try {
-            this.out.write("\n");
-            this.out.write(string);
-            noteLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private synchronized void writeLine(String s1, String s2) {
-        try {
-            this.out.write("\n");
-            this.out.write(s1);
-            this.out.write(s2);
-            noteLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    private synchronized void writeLine(MutableString mstring) {
-        if (this.out == null) {
-            return;
-        }
-        try {
-            this.out.write("\n");
-            mstring.write(out);
-            noteLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    /**
-     * @throws IOException
-     */
-    private void noteLine() throws IOException {
-        lines++;
-        if(lines % TIMESTAMP_INTERVAL == 0) {
-            out.write("\n");
-            out.write(LOG_TIMESTAMP);
-            out.write(ArchiveUtils.getLog14Date());
-        }
-    }
     
     /**
      * Utility method for scanning a recovery journal and applying it to
@@ -466,68 +374,5 @@ implements FrontierJournal {
         return (CharSequence[]) segs.toArray(new CharSequence[segs.size()]);        
     }
 
-    /**
-     * @param source
-     * @return Recover log buffered reader.
-     * @throws IOException
-     */
-    public static BufferedReader getBufferedReader(File source)
-    throws IOException {
-        boolean isGzipped = source.getName().toLowerCase().
-            endsWith(GZIP_SUFFIX);
-        FileInputStream fis = new FileInputStream(source);
-        return new BufferedReader(isGzipped?
-            new InputStreamReader(new GZIPInputStream(fis)):
-            new InputStreamReader(fis));   
-    }
 
-    /**
-     * Get a BufferedInputStream on the recovery file given.
-     *
-     * @param source file to open
-     * @return Recover log buffered input stream.
-     * @throws IOException
-     */
-    public static BufferedInputStream getBufferedInput(File source)
-    throws IOException {
-        boolean isGzipped = source.getName().toLowerCase().
-            endsWith(GZIP_SUFFIX);
-        FileInputStream fis = new FileInputStream(source);
-        return isGzipped ? new BufferedInputStream(new GZIPInputStream(fis))
-                : new BufferedInputStream(fis);
-    }
-    
-    /**
-     * Flush and close the underlying IO objects.
-     */
-    public void close() {
-        if (this.out == null) {
-            return;
-        }
-        try {
-            this.out.flush();
-            this.out.close();
-            this.out = null;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void seriousError(String err) {
-        writeLine("\n"+LOG_ERROR+ArchiveUtils.getLog14Date()+" "+err);
-    }
-
-    public synchronized void checkpoint(final File checkpointDir, 
-            List<RecoverAction> actions)
-    throws IOException {
-        if (this.out == null || !this.gzipFile.exists()) {
-            return;
-        }
-        close();
-        // Rename gzipFile with the checkpoint name as suffix.
-        this.gzipFile.renameTo(new File(this.gzipFile.getParentFile(),
-                this.gzipFile.getName() + "." + checkpointDir.getName()));
-        // Open new gzip file.
-        this.out = initialize(this.gzipFile);
-    }
 }

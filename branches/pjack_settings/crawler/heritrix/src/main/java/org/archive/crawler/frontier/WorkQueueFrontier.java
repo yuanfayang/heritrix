@@ -31,7 +31,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -782,7 +781,7 @@ implements Closeable, HasUriReceiver, Serializable {
         log(curi);
 
         if (curi.isSuccess()) {
-            totalProcessedBytes += curi.getContentSize();
+            totalProcessedBytes += curi.getRecordedSize();
             incrementSucceededFetchCount();
             // Let everyone know in case they want to do something before we strip the curi.
             controller.fireCrawledURISuccessfulEvent(curi);

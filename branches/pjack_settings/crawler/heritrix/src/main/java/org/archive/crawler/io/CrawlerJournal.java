@@ -35,9 +35,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.archive.settings.RecoverAction;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -262,7 +264,8 @@ public class CrawlerJournal {
      * @param checkpointDir
      * @throws IOException
      */
-    public synchronized void checkpoint(final File checkpointDir) throws IOException {
+    public synchronized void checkpoint(final File checkpointDir, 
+            List<RecoverAction> actions) throws IOException {
         if (this.out == null || !this.gzipFile.exists()) {
             return;
         }
