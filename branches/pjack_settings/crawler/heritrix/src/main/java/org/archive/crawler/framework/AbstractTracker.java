@@ -35,6 +35,8 @@ import org.archive.state.Module;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
+import org.xbill.DNS.DClass;
+import org.xbill.DNS.Lookup;
 
 /**
  * A partial implementation of the StatisticsTracking interface.
@@ -177,6 +179,10 @@ Initializable, Finishable {
      */
     protected synchronized void progressStatisticsEvent(final EventObject e) {
         this.controller.progressStatisticsEvent(e);
+        // temporary workaround for 
+        // [ 996161 ] Fix DNSJava issues (memory) -- replace with JNDI-DNS?
+        // http://sourceforge.net/support/tracker.php?aid=996161
+        Lookup.getDefaultCache(DClass.IN).clearCache();
     }
 
     /**
