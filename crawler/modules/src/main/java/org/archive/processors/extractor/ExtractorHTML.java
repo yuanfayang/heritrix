@@ -37,8 +37,10 @@ import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.state.Expert;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -49,13 +51,17 @@ import org.archive.util.TextUtils;
  * @author gojomo
  *
  */
-public class ExtractorHTML extends ContentExtractor {
+public class ExtractorHTML extends ContentExtractor implements Initializable {
 
     private static final long serialVersionUID = 2L;
 
     private static Logger logger =
         Logger.getLogger(ExtractorHTML.class.getName());
 
+    
+    public final static String A_META_ROBOTS = "meta-robots";
+    
+    
     /**
      * Compiled relevant tag extractor.
      *
@@ -212,6 +218,12 @@ public class ExtractorHTML extends ContentExtractor {
         Key.make(true);
     
     
+    /**
+     * The robots honoring policy to use when considering a robots META tag.
+     */
+    public static final Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
+        Key.make(RobotsHonoringPolicy.class, null);
+    
     static {
         KeyManager.addKeys(ExtractorHTML.class);
     }
@@ -220,16 +232,16 @@ public class ExtractorHTML extends ContentExtractor {
     protected long numberOfLinksExtracted = 0;
 
     
-    final private RobotsHonoringPolicy honoringPolicy;
+    RobotsHonoringPolicy honoringPolicy;
 
     
     public ExtractorHTML() {
-        this(new RobotsHonoringPolicy());
     }
+
     
     
-    public ExtractorHTML(RobotsHonoringPolicy rhp) {
-        this.honoringPolicy = rhp;
+    public void initialTasks(StateProvider global) {
+        this.honoringPolicy = global.get(this, ROBOTS_HONORING_POLICY);
     }
     
 
@@ -677,8 +689,7 @@ public class ExtractorHTML extends ContentExtractor {
 
         // Look for the 'robots' meta-tag
         if("robots".equalsIgnoreCase(name) && content != null ) {
-            // This attribute never seemed to get used, so I'm commented it out
-            // curi.putString(A_META_ROBOTS, content);
+            curi.getData().put(A_META_ROBOTS, content);
             RobotsHonoringPolicy policy = honoringPolicy;
             String contentLower = content.toLowerCase();
             if ((policy == null
