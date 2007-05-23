@@ -26,7 +26,6 @@ package org.archive.processors.extractor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.DefaultProcessorURI;
@@ -39,9 +38,7 @@ import org.archive.processors.ProcessorURI;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class JerichoExtractorHTMLTest
-extends ExtractorHTMLTest
-implements CoreAttributeConstants {
+public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
     
     
     @Override
