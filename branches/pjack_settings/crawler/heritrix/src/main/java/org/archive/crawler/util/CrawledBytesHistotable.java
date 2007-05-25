@@ -3,7 +3,7 @@ package org.archive.crawler.util;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.processors.deciderules.recrawl.IdenticalDigestDecideRule;
+import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
 import org.archive.util.Accumulator;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Histotable;

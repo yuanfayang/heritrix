@@ -236,7 +236,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     private String cachedCrawlURIString = null;
     
     /**
-     * Array to hold keys of alist members that persist across URI processings.
+     * Array to hold keys of data members that persist across URI processings.
      * Any key mentioned in this list will not be cleared out at the end
      * of a pass down the processing chain.
      */
@@ -850,7 +850,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         this.contentLength = UNCALCULATED;
         // Clear 'links extracted' flag.
         this.linkExtractorFinished = false;
-        // Clean the alist of all but registered permanent members.
+        // Clean the data map of all but registered permanent members.
         this.data = getPersistentDataMap();
     }
     
@@ -1141,14 +1141,31 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
     
     /**
-     * Add the key of alist items you want to persist across
+     * Add the key of  items you want to persist across
      * processings.
      * @param key Key to add.
      */
-    public static Collection<String> getPersistenetDataKeys() {
+    public static Collection<String> getPersistentDataKeys() {
     	return persistentKeys;
     }
 
+    /**
+     * Add the key of data map items you want to persist across
+     * processings.
+     * @param key Key to add.
+     */
+    public static void addDataPersistentMember(String key) {
+        persistentKeys.add(key);
+    }
+    
+    /**
+     * Remove the key from those data map members persisted. 
+     * @param key Key to remove.
+     * @return True if list contained the element.
+     */
+    public static boolean removeDataPersistentMember(String key) {
+        return persistentKeys.remove(key);
+    }
 
     /**
      * Custom serialization writing an empty 'outLinks' as null. Estimated
@@ -1562,7 +1579,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     /** Make the given key 'heritable', meaning its value will be 
      * added to descendant CrawlURIs. Only keys with immutable
      * values should be made heritable -- the value instance may 
-     * be shared until the AList is serialized/deserialized. 
+     * be shared until the data map is serialized/deserialized. 
      * 
      * @param key to make heritable
      */

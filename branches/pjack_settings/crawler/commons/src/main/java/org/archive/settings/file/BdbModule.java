@@ -303,6 +303,10 @@ Serializable, Closeable {
 
         EnvironmentConfig envConfig;
         try {
+            // sync all databases
+            for (DatabasePlusConfig dbc: databases.values()) {
+                dbc.database.sync();
+            }
             envConfig = bdbEnvironment.getConfig();
         } catch (DatabaseException e) {
             IOException io = new IOException();

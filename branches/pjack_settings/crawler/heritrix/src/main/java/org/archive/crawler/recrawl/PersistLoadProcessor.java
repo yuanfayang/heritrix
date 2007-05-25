@@ -20,14 +20,11 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.processor.recrawl;
+package org.archive.crawler.recrawl;
 
+import java.util.Map;
 
-import java.util.Iterator;
-
-import org.archive.crawler.datamodel.CrawlURI;
-
-import st.ata.util.AList;
+import org.archive.processors.ProcessorURI;
 
 /**
  * Store CrawlURI attributes from latest fetch to persistent storage for
@@ -39,25 +36,24 @@ import st.ata.util.AList;
 public class PersistLoadProcessor extends PersistOnlineProcessor {
     private static final long serialVersionUID = -1917169316015093131L;
 
-    /**
-     * Usual constructor
-     * 
-     * @param name
-     */
-    public PersistLoadProcessor(String name) {
-        super(name, "PersistLoadProcessor. Loads CrawlURI attributes " +
-                "from a previous crawl for current consultation.");
+    // class description: "PersistLoadProcessor. Loads CrawlURI attributes " +
+    // "from a previous crawl for current consultation."
+    
+    public PersistLoadProcessor() {
     }
 
     @Override
-    protected void innerProcess(CrawlURI curi) throws InterruptedException {
-        if(shouldLoad(curi)) {
-            AList prior = (AList) store.get(persistKeyFor(curi));
-            if(prior!=null) {
-                // merge in keys
-                Iterator iter = prior.getKeys();
-                curi.getAList().copyKeysFrom(iter,prior);
-            }
+    protected void innerProcess(ProcessorURI curi) throws InterruptedException {
+        Map<String, Object> prior = 
+        	(Map<String,Object>) store.get(persistKeyFor(curi));
+        if(prior!=null) {
+            // merge in keys
+            curi.getData().putAll(prior); 
         }
     }
+
+	@Override
+	protected boolean shouldProcess(ProcessorURI uri) {
+		return shouldLoad(uri);
+	}
 }

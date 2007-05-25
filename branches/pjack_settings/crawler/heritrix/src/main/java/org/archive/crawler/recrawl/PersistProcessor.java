@@ -20,27 +20,26 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.processor.recrawl;
+package org.archive.crawler.recrawl;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.codec.binary.Base64;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
+import org.apache.commons.lang.SerializationUtils;
 import org.archive.crawler.io.CrawlerJournal;
-import org.archive.util.IoUtils;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.SURT;
 import org.archive.util.bdbje.EnhancedEnvironment;
 import org.archive.util.iterator.LineReadingIterator;
-
-import st.ata.util.AList;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -75,14 +74,7 @@ public abstract class PersistProcessor extends Processor {
         return dbConfig;
     }
 
-    /**
-     * Usual constructor
-     * 
-     * @param name
-     * @param string
-     */
-    public PersistProcessor(String name, String string) {
-        super(name,string);
+    public PersistProcessor() {
     }
 
     /**
@@ -92,7 +84,7 @@ public abstract class PersistProcessor extends Processor {
      * @param curi CrawlURI
      * @return String key
      */
-    public String persistKeyFor(CrawlURI curi) {
+    public String persistKeyFor(ProcessorURI curi) {
         // use a case-sensitive SURT for uniqueness and sorting benefits
         return SURT.fromURI(curi.getUURI().toString(),true);
     }
@@ -104,7 +96,7 @@ public abstract class PersistProcessor extends Processor {
      * @param curi CrawlURI
      * @return true if state should be stored; false to skip persistence
      */
-    protected boolean shouldStore(CrawlURI curi) {
+    protected boolean shouldStore(ProcessorURI curi) {
         // TODO: don't store some codes, such as 304 unchanged?
         return curi.isSuccess();
     }
@@ -115,7 +107,7 @@ public abstract class PersistProcessor extends Processor {
      * @param curi CrawlURI
      * @return true if state should be loaded; false to skip loading
      */
-    protected boolean shouldLoad(CrawlURI curi) {
+    protected boolean shouldLoad(ProcessorURI curi) {
         // TODO: don't load some (prereqs?)
         return true;
     }
@@ -172,7 +164,7 @@ public abstract class PersistProcessor extends Processor {
                 null,URI_HISTORY_DBNAME,historyDatabaseConfig());
         StoredSortedMap historyMap = new StoredSortedMap(historyDB,
                 new StringBinding(), new SerialBinding(classCatalog,
-                        AList.class), true);
+                        Map.class), true);
         
         int count = 0;
         
@@ -185,7 +177,7 @@ public abstract class PersistProcessor extends Processor {
                 String[] splits = line.split(" ");
                 historyMap.put(
                         splits[0], 
-                        IoUtils.deserializeFromByteArray(
+                        SerializationUtils.deserialize(
                                 Base64.decodeBase64(splits[1].getBytes("UTF8"))));
                 count++;
             }
@@ -198,7 +190,7 @@ public abstract class PersistProcessor extends Processor {
                     null,URI_HISTORY_DBNAME,historyDatabaseConfig());
             StoredSortedMap sourceHistoryMap = new StoredSortedMap(sourceHistoryDB,
                     new StringBinding(), new SerialBinding(sourceClassCatalog,
-                            AList.class), true);
+                            Map.class), true);
             Iterator iter = sourceHistoryMap.entrySet().iterator();
             while(iter.hasNext()) {
                 Entry item = (Entry) iter.next(); 
@@ -239,10 +231,10 @@ public abstract class PersistProcessor extends Processor {
             while(iter.hasNext()) {
                 String line = (String) iter.next(); 
                 String[] splits = line.split(" ");
-                AList alist = (AList)IoUtils.deserializeFromByteArray(
+                Map alist = (Map)SerializationUtils.deserialize(
                         Base64.decodeBase64(splits[1].getBytes("UTF8")));
                 System.out.println(
-                        splits[0] + " " + alist.toPrettyString());
+                        splits[0] + " " + ArchiveUtils.prettyString(alist));
                 count++;
             }
             br.close();
@@ -254,12 +246,12 @@ public abstract class PersistProcessor extends Processor {
                     null,URI_HISTORY_DBNAME,historyDatabaseConfig());
             StoredSortedMap sourceHistoryMap = new StoredSortedMap(sourceHistoryDB,
                     new StringBinding(), new SerialBinding(sourceClassCatalog,
-                            AList.class), true);
+                            Map.class), true);
             Iterator iter = sourceHistoryMap.entrySet().iterator();
             while(iter.hasNext()) {
                 Entry item = (Entry) iter.next(); 
-                AList alist = (AList)item.getValue();
-                System.out.println(item.getKey() + " " + alist.toPrettyString());
+                Map alist = (Map)item.getValue();
+                System.out.println(item.getKey() + " " + ArchiveUtils.prettyString(alist));
                 count++;
             }
             StoredIterator.close(iter);

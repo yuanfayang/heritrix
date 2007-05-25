@@ -36,6 +36,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 /**
@@ -740,6 +741,62 @@ public class ArchiveUtils {
         rep.reportTo(name,pw);
         pw.flush();
         return sw.toString();
+    }
+    
+    /**
+     * Enhance given object's default String display for appearing
+     * nested in a pretty Map String.
+     * 
+     * @param obj Object to prettify
+     * @return prettified String
+     */
+    public static String prettyString(Object obj) {
+        return "<"+obj+">"; 
+    }
+    
+    /**
+     * Provide a improved String of a Map's entries
+     * 
+     * @param Map
+     * @return prettified (in curly brackets) string of Map contents
+     */
+    public static String prettyString(Map map) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{ ");
+        boolean needsComma = false; 
+        for( Object key : map.keySet()) {
+            if(needsComma) {
+                builder.append(", ");
+            }
+            builder.append(key);
+            builder.append(": ");
+            builder.append(prettyString(map.get(key)));
+            needsComma = true; 
+        }
+        builder.append(" }");
+        return builder.toString();
+    }
+    
+    /**
+     * Provide a slightly-improved String of Map[]
+     * 
+     * @param Map[]
+     * @return prettified (in square brackets) of Map[]
+     */
+    public static String prettyString(Map[] maps) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[ ");
+        boolean needsComma = false; 
+        for( Map map : maps) {
+            if(map==null) continue;
+            if(needsComma) {
+                builder.append(", ");
+            }
+            builder.append(prettyString(map));
+            needsComma = true; 
+        }
+        builder.append(" ]");
+        return builder.toString();
     }
 }
 

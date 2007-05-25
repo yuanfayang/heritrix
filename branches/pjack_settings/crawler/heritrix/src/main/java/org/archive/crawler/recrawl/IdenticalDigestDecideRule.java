@@ -22,14 +22,16 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.processors.deciderules.recrawl;
+package org.archive.crawler.recrawl;
 
+
+import java.util.Map;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.PredicatedRejectDecideRule;
-import static org.archive.processors.deciderules.recrawl.RecrawlAttributeConstants.*;
 
-import st.ata.util.AList;
+import static org.archive.processors.recrawl.RecrawlAttributeConstants.*;
+
 
 /**
  * Rule applies configured decision to any CrawlURIs whose prior-history
@@ -69,13 +71,13 @@ public class IdenticalDigestDecideRule extends PredicatedRejectDecideRule {
      */
     public static boolean hasIdenticalDigest(ProcessorURI curi) {
         if(curi.containsDataKey(A_FETCH_HISTORY)) {
-            AList[] history = (AList[])curi.getData().get(A_FETCH_HISTORY);
+            Map[] history = (Map[])curi.getData().get(A_FETCH_HISTORY);
             return history[0] != null 
                    && history[0].containsKey(A_CONTENT_DIGEST)
                    && history[1] != null
                    && history[1].containsKey(A_CONTENT_DIGEST)
-                   && history[0].getString(A_CONTENT_DIGEST).equals(
-                           history[1].getString(A_CONTENT_DIGEST));
+                   && history[0].get(A_CONTENT_DIGEST).equals(
+                           history[1].get(A_CONTENT_DIGEST));
         } else {
             return false;
         }

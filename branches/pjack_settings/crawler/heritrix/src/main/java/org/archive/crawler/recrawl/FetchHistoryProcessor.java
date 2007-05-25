@@ -20,19 +20,21 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.processor.recrawl;
+package org.archive.crawler.recrawl;
+
+import java.util.HashMap;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.HttpState;
-import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+import org.archive.state.Expert;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
-import st.ata.util.AList;
-import st.ata.util.HashtableAList;
+import static org.archive.processors.recrawl.RecrawlAttributeConstants.*;
 
 /**
  * Maintain a history of fetch information inside the CrawlURI's attributes. 
@@ -40,72 +42,63 @@ import st.ata.util.HashtableAList;
  * @author gojomo
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
-public class FetchHistoryProcessor extends Processor implements CoreAttributeConstants {
+public class FetchHistoryProcessor extends Processor 
+implements CoreAttributeConstants {
     private static final long serialVersionUID = 8476621038669163983L;
     
-    /** setting for desired history array length */
-    public static final String ATTR_HISTORY_LENGTH = "history-length";
-    /** default history array length */ 
-    public static final Integer DEFAULT_HISTORY_LENGTH = 2; 
+    /** Desired history array length. */
+    @Expert
+    final public static Key<Integer> HISTORY_LENGTH = Key.make(2);
+//    key description: "Number of previous fetch entries to retain in the URI " +
+//    "history. The current fetch becomes a history entry at " +
+//    "this Processor step, so the smallest useful value is " +
+//    "'2' (including the current fetch). Default is '2'."
     
-    /**
-     * Usual constructor
-     * 
-     * @param name
-     */
+    // class description: "FetchHistoryProcessor. Maintain a history of fetch " +
+    // "information inside the CrawlURI's attributes.."
+    
     public FetchHistoryProcessor(String name) {
-        super(name, "FetchHistoryProcessor. Maintain a history of fetch " +
-                "information inside the CrawlURI's attributes..");
-        
-        addElementToDefinition(new SimpleType(ATTR_HISTORY_LENGTH,
-                "Number of previous fetch entries to retain in the URI " +
-                "history. The current fetch becomes a history entry at " +
-                "this Processor step, so the smallest useful value is " +
-                "'2' (including the current fetch). Default is '2'.", 
-                DEFAULT_HISTORY_LENGTH));
     }
 
     @Override
-    protected void innerProcess(CrawlURI curi) throws InterruptedException {
-        AList latestFetch = new HashtableAList();
-        
+    protected void innerProcess(ProcessorURI curi) throws InterruptedException {
+        HashMap<String, Object> latestFetch = new HashMap<String,Object>();
+
         // save status
-        latestFetch.putInt(A_STATUS,curi.getFetchStatus());
+        latestFetch.put(A_STATUS,curi.getFetchStatus());
         // save fetch start time
-        latestFetch.putLong(A_FETCH_BEGAN_TIME,curi.getLong(A_FETCH_BEGAN_TIME));
+        latestFetch.put(A_FETCH_BEGAN_TIME,curi.getData().get(A_FETCH_BEGAN_TIME));
         // save digest
         String digest = curi.getContentDigestSchemeString();
         if(digest!=null) {
-            latestFetch.putString(
-                    A_CONTENT_DIGEST,digest);
+            latestFetch.put(A_CONTENT_DIGEST,digest);
         }
         // save relevant HTTP headers, if available
-        if(curi.containsKey(A_HTTP_TRANSACTION)) {
+        if(curi.containsDataKey(A_HTTP_TRANSACTION)) {
             HttpMethodBase method = 
-                (HttpMethodBase) curi.getObject(A_HTTP_TRANSACTION);
+                (HttpMethodBase) curi.getData().get(A_HTTP_TRANSACTION);
             saveHeader(A_ETAG_HEADER,method,latestFetch);
             saveHeader(A_LAST_MODIFIED_HEADER,method,latestFetch);
             // save reference length (real or virtual)
             long referenceLength; 
-            if(curi.containsKey(A_REFERENCE_LENGTH) ) {
+            if(curi.containsDataKey(A_REFERENCE_LENGTH) ) {
                 // reuse previous length if available (see FetchHTTP#setSizes). 
-                referenceLength = curi.getLong(A_REFERENCE_LENGTH);
+                referenceLength = (Long) curi.getData().get(A_REFERENCE_LENGTH);
             } else {
                 // normally, use content-length
                 referenceLength = curi.getContentLength();
             }
-            latestFetch.putLong(A_REFERENCE_LENGTH,referenceLength);
+            latestFetch.put(A_REFERENCE_LENGTH,referenceLength);
         }
         
         // get or create proper-sized history array
-        int targetHistoryLength = 
-            (Integer) getUncheckedAttribute(curi, ATTR_HISTORY_LENGTH);
-        AList[] history = 
-            curi.getAList().containsKey(A_FETCH_HISTORY) 
-                ? curi.getAList().getAListArray(A_FETCH_HISTORY) 
-                : new AList[targetHistoryLength];
+        int targetHistoryLength = curi.get(this, HISTORY_LENGTH);
+        HashMap[] history = 
+            (HashMap[]) (curi.containsDataKey(A_FETCH_HISTORY) 
+		    ? curi.getData().get(A_FETCH_HISTORY) 
+		    : new HashMap[targetHistoryLength]);
         if(history.length != targetHistoryLength) {
-            AList[] newHistory = new AList[targetHistoryLength];
+            HashMap[] newHistory = new HashMap[targetHistoryLength];
             System.arraycopy(
                     history,0,
                     newHistory,0,
@@ -119,7 +112,7 @@ public class FetchHistoryProcessor extends Processor implements CoreAttributeCon
         }
         history[0]=latestFetch;
         
-        curi.getAList().putAListArray(A_FETCH_HISTORY,history);
+        curi.getData().put(A_FETCH_HISTORY,history);
     }
 
     /**
@@ -129,18 +122,25 @@ public class FetchHistoryProcessor extends Processor implements CoreAttributeCon
      * @param method http operation containing headers
      * @param latestFetch AList to get header
      */
-    protected void saveHeader(String name, HttpMethodBase method, AList latestFetch) {
+    protected void saveHeader(String name, HttpMethodBase method, 
+    		HashMap<String, Object> latestFetch) {
         Header header = method.getResponseHeader(name);
         if(header!=null) {
-            latestFetch.putString(name, header.getValue());
+            latestFetch.put(name, header.getValue());
         }
     }
 
     @Override
-    protected void initialTasks() {
+    public void initialTasks(StateProvider defaults) {
         // ensure history info persists across enqueues and recrawls
-        CrawlURI.addAlistPersistentMember(A_FETCH_HISTORY);
+        CrawlURI.addDataPersistentMember(A_FETCH_HISTORY);
     }
+
+	@Override
+	protected boolean shouldProcess(ProcessorURI uri) {
+		// TODO evaluate if any pre-eligibility testing should occur
+		return true;
+	}
     
     
 }

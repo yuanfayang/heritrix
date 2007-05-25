@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
+
+import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.writer.EmptyMetadataProvider;
 import org.archive.crawler.writer.MetadataProvider;
 import org.archive.io.DefaultWriterPoolSettings;
@@ -46,7 +48,6 @@ import org.archive.io.WriterPoolSettings;
 import org.archive.state.DirectoryModule;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
-import org.archive.processors.deciderules.recrawl.IdenticalDigestDecideRule;
 import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
