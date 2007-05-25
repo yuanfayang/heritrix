@@ -39,19 +39,22 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
+
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.deciderules.recrawl.RecrawlAttributeConstants.*;
+
 
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.processors.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
+import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.ExperimentalWARCWriter;
 import static org.archive.io.warc.WARCConstants.*;
+import static org.archive.processors.recrawl.RecrawlAttributeConstants.*;
+
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.state.Expert;
 import org.archive.state.Global;

@@ -24,21 +24,14 @@
  * $Id:$
  */
 
-package org.archive.processors.deciderules.recrawl;
+package org.archive.processors.recrawl;
 
 /**
- * FIXME: Move this to org.archive.processors.recrawl once that package 
- * exists.
  * 
  * @author pjack
  *
  */
-public class RecrawlAttributeConstants {
-
-    
-    private RecrawlAttributeConstants() {
-    }
-
+public interface RecrawlAttributeConstants {
 
     /* Duplication-reduction / recrawl / history constants */
     

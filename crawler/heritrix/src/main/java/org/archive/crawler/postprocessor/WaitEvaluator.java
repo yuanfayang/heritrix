@@ -114,7 +114,7 @@ implements AdaptiveRevisitAttributeConstants {
      * Constructor.
      */
     public WaitEvaluator() {
-        CrawlURI.getPersistenetDataKeys().add(A_WAIT_INTERVAL);
+        CrawlURI.getPersistentDataKeys().add(A_WAIT_INTERVAL);
     }
 
     

@@ -81,6 +81,8 @@ public interface ProcessorURI extends StateProvider {
 
     boolean containsDataKey(String attr);
     Map<String,Object> getData();
+	void makeHeritable(String attr);
+	Map<String,Object> getPersistentDataMap();
     
     String getUserAgent();
     void setUserAgent(String ua);
@@ -88,6 +90,9 @@ public interface ProcessorURI extends StateProvider {
 
     long getContentSize();
     void setContentSize(long size);
+    
+	String getContentDigestSchemeString();
+    byte[] getContentDigest();
     void setContentDigest(String algorithm, byte[] digest);
 
     String getContentType();
@@ -127,6 +132,6 @@ public interface ProcessorURI extends StateProvider {
     LinkContext getViaContext();
 
     int getFetchAttempts();
-    
-    byte[] getContentDigest();
+
+	boolean isSuccess();
 }

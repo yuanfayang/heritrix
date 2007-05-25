@@ -64,9 +64,11 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+
+import static org.archive.processors.recrawl.RecrawlAttributeConstants.*;
 import static org.archive.processors.fetcher.FetchErrors.*;
 import static org.archive.processors.fetcher.FetchStatusCodes.*;
-import static org.archive.processors.deciderules.recrawl.RecrawlAttributeConstants.*;
+
 import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
@@ -96,8 +98,6 @@ import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
-
-import st.ata.util.AList;
 
 /**
  * HTTP fetcher that uses <a
@@ -530,11 +530,11 @@ public class FetchHTTP extends Processor implements Initializable {
         // special handling for 304-not modified
         if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED
                 && curi.containsDataKey(A_FETCH_HISTORY)) {
-            AList history[] = (AList[])curi.getData().get(A_FETCH_HISTORY);
+            Map history[] = (Map[])curi.getData().get(A_FETCH_HISTORY);
             if (history[0] != null
                     && history[0]
                             .containsKey(A_REFERENCE_LENGTH)) {
-                long referenceLength = history[0].getLong(A_REFERENCE_LENGTH);
+                long referenceLength = (Long) history[0].get(A_REFERENCE_LENGTH);
                 // carry-forward previous 'reference-length' for future
                 curi.getData().put(A_REFERENCE_LENGTH, referenceLength);
                 // increase content-size to virtual-size for reporting
@@ -771,8 +771,8 @@ public class FetchHTTP extends Processor implements Initializable {
             Key<Boolean> setting, String sourceHeader, String targetHeader) {
         if (curi.get(this, setting)) {
             try {
-                AList[] history = (AList[])curi.getData().get(A_FETCH_HISTORY);
-                String previous = history[0].getString(sourceHeader);
+                Map[] history = (Map[])curi.getData().get(A_FETCH_HISTORY);
+                String previous = (String) history[0].get(sourceHeader);
                 if(previous!=null) {
                     method.setRequestHeader(targetHeader, previous);
                 }

@@ -20,11 +20,14 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.processor.recrawl;
+package org.archive.crawler.recrawl;
 
-import org.archive.util.bdbje.EnhancedEnvironment;
+import java.util.Map;
 
-import st.ata.util.AList;
+import org.archive.settings.file.BdbModule;
+import org.archive.state.Immutable;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -42,50 +45,51 @@ import com.sleepycat.je.DatabaseException;
 public abstract class PersistOnlineProcessor extends PersistProcessor {
     private static final long serialVersionUID = -666479480942267268L;
     
+    @Immutable
+    final public static Key<BdbModule> BDB = Key.make(BdbModule.class, null);
+    
+    @Immutable
+    final public static Key<String> HISTORYDB_NAME = Key.make("uri_history");
+
+    protected BdbModule bdb;
     protected StoredSortedMap store;
     protected Database historyDb;
 
-    /**
-     * Usual constructor
-     * 
-     * @param name
-     * @param string
-     */
-    public PersistOnlineProcessor(String name, String string) {
-        super(name, string);
-    }
-
-    protected void initialTasks() {
-        // TODO: share single store instance between Load and Store processors
-        // (shared context? EnhancedEnvironment?)
-        store = initStore(); 
-    }
-
-    protected StoredSortedMap initStore() {
-        StoredSortedMap historyMap;
-        try {
-            EnhancedEnvironment env = getController().getBdbEnvironment();
-            StoredClassCatalog classCatalog = env.getClassCatalog();
-            DatabaseConfig dbConfig = historyDatabaseConfig();
-            historyDb = env.openDatabase(null, URI_HISTORY_DBNAME, dbConfig);
-            historyMap = new StoredSortedMap(historyDb,
-                    new StringBinding(), new SerialBinding(classCatalog,
-                            AList.class), true);
-        } catch (DatabaseException e) {
-            throw new RuntimeException(e);
-        }
-        return historyMap;
+    public PersistOnlineProcessor() {
     }
 
     @Override
-    protected void finalTasks() {
-            try {
-                historyDb.sync();
-                historyDb.close();
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                throw new RuntimeException(e);
-            }
+    public void initialTasks(StateProvider provider) {
+        // TODO: share single store instance between Load and Store processors
+        // (shared context? EnhancedEnvironment?)
+
+        this.bdb = provider.get(this, BDB);
+        String dbName = provider.get(this, HISTORYDB_NAME);
+        StoredSortedMap historyMap;
+        try {
+            StoredClassCatalog classCatalog = bdb.getClassCatalog();
+            DatabaseConfig dbConfig = historyDatabaseConfig();
+
+            historyDb = bdb.openDatabase(dbName, dbConfig, true);
+            historyMap = new StoredSortedMap(historyDb,
+                    new StringBinding(), new SerialBinding(classCatalog,
+                            Map.class), true);
+        } catch (DatabaseException e) {
+        	throw new RuntimeException(e);
         }
+        store =  historyMap;
+    }
+
+    @Override
+    public void finalTasks(StateProvider defaults) {
+    	// TODO leave this cleanup to BdbModule?
+        try {
+            historyDb.sync();
+            historyDb.close();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
+    }
 
 }

@@ -364,4 +364,28 @@ implements ProcessorURI {
         return null; // FIXME
     }
 
+
+	public String getContentDigestSchemeString() {
+		// FIXME
+		return null;
+	}
+
+
+	public void makeHeritable(String attr) {
+		// FIXME? -- maybe irrelevant
+		
+	}
+
+
+	public boolean isSuccess() {
+		// FIXME? 
+		return false;
+	}
+
+
+	public Map<String, Object> getPersistentDataMap() {
+		// FIXME?
+		return null;
+	}
+
 }
