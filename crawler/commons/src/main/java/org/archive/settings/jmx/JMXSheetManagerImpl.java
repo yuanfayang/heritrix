@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.management.openmbean.CompositeData;
 
@@ -60,6 +62,9 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
     final private SheetManager manager;
 
+    final private ConcurrentMap<String,Sheet> checkedOut 
+        = new ConcurrentHashMap<String,Sheet>();
+    
 
     public JMXSheetManagerImpl(SheetManager manager) {
         super(JMXSheetManager.class);
@@ -114,7 +119,12 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
 
     public void setMany(String sheetName, CompositeData[] setData) {
-        SingleSheet sheet = (SingleSheet)manager.getSheet(sheetName);
+        Sheet sh = checkedOut.get(sheetName);
+        if (sh == null) {
+            throw new IllegalArgumentException(sheetName + 
+                    " must be checked out before it can be edited.");
+        }
+        SingleSheet sheet = (SingleSheet)sh;
         Transformer<CompositeData,PathChange> transformer
          = new Transformer<CompositeData,PathChange>() {
             public PathChange transform(CompositeData cd) {
@@ -191,7 +201,10 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
             String path, 
             String type,
             String value) {
-        SingleSheet ss = getSingleSheet(sheet);
+        SingleSheet ss = (SingleSheet)checkedOut.get(sheet);
+        if (ss == null) {
+            throw new IllegalArgumentException(sheet + " is not checked out.");
+        }
         PathChange change = new PathChange(path, type, value);
         new PathChanger().change(ss, Collections.singleton(change));
     }
@@ -260,4 +273,24 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
 
+    public void checkout(String sheetName) {
+        Sheet sheet = manager.checkout(sheetName);
+        checkedOut.putIfAbsent(sheetName, sheet);
+    }
+
+    
+    public void commit(String sheetName) {
+        Sheet sheet = checkedOut.remove(sheetName);
+        manager.commit(sheet);
+    }
+    
+    
+    public void cancel(String sheetName) {
+        checkedOut.remove(sheetName);
+    }
+
+    
+    public String[] getCheckedOutSheets() {
+        return checkedOut.keySet().toArray(new String[0]);
+    }
 }

@@ -49,8 +49,13 @@ public abstract class Sheet implements StateProvider, Serializable {
 
 
     private String name;
-
     
+    /**
+     * True if this sheet is a "clone" sheet used to edit settings.
+     */
+    private boolean clone;
+
+
     /**
      * Constructor.  Package-protected to ensure that only two subclasses
      * exist, SingleSheet and SheetBundle.
@@ -91,6 +96,22 @@ public abstract class Sheet implements StateProvider, Serializable {
         this.name = name;
     }
 
+    
+    /**
+     * True if this is a copy of a sheet checked out for editing.
+     * 
+     * @return
+     */
+    public boolean isClone() {
+        return clone; 
+    }
+    
+    
+    void setClone(boolean clone) {
+        this.clone = clone;
+    }
+    
+    
     /**
      * Looks up a value for a property.  
      * 
@@ -119,7 +140,7 @@ public abstract class Sheet implements StateProvider, Serializable {
     
     
     private <T> Resolved<T> resolveDefaultOnline(Object module, Key<T> key) {
-        SingleSheet defaults = getSheetManager().getDefault();
+        SingleSheet defaults = getGlobalSheet();
         T result = defaults.check(module, key);
         if (result == null) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
@@ -131,7 +152,7 @@ public abstract class Sheet implements StateProvider, Serializable {
     
     private <T> Resolved<T> resolveDefaultOffline(Object module, Key<T> key) {
         Offline offline = (Offline)module;
-        SingleSheet defaults = getSheetManager().getDefault();
+        SingleSheet defaults = getGlobalSheet();
         Offline result = defaults.checkOffline(offline, key);
         if (result == null) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
@@ -194,6 +215,12 @@ public abstract class Sheet implements StateProvider, Serializable {
     }
     
     
+    abstract Sheet duplicate();
+
+    
+    
+    
+    
     static <T> void validateModuleType(Object module, Key<T> key) {
         Class mtype = Offline.getType(module);
         if (!key.getOwner().isAssignableFrom(mtype)) {
@@ -202,4 +229,10 @@ public abstract class Sheet implements StateProvider, Serializable {
                     " but module is " + mtype.getName()); 
         }
     }
+
+
+    SingleSheet getGlobalSheet() {
+        return getSheetManager().getDefault();
+    }
+
 }

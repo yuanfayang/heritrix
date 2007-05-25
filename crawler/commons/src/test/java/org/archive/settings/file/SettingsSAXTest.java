@@ -70,14 +70,8 @@ public class SettingsSAXTest extends TestCase {
         new PathChange("foo", "object", "org.archive.Foo"),
         new PathChange("bar", "object", "org.archive.Bar"),
         new PathChange("baz", "object", "org.archive.Baz"),
-        new PathChange("fubar", "object", "org.archive.Fubar",
-                Arrays.asList(new PathChange[] { 
-                        new PathChange("foo", "string", "test string")
-                })),
-        new PathChange("snafu", "object", "org.archive.Snafu",
-                Arrays.asList(new PathChange[] {
-                        new PathChange("foo", "string", "test string2")
-                })),
+        new PathChange("fubar", "object", "org.archive.Fubar"),
+        new PathChange("snafu", "object", "org.archive.Snafu"),
         new PathChange("snafu.bar", "string", "test string3")
     };
     

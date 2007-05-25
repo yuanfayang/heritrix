@@ -45,6 +45,11 @@ class UnspecifiedSheet extends Sheet {
         super(manager, name);
         thisList = Collections.singletonList((Sheet)this);
     }
+    
+    @Override
+    UnspecifiedSheet duplicate() {
+        return this;
+    }
 
     @Override
     public <T> T check(Object module, Key<T> key) {

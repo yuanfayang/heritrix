@@ -64,6 +64,14 @@ public class SheetBundle extends Sheet {
         this.sheets = new CopyOnWriteArrayList<Sheet>(sheets);
     }
 
+    
+    @Override
+    SheetBundle duplicate() {
+        return new SheetBundle(getSheetManager(), getName(),
+                new CopyOnWriteArrayList<Sheet>(sheets));
+        
+    }
+    
 
     /**
      * Returns the first non-null value returned by this bundle's list of

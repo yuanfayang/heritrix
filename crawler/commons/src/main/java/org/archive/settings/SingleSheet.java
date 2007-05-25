@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.archive.state.Constraint;
 import org.archive.state.Key;
@@ -58,8 +59,14 @@ public class SingleSheet extends Sheet {
      * similar to ConcurrentHashMap -- in particular, the get() operation
      * usually will not block even if another thread is writing to the map.
      * See the {@link SheetMap} class for more details.
-     */    
-    private SheetMap<Object,Map<Key,Object>> settings;
+     */
+    final private SheetMap<Object,Map<Key,Object>> settings;
+
+    
+    /**
+     * True if we're the global sheet.
+     */
+    final private boolean global;
 
 
     /**
@@ -67,11 +74,52 @@ public class SingleSheet extends Sheet {
      * 
      * @param manager   the manager who created this sheet
      */
-    SingleSheet(SheetManager manager, String name) {
+    SingleSheet(SheetManager manager, String name, boolean global) {
         super(manager, name);
+        this.global = global;
         this.settings = new SheetMap<Object,Map<Key,Object>>();
     }
 
+
+    /**
+     * Constructor used during duplicate method.
+     */
+    private SingleSheet(SheetManager manager, 
+            String name, 
+            SheetMap<Object,Map<Key,Object>> settings, 
+            boolean global) {
+        super(manager, name);
+        this.settings = settings;
+        this.global = global;
+    }
+    
+    
+    @Override
+    SingleSheet duplicate() {
+        SheetMap<Object,Map<Key,Object>> newSettings = 
+            new SheetMap<Object,Map<Key,Object>>();
+        AtomicReferenceArray<SheetMap.Node<Object,Map<Key,Object>>> oldBuckets = 
+            settings.rawBuckets();
+        for (int i = 0; i < oldBuckets.length(); i++) {
+            SheetMap.Node<Object,Map<Key,Object>> n;
+            for (n = oldBuckets.get(0); n != null; n = n.next) {
+                Object module = n.key.get();
+                Map<Key,Object> settings = n.value;
+                // Null module means a module was garbage collected.
+                // Null settings means a module was manually removed from the 
+                //    map, but stale node wasn't removed yet.
+                if ((module != null) && (settings != null)) {
+                    // Copy the settings.
+                    settings = new ConcurrentHashMap<Key,Object>(settings);
+                    newSettings.putIfAbsent(module, settings);
+                }
+            }
+        }
+        
+        return new SingleSheet(getSheetManager(), getName(), settings, global);
+    }
+    
+    
     @Override
     public <T> T check(Object module, Key<T> key) {
         if (module == null) {
@@ -144,7 +192,7 @@ public class SingleSheet extends Sheet {
     
     
     private <T> Resolved<T> resolveMap(Object module, Key<T> key) {
-        SingleSheet def = getSheetManager().getDefault();
+        SingleSheet def = getGlobalSheet();
         Map<String,List<Sheet>> sheetMap = new HashMap<String,List<Sheet>>();
         @SuppressWarnings("unchecked")
         Map<String,Object> defMap = (Map)def.check(module, key);
@@ -177,7 +225,7 @@ public class SingleSheet extends Sheet {
     
     
     private <T> Resolved<T> resolveList(Object module, Key<T> key) {
-        SingleSheet def = getSheetManager().getDefault();
+        SingleSheet def = getGlobalSheet();
         @SuppressWarnings("unchecked")
         List<Object> defList = (List)def.check(module, key);
         @SuppressWarnings("unchecked")
@@ -314,4 +362,12 @@ public class SingleSheet extends Sheet {
         return o;
     }
 
+    
+    @Override
+    SingleSheet getGlobalSheet() {
+        if (this.global) {
+            return this;
+        }
+        return getSheetManager().getDefault();
+    }
 }
