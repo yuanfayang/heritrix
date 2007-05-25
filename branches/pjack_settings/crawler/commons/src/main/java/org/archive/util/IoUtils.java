@@ -25,10 +25,8 @@ package org.archive.util;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
-import java.io.Closeable;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,11 +36,14 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.apache.commons.lang.SerializationUtils;
 
 /**
  * I/O Utility methods.
@@ -308,18 +309,10 @@ public class IoUtils {
      * 
      * @param object Object to be serialized
      * @return byte[] serialized form
+     * @deprecated use SerializationUtils.serialize
      */
     public static byte[] serializeToByteArray(Object object) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(object);
-            oos.close();
-        } catch (IOException e) {
-            // shouldn't be possible
-            throw new RuntimeException(e);
-        }
-        return baos.toByteArray();
+    	return SerializationUtils.serialize((Serializable)object);
     }
 
     /**
@@ -327,23 +320,9 @@ public class IoUtils {
      * 
      * @param in byte[] source
      * @return Object deserialized
+     * @deprecated use SerializationUtils.deserialize
      */
     public static Object deserializeFromByteArray(byte[] in) {
-        Object object;
-        try {
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(in));
-            try {
-                object = ois.readObject();
-            } catch (ClassNotFoundException e) {
-                // TODO Auto-generated catch block
-                throw new RuntimeException(e);
-            }
-            ois.close();
-        } catch (IOException e) {
-            // shouldn't be possible
-            throw new RuntimeException(e);
-        }
-        return object;
+    	return SerializationUtils.deserialize(in);
     }
-
 }
