@@ -230,4 +230,17 @@ public class MemorySheetManager extends SheetManager {
     public File getDirectory() {
         return new File(".");
     }
+
+
+    public void commit(Sheet sheet) {
+        if (sheet.getSheetManager() != this) {
+            throw new IllegalArgumentException();
+        }
+        if (sheet.isClone() == false) {
+            throw new IllegalArgumentException();
+        }
+        sheet.setClone(false);
+        this.sheets.put(sheet.getName(), sheet);
+    }
+
 }

@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.management.openmbean.CompositeData;
 
+import org.archive.openmbeans.annotations.Attribute;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
@@ -158,5 +159,25 @@ public interface JMXSheetManager {
 
             @Parameter(name = "sheetName", desc = "The name of the sheet whose settings to resolve.")
             String sheetName);
+
+    @Operation(desc="Checks out a sheet for editing.")
+    void checkout(
+            @Parameter(name="sheetName", desc="The name of the sheet to check out.")
+            String sheetName);
+    
+    @Operation(desc="Commits the changes made to a previously checked out sheet.")
+    void commit(
+            @Parameter(name="sheetName", desc="The name of the sheet to commit.")
+            String sheetName);
+
+    
+    @Operation(desc="Cancels any changes made to a checked out sheet.")
+    void cancel(
+            @Parameter(name="sheetName", desc="The name of the sheet whose changes to cancel.")
+            String sheetName);
+
+
+    @Attribute(desc="The list of currently checked out sheets.", def="")
+    String[] getCheckedOutSheets();
 
 }

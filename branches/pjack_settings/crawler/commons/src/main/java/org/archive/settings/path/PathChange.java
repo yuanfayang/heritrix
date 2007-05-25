@@ -23,9 +23,7 @@
  */
 package org.archive.settings.path;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+
 
 public class PathChange {
     
@@ -33,11 +31,9 @@ public class PathChange {
     final private String path;
     final private String value;
     final private String type;
-    final private List<PathChange> dependencies;
     
 
-    public PathChange(String path, String type, String value, 
-            List<PathChange> dependencies) {
+    public PathChange(String path, String type, String value) {
         if (path == null) {
             throw new IllegalArgumentException("path must not be null");
         }
@@ -47,22 +43,12 @@ public class PathChange {
         if (type == null) {
             throw new IllegalArgumentException("value must not be null");
         }
-        if (dependencies == null) {
-            throw new IllegalArgumentException("dependencies must not be null");
-        }
         this.path = path;
         this.type = type;
         this.value = value;
-        this.dependencies = new ArrayList<PathChange>(dependencies);
     }
     
-    
-    @SuppressWarnings("unchecked")
-    public PathChange(String path, String type, String value) {
-        this(path, type, value, Collections.EMPTY_LIST);
-    }    
-    
-    
+        
     public String getPath() {
         return path;
     }
@@ -78,11 +64,6 @@ public class PathChange {
     }
     
     
-    public List<PathChange> getDependencies() {
-        return dependencies;
-    }
-
-
     public boolean equals(Object other) {
         if (!(other instanceof PathChange)) {
             return false;
@@ -91,24 +72,21 @@ public class PathChange {
         PathChange pc = (PathChange)other;
         return pc.type.equals(type) 
             && pc.value.equals(value)
-            && pc.path.equals(path)
-            && pc.dependencies.equals(dependencies);
+            && pc.path.equals(path);
     }
     
     
     public int hashCode() {
         return type.hashCode() 
             ^ value.hashCode() 
-            ^ path.hashCode() 
-            ^ dependencies.hashCode();
+            ^ path.hashCode();
     }
     
     
     public String toString() {
         return "PathChange{path=" + path 
             + ", type=" + type 
-            + ", value=" + value 
-            + ", dependencies=" + dependencies + "}";
+            + ", value=" + value + "}";
     }
 
 }

@@ -133,6 +133,8 @@ implements StateProvider, Serializable, DirectoryModule {
      * Returns the default sheet.  This sheet is consulted if there is no
      * association for a given SURT or its predecessors.
      * 
+     * FIXME: Rename this to getGlobal()
+     * 
      * @return   the default sheet
      */
     public abstract SingleSheet getDefault();
@@ -205,7 +207,7 @@ implements StateProvider, Serializable, DirectoryModule {
      */
     final protected SingleSheet createSingleSheet(String name) 
     throws IllegalArgumentException {
-        SingleSheet result = new SingleSheet(this, name);
+        SingleSheet result = new SingleSheet(this, name, false);
         return result;
     }
 
@@ -400,4 +402,18 @@ implements StateProvider, Serializable, DirectoryModule {
         }
     }
 
+    
+    public Sheet checkout(String name) {
+        Sheet s = getSheet(name);
+        s = s.duplicate();
+        s.setClone(true);
+        return s;
+    }
+
+    
+    protected void clearCloneFlag(Sheet sheet) {
+        sheet.setClone(false);
+    }
+    
+    public abstract void commit(Sheet sheet);
 }

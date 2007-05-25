@@ -146,7 +146,7 @@ class SheetMap<K,V> implements Serializable {
     private static final long serialVersionUID = 1L;
 
 
-    private static class Node<K,V> {
+    static class Node<K,V> {
         public final WeakReference<K> key;
         public final int hash;
         public final Node<K,V> next;
@@ -220,6 +220,12 @@ class SheetMap<K,V> implements Serializable {
         lock = new ReentrantLock();
     }
 
+    
+    AtomicReferenceArray<Node<K,V>> rawBuckets() {
+        return buckets;
+    }
+    
+    
     
     private void calculateThreshold() {
         // TODO: Make tunable

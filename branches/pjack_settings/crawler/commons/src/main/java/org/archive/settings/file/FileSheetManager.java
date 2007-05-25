@@ -771,4 +771,17 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     }
 
+    
+    public void commit(Sheet sheet) {
+        if (sheet.getSheetManager() != this) {
+            throw new IllegalArgumentException();
+        }
+        if (sheet.isClone() == false) {
+            throw new IllegalArgumentException();
+        }
+        clearCloneFlag(sheet);
+        this.sheets.put(sheet.getName(), sheet);
+        // FIXME: Save new sheet to disk.
+    }
+
 }

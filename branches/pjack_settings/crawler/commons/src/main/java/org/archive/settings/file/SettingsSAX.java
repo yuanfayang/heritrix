@@ -188,8 +188,7 @@ public class SettingsSAX extends DefaultHandler {
         PathChange pc = new PathChange(
                 pending.path, 
                 OBJECT, 
-                pending.value, 
-                pending.dependencies);
+                pending.value); 
         change(pc);
         pending.path = null;
         pending.value = null;
