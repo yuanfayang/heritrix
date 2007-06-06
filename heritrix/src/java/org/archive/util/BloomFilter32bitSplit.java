@@ -111,7 +111,7 @@ public class BloomFilter32bitSplit implements Serializable, BloomFilter {
         // round up to ensure divisible into 1MiB chunks
         len = ((len / ONE_MB_INTS)+1)*ONE_MB_INTS;
         this.m = len*32L;
-        if ( m >= 1L<<32 ) {
+        if ( m >= 1L<<54 ) {
         	throw new IllegalArgumentException( "This filter would require " + m + " bits" );
         }
 //        bits = new int[ len ];
@@ -206,8 +206,9 @@ public class BloomFilter32bitSplit implements Serializable, BloomFilter {
      * @return    the value of the bit with the specified index.
      */
     protected boolean getBit(long bitIndex) {
-        int intIndex = (int) (bitIndex >>> ADDRESS_BITS_PER_UNIT);
-        return ((bits[intIndex / ONE_MB_INTS][intIndex % ONE_MB_INTS] & (1 << (bitIndex & BIT_INDEX_MASK))) != 0);
+        long intIndex = (bitIndex >>> ADDRESS_BITS_PER_UNIT);
+        return ((bits[(int)(intIndex / ONE_MB_INTS)][(int)(intIndex % ONE_MB_INTS)] 
+            & (1 << (bitIndex & BIT_INDEX_MASK))) != 0);
     }
 
     /**
@@ -218,8 +219,9 @@ public class BloomFilter32bitSplit implements Serializable, BloomFilter {
      * @param     bitIndex   the index of the bit to be set.
      */
     protected void setBit(long bitIndex) {
-        int intIndex = (int) (bitIndex >>> ADDRESS_BITS_PER_UNIT);
-        bits[intIndex / ONE_MB_INTS][intIndex % ONE_MB_INTS] |= 1 << (bitIndex & BIT_INDEX_MASK);
+        long intIndex = (bitIndex >>> ADDRESS_BITS_PER_UNIT);
+        bits[(int)(intIndex / ONE_MB_INTS)][(int)(intIndex % ONE_MB_INTS)] 
+            |= 1 << (bitIndex & BIT_INDEX_MASK);
     }
 
     /**
@@ -231,9 +233,9 @@ public class BloomFilter32bitSplit implements Serializable, BloomFilter {
      * @param     bitIndex   the index of the bit to be set.
      */
     protected boolean setGetBit(long bitIndex) {
-        int intIndex = (int) (bitIndex >>> ADDRESS_BITS_PER_UNIT);
-        int a = intIndex / ONE_MB_INTS;
-        int b = intIndex % ONE_MB_INTS;
+        long intIndex = (int) (bitIndex >>> ADDRESS_BITS_PER_UNIT);
+        int a = (int)(intIndex / ONE_MB_INTS);
+        int b = (int)(intIndex % ONE_MB_INTS);
         int mask = 1 << (bitIndex & BIT_INDEX_MASK);
         boolean ret = ((bits[a][b] & (mask)) != 0);
         bits[a][b] |= mask;
