@@ -27,7 +27,12 @@
 package org.archive.crawler.webui;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
@@ -57,8 +62,15 @@ public class Sheets {
         Remote<JMXSheetManager> remote = getSheetManager(request);
         JMXSheetManager sheetManager = remote.getObject();
         try {
-            String[] sheets = sheetManager.getSheets();
-            request.setAttribute("sheets", Arrays.asList(sheets));
+            SortedSet<String> sheets = new TreeSet<String>(
+                    Arrays.asList(sheetManager.getSheets()));
+            Set<String> problems = new HashSet<String>(
+                    Arrays.asList(sheetManager.getProblemSingleSheetNames()));
+            Set<String> checkedOut = new HashSet<String>(
+                    Arrays.asList(sheetManager.getCheckedOutSheets()));
+            request.setAttribute("sheets", sheets);
+            request.setAttribute("problems", problems);
+            request.setAttribute("checkedOut", checkedOut);
             Misc.forward(request, response, "page_sheets.jsp");
         } finally {
             remote.close();
@@ -76,14 +88,51 @@ public class Sheets {
         request.setAttribute("sheet", sheet);
         try {
             CompositeData[] settings = sheetManager.getAll(sheet);
+            CompositeData[] problems = sheetManager.getSingleSheetProblems(sheet);
             request.setAttribute("settings", Arrays.asList(settings));
+            request.setAttribute("problems", Arrays.asList(problems));
             Misc.forward(request, response, "page_sheet_detail.jsp");
         } finally {
             remote.close();
         }
     }
-
     
+    
+    public static void showSheetEditor(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        String sheet = request.getParameter("sheet");
+        request.setAttribute("sheet", sheet);
+        if (!Arrays.asList(sheetManager.getCheckedOutSheets()).contains(sheet)) {
+            sheetManager.checkout(sheet);
+        }
+        try {
+            Map<String,String> problems = getProblems(sheetManager, sheet);
+            CompositeData[] settings = sheetManager.resolveAll(sheet);
+            request.setAttribute("settings", Arrays.asList(settings));
+            request.setAttribute("problems", problems);
+            Misc.forward(request, response, "page_sheet_editor.jsp");
+        } finally {
+            remote.close();
+        }
+
+    }
+
+
+    private static Map<String,String> getProblems(JMXSheetManager mgr, 
+            String sheet) {
+        CompositeData[] problems = mgr.getSingleSheetProblems(sheet);
+        Map<String,String> result = new HashMap<String,String>();
+        for (CompositeData problem: problems) {
+            String path = (String)problem.get("path");
+            String error = (String)problem.get("error");
+            result.put(path, error);
+        }
+        return result;
+    }
     
     /**
      * Returns the JMXSheetManager specified in the request.

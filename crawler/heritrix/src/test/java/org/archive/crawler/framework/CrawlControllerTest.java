@@ -31,12 +31,12 @@ import static org.archive.util.TmpDirTestCase.TEST_TMP_SYSTEM_PROPERTY_NAME;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.scope.DecidingScope;
 import org.archive.settings.MemorySheetManager;
+import org.archive.settings.SettingsMap;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.StateProcessorTestBase;
@@ -91,7 +91,7 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         state.mkdirs();
         
         CrawlOrder order = new CrawlOrder();
-        Map<String,String> headers = new HashMap<String,String>();
+        Map<String,String> headers = new SettingsMap<String>(def, String.class);
         headers.put("user-agent", "Heritrix (+http://www.archive.org) abc");
         headers.put("from", "info@archive.org");
         

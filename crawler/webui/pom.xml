@@ -29,7 +29,7 @@
       <groupId>tomcat</groupId>
       <artifactId>servlet</artifactId>
       <version>4.1.34</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>jboss</groupId>
@@ -75,6 +75,21 @@
           <target>1.5</target>
         </configuration>
       </plugin>
+
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <useSystemClassLoader>true</useSystemClassLoader>
+<argLine>-verbose:class</argLine>
+          <excludes>
+            <exclude>**/Test*.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+
 <!-- Uncomment below to actually compile all the JSP. -->
 <!--
             <plugin>

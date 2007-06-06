@@ -5,6 +5,8 @@
 
 Crawler crawler = (Crawler)Text.get(request, "crawler");
 Collection<String> sheets = (Collection)Text.get(request, "sheets");
+Collection<String> problems = (Collection)Text.get(request, "problems");
+Collection<String> checkedOut = (Collection)Text.get(request, "checkedOut");
 int row = 1;
 
 %>
@@ -15,17 +17,7 @@ int row = 1;
 </head>
 <body>
 
-<table>
-<tr>
-<td>
-<a border="0" href="<%=request.getContextPath()%>/index.jsp">
-<img border="0" src="<%=request.getContextPath()%>/images/logo.gif" height="37" width="145">
-</a>
-</td>
-<td>
-<%=Text.html(crawler.getLegend())%>
-</td>
-</table>
+<%@include file="/include/nav.jsp"%>
 
 <h3>Sheets:</h3>
 
@@ -36,6 +28,9 @@ int row = 1;
 <tr>
 <td class="info<%=row%>">
 <%=Text.html(sheet)%>
+<% if (problems.contains(sheet)) { %>
+*
+<% } %>
 </td>
 <td class="info<%=row%>">
 <a
@@ -44,7 +39,33 @@ int row = 1;
 View
 </a>
 
-Edit | Save
+|
+
+<a
+   title="Edit settings."
+   href="do_show_sheet_editor.jsp?<%=qs%>">
+Edit
+</a>
+
+<% if (checkedOut.contains(sheet)) { %>
+|
+
+<a
+   title="Commit changes to this sheet."
+   href="do_commit_sheet.jsp?<%=qs%>">
+Commit
+</a>
+
+|
+
+<a
+   title="Abandon changes to this sheet."
+   href="do_cancel_sheet.jsp?<%=qs%>">
+Rollback
+</a>
+
+<% } %>
+
 </td>
 </tr>
 <% } %>

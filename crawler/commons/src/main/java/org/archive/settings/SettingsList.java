@@ -28,7 +28,9 @@ package org.archive.settings;
 
 import java.io.Serializable;
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -43,21 +45,42 @@ import org.archive.util.TypeSubstitution;
  *
  */
 public class SettingsList<T> extends AbstractList<T> 
-implements TypeSubstitution, Serializable {
+implements TypedList<T>, TypeSubstitution, Serializable {
 
 
     private static final long serialVersionUID = 1L;
 
     
     final private List<T> delegate;
+    final private List<Sheet> sheets;
     final private SheetManager manager;
+    final private Class<T> elementType;
     
     
-    public SettingsList(SheetManager manager, List<T> delegate) {
-        this.delegate = delegate;
-        this.manager = manager;
+    public SettingsList(SingleSheet sheet, Class<T> c) {
+        this(sheet, 
+                new ArrayList<T>(),
+//                Collections.checkedList(new ArrayList<T>(), c),
+                c);
     }
     
+    
+    public SettingsList(Sheet sheet, List<T> list, Class<T> c) {
+        this.delegate = list;
+        this.sheets = Collections.singletonList((Sheet)sheet);
+        this.manager = sheet.getSheetManager();
+        this.elementType = c;
+    }
+    
+    
+    public List<Sheet> getSheets(int index) {
+        return sheets;
+    }
+     
+    
+    public Class<T> getElementType() {
+        return elementType;
+    }
     
     public Class getActualClass() {
         return delegate.getClass();

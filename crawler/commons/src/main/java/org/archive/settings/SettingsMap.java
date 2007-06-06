@@ -30,7 +30,10 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,7 +47,7 @@ import org.archive.util.TypeSubstitution;
  * @author pjack
  *
  */
-public class SettingsMap<T> implements Map<String,T>, 
+public class SettingsMap<T> implements TypedMap<T>, 
 Serializable, TypeSubstitution {
 
 
@@ -53,11 +56,35 @@ Serializable, TypeSubstitution {
     
     final private Map<String,T> delegate;
     final private SheetManager manager;
-
-
-    public SettingsMap(SheetManager manager, Map<String,T> delegate) {
-        this.manager = manager;
-        this.delegate = delegate;
+    final private List<Sheet> sheets;
+    final private Class<T> elementType;
+    
+    
+    public SettingsMap(SingleSheet sheet, Class<T> c) {
+        this(
+                sheet, 
+//                Collections.checkedMap(
+                        new LinkedHashMap<String,T>(), 
+//                        String.class, 
+//                        c),
+                c);
+    }
+    
+    
+    public SettingsMap(Sheet sheet, Map<String,T> map, Class<T> c) {
+        this.delegate = map;
+        this.sheets = Collections.singletonList((Sheet)sheet);
+        this.manager = sheet.getSheetManager();
+        this.elementType = c;        
+    }
+    
+    
+    public List<Sheet> getSheets(String key) {
+        return sheets;
+    }
+    
+    public Class<T> getElementType() {
+        return elementType;
     }
 
 

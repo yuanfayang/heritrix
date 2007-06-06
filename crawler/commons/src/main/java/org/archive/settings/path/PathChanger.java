@@ -23,12 +23,15 @@
  */
 package org.archive.settings.path;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.archive.settings.Offline;
+import org.archive.settings.SettingsList;
+import org.archive.settings.SettingsMap;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.Initializable;
@@ -52,6 +55,9 @@ public class PathChanger {
     
     final public static String REFERENCE_TAG = "reference";
     
+    final public static String MAP_TAG = "map";
+    
+    final public static String LIST_TAG = "list";
     
     private static class PendingInit {
         Initializable module;
@@ -61,6 +67,9 @@ public class PathChanger {
 
     private LinkedList<PendingInit> pendingInit = new LinkedList<PendingInit>();
 
+    private List<PathChangeException> problems 
+        = new ArrayList<PathChangeException>();
+    
     /**
      * Constructs a new PathChanger with the default set of transformers.
      * The default set of transformers consist of every final static field
@@ -83,19 +92,50 @@ public class PathChanger {
     }
     
     
+    public List<PathChangeException> getProblems() {
+        return problems;
+    }
+
     
     public void change(SingleSheet sheet, PathChange pair) {
+        if (sheet.getSheetManager().isOnline()) {
+            changeLoudly(sheet, pair);
+        } else {
+            changeQuietly(sheet, pair);
+        }
+    }
+
+    
+    private void changeQuietly(SingleSheet sheet, PathChange pair) {
+        try {
+            changeLoudly(sheet, pair);
+        } catch (PathChangeException e) {
+            e.setPathChange(pair);
+            problems.add(e);
+        } catch (RuntimeException e) {
+            PathChangeException pce = new PathChangeException(e);
+            pce.setPathChange(pair);
+            problems.add(pce);
+        }
+    }
+
+    
+    private void changeLoudly(SingleSheet sheet, PathChange pair) {
         String path = pair.getPath();
         String typeTag = pair.getType();
         String value = pair.getValue();
         
         initIfNecessary(sheet, path);
-        
+    
         Object v;
         if (typeTag.equals(REFERENCE_TAG)) {
             v = makeReference(sheet, value);
         } else if (typeTag.equals(OBJECT_TAG)) {
             v = makeObject(sheet, pair);
+        } else if (typeTag.equals(MAP_TAG)) {
+            v = makeMap(sheet, pair);
+        } else if (typeTag.equals(LIST_TAG)) {
+            v = makeList(sheet, pair);
         } else {
             v = makeSimple(typeTag, value);
         }
@@ -105,7 +145,7 @@ public class PathChanger {
     
     
     public void finish(SingleSheet sheet) {
-        initIfNecessary(sheet, ".");
+        initIfNecessary(sheet, String.valueOf(PathValidator.DELIMITER));
     }
     
     
@@ -169,6 +209,43 @@ public class PathChanger {
     }
     
     
+    private Object makeList(SingleSheet sheet, PathChange pc) {
+        String value = pc.getValue();
+        try {
+            Class c = Class.forName(value);
+            
+            if (!online(sheet, c)) {
+                c = Offline.class;
+            }
+            
+            @SuppressWarnings("unchecked")
+            Object r = new SettingsList(sheet, c);
+            return r;
+        } catch (ClassNotFoundException e) {
+            throw new PathChangeException("No such class: " + value);
+        }
+    }
+    
+    
+    private Object makeMap(SingleSheet sheet, PathChange pc) {
+        String value = pc.getValue();
+        try {
+            Class c = Class.forName(value);
+
+            if (!online(sheet, c)) {
+                c = Offline.class;
+            }
+            
+            @SuppressWarnings("unchecked")
+            Object r = new SettingsMap(sheet, c);
+            return r;
+        } catch (ClassNotFoundException e) {
+            throw new PathChangeException("No such class: " + value);
+        }
+    }
+
+    
+    
     private boolean online(SingleSheet sheet, Class c) {
         if (Map.class.isAssignableFrom(c)) {
             return true;
@@ -185,7 +262,7 @@ public class PathChanger {
         String lastToken;
         Object previous;
 
-        int p = path.lastIndexOf('.');
+        int p = path.lastIndexOf(PathValidator.DELIMITER);
         if (p < 0) {
             previousPath = "";
             lastToken = path;

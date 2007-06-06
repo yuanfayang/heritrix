@@ -56,13 +56,13 @@ extends TransformingIteratorWrapper<String,PathChange> {
         String path = line.substring(0,p);
         String value = line.substring(p + 1);
         
-        p = value.indexOf(':');
+        p = value.indexOf(", ");
         if (p < 0) {
             throw new IllegalStateException("Invalid line: " + line);
         }
         
         String type = value.substring(0, p);
-        value = value.substring(p + 1);
+        value = value.substring(p + 2);
         return new PathChange(path, type, value);
     }
     

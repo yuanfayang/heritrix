@@ -24,6 +24,7 @@
 package org.archive.settings.jmx;
 
 import javax.management.openmbean.ArrayType;
+import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenDataException;
@@ -36,6 +37,10 @@ public class Types {
     final public static ArrayType STRING_ARRAY;
     
     final public static CompositeType SET_DATA;
+
+    final public static CompositeType SET_RESULT;
+
+    final public static ArrayType SET_RESULT_ARRAY;
     
     final public static ArrayType SET_DATA_ARRAY;
     
@@ -50,36 +55,54 @@ public class Types {
             SET_DATA = new CompositeType(
                     "set_data", 
                     "A path/value pair.", 
-                    new String[] { "type", "path", "key", "value" },
+                    new String[] { "type", "path", "value" },
                     new String[] { 
                             "The data type of the value.", // FIXME: List choices
-                            "The path to a processor.", 
-                            "The name of one of the processor's keys.", 
-                            "The new value for that key in that processor." }, 
+                            "The path to a module.", 
+                            "The new value for that key in that module." }, 
                     new OpenType[] {
                             SimpleType.STRING,
                             SimpleType.STRING, 
-                            SimpleType.STRING, 
                             SimpleType.STRING });
-            
+
+            SET_RESULT = new CompositeType(
+                    "set_result", 
+                    "The result of a set operation.", 
+                    new String[] { "type", "path", "value", "error" },
+                    new String[] {
+                            "The data type of the value.", // FIXME: List choices
+                            "The path to a setting.", 
+                            "The new value for that setting.",
+                            "A message describing an error while changing the setting."
+                    }, 
+                    new OpenType[] {
+                            SimpleType.STRING,
+                            SimpleType.STRING,
+                            SimpleType.STRING,
+                            SimpleType.STRING });
+
             SET_DATA_ARRAY = new ArrayType(1, SET_DATA);
             
             GET_DATA = new CompositeType(
                     "get_data",
                     "A path/value pair.",
-                    new String[] { "path", "sheets", "value" },
+                    new String[] { "path", "sheets", "value", "type" },
                     new String[] {
                             "The path to the value.",
                             "The sheets that led to the value.",
-                            "The value for the path."
+                            "The value for the path.",
+                            "The type of the value."
                     },
                     new OpenType[] { 
                             SimpleType.STRING, 
                             STRING_ARRAY, 
+                            SimpleType.STRING,
                             SimpleType.STRING }
                     );
             
             GET_DATA_ARRAY = new ArrayType(1, GET_DATA);
+            
+            SET_RESULT_ARRAY = new ArrayType(1, SET_RESULT);
 
         } catch (OpenDataException e) {
             throw new IllegalStateException(e);
@@ -96,5 +119,22 @@ public class Types {
         } catch (OpenDataException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+
+    public static CompositeData makeSetResult(
+            String type,
+            String path,
+            String value,
+            String error) {
+        CompositeData result = composite(SET_RESULT,
+                new String[] { "type", "path", "value", "error" },
+                new Object[] { type, path, value, error });
+        return result;
+    }
+
+    
+    public static void main(String args[]) {
+        
     }
 }

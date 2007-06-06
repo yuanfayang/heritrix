@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,48 +17,50 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * PathChangeException.java
- * Created on October 24, 2006
+ * UnmodifiableTypedList.java
  *
- * $Header$
+ * Created on Jun 4, 2007
+ *
+ * $Id:$
  */
-package org.archive.settings.path;
 
-public class PathChangeException extends RuntimeException {
+package org.archive.settings;
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
+import java.util.AbstractList;
+import java.util.List;
+
+/**
+ * @author pjack
+ *
+ */
+class UnmodifiableTypedList<T> extends AbstractList<T> 
+implements TypedList<T> {
 
     
-    /**
-     * The PathChange that caused the problem.
-     */
-    private PathChange pathChange;
+    private TypedList<T> delegate;
     
-
-    public PathChangeException(String msg) {
-        super(msg);
+    
+    public UnmodifiableTypedList(TypedList<T> delegate) {
+        this.delegate = delegate;
     }
     
     
-    public PathChangeException(Exception e) {
-        super(e);
+    public T get(int index) {
+        return delegate.get(index);
     }
     
     
-    /**
-     * Returns the PathChange object that caused a problem.
-     * 
-     * @return  the PathChange object that caused the problem
-     */
-    public PathChange getPathChange() {
-        return pathChange;
+    public int size() {
+        return delegate.size();
     }
     
+
+    public Class<T> getElementType() {
+        return delegate.getElementType();
+    }
+
     
-    public void setPathChange(PathChange pathChange) {
-        this.pathChange = pathChange;
+    public List<Sheet> getSheets(int index) {
+        return delegate.getSheets(index);
     }
 }

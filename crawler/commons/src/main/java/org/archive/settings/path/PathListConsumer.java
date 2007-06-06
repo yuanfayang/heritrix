@@ -43,10 +43,14 @@ public interface PathListConsumer {
      * @param path    the path to the setting
      * @param sheet   the sheet that defined the setting
      * @param value   the value of the setting
+     * @param type    the type of the setting; this may different than 
+     *     value.getClass().  For instance, value may be null, but the 
+     *     setting will still have a type.  Or the type may be an 
+     *     interface and the value is a specific implementation.
      * @param seenPath   null if the value is a complex type and has never
      *  been seen before; or, the path where the value was previously seen.
      */
-    void consume(String path, List<Sheet> sheet, Object value, 
+    void consume(String path, List<Sheet> sheet, Object value, Class type,
             String seenPath);
 
 }

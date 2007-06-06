@@ -44,6 +44,7 @@ import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.FilePathListConsumer;
 import org.archive.settings.path.PathChange;
+import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
@@ -293,4 +294,28 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     public String[] getCheckedOutSheets() {
         return checkedOut.keySet().toArray(new String[0]);
     }
+
+
+    public String[] getProblemSingleSheetNames() {
+        Set<String> problems = manager.getProblemSingleSheetNames();
+        return problems.toArray(new String[problems.size()]);
+    }
+
+
+    public CompositeData[] getSingleSheetProblems(String sheet) {
+        List<CompositeData> result = new ArrayList<CompositeData>();
+        List<PathChangeException> problems = 
+            manager.getSingleSheetProblems(sheet); 
+        for (PathChangeException e: problems) {
+            PathChange pc = e.getPathChange();
+            result.add(Types.makeSetResult(
+                    pc.getType(),
+                    pc.getPath(),
+                    pc.getValue(),
+                    e.getMessage()));
+        }
+        return result.toArray(new CompositeData[result.size()]);
+    }
+
+
 }

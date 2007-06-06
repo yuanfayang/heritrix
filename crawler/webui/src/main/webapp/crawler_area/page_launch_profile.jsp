@@ -14,9 +14,7 @@ String profile = (String)Text.get(request, "profile");
 </head>
 <body>
 
-<a border="0" href="<%=request.getContextPath()%>/index.jsp">
-<img border="0" src="<%=request.getContextPath()%>/images/logo.gif" height="37" width="145">
-</a>
+<%@include file="/include/nav.jsp"%>
 
 
 <h3>Launch New Job Based on <%=profile%>:</h3>

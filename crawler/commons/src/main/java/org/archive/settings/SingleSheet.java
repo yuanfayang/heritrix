@@ -25,7 +25,6 @@ package org.archive.settings;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -193,48 +192,50 @@ public class SingleSheet extends Sheet {
     
     private <T> Resolved<T> resolveMap(Object module, Key<T> key) {
         SingleSheet def = getGlobalSheet();
-        Map<String,List<Sheet>> sheetMap = new HashMap<String,List<Sheet>>();
+
         @SuppressWarnings("unchecked")
-        Map<String,Object> defMap = (Map)def.check(module, key);
+        TypedMap<Object> defMap = (TypedMap)def.check(module, key);
         
         // If this is the default sheet, avoid redundant double-check.
         @SuppressWarnings("unchecked")
-        Map<String,Object> myMap = (def == this) ? null 
-                : (Map)this.check(module, key);
-        
-        Map<String,Object> result;
-        List<Sheet> sheets;
+        TypedMap<Object> myMap = (def == this) ? null 
+                : (TypedMap)this.check(module, key);
+
+        TypedMap<Object> result;
+        Sheet sheet;
         if ((defMap == null) && (myMap == null)) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
             return un.resolve(module, key);
         }
-        if ((defMap != null) && (myMap != null)) {
-            sheets = Collections.singletonList((Sheet)def);            
-            result = MapResolver.makeMergeMap(defMap, sheetMap, sheets);
-            List<Sheet> thisList = Collections.singletonList((Sheet)this);
-            MapResolver.merge(result, sheetMap, myMap, thisList);
-        } else if (defMap != null) {
-            sheets = Collections.singletonList((Sheet)def);            
-            result = MapResolver.makeMergeMap(defMap, sheetMap, sheets);
-        } else { // myMap != null
-            sheets = Collections.singletonList((Sheet)this);
-            result = MapResolver.makeMergeMap(myMap, sheetMap, sheets);
+        if ((myMap != null) && (defMap != null)) {
+            List<TypedMap<Object>> maps = new ArrayList<TypedMap<Object>>(2);
+            maps.add(myMap);  // First check this sheet's map
+            maps.add(defMap); // Then check default sheet's map.
+            result = new MultiTypedMap<Object>(maps, null);
+            sheet = def; // default sheet originally defined value for this key
+        } else if (myMap != null) {
+            result = myMap;
+            sheet = this;
+        } else { // defMap != null
+            result = defMap;
+            sheet = def;
         }
-        return Resolved.makeMap(module, key, result, sheets, sheetMap);
+
+        List<Sheet> sheets = Collections.singletonList(sheet);
+        return Resolved.makeMap(module, key, result, sheets);
     }
     
     
     private <T> Resolved<T> resolveList(Object module, Key<T> key) {
         SingleSheet def = getGlobalSheet();
         @SuppressWarnings("unchecked")
-        List<Object> defList = (List)def.check(module, key);
+        TypedList<Object> defList = (TypedList)def.check(module, key);
         @SuppressWarnings("unchecked")
-        List<Object> myList = (def == this) ? null 
-                :  (List)this.check(module, key);
+        TypedList<Object> myList = (def == this) ? null 
+                :  (TypedList)this.check(module, key);
         
-        List<Object> result;
-        List<Sheet> sheets;
-        List<List<Sheet>> elementSheets;
+        TypedList<Object> result;
+        Sheet sheet;
         if ((defList == null) && (myList == null)) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
             return un.resolve(module, key);
@@ -242,24 +243,21 @@ public class SingleSheet extends Sheet {
 
 
         if ((defList != null) && (myList != null)) {
-            sheets = Collections.singletonList((Sheet)def);
-            result = new ArrayList<Object>();
-            result.addAll(defList);
-            result.addAll(myList);
-            elementSheets = new ArrayList<List<Sheet>>();
-            elementSheets.addAll(Collections.nCopies(defList.size(), sheets));
-            elementSheets.addAll(Collections.nCopies(myList.size(), 
-                    Collections.singletonList((Sheet)this)));
+            List<TypedList<Object>> lists = new ArrayList<TypedList<Object>>(2);
+            lists.add(defList);
+            lists.add(myList);
+            result = new MultiTypedList<Object>(lists, null);
+            sheet = def;
         } else if (defList != null) {
-            sheets = Collections.singletonList((Sheet)def);
             result = defList;
-            elementSheets = Collections.nCopies(defList.size(), sheets);
-        } else {
-            sheets = Collections.singletonList((Sheet)this);
+            sheet = def;
+        } else { // myList != null
             result = myList;
-            elementSheets = Collections.nCopies(myList.size(), sheets);
+            sheet = this;
         }
-        return Resolved.makeList(module, key, result, sheets, elementSheets);
+        
+        List<Sheet> sheets = Collections.singletonList(sheet);
+        return Resolved.makeList(module, key, result, sheets);
     }
     
 
@@ -352,12 +350,10 @@ public class SingleSheet extends Sheet {
     @SuppressWarnings("unchecked")
     private Object transform(Object o) {
         if ((o instanceof Map) && (!(o instanceof SettingsMap))) {
-            Map<String,Object> map = (Map)o;
-            return new SettingsMap<Object>(getSheetManager(), map);
+            throw new IllegalArgumentException("Maps must be TypedMap.");
         }
         if ((o instanceof List) && (!(o instanceof SettingsList))) {
-            List<Object> list = (List)o;
-            return new SettingsList<Object>(getSheetManager(), list);
+            throw new IllegalArgumentException("Lists must be TypedList.");
         }
         return o;
     }

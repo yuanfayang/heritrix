@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/src/main/resources"/>
+	<classpathentry kind="src" path="webui/src/test/resources"/>
 	<classpathentry kind="src" path="webui/src/main/java"/>
 	<classpathentry kind="src" path="webui/src/test/java"/>
 	<classpathentry kind="src" path="webui/src/main/resources"/>

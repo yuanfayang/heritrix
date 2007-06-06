@@ -29,10 +29,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.archive.settings.path.PathChangeException;
 
 
 /**
@@ -77,28 +80,23 @@ public class MemorySheetManager extends SheetManager {
      * The root map.
      */
     private Map<String,Object> root;
-    
+
 
     public MemorySheetManager() {
-        this(new ConcurrentHashMap<String,Object>());
+        this(true);
     }
 
     
-    public MemorySheetManager(Map<String,Object> root) {
-        this(root, true);
-    }
-    
-
     /**
      * Constructor.
      */
-    public MemorySheetManager(Map<String,Object> root, boolean online) {
+    public MemorySheetManager(boolean online) {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
         defaults = addSingleSheet("default");
         this.online = online;
         defaults.set(getManagerModule(), MANAGER, this);
-        setRoot(root);
+        this.root = new SettingsMap<Object>(defaults, Object.class);
     }
 
 
@@ -110,12 +108,6 @@ public class MemorySheetManager extends SheetManager {
     @Override
     public Map<String,Object> getRoot() {
         return root;
-    }
-    
-    
-    void setRoot(Map<String,Object> root) {
-        this.root = new SettingsMap<Object>(this, root);
-        getDefault().set(getManagerModule(), ROOT, this.root);
     }
 
 
@@ -243,4 +235,13 @@ public class MemorySheetManager extends SheetManager {
         this.sheets.put(sheet.getName(), sheet);
     }
 
+    
+    public Set<String> getProblemSingleSheetNames() {
+        return Collections.emptySet();
+    }
+
+    
+    public List<PathChangeException> getSingleSheetProblems(String sheet) {
+        return Collections.emptyList();
+    }
 }
