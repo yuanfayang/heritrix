@@ -40,7 +40,7 @@ public class WebUITestMain {
     }
     
     
-    private static File getWebAppDir() {
+    static File getWebAppDir() {
         File r = new File("src/main/webapp");
         if (r.isDirectory()) {
             return r;

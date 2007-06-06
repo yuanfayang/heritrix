@@ -51,6 +51,7 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
+import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.state.ExampleStateProvider;
@@ -190,6 +191,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     /** The default sheet. */
     private SingleSheet defaultSheet;
 
+    /** 
+     * Maps a SingeSheet's name to the list of problems encountered when that
+     * sheet was loaded.
+     */
+    final private Map<String,List<PathChangeException>> problems = 
+        new HashMap<String,List<PathChangeException>>();
+    
     private boolean online;
 
 
@@ -549,6 +557,11 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             }
             sheets.put(name, r);
             SheetFileReader sfr = new SheetFileReader(new FileReader(f));
+            PathChanger pc = new PathChanger();
+            pc.change(r, sfr);
+            if (!pc.getProblems().isEmpty()) {
+                this.problems.put(name, pc.getProblems());
+            }
             new PathChanger().change(r, sfr);
             return r;
         } catch (IOException e) {
@@ -783,5 +796,20 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         this.sheets.put(sheet.getName(), sheet);
         // FIXME: Save new sheet to disk.
     }
+
+    
+    public Set<String> getProblemSingleSheetNames() {
+        return new HashSet<String>(problems.keySet());
+    }
+
+    
+    public List<PathChangeException> getSingleSheetProblems(String sheet) {
+        List<PathChangeException> r = problems.get(sheet);
+        if (r == null) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(r);
+    }
+
 
 }

@@ -51,11 +51,26 @@ import javax.servlet.http.HttpServletResponse;
 public class Misc {
 
     
+    private static boolean isLocal(
+            String host, 
+            int port, 
+            String username,
+            String password) {
+        return (port == -1) 
+                && username.equals("local")
+                && password.equals("local");
+    }
+    
+    
+    
     public static JMXConnector connect(
             String host, 
             int port, 
             String username, 
-            String password) throws IOException {     
+            String password) throws IOException {
+        if (isLocal(host, port, username, password)) {
+            return new LocalJMXConnector();
+        }
         String hp = host + ":" + port;
         String s = "service:jmx:rmi://" + hp + "/jndi/rmi://" + hp + "/jmxrmi";
         JMXServiceURL url = new JMXServiceURL(s);

@@ -38,6 +38,9 @@ public class Text {
 
     
     public static String attr(Object s) {
+        if (s == null) {
+            return "null"; // FIXME
+        }
         return TextUtils.escapeForMarkupAttribute(s.toString());
     }
 

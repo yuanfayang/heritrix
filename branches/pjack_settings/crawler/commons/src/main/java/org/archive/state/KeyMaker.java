@@ -75,6 +75,15 @@ public class KeyMaker<T> {
     /** Default value for the property.  Defaults to null. */
     public T def;
 
+    
+    /** 
+     * The element type of a list or map.  Will be null unless this.type
+     * is java.util.List or java.util.Map.
+     * 
+     * <p>For maps, the element type is the type of the map's values.  Maps
+     * in the settings system always have String keys.
+     */ 
+    public Class elementType;
 
     /** Constructor. */
     public KeyMaker() {
@@ -157,6 +166,7 @@ public class KeyMaker<T> {
 
         KeyMaker<List<T>> r = new KeyMaker<List<T>>();
         r.type = c2;
+        r.elementType = element;
         @SuppressWarnings("unchecked")
         List<T> empty = Collections.EMPTY_LIST;
         
@@ -184,6 +194,8 @@ public class KeyMaker<T> {
         KeyMaker<Map<String,T>> r = new KeyMaker<Map<String,T>>();
         r.type = c2;
         r.def = empty;
+        r.elementType = value;
+        
         return r;
     }
 

@@ -24,7 +24,7 @@
  * invokes a method in the {@link Home} class.</li>
  * <li>The name of the action method invoked is always the suffix of the
  * do_x.jsp file.  For instance, home/do_authenticate_crawler.jsp invokes the
- * {@link Home#authenticateCrawler(ServletContext, HttpServletRequest, HttpServletResponse} 
+ * {@link Home#authenticateCrawler(javax.servlet.ServletContext, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse} 
  * method.</li>
  * <li>Action methods always take three parameters: The ServletContext,
  * the HttpServletRequest, and the HttpServletResponse.</li>
@@ -53,11 +53,8 @@
  * home/add_crawler.jsp lets you know exactly which file/method that form
  * will activiate, without having to open other files or perform a search.</li>
  * <li>Similarly, you'll know what method to look at when looking at a bug
- * report with an URL in it.</li> * 
+ * report with an URL in it.</li>
  * </ul>
  */
 package org.archive.crawler.webui;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;

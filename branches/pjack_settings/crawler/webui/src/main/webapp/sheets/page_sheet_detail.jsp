@@ -17,17 +17,7 @@ String previousPath = ":";
 </head>
 <body>
 
-<table>
-<tr>
-<td>
-<a border="0" href="<%=request.getContextPath()%>/index.jsp">
-<img border="0" src="<%=request.getContextPath()%>/images/logo.gif" height="37" width="145">
-</a>
-</td>
-<td>
-<%=Text.html(crawler.getLegend())%>
-</td>
-</table>
+<%@include file="/include/nav.jsp"%>
 
 <h3>Settings:</h3>
 

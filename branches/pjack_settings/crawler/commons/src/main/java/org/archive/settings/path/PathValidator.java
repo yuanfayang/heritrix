@@ -46,8 +46,7 @@ import org.archive.state.KeyManager;
 public class PathValidator {
 
     
-    final static String ROOT_NAME = "root";
-
+    final public static char DELIMITER = ':'; 
     
     /**
      * The sheet being used to resolve the path.
@@ -102,7 +101,7 @@ public class PathValidator {
         this.sheet = sheet;
         this.path = path;
         this.subPath = new StringBuilder();
-        this.tokens = new LinkedList<String>(Arrays.asList(path.split("\\.")));
+        this.tokens = new LinkedList<String>(Arrays.asList(path.split("\\" + DELIMITER)));
         this.checkLast = checkLast;
     }
     
@@ -146,7 +145,7 @@ public class PathValidator {
      */
     private void advance() {
         if (subPath.length() > 0) {
-            subPath.append('.');
+            subPath.append(DELIMITER);
         }
         subPath.append(tokens.get(0));
         tokens.remove(0);

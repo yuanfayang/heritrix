@@ -39,6 +39,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.state.DefaultDirectoryModule;
 import org.archive.state.DirectoryModule;
 import org.archive.settings.file.Checkpointable;
+import org.archive.settings.path.PathChangeException;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -414,6 +415,28 @@ implements StateProvider, Serializable, DirectoryModule {
     protected void clearCloneFlag(Sheet sheet) {
         sheet.setClone(false);
     }
+
     
     public abstract void commit(Sheet sheet);
+    
+    
+    /**
+     * Returns a read-only set of single sheets that generated errors while
+     * loading.
+     * 
+     * @return
+     */
+    public abstract Set<String> getProblemSingleSheetNames();
+
+    
+    /**
+     * Returns the list of exceptions that a problem sheet generated, in the
+     * order they were encountered.
+     * 
+     * @param sheet  the name of the sheet whose problems to return
+     * @return   the list of problems for that sheet
+     */
+    public abstract List<PathChangeException> getSingleSheetProblems(
+            String sheet);
+
 }

@@ -103,16 +103,112 @@ public class SheetBundle extends Sheet {
     
     
     public <T> Resolved<T> resolve(Object module, Key<T> key) {
+        
         if (Map.class.isAssignableFrom(key.getType())) {
-            return new MapResolver<T>(this, module, key).resolve();
+            return resolveMap(module, key);
         }
         
         
         if (List.class.isAssignableFrom(key.getType())) {
-            return new ListResolver<T>(this, module, key).resolve();
+            return resolveList(module, key);
         }
         
         return resolveNormal(module, key);
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    private <T> Resolved<T> resolveMap(Object module, Key<T> k) {
+        Key<Object> key = (Key)k;
+        List<TypedMap<Object>> list = new ArrayList<TypedMap<Object>>();
+        List<Sheet> definer = null;
+        for (Sheet sheet: sheets) {
+            TypedMap map;
+            if (sheet instanceof SingleSheet) {
+                map = (TypedMap)sheet.check(module, key);
+                if (map != null) {
+                    list.add(map);
+                    if (definer == null) {
+                        definer = new ArrayList<Sheet>(2);
+                        definer.add(this);
+                        definer.add(sheet);
+                    }
+                }
+            } else if (sheet instanceof SheetBundle) {
+                Resolved r = sheet.resolve(module, key);
+                map = (TypedMap)r.getValue();
+                if (map != null) {
+                    list.add(map);
+                    if (definer == null) {
+                        definer = new ArrayList<Sheet>();
+                        definer.add(this);
+                        definer.addAll(r.getSheets());
+                    }
+                }
+            }
+        }        
+        if (list.isEmpty()) {
+            return getGlobalSheet().resolve(module, k);
+        }
+        
+        TypedMap<Object> tm = (TypedMap)getGlobalSheet().check(module, key);
+        if (tm != null) {
+            list.add(tm);
+        }
+
+        TypedMap<Object> result; 
+        if (list.size() == 1) {
+            result = list.get(0);
+        } else {
+            result = new MultiTypedMap(list, this);
+        }
+        return Resolved.makeMap(module, k, result, definer);
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    private <T> Resolved<T> resolveList(Object module, Key<T> k) {
+        Key<Object> key = (Key)k;
+        List<TypedList<Object>> lists = new ArrayList<TypedList<Object>>();
+        List<Sheet> definer = null;
+        for (Sheet sheet: sheets) {
+            TypedList list;
+            if (sheet instanceof SingleSheet) {
+                list = (TypedList)sheet.check(module, key);
+                if (list != null) {
+                    lists.add(list);
+                    if (definer == null) {
+                        definer = new ArrayList<Sheet>(2);
+                        definer.add(this);
+                        definer.add(sheet);
+                    }
+                }
+            } else if (sheet instanceof SheetBundle) {
+                Resolved r = sheet.resolve(module, key);
+                list = (TypedList)r.getValue();
+                if (list != null) {
+                    lists.add(list);
+                    if (definer == null) {
+                        definer = new ArrayList<Sheet>();
+                        definer.add(this);
+                        definer.addAll(r.getSheets());
+                    }
+                }
+            }
+            
+        }
+
+        if (lists.isEmpty()) {
+            return getGlobalSheet().resolve(module, k);
+        }
+        
+        TypedList<Object> result; 
+        if (lists.size() == 1) {
+            result = lists.get(0);
+        } else {
+            result = new MultiTypedList(lists, this);
+        }
+        return Resolved.makeList(module, k, result, definer);
     }
 
     

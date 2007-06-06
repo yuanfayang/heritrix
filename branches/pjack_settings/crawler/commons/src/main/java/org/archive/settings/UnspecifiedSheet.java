@@ -26,6 +26,7 @@ package org.archive.settings;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.archive.state.Key;
 
@@ -69,15 +70,35 @@ class UnspecifiedSheet extends Sheet {
         return (Offline)key.getOfflineDefault();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public <T> Resolved<T> resolve(Object module, Key<T> key) {
-        if (getSheetManager().isOnline()) {
-            return Resolved.makeOnline(module, key, key.getDefaultValue(), 
-                    thisList);
+    public <T> Resolved<T> resolve(Object module, Key<T> k) {
+        Key<Object> key = (Key)k;
+        Object value;
+        if (Map.class.isAssignableFrom(key.getType())) {
+            Map map = (Map)key.getDefaultValue();
+            if (map == null) {
+                value = null;
+            } else {
+                value = new SettingsMap(this, map, key.getElementType());
+            }
+        } else if (List.class.isAssignableFrom(key.getType())) {
+            List list = (List)key.getDefaultValue();
+            if (list == null) {
+                value = null;
+            } else {
+                if (key.getElementType() == null) {
+                    throw new AssertionError();
+                }
+                value = new SettingsList(this, list, key.getElementType());                
+            }
+        } else if (getSheetManager().isOnline()) {
+            value = key.getDefaultValue();
+        } else {
+            value = key.getOfflineDefault();
         }
-        
-        return Resolved.make(module, key, key.getOfflineDefault(), 
-                thisList, null);
+
+        return Resolved.make(module, k, value, thisList);
     }
 
 

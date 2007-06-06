@@ -27,7 +27,6 @@ package org.archive.crawler.webui;
 
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -234,12 +233,12 @@ public class Crawler implements Comparable {
     
     public static Crawler fromObjectName(ObjectName oname) {
         int id = Integer.parseInt(oname.getKeyProperty("instance"));
-        InetSocketAddress addr = JmxUtils.extractAddress(oname);
+        int port = Integer.parseInt(oname.getKeyProperty(JmxUtils.JMX_PORT));
         Crawler crawler = new Crawler();
         crawler.setIdentityHashCode(id);
         crawler.setSource(Crawler.Source.JNDI);
-        crawler.setHost(addr.getHostName());
-        crawler.setPort(addr.getPort());
+        crawler.setHost(oname.getKeyProperty(JmxUtils.HOST));
+        crawler.setPort(port);
         crawler.setObjectName(oname);
         return crawler;
     }
@@ -321,6 +320,7 @@ public class Crawler implements Comparable {
             
             return result;
         } catch (Exception e) {
+            e.printStackTrace();
             this.error = e.getMessage();
             return Collections.singleton(this);
         } finally {

@@ -56,8 +56,18 @@ final public class Key<Value> implements Serializable {
     /** The class who declares the field.  Set by the KeyManager. */
     private Class owner;
     
+    
+    
     /** The type of the field. */
     transient final private Class<Value> type;
+
+
+    /**
+     * The element type of a List or Map.  Will be null if this.type is 
+     * anything other than java.util.List or java.util.Map.
+     */
+    private Class elementType;
+    
     
     /** The default value of the field. */
     transient final private Value def;
@@ -91,14 +101,13 @@ final public class Key<Value> implements Serializable {
     public Key(KeyMaker<Value> maker) {
         maker.validate();
         this.type = maker.type;
+        this.elementType = maker.elementType;
         this.def = maker.def;
         this.offlineDef = makeOfflineDefault(maker.def);
         Set<Constraint<Value>> s = new HashSet<Constraint<Value>>(maker.constraints);
         this.constraints = Collections.unmodifiableSet(s);
         maker.reset();
     }
-    
-    
 
 
     /**
@@ -122,6 +131,11 @@ final public class Key<Value> implements Serializable {
         }
     }
 
+    
+    public Class getElementType() {
+        return elementType;
+    }
+    
 
     /**
      * Returns true if the property is considered "expert".  User interfaces

@@ -26,13 +26,14 @@ package org.archive.settings.path;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.archive.settings.Offline;
 import org.archive.settings.Resolved;
+import org.archive.settings.TypedList;
+import org.archive.settings.TypedMap;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
@@ -97,7 +98,7 @@ public class PathLister {
         String path = "root";
         Object module = startSheet.getSheetManager().getRoot();
         List<Sheet> list = Collections.singletonList(defaults);
-        consume(path, list, module);
+        consume(path, list, module, Map.class);
         advance(path, list, module);
     }
 
@@ -187,12 +188,12 @@ public class PathLister {
         List<Sheet> resolvedList = r.getSheets();
         
         String kpath = appendPath(path, k.getFieldName());        
-        consume(kpath, resolvedList, r.getValue());
+        consume(kpath, resolvedList, r.getValue(), k.getType());
         
         if (Map.class.isAssignableFrom(k.getType())) {
-            handleMap(kpath, r.getMapSheets(), r.getValue());
+            handleMap(kpath, r.getValue());
         } else if (List.class.isAssignableFrom(k.getType())) {
-            handleList(kpath, r.getListSheets(), r.getValue());
+            handleList(kpath, r.getValue());
         } else {
             handleModule(kpath, r.getValue());
         }
@@ -211,29 +212,24 @@ public class PathLister {
      * @param list    the list of sheets that led to the setting
      * @param value   the value of the setting
      */
-    private void consume(String path, List<Sheet> list, Object value) {
+    private void consume(
+            String path, 
+            List<Sheet> list, 
+            Object value,
+            Class type) {
         String seen = alreadySeen.get(value);
         Sheet last = list.get(list.size() - 1);
         if (resolve || (last == startSheet)) {
-            consumer.consume(path, list, value, seen);
+            consumer.consume(path, list, value, type, seen);
         }
     }
     
 
     private void advance(String path, List<Sheet> list, Object value) {
-        if (value instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<Object> v = (List)value;
-            List<List<Sheet>> sheets = Collections.nCopies(v.size(), list);
-            handleList(path, sheets, v);
-        } else if (value instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String,Object> map = (Map)value;
-            Map<String,List<Sheet>> sheets = new HashMap<String,List<Sheet>>();
-            for (String k: map.keySet()) {
-                sheets.put(k, list);
-            }
-            handleMap(path, sheets, map);
+        if (value instanceof TypedList) {
+            handleList(path, value);
+        } else if (value instanceof TypedMap) {
+            handleMap(path, value);
         } else {
             // Assume it's another module.
             handleModule(path, value);
@@ -246,38 +242,38 @@ public class PathLister {
      * consumes each element of the list.
      * 
      * @param path    the path to the list object
-     * @param sheet   the sheet to use to resolve values
      * @param l       the list, as an object (easier to cast in the method
      *   body than at each call site)
      */
-    private void handleList(String path, List<List<Sheet>> sheets, Object l) {
+    private void handleList(String path, Object l) {
         if (alreadySeen(l, path)) {
             return;
         }
         @SuppressWarnings("unchecked")
-        List<Object> list = (List<Object>)l;
+        TypedList<Object> list = (TypedList<Object>)l;
         
         for (int i = 0; i < list.size(); i++) {
             Object element = list.get(i);
             String lpath = appendPath(path, Integer.toString(i));
-            consume(lpath, sheets.get(i), element);
-            advance(lpath, sheets.get(i), element);
+            List<Sheet> sheets = list.getSheets(i);
+            consume(lpath, sheets, element, list.getElementType());
+            advance(lpath, sheets, element);
         }
     }
 
 
-    private void handleMap(String path, Map<String,List<Sheet>> sheetMap, Object m) {
+    private void handleMap(String path, Object m) {
         if (alreadySeen(m, path)) {
             return;
         }
         @SuppressWarnings("unchecked")
-        Map<String,Object> map = (Map<String,Object>)m;
+        TypedMap<Object> map = (TypedMap<Object>)m;
         for (Map.Entry<String,Object> entry: map.entrySet()) {
             Object element = entry.getValue();
             String entryKey = entry.getKey(); // FIXME: Escape keys
             String mpath = appendPath(path, entryKey);
-            List<Sheet> sheets = sheetMap.get(entryKey);
-            consume(mpath, sheets, element);
+            List<Sheet> sheets = map.getSheets(entryKey);
+            consume(mpath, sheets, element, map.getElementType());
             advance(mpath, sheets, element);
         }
     }
@@ -287,7 +283,7 @@ public class PathLister {
         if (path.length() == 0) {
             return next;
         }
-        return path + "." + next;
+        return path + PathValidator.DELIMITER + next;
     }
 
 

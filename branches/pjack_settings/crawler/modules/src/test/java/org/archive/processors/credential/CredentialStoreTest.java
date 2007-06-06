@@ -25,12 +25,12 @@ package org.archive.processors.credential;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import org.archive.settings.MemorySheetManager;
+import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SingleSheet;
@@ -69,11 +69,11 @@ public class CredentialStoreTest extends StateProcessorTestBase {
         
         CredentialStore store = new CredentialStore();
         global.set(store, CredentialStore.CREDENTIALS, 
-                new HashMap<String,Credential>());
+                new SettingsMap<Credential>(global, Credential.class));
         domain.set(store, CredentialStore.CREDENTIALS, 
-                new HashMap<String,Credential>());
+                new SettingsMap<Credential>(domain, Credential.class));
         hostSingle.set(store, CredentialStore.CREDENTIALS, 
-                new HashMap<String,Credential>());
+                new SettingsMap<Credential>(hostSingle, Credential.class));
         
         writeCrendentials(store, global, "global");
         writeCrendentials(store, domain, "domain");
@@ -102,13 +102,14 @@ public class CredentialStoreTest extends StateProcessorTestBase {
 
         List<String> names = new ArrayList<String>(size);
         names.addAll(map.keySet());
-        assertTrue("Not enough names, size " + size, size == map.size());
+        assertEquals("Not enough names", size, map.size());
         return names;
     }
 
     private void writeCrendentials(CredentialStore store, SingleSheet context,
                 String prefix) throws Exception {
-        Map<String,Credential> map = new HashMap<String,Credential>();
+        Map<String,Credential> map = new SettingsMap<Credential>(context, 
+                Credential.class);
         context.set(store, CredentialStore.CREDENTIALS, map);
         
         List<Class> types = CredentialStore.getCredentialTypes();

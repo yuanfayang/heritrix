@@ -180,4 +180,16 @@ public interface JMXSheetManager {
     @Attribute(desc="The list of currently checked out sheets.", def="")
     String[] getCheckedOutSheets();
 
+    @Attribute(desc="Returns the list of problems encountered while loading sheets.",
+            def="")
+    String[] getProblemSingleSheetNames();
+
+
+    @Operation(desc="Returns the list of problems encountered when a sheet was loaded.",
+            type="org.archive.settings.jmx.Types.SET_RESULT_ARRAY")
+    CompositeData[] getSingleSheetProblems(
+            @Parameter(name="sheet", desc="The name of the sheet whose problems to return.")
+            String sheet);
+
+
 }
