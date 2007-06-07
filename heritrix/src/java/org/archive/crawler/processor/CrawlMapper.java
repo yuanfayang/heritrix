@@ -163,7 +163,7 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
             updateGeneration(nowGeneration);
         }
         
-        if (curi.getFetchStatus() == 0
+        if (curi.getFetchStatus() <= 0 // unfetched/unsuccessful
                 && ((Boolean) getUncheckedAttribute(null, ATTR_CHECK_URI))
                         .booleanValue()) {
             // apply mapping to the CrawlURI itself
@@ -180,11 +180,9 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
             }
         }
         
-        if (curi.getOutLinks().size() > 0 && 
-                ((Boolean) getUncheckedAttribute(null, ATTR_CHECK_OUTLINKS))
-                        .booleanValue()) {
+        if ((Boolean) getUncheckedAttribute(null, ATTR_CHECK_OUTLINKS)) {
             // consider outlinks for mapping
-            Iterator<CandidateURI> iter = curi.getOutCandidates().iterator(); 
+            Iterator<CandidateURI> iter = curi.getOutCandidates().iterator();
             while(iter.hasNext()) {
                 CandidateURI cauri = iter.next();
                 if (decideToMapOutlink(cauri)) {
