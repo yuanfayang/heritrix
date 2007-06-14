@@ -80,21 +80,17 @@ public class PublicSuffixes {
      */
     public static void main(String args[]) throws IOException {
 
-        BufferedReader reader;
-
+        String regex;
+        
         if (args.length == 0 || "=".equals(args[0])) {
             // use bundled list
-            reader = new BufferedReader(new InputStreamReader(
-                    PublicSuffixes.class.getClassLoader().getResourceAsStream(
-                            "org/archive/net/effective_tld_names.dat")));
+            regex = getTopmostAssignedSurtPrefixRegex();
         } else {
             // use specified filename
-            reader = new BufferedReader(new FileReader(args[0]));
+            BufferedReader reader = new BufferedReader(new FileReader(args[0]));
+            regex = getTopmostAssignedSurtPrefixRegex(reader);
+            IOUtils.closeQuietly(reader);
         }
-
-        String regex = getTopmostAssignedSurtPrefixRegex(reader);
-
-        IOUtils.closeQuietly(reader);
 
         boolean needsClose = false;
         BufferedWriter writer;
@@ -165,7 +161,7 @@ public class PublicSuffixes {
                 continue;
             }
             last = s;
-            System.out.println(s);
+//            System.out.println(s);
         }
         return list;
     }
@@ -264,7 +260,7 @@ public class PublicSuffixes {
         // use bundled list
         BufferedReader reader = new BufferedReader(new InputStreamReader(
                 PublicSuffixes.class.getClassLoader().getResourceAsStream(
-                        "org/archive/net/effective_tld_names.dat")));
+                        "effective_tld_names.dat")));
         String returnValue = getTopmostAssignedSurtPrefixRegex(reader);
         IOUtils.closeQuietly(reader);
         return returnValue;
