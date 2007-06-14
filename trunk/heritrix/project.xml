@@ -553,7 +553,12 @@
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>JavaSWF2 is a set of Java packages that enable the parsing, manipulation and generation of the Macromedia Flash(TM) file format known as SWF ("swiff").  Added jar was made by unzipping javaswf-CVS-SNAPSHOT-1.zip download, compiling the java classes therein, and then making a jar of the product.</description>
+                <description>JavaSWF2 is a set of Java packages that enable 
+                the parsing, manipulation and generation of the Macromedia 
+                Flash(TM) file format known as SWF ("swiff").  Added jar was 
+                made by unzipping javaswf-CVS-SNAPSHOT-1.zip download, 
+                compiling the java classes therein, and then making a jar 
+                of the product.</description>
                 <license>The JavaSWF BSD License, 
                 http://anotherbigidea.com/javaswf/JavaSWF2-BSD.LICENSE.html
                 </license>
@@ -770,6 +775,7 @@
             <include>profiles/*default/**</include>
             <include>modules/**</include>
             <include>selftest/**</include>
+            <include>effective_tld_names.dat</include>
         </includes>
     </resource>
     </resources>
