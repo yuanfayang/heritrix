@@ -1,6 +1,14 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
+<%@ page import="javax.management.remote.JMXConnector"%>
+<%@ page import="java.util.Set"%>
+<%@ page import="javax.management.ObjectName"%>
+<%@ page import="org.archive.crawler.webui.Misc"%>
+<%@ page import="javax.management.MBeanServerConnection"%>
+<%@ page import="java.lang.management.MemoryMXBean"%>
+<%@ page import="org.archive.crawler.webui.Remote"%>
+<%@ page import="javax.management.openmbean.CompositeData"%>
 <%
 
 Crawler crawler = (Crawler)request.getAttribute("crawler");
@@ -12,7 +20,7 @@ int row = 1;
 %>
 <html>
 <head>
-<%@include file="/include/header.jsp"%>
+<%@ include file="/include/header.jsp"%>
 <title>Heritrix <%=Text.html(crawler.getLegend())%></title>
 </head>
 <body>
@@ -40,7 +48,12 @@ int row = 1;
    Console
 </a>
 |
-Sheets | Seeds | Reports | Logs
+Sheets | Seeds | Reports | 
+<a 
+   title="View logs for this job."
+   href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">
+   Logs
+</a>
 </td>
 </tr>
 <% } %>
@@ -87,18 +100,25 @@ Launch
 <table class="info">
 <% for (String job: completed) { %>
 <% row = -row + 1; %>
+<% String jqs = crawler.getQueryString() + "&job=" + job; %>
+
 <tr>
 <td class="info<%=row%>">
 <%=job%>
 </td>
 <td class="info<%=row%>">
-Sheets | Seeds | Reports | Logs
+Sheets | Seeds | Reports | 
+<a 
+   title="View logs for this job."
+   href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">
+   Logs
+</a>
+
 </td>
 </tr>
 <% } %>
 </table>
 <% } %>
-
 
 </body>
 </html>

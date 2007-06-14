@@ -49,6 +49,7 @@ import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.ListModuleListener;
@@ -150,6 +151,18 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(fsm);
         ObjectName name = JMXModuleListener.nameOf(DOMAIN, profile, jmx);
         register(jmx, name);
+    }
+
+    public void openLogs(String job) throws IOException {
+        File src = new File(getJobsDir(), job);
+        
+        if (!src.exists()) {
+            throw new IllegalArgumentException("No such job: " + job);
+        }
+
+        LogRemoteAccessImpl lra = new LogRemoteAccessImpl(src.getAbsolutePath() + File.separator + "logs"); // FIXME: Stop assuming location of logs
+        ObjectName name = JMXModuleListener.nameOf(DOMAIN, job, lra);
+        register(lra, name);
     }
 
     

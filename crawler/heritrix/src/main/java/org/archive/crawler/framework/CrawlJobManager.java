@@ -93,6 +93,15 @@ public interface CrawlJobManager extends Closeable {
             ) throws IOException;
 
 
+    @Operation(desc="Loads the logs for a job.")
+    public void openLogs(
+            
+            @Parameter(name="job", desc="The name of the job.")
+            String job
+            
+            ) throws IOException;
+
+
 
     @Operation(desc="Lists all available checkpoints.")
     String[] listCheckpoints();
