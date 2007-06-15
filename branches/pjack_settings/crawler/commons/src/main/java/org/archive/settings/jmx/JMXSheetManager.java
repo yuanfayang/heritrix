@@ -65,22 +65,16 @@ public interface JMXSheetManager {
             @Parameter(name = "sheetName", desc = "The name of the sheet containing the list.")
             String sheetName,
 
-            @Parameter(name = "listPath", desc = "The path to the list.")
-            String listPath,
-
-            @Parameter(name = "index", desc = "The index of the element to move up.")
-            int index);
+            @Parameter(name = "path", desc = "The path to the element to move.")
+            String path);
 
     @Operation(desc = "Moves an element in a list down one position.")
     void moveElementDown(
             @Parameter(name = "sheetName", desc = "The name of the sheet containing the list.")
             String sheetName,
 
-            @Parameter(name = "listPath", desc = "The path to the list.")
-            String listPath,
-
-            @Parameter(name = "index", desc = "The index of the element to move up.")
-            int index);
+            @Parameter(name = "path", desc = "The path to the element to move.")
+            String path);
 
     @Operation(desc = "Associates one or more SURTs with a sheet.")
     void associate(

@@ -30,8 +30,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -221,8 +223,13 @@ class SheetMap<K,V> implements Serializable {
     }
 
     
-    AtomicReferenceArray<Node<K,V>> rawBuckets() {
-        return buckets;
+    List<Node<K,V>> rawBuckets() {
+        AtomicReferenceArray<Node<K,V>> localBuckets = buckets;
+        List<Node<K,V>> result = new ArrayList<Node<K,V>>(localBuckets.length());
+        for (int i = 0; i < localBuckets.length(); i++) {
+            result.add(localBuckets.get(i));
+        }
+        return result;
     }
     
     

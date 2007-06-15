@@ -794,7 +794,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
         clearCloneFlag(sheet);
         this.sheets.put(sheet.getName(), sheet);
-        // FIXME: Save new sheet to disk.
+        if (sheet instanceof SingleSheet) {
+            saveSingleSheet((SingleSheet)sheet);
+        }
+        // FIXME: Save sheet bundles too.
     }
 
     

@@ -73,6 +73,30 @@ implements TypedList<T>, TypeSubstitution, Serializable {
     }
     
     
+    // Used by duplicate
+    private SettingsList(List<T> delegate, 
+            List<Sheet> sheets, 
+            SheetManager manager, 
+            Class<T> elementType) {
+        this.delegate = delegate;
+        this.sheets = sheets;
+        this.manager = manager;
+        this.elementType = elementType;
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    public Object duplicate(Duplicator d) {        
+        List<Sheet> newSheets = d.duplicateSheets(sheets);
+        
+        List newElements = new ArrayList<T>();
+        for (T e: delegate) {
+            newElements.add(d.duplicate(e));
+        }
+        System.out.println(newElements);
+        return new SettingsList(newElements, newSheets, manager, elementType);
+    }
+    
     public List<Sheet> getSheets(int index) {
         return sheets;
     }

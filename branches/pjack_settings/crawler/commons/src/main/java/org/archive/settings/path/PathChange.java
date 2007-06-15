@@ -40,9 +40,6 @@ public class PathChange {
         if (type == null) {
             throw new IllegalArgumentException("type must not be null");
         }
-        if (type == null) {
-            throw new IllegalArgumentException("value must not be null");
-        }
         this.path = path;
         this.type = type;
         this.value = value;
