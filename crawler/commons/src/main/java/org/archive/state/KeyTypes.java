@@ -35,7 +35,8 @@ public class KeyTypes {
     
     final private static Map<Class,String> TYPES;
     final private static Map<String,Class> TAGS;
-
+    final public static String ENUM_TAG = "enum";
+    
     static {
         Map<Class,String> types = new HashMap<Class,String>();
         types.put(Boolean.class, "boolean");
@@ -50,6 +51,7 @@ public class KeyTypes {
         types.put(Pattern.class, "pattern");
         types.put(BigInteger.class, "biginteger");
         types.put(BigInteger.class, "bigdecimal");
+        types.put(Enum.class, ENUM_TAG);
         TYPES = Collections.unmodifiableMap(types);
         
         Map<String,Class> tags = new HashMap<String,Class>();
@@ -75,6 +77,9 @@ public class KeyTypes {
 
     
     public static String getSimpleTypeTag(Class type) {
+        if (Enum.class.isAssignableFrom(type)) {
+            return ENUM_TAG;
+        }
         return TYPES.get(type);
     }
     
@@ -85,6 +90,9 @@ public class KeyTypes {
     
     
     private static Object fromString2(Class type, String value) {
+        if (type == Enum.class) {
+            return parseEnum(value);
+        }
         if (type == Boolean.class) {
             return Boolean.parseBoolean(value);
         }
@@ -125,9 +133,35 @@ public class KeyTypes {
         throw new IllegalArgumentException("Not a simple type: " + type);
     }
     
+    
+    private static Object parseEnum(String value) {
+        int p = value.indexOf('-');
+        if (p < 0) {
+            throw new IllegalArgumentException(value + 
+                    " cannot be parsed as enum.");
+        }
+        String cname = value.substring(0, p);
+        String field = value.substring(p + 1);
+        try {
+            Class c = Class.forName(cname);
+            @SuppressWarnings("unchecked")
+            Object result = Enum.valueOf(c, field);
+            return result;
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(e);
+        }
+
+    }
+    
     public static String toString(Object simple) {
+        if (simple == null) {
+            return "";
+        }
         if (!isSimple(simple.getClass())) {
             throw new IllegalArgumentException();
+        }
+        if (simple instanceof Enum) {
+            return simple.getClass().getName() + "-" + simple.toString();
         }
         return simple.toString();
     }

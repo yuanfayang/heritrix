@@ -29,6 +29,7 @@ package org.archive.settings.path;
 import java.util.List;
 import java.util.Map;
 
+import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
 import org.archive.settings.TypedList;
 import org.archive.settings.TypedMap;
@@ -57,23 +58,25 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             snames[i] = sheets.get(i).getName();
         }
         
+        Class actual = (value == null) ? type : value.getClass();
+        
         String typeTag;
         String v;
         if (KeyTypes.isSimple(type)) {
             typeTag = KeyTypes.getSimpleTypeTag(type);
-            v = toString(value);
+            v = KeyTypes.toString(value);
         } else if (seenPath != null) {
             typeTag = REFERENCE_TAG;
             v = seenPath;
-        } else if (Map.class.isAssignableFrom(type)) {
+        } else if (Map.class.isAssignableFrom(actual)) {
             typeTag = MAP_TAG;
             v = ((TypedMap)value).getElementType().getName();
-        } else if (List.class.isAssignableFrom(type)) {
+        } else if (List.class.isAssignableFrom(actual)) {
             typeTag = LIST_TAG;
             v = ((TypedList)value).getElementType().getName();
         } else {
             typeTag = OBJECT_TAG;
-            v = (value == null) ? "null" : value.getClass().getName();
+            v = (value == null) ? "null" : Offline.getType(value).getName();
         }
 
         consume(path, snames, v, typeTag);
@@ -83,13 +86,5 @@ public abstract class StringPathListConsumer implements PathListConsumer {
     protected abstract void consume(String path, String[] sheets, String value,
             String type);
 
-    
-    
-    private static String toString(Object v) {
-        if (v == null) {
-            return null;
-        }
-        return v.toString();
-    }
 
 }

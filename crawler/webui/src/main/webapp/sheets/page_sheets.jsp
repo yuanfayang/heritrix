@@ -21,6 +21,16 @@ int row = 1;
 
 <h3>Sheets:</h3>
 
+<a href="do_show_add_single_sheet.jsp?<%=Text.jobQueryString(request)%>">
+Add Single Sheet
+</a>
+|
+<a href="do_show_add_sheet_bundle.jsp?<%=Text.jobQueryString(request)%>">
+Add Sheet Bundle
+</a>
+
+
+
 <table class="info">
 <% for (String sheet: sheets) { %>
 <% row = -row + 1; %>

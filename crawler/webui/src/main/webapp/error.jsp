@@ -10,7 +10,18 @@
 
 <pre><h3 style="color: red"><%= exception %></h3></pre>
 
-<pre><% exception.printStackTrace(new java.io.PrintWriter(out)); %></pre>
+<pre><% 
+
+if (exception != null) { 
+
+exception.printStackTrace(new java.io.PrintWriter(out)); 
+
+} else { %>
+
+No exception to report.
+
+<%}%>
+</pre>
 
 <a href="javascript:history.back()">You may be able to recover by going back</a>
 

@@ -233,7 +233,7 @@ public class PathValidator {
     }
 
     
-    static Object check(SingleSheet sheet, String path) {
+    public static Object check(SingleSheet sheet, String path) {
         return new PathValidator(sheet, path, true).validatePath();
     }
     

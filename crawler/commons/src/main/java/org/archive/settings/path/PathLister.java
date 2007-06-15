@@ -96,7 +96,8 @@ public class PathLister {
     private void list() {
         Sheet defaults = startSheet.getSheetManager().getDefault();
         String path = "root";
-        Object module = startSheet.getSheetManager().getRoot();
+        Object module = startSheet.get(
+                startSheet.getSheetManager().getManagerModule(), SheetManager.ROOT);
         List<Sheet> list = Collections.singletonList(defaults);
         consume(path, list, module, Map.class);
         advance(path, list, module);

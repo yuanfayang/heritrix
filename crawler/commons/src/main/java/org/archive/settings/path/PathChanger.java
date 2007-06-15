@@ -98,6 +98,7 @@ public class PathChanger {
 
     
     public void change(SingleSheet sheet, PathChange pair) {
+        System.out.println(pair);
         if (sheet.getSheetManager().isOnline()) {
             changeLoudly(sheet, pair);
         } else {
@@ -110,9 +111,11 @@ public class PathChanger {
         try {
             changeLoudly(sheet, pair);
         } catch (PathChangeException e) {
+            e.printStackTrace();
             e.setPathChange(pair);
             problems.add(e);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             PathChangeException pce = new PathChangeException(e);
             pce.setPathChange(pair);
             problems.add(pce);
@@ -128,7 +131,10 @@ public class PathChanger {
         initIfNecessary(sheet, path);
     
         Object v;
-        if (typeTag.equals(REFERENCE_TAG)) {
+        
+        if (value == null) {
+            v = null;
+        } else if (typeTag.equals(REFERENCE_TAG)) {
             v = makeReference(sheet, value);
         } else if (typeTag.equals(OBJECT_TAG)) {
             v = makeObject(sheet, pair);
@@ -176,7 +182,70 @@ public class PathChanger {
     }
 
     
+    private Object getPreexistingObject(SingleSheet sheet, PathChange pc) {
+        try {
+            Object o = PathValidator.validate(sheet, pc.getPath());
+            if (o == null) {
+                // There was no preexisting object.
+                return null;
+            }
+            
+                Class otype = Offline.getType(o);
+                if (otype.getName().equals(pc.getValue())) {
+                    return o;
+                }                            
+            return null;            
+        } catch (InvalidPathException e) {
+            // This may simply mean that the path doesn't exist yet, which
+            // is legal (it what's this method is testing for.)
+            //
+            // If the path really is invalid, later checks will raise an
+            // appropriate error.
+            return null;
+        }
+    }
+    
+    
+    private Object getPreexistingCol(SingleSheet sheet, PathChange pc) {
+        try {
+            Object o = PathValidator.check(sheet, pc.getPath());
+
+            if (pc.getType().equals(MAP_TAG)) {
+                if (!(o instanceof SettingsMap)) {
+                    return null;
+                }
+                SettingsMap sm = (SettingsMap) o;
+                if (sm.getElementType().getName().equals(pc.getValue())) {
+                    return sm;
+                }
+            } else if (pc.getType().equals(LIST_TAG)) {
+                if (!(o instanceof SettingsList)) {
+                    return null;
+                }
+                SettingsList sm = (SettingsList) o;
+                if (sm.getElementType().getName().equals(pc.getValue())) {
+                    return sm;
+                }
+            }
+            return null;
+        } catch (RuntimeException e) {
+            // This may simply mean that the path doesn't exist yet, which
+            // is legal (it what's this method is testing for.)
+            //
+            // If the path really is invalid, later checks will raise an
+            // appropriate error.
+            return null;
+        }
+    }
+    
+    
     private Object makeObject(SingleSheet sheet, PathChange pc) {
+        // If an object already exists at the given path, AND that object
+        // has the type we want to change to, do NOT destroy the old object.
+        Object pre = getPreexistingObject(sheet, pc);
+        if (pre != null) {
+            return pre;
+        }
         
         Object result = makeObject2(sheet, pc);
         if (result instanceof Initializable) {
@@ -210,13 +279,14 @@ public class PathChanger {
     
     
     private Object makeList(SingleSheet sheet, PathChange pc) {
+        Object pre = getPreexistingCol(sheet, pc);
+        if (pre != null) {
+            return pre;
+        }
+
         String value = pc.getValue();
         try {
             Class c = Class.forName(value);
-            
-            if (!online(sheet, c)) {
-                c = Offline.class;
-            }
             
             @SuppressWarnings("unchecked")
             Object r = new SettingsList(sheet, c);
@@ -228,13 +298,14 @@ public class PathChanger {
     
     
     private Object makeMap(SingleSheet sheet, PathChange pc) {
+        Object pre = getPreexistingCol(sheet, pc);
+        if (pre != null) {
+            return pre;
+        }
+        
         String value = pc.getValue();
         try {
             Class c = Class.forName(value);
-
-            if (!online(sheet, c)) {
-                c = Offline.class;
-            }
             
             @SuppressWarnings("unchecked")
             Object r = new SettingsMap(sheet, c);

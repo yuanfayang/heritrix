@@ -208,7 +208,8 @@ implements StateProvider, Serializable, DirectoryModule {
      */
     final protected SingleSheet createSingleSheet(String name) 
     throws IllegalArgumentException {
-        SingleSheet result = new SingleSheet(this, name, false);
+        boolean global = name.equals("default");
+        SingleSheet result = new SingleSheet(this, name, global);
         return result;
     }
 

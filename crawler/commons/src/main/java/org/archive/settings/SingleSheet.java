@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.archive.state.Constraint;
 import org.archive.state.Key;
@@ -79,29 +78,18 @@ public class SingleSheet extends Sheet {
         this.settings = new SheetMap<Object,Map<Key,Object>>();
     }
 
+    
 
-    /**
-     * Constructor used during duplicate method.
-     */
-    private SingleSheet(SheetManager manager, 
-            String name, 
-            SheetMap<Object,Map<Key,Object>> settings, 
-            boolean global) {
-        super(manager, name);
-        this.settings = settings;
-        this.global = global;
-    }
-    
-    
     @Override
     SingleSheet duplicate() {
-        SheetMap<Object,Map<Key,Object>> newSettings = 
-            new SheetMap<Object,Map<Key,Object>>();
-        AtomicReferenceArray<SheetMap.Node<Object,Map<Key,Object>>> oldBuckets = 
+        List<SheetMap.Node<Object,Map<Key,Object>>> oldBuckets = 
             settings.rawBuckets();
-        for (int i = 0; i < oldBuckets.length(); i++) {
+        SingleSheet result = new SingleSheet(
+                getSheetManager(), getName(), global);
+        Duplicator d = new Duplicator(this, result);
+        for (int i = 0; i < oldBuckets.size(); i++) {
             SheetMap.Node<Object,Map<Key,Object>> n;
-            for (n = oldBuckets.get(0); n != null; n = n.next) {
+            for (n = oldBuckets.get(i); n != null; n = n.next) {
                 Object module = n.key.get();
                 Map<Key,Object> settings = n.value;
                 // Null module means a module was garbage collected.
@@ -109,14 +97,23 @@ public class SingleSheet extends Sheet {
                 //    map, but stale node wasn't removed yet.
                 if ((module != null) && (settings != null)) {
                     // Copy the settings.
-                    settings = new ConcurrentHashMap<Key,Object>(settings);
-                    newSettings.putIfAbsent(module, settings);
+                    Map<Key,Object> settingsClone = 
+                        new ConcurrentHashMap<Key,Object>(settings);
+                    for (Map.Entry<Key,Object> me: settings.entrySet()) {
+                        Key key = me.getKey();
+                        Object value = d.duplicate(me.getValue());
+                        if (value != null) {
+                            settingsClone.put(key, value);
+                        }
+                    }
+                    result.settings.putIfAbsent(module, settingsClone);
                 }
             }
         }
-        
-        return new SingleSheet(getSheetManager(), getName(), settings, global);
+
+        return result;
     }
+
     
     
     @Override

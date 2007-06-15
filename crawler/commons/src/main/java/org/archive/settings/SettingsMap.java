@@ -29,6 +29,7 @@ package org.archive.settings;
 import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -76,6 +77,27 @@ Serializable, TypeSubstitution {
         this.sheets = Collections.singletonList((Sheet)sheet);
         this.manager = sheet.getSheetManager();
         this.elementType = c;        
+    }
+
+    private SettingsMap(List<Sheet> sheets, Map<String,T> map, Class<T> c, 
+            SheetManager manager) {
+        this.delegate = map;
+        this.sheets = sheets;
+        this.manager = manager;
+        this.elementType = c;        
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public SettingsMap<T> duplicate(Duplicator d) {
+        List<Sheet> newSheets = d.duplicateSheets(sheets);
+
+        Map newDelegate = new LinkedHashMap<String,T>();
+        for (Map.Entry<String,T> me: delegate.entrySet()) {
+            newDelegate.put(me.getKey(), d.duplicate(me.getValue()));
+        }
+        
+        return new SettingsMap(newSheets, newDelegate, elementType, manager);
     }
     
     
@@ -181,6 +203,32 @@ Serializable, TypeSubstitution {
     public Map<String,T> getDelegate() {
         return delegate;
     }
+
+    
+    public void moveElement(String key, boolean up) {
+        ArrayList<Map.Entry<String,T>> arr = 
+            new ArrayList<Map.Entry<String,T>>(delegate.entrySet());
+        int index = -1;
+        for (int i = 0; i < arr.size(); i++) {
+            Map.Entry<String,T> me = arr.get(i);
+            if (me.getKey().equals(key)) {
+                index = i;
+                break;
+            }
+        }
+        if (index == -1) {
+            throw new IllegalArgumentException("No such key: " + key);
+        }
+        
+        int index2 = up ? index - 1 : index + 1;
+        
+        Collections.swap(arr, index, index2);
+        this.delegate.clear();
+        for (Map.Entry<String,T> me: arr) {
+            delegate.put(me.getKey(), me.getValue());
+        }
+    }
+
 
     private class KeySet<X> extends AbstractSet<String> {
         
