@@ -69,6 +69,10 @@ a.underLineOnHover {
 a:hover.underLineOnHover {
     text-decoration: underline;
 }
+a.plain{
+	text-decoration: none; 
+	color: #000000;
+}
 .SettingsBlock {
     border:1px solid #9999ff;
     margin-left:10px; margin-right:5px;
