@@ -37,7 +37,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.util.LogRemoteAccess;
 import org.archive.crawler.util.Logs;
-import org.archive.settings.jmx.JMXSheetManager;
 
 /**
  * Supports web UI operations for logs. 
@@ -177,6 +176,7 @@ public class Log {
             throw new IllegalStateException("job must not be null");
         }
         log.job = job;
+        request.setAttribute("job", job);
         
         // All settings parsed.
 		// Get appropriate log content from crawler
