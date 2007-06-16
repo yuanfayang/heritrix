@@ -30,8 +30,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
+import java.util.TreeSet;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -48,8 +52,10 @@ import org.archive.crawler.util.BloomUriUniqFilter;
 import org.archive.crawler.util.CheckpointUtils;
 import org.archive.crawler.util.DiskFPMergeUriUniqFilter;
 import org.archive.crawler.util.MemFPMergeUriUniqFilter;
+import org.archive.queue.StoredQueue;
 import org.archive.util.ArchiveUtils;
 
+import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseException;
 
 /**
@@ -121,6 +127,50 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             this.controller.isCheckpointRecover());
     }
 
+    
+    @Override
+    protected void initQueuesOfQueues() {
+        if(this.controller.isCheckpointRecover()) {
+            // do not setup here; take/init from deserialized frontier
+            return; 
+        }
+        // small risk of OutOfMemoryError: if 'hold-queues' is false,
+        // readyClassQueues may grow in size without bound
+        readyClassQueues = new LinkedBlockingQueue<String>();
+
+        Database retiredQueuesDb;
+        try {
+            Database inactiveQueuesDb = this.controller.getBdbEnvironment()
+                    .openDatabase(null, "inactiveQueues",
+                            StoredQueue.databaseConfig());
+            inactiveQueues = new StoredQueue<String>(inactiveQueuesDb,
+                    String.class, null);
+            retiredQueuesDb = this.controller.getBdbEnvironment().openDatabase(
+                    null, "retiredQueues", StoredQueue.databaseConfig());
+            retiredQueues = new StoredQueue<String>(retiredQueuesDb,String.class,null);
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        }
+        
+        // small risk of OutOfMemoryError: in large crawls with many 
+        // unresponsive queues, an unbounded number of snoozed queues 
+        // may exist
+        snoozedClassQueues = Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
+    }
+
+    protected Queue<String> reinit(Queue<String> q, String name) {
+        try {
+            // restore the innner Database/StoredSortedMap of the queue
+            StoredQueue<String> queue = (StoredQueue<String>) q;
+            Database db = this.controller.getBdbEnvironment()
+                .openDatabase(null, name, StoredQueue.databaseConfig());
+            queue.hookupDatabase(db, String.class, null);
+            return queue;
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     /**
      * Create a UriUniqFilter that will serve as record 
      * of already seen URIs.
@@ -314,12 +364,21 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             this.succeededFetchCount = f.succeededFetchCount;
             this.lastMaxBandwidthKB = f.lastMaxBandwidthKB;
             this.readyClassQueues = f.readyClassQueues;
-            this.inactiveQueues = f.inactiveQueues;
-            this.retiredQueues = f.retiredQueues;
+            this.inactiveQueues = reinit(f.inactiveQueues,"inactiveQueues");
+            this.retiredQueues = reinit(f.retiredQueues,"retiredQueues");
             this.snoozedClassQueues = f.snoozedClassQueues;
             this.inProcessQueues = f.inProcessQueues;
             wakeQueues();
         }
+    }
+
+    
+    
+    @Override
+    public void crawlEnded(String sExitMessage) {
+        ((StoredQueue)inactiveQueues).close();
+        ((StoredQueue)retiredQueues).close();
+        super.crawlEnded(sExitMessage);
     }
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
@@ -331,7 +390,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         if (this.pendingUris != null) {
         	this.pendingUris.sync();
         }
-        CheckpointUtils .writeObjectToFile(this.alreadyIncluded, checkpointDir);
+        CheckpointUtils.writeObjectToFile(this.alreadyIncluded, checkpointDir);
         logger.fine("Finished serializing already seen as part "
             + "of checkpoint.");
         // Serialize ourselves.
