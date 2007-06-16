@@ -28,14 +28,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -58,10 +61,6 @@ import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.collections.StoredIterator;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A common Frontier base using several queues to hold pending URIs. 
@@ -160,8 +159,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * All per-class queues whose first item may be handed out.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue<String> readyClassQueues =
-    	new LinkedBlockingQueue<String>();
+    protected BlockingQueue<String> readyClassQueues;
     
     /** Target (minimum) size to keep readyClassQueues */
     protected int targetSizeForReadyQueues;
@@ -170,15 +168,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * All 'inactive' queues, not yet in active rotation.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue<String> inactiveQueues =
-    	new LinkedBlockingQueue<String>();
+    protected Queue<String> inactiveQueues;
 
     /**
      * 'retired' queues, no longer considered for activation.
      * Linked-list of keys for queues.
      */
-    protected BlockingQueue<String> retiredQueues =
-    	new LinkedBlockingQueue<String>();
+    protected Queue<String> retiredQueues;
     
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
@@ -187,8 +183,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     /**
      * All per-class queues held in snoozed state, sorted by wake time.
      */
-    protected SortedSet<WorkQueue> snoozedClassQueues =
-        Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
+    protected SortedSet<WorkQueue> snoozedClassQueues;
     
     /** Timer for tasks which wake head item of snoozedClassQueues */
     protected transient Timer wakeTimer;
@@ -289,6 +284,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         super.initialize(c);
         this.controller = c;
         
+        initQueuesOfQueues();
+        
         this.targetSizeForReadyQueues = (Integer)getUncheckedAttribute(null,
             ATTR_TARGET_READY_QUEUES_BACKLOG);
         if (this.targetSizeForReadyQueues < 1) {
@@ -334,6 +331,27 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         loadSeeds();
     }
     
+    /**
+     * Set up the various queues-of-queues used by the frontier. Override
+     * in implementing subclasses to reduce or eliminate risk of queues
+     * growing without bound. 
+     */
+    protected void initQueuesOfQueues() {
+        // small risk of OutOfMemoryError: if 'hold-queues' is false,
+        // readyClassQueues may grow in size without bound
+        readyClassQueues = new LinkedBlockingQueue<String>();
+        // risk of OutOfMemoryError: in large crawls, 
+        // inactiveQueues may grow in size without bound
+        inactiveQueues = new LinkedBlockingQueue<String>();
+        // risk of OutOfMemoryError: in large crawls with queue max-budgets, 
+        // inactiveQueues may grow in size without bound
+        retiredQueues = new LinkedBlockingQueue<String>();
+        // small risk of OutOfMemoryError: in large crawls with many 
+        // unresponsive queues, an unbounded number of snoozed queues 
+        // may exist
+        snoozedClassQueues = Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
+    }
+
     /**
      * Set (or reset after configuration change) the cost policy in effect.
      * 
@@ -499,16 +517,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param wq
      */
     private void deactivateQueue(WorkQueue wq) {
-        try {
+//        try {
             wq.setSessionBalance(0); // zero out session balance
-            inactiveQueues.put(wq.getClassKey());
+            inactiveQueues.add(wq.getClassKey());
             wq.setActive(this, false);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.err.println("unable to deactivate queue "+wq);
-            // propagate interrupt up 
-            throw new RuntimeException(e);
-        }
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//            System.err.println("unable to deactivate queue "+wq);
+//            // propagate interrupt up 
+//            throw new RuntimeException(e);
+//        }
     }
     
     /**
@@ -516,17 +534,17 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param wq
      */
     private void retireQueue(WorkQueue wq) {
-        try {
-            retiredQueues.put(wq.getClassKey());
+//        try {
+            retiredQueues.add(wq.getClassKey());
             decrementQueuedCount(wq.getCount());
             wq.setRetired(true);
             wq.setActive(this, false);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.err.println("unable to retire queue "+wq);
-            // propagate interrupt up 
-            throw new RuntimeException(e);
-        }
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//            System.err.println("unable to retire queue "+wq);
+//            // propagate interrupt up 
+//            throw new RuntimeException(e);
+//        }
     }
     
     /** 
