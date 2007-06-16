@@ -36,6 +36,7 @@ import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
+import com.sleepycat.je.DatabaseException;
 
 /**
  * Queue backed by a JE Collections StoredSortedMap. 
@@ -44,10 +45,11 @@ import com.sleepycat.je.DatabaseConfig;
  *
  * @param <E>
  */
-public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  {
-    StoredSortedMap queueMap; // Long -> E
-    AtomicLong tailIndex = new AtomicLong(0); // next spot for insert
-    AtomicLong headIndex = new AtomicLong(0); // next spot for read
+public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  implements Serializable {
+    transient StoredSortedMap queueMap; // Long -> E
+    transient Database queueDb; // Database
+    AtomicLong tailIndex; // next spot for insert
+    AtomicLong headIndex; // next spot for read
  
     /**
      * Create a StoredQueue backed by the given Database. 
@@ -61,10 +63,22 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  {
      * @param classCatalog
      */
     public StoredQueue(Database db, Class clsOrNull, StoredClassCatalog classCatalog) {
+        tailIndex = new AtomicLong(0);
+        headIndex = new AtomicLong(0);
+        hookupDatabase(db, clsOrNull, classCatalog);
+    }
+
+    /**
+     * @param db
+     * @param clsOrNull
+     * @param classCatalog
+     */
+    public void hookupDatabase(Database db, Class clsOrNull, StoredClassCatalog classCatalog) {
         EntryBinding valueBinding = TupleBinding.getPrimitiveBinding(clsOrNull);
         if(valueBinding == null) {
             valueBinding = new SerialBinding(classCatalog, clsOrNull);
         }
+        queueDb = db;
         queueMap = new StoredSortedMap(
                 db,
                 TupleBinding.getPrimitiveBinding(Long.class),
@@ -80,7 +94,12 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  {
 
     @Override
     public int size() {
-        return queueMap.size();
+        synchronized(tailIndex) {
+            synchronized(headIndex) {
+                return (int)(tailIndex.get()-headIndex.get());
+            }
+        }
+        
     }
 
     public boolean offer(E o) {
@@ -100,7 +119,12 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  {
     @SuppressWarnings("unchecked")
     public E poll() {
         synchronized (headIndex) {
-            return (E) queueMap.remove(headIndex.getAndIncrement());
+            E head = peek();
+            if(head!=null) {
+                return (E) queueMap.remove(headIndex.getAndIncrement());
+            } else {
+                return null;
+            }
         }
     }
 
@@ -110,11 +134,38 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  {
      * 
      * @return DatabaseConfig suitable for queue
      */
-    protected static DatabaseConfig databaseConfig() {
+    public static DatabaseConfig databaseConfig() {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setTransactional(false);
         dbConfig.setAllowCreate(true);
         dbConfig.setDeferredWrite(true);
         return dbConfig;
+    }
+    
+    /**
+     * Save the state to a stream (that is, serialize it).
+     *
+     * @serialData The capacity is emitted (int), followed by all of
+     * its elements (each an <tt>Object</tt>) in the proper order,
+     * followed by a null
+     * @param s the stream
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+        try {
+            queueDb.sync();
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e); 
+        } 
+        s.defaultWriteObject();
+    }
+
+    public void close() {
+        try {
+            queueDb.sync();
+            queueDb.close();
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
