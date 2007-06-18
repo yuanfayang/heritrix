@@ -25,7 +25,7 @@ public class MonkeyServlet extends HttpServlet {
 	private static final long serialVersionUID = 386927649505528063L;
 
 	private MonkeyHeartbeatTracker heartbeat;
-
+	
 	@Override
 	/**
 	 * Initializes the servlet. A new heart beat tracker is created and started.
@@ -121,7 +121,7 @@ public class MonkeyServlet extends HttpServlet {
 		Properties conf = Harness.loadOrCreateProperties();
 		JSONObject res = new JSONObject();
 		res.put("controller_url", conf.getProperty("controller.url"));
-		res.put("linksSubmit_url", conf.getProperty("linksSubmit.url"));
+		res.put("monkey_id", conf.getProperty("monkey.id"));
 		response.getWriter().println(res.toString());
 	}
 	

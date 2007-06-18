@@ -14,11 +14,13 @@
 
 $:.unshift File.dirname(__FILE__) + "/../../lib"
 require 'rubygems'
-require_gem 'camping', '>=1.4'
+gem 'camping', '>=1.4'
 require 'camping/session'
 require 'net/http'
-require 'URI'
-require 'json'
+#require 'URI'
+require 'open-uri'
+#require 'json'
+require 'active_support/json'
 
 Camping.goes :Monkeys
 

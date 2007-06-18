@@ -1,6 +1,8 @@
 package org.archive.monkeys.controller.interfaces;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
@@ -114,22 +116,79 @@ public class ControllerMonkeyServlet extends ControllerInterfaceServlet {
 		if (!request.getMethod().equals("POST")) {
 			response.setStatus(400);
 			response.getWriter().println(
-					"This request should be a GET request.");
+					"This request should be a POST request.");
 		} else {
 			BufferedReader br = new BufferedReader(request.getReader());
 			String line;
 			while ((line = br.readLine()) != null) {
+				
+				/* not adding received urls as tasks */
+				
+				/*
 				JSONObject task = new JSONObject();
 				task.put("URL", line);
 				task.put("auth", new JSONObject());
 				task.put("operation", "linksGetter");
+				
+				*/
 //				System.err.println(line);
 				try {
-					controller.submitTask(task);
+					; //controller.submitTask(task);
 				} catch (Exception e) {
 					throw new ServletException(e);
 				}
 			}
+			response.setStatus(200);
+			response.getWriter().println("OK");
+		}
+	}
+	
+	
+	public void doResponseLogger(HttpServletRequest request, HttpServletResponse response)
+	throws ServletException, IOException {
+		
+		log.debug("In the response logger function");
+		
+		response.setContentType("text/html");
+		if (!request.getMethod().equals("POST")) {
+			response.setStatus(400);
+			response.getWriter().println(
+					"This request should be a POST request.");
+			
+		//	log.debug("---The method used---" + request.getMethod());
+			
+		} else {
+			BufferedReader br = new BufferedReader(request.getReader());
+			
+			String line;
+			
+			//log.debug("Extracted logs");
+			BufferedWriter out;
+			try {
+		         out = new BufferedWriter(new FileWriter("/tmp/monkey-responses.log", true));
+		    
+		         while ((line = br.readLine()) != null) {
+						
+						/* Write the line to disk
+						 * 
+						 */
+						
+						//log.debug(line);
+					
+						out.write(line + "\n");
+						
+						
+					}
+					
+					
+			        out.close();
+					
+		         
+		    } catch (IOException e) {
+		    
+		    	log.debug("Exception in opening file to write monkey responses");
+		    }
+			
 			response.setStatus(200);
 			response.getWriter().println("OK");
 		}

@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.BasicConfigurator;
+//import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.archive.monkeys.controller.DefaultController;
 import org.archive.monkeys.controller.NanoContainer;
@@ -30,6 +30,9 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 			HttpServletResponse response) throws ServletException, IOException {
 		response.setContentType("text/html");
 
+		
+		
+		
 		// check that we got the correct HTTP method in the request
 		if (!request.getMethod().equals("POST")) {
 			log.warn("Request wasn't POST, returning error.");
@@ -40,20 +43,22 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 			log.debug("Request OK, parsing data.");
 			log.debug("Content length is: " + request.getContentLength());
 			log.debug("Query string is: " + request.getQueryString());
-			log.debug("Resuest URL was: " + request.getRequestURI());
-			log.debug(request.getInputStream().available());
+			log.debug("Request URL was: " + request.getRequestURI());
+			
+			//log.debug(request.getInputStream().available());
 			log.debug("before reader");
 
 			// read POST data
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					request.getInputStream()));
-			log.debug("reading");
+		
 			String content = "";
-			while (br.ready()) {
-				content += br.readLine();
-			}
-			log.debug("!!! " + content);
+	
+			content = request.getParameter("jsondata");
 
+			log.debug("content is " + content);
+
+			//content = "{\"URL\":\"www.google.com\",\"auth\":{},\"operation\":\"linksGetter\"}";	
+		
+			
 			// parse the JSON data read from the stream
 			JSONObject taskData = (JSONObject) JSONValue.parse(content);
 
@@ -97,6 +102,32 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 		}
 	}
 
+	public void doReIssueFailedTask(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+
+		response.setContentType("text/html");
+		if (!request.getMethod().equals("GET")) {
+			log.warn("Request wasn't GET, returning error.");
+			response.setStatus(400);
+			response.getWriter().println(
+					"This request should be a GET request.");
+		} else {
+			long taskId = Long.parseLong(request.getParameter("tid"));
+			try {
+				
+				controller.reIssueFailedTask(taskId);
+				response.setStatus(200);
+				response.getWriter().println(taskId);
+			} catch (Exception e) {
+				response.setStatus(400);
+				response.getWriter().println(e.getMessage());
+			}
+		}
+	}
+
+	
+	
+	
 	public void doShowQueue(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 
@@ -190,15 +221,28 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 					"This request should be a GET request.");
 		} else {
 			try {
-				HashMap<Long, Task.Status> rep = controller.getTaskReport();
+				HashMap<Long, String> rep = controller.getTaskReport();
 				response.setStatus(200);
 				
-				response.getWriter().print("<table><tr><th>Task id</th><th>Status</th></tr>");
-				for (long tid : rep.keySet()) {
+				// modifying the following to not print html
+				
+				//response.getWriter().print("<table><tr><th>Task id</th><th>Status</th></tr>");
+				/*for (long tid : rep.keySet()) {
 					response.getWriter().print("<tr><td>" + tid + "</td><td>" + rep.get(tid) +
 							"</td></tr>");
-				}
-				response.getWriter().println("</table>");
+				}*/
+				
+				for (long tid : rep.keySet()) {
+					
+									
+					response.getWriter().print(tid + " " + rep.get(tid) + "\n");
+				}	
+				
+				response.getWriter().println();
+				
+				//response.getWriter().println("</table>");
+				
+//				
 			} catch (Exception e) {
 				response.setStatus(400);
 				response.getWriter().println(e.getMessage());

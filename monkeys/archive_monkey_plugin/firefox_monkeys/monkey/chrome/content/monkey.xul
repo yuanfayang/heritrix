@@ -12,7 +12,14 @@
             src="chrome://monkey/content/link_getter.js" /> -->
 
     <script type="application/x-javascript">
-	window.addEventListener("load", monkey_load, false);
+	
+	if(	window.toolbar.visible ) { 
+		window.addEventListener("load", monkey_load, false);
+	}	
+	
+	
+	//window.addEventListener("load",launchDebugWindow,false);
+	
 	//window.addEventListener("unload", monkey_unload, false);
     </script>     
 
@@ -27,6 +34,12 @@
             
                 <toolbarbutton id="magic-button" tooltiptext="Magic Button"
                                label="Monkey" oncommand="magic_button(event)" />
+                
+                <toolbarbutton id="magic-button1" tooltiptext="Magic Button1"
+                               label="Monkey Debugger" oncommand="launchDebugWindow()" />
+                    
+                               
+                               
             </toolbaritem>
             
             <toolbarspring />

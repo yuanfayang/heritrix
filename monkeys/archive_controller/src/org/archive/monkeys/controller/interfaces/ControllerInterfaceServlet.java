@@ -21,9 +21,16 @@ public abstract class ControllerInterfaceServlet extends HttpServlet{
 	
 	public void init(ServletConfig conf) throws ServletException {
 		super.init(conf);
+		
+		
 		log = Logger.getLogger(this.getClass());
-		BasicConfigurator.configure();
+		
+		//BasicConfigurator.configure();
+		//log.setAdditivity(false);
+		
 		controller = ControllerFactory.getController();
+		
+		
 	}
 
 	protected void service(HttpServletRequest request,

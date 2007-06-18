@@ -56,10 +56,21 @@ public class DefaultController implements Serializable, Controller {
     nanoId = nano.put(this);
     taskCounter = 0;
     log = Logger.getLogger(this.getClass());
+    
+    
     BasicConfigurator.configure();
+    
+    
+    //log.setAdditivity(false);
+    
+    
     //log.info("Controller created successfully, nano id: " + nanoId);
   }
 
+  
+  
+  
+  
   // Methods used by the operator-controller interface
 
   /* (non-Javadoc)
@@ -135,6 +146,12 @@ public class DefaultController implements Serializable, Controller {
     }
 
     t.assign(monkeyId);
+    
+    t.setNumAttempts(t.getNumAttempts() + 1);
+    
+    t.setAssignmentTime(System.currentTimeMillis());
+    t.setCompletionTime(-1);
+    
     taskAssigned(t);
 
     return t.getTaskData();
@@ -154,6 +171,12 @@ public class DefaultController implements Serializable, Controller {
       t.fail();
       throw new Exception("Completed the wrong task.");
     } else {
+     
+    	//completed the right task
+    	
+    	t.setCompletionTime(System.currentTimeMillis());
+    	
+    	
       taskCompleted(t);
       t.success();
     }
@@ -191,6 +214,7 @@ public synchronized void hungMonkey(String monkeyId) throws Exception {
   /* (non-Javadoc)
  * @see org.archive.monkeys.controller.Controller#getTaskReport()
  */
+/*
 public synchronized HashMap<Long, Task.Status> getTaskReport() {
     HashMap<Long, Task.Status> res = new HashMap<Long, Task.Status>();
       for (Task t : allTasks.values()) {
@@ -198,6 +222,25 @@ public synchronized HashMap<Long, Task.Status> getTaskReport() {
       }
     return res;
   }
+*/
+
+public synchronized HashMap<Long, String> getTaskReport() {
+    HashMap<Long, String> res = new HashMap<Long, String>();
+    
+    long currentTime = System.currentTimeMillis();
+    for (Task t : allTasks.values()) {
+    	
+    	String str = ((Object)t.getStatus()).toString() + " " + t.getNumAttempts();
+    	str+=" " + t.getAssignmentTime() + " " + t.getCompletionTime() + " " + currentTime;
+    	str+=" " + t.getMonkeyId();
+    	
+    	
+        res.put(t.getId(), str);
+      }
+    return res;
+  }
+
+
 
   // helper methods 
 
@@ -214,6 +257,24 @@ public synchronized long getNanoId() {
     failedTasks.add(t);
   }
 
+  
+  /**
+   * Reissues a task from the failed list to the free task list
+   * allowing another go for the task to be assigned and processed
+   */
+ 
+  public synchronized void reIssueFailedTask(long taskId) throws Exception {
+    	
+	  	Task t = allTasks.get(taskId);
+	    failedTasks.remove(t);
+	    
+	    t.setStatusFree();
+	    t.setAssignmentTime(-1);
+	    t.setCompletionTime(-1);
+	    
+	    freeTasks.add(t);
+  }
+  
   /**
    * Performs the necessary data structure changes when a task is assigned.
    */

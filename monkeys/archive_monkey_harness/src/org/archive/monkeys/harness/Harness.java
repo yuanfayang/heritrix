@@ -31,6 +31,11 @@ public class Harness {
 	private Logger log;
 
 	private Properties conf;
+	
+	private static String monkeyId = "MonkeyOne";
+	
+	private static String browserCommand = "firefox -P dev";
+	
 
 	/**
 	 * Creates a new harness. All necessary initializations are done but the
@@ -42,20 +47,35 @@ public class Harness {
 	 * @throws FileNotFoundException
 	 *             in case the config file cannot be created.
 	 */
-	public Harness() throws FileNotFoundException, IOException {
+	
+	public Harness() {
+		
+		
+	}
+	
+	public Harness(String mId, String bCommand) throws FileNotFoundException, IOException {
+
+
+		Harness.monkeyId =  mId;
+
+		Harness.browserCommand = bCommand;
+		
 		log = Logger.getLogger(this.getClass());
+		//log.setAdditivity(false);
 		BasicConfigurator.configure();
 		conf = loadOrCreateProperties();
 		this.server = new HttpServer();
 		this.server.addListener(":" + conf.getProperty("port"));
 
+		
 		HttpContext context = this.server.getContext("/");
 		ServletHandler handler = new ServletHandler();
 		handler.addServlet("harness", conf.getProperty("harness.mapping"),
 				"org.archive.monkeys.harness.MonkeyServlet");
 		context.addHandler(handler);
 	}
-
+	
+	
 	/**
 	 * Starts the browser and http server. Will return when both processes exit.
 	 * 
@@ -79,8 +99,9 @@ public class Harness {
 	 */
 	public static void main(String[] args) {
 		try {
-			Harness h = new Harness();
+			Harness h = new Harness(args[0], args[1]);
 			h.start();
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -100,18 +121,25 @@ public class Harness {
 		Properties p = new Properties();
 		if (conf.exists()) {
 			p.load(new FileInputStream(conf));
+			
 		} else {
 			// load defaults
+			
 			p.setProperty("port", "8082");
 			p.setProperty("harness.mapping", "/harness");
-			p.setProperty("browser.command", "firefox -P dev");
+			
 			p.setProperty("browser.timeout", "20000");
 			p.setProperty("controller.url", "http://localhost:8081/monkey");
-			p.setProperty("linksSubmit.url", "http://localhost:8081/monkey?method=urls");
+			
 			p.store(new FileOutputStream(conf),
 					"Archive Monkey Harness Config File");
+			
 		}
 
+		// this will not be stored into the conf file
+		p.setProperty("browser.command", browserCommand);
+		p.setProperty("monkey.id", monkeyId);
+		
 		return p;
 	}
 }

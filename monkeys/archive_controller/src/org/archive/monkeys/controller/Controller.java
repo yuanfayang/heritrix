@@ -3,8 +3,10 @@ package org.archive.monkeys.controller;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.archive.monkeys.controller.Task.Status;
+import org.archive.monkeys.controller.Task;
 import org.json.simple.JSONObject;
+
+import org.apache.log4j.Logger;
 
 public interface Controller {
 
@@ -67,9 +69,15 @@ public interface Controller {
 			throws Exception;
 
 	public abstract void hungMonkey(String monkeyId) throws Exception;
+	
+	public abstract void reIssueFailedTask(long taskId) throws Exception; 
 
-	public abstract HashMap<Long, Task.Status> getTaskReport();
+	//public abstract HashMap<Long, Task.Status> getTaskReport();
 
+	public abstract HashMap<Long, String> getTaskReport();
+	
 	public abstract long getNanoId();
+	
+	
 
 }
