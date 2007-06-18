@@ -76,11 +76,39 @@ Rollback
 
 <% } %>
 
+|
+
+<a 
+   title="Associate SURT prefixes with this sheet."
+   href="do_show_associate.jsp?<%=qs%>&add=Y">
+Associate
+</a>
+
+|
+
+<a 
+   title="Disassociate SURT prefixes with this sheet."
+   href="do_show_associate.jsp?<%=qs%>&add=N">
+Disassociate
+</a>
+
+
+
+
 </td>
 </tr>
 <% } %>
 </table>
 
+<h3>Test Settings</h3>
+
+<form method="get" action="do_show_config.jsp">
+<% Text.printJobFormFields(request, out); %>
+Enter a URL below to see what settings will be applied for that URL:<br>
+<input type="text" name="url" value="">
+<input type="submit" name="button" value="Settings">
+<input type="submit" name="button" value="Sheets">
+</form>
 
 </body>
 </html>

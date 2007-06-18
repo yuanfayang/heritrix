@@ -26,8 +26,12 @@
 
 package org.archive.crawler.webui;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,6 +52,7 @@ import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.Types;
 import org.archive.settings.path.PathValidator;
+import org.archive.surt.SURTTokenizer;
 
 import static org.archive.settings.path.PathChanger.LIST_TAG;
 import static org.archive.settings.path.PathChanger.MAP_TAG;
@@ -445,6 +450,86 @@ public class Sheets {
         showPathDetail(sc, request, response);
     }
     
+    
+    public static void associate(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        boolean add = request.getParameter("add").equals("Y");
+        String sheet = request.getParameter("sheet");
+        String surts = request.getParameter("surts");
+        BufferedReader br = new BufferedReader(new StringReader(surts));
+        int count = 0;
+        try {
+            for (String s = br.readLine(); s != null; s = br.readLine()) {
+                if (!s.startsWith("#") && s.trim().length() > 0) {
+                    String surt = SURTTokenizer.prefixKey(s);
+                    if (surt.startsWith("http://")) {
+                        surt = surt.substring(7);
+                    }
+                    if (add) {
+                        sheetManager.associate(sheet, surt);
+                    } else {
+                        sheetManager.disassociate(sheet, surt);
+                    }
+                }
+            }
+            count++;
+        } catch (IOException e) { 
+            // Impossible
+            throw new Error();
+        } finally {
+            remote.close();
+        }
+
+        request.setAttribute("message", count + " SURT prefixes were " +
+                        "associated with " + sheet + ".");
+        showSheets(sc, request, response);
+    }
+
+    
+    public static void showAssociate(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        getSheetManager(request).close();
+        request.setAttribute("sheet", request.getParameter("sheet"));
+        request.setAttribute("add", request.getParameter("add"));
+        Misc.forward(request, response, "page_associations.jsp");
+    }
+
+    
+    public static void showConfig(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        String url = request.getParameter("url");
+        request.setAttribute("sheet", url);
+        try {
+            if (request.getParameter("button").equals("Sheets")) {
+                String[] pairs = sheetManager.findConfigNames(url);
+                Map<String,String> map = new LinkedHashMap<String,String>();
+                for (int i = 0; i < pairs.length; i += 2) {
+                    map.put(pairs[i], pairs[i + 1]);
+                }
+                request.setAttribute("surtToSheet", map);
+                Misc.forward(request, response, "page_config_names.jsp");
+            } else {
+                CompositeData[] settings = sheetManager.findConfig(url);
+                request.setAttribute("settings", Arrays.asList(settings));
+                request.setAttribute("problems", Collections.emptyList());
+                Misc.forward(request, response, "page_sheet_detail.jsp");
+            }
+        } finally {
+            remote.close();
+        }
+    }
+
+
     private static Settings getSettings(JMXSheetManager mgr,
             String sheet) {
         Map<String,Setting> result = new LinkedHashMap<String,Setting>();

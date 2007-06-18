@@ -185,5 +185,18 @@ public interface JMXSheetManager {
             @Parameter(name="sheet", desc="The name of the sheet whose problems to return.")
             String sheet);
 
+    
+    @Operation(desc="Returns the settings that will be applied for the given URI.",
+            type="org.archive.settings.jmx.Types.GET_DATA_ARRAY")
+    CompositeData[] findConfig(
+            @Parameter(name="uri", desc="The URI whose settings to return.")
+            String uri);
+
+
+    @Operation(desc="Returns the names of the sheets used to populate the " +
+                "settings for the given URI.")
+    String[] findConfigNames(
+            @Parameter(name="uri", desc="The URI whose sheets to return.")
+            String uri);
 
 }
