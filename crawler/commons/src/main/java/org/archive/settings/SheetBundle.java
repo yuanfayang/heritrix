@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.archive.state.Key;
+import org.archive.state.KeyTypes;
 
 
 /**
@@ -240,10 +241,15 @@ public class SheetBundle extends Sheet {
                 sheets.remove(sheets.size() - 1);
             } else {
                 SingleSheet ss = (SingleSheet)sheet;
-                T value = ss.check(module, key);
-                if (value != null) {
-                    sheets.add(ss);
-                    return Resolved.makeOnline(module, key, value, sheets);
+                if (isOnline(bundle, key.getType())) {
+                    T value = ss.check(module, key);
+                    if (value != null) {
+                        sheets.add(ss);
+                        return Resolved.makeOnline(module, key, value, sheets);
+                    }
+                } else {
+                    Offline value = ss.checkOffline((Offline)module, key);
+                    return Resolved.makeOffline(module, key, value, sheets);
                 }
             }
         }
@@ -251,6 +257,21 @@ public class SheetBundle extends Sheet {
     }
     
     
+    private static boolean isOnline(Sheet sheet, Class c) {
+        if (sheet.getSheetManager().isOnline()) {
+            return true;
+        }
+        if (KeyTypes.isSimple(c)) {
+            return true;
+        }
+        if (Map.class.isAssignableFrom(c)) {
+            return true;
+        }
+        if (List.class.isAssignableFrom(c)) {
+            return true;
+        }
+        return false;
+    }
 
 
     /**

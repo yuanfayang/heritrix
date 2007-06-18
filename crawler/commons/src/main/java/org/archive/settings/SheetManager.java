@@ -28,6 +28,7 @@ import java.io.Closeable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -349,7 +350,7 @@ implements StateProvider, Serializable, DirectoryModule {
      * @param uri
      * @return
      */
-    public StateProvider findConfig(String uri) {
+    public Sheet findConfig(String uri) {
         SURTTokenizer st;
         try {
             st = new SURTTokenizer(uri.toString());
@@ -357,12 +358,12 @@ implements StateProvider, Serializable, DirectoryModule {
             throw new IllegalArgumentException(e);
         }
         
-        SheetList list = null;
+        List<Sheet> list = null;
         for (String s = st.nextSearch(); s != null; s = st.nextSearch()) {
             Sheet sheet = getAssociation(s);
             if (sheet != null) {
                 if (list == null) {
-                    list = new SheetList();
+                    list = new ArrayList<Sheet>();
                 }
                 list.add(sheet);
             }
@@ -372,9 +373,27 @@ implements StateProvider, Serializable, DirectoryModule {
         }
         
         list.add(getDefault());
-        return list;
+        return new SheetBundle(this, "anonymous", list);
     }    
 
+    
+    public Map<String,String> findConfigNames(String uri) {
+        SURTTokenizer st;
+        try {
+            st = new SURTTokenizer(uri.toString());
+        } catch (URIException e) {
+            throw new IllegalArgumentException(e);
+        }
+
+        Map<String,String> result = new LinkedHashMap<String,String>();
+        for (String s = st.nextSearch(); s != null; s = st.nextSearch()) {
+            Sheet sheet = getAssociation(s);
+            String sheetName = (sheet == null) ? null : sheet.getName();
+            result.put(s, sheetName);
+        }
+        
+        return result;
+    }
     
     /**
      * Closes any modules that require special cleanup.  First, this method

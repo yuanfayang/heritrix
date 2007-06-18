@@ -8,7 +8,7 @@ Crawler crawler = (Crawler)Text.get(request, "crawler");
 Collection<CompositeData> settings = (Collection)Text.get(request, "settings");
 int row = 1;
 String previousPath = ":";
-
+boolean showSheets = true;
 %>
 <html>
 <head>
@@ -21,41 +21,50 @@ String previousPath = ":";
 
 <h3>Settings:</h3>
 
-<ul>
+
+<table class="info">
 <% 
 
 for (CompositeData setting: settings) {
     String path = (String)setting.get("path");
     String value = (String)setting.get("value");
-    int p = path.lastIndexOf('.');
-    String base = (p < 0) ? path : path.substring(p + 1);
-        
-    String parent = Text.parentPath(path);
-    String previousParent = Text.parentPath(previousPath);
-    int count = Text.countSegments(path);
-    int previousCount = Text.countSegments(previousPath);
-    if (parent.equals(previousParent)) {
-        if (count > previousCount) {
-           for (int i = 0; i < count - previousCount; i++) {
-               out.println("<ul>\n");
-           }
-        }
-        if (count < previousCount) {
-           for (int i = 0; i < previousCount - count; i++) {
-               out.println("</ul>\n");
-           }
-        }
-    } else {
-        out.println("</ul>\n");    
-    }
+    String type = (String)setting.get("type");
+    String[] sheets = (String[])setting.get("sheets");
+    row = -row + 1;
 %>
-<li><b title="<%=path%>"><%=Text.html(base)%></b></br>
-<%=Text.html(value)%></li>
-<% 
-    previousPath = path;
-} 
-%>
-</ul>
+
+<% if (showSheets) { %>
+<tr>
+<td class="info<%=row%>">
+<%=Text.html(sheets[0])%>
+<% for (int i = 1; i < sheets.length; i++) { %>
+, <%=Text.html(sheets[i])%>
+
+<% } %>
+
+</td>
+
+
+<% } %>
+
+
+<td class="info<%=row%>">
+<%=Text.html(path)%>
+</td>
+
+<td class="info<%=row%>">
+<%=Text.html(type)%>
+</td>
+
+<td class="info<%=row%>">
+<%=Text.html(value)%>
+</td>
+
+</tr>
+<% } // for %> 
+
+</table>
+
 
 </body>
 </html>

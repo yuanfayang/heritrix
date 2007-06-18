@@ -140,6 +140,19 @@ public class WebUIJUnit extends TmpDirTestCase {
     }
     
     
+    private static String extract(String url, String key) {
+        int p = url.indexOf(key);
+        if (p < 0) {
+            throw new IllegalStateException();
+        }
+        int p2 = url.indexOf('&', p);
+        if (p2 < 0) {
+            p2 = url.length();
+        }
+        return url.substring(p + key.length() + 1, p2);
+    }
+    
+    
     /**
      * Tests the webui.
      */
@@ -154,14 +167,72 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "password", "local");
         
         String url = findHref("do_show_crawler.jsp", managerId);
+        String host = extract(url, "host");
         doGet(url);
         
-        url = findHref("do_show_sheets.jsp", managerId, "default");
+        String urlSheets = findHref("do_show_sheets.jsp", managerId, "default");
+        doGet(urlSheets);
+        
+        // Create a new single sheet named 'foo'.
+        url = findHref("do_show_add_single_sheet.jsp", managerId, "default");
         doGet(url);
         
-        url = findHref("do_show_sheet_detail.jsp", managerId, "sheet", "default");
+        doPost("do_add_single_sheet.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", "foo");
+
+
+        // Override FetchHTTP.sotimeout-ms in the foo sheet to be 
+        // "3333" instead of "20000".  Commit the change.
+        url = findHref("do_override_path.jsp", "sotimeout-ms", "20000");
         doGet(url);
         
+        url = findHref("do_show_path_detail.jsp", "sotimeout-ms", "20000");
+        doGet(url);
+        
+        doPost("do_save_path.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", "foo", 
+                "path", "root:controller:processors:HTTP:sotimeout-ms",
+                "type-root:controller:processors:HTTP:sotimeout-ms", "int",
+                "value-root:controller:processors:HTTP:sotimeout-ms", "3333"
+        );
+        
+        doGet(urlSheets);
+        
+        url = findHref("do_commit_sheet.jsp", managerId, "foo");
+        doGet(url);
+        
+        // Associate the URL prefix "http://www.foo.org" with the "foo" sheet.
+        url = findHref("do_show_associate.jsp", managerId, "foo");
+        doGet(url);
+        
+        doPost("do_associate.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", "foo", 
+                "add", "Y",
+                "surts", "# Comment line to ignore\n\nhttp://www.foo.org");
+        
+        // View the configuration for url "http://www.foo.org/index.html",
+        // which should contain our sotimeout-ms override.
+        doPost("do_show_config.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "button", "Settings",
+                "url", "http://www.foo.org/index.html");
+
+
         if (System.getProperty("org.archive.crawler.webui.wait") != null) {
             Object eternity = new Object();
             synchronized (eternity) {
@@ -219,6 +290,7 @@ public class WebUIJUnit extends TmpDirTestCase {
     }
     
     
+
     private void doPost(String urlString, String... pairs) throws Exception {
         if (pairs.length % 2 != 0) {
             throw new IllegalArgumentException("Pairs must come in pairs.");

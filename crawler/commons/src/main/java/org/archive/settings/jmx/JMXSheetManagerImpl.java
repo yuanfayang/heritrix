@@ -391,4 +391,23 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
 
+    public CompositeData[] findConfig(String uri) {
+        Sheet sheet = manager.findConfig(uri);
+        JMXPathListConsumer c = new JMXPathListConsumer();
+        PathLister.resolveAll(sheet, c);
+        return c.getData();        
+    }
+    
+    
+    public String[] findConfigNames(String uri) {
+        Map<String,String> surtToSheet = manager.findConfigNames(uri);
+        String[] result = new String[surtToSheet.size() * 2];
+        int i = 0;
+        for (Map.Entry<String,String> me: surtToSheet.entrySet()) {
+            result[i] = me.getKey();
+            result[i + 1] = me.getValue();
+            i += 2;
+        }
+        return result;
+    }
 }
