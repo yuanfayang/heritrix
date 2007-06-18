@@ -26,6 +26,8 @@ public class Task {
 			Status.FAILED };
 
 	private long id;
+	
+	private int numAttempts;
 
 	private Status status;
 
@@ -34,6 +36,9 @@ public class Task {
 	private DefaultController controller;
 
 	private String monkeyId;
+	
+	private long assignmentTime;
+	private long completionTime;
 
 	@SuppressWarnings("unchecked")
 	/**
@@ -51,8 +56,31 @@ public class Task {
 		this.id = id;
 		this.taskData.put("id", id);
 		this.status = Status.FREE;
+		
+		this.numAttempts = 0;
+		
+		this.assignmentTime = -1;
+		this.completionTime = -1;
 	}
 
+	
+	public long getAssignmentTime() {
+		return assignmentTime;
+	}
+	
+	public long getCompletionTime() {
+		return completionTime;
+	}
+	
+	public void setAssignmentTime(long time) {
+		assignmentTime = time;
+	}
+	
+	public void setCompletionTime(long time) {
+		completionTime = time;
+	}
+	
+	
 	/**
 	 * Returns the status of this task.
 	 */
@@ -60,13 +88,24 @@ public class Task {
 		return status;
 	}
 
+	
+	public int getNumAttempts() {
+		return numAttempts;
+	}
+	
+	public void setNumAttempts(int num) {
+		numAttempts = num;
+	}
+	
+	
+	
 	/**
 	 * Sets the status of this task.
 	 * @param status The new status
 	 */
 	public void setStatus(Status status) {
 		if (status != Status.ASSIGNED) {
-			setMonkeyId(null);
+			; //setMonkeyId(null);
 		}
 		this.status = status;
 	}
@@ -129,6 +168,15 @@ public class Task {
 	 */
 	public void success() {
 		this.setStatus(Status.COMPLETE);
+	}
+	
+	/**
+	 * Marks this task as free
+	 */
+	public void setStatusFree() {
+		
+		this.setStatus(Status.FREE);
+		this.setMonkeyId(null);
 	}
 	
 	/**
