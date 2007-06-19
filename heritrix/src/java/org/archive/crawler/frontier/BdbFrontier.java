@@ -162,10 +162,19 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     protected Queue<String> reinit(Queue<String> q, String name) {
         try {
             // restore the innner Database/StoredSortedMap of the queue
-            StoredQueue<String> queue = (StoredQueue<String>) q;
             Database db = this.controller.getBdbEnvironment()
                 .openDatabase(null, name, StoredQueue.databaseConfig());
-            queue.hookupDatabase(db, String.class, null);
+            
+            StoredQueue<String> queue;
+            if(q instanceof StoredQueue) {
+                queue = (StoredQueue<String>) q;
+                queue.hookupDatabase(db, String.class, null);
+            } else {
+                // recovery of older checkpoint; copy to StoredQueue
+                queue = new StoredQueue<String>(db,String.class,
+                        this.controller.getBdbEnvironment().getClassCatalog()); 
+                queue.addAll(q);
+            }
             return queue;
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
