@@ -138,16 +138,17 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         // readyClassQueues may grow in size without bound
         readyClassQueues = new LinkedBlockingQueue<String>();
 
-        Database retiredQueuesDb;
         try {
             Database inactiveQueuesDb = this.controller.getBdbEnvironment()
                     .openDatabase(null, "inactiveQueues",
                             StoredQueue.databaseConfig());
             inactiveQueues = new StoredQueue<String>(inactiveQueuesDb,
                     String.class, null);
-            retiredQueuesDb = this.controller.getBdbEnvironment().openDatabase(
-                    null, "retiredQueues", StoredQueue.databaseConfig());
-            retiredQueues = new StoredQueue<String>(retiredQueuesDb,String.class,null);
+            Database retiredQueuesDb = this.controller.getBdbEnvironment()
+                    .openDatabase(null, "retiredQueues",
+                            StoredQueue.databaseConfig());
+            retiredQueues = new StoredQueue<String>(retiredQueuesDb,
+                    String.class, null);
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
         }
