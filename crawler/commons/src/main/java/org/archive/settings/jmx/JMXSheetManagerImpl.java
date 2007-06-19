@@ -44,6 +44,7 @@ import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
+import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.FilePathListConsumer;
@@ -124,12 +125,9 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
-    public synchronized void makeSheetBundle(String name, String sheets) {
-        List<Sheet> list = new ArrayList<Sheet>();
-        for (String s : sheets.split(",")) {
-            list.add(manager.getSheet(s));
-        }
-        manager.addSheetBundle(name, list);
+    public synchronized void makeSheetBundle(String name) {
+        Collection<Sheet> empty = Collections.emptyList();
+        manager.addSheetBundle(name, empty);
     }
 
     
@@ -410,4 +408,81 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         }
         return result;
     }
+
+
+    public synchronized boolean isSingleSheet(String sheetName) {
+        Sheet sheet = getSheet(sheetName);
+        if (sheet == null) {
+            throw new IllegalArgumentException("No such sheet: " + sheetName);
+        }
+        
+        return sheet instanceof SingleSheet;
+    }
+    
+    
+    public synchronized String[] getBundledSheets(String bundleName) {
+        Sheet sheet = getSheet(bundleName);
+        if (!(sheet instanceof SheetBundle)) {
+            throw new IllegalArgumentException(bundleName + " is not a bundle.");
+        }
+        
+        SheetBundle bundle = (SheetBundle)sheet;
+        List<Sheet> sheets = bundle.getSheets();
+        String[] result = new String[sheets.size()];
+        for (int i = 0; i < sheets.size(); i++) {
+            result[i] = sheets.get(i).getName();
+        }
+        return result;
+    }
+
+    
+    public synchronized void moveBundledSheet(
+            String bundleName, 
+            String move, 
+            int index) {
+        Sheet sheet = checkedOut.get(bundleName);
+        if (sheet == null) {
+            throw new IllegalArgumentException(bundleName + 
+                    " is not checked out.");
+        }
+        if (!(sheet instanceof SheetBundle)) {
+            throw new IllegalArgumentException(bundleName + " is not a bundle.");
+        }
+        
+        SheetBundle bundle = (SheetBundle)sheet;
+        List<Sheet> sheets = bundle.getSheets();
+        int moveIndex = indexOf(sheets, move);
+        
+        if (moveIndex < 0) {
+            Sheet s = manager.getSheet(move);
+            if (s == null) {
+                throw new IllegalArgumentException("No such sheet: " + move);
+            }
+            moveIndex = sheets.size();
+            sheets.add(s);
+        }
+        
+        if (index == moveIndex) {
+            return;
+        }
+        
+        Sheet s = sheets.remove(moveIndex);
+        sheets.add(index, s);
+    }
+    
+    
+    private static int indexOf(List<Sheet> sheets, String name) {
+        int i = 0;
+        for (Sheet sheet: sheets) {
+            if (sheet.getName().equals(name)) {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+    
+    
+    
+    
 }

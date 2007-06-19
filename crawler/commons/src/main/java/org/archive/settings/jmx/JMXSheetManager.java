@@ -35,11 +35,7 @@ public interface JMXSheetManager {
     @Operation(desc = "Creates a new sheet bundle.", impact = Bean.ACTION)
     void makeSheetBundle(
             @Parameter(name = "name", desc = "The name for the new sheet")
-            String name,
-
-            @Parameter(name = "sheets", desc = "The names of the sheets "
-                    + "to include in the bundle, in order of priority.")
-            String sheets);
+            String name);
 
     @Operation(desc = "Returns the settings overriden by the given single sheet.", type = "org.archive.settings.jmx.Types.GET_DATA_ARRAY")
     CompositeData[] getAll(
@@ -76,14 +72,6 @@ public interface JMXSheetManager {
             @Parameter(name = "path", desc = "The path to the element to move.")
             String path);
 
-    @Operation(desc = "Associates one or more SURTs with a sheet.")
-    void associate(
-
-            @Parameter(name = "sheetName", desc = "The name of the sheet to associate the SURTs with.")
-            String sheetName,
-
-            @Parameter(name = "surts", desc = "The surts to associate with that sheet.")
-            String[] contexts);
 
     @org.archive.openmbeans.annotations.Attribute(desc = "The names of the sheets being managed.", def = "")
     String[] getSheets();
@@ -198,5 +186,32 @@ public interface JMXSheetManager {
     String[] findConfigNames(
             @Parameter(name="uri", desc="The URI whose sheets to return.")
             String uri);
+
+    @Operation(desc="Returns true if the given sheet is a single sheet, or" +
+                "false if the given sheet is a sheet bundle.  Throws an " +
+                "exception if the given sheet does not exist.")
+    boolean isSingleSheet(           
+            @Parameter(name="sheetName", desc="The name of the sheet to test.")
+            String sheetName);
+
+    @Operation(desc="Returns the names of the sheets contained in the given" +
+                "sheet bundle.")
+    String[] getBundledSheets(            
+            @Parameter(name="bundleName", desc="The name of the bundle whose sheets to return.")
+            String bundleName);
+
+    @Operation(desc="Moves a sheet inside a bundle.")
+    void moveBundledSheet(
+            
+            @Parameter(name="bundle", desc="The name of the sheet bundle containing the sheet to move.")
+            String bundle, 
+            
+            @Parameter(name="sheetToMove", desc="The name of the sheet inside " +
+                        "the bundle to move.  If sheetToMove is not yet a " +
+                        "member of the bundle, it will be added to the bundle.")
+            String sheetToMove, 
+            
+            @Parameter(name="index", desc="The index to move the sheet to.")
+            int index);
 
 }
