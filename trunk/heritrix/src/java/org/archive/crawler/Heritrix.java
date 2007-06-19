@@ -167,9 +167,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private static final String PROPERTIES_KEY = PROPERTIES;
     
     /**
-     * Prefix used on properties we'll add to the System.properties list.
+     * Prefix used on our properties we'll add to the System.properties list.
      */
     private static final String HERITRIX_PROPERTIES_PREFIX = "heritrix.";
+
+    /**
+     * Prefix used on other properties we'll add to the System.properties 
+     * list (after stripping this prefix). 
+     */
+    private static final String SYSTEM_PREFIX = "system.";
 
     /**
      * Instance of web server if one was started.
@@ -866,16 +872,29 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                     key.startsWith(HERITRIX_PROPERTIES_PREFIX)) {
                 // Don't add the heritrix.properties entries that are
                 // changing the logging level of particular classes.
+                String value = properties.getProperty(key).trim();
                 if (key.indexOf(".level") < 0) {
-                    if (System.getProperty(key) == null ||
-                        System.getProperty(key).length() == 0) {
-                	    System.setProperty(key,
-                            properties.getProperty(key).trim());
-                    }
+                    copyToSystemProperty(key, value);
                 }
+            }  else if (key.startsWith(SYSTEM_PREFIX)) {
+                String value = properties.getProperty(key).trim();
+                copyToSystemProperty(key.substring(SYSTEM_PREFIX.length()), value); 
             }
         }
         return properties;
+    }
+
+    /**
+     * Copy the given key-value into System properties, as long as there
+     * is no existing value. 
+     * @param key property key 
+     * @param value property value
+     */
+    protected static void copyToSystemProperty(String key, String value) {
+        if (System.getProperty(key) == null ||
+            System.getProperty(key).length() == 0) {
+            System.setProperty(key, value);
+        }
     }
 
     protected static InputStream getPropertiesInputStream()
