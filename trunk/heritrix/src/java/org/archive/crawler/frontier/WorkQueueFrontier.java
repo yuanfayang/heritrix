@@ -295,8 +295,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         
         try {
             if (workQueueDataOnDisk()
-                    && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
-                    && queueAssignmentPolicy.maximumNumberOfKeys() <= 
+                    && getQueueAssignmentPolicy(null).maximumNumberOfKeys() >= 0
+                    && getQueueAssignmentPolicy(null).maximumNumberOfKeys() <= 
                         MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
                 this.allQueues = Collections.synchronizedMap(
                         new HashMap<String,WorkQueue>());
@@ -378,8 +378,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             this.alreadyIncluded.close();
             this.alreadyIncluded = null;
         }
-
-        this.queueAssignmentPolicy = null;
         
         try {
             closeQueue();

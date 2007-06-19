@@ -196,9 +196,6 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     
     protected int lastMaxBandwidthKB = 0;
 
-    /** Policy for assigning CrawlURIs to named queues */
-    protected transient QueueAssignmentPolicy queueAssignmentPolicy = null;
-
     /**
      * Crawl replay logger.
      * 
@@ -267,7 +264,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                 HostnameQueueAssignmentPolicy.class.getName() + " " +
                 IPQueueAssignmentPolicy.class.getName() + " " +
                 BucketQueueAssignmentPolicy.class.getName() + " " +
-                SurtAuthorityQueueAssignmentPolicy.class.getName());
+                SurtAuthorityQueueAssignmentPolicy.class.getName() + " " +
+                TopmostAssignedSurtQueueAssignmentPolicy.class.getName());
         Pattern p = Pattern.compile("\\s*,\\s*|\\s+");
         String [] queues = p.split(queueStr);
         if (queues.length <= 0) {
@@ -279,7 +277,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                 "by ip, and into one of a fixed set of buckets (1k).",
                 queues[0], queues));
         t.setExpertSetting(true);
-        t.setOverrideable(false);
+        t.setOverrideable(true);
 
         t = addElementToDefinition(new SimpleType(
                 ATTR_FORCE_QUEUE,
@@ -369,16 +367,16 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                     FrontierJournal.LOGNAME_RECOVER);
             }
         }
-        try {
-            final Class qapClass = Class.forName((String)getUncheckedAttribute(
-                    null, ATTR_QUEUE_ASSIGNMENT_POLICY));
-
-            queueAssignmentPolicy =
-                (QueueAssignmentPolicy)qapClass.newInstance();
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Bad queue assignment policy class", e);
-            throw new FatalConfigurationException(e.getMessage());
-        }
+//        try {
+//            final Class qapClass = Class.forName((String)getUncheckedAttribute(
+//                    null, ATTR_QUEUE_ASSIGNMENT_POLICY));
+//
+//            queueAssignmentPolicy =
+//                (QueueAssignmentPolicy)qapClass.newInstance();
+//        } catch (Exception e) {
+//            logger.log(Level.SEVERE, "Bad queue assignment policy class", e);
+//            throw new FatalConfigurationException(e.getMessage());
+//        }
     }
 
     synchronized public void terminate() {
@@ -1015,11 +1013,23 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         String queueKey = (String)getUncheckedAttribute(cauri,
             ATTR_FORCE_QUEUE);
         if ("".equals(queueKey)) {
-            // Typical case, barring overrides
+            // no forced override
+            QueueAssignmentPolicy queueAssignmentPolicy = 
+                getQueueAssignmentPolicy(cauri);
             queueKey =
                 queueAssignmentPolicy.getClassKey(this.controller, cauri);
         }
         return queueKey;
+    }
+
+    protected QueueAssignmentPolicy getQueueAssignmentPolicy(CandidateURI cauri) {
+        String clsName = (String)getUncheckedAttribute(cauri,
+                ATTR_QUEUE_ASSIGNMENT_POLICY);
+        try {
+            return (QueueAssignmentPolicy) Class.forName(clsName).newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
