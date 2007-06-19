@@ -124,17 +124,23 @@ public class Sheets {
         JMXSheetManager sheetManager = remote.getObject();
         String sheet = request.getParameter("sheet");
         request.setAttribute("sheet", sheet);
-        if (!Arrays.asList(sheetManager.getCheckedOutSheets()).contains(sheet)) {
-            sheetManager.checkout(sheet);
-        }
         try {
-            Settings settings = getSettings(sheetManager, sheet);
-            request.setAttribute("settings", settings);
-            Misc.forward(request, response, "page_sheet_editor.jsp");
+            if (!Arrays.asList(sheetManager.getCheckedOutSheets()).contains(sheet)) {
+                sheetManager.checkout(sheet);
+            }
+            
+            if (sheetManager.isSingleSheet(sheet)) {
+                Settings settings = getSettings(sheetManager, sheet);
+                request.setAttribute("settings", settings);
+                Misc.forward(request, response, "page_sheet_editor.jsp");
+            } else {
+                String[] bundled = sheetManager.getBundledSheets(sheet);
+                request.setAttribute("bundled", Arrays.asList(bundled));
+                Misc.forward(request, response, "page_bundle_editor.jsp");
+            }
         } finally {
             remote.close();
         }
-
     }
     
     
@@ -220,7 +226,8 @@ public class Sheets {
             HttpServletResponse response) throws Exception {
         Home.getCrawler(request);
         getJob(request);
-        Misc.forward(request, response, "page_add_sheet_bundle.jsp");
+        request.setAttribute("single", false);
+        Misc.forward(request, response, "page_add_sheet.jsp");
     }
     
     
@@ -230,7 +237,8 @@ public class Sheets {
             HttpServletResponse response) throws Exception {
         Home.getCrawler(request);
         getJob(request);
-        Misc.forward(request, response, "page_add_single_sheet.jsp");
+        request.setAttribute("single", true);
+        Misc.forward(request, response, "page_add_sheet.jsp");
     }
 
     
@@ -243,7 +251,7 @@ public class Sheets {
         String sheet = request.getParameter("sheet");
         request.setAttribute("sheet", sheet);
         try {
-            sheetManager.makeSheetBundle(sheet, "default");
+            sheetManager.makeSheetBundle(sheet);
         } catch (Exception e) {
             request.setAttribute("error", e.getMessage());
             Misc.forward(request, response, "page_add_sheet_bundle.jsp");
@@ -251,7 +259,7 @@ public class Sheets {
             remote.close();
         }
         
-        Misc.forward(request, response, "page_bundle_editor.jsp");
+        showSheetEditor(sc, request, response);
     }
 
     
@@ -529,6 +537,28 @@ public class Sheets {
         }
     }
 
+    
+    public static void moveBundledSheets(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        String sheet = request.getParameter("sheet");
+        request.setAttribute("sheet", sheet);
+        String move = request.getParameter("move");
+        int index = Integer.parseInt(request.getParameter("index"));
+        try {
+            sheetManager.moveBundledSheet(sheet, move, index);
+        } finally {
+            remote.close();
+        }
+        
+        showSheetEditor(sc, request, response);
+    }
+            
+    
+    
 
     private static Settings getSettings(JMXSheetManager mgr,
             String sheet) {
