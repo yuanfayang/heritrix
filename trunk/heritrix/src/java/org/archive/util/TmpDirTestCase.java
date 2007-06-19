@@ -86,14 +86,6 @@ public abstract class TmpDirTestCase extends TestCase
         }
     }
 
-    /*
-     * @see TestCase#tearDown()
-     */
-    protected void tearDown() throws Exception
-    {
-        super.tearDown();
-    }
-
     /**
      * @return Returns the tmpDir.
      */
