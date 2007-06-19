@@ -71,6 +71,8 @@ import org.archive.util.ArchiveUtils;
 public abstract class AbstractFrontier extends ModuleType
 implements CrawlStatusListener, Frontier, FetchStatusCodes,
         CoreAttributeConstants, Serializable {
+    private static final long serialVersionUID = -4766504935003203930L;
+
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
