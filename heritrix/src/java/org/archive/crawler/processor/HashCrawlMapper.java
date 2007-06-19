@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.net.PublicSuffixes;
 import org.archive.util.TextUtils;
 
 import st.ata.util.FPGenerator;
@@ -44,17 +45,17 @@ public class HashCrawlMapper extends CrawlMapper {
     public static final String ATTR_CRAWLER_COUNT = "crawler-count";
     public static final Long DEFAULT_CRAWLER_COUNT = new Long(1);
 
+    /** ruse publicsuffixes pattern for reducing classKey? */
+    public static final String ATTR_USE_PUBLICSUFFIX_REDUCE = 
+        "use_publicsuffix_reduction";
+    public static final Boolean DEFAULT_USE_PUBLICSUFFIX_REDUCE = true;
+    
     /** regex pattern for reducing classKey */
     public static final String ATTR_REDUCE_PATTERN = "reduce-prefix-pattern";
     public static final String DEFAULT_REDUCE_PATTERN = "";
-    
-//    /** replace pattern for reducing classKey */
-//    public static final String ATTR_REPLACE_PATTERN = "replace-pattern";
-//    public static final String DEFAULT_REPLACE_PATTERN = "";
  
     long bucketCount = 1;
     String reducePattern = null;
-//    String replacePattern = null;
  
     /**
      * Constructor.
@@ -68,10 +69,17 @@ public class HashCrawlMapper extends CrawlMapper {
             "Number of crawlers among which to split up the URIs. " +
             "Their names are assumed to be 0..N-1.",
             DEFAULT_CRAWLER_COUNT));
+        addElementToDefinition(new SimpleType(ATTR_USE_PUBLICSUFFIX_REDUCE,
+                "Whether to use a built-in regular expression, built from " +
+                "the 'public suffix' list at publicsuffix.org, for " +
+                "reducing classKeys to mapping keys. If true, the default, " +
+                "then the '"+ATTR_REDUCE_PATTERN+"' setting is ignored.",
+                DEFAULT_USE_PUBLICSUFFIX_REDUCE));
         addElementToDefinition(new SimpleType(ATTR_REDUCE_PATTERN,
                 "A regex pattern to apply to the classKey, using " +
-                "the first match as the mapping key. If empty (the" +
-                "default), use the full classKey.",
+                "the first match as the mapping key. Ignored if '"+
+                ATTR_USE_PUBLICSUFFIX_REDUCE+"' is set true. If empty " +
+                "(the default), use the full classKey.",
                 DEFAULT_REDUCE_PATTERN));
     }
 
@@ -97,7 +105,12 @@ public class HashCrawlMapper extends CrawlMapper {
     @Override
     public void kickUpdate() {
         super.kickUpdate();
-        reducePattern = (String)getUncheckedAttribute(null, ATTR_REDUCE_PATTERN);
+        if ((Boolean) getUncheckedAttribute(null, ATTR_USE_PUBLICSUFFIX_REDUCE)) {
+            reducePattern = PublicSuffixes.getTopmostAssignedSurtPrefixRegex();
+        } else {
+            reducePattern = (String) getUncheckedAttribute(null,
+                    ATTR_REDUCE_PATTERN);
+        }
     }
     
     public static String mapString(String key, String reducePattern, long bucketCount) {
