@@ -38,9 +38,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
+import org.archive.util.TextUtils;
 
 /**
  * Utility class for making use of the information about 'public suffixes' at
@@ -274,5 +276,24 @@ public class PublicSuffixes {
             throw new RuntimeException(e);
         }
         return surtPrefixRegexFromSurtList(list);
+    }
+
+    /**
+     * Truncate SURT to its topmost assigned domain segment; that is, 
+     * the public suffix plus one segment, but as a SURT-ordered prefix. 
+     * 
+     * if the pattern doesn't match, the passed-in SURT is returned.
+     * 
+     * @param surt SURT to truncate
+     * @return truncated-to-topmost-assigned SURT prefix
+     */
+    public static String reduceSurtToTopmostAssigned(String surt) {
+        Matcher matcher = TextUtils.getMatcher(
+                getTopmostAssignedSurtPrefixRegex(), surt);
+        if (matcher.find()) {
+            surt = matcher.group();
+        }
+        TextUtils.recycleMatcher(matcher);
+        return surt;
     }
 }
