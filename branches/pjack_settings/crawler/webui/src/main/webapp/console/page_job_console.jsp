@@ -3,83 +3,52 @@
 <%@ page import="org.archive.crawler.framework.StatisticsTracking" %>
 <%@ page import="org.archive.crawler.framework.JobController" %>
 <%@ page import="org.archive.util.ArchiveUtils" %>
-<!-- @include file="/include/handler.jsp" -->
+<%@ page import="org.archive.crawler.webui.CrawlJob"%>
+<%@ page import="javax.management.openmbean.CompositeData"%>
 
 <% 
 
 Crawler crawler = (Crawler)Text.get(request, "crawler");
 StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
-JobController controller = (JobController)Text.get(request, "controller");
-String job = (String)Text.get(request, "job");
+CompositeData memory = (CompositeData)Text.get(request, "memory"); 
+CrawlJob job = (CrawlJob)Text.get(request, "crawljob"); 
 
-String qs = crawler.getQueryString() + "&job=" + job;
+String qs = crawler.getQueryString() + "&job=" + job.getName();
+
 
 %>
 
+<html>
+<head>
+    <%@include file="/include/header.jsp"%>
+    <title>Heritrix Crawler List</title>
+</head>
+<body>
 
-
-<%
-    String sAction = request.getParameter("action");
-    if(sAction != null) {
-        if(sAction.equalsIgnoreCase("logout")) {
-            // Logging out.
-            session = request.getSession();
-            if (session != null) {
-                session.invalidate();
-                // Redirect back to here and we'll get thrown to the login
-                // page.
-                response.sendRedirect(request.getContextPath() + "/index.jsp"); 
-            }
-        }
-    }
-
-    String title = "Admin Console";
-    int tab = 0;
-%>
-
-<!-- @include file="/include/head.jsp" -->
-    
-    <script type="text/javascript">
-        function doTerminateCurrentJob(){
-            if(confirm("Are you sure you wish to terminate the job currently being crawled?")){
-                document.location = '<%out.print(request.getContextPath());%>/console/action.jsp?action=terminate';
-            }
-        }    
-    </script>
-    
+<%@include file="/include/nav.jsp"%>
     <table border="0" cellspacing="0" cellpadding="0"><tr><td>
     <fieldset style="width: 750px">
         <legend> 
-        <b><span class="legendTitle">Crawler Status:</span> 
-        <span class="status crawling"><%=controller.getCrawlStatusString()%></span>
-        <!-- = handler.isRunning() 
-            ? "<span class='status crawling'>CRAWLING JOBS</span></b> | "
-              +"<a href='"+request.getContextPath()+"/console/action.jsp?action=stop'>Hold</a>"
-            : "<span class='status holding'>HOLDING JOBS</span></b> | "
-              +"<a href='"+request.getContextPath()+"/console/action.jsp?action=start'>Start</a>"
-        --> </b>
+        <b>
+            <span class="legendTitle">Crawler:</span> 
+            <span class="status crawling"><%=crawler.getLegend()%></span>
+        </b>
         </legend>
         <div style="float:right;padding-right:50px;">
 	        <b>Memory</b><br>
 	        <div style="padding-left:20px">
-		        <%=(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024%> KB 
+		        <%=((Long)memory.get("used"))/1024%> KB 
 		        used<br>
-		        <%=(Runtime.getRuntime().totalMemory())/1024%> KB
-		        current heap<br>
-		        <%=(Runtime.getRuntime().maxMemory())/1024%> KB
+		        <%=((Long)memory.get("committed"))/1024%> KB
+		        committed heap<br>
+		        <%=((Long)memory.get("max"))/1024%> KB
 		        max heap
 	        </div>
 	    </div>
         <b>Jobs</b>
         <div style="padding-left:20px">
-            <%=controller.getCrawlStatusString()%>: <i><%=job%></i>
-			<!--= handler.getCurrentJob()!=null
-			    ? shortJobStatus+": <i>"
-			      +handler.getCurrentJob().getJobName()+"</i>"
-			    : ((handler.isRunning()) ? "None available" : "None running")
-			 <br>
-	        <= handler.getPendingJobs().size() > pending,
-	        <= handler.getCompletedJobs().size() > completed -->
+            <%=job.getState()%>: <i><%=job.getName()%></i>
+            <!-- TODO: Consider pending jobs -->
         </div>
 
         <b>Alerts:</b> 0 (0 new) <!-- FIXME
@@ -120,47 +89,32 @@ String qs = crawler.getQueryString() + "&job=" + job;
             <fieldset style="width: 750px">
                <legend>
                <b><span class="legendTitle">Job Status:</span>
-               <%=controller.getCrawlStatusString()%>
-               <!--= 
-               "<span class='status "
-               +shortJobStatus+"'>"
-               +shortJobStatus+"</span>"
-               -->
+               <span class='status <%=job.getState()%>'>
+               <%=job.getState()%></span>
                </b> 
-           
 <a>
-<% String status = controller.getCrawlStatusString(); %>
+<% String status = job.getState(); %>
 <% if (status.equals("PREPARING")) { %>
     <a 
     title="Start the crawl."
-    href="<%=request.getContextPath()%>/console/do_start.jsp?<%=qs%>">
-    Start
-    </a>
+    href="<%=request.getContextPath()%>/console/do_start.jsp?<%=qs%>">Start</a>
 <% } else if (status.equals("PAUSED") || status.equals("PAUSING")) { %> 
     <a 
     title="Resume the crawl."
-    href="<%=request.getContextPath()%>/console/do_resume.jsp?<%=qs%>">
-    Resume
-    </a>
+    href="<%=request.getContextPath()%>/console/do_resume.jsp?<%=qs%>">Resume</a>
     |
     <a 
     title="Checkpoint the crawl."
-    href="<%=request.getContextPath()%>/console/do_checkpoint.jsp?<%=qs%>">
-    Checkpoint
-    </a>
+    href="<%=request.getContextPath()%>/console/do_checkpoint.jsp?<%=qs%>">Checkpoint</a>
 <% } else if (!status.equals("CHECKPOINTING")) { %>
     <a 
     title="Pause the crawl."
-    href="<%=request.getContextPath()%>/console/do_pause.jsp?<%=qs%>">
-    Pause
-    </a>
+    href="<%=request.getContextPath()%>/console/do_pause.jsp?<%=qs%>">Pause</a>
 <% } %>
 |
     <a 
     title="Terminates the crawl."
-    href="<%=request.getContextPath()%>/console/do_stop.jsp?<%=qs%>">
-    Terminate
-    </a>
+    href="<%=request.getContextPath()%>/console/do_stop.jsp?<%=qs%>">Terminate</a>
 
 </legend>
 
@@ -232,7 +186,7 @@ String qs = crawler.getQueryString() + "&job=" + job;
                             </center>
             <%
                 }
-                if (controller.getCrawlStatusString().equals("PAUSED")) {
+                if (job.getState().equals("PAUSED")) {
             %>
             		<b>Paused Operations</b>
             		<div class='indent'>
@@ -245,7 +199,7 @@ String qs = crawler.getQueryString() + "&job=" + job;
     </td></tr>
     <tr><td>
     
-	<a href="<%=request.getContextPath()%>/">Refresh</a>
+	<a href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=qs%>">Refresh</a>
     </td></tr>
     <tr><td>
         <p>
@@ -255,6 +209,7 @@ String qs = crawler.getQueryString() + "&job=" + job;
     </td></tr>
     <tr><td>
 
-        <!-- a href="<%=request.getContextPath()%>/index.jsp?action=logout">Logout</a -->
     </td></tr></table>
-<!-- include file="/include/foot.jsp" -->
+
+</body>
+</html>

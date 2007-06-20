@@ -146,18 +146,17 @@ th.info {
 }
 
 
-td.info0 {
+td.info {
     border: solid black 1px;
     border-collapse: collapse;    
     padding: 2px;
 }
 
-td.info1 {
-    border: solid black 1px;
-    border-collapse: collapse;    
+tr.infoalt{
     background-color: #FFFFCC;
-    padding: 2px;
 }
+
+
 
 .nospace {
     display:inline;

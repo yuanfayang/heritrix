@@ -9,115 +9,103 @@
 <%@ page import="java.lang.management.MemoryMXBean"%>
 <%@ page import="org.archive.crawler.webui.Remote"%>
 <%@ page import="javax.management.openmbean.CompositeData"%>
+<%@ page import="org.archive.crawler.webui.CrawlJob"%>
+<%@ page import="org.archive.crawler.webui.CrawlJob.State"%>
 <%
 
 Crawler crawler = (Crawler)request.getAttribute("crawler");
-Collection<String> profiles = (Collection)request.getAttribute("profiles");
-Collection<String> active = (Collection)request.getAttribute("active");
-Collection<String> completed = (Collection)request.getAttribute("completed");
-int row = 1;
+
+Collection<CrawlJob> profiles = crawler.getJobs(State.PROFILE);
+Collection<CrawlJob> active = crawler.getJobs(State.ACTIVE);
+Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
 
 %>
 <html>
 <head>
-<%@ include file="/include/header.jsp"%>
-<title>Heritrix <%=Text.html(crawler.getLegend())%></title>
+    <%@ include file="/include/header.jsp"%>
+    <title>Heritrix <%=Text.html(crawler.getLegend())%></title>
 </head>
 <body>
 
 <%@include file="/include/nav.jsp"%>
 
 <% if (active.isEmpty()) { %>
-<p>There are no active jobs on <%=Text.html(crawler.getLegend())%>.
+    <p>There are no active jobs on <%=Text.html(crawler.getLegend())%>.
 <% } else { %>
 
-<h3>Active Jobs:</h3>
-
-<table class="info">
-<% for (String job: active) { %>
-<% row = -row + 1; %>
-<% String jqs = crawler.getQueryString() + "&job=" + job; %>
-<tr>
-<td class="info<%=row%>">
-<%=job%>
-</td>
-<td class="info<%=row%>">
-<a 
-   title="View and control the current status for this job."
-   href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=jqs%>">
-   Console
-</a>
-|
-Sheets | Seeds | Reports | 
-<a 
-   title="View logs for this job."
-   href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">
-   Logs
-</a>
-</td>
-</tr>
-<% } %>
-</table>
+    <h3>Active Jobs:</h3>
+    
+    <table class="info">
+    <% boolean alt = false; %>
+    <% for (CrawlJob job: active) { %>
+    <% String jqs = crawler.getQueryString() + "&job=" + job.getName(); %>
+    <tr <%=alt?"class=\"infoalt\"":""%>>
+    <td class="info">
+        <%=job.getName()%>
+    </td>
+    <td class="info">
+        <a 
+           title="View and control the current status for this job."
+           href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=jqs%>">Console</a>
+        |
+        Sheets | Seeds | Reports | 
+        <a 
+           title="View logs for this job."
+           href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">
+           Logs
+        </a>
+    </td>
+    </tr>
+    <% alt = !alt; %>
+    <% } %>
+    </table>
 <% } %>
 
 <h3>Profiles:</h3>
 
 <table class="info">
-<% for (String job: profiles) { %>
-<% row = -row + 1; %>
-<tr>
-<td class="info<%=row%>">
-<%=job%>
-</td>
-<td class="info<%=row%>">
-<% String pqs = crawler.getQueryString() + "&profile=" + job; %>
-
-<a 
-   title="View or edit this profile's settings sheets."
-   href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=pqs%>">
-Sheets 
-</a>
-| 
-Seeds 
-| 
-Copy 
-| 
-<a 
-   title="Launch a new job based on this profile." 
-   href="do_show_launch_profile.jsp?<%=pqs%>">
-Launch
-</a>
-</td>
-</tr>
+<% for (CrawlJob job: profiles) { %>
+    <tr>
+    <td class="info">
+        <%=job.getName()%>
+    </td>
+    <% String pqs = crawler.getQueryString() + "&profile=" + job.getName(); %>
+    <td class="info">
+        <a title="View or edit this profile's settings sheets."
+           href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=pqs%>">Sheets</a>
+        | 
+        Seeds 
+        | 
+        Copy 
+        | 
+        <a title="Launch a new job based on this profile." 
+           href="do_show_launch_profile.jsp?<%=pqs%>">Launch</a>
+    </td>
+    </tr>
 <% } %>
 </table>
+
 
 <% if (completed.isEmpty()) { %>
-<p>There are no completed jobs.
+    <p>There are no completed jobs.
 <% } else { %>
-<h3>Completed Jobs:</h3>
-
-<table class="info">
-<% for (String job: completed) { %>
-<% row = -row + 1; %>
-<% String jqs = crawler.getQueryString() + "&job=" + job; %>
-
-<tr>
-<td class="info<%=row%>">
-<%=job%>
-</td>
-<td class="info<%=row%>">
-Sheets | Seeds | Reports | 
-<a 
-   title="View logs for this job."
-   href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">
-   Logs
-</a>
-
-</td>
-</tr>
-<% } %>
-</table>
+    <h3>Completed Jobs:</h3>
+    
+    <table class="info">
+    <% for (CrawlJob job: completed) { %>
+        <% String jqs = crawler.getQueryString() + "&job=" + job.getName(); %>
+        <tr>
+        <td class="info">
+            <%=job.getName()%>
+        </td>
+        <td class="info">
+            Sheets | Seeds | Reports | 
+            <a title="View logs for this job."
+               href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
+        </td>
+        </tr>
+    <% } %>
+    </table>
 <% } %>
 
 </body>
