@@ -38,6 +38,7 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -163,6 +164,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     /** Target (minimum) size to keep readyClassQueues */
     protected int targetSizeForReadyQueues;
+    
+    /** single-thread access to ready-filling code */
+    protected transient Semaphore readyFiller = new Semaphore(1);
     
     /** 
      * All 'inactive' queues, not yet in active rotation.
@@ -626,11 +630,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // Do common checks for pause, terminate, bandwidth-hold
             preNext(now);
             
-            synchronized(readyClassQueues) {
-                int activationsNeeded = targetSizeForReadyQueues() - readyClassQueues.size();
-                while(activationsNeeded > 0 && !inactiveQueues.isEmpty()) {
-                    activateInactiveQueue();
-                    activationsNeeded--;
+            // allow up-to-1 thread to fill readyClassQueues to target
+            if(readyFiller.tryAcquire()) {
+                try {
+                    int activationsNeeded = targetSizeForReadyQueues() - readyClassQueues.size();
+                    while(activationsNeeded > 0 && !inactiveQueues.isEmpty()) {
+                        activateInactiveQueue();
+                        activationsNeeded--;
+                    }
+                } finally {
+                    readyFiller.release();
                 }
             }
                    
