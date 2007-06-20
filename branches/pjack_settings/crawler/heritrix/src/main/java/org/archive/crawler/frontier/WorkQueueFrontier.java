@@ -22,6 +22,10 @@
   */
 package org.archive.crawler.frontier;
 
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIRE;
+import static org.archive.processors.fetcher.FetchStatusCodes.S_DEFERRED;
+import static org.archive.processors.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -34,10 +38,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,8 +51,6 @@ import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -59,10 +63,6 @@ import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.je.DatabaseException;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A common Frontier base using several queues to hold pending URIs. 
@@ -155,8 +155,7 @@ implements Closeable, HasUriReceiver, Serializable {
      * All per-class queues whose first item may be handed out.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue<String> readyClassQueues =
-    	new LinkedBlockingQueue<String>();
+    protected BlockingQueue<String> readyClassQueues;
     
     /** Target (minimum) size to keep readyClassQueues */
     protected int targetSizeForReadyQueues;
@@ -165,15 +164,13 @@ implements Closeable, HasUriReceiver, Serializable {
      * All 'inactive' queues, not yet in active rotation.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue<String> inactiveQueues =
-    	new LinkedBlockingQueue<String>();
+    protected Queue<String> inactiveQueues;
 
     /**
      * 'retired' queues, no longer considered for activation.
      * Linked-list of keys for queues.
      */
-    protected BlockingQueue<String> retiredQueues =
-    	new LinkedBlockingQueue<String>();
+    protected Queue<String> retiredQueues;
     
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
@@ -182,8 +179,7 @@ implements Closeable, HasUriReceiver, Serializable {
     /**
      * All per-class queues held in snoozed state, sorted by wake time.
      */
-    protected SortedSet<WorkQueue> snoozedClassQueues =
-        Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
+    protected SortedSet<WorkQueue> snoozedClassQueues;
     
     /** Timer for tasks which wake head item of snoozedClassQueues */
     protected transient Timer wakeTimer;
@@ -243,8 +239,8 @@ implements Closeable, HasUriReceiver, Serializable {
     private void initAllQueues(boolean recycle) 
     throws IOException, DatabaseException {
         if (workQueueDataOnDisk()
-                && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
-                && queueAssignmentPolicy.maximumNumberOfKeys() <= 
+                && get(QUEUE_ASSIGNMENT_POLICY).maximumNumberOfKeys() >= 0
+                && get(QUEUE_ASSIGNMENT_POLICY).maximumNumberOfKeys() <= 
                     MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
             this.allQueues = Collections.synchronizedMap(
                     new HashMap<String,WorkQueue>());
@@ -413,16 +409,9 @@ implements Closeable, HasUriReceiver, Serializable {
      * @param wq
      */
     private void deactivateQueue(WorkQueue wq) {
-        try {
-            wq.setSessionBalance(0); // zero out session balance
-            inactiveQueues.put(wq.getClassKey());
-            wq.setActive(this, false);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.err.println("unable to deactivate queue "+wq);
-            // propagate interrupt up 
-            throw new RuntimeException(e);
-        }
+        wq.setSessionBalance(0); // zero out session balance
+        inactiveQueues.add(wq.getClassKey());
+        wq.setActive(this, false);
     }
     
     /**
@@ -430,17 +419,10 @@ implements Closeable, HasUriReceiver, Serializable {
      * @param wq
      */
     private void retireQueue(WorkQueue wq) {
-        try {
-            retiredQueues.put(wq.getClassKey());
-            decrementQueuedCount(wq.getCount());
-            wq.setRetired(true);
-            wq.setActive(this, false);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.err.println("unable to retire queue "+wq);
-            // propagate interrupt up 
-            throw new RuntimeException(e);
-        }
+        retiredQueues.add(wq.getClassKey());
+        decrementQueuedCount(wq.getCount());
+        wq.setRetired(true);
+        wq.setActive(this, false);
     }
     
     /** 

@@ -29,13 +29,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
+import org.archive.queue.StoredQueue;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.file.Checkpointable;
@@ -230,5 +234,31 @@ implements Serializable, Checkpointable {
                 StoredIterator.close(i);
             }
         }
+        
+        // TODO: handle checkpoint-recovery
+        
+        // small risk of OutOfMemoryError: if 'hold-queues' is false,
+        // readyClassQueues may grow in size without bound
+        readyClassQueues = new LinkedBlockingQueue<String>();
+
+        Database retiredQueuesDb;
+        try {
+            Database inactiveQueuesDb = bdb.openDatabase("inactiveQueues",
+                    StoredQueue.databaseConfig(), false);
+            inactiveQueues = new StoredQueue<String>(inactiveQueuesDb,
+                    String.class, null);
+            retiredQueuesDb = bdb.openDatabase("retiredQueues", 
+                    StoredQueue.databaseConfig(), false);
+            retiredQueues = new StoredQueue<String>(retiredQueuesDb,
+                    String.class, null);
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        }
+
+        // small risk of OutOfMemoryError: in large crawls with many 
+        // unresponsive queues, an unbounded number of snoozed queues 
+        // may exist
+        snoozedClassQueues = Collections
+                .synchronizedSortedSet(new TreeSet<WorkQueue>());
     }
 }
