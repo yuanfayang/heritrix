@@ -40,6 +40,7 @@ import javax.management.remote.JMXConnector;
 import javax.servlet.jsp.JspWriter;
 
 import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.webui.CrawlJob.State;
 import org.archive.util.JmxUtils;
 
 
@@ -62,13 +63,6 @@ public class Crawler implements Comparable {
     public static enum Source {
         JNDI, MANUAL
     }
-    
-    
-    /**
-     * The (remote) CrawlJobManager.  Possibly null if the crawler could
-     * not be contacted.
-     */
-    private CrawlJobManager crawlJobManager;
     
     
     /**
@@ -179,30 +173,9 @@ public class Crawler implements Comparable {
     }
 
 
-    /**
-     * Returns the CrawlJobManager that can be used to open profiles, launch
-     * jobs and so on.  May be null if the remote crawler could not be 
-     * contacted.
-     * 
-     * @return
-     */
-    public CrawlJobManager getCrawlJobManager() {
-        return crawlJobManager;
-    }
-
-
-
-    public void setCrawlJobManager(CrawlJobManager crawlJobManager) {
-        this.crawlJobManager = crawlJobManager;
-    }
-
-
-
     public String getPassword() {
         return password;
     }
-
-
 
     public void setPassword(String password) {
         this.password = password;
@@ -420,5 +393,44 @@ public class Crawler implements Comparable {
         }
     }
 
+    /**
+     * Get jobs (and profiles) associated with this crawler.
+     * <p>
+     * Note: The information is fetched from the crawler on request. 
+     * @param state The state of the jobs (or profiles) to be returned.
+     * @return A collection of {@link CrawlJob}s having the desired 
+     *         <code>state</code>. An empty collection if no such jobs exist.
+     * @see CrawlJob
+     * @see State
+     */
+    public Collection<CrawlJob> getJobs(State state){
+        JMXConnector jmx = this.connect();
+        Remote<CrawlJobManager> remote = Remote.make(
+                jmx, 
+                this.getObjectName(), 
+                CrawlJobManager.class);
+
+        CrawlJobManager manager = remote.getObject();
+        Collection<CrawlJob> jobs = null;
+        try {
+            String[] jobnames = null;
+            switch(state){
+            case ACTIVE    : jobnames = manager.listActiveJobs(); break; 
+            case COMPLETED : jobnames = manager.listCompletedJobs(); break; 
+            case PROFILE   : jobnames = manager.listProfiles(); break; 
+            }
+            
+            jobs = new ArrayList<CrawlJob>(jobnames.length);
+            for(String jobname : jobnames){
+                CrawlJob job = new CrawlJob(jobname,this,state);
+                jobs.add(job);
+            }
+        } finally {
+            remote.close();
+        }
+                
+        return jobs;
+    }
+    
 }
 

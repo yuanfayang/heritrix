@@ -52,23 +52,7 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = open(request);
-        CrawlJobManager manager = remote.getObject();
-        try {
-            String[] profiles = manager.listProfiles();
-            Arrays.sort(profiles);
-            request.setAttribute("profiles", Arrays.asList(profiles));
-
-            String[] active = manager.listActiveJobs();
-            Arrays.sort(active);
-            request.setAttribute("active", Arrays.asList(active));
-
-            String[] completed = manager.listCompletedJobs();
-            Arrays.sort(completed);
-            request.setAttribute("completed", Arrays.asList(completed));
-        } finally {
-            remote.close();
-        }
+        request.setAttribute("crawler", Home.getCrawler(request));
         
         Misc.forward(request, response, "page_crawler.jsp");
     }
