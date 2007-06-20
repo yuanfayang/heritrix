@@ -79,6 +79,8 @@ import org.archive.util.ArchiveUtils;
  */
 public abstract class AbstractFrontier 
 implements CrawlStatusListener, Frontier, Serializable, Initializable {
+    private static final long serialVersionUID = 555881755284996860L;
+
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
@@ -196,9 +198,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     
     protected int lastMaxBandwidthKB = 0;
 
-    /** Policy for assigning CrawlURIs to named queues */
-    protected QueueAssignmentPolicy queueAssignmentPolicy = null;
-
     /**
      * Crawl replay logger.
      * 
@@ -248,10 +247,11 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     
 
     /**
-     * Defines how to assign URIs to queues. Can assign by host, by ip, and into
-     * one of a fixed set of buckets (1k).
+     * Defines how to assign URIs to queues. Can assign by host, by ip, 
+     * by SURT-ordered authority, by SURT-ordered authority truncated to 
+     * a topmost-assignable domain, and into one of a fixed set of buckets 
+     * (1k).
      */
-    @Immutable
     final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
         Key.make(QueueAssignmentPolicy.class, null);
     
@@ -267,7 +267,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         this.global = provider;
         this.controller = provider.get(this, CONTROLLER);
         this.loggerModule = provider.get(this, LOGGER_MODULE);
-        this.queueAssignmentPolicy = provider.get(this, QUEUE_ASSIGNMENT_POLICY);
         this.manager = provider.get(this, MANAGER);
         if (provider.get(this, RECOVERY_LOG_ENABLED)) try {
             initJournal(loggerModule.getLogsDir().getAbsolutePath());
@@ -932,8 +931,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         String queueKey = get(FORCE_QUEUE_ASSIGNMENT);
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
-            queueKey =
-                queueAssignmentPolicy.getClassKey(this.controller, cauri);
+            queueKey = cauri.get(this, QUEUE_ASSIGNMENT_POLICY).getClassKey(
+                    controller, cauri);
         }
         return queueKey;
     }
