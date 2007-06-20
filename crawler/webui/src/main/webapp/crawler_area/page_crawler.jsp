@@ -64,8 +64,9 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
 <h3>Profiles:</h3>
 
 <table class="info">
+<% boolean alt = false; %>
 <% for (CrawlJob job: profiles) { %>
-    <tr>
+    <tr <%=alt?"class=\"infoalt\"":""%>>
     <td class="info">
         <%=job.getName()%>
     </td>
@@ -82,6 +83,7 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
            href="do_show_launch_profile.jsp?<%=pqs%>">Launch</a>
     </td>
     </tr>
+    <% alt = !alt; %>
 <% } %>
 </table>
 
@@ -92,9 +94,10 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
     <h3>Completed Jobs:</h3>
     
     <table class="info">
+    <% alt = false; %>
     <% for (CrawlJob job: completed) { %>
         <% String jqs = crawler.getQueryString() + "&job=" + job.getName(); %>
-        <tr>
+        <tr <%=alt?"class=\"infoalt\"":""%>>
         <td class="info">
             <%=job.getName()%>
         </td>
@@ -104,6 +107,7 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
                href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
         </td>
         </tr>
+        <% alt = !alt; %>
     <% } %>
     </table>
 <% } %>
