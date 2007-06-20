@@ -443,7 +443,6 @@ Serializable, Closeable {
     
     public void close() {        
         for (Map.Entry<String,CachedBdbMap> me: bigMaps.entrySet()) try {
-            me.getValue().sync();
             me.getValue().close();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error closing bigMap " + me.getKey(), e);
