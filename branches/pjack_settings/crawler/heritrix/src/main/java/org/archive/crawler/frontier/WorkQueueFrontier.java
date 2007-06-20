@@ -529,6 +529,8 @@ implements Closeable, HasUriReceiver, Serializable {
                     synchronized(readyQ) {
                         curi = readyQ.peek(this);                     
                         if (curi != null) {
+                            curi.setStateProvider(manager);
+                            
                             // check if curi belongs in different queue
                             String currentQueueKey = getClassKey(curi);
                             if (currentQueueKey.equals(curi.getClassKey())) {
