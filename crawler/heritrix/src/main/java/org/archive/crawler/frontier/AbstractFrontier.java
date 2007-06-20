@@ -471,6 +471,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
             CrawlURI caUri = new CrawlURI(u);
+            caUri.setStateProvider(manager);
             caUri.setSeed(true);
             caUri.setSchedulingDirective(SchedulingConstants.MEDIUM);
             if (get(SOURCE_TAG_SEEDS)) {
