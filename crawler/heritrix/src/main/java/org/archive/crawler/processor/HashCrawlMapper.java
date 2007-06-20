@@ -23,12 +23,13 @@
 package org.archive.crawler.processor;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.net.PublicSuffixes;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
+import org.archive.util.TextUtils;
 
 import st.ata.util.FPGenerator;
 
@@ -53,21 +54,21 @@ public class HashCrawlMapper extends CrawlMapper {
 
 
     /**
+     * Whether to use the PublicSuffixes-supplied reduce regex.
+     * 
+     */
+    final public static Key<Boolean> USE_PUBLICSUFFIXES_REGEX = 
+        Key.make(true);
+    
+    /**
      * A regex pattern to apply to the classKey, using the first match as the
      * mapping key. If empty (the default), use the full classKey.
      * 
      */
-    final public static Key<Pattern> REDUCE_PREFIX_PATTERN = 
-        Key.make(Pattern.compile("."));
+    final public static Key<String> REDUCE_PREFIX_REGEX = 
+        Key.make("");
     
-//    /** replace pattern for reducing classKey */
-//    public static final String ATTR_REPLACE_PATTERN = "replace-pattern";
-//    public static final String DEFAULT_REPLACE_PATTERN = "";
- 
     long bucketCount = 1;
-//    String replacePattern = null;
-
-
 
     /**
      * Constructor.
@@ -86,8 +87,16 @@ public class HashCrawlMapper extends CrawlMapper {
     protected String map(CrawlURI cauri) {
         // get classKey, via frontier to generate if necessary
         String key = getController().getFrontier().getClassKey(cauri);
-        Pattern reducePattern = cauri.get(this, REDUCE_PREFIX_PATTERN);
-        return mapString(key, reducePattern, bucketCount); 
+        String reduceRegex = getReduceRegex(cauri);
+        return mapString(key, reduceRegex, bucketCount); 
+    }
+
+    protected String getReduceRegex(CrawlURI cauri) {
+        if(cauri.get(this, USE_PUBLICSUFFIXES_REGEX)) {
+            return PublicSuffixes.getTopmostAssignedSurtPrefixRegex();
+        } else {
+            return cauri.get(this, REDUCE_PREFIX_REGEX);
+        }
     }
 
     public void initialTasks(StateProvider context) {
@@ -96,14 +105,15 @@ public class HashCrawlMapper extends CrawlMapper {
     }
 
 
-    public static String mapString(String key, Pattern reducePattern,
+    public static String mapString(String key, String reducePattern,
             long bucketCount) {
 
-        if (reducePattern != null) {
-            Matcher matcher = reducePattern.matcher(key);
-            if (matcher.find()) {
+        if (reducePattern != null && reducePattern.length()>0) {
+            Matcher matcher = TextUtils.getMatcher(reducePattern,key);
+            if(matcher.find()) {
                 key = matcher.group();
             }
+            TextUtils.recycleMatcher(matcher);
         }
         long fp = FPGenerator.std64.fp(key);
         long bucket = fp % bucketCount;
