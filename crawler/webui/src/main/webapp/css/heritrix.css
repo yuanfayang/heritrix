@@ -132,30 +132,40 @@ a.plain{
 	color:black;
 }
 
-
-table.info {
+.info {
     border: solid black 1px;
     border-collapse: collapse;    
+}
+
+table.info {
     width: 100%;
 }
 
 th.info {
-    border: solid black 1px;
-    border-collapse: collapse;    
     padding: 2px;
 }
-
 
 td.info {
+    padding: 2px;
+}
+
+td.info0 {
     border: solid black 1px;
     border-collapse: collapse;    
     padding: 2px;
 }
+
+td.info1 {
+    border: solid black 1px;
+    border-collapse: collapse;    
+    background-color: #FFFFCC;
+    padding: 2px;
+}
+
 
 tr.infoalt{
     background-color: #FFFFCC;
 }
-
 
 
 .nospace {
