@@ -9,7 +9,12 @@
     </icon>
     <display-name>Heritrix Console</display-name>
     <description>Heritrix Administration Console</description>
-<!--    <filter> 
+    <error-page>
+      <exception-type>java.lang.Exception
+      </exception-type>
+      <location>/heritrix/error.jsp</location>
+    </error-page>
+  <!--    <filter> 
         <filter-name>RootFilter</filter-name> 
         <filter-class>org.archive.crawler.admin.ui.RootFilter</filter-class> 
         <init-param>

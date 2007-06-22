@@ -40,20 +40,22 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
     <% for (CrawlJob job: active) { %>
     <% String jqs = crawler.getQueryString() + "&job=" + job.getName(); %>
     <tr <%=alt?"class=\"infoalt\"":""%>>
-    <td class="info">
+    <td>
         <%=job.getName()%>
     </td>
-    <td class="info">
+    <td>
         <a 
            title="View and control the current status for this job."
            href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=jqs%>">Console</a>
         |
-        Sheets | Seeds | Reports | 
+        Sheets | Seeds | 
         <a 
            title="View logs for this job."
-           href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">
-           Logs
-        </a>
+           href="<%=request.getContextPath()%>/reports/do_show_reports.jsp?<%=jqs%>">Reports</a>
+        | 
+        <a 
+           title="View logs for this job."
+           href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
     </td>
     </tr>
     <% alt = !alt; %>

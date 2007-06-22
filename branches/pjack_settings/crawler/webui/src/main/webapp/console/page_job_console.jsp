@@ -21,7 +21,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 <html>
 <head>
     <%@include file="/include/header.jsp"%>
-    <title>Heritrix Crawler List</title>
+    <title>Heritrix Console</title>
 </head>
 <body>
 
@@ -47,7 +47,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 	    </div>
         <b>Jobs</b>
         <div style="padding-left:20px">
-            <%=job.getState()%>: <i><%=job.getName()%></i>
+            <%=job.getCrawlState()%>: <i><%=job.getName()%></i>
             <!-- TODO: Consider pending jobs -->
         </div>
 
@@ -89,11 +89,11 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
             <fieldset style="width: 750px">
                <legend>
                <b><span class="legendTitle">Job Status:</span>
-               <span class='status <%=job.getState()%>'>
-               <%=job.getState()%></span>
+               <span class='status <%=job.getCrawlState()%>'>
+               <%=job.getCrawlState()%></span>
                </b> 
 <a>
-<% String status = job.getState(); %>
+<% String status = job.getCrawlState(); %>
 <% if (status.equals("PREPARING")) { %>
     <a 
     title="Start the crawl."
@@ -186,7 +186,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
                             </center>
             <%
                 }
-                if (job.getState().equals("PAUSED")) {
+                if (job.getCrawlState().equals("PAUSED")) {
             %>
             		<b>Paused Operations</b>
             		<div class='indent'>

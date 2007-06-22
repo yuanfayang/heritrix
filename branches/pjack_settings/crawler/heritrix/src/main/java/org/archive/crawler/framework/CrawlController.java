@@ -29,13 +29,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.EventObject;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,24 +49,24 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.openmbeans.annotations.Bean;
-import org.archive.openmbeans.annotations.Emitter;
-import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.DefaultDirectoryModule;
-import org.archive.state.DirectoryModule;
+import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.Emitter;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
+import org.archive.processors.util.ServerCache;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
+import org.archive.state.DefaultDirectoryModule;
+import org.archive.state.DirectoryModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -77,9 +78,6 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Type;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -1626,4 +1624,38 @@ DirectoryModule, JobController {
     public String getCrawlStatusString() {
         return this.state.toString();
     }
+
+    public String getToeThreadReport() {
+        StringWriter sw = new StringWriter();
+        toePool.reportTo(new PrintWriter(sw));
+        return sw.toString();
+    }
+
+    public String getToeThreadReportShort() {
+        return toePool.singleLineReport();
+    }
+
+    public String getFrontierReport() {
+        StringWriter sw = new StringWriter();
+        try {
+            getFrontier().reportTo(new PrintWriter(sw));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return sw.toString();
+    }
+
+    public String getFrontierReportShort() {
+        return getFrontier().singleLineReport();
+    }
+
+    public String getProcessorsReport() {
+        StringWriter sw = new StringWriter();
+        this.reportTo(CrawlController.PROCESSORS_REPORT,new PrintWriter(sw));
+        return sw.toString();
+    }
+
+
+
 }

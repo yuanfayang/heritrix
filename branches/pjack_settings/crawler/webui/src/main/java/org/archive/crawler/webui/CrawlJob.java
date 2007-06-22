@@ -119,12 +119,17 @@ public class CrawlJob {
         return name;
     }
 
+    public State getState(){
+        return state;
+    }
+
     
-    public String getState(){
+    public String getCrawlState(){
+        // TODO: Completed jobs also have more specific crawl state (i.e. how they ended).
         if(state==State.ACTIVE){
             return jobState;
         } else {
-            return state.toString(); // TODO: Make this more user friendly.
+            return state.toString();
         }
     }
     
