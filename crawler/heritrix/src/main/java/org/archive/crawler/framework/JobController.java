@@ -53,4 +53,19 @@ public interface JobController {
     @Attribute(desc="The current crawl status.", def="PAUSED")
     String getCrawlStatusString();
 
+    @Attribute(desc = "Returns the toe threads report", def="")
+    String getToeThreadReport();
+
+    @Attribute(desc = "Returns a summarized toe threads report", def="")
+    String getToeThreadReportShort();
+
+    @Attribute(desc = "Returns the frontier report", def="")
+    String getFrontierReport();
+
+    @Attribute(desc = "Returns a summarized frontier report", def="")
+    String getFrontierReportShort();
+
+    @Attribute(desc = "Returns the processors report", def="")
+    String getProcessorsReport();
+
 }

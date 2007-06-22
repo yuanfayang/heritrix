@@ -20,7 +20,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 <html>
 <head>
     <%@include file="/include/header.jsp"%>
-    <title>Heritrix Crawler List</title>
+    <title>Heritrix Console</title>
 </head>
 <body>
 
@@ -46,7 +46,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
         </div>
         <b>Jobs</b>
         <div style="padding-left:20px">
-            <%=job.getState()%>: <i><%=job.getName()%></i>
+            <%=job.getCrawlState()%>: <i><%=job.getName()%></i>
             <!-- TODO: Consider pending jobs -->
         </div>
 

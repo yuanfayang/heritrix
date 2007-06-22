@@ -286,4 +286,43 @@ public interface StatisticsTracking extends Runnable {
     @Operation(desc="Returns the number of URIs queued up and waiting for processing.")
     public long queuedUriCount();
 
+    /**
+     * Number of <i>discovered</i> URIs.
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value of
+     * the last snapshot.
+     *
+     * @return A count of all uris encountered
+     *
+     * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
+     */
+    @Operation(desc="Returns the number of discovered URIs.")
+    public long discoveredUriCount();
+
+    /**
+     * Number of URIs that have <i>finished</i> processing.
+     *
+     * @return Number of URIs that have finished processing
+     *
+     * @see org.archive.crawler.framework.Frontier#finishedUriCount()
+     */
+    @Operation(desc="Returns the number processed URIs.")
+    public long finishedUriCount();
+
+    /**
+     * Get the total number of failed fetch attempts (connection failures -> give up, etc)
+     *
+     * @return The total number of failed fetch attempts
+     */
+    @Operation(desc="Returns the number URIs that could not be fetched.")
+    public long failedFetchAttempts();
+
+    /**
+     * Get the total number of failed fetch attempts (connection failures -> give up, etc)
+     *
+     * @return The total number of failed fetch attempts
+     */
+    @Operation(desc="Returns the number of disregarded URIs.")
+    public long disregardedFetchAttempts();
+
 }

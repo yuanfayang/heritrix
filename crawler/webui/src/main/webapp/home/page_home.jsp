@@ -51,7 +51,7 @@
                     out.println("No active jobs");
                 } else {
                     for(CrawlJob job : activeJobs){
-                        out.println(job.getState() + ": ");
+                        out.println(job.getCrawlState() + ": ");
                         out.println("<a href=\"" + request.getContextPath());
                         out.println("/console/do_show_job_console.jsp?");
                         out.println(crawler.getQueryString());
