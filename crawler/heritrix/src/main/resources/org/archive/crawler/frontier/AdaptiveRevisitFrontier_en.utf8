@@ -60,3 +60,5 @@ Should the Frontier use a seperate 'already included' datastructure
 or rely on the queues'. 
 
 
+dir-description:
+The directory used by the frontier.

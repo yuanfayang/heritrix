@@ -37,7 +37,9 @@ import java.util.Set;
 import javax.servlet.jsp.JspWriter;
 
 import org.archive.settings.SheetManager;
+import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.path.PathChanger;
+import org.archive.settings.path.PathValidator;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
@@ -334,6 +336,9 @@ public class Settings {
         String parentPath = Text.parentPath(setting.getPath());
         Setting parent = settings.get(parentPath);
         if (parent == null) {
+            parent = settings.get("manager");
+        }
+        if (parent == null) {
             throw new IllegalStateException("No parent for " + path);
         }
         
@@ -348,8 +353,8 @@ public class Settings {
         }
         
         String path = setting.getPath();
-        if (path.equals("root")) {
-            return Object.class;
+        if (path.indexOf(PathValidator.DELIMITER) < 0) {
+            return KeyManager.getKeys(FileSheetManager.class).get(path).getType();
         }
         
         Setting parent = getParentSetting(setting);
@@ -504,7 +509,7 @@ public class Settings {
     public String getDescription(Setting setting) {
         try {
             String path = setting.getPath();
-            if (path.equals("root")) {
+            if (path.indexOf(PathValidator.DELIMITER) < 0) {
                 Map<String,Key<Object>> keys = KeyManager.getKeys(SheetManager.class);
                 Key<Object> key = keys.get(path);
                 return key.getDescription(Locale.ENGLISH);

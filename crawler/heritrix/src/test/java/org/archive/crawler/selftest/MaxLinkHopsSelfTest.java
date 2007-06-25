@@ -42,11 +42,21 @@ public class MaxLinkHopsSelfTest
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "1.html", "2.html", "3.html", "robots.txt"
     })));
-    
+
+    @Override
     protected void verify() throws Exception {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }
     
+    @Override
+    protected String changeGlobalConfig(String config) {
+        String token = "root:scope:rules:2:max-hops=int, 20\n";
+        int p = config.indexOf(token);
+        String result = config.substring(0, p) + 
+            "root:scope:rules:2:max-hops=int, 3\n" +
+            config.substring(p + token.length());
+        return result;
+    }
 }
 

@@ -35,6 +35,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.Frontier;
+import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -96,6 +98,14 @@ public class LexicalCrawlMapper extends CrawlMapper {
     @Immutable
     final public static Key<String> MAP_SOURCE = Key.make("");
 
+
+    @Immutable
+    final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, null); 
+    
+    @Immutable
+    final public static Key<FileModule> DIR = 
+        Key.make(FileModule.class, null);
+    
     
     /**
      * Mapping of classKey ranges (as represented by their start) to 
@@ -103,6 +113,9 @@ public class LexicalCrawlMapper extends CrawlMapper {
      */
     TreeMap<String, String> map = new TreeMap<String, String>();
 
+    private Frontier frontier;
+    private FileModule dir;
+    
     /**
      * Constructor.
      */
@@ -120,7 +133,7 @@ public class LexicalCrawlMapper extends CrawlMapper {
      */
     protected String map(CrawlURI cauri) {
         // get classKey, via frontier to generate if necessary
-        String classKey = getController().getFrontier().getClassKey(cauri);
+        String classKey = frontier.getClassKey(cauri);
         SortedMap tail = map.tailMap(classKey);
         if(tail.isEmpty()) {
             // wraparound
@@ -132,6 +145,9 @@ public class LexicalCrawlMapper extends CrawlMapper {
 
     public void initialTasks(StateProvider context) {
         super.initialTasks(context);
+        this.frontier = context.get(this, FRONTIER);
+        this.dir = context.get(this, DIR);
+
         try {
             loadMap(context);
         } catch (IOException e) {
@@ -154,7 +170,7 @@ public class LexicalCrawlMapper extends CrawlMapper {
             // file-based source
             File source = new File(mapSource);
             if (!source.isAbsolute()) {
-                source = new File(getController().getDisk(), mapSource);
+                source = new File(dir.getFile(), mapSource);
             }
             reader = new FileReader(source);
         } else {

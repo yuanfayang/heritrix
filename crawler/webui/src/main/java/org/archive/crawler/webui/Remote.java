@@ -65,6 +65,10 @@ public class Remote<T> {
     }
 
     
+    public JMXConnector getJMXConnector() {
+        return connector;
+    }
+    
     public T getObject() {
         return object;
     }

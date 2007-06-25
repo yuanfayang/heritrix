@@ -45,7 +45,7 @@ import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.state.DirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
 import static org.archive.processors.fetcher.FetchStatusCodes.*;
@@ -168,8 +168,8 @@ implements Closeable {
         Key.make(ServerCache.class, null);
 
     @Immutable
-    final public static Key<DirectoryModule> DIRECTORY =
-        Key.make(DirectoryModule.class, null);
+    final public static Key<FileModule> DIRECTORY =
+        Key.make(FileModule.class, null);
     
     
     static {
@@ -188,7 +188,7 @@ implements Closeable {
 
     
     private ServerCache serverCache;
-    private DirectoryModule directory;
+    private FileModule directory;
     private WriterPoolSettings settings;
     private int maxActive;
     private int maxWait;

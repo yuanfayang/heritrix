@@ -28,6 +28,7 @@ package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -106,13 +107,26 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // Copy configuration for eg Logging over
         File tmpConfDir = new File(tmpTestDir, "conf");
         tmpConfDir.mkdirs();
-        FileUtils.copyFiles(new File("testdata/selftest/conf"), tmpConfDir);
+        File srcConf = new File(src.getParentFile(), "conf");
+        FileUtils.copyFiles(srcConf, tmpConfDir);
+
+        String globalSheetText = FileUtils.readFileAsString(
+                new File(srcConf, "default.single"));
+        globalSheetText = changeGlobalConfig(globalSheetText);
+        File sheets = new File(tmpDefProfile, "sheets");
+        File globalSheet = new File(sheets, "default.single");
+        FileWriter fw = new FileWriter(globalSheet);
+        fw.write(globalSheetText);
+        fw.close();
         
         startHeritrix(tmpTestDir.getAbsolutePath());
         this.waitForCrawlFinish();
     }
     
     
+    protected String changeGlobalConfig(String globalSheetText) {
+        return globalSheetText;
+    }
     
 
     protected void close() throws Exception {

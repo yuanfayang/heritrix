@@ -14,3 +14,6 @@ the 'public suffix' list at publicsuffix.org, for
 reducing classKeys to mapping keys. If true, the default,
 then the reduce-prefix-pattern setting is ignored.
 
+
+frontier-description:
+The frontier.

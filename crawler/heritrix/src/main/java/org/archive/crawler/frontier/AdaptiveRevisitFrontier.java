@@ -64,6 +64,7 @@ import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;
 import org.archive.settings.file.BdbModule;
+import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
@@ -108,6 +109,10 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     @Immutable
     final public static Key<UriUniqFilter> URI_UNIQ_FILTER =
         Key.make(UriUniqFilter.class, null);
+    
+    @Immutable
+    final public static Key<FileModule> DIR = 
+        Key.make(FileModule.class, null);
     
     /** How many multiples of last fetch elapsed time to wait before recontacting
      * same server */
@@ -177,6 +182,8 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
     
+    private FileModule dir;
+    
 
 
     public AdaptiveRevisitFrontier() {
@@ -189,6 +196,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     
     public synchronized void initialTasks(StateProvider provider) {
         controller = provider.get(this, CONTROLLER);
+        dir = provider.get(this, DIR);
 
         queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
         alreadyIncluded = provider.get(this, URI_UNIQ_FILTER);
@@ -227,7 +235,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         // save ignored items (if any) where they can be consulted later
         AbstractFrontier.saveIgnoredItems(
                 ignoredWriter.toString(), 
-                controller.getDisk());
+                dir.getFile());
     }
     
     public String getClassKey(CrawlURI cauri) {

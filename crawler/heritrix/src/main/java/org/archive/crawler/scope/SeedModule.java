@@ -41,7 +41,7 @@ import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
-import org.archive.state.DirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -68,7 +68,8 @@ public class SeedModule implements Initializable {
      * File from which to extract seeds.
      */
     @Expert @Immutable
-    final public static Key<String> SEEDSFILE = Key.make("seeds.txt");
+    final public static Key<FileModule> SEEDSFILE = 
+        Key.make(FileModule.class, null);
 
 
     /**
@@ -80,8 +81,6 @@ public class SeedModule implements Initializable {
     @Global @Expert
     final public static Key<Boolean> REREAD_SEEDS_ON_CONFIG = Key.make(true);
 
-    final public static Key<DirectoryModule> DIRECTORY = 
-        Key.make(DirectoryModule.class, null);
 
     protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();
 
@@ -89,8 +88,7 @@ public class SeedModule implements Initializable {
         new HashSet<SeedRefreshListener>();
 
     
-    private StateProvider global;
-    private DirectoryModule directory;
+    private FileModule seedsFile;
 
 
     /** 
@@ -101,8 +99,7 @@ public class SeedModule implements Initializable {
 
 
     public void initialTasks(StateProvider provider) {
-        this.global = provider;
-        this.directory = global.get(this, DIRECTORY);
+        this.seedsFile = provider.get(this, SEEDSFILE);
     }
 
 
@@ -125,20 +122,7 @@ public class SeedModule implements Initializable {
      * @return Seed list file or null if problem getting settings file.
      */
     public File getSeedfile() {
-        File file = null;
-        try {
-            String path = global.get(this, SEEDSFILE);
-            path = directory.toAbsolutePath(path);
-            file = new File(path);
-            if (!file.exists() || !file.canRead()) {
-                throw new IOException("Seeds file " +
-                    file.getAbsolutePath() + " does not exist or unreadable.");
-            }
-        } catch (IOException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-        }
-
-        return file;
+        return seedsFile.getFile();
     }
 
     /** Check if a URI is in the seeds.

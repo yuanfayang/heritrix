@@ -52,3 +52,11 @@ The chain of processors that will handle each URI in the crawl.
 
 bdb-description:
 The BDB module.
+
+
+scratch-dir-description:
+The directory where temporary files will be written.
+
+
+checkpoints-dir-description:
+The directory where checkpoints will be stored.

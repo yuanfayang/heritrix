@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessorURI;
 import org.archive.settings.Sheet;
+import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -69,7 +70,8 @@ public class BeanShellProcessor extends CrawlerProcessor {
      *  BeanShell script file.
      */
     @Immutable
-    final public static Key<String> SCRIPT_FILE = Key.make("");
+    final public static Key<FileModule> SCRIPT_FILE = 
+        Key.make(FileModule.class, null);
 
 
     /**
@@ -146,15 +148,12 @@ public class BeanShellProcessor extends CrawlerProcessor {
         try {
             interpreter.set("self", this);
             interpreter.set("controller", controller);
-            
-            String filePath = get(SCRIPT_FILE);
-            if(filePath.length()>0) {
-                try {
-                    File file = controller.getRelative(filePath);
-                    interpreter.source(file.getPath());
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE,"unable to read script file",e);
-                }
+
+            File file = get(SCRIPT_FILE).getFile();
+            try {
+                interpreter.source(file.getPath());
+            } catch (IOException e) {
+                logger.log(Level.SEVERE,"unable to read script file",e);
             }
         } catch (EvalError e) {
             // TODO Auto-generated catch block

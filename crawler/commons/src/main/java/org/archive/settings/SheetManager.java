@@ -37,8 +37,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.state.DefaultDirectoryModule;
-import org.archive.state.DirectoryModule;
 import org.archive.settings.file.Checkpointable;
 import org.archive.settings.path.PathChangeException;
 import org.archive.state.Immutable;
@@ -54,7 +52,7 @@ import org.archive.surt.SURTTokenizer;
  * @author pjack
  */
 public abstract class SheetManager 
-implements StateProvider, Serializable, DirectoryModule {
+implements StateProvider, Serializable { //, DirectoryModule {
 
     final public static Logger LOGGER = 
         Logger.getLogger(SheetManager.class.getName());
@@ -333,7 +331,7 @@ implements StateProvider, Serializable, DirectoryModule {
         }
     }
     
-
+/*
     public String toAbsolutePath(String path) {
         return DefaultDirectoryModule.toAbsolutePath(getDirectory(), path);
     }
@@ -342,6 +340,7 @@ implements StateProvider, Serializable, DirectoryModule {
     public String toRelativePath(String path) {
         return DefaultDirectoryModule.toRelativePath(getDirectory(), path);
     }
+    */
 
     
     /**

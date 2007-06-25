@@ -44,9 +44,16 @@ public class SimpleSelfTest extends SelfTestBase {
             "index.html", "link1.html", "link2.html", "link3.html", "robots.txt"
     })));
     
+    
+    @Override
     protected void verify() throws Exception {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }
 
+    
+    @Override
+    protected String changeGlobalConfig(String text) {
+        return text;
+    }
 }

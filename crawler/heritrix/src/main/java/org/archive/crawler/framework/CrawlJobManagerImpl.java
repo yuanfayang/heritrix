@@ -25,8 +25,13 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,6 +66,7 @@ import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
 import org.archive.settings.path.PathValidator;
 import org.archive.util.FileUtils;
+import org.archive.util.IoUtils;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -394,4 +400,86 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         return result.toArray(new String[0]);
     }
 
+    
+    public synchronized String readLines(String fileName, int startLine, int lineCount) 
+    throws IOException {
+        if (startLine < 0) {
+            throw new IllegalArgumentException("startLine must be positive.");
+        }
+        if (lineCount < 0) {
+            throw new IllegalArgumentException("lineCount must be positive.");
+        }
+        if (lineCount > 10000) {
+            throw new IllegalArgumentException("lineCount exceeds max (10000)");
+        }
+
+        BufferedReader br = null;
+        StringBuilder result = new StringBuilder();
+        try {
+            br = new BufferedReader(new FileReader(fileName));
+            for (int i = 0; i < startLine; i++) {
+                String line = br.readLine();
+                if (line == null) {
+                    return "";
+                }
+            }
+            for (int i = 0; i < lineCount; i++) {
+                String line = br.readLine();
+                if (line == null) {
+                    return result.toString();
+                }
+                result.append(line).append('\n');
+            }
+            return result.toString();
+        } finally {
+            IoUtils.close(br);
+        }
+    }
+
+    public synchronized void writeLines(String fileName, int startLine, 
+            int lineCount, String lines)
+    throws IOException {
+        if (startLine < 0) {
+            throw new IllegalArgumentException("startLine must be positive.");
+        }
+
+        String tempFilename = fileName + ".temp";
+        
+        BufferedReader br = null;
+        BufferedWriter bw = null;
+        try {
+            BufferedReader linesBr = new BufferedReader(new StringReader(lines));
+            br = new BufferedReader(new FileReader(fileName));
+            bw = new BufferedWriter(new FileWriter(tempFilename));
+            for (int i = 0; i < startLine; i++) {
+                String line = br.readLine();
+                if (line == null) {
+                    break;
+                }
+                bw.write(line);
+                bw.write('\n');
+            }
+            
+            int count = 0;
+            for (String s = linesBr.readLine(); s != null; s = linesBr.readLine()) {
+                count++;
+                br.readLine();
+                bw.write(s);
+                bw.write('\n');
+            }
+            
+            for (int i = count; i < lineCount; i++) {
+                br.readLine();
+            }
+            
+            for (String s = br.readLine(); s != null; s = br.readLine()) {
+                bw.write(s);
+                bw.write('\n');
+            }            
+        } finally {
+            IoUtils.close(br);
+            IoUtils.close(bw);
+        }
+        new File(tempFilename).renameTo(new File(fileName));
+    }
 }

@@ -64,6 +64,7 @@ import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.SheetManager;
+import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -99,6 +100,18 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      */
     protected transient boolean shouldTerminate = false;
 
+
+    @Immutable
+    final public static Key<FileModule> SCRATCH_DIR = 
+        Key.make(FileModule.class, null);
+    
+
+    @Immutable
+    final public static Key<FileModule> RECOVERY_DIR =
+        Key.make(FileModule.class, null);
+    
+    
+    
     /**
      * How many multiples of last fetch elapsed time to wait before recontacting
      * same server.
@@ -245,6 +258,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         Key.make(SheetManager.class, null);
 
     
+    private FileModule scratchDir;
+    private FileModule recoveryDir;
+
 
     /**
      * Defines how to assign URIs to queues. Can assign by host, by ip, 
@@ -265,6 +281,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     
     public void initialTasks(StateProvider provider) {
         this.global = provider;
+        this.scratchDir = provider.get(this, SCRATCH_DIR);
+        this.recoveryDir = provider.get(this, RECOVERY_DIR);
         this.controller = provider.get(this, CONTROLLER);
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         this.manager = provider.get(this, MANAGER);
@@ -484,7 +502,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
             }
         }
         // save ignored items (if any) where they can be consulted later
-        saveIgnoredItems(ignoredWriter.toString(), controller.getDisk());
+        saveIgnoredItems(ignoredWriter.toString(), recoveryDir.getFile());
         logger.info("finished");
     }
 
@@ -773,7 +791,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
             hex = "0" + hex;
         }
         int len = hex.length();
-        return new File(this.controller.getStateDisk(), hex.substring(len - 2,
+        return new File(scratchDir.getFile(), hex.substring(len - 2,
                 len)
                 + File.separator
                 + hex.substring(len - 4, len - 2)
@@ -792,7 +810,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
             throws IOException {
         File source = new File(pathToLog);
         if (!source.isAbsolute()) {
-            source = new File(controller.getDisk(), pathToLog);
+            source = new File(recoveryDir.getFile(), pathToLog);
         }
         RecoveryJournal.importRecoverLog(source, this, retainFailures);
     }

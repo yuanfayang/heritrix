@@ -120,7 +120,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
                 .getOrderSetting(CrawlOrder.RECORDER_OUT_BUFFER_BYTES);
         int inBufferSize = controller
                 .getOrderSetting(CrawlOrder.RECORDER_IN_BUFFER_BYTES);
-        httpRecorder = new Recorder(controller.getScratchDisk(),
+        httpRecorder = new Recorder(controller.getScratchDir(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
     }

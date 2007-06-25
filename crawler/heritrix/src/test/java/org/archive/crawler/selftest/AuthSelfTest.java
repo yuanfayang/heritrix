@@ -119,6 +119,39 @@ public class AuthSelfTest
 
 
 
+    @Override
+    protected String changeGlobalConfig(String config) {
+        String token = "CredentialStore\n";        
+        int p = config.indexOf(token);
+        String newConfig = 
+            "root:controller:credential-store:credentials" +
+            "=map, org.archive.processors.credential.Credential\n" +
+            "root:controller:credential-store:credentials:test" +
+            "=object, org.archive.processors.credential.Rfc2617Credential\n" +
+            "root:controller:credential-store:credentials:test:" +
+            "credential-domain=string, localhost:7777\n" +
+            "root:controller:credential-store:credentials:test:realm" +
+            "=string, Hyrule\n" +
+            "root:controller:credential-store:credentials:test:login" +
+            "=string, Mr. Happy Pants\n" +
+            "root:controller:credential-store:credentials:test:password" +
+            "=string, xyzzy\n" +
+            "root:controller:credential-store:credentials:test2" +
+            "=object, org.archive.processors.credential.HtmlFormCredential\n" +
+            "root:controller:credential-store:credentials:test2:credential-domain" +
+            "=string, localhost:7777\n" +
+            "root:controller:credential-store:credentials:test2:login-uri" +
+            "=string, http://localhost:7777/login/login.html\n" +
+            "root:controller:credential-store:credentials:test2:form-items" +
+            "=map, java.lang.String\n" +
+            "root:controller:credential-store:credentials:test2:form-items" +
+            ":username=string, Mr. Happy Pants\n" +
+            "root:controller:credential-store:credentials:test2:form-items" +
+            ":password=string, xyzzy\n";
+        String result = config.substring(0, p + token.length()) + 
+            newConfig + config.substring(p + token.length());
+        return result;
+    }
 
 }
 

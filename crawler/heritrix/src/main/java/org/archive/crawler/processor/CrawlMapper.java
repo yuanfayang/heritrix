@@ -32,14 +32,14 @@ import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.processors.fetcher.FetchStatusCodes.*;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessResult;
+import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
 import org.archive.processors.deciderules.DecideRuleSequence;
-import org.archive.settings.Sheet;
+import org.archive.state.FileModule;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -68,7 +68,7 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public abstract class CrawlMapper extends CrawlerProcessor {
+public abstract class CrawlMapper extends Processor {
 
     /**
      * PrintWriter which remembers the File to which it writes. 
@@ -116,7 +116,9 @@ public abstract class CrawlMapper extends CrawlerProcessor {
     /**
      * Directory to write diversion logs.
      */
-    final public static Key<String> DIVERSION_DIR = Key.make("diversions");
+    @Immutable
+    final public static Key<FileModule> DIVERSION_DIR = 
+        Key.make(FileModule.class, null);
 
 
     /**
@@ -145,7 +147,8 @@ public abstract class CrawlMapper extends CrawlerProcessor {
     protected String localName;
     
     protected ArrayLongFPCache cache;
-    
+
+    private FileModule diversionDir;
     
     /**
      * Constructor.
@@ -287,12 +290,7 @@ public abstract class CrawlMapper extends CrawlerProcessor {
     protected PrintWriter getDiversionLog(String target) {
         FilePrintWriter writer = (FilePrintWriter) diversionLogs.get(target);
         if(writer == null) {
-            Sheet def = controller.getSheetManager().getDefault();
-            String divertDirPath = def.get(this, DIVERSION_DIR);
-            File divertDir = new File(divertDirPath);
-            if (!divertDir.isAbsolute()) {
-                divertDir = new File(controller.getDisk(), divertDirPath);
-            }
+            File divertDir = this.diversionDir.getFile();
             divertDir.mkdirs();
             File divertLog = 
                 new File(divertDir,
@@ -313,10 +311,8 @@ public abstract class CrawlMapper extends CrawlerProcessor {
         super.initialTasks(context);
         localName = context.get(this, LOCAL_NAME);
         cache = new ArrayLongFPCache();
+        diversionDir = context.get(this, DIVERSION_DIR);
     }
-    
-    
-    protected CrawlController getController() {
-        return controller;
-    }
+
+
 }

@@ -36,7 +36,9 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
+import org.archive.state.FileModule;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -58,7 +60,7 @@ import bsh.Interpreter;
  * 
  * @author gojomo
  */
-public class BeanShellDecideRule extends DecideRule {
+public class BeanShellDecideRule extends DecideRule implements Initializable {
 
     private static final long serialVersionUID = 3L;
 
@@ -67,8 +69,11 @@ public class BeanShellDecideRule extends DecideRule {
     
     /** BeanShell script file. */
     @Immutable
-    final public static Key<String> SCRIPT_FILE = Key.make("");
+    final public static Key<FileModule> SCRIPT_FILE = 
+        Key.make(FileModule.class, null);
 
+    final public static Key<CrawlController> CONTROLLER =
+        Key.make(CrawlController.class, null);
 
     /**
      * Whether each ToeThread should get its own independent script context, or
@@ -86,11 +91,17 @@ public class BeanShellDecideRule extends DecideRule {
         Collections.synchronizedMap(new HashMap<Object,Object>());
     protected boolean initialized = false; 
 
+    private FileModule scriptFile;
+    private CrawlController controller;
     
-    final private CrawlController controller;
-
-    public BeanShellDecideRule(CrawlController controller) {
-        this.controller = controller;
+    
+    public BeanShellDecideRule() {
+    }
+    
+    
+    public void initialTasks(StateProvider context) {
+        this.scriptFile = context.get(this, SCRIPT_FILE);
+        this.controller = context.get(this, CONTROLLER);
     }
 
     
@@ -148,14 +159,11 @@ public class BeanShellDecideRule extends DecideRule {
             interpreter.set("self", this);
             interpreter.set("controller", controller);
             
-            String filePath = context.get(this, SCRIPT_FILE);
-            if(filePath.length()>0) {
-                try {
-                    File file = controller.getRelative(filePath);
-                    interpreter.source(file.getPath());
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE,"unable to read script file",e);
-                }
+            File file = scriptFile.getFile();
+            try {
+                interpreter.source(file.getPath());
+            } catch (IOException e) {
+                logger.log(Level.SEVERE,"unable to read script file",e);
             }
         } catch (EvalError e) {
             // TODO Auto-generated catch block

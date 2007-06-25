@@ -55,13 +55,15 @@ import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 
-import static org.archive.settings.file.BdbModule.*;
+import static org.archive.settings.file.BdbModule.BDB_CACHE_PERCENT;
+import static org.archive.settings.file.BdbModule.CHECKPOINT_COPY_BDBJE_LOGS;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -154,6 +156,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     final public static Key<BdbModule> BDB = 
         Key.make(BdbModule.class, null);
 
+    /** The directory this sheet manager uses. */
+    @Immutable
+    final public static Key<FileModule> DIR =
+        Key.make(FileModule.class, null);
 
     static {
         KeyManager.addKeys(FileSheetManager.class);
@@ -203,6 +209,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     final private BdbModule bdb;
     
+    final private FileModule dir;
+    
     private String bdbDir;
     
     final private int bdbCachePercent;
@@ -243,6 +251,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         if (!f.isAbsolute()) {
             f = new File(mainConfig.getParent(), path);
         }
+
         
         this.bdbDir = f.getAbsolutePath();
         this.bdbCachePercent = Integer.parseInt(
@@ -257,12 +266,17 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
         
         ExampleStateProvider dsp = new ExampleStateProvider();
+
+        this.dir = new FileModule();
+        dsp.set(dir, FileModule.PATH, main.getParentFile().getAbsolutePath());
+        dir.initialTasks(dsp);
         
         this.bdb = new BdbModule();
-        dsp.set(bdb, DIR, this.bdbDir);
+        dsp.set(bdb, BdbModule.DIR, this.bdbDir);
         dsp.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
         dsp.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
         bdb.initialTasks(dsp);
+        
         
         String prop = p.getProperty(ATTR_SHEETS);
         this.sheetsDir = getRelative(main, prop, DEFAULT_SHEETS);
@@ -702,18 +716,23 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         if (isOnline()) {
             ss.set(this, MANAGER, this);
             ss.set(this, BDB, bdb);
-            ss.set(bdb, DIR, bdbDir);
+            ss.set(this, DIR, dir);
+            ss.set(bdb, BdbModule.DIR, bdbDir);
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+            ss.set(dir, FileModule.PATH, dir.getFile().getAbsolutePath());
         } else {
             @SuppressWarnings("unchecked")
             Offline<SheetManager> manager = (Offline)getManagerModule();
             Offline<BdbModule> bdb = Offline.make(BdbModule.class);
+            Offline<FileModule> dir = Offline.make(FileModule.class);
             ss.setOffline(manager, MANAGER, manager);
             ss.setOffline(manager, BDB, bdb);
-            ss.set(bdb, DIR, bdbDir);
+            ss.setOffline(manager, DIR, dir);
+            ss.set(bdb, BdbModule.DIR, bdbDir);
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+            ss.setOffline(dir, FileModule.PATH, this.dir.getFile().getAbsolutePath());
         }
     }
     

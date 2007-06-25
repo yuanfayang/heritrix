@@ -25,6 +25,7 @@ package org.archive.crawler.processor;
 import java.util.regex.Matcher;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.Frontier;
 import org.archive.net.PublicSuffixes;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
@@ -43,6 +44,12 @@ import st.ata.util.FPGenerator;
 public class HashCrawlMapper extends CrawlMapper {
 
     private static final long serialVersionUID = 2L;
+    
+    
+    
+    @Immutable
+    final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, null);
+    
     
 
     /**
@@ -69,7 +76,8 @@ public class HashCrawlMapper extends CrawlMapper {
         Key.make("");
     
     long bucketCount = 1;
-
+    private Frontier frontier;
+    
     /**
      * Constructor.
      */
@@ -86,7 +94,7 @@ public class HashCrawlMapper extends CrawlMapper {
      */
     protected String map(CrawlURI cauri) {
         // get classKey, via frontier to generate if necessary
-        String key = getController().getFrontier().getClassKey(cauri);
+        String key = frontier.getClassKey(cauri);
         String reduceRegex = getReduceRegex(cauri);
         return mapString(key, reduceRegex, bucketCount); 
     }
@@ -101,6 +109,7 @@ public class HashCrawlMapper extends CrawlMapper {
 
     public void initialTasks(StateProvider context) {
         super.initialTasks(context);
+        this.frontier = context.get(this, FRONTIER);
         bucketCount = context.get(this, CRAWLER_COUNT);
     }
 

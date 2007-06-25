@@ -41,7 +41,7 @@ import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
-import org.archive.state.DirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.processors.deciderules.DecideRule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
@@ -107,12 +107,12 @@ public abstract class CrawlScope extends DecideRule implements Initializable {
 
     
     
-    final public static Key<DirectoryModule> DIRECTORY = 
-        Key.make(DirectoryModule.class, null);
+    final public static Key<FileModule> DIRECTORY = 
+        Key.make(FileModule.class, null);
 
     
     private StateProvider global;
-    private DirectoryModule directory;
+    private FileModule directory;
 
 
     /** 
