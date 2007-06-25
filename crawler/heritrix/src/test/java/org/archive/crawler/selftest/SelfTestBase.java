@@ -41,7 +41,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.archive.crawler.Heritrix;
-import org.archive.crawler.framework.CrawlJobManagerImpl;
 import org.archive.crawler.framework.CrawlStatus;
 import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.arc.ARCReaderFactory;
@@ -49,7 +48,6 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
-import org.archive.util.JmxUtils;
 import org.archive.util.JmxWaiter;
 import org.archive.util.TmpDirTestCase;
 import org.mortbay.jetty.Handler;
@@ -68,12 +66,10 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     final private Logger LOGGER = 
         Logger.getLogger(SelfTestBase.class.getName());
     
-//    protected HeritrixThread heritrixThread;
     protected Server httpServer;
     
     protected HeritrixThread heritrixThread;
 
-    
     protected void open() throws Exception {
         // We expect to be run from the project directory.
         // (Both eclipse and maven run junit tests from there).

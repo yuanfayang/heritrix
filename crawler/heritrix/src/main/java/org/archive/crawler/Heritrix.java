@@ -181,17 +181,17 @@ public class Heritrix {
             properties = new File(cl.getOptionValue('h'));
         }
 
+        if (properties.exists()) {
+            FileInputStream finp = new FileInputStream(properties);
+            LogManager.getLogManager().readConfiguration(finp);
+        }
+        
         PrintStream out;
         if (isDevelopment()) {
             out = System.out;
         } else {
             File startLog = new File(getHeritrixHome(), STARTLOG);
             out = new PrintStream(new FileOutputStream(startLog));
-        }
-        
-        if (properties.exists()) {
-            FileInputStream finp = new FileInputStream(properties);
-            LogManager.getLogManager().readConfiguration(finp);
         }
         
         // Set timezone here.  Would be problematic doing it if we're running
