@@ -52,6 +52,7 @@ import org.archive.net.UURI;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.file.BdbModule;
+import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -126,8 +127,13 @@ implements CrawlURIDispositionListener, Serializable {
     final public static Key<BdbModule> BDB =
         Key.make(BdbModule.class, null);
     
+    @Immutable
+    final public static Key<FileModule> REPORTS_DIR =
+        Key.make(FileModule.class, null);
+    
     private SeedModule seeds;
     private BdbModule bdb;
+    private FileModule reportsDir;
     
     /**
      * Messages from the StatisticsTracker.
@@ -219,6 +225,7 @@ implements CrawlURIDispositionListener, Serializable {
         super.initialTasks(p);
         this.seeds = p.get(this, SEEDS);
         this.bdb = p.get(this, BDB);
+        this.reportsDir = p.get(this, REPORTS_DIR);
         try {
             this.sourceHostDistribution = bdb.getBigMap("sourceHostDistribution",
             	    String.class, HashMap.class);
@@ -1062,7 +1069,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeReportFile(String reportName, String filename) {
-        File f = new File(controller.getDisk().getPath(), filename);
+        File f = new File(reportsDir.getFile().getPath(), filename);
         try {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
             writeReportTo(reportName, bw);

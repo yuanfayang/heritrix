@@ -33,7 +33,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.net.UURI;
-import org.archive.state.DirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.PredicatedAcceptDecideRule;
 import org.archive.state.Expert;
@@ -114,8 +114,8 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
 
     
     @Immutable
-    final public static Key<DirectoryModule> DIRECTORY = 
-        Key.make(DirectoryModule.class, null);
+    final public static Key<FileModule> DIRECTORY = 
+        Key.make(FileModule.class, null);
     
     
     @Immutable 
@@ -126,7 +126,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     protected SurtPrefixSet surtPrefixes = null;
 
     
-    private DirectoryModule directory;
+    private FileModule directory;
     
     private SeedModule seeds;
     

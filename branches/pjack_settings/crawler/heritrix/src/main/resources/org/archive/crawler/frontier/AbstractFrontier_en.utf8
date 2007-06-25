@@ -84,3 +84,12 @@ The crawl controller using this Frontier.
 
 queue-assignment-policy-description:
 The queue assignment policy to use.
+
+
+recovery-dir-description:
+The directory that the ignored seeds report and the recovery log will live in.
+
+
+scratch-dir-description:
+The directory where temporary files will be written.
+

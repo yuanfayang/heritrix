@@ -557,7 +557,10 @@ public class Sheets {
         showSheetEditor(sc, request, response);
     }
             
-    
+
+    public static Settings getGlobalSettings(JMXSheetManager mgr) {
+        return getSettings(mgr, "default");
+    }
     
 
     private static Settings getSettings(JMXSheetManager mgr,
@@ -633,7 +636,7 @@ public class Sheets {
      * @return   the remote JMXSheetManager specified in the request
      * @throws Exception   if anything goes wrong
      */
-    private static Remote<JMXSheetManager> getSheetManager(
+    public static Remote<JMXSheetManager> getSheetManager(
             HttpServletRequest request) throws Exception {
         Crawler crawler = Home.getCrawler(request);
         boolean profile = isProfile(request);

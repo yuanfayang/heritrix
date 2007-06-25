@@ -235,7 +235,7 @@ public class Checkpointer implements Serializable {
     
     protected File createCheckpointInProgressDirectory() {
         this.checkpointInProgressDir =
-            new File(Checkpointer.this.controller.getCheckpointsDisk(),
+            new File(Checkpointer.this.controller.getCheckpointsDir(),
                 getNextCheckpointName());
         this.checkpointInProgressDir.mkdirs();
         return this.checkpointInProgressDir;

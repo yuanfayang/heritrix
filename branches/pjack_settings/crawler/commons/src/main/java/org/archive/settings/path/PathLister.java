@@ -83,9 +83,9 @@ public class PathLister {
         this.resolve = resolve;
         this.consumer = c;
         this.alreadySeen = new IdentityHashMap<Object,String>();
-        alreadySeen.put(
-                sheet.getSheetManager().getManagerModule(),
-                SheetManager.MANAGER.getFieldName());
+//        alreadySeen.put(
+//                sheet.getSheetManager().getManagerModule(),
+//                SheetManager.MANAGER.getFieldName());
     }
     
 
@@ -94,13 +94,12 @@ public class PathLister {
      * for the algorithm.  It starts by consuming the root objects.
      */
     private void list() {
-        Sheet defaults = startSheet.getSheetManager().getDefault();
-        String path = "root";
-        Object module = startSheet.get(
-                startSheet.getSheetManager().getManagerModule(), SheetManager.ROOT);
-        List<Sheet> list = Collections.singletonList(defaults);
-        consume(path, list, module, Map.class);
-        advance(path, list, module);
+        Object start = startSheet.getSheetManager().getManagerModule();
+        Class type = Offline.getType(start);
+        Collection<Key<Object>> keys = KeyManager.getKeys(type).values();
+        for (Key<Object> k: keys) {            
+            this.handleKey("", start, k);
+        }
     }
 
 

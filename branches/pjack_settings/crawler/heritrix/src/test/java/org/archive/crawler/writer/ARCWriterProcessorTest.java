@@ -29,7 +29,7 @@ package org.archive.crawler.writer;
 import java.io.File;
 
 import org.archive.crawler.framework.WriterPoolProcessor;
-import org.archive.state.DefaultDirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.processors.ProcessorTestBase;
 import org.archive.processors.fetcher.DefaultServerCache;
 import org.archive.state.ExampleStateProvider;
@@ -57,8 +57,8 @@ public class ARCWriterProcessorTest extends ProcessorTestBase {
         tmp.mkdirs();
 
         ExampleStateProvider sp = new ExampleStateProvider();
-        DefaultDirectoryModule dir = new DefaultDirectoryModule();
-        sp.set(dir, DefaultDirectoryModule.DIRECTORY, tmp.getAbsolutePath());
+        FileModule dir = new FileModule();
+        sp.set(dir, FileModule.PATH, tmp.getAbsolutePath());
         
         
         ARCWriterProcessor result = new ARCWriterProcessor();

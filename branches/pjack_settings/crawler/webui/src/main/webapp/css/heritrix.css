@@ -167,9 +167,40 @@ tr.infoalt{
     background-color: #FFFFCC;
 }
 
+td.info0 {
+    border: solid black 1px;
+    border-collapse: collapse;    
+    padding: 2px;
+}
+
+td.info1 {
+    border: solid black 1px;
+    border-collapse: collapse;    
+    background-color: #FFFFCC;
+    padding: 2px;
+}
 
 .nospace {
     display:inline;
     margin:0px;
     padding:0px;
+}
+
+td.jobnav {
+    background-color: #EEEEFF; padding-left: 5; padding-right: 5; 
+    border-top: solid blue 1px;
+    border-bottom: solid blue 1px;
+}
+
+td.jobnav_selected {
+    background-color: #0000FF; padding-left: 5; padding-right: 5; 
+    border-top: solid blue 1px;
+    border-bottom: solid blue 1px;
+}
+
+td.jobnav_seperator {
+    background-color: #FFFFFF; color: #000000; font-weight: bold; padding-left: 2; padding-right: 2; 
+    text-decoration: none;
+    border-top: solid blue 1px;
+    border-bottom: solid blue 1px;
 }

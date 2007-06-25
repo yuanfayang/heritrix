@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,24 +48,22 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.Emitter;
+import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.openmbeans.annotations.Bean;
-import org.archive.openmbeans.annotations.Emitter;
+import org.archive.state.FileModule;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
-import org.archive.processors.util.ServerCache;
-import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
-import org.archive.state.DefaultDirectoryModule;
-import org.archive.state.DirectoryModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -79,6 +76,8 @@ import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * CrawlController collects all the classes which cooperate to
  * perform a crawl and provides a high-level interface to the
@@ -90,8 +89,7 @@ import org.xbill.DNS.Lookup;
  * @author Gordon Mohr
  */
 public class CrawlController extends Bean 
-implements Serializable, Reporter, StateProvider, Initializable, 
-DirectoryModule, JobController {
+implements Serializable, Reporter, StateProvider, Initializable, JobController {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
@@ -118,6 +116,15 @@ DirectoryModule, JobController {
     @Immutable
     final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, null);
 
+    
+    @Immutable
+    final public static Key<FileModule> SCRATCH_DIR = 
+        Key.make(FileModule.class, null);
+    
+    @Immutable
+    final public static Key<FileModule> CHECKPOINTS_DIR =
+        Key.make(FileModule.class, null);
+    
 
     /**
      * Ordered list of url canonicalization rules.  Rules are applied in the 
@@ -158,7 +165,7 @@ DirectoryModule, JobController {
 
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
         Key.make(CrawlerLoggerModule.class, null);
-    
+
     static {
         KeyManager.addKeys(CrawlController.class);
     }
@@ -217,22 +224,22 @@ DirectoryModule, JobController {
     transient private State state = State.NASCENT;
 
     // disk paths
-    transient private File disk;        // overall disk path
+//    transient private File disk;        // overall disk path
     
     /**
      * For temp files representing state of crawler (eg queues)
      */
-    transient private File stateDisk;
+//    transient private File stateDisk;
     
     /**
      * For discardable temp files (eg fetch buffers).
      */
-    transient private File scratchDisk;
+    private FileModule scratchDir;
 
     /**
      * Directory that holds checkpoint.
      */
-    transient private File checkpointsDisk;
+    private FileModule checkpointsDir;
     
     /**
      * Checkpointer.
@@ -281,6 +288,8 @@ DirectoryModule, JobController {
         this.sheetManager = provider.get(this, SHEET_MANAGER);
         this.order = provider.get(this, ORDER);
         this.loggerModule = provider.get(this, LOGGER_MODULE);
+        this.scratchDir = provider.get(this, SCRATCH_DIR);
+        this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
         sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
 
         this.singleThreadLock = new ReentrantLock();
@@ -297,9 +306,6 @@ DirectoryModule, JobController {
             checkUserAgentAndFrom();
 
             onFailMessage = "Unable to setup disk";
-            if (disk == null) {
-                setupDisk();
-            }
             
             // Figure if we're to do a checkpoint restore. If so, get the
             // checkpointRecover instance and then put into place the old bdb
@@ -591,6 +597,7 @@ DirectoryModule, JobController {
         }
     }
 
+    /*
     private void setupDisk() {
         String diskPath = get(order, CrawlOrder.DISK_PATH);
         diskPath = sheetManager.toAbsolutePath(diskPath);
@@ -599,7 +606,7 @@ DirectoryModule, JobController {
         this.checkpointsDisk = getSettingsDir(CrawlOrder.CHECKPOINTS_PATH);
         this.stateDisk = getSettingsDir(CrawlOrder.STATE_PATH);
         this.scratchDisk = getSettingsDir(CrawlOrder.SCRATCH_PATH);
-    }
+    }*/
     
     
     /**
@@ -611,7 +618,7 @@ DirectoryModule, JobController {
      * @return Full path to directory named by <code>key</code>.
      * @throws AttributeNotFoundException
      */
-    private File getSettingsDir(Key<String> key) {
+/*    private File getSettingsDir(Key<String> key) {
         String path = get(order, key);
         File f = new File(path);
         if (!f.isAbsolute()) {
@@ -621,7 +628,7 @@ DirectoryModule, JobController {
             f.mkdirs();
         }
         return f;
-    }
+    } */
 
     /**
      * Setup the statistics tracker.
@@ -807,8 +814,8 @@ DirectoryModule, JobController {
         this.manifest = null;
 
 //        this.frontier = null;
-        this.disk = null;
-        this.scratchDisk = null;
+//        this.disk = null;
+//        this.scratchDisk = null;
 //        this.order = null;
 //        this.scope = null;
         if (this.sheetManager !=  null) {
@@ -1093,27 +1100,6 @@ DirectoryModule, JobController {
 //    }
 
 
-    /**
-     * Get the 'working' directory of the current crawl.
-     * @return the 'working' directory of the current crawl.
-     */
-    public File getDisk() {
-        return disk;
-    }
-
-    /**
-     * @return Scratch disk location.
-     */
-    public File getScratchDisk() {
-        return scratchDisk;
-    }
-
-    /**
-     * @return State disk location.
-     */
-    public File getStateDisk() {
-        return stateDisk;
-    }
 
     /**
      * @return The number of ToeThreads
@@ -1231,12 +1217,6 @@ DirectoryModule, JobController {
         // first since Modules that are constructed during defaultReadObject
         // may require those things.
         stream.writeObject(order);
-        
-        stream.writeObject(disk);
-        stream.writeObject(checkpointsDisk);
-        stream.writeObject(scratchDisk);
-        stream.writeObject(stateDisk);
-        
         stream.defaultWriteObject();
     }
     
@@ -1245,38 +1225,15 @@ DirectoryModule, JobController {
     throws IOException, ClassNotFoundException {
         this.order = (CrawlOrder)stream.readObject();
         this.state = State.PAUSED;
-        
-        disk = (File)stream.readObject();
-        checkpointsDisk = (File)stream.readObject();
-        scratchDisk = (File)stream.readObject();
-        stateDisk = (File)stream.readObject();
+
         this.manifest = new StringBuffer();
-        
-        if (stream instanceof CheckpointRecovery) {
-            CheckpointRecovery cr = (CheckpointRecovery)stream;
-            this.disk = translate(cr, CrawlOrder.DISK_PATH, this.disk);
-            this.checkpointsDisk = translate(cr, 
-                    CrawlOrder.CHECKPOINTS_PATH, this.checkpointsDisk);
-            this.scratchDisk = translate(cr, 
-                    CrawlOrder.SCRATCH_PATH, this.scratchDisk);
-            this.stateDisk = translate(cr, 
-                    CrawlOrder.STATE_PATH, this.stateDisk);
-        }
-            
+
         stream.defaultReadObject();
 
         // Ensure no holdover singleThreadMode
         singleThreadMode = false; 
     }
-    
-    
-    private File translate(CheckpointRecovery cr, Key<String> key, File f) {
-        String newPath = cr.translatePath(f.getAbsolutePath());
-        cr.setState(order, key, newPath);
-        File r = new File(newPath);
-        r.mkdirs();
-        return r;
-    }
+
 
     /**
      * Go to single thread mode, where only one ToeThread may
@@ -1515,22 +1472,6 @@ DirectoryModule, JobController {
     public Object getState() {
         return this.state;
     }
-
-    
-    public File getRelative(String path) {
-        File f = new File(path);
-        if (f.isAbsolute()) {
-            return f;
-        }
-
-    
-        return new File(disk, path);
-    }
-    
-    
-    public File getCheckpointsDisk() {
-        return this.checkpointsDisk;
-    }
     
     
     public CredentialStore getCredentialStore() {
@@ -1587,6 +1528,15 @@ DirectoryModule, JobController {
     }
 
     
+    public File getScratchDir() {
+        return scratchDir.getFile();
+    }
+    
+    
+    public File getCheckpointsDir() {
+        return checkpointsDir.getFile();
+    }
+    
     @Emitter(desc="Emitted when the crawl status changes (eg, when a crawl "
         + " goes from CRAWLING to ENDED)",         
         types={ "PAUSED", "RUNNING", "PAUSING", "STARTED", "STOPPING", 
@@ -1603,21 +1553,6 @@ DirectoryModule, JobController {
 
     public CrawlerLoggerModule getLoggerModule() {
         return loggerModule;
-    }
-
-
-    public File getDirectory() {
-        return disk;
-    }
-
-    
-    public String toAbsolutePath(String path) {
-        return DefaultDirectoryModule.toAbsolutePath(getDirectory(), path);
-    }
-
-
-    public String toRelativePath(String path) {
-        return DefaultDirectoryModule.toRelativePath(getDirectory(), path);
     }
 
     
@@ -1655,7 +1590,4 @@ DirectoryModule, JobController {
         this.reportTo(CrawlController.PROCESSORS_REPORT,new PrintWriter(sw));
         return sw.toString();
     }
-
-
-
 }

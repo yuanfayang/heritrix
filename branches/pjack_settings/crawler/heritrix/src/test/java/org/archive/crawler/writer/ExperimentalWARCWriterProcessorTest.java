@@ -30,7 +30,7 @@ import java.io.File;
 
 import org.archive.crawler.framework.CrawlerProcessorTestBase;
 import org.archive.crawler.framework.WriterPoolProcessor;
-import org.archive.state.DefaultDirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.processors.fetcher.DefaultServerCache;
 import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
@@ -57,8 +57,8 @@ public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBas
         tmp.mkdirs();
 
         ExampleStateProvider sp = new ExampleStateProvider();
-        DefaultDirectoryModule dir = new DefaultDirectoryModule();
-        sp.set(dir, DefaultDirectoryModule.DIRECTORY, tmp.getAbsolutePath());
+        FileModule dir = new FileModule();
+        sp.set(dir, FileModule.PATH, tmp.getAbsolutePath());
         
         
         ExperimentalWARCWriterProcessor result = new ExperimentalWARCWriterProcessor();

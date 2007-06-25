@@ -98,7 +98,6 @@ public class PathChanger {
 
     
     public void change(SingleSheet sheet, PathChange pair) {
-        System.out.println(pair);
         if (sheet.getSheetManager().isOnline()) {
             changeLoudly(sheet, pair);
         } else {
@@ -111,11 +110,9 @@ public class PathChanger {
         try {
             changeLoudly(sheet, pair);
         } catch (PathChangeException e) {
-            e.printStackTrace();
             e.setPathChange(pair);
             problems.add(e);
         } catch (RuntimeException e) {
-            e.printStackTrace();
             PathChangeException pce = new PathChangeException(e);
             pce.setPathChange(pair);
             problems.add(pce);

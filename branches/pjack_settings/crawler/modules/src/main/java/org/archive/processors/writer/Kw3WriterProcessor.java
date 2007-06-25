@@ -37,7 +37,7 @@ import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
-import org.archive.state.DirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
@@ -145,8 +145,8 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
    * Directory for relative path values.
    */
   @Immutable
-  final public static Key<DirectoryModule> DIR = 
-      Key.make(DirectoryModule.class, null);
+  final public static Key<FileModule> DIR = 
+      Key.make(FileModule.class, null);
   
   private static String BOUNDARY_START = "KulturArw3_";
   
@@ -167,7 +167,7 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
   
   private ServerCache serverCache;
   
-  private DirectoryModule dirModule;
+  private FileModule dirModule;
   
   /**
    * Constructor.

@@ -125,4 +125,32 @@ public interface CrawlJobManager extends Closeable {
     @Operation(desc="Invokes System.exit to terminate the JVM.")
     void systemExit();
 
+    
+    @Operation(desc="Reads lines from a text file.")
+    String readLines(
+            @Parameter(name="filename", desc="The name of the file to read.")
+            String fileName,
+            
+            @Parameter(name="startLine", desc="The starting line number to read.")
+            int startLine,
+            
+            @Parameter(name="lineCount", desc="The number of lines to read.")
+            int lineCount) throws IOException;
+
+    
+    @Operation(desc="Writes lines to a text file.")
+    void writeLines(
+            @Parameter(name="filename", desc="The name of the file to write.")
+            String fileName,
+            
+            @Parameter(name="startLine", desc="The starting line number to write.")
+            int startLine,
+
+            @Parameter(name="lineCount", desc="The number of lines in a page.")
+            int lineCount,
+            
+            @Parameter(name="lines", desc="The new text to write.")
+            String lines) throws IOException;
+
+    
 }

@@ -28,8 +28,6 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -48,9 +46,8 @@ import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.io.GenerationFileHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.DirectoryModule;
+import org.archive.state.FileModule;
 import org.archive.processors.LoggerModule;
-import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
@@ -67,12 +64,8 @@ public class CrawlerLoggerModule
 implements LoggerModule, Initializable, Checkpointable {
 
     @Immutable
-    public final static Key<DirectoryModule> PARENT = 
-        Key.make(DirectoryModule.class, null);
-
-
-    @Immutable
-    public final static Key<String> DIR = Key.make("logs");
+    public final static Key<FileModule> DIR = 
+        Key.make(FileModule.class, null);
 
     
     static {
@@ -150,8 +143,7 @@ implements LoggerModule, Initializable, Checkpointable {
     transient private Map<String,Logger> loggers = new HashMap<String,Logger>();
 
 
-    private DirectoryModule parent;
-    private File logsDisk;
+    private FileModule dir;
 
     
     private StringBuffer manifest = new StringBuffer();
@@ -161,10 +153,8 @@ implements LoggerModule, Initializable, Checkpointable {
 
     
     public void initialTasks(StateProvider provider) {
-        String dir = provider.get(this, DIR);
-        this.parent = provider.get(this, PARENT);
-        logsDisk = new File(parent.toAbsolutePath(dir));
-        logsDisk.mkdirs();
+        dir = provider.get(this, DIR);
+        dir.getFile().mkdirs();
         try {
             setupLogs();
         } catch (IOException e) {
@@ -174,7 +164,7 @@ implements LoggerModule, Initializable, Checkpointable {
     
     
     private void setupLogs() throws IOException {
-        String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
+        String logsPath = dir.getFile().getAbsolutePath() + File.separatorChar;
         uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
         runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
             logsPath);
@@ -294,7 +284,7 @@ implements LoggerModule, Initializable, Checkpointable {
 
 
     public File getLogsDir() {
-        return logsDisk;
+        return dir.getFile();
     }
 
 
@@ -327,22 +317,6 @@ implements LoggerModule, Initializable, Checkpointable {
         return uriProcessing;
     }
 
-    
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-    }
-    
-    
-    private void readObject(ObjectInputStream input) 
-    throws IOException, ClassNotFoundException {
-        input.defaultReadObject();
-        if (input instanceof CheckpointRecovery) {
-            CheckpointRecovery cr = (CheckpointRecovery)input;
-            String abs = logsDisk.getAbsolutePath();
-            abs = cr.translatePath(abs);
-            cr.setState(this, DIR, parent.toRelativePath(abs));
-        }
-    }
 
 
     /**

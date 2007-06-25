@@ -69,4 +69,35 @@ String the_sheet = (String)request.getAttribute("sheet");
 </td>
 </table>
 
+
+
+<% if (the_profile != null) { 
+     Integer tabObject = (Integer)request.getAttribute("tab");
+     int tab = (tabObject == null) ? -1 : tabObject.intValue();
+     String the_qs = Text.jobQueryString(request);
+%>
+
+<table border="0" cellspacing="0" cellpadding="0" width="100%" height="20">
+  <tr>
+    <td class="jobnav_seperator">&nbsp;</td>
+    <td class="jobnav<%=tab==1?"_selected":""%>">
+      <a href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=the_qs%>" class="tab_text<%=tab==1?"_selected":""%>">Sheets</a>
+    </td>
+    <td class="jobnav_seperator">&nbsp;</td>
+    <td class="jobnav<%=tab==2?"_selected":""%>">
+      <a href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=the_qs%>" class="tab_text<%=tab==1?"_selected":""%>">Seeds</a>
+    </td>
+    
+    <td class="jobnav_seperator" style="width:100%;">
+    &nbsp;
+    </td>
+    
+  </tr>
+</table>
+
+<% } // end if %>
+
+
+
+
 <% } // end of local variable scope %>

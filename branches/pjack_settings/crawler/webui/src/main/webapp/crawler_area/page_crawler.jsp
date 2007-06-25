@@ -77,7 +77,8 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
         <a title="View or edit this profile's settings sheets."
            href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=pqs%>">Sheets</a>
         | 
-        Seeds 
+        <a title="View or edit this profile's settings sheets."
+           href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=pqs%>">Seeds</a>
         | 
         Copy 
         | 

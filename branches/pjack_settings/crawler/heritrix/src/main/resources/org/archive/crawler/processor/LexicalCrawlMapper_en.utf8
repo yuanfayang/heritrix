@@ -5,3 +5,10 @@ range, the second the crawler node to which URIs in the key range should
 be mapped. 
 
 
+frontier-description:
+The frontier.
+
+
+dir-description:
+The directory where the file specified by map-source will be found, if 
+map-source does not look like a URL.
