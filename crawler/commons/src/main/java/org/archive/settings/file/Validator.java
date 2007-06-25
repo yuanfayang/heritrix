@@ -40,14 +40,7 @@ import org.archive.settings.path.PathChangeException;
 public class Validator {
 
     
-    public static void main(String[] args) throws Exception {
-        String mainConfigPath;
-        if (args.length == 0) {
-            mainConfigPath = "config.txt";
-        } else {
-            mainConfigPath = args[0];
-        }
-        
+    public static int validate(String mainConfigPath) throws Exception {
         File main = new File(mainConfigPath);
         FileSheetManager fsm = new FileSheetManager(main, false);
 
@@ -67,5 +60,19 @@ public class Validator {
         }
         
         System.out.println("There were " + count + " problems.");
+        return count;
+    }
+    
+    
+    
+    public static void main(String[] args) throws Exception {
+        String mainConfigPath;
+        if (args.length == 0) {
+            mainConfigPath = "config.txt";
+        } else {
+            mainConfigPath = args[0];
+        }
+        
+        validate(mainConfigPath);
     }
 }
