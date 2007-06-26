@@ -26,10 +26,6 @@
 
 package org.archive.crawler.webui;
 
-import java.lang.management.MemoryMXBean;
-import java.util.Collection;
-
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.servlet.ServletContext;
@@ -38,7 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.StatisticsTracking;
-import org.archive.crawler.webui.CrawlJob.State;
+
 
 /**
  * @author pjack

@@ -242,14 +242,16 @@ public class PathValidator {
         if ((checkLast) && (tokens.size() <= 1)) {
             Class type = key.getType();
             if (Map.class.isAssignableFrom(type)) {
-                Object r = sheet.check(current, key);
+                SingleSheet ss = (SingleSheet)sheet;
+                Object r = ss.resolveEditableMap(current, key.cast(Map.class));
                 if (r == null) {
                     throw ex(" alters a key for a nonexistent map at ");
                 }
                 return r;
             }
             if (List.class.isAssignableFrom(type)) {
-                Object r = sheet.check(current, key);
+                SingleSheet ss = (SingleSheet)sheet;
+                Object r = ss.resolveEditableList(current, key.cast(List.class));
                 if (r == null) {
                     throw ex(" alters an element for nonexistent list at ");
                 }

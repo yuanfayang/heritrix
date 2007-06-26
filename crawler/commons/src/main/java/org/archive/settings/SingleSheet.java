@@ -79,6 +79,9 @@ public class SingleSheet extends Sheet {
     }
 
     
+    public boolean isGlobal() {
+        return global;
+    }
 
     @Override
     SingleSheet duplicate() {
@@ -353,6 +356,24 @@ public class SingleSheet extends Sheet {
             throw new IllegalArgumentException("Lists must be TypedList.");
         }
         return o;
+    }
+
+    
+    public Map resolveEditableMap(Object o, Key<Map> k) {
+        Map result = check(o, k);
+        if ((result == null) && !global) {
+            result = getSheetManager().getDefault().check(o, k);
+        }
+        return result;
+    }
+
+    
+    public List resolveEditableList(Object o, Key<List> k) {
+        List result = check(o, k);
+        if ((result == null) && !global) {
+            result = getSheetManager().getDefault().check(o, k);
+        }
+        return result;
     }
 
     
