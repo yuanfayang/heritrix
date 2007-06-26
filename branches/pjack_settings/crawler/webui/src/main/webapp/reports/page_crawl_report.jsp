@@ -4,6 +4,9 @@
 <%@ page import="org.archive.crawler.framework.StatisticsTracking"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
 <%@ page import="org.archive.crawler.framework.CrawlController"%>
+<%@ page import="java.util.TreeSet"%>
+<%@ page import="org.archive.crawler.webui.ReportLine"%>
+<%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 
 <html>
 <head>
@@ -22,12 +25,12 @@
 
 <%
     Crawler crawler = (Crawler)request.getAttribute("crawler");
-System.out.println("crawler " + (crawler!=null));    
     CrawlJob crawljob = (CrawlJob)request.getAttribute("crawljob");
-System.out.println("crawljob " + (crawljob!=null));    
     StatisticsTracking stats = (StatisticsTracking)request.getAttribute("stats");
-System.out.println("stats " + (stats!=null));    
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
+    String qsStatus = "&statusorder=" + request.getAttribute("statusorder");
+    String qsFiletype = "&fileorder=" + request.getAttribute("fileorder");
+    String qsHosts = "&hostsorder=" + request.getAttribute("hostsorder");
 
     // TODO: Handle crawl reports for completed jobs.
 
@@ -37,7 +40,7 @@ System.out.println("stats " + (stats!=null));
 %>
         <p>&nbsp;<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Can only display report for ongoing crawls.</b>
 <%
-    } else {
+} else {
 %>
     <hr />
         <table border="0">
@@ -96,15 +99,19 @@ System.out.println("stats " + (stats!=null));
                                 <b>Processed docs/sec:</b>&nbsp;
                             </td>
                             <td>
-                                <%  if(crawljob.getCrawlState().equalsIgnoreCase("RUNNING")){
-                                        // Show current and overall stats.
+                                <%
+                                    if(crawljob.getCrawlState().equalsIgnoreCase("RUNNING")){
+                                    // Show current and overall stats.
                                 %>
-                                        <%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>)
-                                <%  } else {
-                                        // Only show overall stats.
+                                    <%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>)
+                                <%
+                                    } else {
+                                    // Only show overall stats.
                                 %>
-                                        <%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>
-                                <%  }  %>
+                                    <%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>
+                                <%
+                                }
+                                %>
                             </td>
                         </tr>
                         <tr>
@@ -112,15 +119,19 @@ System.out.println("stats " + (stats!=null));
                                 <b>Processed KB/sec:</b>&nbsp;
                             </td>
                             <td>
-                                <%  if(crawljob.getCrawlState().equalsIgnoreCase("RUNNING")){
-                                        // Show current and overall stats.
+                                <%
+                                    if(crawljob.getCrawlState().equalsIgnoreCase("RUNNING")){
+                                    // Show current and overall stats.
                                 %>
-                                        <%=ArchiveUtils.doubleToString(stats.currentProcessedKBPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedKBPerSec(),2)%>)
-                                <%  } else {
-                                        // Only show overall stats.
+                                    <%=ArchiveUtils.doubleToString(stats.currentProcessedKBPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedKBPerSec(),2)%>)
+                                <%
+                                    } else {
+                                    // Only show overall stats.
                                 %>
-                                        <%=ArchiveUtils.doubleToString(stats.processedKBPerSec(),2)%>
-                                <%  }  %>
+                                    <%=ArchiveUtils.doubleToString(stats.processedKBPerSec(),2)%>
+                                <%
+                                }
+                                %>
                             </td>
                         </tr>
                         <tr>
@@ -225,48 +236,142 @@ System.out.println("stats " + (stats!=null));
         <table cellspacing="0">
             <tr>
                 <th>
-                    Status code
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsFiletype+qsHosts%>&statusorder=name">Status code</a>
                 </th>
-                <th width="200" colspan="2">
-                    Documents
+                <th width="200">
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsFiletype+qsHosts%>&statusorder=uris">Documents</a>
                 </th>
             </tr>
-            <% // TODO: Implement status code report %>
+            <%
+                boolean alt = true;
+                TreeSet<ReportLine> status = 
+                    (TreeSet<ReportLine>)request.getAttribute("statuscode");
+
+                for (ReportLine rl : status) {
+                    long count = rl.numberOfURIS;
+                    long displaybarwidth = 0;
+                    if(stats.successfullyFetchedCount()/6>0){
+                       displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
+                    } 
+                    if(displaybarwidth==0){
+                       displaybarwidth=1;
+                    }
+            %>
+                <tr <%=alt?"bgcolor=#EEEEFF":""%>>
+                    <td nowrap>
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?<%=qs%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                            <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt(rl.legend))%>
+                        </a>&nbsp;
+                    </td>
+                    <td nowrap>
+                        <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
+                    </td>
+                </tr>
+            <%
+                    alt = !alt;
+                }
+            %>                
             <tr>
                 <td>&nbsp;</td>
             </tr>
             <tr>
                 <th width="100">
-                    File type
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsStatus+qsHosts%>&fileorder=name">File type</a>
                 </th>
                 <th width="200">
-                    Documents
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsStatus+qsHosts%>&fileorder=uris">Documents</a>
                 </th>
                 <th>
-                    Data
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsStatus+qsHosts%>&fileorder=bytes">Data</a>
                 </th>
             </tr>
-            <% // TODO: Implement file type report %>
-        </table>
-        
-        <p>
-        
-        <table cellspacing="0">
+            <%
+                alt = true;
+                TreeSet<ReportLine> filetypes = 
+                    (TreeSet<ReportLine>)request.getAttribute("filetypes");
+
+                for (ReportLine rl : filetypes) {
+                    long count = rl.numberOfURIS;
+                    long displaybarwidth = 0;
+                    if(stats.successfullyFetchedCount()/6>0){
+                       displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
+                    } 
+                    if(displaybarwidth==0){
+                       displaybarwidth=1;
+                    }
+            %>
+                <tr <%=alt?"bgcolor=#EEEEFF":""%>>
+                    <td nowrap>
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?<%=qs%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                            <%=rl.legend%>
+                        </a>&nbsp;
+                    </td>
+                    <td nowrap>
+                        <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
+                    </td>
+                    <td align="right">
+                        <%=ArchiveUtils.formatBytesForDisplay(rl.bytes)%>
+                    </td>
+                </tr>
+            <%
+                    alt = !alt;
+                }
+            %>                
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
             <tr>
                 <th>
                     Hosts&nbsp;
                 </th>
                 <th>
-                    Documents&nbsp;
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsStatus+qsFiletype%>&hostsorder=uris">Documents</a>
                 </th>
                 <th>
-                    Data&nbsp;
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsStatus+qsFiletype%>&hostsorder=bytes">Data</a>
                 </th>
-                    <th>
-                        Time since last URI finished
-                    </th>
+                <th>
+                    <a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs+qsStatus+qsFiletype%>&hostsorder=lastactive">Time since last URI finished</a>
+                </th>
             </tr>
-            <% // TODO: Implement hosts report %>
+            <%
+                alt = true;
+                TreeSet<ReportLine> hosts = 
+                    (TreeSet<ReportLine>)request.getAttribute("hosts");
+
+                for (ReportLine rl : hosts) {
+                    long count = rl.numberOfURIS;
+                    long displaybarwidth = 0;
+                    if(stats.successfullyFetchedCount()/6>0){
+                       displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
+                    } 
+                    if(displaybarwidth==0){
+                       displaybarwidth=1;
+                    }
+            %>
+                <tr <%=alt?"bgcolor=#EEEEFF":""%>>
+                    <td nowrap>
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?<%=qs%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                            <%=rl.legend%>
+                        </a>&nbsp;
+                    </td>
+                    <td nowrap>
+                        <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
+                    </td>
+                    <td align="right">
+                        <%=ArchiveUtils.formatBytesForDisplay(rl.bytes)%>
+                    </td>
+                    <td align="right">
+                        <%=ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-rl.lastActive)%>
+                    </td>
+                </tr>
+            <%
+                    alt = !alt;
+                }
+            %>                
+                <tr>
+                    <td colspan="4">Showing top <%=hosts.size() %> hosts only</td>
+                </tr>
         </table>
 <%
     } 

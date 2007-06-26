@@ -21,8 +21,11 @@ package org.archive.crawler.framework;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.management.openmbean.CompositeData;
+
 import org.archive.openmbeans.annotations.Attribute;
 import org.archive.openmbeans.annotations.Operation;
+import org.archive.openmbeans.annotations.Parameter;
 
 /**
  * An interface for objects that want to collect statistics on
@@ -76,18 +79,6 @@ public interface StatisticsTracking extends Runnable {
     public static final String SEED_DISPOSITION_NOT_PROCESSED =
         "Seed has not been processed";
     
-    /**
-     * Do initialization.
-     *
-     * The CrawlController will call this method before calling the start()
-     * method.
-     *
-     * @param c The {@link CrawlController CrawlController} running the crawl
-     * that this class is to gather statistics on.
-     * @throws FatalConfigurationException
-     */
-//    public void initialize(CrawlController c)
-//    throws FatalConfigurationException;
 
     /**
      * Returns how long the current crawl has been running (excluding any time
@@ -248,6 +239,9 @@ public interface StatisticsTracking extends Runnable {
      */
     public Iterator getSeedRecordsSortedByStatusCode();
 
+    @Operation(desc="Returns the seed report", type="org.archive.settings.jmx.Types.SET_SEED_RECORD")
+    CompositeData[] seedReport();
+    
     /**
      * @return legend of progress-statistics
      */
@@ -325,4 +319,15 @@ public interface StatisticsTracking extends Runnable {
     @Operation(desc="Returns the number of disregarded URIs.")
     public long disregardedFetchAttempts();
 
+    @Operation(desc="Returns the known keys in a report.")
+    public String[] getReportKeys(
+            @Parameter(name="report", desc="The name of the report.")
+            String report);
+    
+    @Operation(desc="Returns the known value keys of a key in a report.")
+    public long getReportValue(
+            @Parameter(name="report", desc="The name of the report.")
+            String report, 
+            @Parameter(name="key", desc="The key in the report whose value we want.")
+            String key);
 }
