@@ -47,6 +47,8 @@ public class Types {
     final public static CompositeType GET_DATA;
     
     final public static ArrayType GET_DATA_ARRAY;
+    
+    final public static CompositeType SET_SEED_RECORD;
 
     static {
         try {
@@ -103,6 +105,18 @@ public class Types {
             GET_DATA_ARRAY = new ArrayType(1, GET_DATA);
             
             SET_RESULT_ARRAY = new ArrayType(1, SET_RESULT);
+            
+            SET_SEED_RECORD = new CompositeType(
+                    "SeedRecord",
+                    "Seed record",
+                    new String[]{"uri","statusCode","disposition","redirectUri"},
+                    new String[]{"uri","statusCode","disposition","redirectUri"},
+                    new OpenType[]{
+                            SimpleType.STRING, 
+                            SimpleType.INTEGER, 
+                            SimpleType.STRING, 
+                            SimpleType.STRING});
+
 
         } catch (OpenDataException e) {
             throw new IllegalStateException(e);
