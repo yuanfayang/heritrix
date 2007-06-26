@@ -376,4 +376,17 @@ final public class Key<Value> implements Serializable {
     private Object readResolve() {
         return KeyManager.getKeys(owner).get(fieldName);
     }
+
+
+    @SuppressWarnings("unchecked")
+    public <T> Key<T> cast(Class<T> cls) {
+        if (cls != type) {
+            throw new ClassCastException("Can't cast Key<" 
+                    + type.getClass().getName() 
+                    + "> to Key<" + cls.getClass().getName() + ">");
+        }
+        Key r = this;
+        return r;
+    }
+
 }

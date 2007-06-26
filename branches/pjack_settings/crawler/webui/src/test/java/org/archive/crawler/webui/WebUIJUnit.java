@@ -91,6 +91,9 @@ public class WebUIJUnit extends TmpDirTestCase {
     private String lastFetched;
 
     private URL lastUrl;
+
+    private String host;
+    private String urlSheets;
     
     /**
      * Starts Jetty, starts Heritrix.
@@ -167,71 +170,91 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "password", "local");
         
         String url = findHref("do_show_crawler.jsp", managerId);
-        String host = extract(url, "host");
+        this.host = extract(url, "host");
         doGet(url);
         
-        String urlSheets = findHref("do_show_sheets.jsp", managerId, "default");
+        this.urlSheets = findHref("do_show_sheets.jsp", managerId, "default");
         doGet(urlSheets);
         
-        // Create a new single sheet named 'foo'.
-        url = findHref("do_show_add_single_sheet.jsp", managerId, "default");
+        addSingleAndOverride(
+                "foo", 
+                "root:controller:processors:HTTP:sotimeout-ms", 
+                "20000", 
+                "3333", 
+                "http://www.foo.org");
+        
+        addSingleAndOverride(
+                "bar",
+                "root:order:recorder-in-buffer-bytes",
+                "65536",
+                "66666",
+                "http://www.bar.org/1/2/3");
+        
+        addSingleAndOverride(
+                "baz",
+                "root:scope:rules:2:max-hops",
+                "20",
+                "123456",
+                "http://www.baz.org/1.html");
+
+        doGet(urlSheets);
+        
+        // Add a sheet bundle consiting of foo, bar, baz
+        url = findHref("do_show_add_sheet_bundle.jsp", managerId);
         doGet(url);
         
-        doPost("do_add_single_sheet.jsp",
+        doPost("do_add_sheet_bundle.jsp",
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
                 "profile", "default",
-                "sheet", "foo");
-
-
-        // Override FetchHTTP.sotimeout-ms in the foo sheet to be 
-        // "3333" instead of "20000".  Commit the change.
-        url = findHref("do_override_path.jsp", "sotimeout-ms", "20000");
-        doGet(url);
+                "sheet", "the_bundle");
         
-        url = findHref("do_show_path_detail.jsp", "sotimeout-ms", "20000");
-        doGet(url);
-        
-        doPost("do_save_path.jsp",
+        doPost("do_move_bundled_sheets.jsp",
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
                 "profile", "default",
-                "sheet", "foo", 
-                "path", "root:controller:processors:HTTP:sotimeout-ms",
-                "type-root:controller:processors:HTTP:sotimeout-ms", "int",
-                "value-root:controller:processors:HTTP:sotimeout-ms", "3333"
-        );
-        
+                "sheet", "the_bundle",
+                "move", "foo",
+                "index", "0");
+
+        doPost("do_move_bundled_sheets.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", "the_bundle",
+                "move", "bar",
+                "index", "1");
+
+        doPost("do_move_bundled_sheets.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", "the_bundle",
+                "move", "baz",
+                "index", "2");
+
+        // Commit the new bundle.
         doGet(urlSheets);
-        
-        url = findHref("do_commit_sheet.jsp", managerId, "foo");
+        url = findHref("do_commit_sheet.jsp", managerId, "the_bundle");
         doGet(url);
-        
-        // Associate the URL prefix "http://www.foo.org" with the "foo" sheet.
-        url = findHref("do_show_associate.jsp", managerId, "foo");
+
+        // Associate the URL prefix "http://the_bundle.archive.org" 
+        // with the new bundle.
+        url = findHref("do_show_associate.jsp", managerId, "the_bundle");
         doGet(url);
-        
+
         doPost("do_associate.jsp",
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
                 "profile", "default",
-                "sheet", "foo", 
+                "sheet", "the_bundle", 
                 "add", "Y",
-                "surts", "# Comment line to ignore\n\nhttp://www.foo.org");
-        
-        // View the configuration for url "http://www.foo.org/index.html",
-        // which should contain our sotimeout-ms override.
-        doPost("do_show_config.jsp",
-                "host", host,
-                "port", "-1",
-                "id", Integer.toString(managerId),
-                "profile", "default",
-                "button", "Settings",
-                "url", "http://www.foo.org/index.html");
-
+                "surts", "http://the_bundle.archive.org");
 
         if (System.getProperty("org.archive.crawler.webui.wait") != null) {
             Object eternity = new Object();
@@ -240,6 +263,95 @@ public class WebUIJUnit extends TmpDirTestCase {
             }
         }
     }
+
+    
+    /**
+     * Creates a new single sheet, overrides a setting on that sheet, commits
+     * the sheet, and associates an URL with the sheet.
+     * 
+     * The new sheet will be created in the default profile, and the setting
+     * to override must be of type int.
+     * 
+     * @param sheet   the name of the new sheet
+     * @param path    the path to the setting to override
+     * @param oldValue   the old (default) value of that setting
+     * @param newValue   the new value for that setting
+     * @param assoc      the URL to associate with the new sheet
+     * @throws Exception
+     */
+    private void addSingleAndOverride(
+            String sheet, 
+            String path, 
+            String oldValue,
+            String newValue,
+            String assoc) 
+    throws Exception {
+        // Start on the sheets page for the default profile.
+        doGet(urlSheets);
+
+        // Create a new single sheet with the specified name.
+        String url = findHref("do_show_add_single_sheet.jsp", managerId, "default");
+        doGet(url);
+        
+        doPost("do_add_single_sheet.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", sheet);
+
+        // Override the specified setting to be newValue instead of oldValue. 
+        url = findHref("do_override_path.jsp", path, oldValue);
+        doGet(url);
+        
+        url = findHref("do_show_path_detail.jsp", path, oldValue);
+        doGet(url);
+        
+        doPost("do_save_path.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", sheet, 
+                "path", path, 
+                "type-" + path, "int",
+                "value-" + path, newValue
+        );
+        
+        doGet(urlSheets);
+
+        // Commit the override.
+        url = findHref("do_commit_sheet.jsp", managerId, sheet);
+        doGet(url);
+
+        // Associate the URL prefix "http://www.foo.org" with the "foo" sheet.
+        url = findHref("do_show_associate.jsp", managerId, sheet);
+        doGet(url);
+        
+        doPost("do_associate.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "sheet", sheet, 
+                "add", "Y",
+                "surts", "# Comment line to ignore\n\n" + assoc);
+        
+        // View the configuration for url assoc + "/a/b/c/d",
+        // which should contain our newValue override.
+        doPost("do_show_config.jsp",
+                "host", host,
+                "port", "-1",
+                "id", Integer.toString(managerId),
+                "profile", "default",
+                "button", "Settings",
+                "url", assoc + "/a/b/c/d");
+
+        int p = this.lastFetched.indexOf(newValue);
+        assertTrue("Configuration for " + assoc 
+                + " did not contain override value of " + newValue, p > 0);
+    }
+    
     
     
     private URL toURL(String urlString) throws Exception {

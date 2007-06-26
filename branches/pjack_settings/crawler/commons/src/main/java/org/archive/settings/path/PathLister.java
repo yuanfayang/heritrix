@@ -25,7 +25,6 @@ package org.archive.settings.path;
 
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,6 @@ import org.archive.settings.Resolved;
 import org.archive.settings.TypedList;
 import org.archive.settings.TypedMap;
 import org.archive.settings.Sheet;
-import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;

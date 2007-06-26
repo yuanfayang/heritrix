@@ -206,7 +206,6 @@ public class PathChanger {
     private Object getPreexistingCol(SingleSheet sheet, PathChange pc) {
         try {
             Object o = PathValidator.check(sheet, pc.getPath());
-
             if (pc.getType().equals(MAP_TAG)) {
                 if (!(o instanceof SettingsMap)) {
                     return null;
@@ -225,7 +224,7 @@ public class PathChanger {
                 }
             }
             return null;
-        } catch (RuntimeException e) {
+        } catch (InvalidPathException e) {
             // This may simply mean that the path doesn't exist yet, which
             // is legal (it what's this method is testing for.)
             //

@@ -27,8 +27,6 @@
 package org.archive.crawler.webui;
 
 
-import java.util.Arrays;
-
 import javax.management.remote.JMXConnector;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
