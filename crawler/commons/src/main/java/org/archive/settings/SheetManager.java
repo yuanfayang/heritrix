@@ -370,6 +370,10 @@ implements StateProvider, Serializable { //, DirectoryModule {
         if (list == null) {
             return getDefault();
         }
+
+        if (list.size() == 1) {
+            return list.get(0);
+        }
         
         list.add(getDefault());
         return new SheetBundle(this, "anonymous", list);

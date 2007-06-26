@@ -249,7 +249,10 @@ public class SheetBundle extends Sheet {
                     }
                 } else {
                     Offline value = ss.checkOffline((Offline)module, key);
-                    return Resolved.makeOffline(module, key, value, sheets);
+                    if (value != null) {
+                        sheets.add(ss);
+                        return Resolved.makeOffline(module, key, value, sheets);
+                    }
                 }
             }
         }
