@@ -31,15 +31,25 @@ import java.util.Date;
 import java.util.EventObject;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenType;
+import javax.management.openmbean.SimpleType;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
@@ -52,7 +62,9 @@ import org.archive.net.UURI;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.file.BdbModule;
+import org.archive.settings.jmx.Types;
 import org.archive.state.FileModule;
+import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -117,6 +129,14 @@ public class StatisticsTracker extends AbstractTracker
 implements CrawlURIDispositionListener, Serializable {
     private static final long serialVersionUID = 8004878315916392305L;
 
+    public enum Reports{
+        FILETYPE_BYTES,
+        FILETYPE_URIS,
+        STATUSCODE,
+        HOST_BYTES,
+        HOST_URIS,
+        HOST_LAST_ACTIVE
+    }
 
     
     @Immutable
@@ -130,6 +150,11 @@ implements CrawlURIDispositionListener, Serializable {
     @Immutable
     final public static Key<FileModule> REPORTS_DIR =
         Key.make(FileModule.class, null);
+    
+    
+    @Global
+    @Immutable
+    final public static Key<Integer> LIVE_HOST_REPORT_SIZE = Key.make(20);
     
     private SeedModule seeds;
     private BdbModule bdb;
@@ -200,6 +225,11 @@ implements CrawlURIDispositionListener, Serializable {
     protected transient 
     Map<String,HashMap<String,LongWrapper>> sourceHostDistribution = null;
 
+    /* Keep track of 'top' hosts for live reports */
+    protected LargestSet hostsDistributionTop;
+    protected LargestSet hostsBytesTop;
+    protected LargestSet hostsLastFinishedTop;
+    
     /**
      * Record of seeds' latest actions.
      */
@@ -236,7 +266,11 @@ implements CrawlURIDispositionListener, Serializable {
             this.hostsLastFinished = bdb.getBigMap("hostsLastFinished",
                 String.class, Long.class);
             this.processedSeedsRecords = bdb.getBigMap("processedSeedsRecords",
-                    String.class, SeedRecord.class); 
+                    String.class, SeedRecord.class);
+            
+            this.hostsDistributionTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));
+            this.hostsBytesTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));
+            this.hostsLastFinishedTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -814,13 +848,19 @@ implements CrawlURIDispositionListener, Serializable {
     protected void saveHostStats(String hostname, long size) {
         synchronized(hostsDistribution){
             incrementMapCount(hostsDistribution, hostname);
+            hostsDistributionTop.update(
+                    hostname, 
+                    hostsDistribution.get(hostname).longValue);
         }
         synchronized(hostsBytes){
             incrementMapCount(hostsBytes, hostname, size);
+            hostsBytesTop.update(hostname, 
+                    hostsBytes.get(hostname).longValue);
         }
         synchronized(hostsLastFinished){
-            hostsLastFinished.put(hostname,
-                new Long(System.currentTimeMillis()));
+            long time = new Long(System.currentTimeMillis());
+            hostsLastFinished.put(hostname, time);
+            hostsLastFinishedTop.update(hostname, time);
         }
     }
 
@@ -836,6 +876,31 @@ implements CrawlURIDispositionListener, Serializable {
         handleSeed(curi,SEED_DISPOSITION_FAILURE);
     }
 
+    public CompositeData[] seedReport(){
+        Iterator<SeedRecord> it = getSeedRecordsSortedByStatusCode();
+        List<CompositeData> cd = new LinkedList<CompositeData>();
+        try {
+            while(it.hasNext()){
+                SeedRecord sr = it.next();
+                CompositeDataSupport cds = new CompositeDataSupport(
+                        Types.SET_SEED_RECORD,
+                        new String[]{"uri","statusCode","disposition","redirectUri"},
+                        new Object[]{
+                                sr.getUri(),
+                                sr.getStatusCode(),
+                                sr.getDisposition(),
+                                sr.getRedirectUri()});
+                cd.add(cds);
+            }
+        } catch (OpenDataException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+        }
+        
+        return cd.toArray(new CompositeData[0]);
+    }
+    
     /**
      * Get a seed iterator for the job being monitored. 
      * 
@@ -854,7 +919,7 @@ implements CrawlURIDispositionListener, Serializable {
         return seedsCopy.iterator();
     }
 
-    public Iterator getSeedRecordsSortedByStatusCode() {
+    public Iterator<SeedRecord> getSeedRecordsSortedByStatusCode() {
         return getSeedRecordsSortedByStatusCode(getSeeds());
     }
     
@@ -1153,4 +1218,107 @@ implements CrawlURIDispositionListener, Serializable {
         // CrawlController is managing the checkpointing of this object.
         logNote("CRAWL CHECKPOINTING TO " + cpDir.toString());
     }
+
+    
+    
+    public String[] getReportKeys(String report) {
+        Reports rep = Reports.valueOf(report);
+        switch(rep){
+        case FILETYPE_BYTES : 
+            return (String[])mimeTypeBytes.keySet().toArray(new String[0]);
+        case FILETYPE_URIS : 
+            return (String[])mimeTypeDistribution.keySet().toArray(new String[0]);
+        case HOST_BYTES :
+            return (String[])hostsBytesTop.keySet();
+        case HOST_LAST_ACTIVE :
+            return (String[])hostsLastFinishedTop.keySet();
+        case HOST_URIS :
+            return (String[])hostsDistributionTop.keySet();
+        case STATUSCODE :
+            return (String[])statusCodeDistribution.keySet().toArray(new String[0]);
+        }
+        return null;
+    }
+
+    public long getReportValue(String report, String key) {
+        Reports rep = Reports.valueOf(report);
+        switch(rep){
+        case FILETYPE_BYTES : 
+            return mimeTypeBytes.get(key).longValue;
+        case FILETYPE_URIS : 
+            return mimeTypeDistribution.get(key).longValue;
+        case HOST_BYTES :
+            return hostsBytes.get(key).longValue;
+        case HOST_LAST_ACTIVE :
+            return hostsLastFinished.get(key);
+        case HOST_URIS :
+            return hostsDistribution.get(key).longValue;
+        case STATUSCODE :
+            return statusCodeDistribution.get(key).longValue;
+        }
+        return -1;
+    }
+}
+
+class LargestSet{
+    
+    int maxsize;
+    HashMap<String, Long> set;
+    long smallestKnownValue;
+    String smallestKnownKey;
+    
+    public LargestSet(int size){
+        maxsize = size;
+        set = new HashMap<String, Long>(size);
+    }
+    
+    public void update(String key, long value){
+        if(set.containsKey(key)) {
+            // Update the value of an existing key
+            set.put(key,value); 
+            // This may promote the key if it was the smallest
+            if(smallestKnownKey == null || smallestKnownKey.equals(key)){
+                updateSmallest();
+            }
+        } else if(set.size()<maxsize) {
+            // Can add a new key/value pair as we still have space
+            set.put(key, value);
+            // Check if this is new smallest known value
+            if(value<smallestKnownValue){
+                smallestKnownValue = value;
+                smallestKnownKey = key;
+            }
+        } else {
+            // Determine if value is large enough for inclusion
+            if(value>smallestKnownValue){
+                // Replace current smallest
+                set.remove(smallestKnownKey);
+                updateSmallest();
+                set.put(key, value);
+            } // Else do nothing.
+        }
+    }
+    
+    private void updateSmallest(){
+        // Need to scan through for new smallest value.
+        long oldSmallest = smallestKnownValue;
+        smallestKnownValue = Long.MAX_VALUE;
+        for(String k : set.keySet()){
+            long v = set.get(k);
+            if(v<smallestKnownValue){
+                smallestKnownValue = v;
+                smallestKnownKey = k;
+                if(v==oldSmallest){
+                    // Found another key matching old smallest known value
+                    // Can not be anything smaller.
+                    return;
+                }
+            }
+        }
+    }
+    
+    public String[] keySet(){
+        return set.keySet().toArray(new String[0]);
+    }
+    
 }

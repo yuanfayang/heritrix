@@ -114,12 +114,12 @@ Initializable, Finishable {
             return;
         }
 
-        shouldrun = true; //If we are starting, this should always be true.
-
         // Log the legend
         this.controller.logProgressStatistics(progressStatisticsLegend());
-        lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
 
+        shouldrun = true; //If we are starting, this should always be true.
+        lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
+        
         // Keep logging until someone calls stop()
         while (shouldrun) {
             // Pause before writing the first entry (so we have real numbers)
@@ -261,7 +261,7 @@ Initializable, Finishable {
 
     protected void logNote(final String note) {
         this.controller.logProgressStatistics(new PaddingStringBuffer()
-                     .append(ArchiveUtils.get14DigitDate(new Date()))
+                     .append(ArchiveUtils.getLog14Date(new Date()))
                      .append(" ")
                      .append(note)
                      .toString());
