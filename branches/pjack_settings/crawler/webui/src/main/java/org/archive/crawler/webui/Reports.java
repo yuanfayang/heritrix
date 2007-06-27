@@ -1,7 +1,6 @@
 package org.archive.crawler.webui;
 
-import java.util.Comparator;
-import java.util.TreeMap;
+
 import java.util.TreeSet;
 
 import javax.management.remote.JMXConnector;

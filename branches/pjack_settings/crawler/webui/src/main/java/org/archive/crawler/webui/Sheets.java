@@ -594,7 +594,7 @@ public class Sheets {
             setting.setErrorMessage(error);
         }
         
-        return new Settings(sheet, result);
+        return new Settings(sheet, mgr.isOnline(), result);
     }
     
     

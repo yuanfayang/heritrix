@@ -48,9 +48,12 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
            title="View and control the current status for this job."
            href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=jqs%>">Console</a>
         |
-        Sheets | Seeds | 
+        <a title="View or edit this profile's settings sheets."
+           href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=jqs%>">Sheets</a>
+        | 
+        Seeds | 
         <a 
-           title="View logs for this job."
+           title="View reports for this job."
            href="<%=request.getContextPath()%>/reports/do_show_reports.jsp?<%=jqs%>">Reports</a>
         | 
         <a 
