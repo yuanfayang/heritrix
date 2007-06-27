@@ -19,6 +19,7 @@ public class CrawlJob {
     public enum State{
         // TODO: Consider pending jobs
         PROFILE,
+        PENDING, // An active job whose crawl status is 'Preparing'
         ACTIVE,
         COMPLETED
     }
@@ -26,7 +27,7 @@ public class CrawlJob {
     String name;
     Crawler crawler; // TODO: Do we need to keep this?
     State state;
-    String jobState;
+    String crawlstatus;
     
     public CrawlJob(String name, Crawler crawler){
         this.name = name;
@@ -62,7 +63,7 @@ public class CrawlJob {
             }
         }
         if(state==State.ACTIVE){
-            determineActiveState(jmxc);
+            determineCrawlStatus(jmxc);
         }
         
         Misc.close(jmxc);
@@ -77,18 +78,18 @@ public class CrawlJob {
             // Try to access the JobController and StatisticsTracking beans
             // on the crawler to populate more detailed info.
             JMXConnector jmxc = crawler.connect();
-            determineActiveState(jmxc);
+            determineCrawlStatus(jmxc);
             Misc.close(jmxc);
         }
     }
     
-    private void determineActiveState(JMXConnector jmxc){
+    private void determineCrawlStatus(JMXConnector jmxc){
         JobController controller = findJobController(jmxc,name);
         if(controller == null){
             throw new IllegalStateException("Failed to find " +
                     "JobController for job " + name);
         }
-        jobState = controller.getCrawlStatusString();
+        crawlstatus = controller.getCrawlStatusString();
     }
     
     /**
@@ -120,14 +121,19 @@ public class CrawlJob {
     }
 
     public State getState(){
+        if(getCrawlStatus().equals("PREPARING")){
+            // Handle this border case. 'Preparing' jobs may not have all
+            // reports ready etc. so it is important to distingush them.
+            return State.PENDING;
+        }
         return state;
     }
 
     
-    public String getCrawlState(){
+    public String getCrawlStatus(){
         // TODO: Completed jobs also have more specific crawl state (i.e. how they ended).
         if(state==State.ACTIVE){
-            return jobState;
+            return crawlstatus;
         } else {
             return state.toString();
         }

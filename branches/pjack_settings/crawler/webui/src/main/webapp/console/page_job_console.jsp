@@ -47,7 +47,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 	    </div>
         <b>Jobs</b>
         <div style="padding-left:20px">
-            <%=job.getCrawlState()%>: <i><%=job.getName()%></i>
+            <%=job.getCrawlStatus()%>: <i><%=job.getName()%></i>
             <!-- TODO: Consider pending jobs -->
         </div>
 
@@ -59,46 +59,52 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 	        
          </fieldset>
             <%
-            	long begin, end;
-	            if(stats != null) {
-	                begin = stats.successfullyFetchedCount();
-	                end = stats.totalCount();
-	                if(end < 1) {
-	                    end = 1;
-	                }
-	            } else {
-                    begin = 0;
-                    end = 1;
-	            }
-                
-                if (true) //handler.getCurrentJob() != null)
-                {
-                    final long timeElapsed, timeRemain;
-                    if(stats == null) {
-                        timeElapsed= 0;
-                        timeRemain = -1;
-                    } else {
-	                    timeElapsed = (stats.getCrawlerTotalElapsedTime());
-	                    if(begin == 0) {
-	                        timeRemain = -1;
-	                    } else {
-	                        timeRemain = ((long)(timeElapsed*end/(double)begin))-timeElapsed;
-	                    }
-                    }
+            	            long begin, end;
+            	            if(stats != null) {
+            	                begin = stats.successfullyFetchedCount();
+            	                end = stats.totalCount();
+            	                if(end < 1) {
+            	                    end = 1;
+            	                }
+            	            } else {
+                                begin = 0;
+                                end = 1;
+            	            }
+                            
+                            if (true) //handler.getCurrentJob() != null)
+                            {
+                                final long timeElapsed, timeRemain;
+                                if(stats == null) {
+                                    timeElapsed= 0;
+                                    timeRemain = -1;
+                                } else {
+            	                    timeElapsed = (stats.getCrawlerTotalElapsedTime());
+            	                    if(begin == 0) {
+            	                        timeRemain = -1;
+            	                    } else {
+            	                        timeRemain = ((long)(timeElapsed*end/(double)begin))-timeElapsed;
+            	                    }
+                                }
             %>
             <fieldset style="width: 750px">
                <legend>
                <b><span class="legendTitle">Job Status:</span>
-               <span class='status <%=job.getCrawlState()%>'>
-               <%=job.getCrawlState()%></span>
+               <span class='status <%=job.getCrawlStatus()%>'>
+               <%=job.getCrawlStatus()%></span>
                </b> 
 <a>
-<% String status = job.getCrawlState(); %>
-<% if (status.equals("PREPARING")) { %>
+<%
+String status = job.getCrawlStatus();
+%>
+<%
+if (status.equals("PREPARING")) {
+%>
     <a 
     title="Start the crawl."
     href="<%=request.getContextPath()%>/console/do_start.jsp?<%=qs%>">Start</a>
-<% } else if (status.equals("PAUSED") || status.equals("PAUSING")) { %> 
+<%
+} else if (status.equals("PAUSED") || status.equals("PAUSING")) {
+%> 
     <a 
     title="Resume the crawl."
     href="<%=request.getContextPath()%>/console/do_resume.jsp?<%=qs%>">Resume</a>
@@ -106,11 +112,15 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
     <a 
     title="Checkpoint the crawl."
     href="<%=request.getContextPath()%>/console/do_checkpoint.jsp?<%=qs%>">Checkpoint</a>
-<% } else if (!status.equals("CHECKPOINTING")) { %>
+<%
+} else if (!status.equals("CHECKPOINTING")) {
+%>
     <a 
     title="Pause the crawl."
     href="<%=request.getContextPath()%>/console/do_pause.jsp?<%=qs%>">Pause</a>
-<% } %>
+<%
+}
+%>
 |
     <a 
     title="Terminates the crawl."
@@ -119,8 +129,8 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 </legend>
 
                 <%
-                  if(stats != null)
-                  {
+                                  if(stats != null)
+                                  {
                 %>
                 	<div style="float:right; padding-right:50px;">
                 	    <b>Load</b>
@@ -148,45 +158,45 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 
                     <b>Time</b>
                     <div class='indent'>
-	                    <%= ArchiveUtils.formatMillisecondsToConventional(timeElapsed,false) %>
+	                    <%=ArchiveUtils.formatMillisecondsToConventional(timeElapsed,false)%>
 						elapsed
 						<br>
 	                    <%
-	                       if(timeRemain != -1) {
+	                    if(timeRemain != -1) {
 	                    %>
-		                    <%= ArchiveUtils.formatMillisecondsToConventional(timeRemain,false) %>
+		                    <%=ArchiveUtils.formatMillisecondsToConventional(timeRemain,false)%>
 		                    remaining (estimated)
 		               	<%
-	                       }
-                   		%>
+		                    }
+		                    %>
 					</div>
                     <b>Totals</b>
                 	<%
-                          }
-                }
-                if(stats != null)
-                {
-	                int ratio = (int) (100 * begin / end);
-            %>
+                	                }
+                	                }
+                	                if(stats != null)
+                	                {
+                		                int ratio = (int) (100 * begin / end);
+                	%>
                             <center>
                             <table border="0" cellpadding="0" cellspacing= "0" width="600"> 
                                 <tr>
-                                    <td align='right' width="25%">downloaded <%= begin %>&nbsp;</td>
-                                    <td class='completedBar' width="<%= (int)ratio/2 %>%" align="right">
-                                    <%= ratio > 50 ? "<b>"+ratio+"</b>%&nbsp;" : "" %>
+                                    <td align='right' width="25%">downloaded <%=begin%>&nbsp;</td>
+                                    <td class='completedBar' width="<%=(int)ratio/2%>%" align="right">
+                                    <%=ratio > 50 ? "<b>"+ratio+"</b>%&nbsp;" : ""%>
                                     </td>
-                                    <td class='queuedBar' align="left" width="<%= (int) ((100-ratio)/2) %>%">
-                                    <%= ratio <= 50 ? "&nbsp;<b>"+ratio+"</b>%" : "" %>
+                                    <td class='queuedBar' align="left" width="<%=(int) ((100-ratio)/2)%>%">
+                                    <%=ratio <= 50 ? "&nbsp;<b>"+ratio+"</b>%" : ""%>
                                     </td>
                                     <td width="25%" nowrap>&nbsp;<%=stats.queuedUriCount()%> queued</td>
                                 </tr>
                             </table>
-                            <%= end %> total downloaded and queued<br>      
+                            <%=end%> total downloaded and queued<br>      
                     		<%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%> uncompressed data received
                             </center>
             <%
-                }
-                if (job.getCrawlState().equals("PAUSED")) {
+                            }
+                            if (job.getCrawlStatus().equals("PAUSED")) {
             %>
             		<b>Paused Operations</b>
             		<div class='indent'>

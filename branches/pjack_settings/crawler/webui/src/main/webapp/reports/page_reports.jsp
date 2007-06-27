@@ -18,8 +18,12 @@
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
 %>
 
+<% if(request.getAttribute("message")!=null){ %>
+    <p class="flashMessage"><%=request.getAttribute("message") %></p>
+<% } %>
+
 <p>
-<b>Reports for <%=crawljob.getName()%> (<i><%=crawljob.getCrawlState()%></i>)</b><br>
+<b>Reports for <%=crawljob.getName()%> (<i><%=crawljob.getCrawlStatus()%></i>)</b><br>
 <ul>
     <% if(crawljob.getState()==CrawlJob.State.ACTIVE) { %>
     <li><a href="<%=request.getContextPath()%>/reports/do_show_crawl_report.jsp?<%=qs%>">Crawl report</a></li>
@@ -47,7 +51,7 @@
     <% } %>
 </ul>
 <% if(crawljob.getState()==CrawlJob.State.ACTIVE) { %>
-<p>The crawler generates reports when it finishes a job.  Clicking here on <a href="<%=request.getContextPath()%>/do_force_reports.jsp?<%=qs%>">Force generation of end-of-crawl Reports</a> will force the writing of reports to disk.  Clicking this link will return you to this page. Look to the disk for the generated reports.  Each click overwrites previously generated reports. Use this facility when the crawler has hung threads that can't be interrupted.</p>
+<p>The crawler generates reports when it finishes a job.  Clicking here on <a href="<%=request.getContextPath()%>/reports/do_force_reports.jsp?<%=qs%>">Force generation of end-of-crawl Reports</a> will force the writing of reports to disk.  Clicking this link will return you to this page. Look to the disk for the generated reports.  Each click overwrites previously generated reports. Use this facility when the crawler has hung threads that can't be interrupted.</p>
 <% } %>
 </body>
 </html>

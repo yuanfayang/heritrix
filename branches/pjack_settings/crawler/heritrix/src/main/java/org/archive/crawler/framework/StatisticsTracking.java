@@ -330,4 +330,7 @@ public interface StatisticsTracking extends Runnable {
             String report, 
             @Parameter(name="key", desc="The key in the report whose value we want.")
             String key);
+    
+    @Operation(desc="Dumps crawl reports to disk.")
+    public void dumpReports();
 }

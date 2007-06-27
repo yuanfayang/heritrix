@@ -320,7 +320,7 @@ Initializable, Finishable {
     /**
      * Dump reports, if any, on request or at crawl end. 
      */
-    protected void dumpReports() {
+    public void dumpReports() {
         // by default do nothing; subclasses may override
     }
 

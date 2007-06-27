@@ -60,7 +60,7 @@
                                 <b>Status:</b>&nbsp;
                             </td>
                             <td>
-                                <%=crawljob.getCrawlState()%>
+                                <%=crawljob.getCrawlStatus()%>
                             </td>
                         </tr>
                         <tr>
@@ -69,21 +69,21 @@
                             </td>
                             <td>
                                 <%
-                                    long time = (stats.getCrawlerTotalElapsedTime())/1000;
-                                    if(time>3600)
-                                    {
-                                        //got hours.
-                                        out.println(time/3600 + " h., ");
-                                        time = time % 3600;
-                                    }
-                                    
-                                    if(time > 60)
-                                    {
-                                        out.println(time/60 + " min. and ");
-                                        time = time % 60;
-                                    }
+                                                                    long time = (stats.getCrawlerTotalElapsedTime())/1000;
+                                                                    if(time>3600)
+                                                                    {
+                                                                        //got hours.
+                                                                        out.println(time/3600 + " h., ");
+                                                                        time = time % 3600;
+                                                                    }
+                                                                    
+                                                                    if(time > 60)
+                                                                    {
+                                                                        out.println(time/60 + " min. and ");
+                                                                        time = time % 60;
+                                                                    }
 
-                                    out.println(time + " sec.");
+                                                                    out.println(time + " sec.");
                                 %>
                             </td>
                         </tr>
@@ -100,14 +100,14 @@
                             </td>
                             <td>
                                 <%
-                                    if(crawljob.getCrawlState().equalsIgnoreCase("RUNNING")){
-                                    // Show current and overall stats.
+                                                                    if(crawljob.getCrawlStatus().equalsIgnoreCase("RUNNING")){
+                                                                    // Show current and overall stats.
                                 %>
                                     <%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>)
                                 <%
-                                    } else {
-                                    // Only show overall stats.
-                                %>
+                                                                        } else {
+                                                                        // Only show overall stats.
+                                    %>
                                     <%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>
                                 <%
                                 }
@@ -120,8 +120,8 @@
                             </td>
                             <td>
                                 <%
-                                    if(crawljob.getCrawlState().equalsIgnoreCase("RUNNING")){
-                                    // Show current and overall stats.
+                                                                    if(crawljob.getCrawlStatus().equalsIgnoreCase("RUNNING")){
+                                                                    // Show current and overall stats.
                                 %>
                                     <%=ArchiveUtils.doubleToString(stats.currentProcessedKBPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedKBPerSec(),2)%>)
                                 <%

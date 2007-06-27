@@ -42,24 +42,24 @@
         <% } %>
         </td>
         <td class="info">
-        <% 
-            if (crawler.getError() != null) { 
-                out.println(crawler.getError());
-            } else {
-                Collection<CrawlJob> activeJobs = crawler.getJobs(State.ACTIVE);
-                if(activeJobs.size()==0){
-                    out.println("No active jobs");
-                } else {
-                    for(CrawlJob job : activeJobs){
-                        out.println(job.getCrawlState() + ": ");
-                        out.println("<a href=\"" + request.getContextPath());
-                        out.println("/console/do_show_job_console.jsp?");
-                        out.println(crawler.getQueryString());
-                        out.println("&job=" + job.getName() + "\">");
-                        out.println(job.getName() + "</a>");
+        <%
+                        if (crawler.getError() != null) { 
+                        out.println(crawler.getError());
+                    } else {
+                        Collection<CrawlJob> activeJobs = crawler.getJobs(State.ACTIVE);
+                        if(activeJobs.size()==0){
+                            out.println("No active jobs");
+                        } else {
+                            for(CrawlJob job : activeJobs){
+                                out.println(job.getCrawlStatus() + ": ");
+                                out.println("<a href=\"" + request.getContextPath());
+                                out.println("/console/do_show_job_console.jsp?");
+                                out.println(crawler.getQueryString());
+                                out.println("&job=" + job.getName() + "\">");
+                                out.println(job.getName() + "</a>");
+                            }
+                        }
                     }
-                }
-            } 
         %>
         </td>
 
