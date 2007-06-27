@@ -50,6 +50,18 @@ public class PrefixFinderTest extends TestCase {
         }
     }
 
+    
+    public void testSmallMap() {
+        SortedMap<String,String> testData = new TreeMap<String,String>();
+        testData.put("foo", "bar");
+        List<Map.Entry<String,String>> result = 
+            new ArrayList<Map.Entry<String,String>>();
+        int count = PrefixFinder.find(testData, "baz", result);
+        assertTrue(result.isEmpty());
+        assertEquals(count, 1);
+    }
+    
+    
     private void doTest() {
         // Generate test data.
         SortedMap<String,String> testData = new TreeMap<String,String>();        
