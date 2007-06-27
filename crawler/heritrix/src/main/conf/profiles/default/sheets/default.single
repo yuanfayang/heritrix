@@ -150,5 +150,6 @@ root:controller:loggers=list, org.archive.crawler.framework.StatisticsTracking
 root:controller:loggers:0=object, org.archive.crawler.framework.StatisticsTracker
 root:controller:loggers:0:seeds=reference, root:seeds
 root:controller:loggers:0:bdb=reference, manager:bdb
+root:controller:loggers:0:reports-dir=reference, manager:dir
 root:controller:loggers:0:controller=reference, root:controller
 

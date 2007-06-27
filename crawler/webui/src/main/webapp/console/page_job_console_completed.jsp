@@ -46,7 +46,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
         </div>
         <b>Jobs</b>
         <div style="padding-left:20px">
-            <%=job.getCrawlState()%>: <i><%=job.getName()%></i>
+            <%=job.getCrawlStatus()%>: <i><%=job.getName()%></i>
             <!-- TODO: Consider pending jobs -->
         </div>
 

@@ -41,7 +41,7 @@ String the_sheet = (String)request.getAttribute("sheet");
 <% if (the_job != null) { %>
     <b>Job:</b> 
     <%=Text.html(the_job)%>
-    <span class='status <%=crawljob.getCrawlState()%>'><%=crawljob.getCrawlState()%></span>
+    <span class='status <%=crawljob.getCrawlStatus()%>'><%=crawljob.getCrawlStatus()%></span>
 	<% if(crawljob.getState()==CrawlJob.State.ACTIVE){ %>
         <a title="View and control the current status for this job."
            href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=the_jqs%>">Console</a>

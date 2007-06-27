@@ -20,7 +20,8 @@ public class Reports {
         SEEDS ("page_seeds_report.jsp"),
         FRONTIER ("page_frontier_report.jsp"),
         PROCESSORS ("page_processors_report.jsp"),
-        THREADS ("page_threads_report.jsp");
+        THREADS ("page_threads_report.jsp"),
+        FORCE ("page_reports.jsp");
         
         String jsp;
         
@@ -42,10 +43,13 @@ public class Reports {
         request.setAttribute("crawljob", new CrawlJob(job,crawler));
         
         JMXConnector jmxc = crawler.connect();
-        // Access to the JobController is 
         
         // Do page specific stuff:
         switch(page){
+        case FORCE: 
+            Misc.find(jmxc, job, StatisticsTracking.class).dumpReports();
+            request.setAttribute("message", 
+                    "Force generation of reports signal sent to crawler");
         case OVERVIEW : 
         case THREADS : 
         case FRONTIER : 
@@ -205,6 +209,13 @@ public class Reports {
             HttpServletRequest request,
             HttpServletResponse response) {
         handleReports(sc, request, response, ReportPages.SEEDS);
+    }
+    
+    public static void forceReports(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        handleReports(sc, request, response, ReportPages.FORCE);
     }
     
 }
