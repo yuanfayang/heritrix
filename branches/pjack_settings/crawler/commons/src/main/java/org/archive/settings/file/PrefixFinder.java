@@ -28,6 +28,7 @@ package org.archive.settings.file;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.SortedMap;
 
 import org.archive.util.SimpleMapEntry;
@@ -71,7 +72,12 @@ class PrefixFinder {
                 string = string.substring(0, string.length() - 1);
             } else {
                 map = map.headMap(string);
-                String last = map.lastKey();
+                String last;
+                try {
+                    last = map.lastKey();
+                } catch (NoSuchElementException e) {
+                    return opCount;
+                }
                 string = longestCommonPrefix(string, last);
                 if (string.length() == 0) {
                     return opCount;
