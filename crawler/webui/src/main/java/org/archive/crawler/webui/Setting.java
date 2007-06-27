@@ -26,9 +26,8 @@
 
 package org.archive.crawler.webui;
 
-import javax.servlet.jsp.JspWriter;
-
 import org.archive.settings.path.PathValidator;
+import org.archive.state.Key;
 
 /**
  * @author pjack
@@ -36,6 +35,7 @@ import org.archive.settings.path.PathValidator;
  */
 public class Setting {
 
+    final private static Object NO_KEY = new Object(); 
     
     private String path;
     private String type;
@@ -43,7 +43,8 @@ public class Setting {
     private String value;
     private String errorMessage;
     private String[] sheets;
-
+    private Object key;
+    
     public Setting() {
     }
 
@@ -88,10 +89,6 @@ public class Setting {
     }
 
 
-    public void printFormField(JspWriter out) {
-        
-    }
-
     public void setActualType(Class c) {
         this.actualType = c;
     }
@@ -110,4 +107,29 @@ public class Setting {
         return path.indexOf(PathValidator.DELIMITER, 
                 parentPath.length() + 1) < 0;
     }
+
+    
+    boolean isKeySet() {
+        return key != null;
+    }
+    
+
+    Key getKey() {
+        if (key == NO_KEY) {
+            return null;
+        } else {
+            return (Key)key;
+        }
+    }
+    
+    
+    void setKey(Key key) {
+        this.key = key;
+    }
+    
+    
+    void setNoKey() {
+        this.key = NO_KEY;
+    }
+
 }

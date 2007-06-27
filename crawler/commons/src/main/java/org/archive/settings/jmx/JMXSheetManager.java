@@ -214,4 +214,6 @@ public interface JMXSheetManager {
             @Parameter(name="index", desc="The index to move the sheet to.")
             int index);
 
+    @Attribute(desc="Returns true if the sheet manager is online.", def="false")
+    boolean isOnline();
 }

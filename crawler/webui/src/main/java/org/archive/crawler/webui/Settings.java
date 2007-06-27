@@ -36,7 +36,6 @@ import java.util.Set;
 
 import javax.servlet.jsp.JspWriter;
 
-import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathValidator;
@@ -67,13 +66,16 @@ public class Settings {
     /** 
      * The name of the sheet being edited.
      */
-    private String sheet;
+    final private String sheet;
+
+    
+    final private boolean online;
     
     
     /**
      * The settings for that sheet.
      */
-    private Map<String,Setting> settings;
+    final private Map<String,Setting> settings;
     
     
     /**
@@ -82,9 +84,10 @@ public class Settings {
      * @param sheet
      * @param settings
      */
-    public Settings(String sheet, Map<String,Setting> settings) {
+    public Settings(String sheet, boolean online, Map<String,Setting> settings) {
         this.settings = settings;
         this.sheet = sheet;
+        this.online = online;
     }
     
 
@@ -164,7 +167,7 @@ public class Settings {
         out.print(Text.attr(name));
         out.print("\" value=\"");
         out.print(Text.attr(value));
-        if (!setting.getSheets()[0].equals(sheet)) {
+        if (!isEnabled(setting)) {
             out.print("\" disabled=\"disabled");
         }
         out.println("\">");
@@ -181,7 +184,7 @@ public class Settings {
     throws IOException {
         out.print("<select name=\"");
         out.print(Text.attr(name));
-        if (!setting.getSheets()[0].equals(sheet)) {
+        if (!isEnabled(setting)) {
             out.print("\" disabled=\"disabled");
         }
         out.println("\">");        
@@ -507,28 +510,60 @@ public class Settings {
 
     
     public String getDescription(Setting setting) {
-        try {
+        Key key = getKey(setting);
+        if (key == null) {
+            return "No description."; 
+        } else {
+            return key.getDescription(Locale.ENGLISH);
+        }
+    }
+
+    
+    public Key getKey(Setting setting) {
+        if (setting.isKeySet()) {
+            return setting.getKey();
+        }
+
+        Setting parent = getParentSetting(setting);
+        String parentType = parent.getType();
+        if (parentType.equals(OBJECT_TAG)) {
             String path = setting.getPath();
-            if (path.indexOf(PathValidator.DELIMITER) < 0) {
-                Map<String,Key<Object>> keys = KeyManager.getKeys(SheetManager.class);
-                Key<Object> key = keys.get(path);
-                return key.getDescription(Locale.ENGLISH);
-            }
-            
-            Setting parent = getParentSetting(setting);
-            String parentType = parent.getType();
-            if (parentType.equals(OBJECT_TAG)) {
-                Class parentClass = forName(parent.getValue());
-                Map<String,Key<Object>> keys = KeyManager.getKeys(parentClass);                
-                String keyName = Text.lastPath(path);
-                Key<Object> key = keys.get(keyName);
-                return key.getDescription(Locale.ENGLISH);
-            }
-        } catch (Error e) {
-            e.printStackTrace();
+            Class parentClass = forName(parent.getValue());
+            Map<String,Key<Object>> keys = KeyManager.getKeys(parentClass);                
+            String keyName = Text.lastPath(path);
+            Key<Object> key = keys.get(keyName);
+            setting.setKey(key);
+            return key;
+        } else {
+            setting.setNoKey();
+            return null;
+        }
+    }
+
+    
+    public boolean isEnabled(Setting setting) {
+        if (!canOverride(setting)) {
+            return false;
+        }
+        return setting.getSheets()[0].equals(sheet);
+    }
+
+    
+    public boolean canOverride(Setting setting) {
+        Key key = getKey(setting);
+        if (key == null) {
+            return true;
         }
         
-        return null;
+        if (key.isGlobal() && !sheet.equals("default")) {
+            return false;
+        }
+        
+        if (online && key.isImmutable()) {
+            return false;
+        }
+        
+        return true;
     }
 
 }

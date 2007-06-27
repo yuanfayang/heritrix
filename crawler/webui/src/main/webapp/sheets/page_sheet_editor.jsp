@@ -54,10 +54,10 @@ for (Setting setting: settings.getSettings()) {
 <td class="info<%=row%>">
   <a 
      href="do_show_path_detail.jsp?<%=qs%>"
-     title="View details for this setting.">
-     
+     title="View details for this setting.">     
    Details
   </a>
+  <% if (settings.canOverride(setting)) { %>
   |
   <% if (sheets[0].equals(editedSheet)) { %>
     <a href="do_remove_path.jsp?<%=qs%>">
@@ -67,6 +67,7 @@ for (Setting setting: settings.getSettings()) {
     <a href="do_override_path.jsp?<%=qs%>">
       Add
     </a>  
+  <% } %>
   <% } %>
 </td>
 <td class="info<%=row%>">

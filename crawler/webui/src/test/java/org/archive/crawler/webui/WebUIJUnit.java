@@ -185,9 +185,9 @@ public class WebUIJUnit extends TmpDirTestCase {
         
         addSingleAndOverride(
                 "bar",
-                "root:order:recorder-in-buffer-bytes",
-                "65536",
-                "66666",
+                "root:controller:processors:HTTP:timeout-seconds",
+                "1200",
+                "9999",
                 "http://www.bar.org/1/2/3");
         
         addSingleAndOverride(

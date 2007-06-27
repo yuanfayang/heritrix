@@ -483,6 +483,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
-    
+    public boolean isOnline() {
+        return manager.isOnline();
+    }
     
 }
