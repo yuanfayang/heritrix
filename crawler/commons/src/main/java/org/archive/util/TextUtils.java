@@ -67,6 +67,7 @@ public class TextUtils {
         if (pattern == null) {
             throw new IllegalArgumentException("String 'pattern' must not be null");
         }
+        input = new InterruptibleCharSequence(input);
         final Map<String,Matcher> matchers = TL_MATCHER_MAP.get();
         Matcher m = (Matcher)matchers.get(pattern);
         if(m == null) {
@@ -96,6 +97,7 @@ public class TextUtils {
      */
     public static String replaceAll(
             String pattern, CharSequence input, String replacement) {
+        input = new InterruptibleCharSequence(input);
         Matcher m = getMatcher(pattern, input);
         String res = m.replaceAll(replacement);
         recycleMatcher(m);
@@ -115,6 +117,7 @@ public class TextUtils {
      */
     public static String replaceFirst(
             String pattern, CharSequence input, String replacement) {
+        input = new InterruptibleCharSequence(input);
         Matcher m = getMatcher(pattern, input);
         String res = m.replaceFirst(replacement);
         recycleMatcher(m);
@@ -132,6 +135,7 @@ public class TextUtils {
      * @return true if character sequence matches
      */
     public static boolean matches(String pattern, CharSequence input) {
+        input = new InterruptibleCharSequence(input);
         Matcher m = getMatcher(pattern, input);
         boolean res = m.matches();
         recycleMatcher(m);
@@ -148,6 +152,7 @@ public class TextUtils {
      * @return array of Strings split by pattern
      */
     public static String[] split(String pattern, CharSequence input) {
+        input = new InterruptibleCharSequence(input);
         Matcher m = getMatcher(pattern,input);
         String[] retVal = m.pattern().split(input); 
         recycleMatcher(m);
