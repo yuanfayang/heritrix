@@ -27,9 +27,9 @@
         <item name="Archive Access"
             href="http://archive-access.sourceforge.net/" /> 
         <item name="Heritrix Cluster Controller (hcc)"
-            href="http://crawler.sourceforge.net/hcc" /> 
+            href="http://crawler.archive.org/hcc" /> 
         <item name="cmdline-jmxclient"
-            href="http://crawler.sourceforge.net/cmdline-jmxclient" /> 
+            href="http://crawler.archive.org/cmdline-jmxclient" /> 
         <item name="Deduplicator"
             href="http://deduplicator.sourceforge.net" /> 
         <item name="Hadoop DFS Writer Processor"
