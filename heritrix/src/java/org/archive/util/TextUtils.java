@@ -132,7 +132,7 @@ public class TextUtils {
      * @return true if character sequence matches
      */
     public static boolean matches(String pattern, CharSequence input) {
-        Matcher m = getMatcher(pattern, input);
+        Matcher m = getMatcher(pattern, new InterruptibleCharSequence(input));
         boolean res = m.matches();
         recycleMatcher(m);
         return res;

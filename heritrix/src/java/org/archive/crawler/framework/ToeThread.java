@@ -422,12 +422,13 @@ Reporter, ProgressStatisticsReporter {
 	}
 
     /**
-     * Is this thread processing a URI, not paused or waiting for a URI?
+     * Is this thread validly processing a URI, not paused, waiting for 
+     * a URI, or interrupted?
      * @return whether thread is actively processing a URI
      */
     public boolean isActive() {
         // if alive and not waiting in/for frontier.next(), we're 'active'
-        return this.isAlive() && (currentCuri != null);
+        return this.isAlive() && (currentCuri != null) && !isInterrupted();
     }
     
     /**
