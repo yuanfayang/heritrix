@@ -53,4 +53,8 @@ public class InterruptibleCharSequence implements CharSequence {
         return new InterruptibleCharSequence(inner.subSequence(start, end));
     }
 
+    @Override
+    public String toString() {
+        return inner.toString();
+    }
 }
