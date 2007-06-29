@@ -21,7 +21,8 @@ public class Reports {
         FRONTIER ("page_frontier_report.jsp"),
         PROCESSORS ("page_processors_report.jsp"),
         THREADS ("page_threads_report.jsp"),
-        FORCE ("page_reports.jsp");
+        FORCE ("page_reports.jsp"),
+        KILL_THREAD ("page_threads_report.jsp");
         
         String jsp;
         
@@ -46,6 +47,23 @@ public class Reports {
         
         // Do page specific stuff:
         switch(page){
+        case KILL_THREAD :
+            JobController controller = Misc.find(jmxc, job, JobController.class);
+            String message = "Kill operation: ";
+            try {
+                String threadNumber =request.getParameter("threadNumber");
+                controller.
+                    killThread(Integer.parseInt(threadNumber),
+                        (request.getParameter("replace")!=null && 
+                            request.getParameter("replace").equals("replace")));
+                message += "Order sent to thread #" +
+                    request.getParameter("threadNumber");
+            } catch(NumberFormatException e){
+                message += "Failed";
+            }
+            request.setAttribute("message", message);
+            request.setAttribute("controller", controller);
+            break;
         case FORCE: 
             Misc.find(jmxc, job, StatisticsTracking.class).dumpReports();
             request.setAttribute("message", 
@@ -217,7 +235,13 @@ public class Reports {
             HttpServletResponse response) {
         handleReports(sc, request, response, ReportPages.FORCE);
     }
-    
+
+    public static void killThread(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        handleReports(sc, request, response, ReportPages.KILL_THREAD);
+    }
 }
 
 

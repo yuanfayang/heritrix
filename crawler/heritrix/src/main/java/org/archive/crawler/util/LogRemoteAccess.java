@@ -25,8 +25,6 @@
  */
 package org.archive.crawler.util;
 
-import javax.management.openmbean.CompositeData;
-
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
 

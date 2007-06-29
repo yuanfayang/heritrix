@@ -53,6 +53,7 @@ import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.openmbeans.annotations.Bean;
@@ -481,5 +482,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             IoUtils.close(bw);
         }
         new File(tempFilename).renameTo(new File(fileName));
+    }
+    
+    public String getHeritrixVersion(){
+        return Heritrix.getVersion();
     }
 }

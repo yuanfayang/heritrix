@@ -1,5 +1,12 @@
 <%@ page import="org.archive.crawler.Heritrix" %>
-<%@include file="/include/handler.jsp"%>
+<html>
+<head>
+    <%@include file="/include/header.jsp"%>
+    <title>Heritrix Help WebUI Preferences</title>
+</head>
+<body>
+
+<%@include file="/include/nav.jsp"%>
 
 <%
     String title = "Web UI Prefs";
@@ -9,8 +16,6 @@
         System.getProperties().setProperty("heritrix.favicon",setFavicon);
     }
 %>
-
-<%@include file="/include/head.jsp"%>
 
 <div class="margined">
 
@@ -42,7 +47,7 @@
 	String newPassword = request.getParameter("newPassword");
 	if(newUsername!=null && newPassword != null && newUsername.length()>0 
 	        && newPassword.length()>0) {
-	    Heritrix.resetAuthentication(newUsername,newPassword); 
+	    //Heritrix.resetAuthentication(newUsername,newPassword); 
 	    %>
 	    <span class="flashMessage">administrative login changed to 
 	    username '<%=newUsername%>' password '<%=newPassword %>' </span>
@@ -72,4 +77,5 @@
     </form>
 </fieldset>
 </div>
-<%@include file="/include/foot.jsp"%>
+</body>
+</html>

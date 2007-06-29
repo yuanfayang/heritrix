@@ -1,7 +1,9 @@
 package org.archive.crawler.framework;
 
 import org.archive.openmbeans.annotations.Attribute;
+import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
+import org.archive.openmbeans.annotations.Parameter;
 
 
 /**
@@ -68,4 +70,10 @@ public interface JobController {
     @Attribute(desc = "Returns the processors report", def="")
     String getProcessorsReport();
 
+    @Operation(desc = "Kill a specific ToeThread.", impact=Bean.ACTION)
+    void killThread(
+            @Parameter(name = "threadNumber", desc = "Serial number of the ToeThread to kill")
+            int threadNumber,
+            @Parameter(name = "replace", desc = "If the killed thread should be replaced")
+            boolean replace);
 }

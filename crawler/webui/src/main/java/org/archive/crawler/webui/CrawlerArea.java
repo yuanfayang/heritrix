@@ -27,6 +27,7 @@
 package org.archive.crawler.webui;
 
 
+import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -92,4 +93,28 @@ public class CrawlerArea {
         return Remote.make(jmx, c.getObjectName(), CrawlJobManager.class);
     }
 
+    public static void showAbout(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response){
+        Crawler crawler = Home.getCrawler(request);
+        request.setAttribute("crawler", crawler);
+        JMXConnector jmxc = crawler.connect();
+        CrawlJobManager cjm = open(request).getObject();
+        request.setAttribute("heritrix.version", cjm.getHeritrixVersion());
+        
+        try{
+            // System properites
+            request.setAttribute(
+                "system.properties", 
+                jmxc.getMBeanServerConnection().getAttribute(
+                        new ObjectName("java.lang:type=Runtime"), 
+                    "SystemProperties"));
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        
+        Misc.forward(request, response, "page_about_crawler.jsp");
+    }
 }
