@@ -180,7 +180,8 @@ public abstract class CrawlMapper extends Processor {
             updateGeneration(nowGeneration);
         }
         
-        if (curi.getFetchStatus() == 0 && curi.get(this, CHECK_URI)) {
+        if (curi.getFetchStatus() <= 0  // unfetched/unsuccessful
+                && curi.get(this, CHECK_URI)) {
             // apply mapping to the CrawlURI itself
             String target = map(curi);
             if(!localName.equals(target)) {
@@ -194,7 +195,7 @@ public abstract class CrawlMapper extends Processor {
             }
         }
         
-        if (curi.getOutLinks().size() > 0 && curi.get(this, CHECK_OUTLINKS)) {
+        if (curi.get(this, CHECK_OUTLINKS)) {
             // consider outlinks for mapping
             Iterator<CrawlURI> iter = curi.getOutCandidates().iterator(); 
             while(iter.hasNext()) {
