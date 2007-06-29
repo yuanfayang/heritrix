@@ -21,6 +21,8 @@
  */
 package org.archive.crawler.framework;
 
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_SOURCE_TAG;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,14 +31,12 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EventObject;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -46,16 +46,10 @@ import java.util.logging.Logger;
 
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
-import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenDataException;
-import javax.management.openmbean.OpenType;
-import javax.management.openmbean.SimpleType;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.event.CrawlURIDispositionListener;
-import org.archive.crawler.framework.AbstractTracker;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.net.UURI;

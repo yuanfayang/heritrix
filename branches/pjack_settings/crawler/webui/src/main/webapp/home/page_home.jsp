@@ -71,6 +71,7 @@
         <% if (crawler.getSource() == Crawler.Source.MANUAL) { %>
             | <a href="do_remove_crawler.jsp?<%=crawler.getQueryString()%>">Remove</a>
         <% } %>
+        | <a href="<%=request.getContextPath()%>/crawler_area/do_show_about_crawler.jsp?<%=crawler.getQueryString()%>">About</a>
         </td>
     </tr>
     <% alt = !alt; %>
@@ -81,7 +82,9 @@
 <a href="do_show_add_crawler.jsp">Add</a>
 |
 <a href="do_crawler_refresh.jsp">Refresh</a>
+|
+<a href="<%=request.getContextPath()%>/help/do_show_help.jsp">Help</a>
 
 <% if (jndiWarning) { %>
-   Note: No JNDI server was configured for the servlet container JVM.
+   <p>Note: No JNDI server was configured for the servlet container JVM.
 <% } %>

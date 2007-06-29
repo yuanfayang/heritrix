@@ -29,6 +29,7 @@ package org.archive.crawler.framework;
 import java.io.Closeable;
 import java.io.IOException;
 
+import org.archive.openmbeans.annotations.Attribute;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
 
@@ -152,5 +153,6 @@ public interface CrawlJobManager extends Closeable {
             @Parameter(name="lines", desc="The new text to write.")
             String lines) throws IOException;
 
-    
+    @Attribute(desc="The version of Heritrix.", def="Unknown")
+    String getHeritrixVersion();
 }
