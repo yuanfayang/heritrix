@@ -36,4 +36,4 @@ org.archive.crawler.deciderules.ExceedsDocumentLengthTresholdDecideRule
 org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule
 org.archive.crawler.deciderules.FilterDecideRule
 org.archive.crawler.deciderules.ContentTypeMatchesRegExpDecideRule
-org.archive.crawler.deciderules.ContentTypeNotMatchesRegExpDecideRule.java
+org.archive.crawler.deciderules.ContentTypeNotMatchesRegExpDecideRule
