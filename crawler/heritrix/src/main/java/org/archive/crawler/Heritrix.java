@@ -29,6 +29,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -125,6 +127,18 @@ public class Heritrix {
                 "(eg, conf/heritrix.properties).  If present, this file " +
                 "will be used to configure Java logging.  Defaults to " +
                 "./conf/heritrix.properties");
+        options.addOption("b", "webui-bind-hosts", true, 
+                "A comma-separated list of hostnames for the " +
+                "webui to bind to.  Ignored if -r is not specified.");
+        options.addOption("l", "webui-port", true, "The port the webui " +
+                "should listen on.  Ignored if -r is not specified.");
+        options.addOption("w", "webui-war-path", true, "The path to the " +
+                "Heritrix webui WAR.  Ignored if -r is not specified.");
+        options.addOption("r", "run-webui", false,  "If set, then no web " +
+                 "server will be launched, and the Heritrix web UI will not " +
+                 "be available on this machine.  Use this option if you have " +
+                 "multiple crawlers that you want to control with a single" +
+                 "web UI.");
         return options;
     }
     
@@ -164,6 +178,7 @@ public class Heritrix {
     public static void main(String[] args)
     throws Exception {
         CrawlJobManagerConfig config = new CrawlJobManagerConfig();
+        WebUIConfig webConfig = new WebUIConfig();
         File properties = getDefaultPropertiesFile();
         
         CommandLine cl = getCommandLine(args);
@@ -179,6 +194,19 @@ public class Heritrix {
         
         if (cl.hasOption('h')) {
             properties = new File(cl.getOptionValue('h'));
+        }
+
+        if (cl.hasOption('b')) {
+            String hosts = cl.getOptionValue('b');
+            List<String> list = Arrays.asList(hosts.split(","));
+            webConfig.getHosts().addAll(list);
+        }
+        if (cl.hasOption('l')) {
+            int port = Integer.parseInt(cl.getOptionValue('l'));
+            webConfig.setPort(port);
+        }
+        if (cl.hasOption('w')) {
+            webConfig.setPathToWAR(cl.getOptionValue('w'));
         }
 
         if (properties.exists()) {
@@ -198,6 +226,7 @@ public class Heritrix {
         // inside in a container.
         TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
 
+        // Start Heritrix.
         try {
             CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(config);
             registerJndi(cjm.getObjectName(), out);
@@ -223,6 +252,11 @@ public class Heritrix {
                     out.flush();
                 }
             }
+        }
+        
+        // Start WebUI, if desired.
+        if (cl.hasOption('r')) {
+            new WebUI(webConfig).start();
         }
         
         try {
