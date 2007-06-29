@@ -1,8 +1,7 @@
 <assembly>
    <id>dist</id>
    <formats>
-      <format>tar.gz</format>
-      <format>zip</format>
+      <format>dir</format>
    </formats>
    <includeBaseDirectory>true</includeBaseDirectory>
    <dependencySets>
@@ -11,14 +10,6 @@
     </dependencySet>
    </dependencySets>
    <fileSets>
-    <fileSet>
-     <directory>.</directory>
-     <outputDirectory>/</outputDirectory>
-     <includes>
-      <include>README.txt</include>
-      <include>LICENSE.txt</include>
-     </includes>
-    </fileSet>
     <fileSet>
      <directory>target</directory>
      <outputDirectory>/</outputDirectory>
@@ -30,21 +21,5 @@
      <directory>target/site</directory>
      <outputDirectory>/docs</outputDirectory>
     </fileSet>
-    <fileSet>
-     <directory>src/main/bin</directory>
-     <outputDirectory>/bin</outputDirectory>
-     <fileMode>0755</fileMode>
-   </fileSet>
-   <fileSet>
-     <directory>src/main/conf</directory>
-     <outputDirectory>/conf</outputDirectory>
-     <excludes>
-       <exclude>profiles</exclude>
-     </excludes>
-   </fileSet>
-   <fileSet>
-     <directory>src/main/conf/profiles</directory>
-     <outputDirectory>/profiles</outputDirectory>
-   </fileSet>
   </fileSets>
 </assembly>
