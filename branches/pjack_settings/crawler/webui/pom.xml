@@ -64,7 +64,7 @@
     
   </dependencies>
   <build>
-    <finalName>heritrix-webui</finalName>
+    <finalName>heritrix-webui-${project.version}</finalName>
 
     <plugins>
       <plugin>

@@ -28,28 +28,34 @@ package org.archive.settings.file;
 
 import java.io.File;
 
-import junit.framework.TestCase;
+import org.archive.util.FileUtils;
+import org.archive.util.TmpDirTestCase;
 
 /**
  * @author pjack
  *
  */
-public class ValidatorTest extends TestCase {
+public class ValidatorTest extends TmpDirTestCase {
 
     
     /**
      * Tests the default profile that gets put in the heritrix tarball.
      */
     public void testDefaultProfile() throws Exception {
-        File f = new File("src/main/conf/profiles/default/config.txt");
-        if (!f.exists()) {
-            f = new File("heritrix/src/main/conf/profiles/default/config.txt");
+	File srcDir = new File("../src/main/conf/profiles/default");
+        if (!srcDir.exists()) {
+            srcDir = new File("src/main/conf/profiles/default");
         }
-        if (!f.exists()) {
+        if (!srcDir.exists()) {
             throw new IllegalStateException("Couldn't find default profile.");
         }
+
+        File tmpDir = new File(getTmpDir(), "validatorTest");
+        FileUtils.copyFiles(srcDir, tmpDir);
+
+        File config = new File(tmpDir, "config.txt");
         
-        int errors = Validator.validate(f.getAbsolutePath());
+        int errors = Validator.validate(config.getAbsolutePath());
         assertEquals(0, errors);
     }
 }
