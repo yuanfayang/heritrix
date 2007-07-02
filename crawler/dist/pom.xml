@@ -9,7 +9,7 @@
   <groupId>org.archive.crawler</groupId>
   <artifactId>dist</artifactId>
   <packaging>jar</packaging>
-  <name>Heritrix</name>
+  <name>Heritrix Tarballs</name>
     <pluginRepositories>
     <pluginRepository>
       <releases>
