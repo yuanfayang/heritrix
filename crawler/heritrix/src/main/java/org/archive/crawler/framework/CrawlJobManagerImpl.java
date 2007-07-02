@@ -101,6 +101,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
     final private Thread heritrixThread;
     
+    private HashMap<String, LogRemoteAccessImpl> logRemoteAccess;
+    
     public CrawlJobManagerImpl(CrawlJobManagerConfig config) {
         super(CrawlJobManager.class);
         this.server = config.getServer();
@@ -115,6 +117,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         this.jobsDir = new File(config.getJobsDirectory());
         this.jobs = new HashMap<String,CrawlController>();
         this.oname = JMXModuleListener.nameOf(DOMAIN, NAME, this);
+        
+        logRemoteAccess = new HashMap<String, LogRemoteAccessImpl>();
+        
         register(this, oname);
         this.heritrixThread = config.getHeritrixThread();
     }
@@ -160,16 +165,22 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         register(jmx, name);
     }
 
-    public void openLogs(String job) throws IOException {
+    public String getLogs(String job) throws IOException {
+        if(logRemoteAccess.containsKey(job)){
+            return logRemoteAccess.get(job).getObjectName().getCanonicalName();
+        }
         File src = new File(getJobsDir(), job);
         
         if (!src.exists()) {
             throw new IllegalArgumentException("No such job: " + job);
         }
 
-        LogRemoteAccessImpl lra = new LogRemoteAccessImpl(src.getAbsolutePath() + File.separator + "logs"); // FIXME: Stop assuming location of logs
-        ObjectName name = JMXModuleListener.nameOf(DOMAIN, job, lra);
-        register(lra, name);
+        LogRemoteAccessImpl lra = new LogRemoteAccessImpl(
+                job, DOMAIN,
+                src.getAbsolutePath() + File.separator + "logs"); // FIXME: Stop assuming location of logs
+        register(lra, lra.getObjectName());
+        logRemoteAccess.put(job, lra);
+        return lra.getObjectName().getCanonicalName();
     }
 
     
@@ -376,8 +387,14 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         if (!jobs.isEmpty()) {
             throw new IllegalStateException("Cannot close CrawlJobManager " + 
                     "when jobs are still active.");
-        }
+        }        
         unregister(oname);
+        // Clean up LogRemoteAccessors that may have been opened
+        for(String key : logRemoteAccess.keySet()){
+            LogRemoteAccessImpl lra = logRemoteAccess.get(key);
+            unregister(lra.getObjectName());
+            logRemoteAccess.remove(key);
+        }
         if (heritrixThread != null) {
             heritrixThread.interrupt();
         }
