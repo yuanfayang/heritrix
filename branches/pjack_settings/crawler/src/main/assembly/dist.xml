@@ -60,10 +60,10 @@
      <outputDirectory>/profiles</outputDirectory>
    </fileSet>
 
-   <fileSet>
+   <!--fileSet>
      <directory>heritrix/target/heritrix-${project.version}-dist.dir/heritrix-${project.version}/lib</directory>
      <outputDirectory>/lib</outputDirectory>
-   </fileSet>
+   </fileSet-->
    <fileSet>
      <directory>webui/target</directory>
      <outputDirectory>/lib</outputDirectory>
