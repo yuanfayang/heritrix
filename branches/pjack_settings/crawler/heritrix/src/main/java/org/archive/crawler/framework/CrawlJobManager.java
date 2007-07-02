@@ -95,7 +95,7 @@ public interface CrawlJobManager extends Closeable {
 
 
     @Operation(desc="Loads the logs for a job.")
-    public void openLogs(
+    public String getLogs(
             
             @Parameter(name="job", desc="The name of the job.")
             String job

@@ -26,7 +26,6 @@
 package org.archive.crawler.webui;
 
 import java.io.IOException;
-import java.util.Set;
 
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -44,8 +43,6 @@ import org.archive.crawler.util.Logs;
  */
 public class Log {
 
-	// TODO: Various 'magic numbers' etc. should probably be made into constants
-		
 	// Existing logs
 	public enum Mode{
 		LINE_NUMBER ("Line number"),
@@ -183,24 +180,20 @@ public class Log {
         try {
 	        JMXConnector jmxc = crawler.connect();
 
-	        LogRemoteAccess lra = findLogRemoteAccess(jmxc,job);
+	        Remote<CrawlJobManager> manager = Remote.make(
+	                jmxc, crawler.getObjectName(), CrawlJobManager.class);
+	        ObjectName oname;
+            try {
+                oname = new ObjectName(
+                        manager.getObject().getLogs(job));
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to aquire " +
+                        "LogRemoteAccess for job " + job, e);
+            }
 
-	        if(lra==null){
-	        	// Probably means that the remote object hasn't been created.
-	        	// Try opening log
-		        Remote<CrawlJobManager> manager = Remote.make(
-		                jmxc, crawler.getObjectName(), CrawlJobManager.class);
-		        manager.getObject().openLogs(job);
-		        // And now we should find it.
-		        lra = findLogRemoteAccess(jmxc,job);
-	        }
+            LogRemoteAccess lra = Remote.make(
+                    jmxc, oname, LogRemoteAccess.class).getObject();
 
-	        if(lra==null){
-	        	throw new IllegalStateException("Unable to aquire " +
-	        			"LogRemoteAccess for job " + job);
-	        }
-	        
-	        
 	        switch(log.mode){
 	        case TAIL :
 	        	log.log = lra.getTail(
@@ -244,30 +237,6 @@ public class Log {
 		Misc.forward(request, response, "page_show_log.jsp");
 	}
 	
-	/**
-	 * Finds an appropriate LogRemoteAccess object.
-	 * @param jmxc JMXConnector to the remote machine
-	 * @param job The name of the job whose logs we are interested in
-	 * @return The LogRemoteAccess object or null if none is found.
-	 * @throws IllegalStateException If there are multiple 
-	 * 		{@link LogRemoteAccess} objects found. 
-	 */
-	private static LogRemoteAccess findLogRemoteAccess(JMXConnector jmxc, String job){
-        String query = "org.archive.crawler:*," + 
-        "name=" + job + 
-        ",type=" + LogRemoteAccess.class.getName();
-
-	    Set<ObjectName> set = Misc.find(jmxc, query);
-	    if (set.size() == 1) {
-	        ObjectName name = set.iterator().next();
-	        return Remote.make(jmxc, name, LogRemoteAccess.class).getObject();
-	    } else if(set.size() > 1) {
-	    	// Error
-	    	throw new IllegalStateException("Found multiple LogRemoteAccessors for job " + job);
-	    }
-	    return null;
-    }
-
 	public String[] getContent() {
 		return content;
 	}

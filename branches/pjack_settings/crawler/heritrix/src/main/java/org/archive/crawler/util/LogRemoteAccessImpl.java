@@ -28,7 +28,10 @@ package org.archive.crawler.util;
 import java.io.File;
 import java.io.Serializable;
 
+import javax.management.ObjectName;
+
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.settings.jmx.JMXModuleListener;
 
 /**
  * Implements the {@link LogRemoteAccess} interface and provides JMX access
@@ -43,11 +46,17 @@ public class LogRemoteAccessImpl extends Bean
 
 	private static final long serialVersionUID = 1L;
 	String logDirectory;
+    ObjectName oname;
 	
-	public LogRemoteAccessImpl(String logDirectory){
+	public LogRemoteAccessImpl(String job, String domain, String logDirectory){
         super(LogRemoteAccess.class);
 		this.logDirectory = logDirectory;
+        this.oname = JMXModuleListener.nameOf(domain, job, this);
 	}
+    
+    public ObjectName getObjectName(){
+        return oname;
+    }
 
 	public String[] getTail(String log, int lines) {
 		String logfile = Logs.valueOf(log).getFilename(); 
