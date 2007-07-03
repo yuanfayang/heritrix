@@ -105,11 +105,38 @@ public class CrawlerArea {
         
         try{
             // System properites
+            ObjectName runtimeOName = new ObjectName("java.lang:type=Runtime");
             request.setAttribute(
                 "system.properties", 
                 jmxc.getMBeanServerConnection().getAttribute(
-                        new ObjectName("java.lang:type=Runtime"), 
-                    "SystemProperties"));
+                        runtimeOName, 
+                        "SystemProperties"));
+            // Uptime
+            request.setAttribute(
+                    "runtime.uptime", 
+                    jmxc.getMBeanServerConnection().getAttribute(
+                            runtimeOName, 
+                            "Uptime"));
+            // Start time
+            request.setAttribute(
+                    "runtime.starttime", 
+                    jmxc.getMBeanServerConnection().getAttribute(
+                            runtimeOName, 
+                            "StartTime"));
+            // Input arguments
+            request.setAttribute(
+                    "runtime.inputarguments", 
+                    jmxc.getMBeanServerConnection().getAttribute(
+                            runtimeOName, 
+                            "InputArguments"));
+            
+            // Operating system
+            ObjectName osOName = 
+                new ObjectName("java.lang:type=OperatingSystem");
+            request.setAttribute(
+                    "os.availableprocessors", 
+                    jmxc.getMBeanServerConnection().getAttribute(
+                            osOName, "AvailableProcessors"));
         } catch (Exception e){
             e.printStackTrace();
         }

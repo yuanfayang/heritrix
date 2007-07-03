@@ -1,37 +1,73 @@
-<%@ page import="java.io.PrintWriter" %>
+<%@ page import="org.archive.util.ArchiveUtils"%>
 <%@ page import="org.archive.crawler.Heritrix"%>
+<%@ page import="java.util.Properties"%>
+<%@ page import="java.lang.management.ManagementFactory"%>
+<%@ page import="java.lang.management.RuntimeMXBean"%>
+<%@ page import="java.lang.management.OperatingSystemMXBean"%>
+
+
 <html>
 <head>
     <%@include file="/include/header.jsp"%>
-    <title>Heritrix About (Web UI)</title>
+    <title>Heritrix About</title>
 </head>
 <body>
 
 <%@include file="/include/nav.jsp"%>
 
+<%
+RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+%>
+
 <div class="margined">
 
-<h1>About Heritrix (UI)</h1>
+<h1>About Heritrix (Web UI)</h1>
 
-For more information, see 
-<a href="http://crawler.archive.org">crawler.archive.org</a><br/>
-<br/>
+<p>The information on this page refers to this web UI part of Heritrix running on <%=request.getRemoteHost() %>.</p>
         
-	<fieldset><legend>Versions</legend>
-	Heritrix <%=Heritrix.getVersion()%><br/><br/>
-	
+    <fieldset><legend>Heritrix</legend>
+	Heritrix <%=Heritrix.getVersion()%><br/>
+    </fieldset>
+    <br/>
+
+    <fieldset><legend>Java Virtual Machine</legend>
 	<%=System.getProperties().getProperty("java.runtime.name") %>
-	<%=System.getProperties().getProperty("java.vm.version") %><br/><br/>
-	
+	<%=System.getProperties().getProperty("java.vm.version") %><br/>
+    Vendor: <%=System.getProperties().getProperty("java.vm.vendor")%><br/>
+    Started: <%=ArchiveUtils.getLog14Date(runtime.getStartTime()) %><br/>
+    Uptime: <%=ArchiveUtils.formatMillisecondsToConventional(runtime.getUptime()) %><br/>
+    
+    Input arguments:
+    <pre><% 
+        String[] args = runtime.getInputArguments().toArray(new String[0]);
+        for(String arg : args){
+            out.println("   " + arg); 
+        }
+    %></pre>
+
+    System properties:
+    <pre><%
+        Properties systemProperties = System.getProperties();
+        for(Object key : systemProperties.keySet()){
+            out.println("   "+key+"="+systemProperties.get(key));
+        }
+    %></pre>
+    
+    <br/>
+    </fieldset>
+    <br/>
+
+    <fieldset><legend>Operating system</legend>
 	<%=System.getProperties().getProperty("os.name") %>
-	<%=System.getProperties().getProperty("os.version") %>
-	
-	</fieldset>
-	<br/>
+	<%=System.getProperties().getProperty("os.version") %><br/>
+    Architecture: <%=systemProperties.get("os.arch")  %><br/>
+    Available processors: <%=os.getAvailableProcessors() %><br/>
+    </fieldset>
+    <br/>
     <fieldset><legend>License</legend>
     
-    <pre>
-Copyright (C) 2003-2006 Internet Archive.
+    <pre> Copyright (C) 2003-2006 Internet Archive.
 
 Heritrix is free software; you can redistribute it and/or modify
 it under the terms of the GNU Lesser Public License as published by
@@ -51,16 +87,13 @@ Heritrix contains many other free and open source libraries; they are
 governed by their respective licenses.</pre>
     </fieldset>
     <br/>
-    <fieldset>
-    <legend> System Properties for Web UI </legend>
-    <pre>
-    <%
-    	PrintWriter writer = new PrintWriter(out);
-    	System.getProperties().list(writer);
-    	writer.flush();
-    %></pre>
-    </fieldset>
 
 </div>
+
+For more information, see 
+<a href="http://crawler.archive.org">crawler.archive.org</a><br/>
+<br/>
+
 </body>
 </html>
+

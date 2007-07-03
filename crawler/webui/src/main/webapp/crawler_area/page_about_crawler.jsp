@@ -4,6 +4,8 @@
 <%@ page import="org.archive.crawler.webui.Crawler"%>
 <%@ page import="java.util.SortedMap"%>
 <%@ page import="java.util.TreeMap"%>
+<%@ page import="org.archive.util.ArchiveUtils"%>
+<%@ page import="java.lang.management.OperatingSystemMXBean"%>
 
 <%
     Crawler crawler = (Crawler)request.getAttribute("crawler");
@@ -29,19 +31,43 @@
 
 <h1>About Heritrix (<%=crawler.getLegend() %>)</h1>
 
-For more information, see 
-<a href="http://crawler.archive.org">crawler.archive.org</a><br/>
-<br/>
+<p>The information on this page refers to an instance of the Heritrix crawler running on <%=crawler.getLegend() %>.</p>
         
-	<fieldset><legend>Versions</legend>
-	Heritrix <%=request.getAttribute("heritrix.version")%><br/><br/>
-	
+	<fieldset><legend>Heritrix</legend>
+	Heritrix <%=request.getAttribute("heritrix.version")%><br/>
+    </fieldset>
+    <br/>
+
+    <fieldset><legend>Java Virtual Machine</legend>
 	<%=systemProperties.get("java.runtime.name") %>
-	<%=systemProperties.get("java.vm.version") %><br/><br/>
-	
+	<%=systemProperties.get("java.vm.version") %><br/>
+    Vendor: <%=systemProperties.get("java.vm.vendor")%><br/>
+    Started: <%=ArchiveUtils.getLog14Date((Long)request.getAttribute("runtime.starttime")) %><br/>
+    Uptime: <%=ArchiveUtils.formatMillisecondsToConventional((Long)request.getAttribute("runtime.uptime")) %><br/>
+    Input arguments:
+    <pre><% 
+        String[] args = (String[])request.getAttribute("runtime.inputarguments");
+        for(String arg : args){
+            out.println("   " + arg); 
+        }
+    %></pre>
+    
+    System properties:
+    <pre><%
+        for(String key : systemProperties.keySet()){
+            out.println("   "+key+"="+systemProperties.get(key));
+        }
+    %></pre>
+    
+    <br/>
+    </fieldset>
+    <br/>
+
+    <fieldset><legend>Operating system</legend>
 	<%=systemProperties.get("os.name") %>
-	<%=systemProperties.get("os.version") %>
-	
+	<%=systemProperties.get("os.version") %><br/>
+    Architecture: <%=systemProperties.get("os.arch")  %><br/>
+    Available processors: <%=request.getAttribute("os.availableprocessors") %><br/>
 	</fieldset>
 	<br/>
     <fieldset><legend>License</legend>
@@ -66,15 +92,12 @@ Heritrix contains many other free and open source libraries; they are
 governed by their respective licenses.</pre>
     </fieldset>
     <br/>
-    <fieldset>
-    <legend> System Properties for <code><%=crawler.getLegend() %></code> </legend>
-    <pre><%
-        for(String key : systemProperties.keySet()){
-            out.println(key+"="+systemProperties.get(key));
-        }
-    %></pre>
-    </fieldset>
 
 </div>
+
+For more information, see 
+<a href="http://crawler.archive.org">crawler.archive.org</a><br/>
+<br/>
+
 </body>
 </html>
