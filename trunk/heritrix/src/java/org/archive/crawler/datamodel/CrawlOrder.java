@@ -68,6 +68,10 @@ public class CrawlOrder extends ModuleType implements Serializable {
     public static final String ATTR_RECOVER_PATH = "recover-path";
     public static final String ATTR_RECOVER_RETAIN_FAILURES =
         "recover-retain-failures";
+    public static final String ATTR_RECOVER_SCOPE_INCLUDES =
+        "recover-scope-includes";
+    public static final String ATTR_RECOVER_SCOPE_ENQUEUES =
+        "recover-scope-enqueues";
     public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
     public static final String ATTR_MAX_DOCUMENT_DOWNLOAD =
         "max-document-download";
@@ -333,6 +337,24 @@ public class CrawlOrder extends ModuleType implements Serializable {
                 "crawl.", Boolean.FALSE));
         e.setOverrideable(false);
         e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_RECOVER_SCOPE_INCLUDES,
+                "When recovering via the recover.log, should URIs " +
+                "be checked against scope before considered included " +
+                "during the first phase which primes the already-seen " +
+                "set. " +
+                "Default is true, meaning scope changes in a recovered " +
+                "crawl can slim the already-seen size. ", Boolean.TRUE));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_RECOVER_SCOPE_ENQUEUES,
+                "When recovering via the recover.log, should URIs " +
+                "be checked against scope before reenqueued during " +
+                "the second phase which fills the to-be-fetched queues. " +
+                "Default is true, meaning scope changes in a recovered " +
+                "crawl can slim the pending queues. ", Boolean.TRUE));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
+        
         
         e = addElementToDefinition(
            new CredentialStore(CredentialStore.ATTR_NAME));
