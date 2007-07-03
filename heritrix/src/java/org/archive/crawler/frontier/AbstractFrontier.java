@@ -878,7 +878,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             source = new File(getSettingsHandler().getOrder().getController()
                     .getDisk(), pathToLog);
         }
-        RecoveryJournal.importRecoverLog(source, this, retainFailures);
+        RecoveryJournal.importRecoverLog(source, controller, retainFailures);
     }
 
     /*

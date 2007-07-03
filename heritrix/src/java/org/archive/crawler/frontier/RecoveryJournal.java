@@ -35,7 +35,10 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.io.CrawlerJournal;
 import org.archive.net.UURI;
@@ -142,7 +145,7 @@ implements FrontierJournal {
      * @see org.archive.crawler.framework.Frontier#importRecoverLog(String, boolean)
      */
     public static void importRecoverLog(final File source,
-        final Frontier frontier, final boolean retainFailures)
+        final CrawlController controller, final boolean retainFailures)
     throws IOException {
         if (source == null) {
             throw new IllegalArgumentException("Passed source file is null.");
@@ -152,7 +155,7 @@ implements FrontierJournal {
         // first, fill alreadyIncluded with successes (and possibly failures),
         // and count the total lines
         final int lines =
-            importCompletionInfoFromLog(source, frontier, retainFailures);
+            importCompletionInfoFromLog(source, controller, retainFailures);
         
         LOGGER.info("finished completion state; recovering queues from " +
             source);
@@ -163,7 +166,7 @@ implements FrontierJournal {
         final CountDownLatch recoveredEnough = new CountDownLatch(1);
         new Thread(new Runnable() {
             public void run() {
-                importQueuesFromLog(source, frontier, lines, recoveredEnough);
+                importQueuesFromLog(source, controller, lines, recoveredEnough);
             }
         }, "queuesRecoveryThread").start();
         
@@ -187,7 +190,12 @@ implements FrontierJournal {
      * @throws IOException
      */
     private static int importCompletionInfoFromLog(File source, 
-            Frontier frontier, boolean retainFailures) throws IOException {
+            CrawlController controller, boolean retainFailures) throws IOException {
+        Frontier frontier = controller.getFrontier();
+        boolean checkScope = (Boolean) controller.getOrder()
+                .getUncheckedAttribute(null,
+                        CrawlOrder.ATTR_RECOVER_SCOPE_INCLUDES);
+        CrawlScope scope = checkScope ? controller.getScope() : null;
         // Scan log for all 'Fs' lines: add as 'alreadyIncluded'
         BufferedInputStream is = getBufferedInput(source);
         // create MutableString of good starting size (will grow if necessary)
@@ -203,6 +211,12 @@ implements FrontierJournal {
                     String s = read.subSequence(3,read.length()).toString();
                     try {
                         UURI u = UURIFactory.getInstance(s);
+                        if(checkScope) {
+                            if(!scope.accepts(u)) {
+                                // skip out-of-scope URIs.
+                                continue;
+                            }
+                        }
                         frontier.considerIncluded(u);
                         if(wasSuccess) {
                             if (frontier.getFrontierJournal() != null) {
@@ -278,11 +292,16 @@ implements FrontierJournal {
      * @param lines total lines noted in recovery log earlier
      * @param enough latch signalling 'enough' URIs queued to begin crawling
      */
-    private static void importQueuesFromLog(File source, Frontier frontier,
+    private static void importQueuesFromLog(File source, CrawlController controller,
             int lines, CountDownLatch enough) {
         BufferedInputStream is;
         // create MutableString of good starting size (will grow if necessary)
         MutableString read = new MutableString(UURI.MAX_URL_LENGTH);
+        Frontier frontier = controller.getFrontier();
+        boolean checkScope = (Boolean) controller.getOrder()
+        .getUncheckedAttribute(null,
+                CrawlOrder.ATTR_RECOVER_SCOPE_ENQUEUES);
+        CrawlScope scope = checkScope ? controller.getScope() : null;
         long queuedAtStart = frontier.queuedUriCount();
         long queuedDuringRecovery = 0;
         int qLines = 0;
@@ -308,6 +327,12 @@ implements FrontierJournal {
                                     args[4].toString(): "";
                             CandidateURI caUri = new CandidateURI(u, 
                                     pathFromSeed, via, viaContext);
+                            if(checkScope) {
+                                if(!scope.accepts(caUri)) {
+                                    // skip out-of-scope URIs.
+                                    continue;
+                                }
+                            }
                             frontier.schedule(caUri);
                             
                             queuedDuringRecovery =
