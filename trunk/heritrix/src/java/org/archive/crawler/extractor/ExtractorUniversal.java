@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.io.IOUtils;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
@@ -448,14 +449,7 @@ implements CoreAttributeConstants {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } finally {
-            if(instream!=null){
-                try {
-                    instream.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
+            IOUtils.closeQuietly(instream);
         }
         // Set flag to indicate that link extraction is completed.
         curi.linkExtractorFinished();
