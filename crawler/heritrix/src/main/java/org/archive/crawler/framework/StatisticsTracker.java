@@ -58,7 +58,6 @@ import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.jmx.Types;
 import org.archive.state.FileModule;
-import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -145,8 +144,6 @@ implements CrawlURIDispositionListener, Serializable {
     final public static Key<FileModule> REPORTS_DIR =
         Key.make(FileModule.class, null);
     
-    
-    @Global
     @Immutable
     final public static Key<Integer> LIVE_HOST_REPORT_SIZE = Key.make(20);
     
@@ -1095,7 +1092,10 @@ implements CrawlURIDispositionListener, Serializable {
         writer.print("\nTotal Seeds not Crawled: " + seedsNotCrawled);
         // hostsDistribution contains all hosts crawled plus an entry for dns.
         writer.print("\nTotal Hosts Crawled: " + (hostsDistribution.size()-1));
-        writer.print("\nTotal Documents Crawled: " + finishedUriCount);
+        writer.print("\nTotal URIs Processed: " + finishedUriCount);
+        writer.print("\nURIs Crawled successfully: " + downloadedUriCount);
+        writer.print("\nURIs Failed to Crawl: " + downloadFailures);
+        writer.print("\nURIs Disregarded: " + downloadDisregards);
         writer.print("\nProcessed docs/sec: " +
                 ArchiveUtils.doubleToString(docsPerSecond,2));
         writer.print("\nBandwidth in Kbytes/sec: " + totalKBPerSec);
@@ -1205,7 +1205,6 @@ implements CrawlURIDispositionListener, Serializable {
         if (!sourceHostDistribution.isEmpty()) {
             writeReportFile("source","source-report.txt");
         }
-        // TODO: Save object to disk?
     }
 
     public void crawlCheckpoint(StateProvider def, File cpDir) throws Exception {
