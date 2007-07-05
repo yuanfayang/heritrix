@@ -366,8 +366,9 @@ public class ExtractorUniversal extends ContentExtractor {
     
     @Override
     protected boolean innerExtract(ProcessorURI curi) {
+        InputStream instream = null;
         try {
-            InputStream instream = curi.getRecorder().getRecordedInput().
+            instream = curi.getRecorder().getRecordedInput().
                 getContentReplayInputStream();
             int ch = instream.read();
             StringBuffer lookat = new StringBuffer();
@@ -434,6 +435,15 @@ public class ExtractorUniversal extends ContentExtractor {
             }
         } catch(IOException e){
             curi.getNonFatalFailures().add(e);
+        } finally {
+            if(instream!=null){
+                try {
+                    instream.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
         }
         // Set flag to indicate that link extraction is completed.
         return true;
