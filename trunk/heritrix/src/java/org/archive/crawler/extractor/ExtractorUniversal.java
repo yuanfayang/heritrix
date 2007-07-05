@@ -377,8 +377,9 @@ implements CoreAttributeConstants {
 
         numberOfCURIsHandled++;
 
+        InputStream instream = null;
         try {
-            InputStream instream = curi.getHttpRecorder().getRecordedInput().
+            instream = curi.getHttpRecorder().getRecordedInput().
                 getContentReplayInputStream();
             int ch = instream.read();
             StringBuffer lookat = new StringBuffer();
@@ -446,6 +447,15 @@ implements CoreAttributeConstants {
         } catch (AttributeNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        } finally {
+            if(instream!=null){
+                try {
+                    instream.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
         }
         // Set flag to indicate that link extraction is completed.
         curi.linkExtractorFinished();
