@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+import org.apache.commons.io.IOUtils;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
@@ -436,14 +437,7 @@ public class ExtractorUniversal extends ContentExtractor {
         } catch(IOException e){
             curi.getNonFatalFailures().add(e);
         } finally {
-            if(instream!=null){
-                try {
-                    instream.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
+            IOUtils.closeQuietly(instream);
         }
         // Set flag to indicate that link extraction is completed.
         return true;
