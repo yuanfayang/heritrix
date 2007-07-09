@@ -41,6 +41,7 @@ import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
@@ -132,6 +133,10 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     
     //private CrawlController controller;
 
+    static {
+        KeyManager.addKeys(SurtPrefixedDecideRule.class);
+    }
+    
 
     /**
      * Usual constructor. 

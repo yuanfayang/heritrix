@@ -29,6 +29,7 @@ import org.archive.net.UURI;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
@@ -52,6 +53,12 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
     
     private static final Logger logger =
         Logger.getLogger(ScopePlusOneDecideRule.class.getName());
+    
+    
+    static {
+        KeyManager.addKeys(ScopePlusOneDecideRule.class);
+    }
+    
     
     /**
      * Constructor.
