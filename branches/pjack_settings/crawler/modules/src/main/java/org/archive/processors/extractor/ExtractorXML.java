@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.KeyManager;
 import org.archive.util.TextUtils;
 
 
@@ -152,5 +153,11 @@ public class ExtractorXML extends ContentExtractor {
         ret.append("  Links extracted:   " + linksExtracted + "\n\n");
 
         return ret.toString();
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(ExtractorXML.class);
     }
 }

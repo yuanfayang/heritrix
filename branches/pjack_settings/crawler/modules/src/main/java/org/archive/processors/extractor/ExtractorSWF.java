@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.archive.processors.ProcessorURI;
+import org.archive.state.KeyManager;
 
 import com.anotherbigidea.flash.interfaces.SWFTagTypes;
 import com.anotherbigidea.flash.readers.SWFReader;
@@ -226,5 +227,11 @@ public class ExtractorSWF extends ContentExtractor {
         protected void parseDefineFont2(InStream in) throws IOException {
             // DO NOTHING - no URLs to be found in bits
         }
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(ExtractorSWF.class);
     }
 }

@@ -37,6 +37,7 @@ import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -108,5 +109,11 @@ public class CrawlStateUpdater extends CrawlerProcessor {
                 logger.severe("Failed get path on " + curi.getUURI());
             }
         }
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(CrawlStateUpdater.class);
     }
 }

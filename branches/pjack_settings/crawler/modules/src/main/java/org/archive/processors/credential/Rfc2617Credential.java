@@ -38,6 +38,7 @@ import org.archive.processors.ProcessorURI;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 
@@ -200,5 +201,11 @@ public class Rfc2617Credential extends Credential {
             }
         }
         return result;
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(Rfc2617Credential.class);
     }
 }

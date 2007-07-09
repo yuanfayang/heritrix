@@ -39,6 +39,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -180,5 +181,11 @@ public class ExtractorImpliedURI extends Extractor {
         ret.append("  CrawlURIs handled: " + getURICount() + "\n");
         ret.append("  Links extracted:   " + linksExtracted.get() + "\n\n");
         return ret.toString();
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(ExtractorImpliedURI.class);
     }
 }

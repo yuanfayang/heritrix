@@ -32,6 +32,7 @@ import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -190,5 +191,11 @@ implements AdaptiveRevisitAttributeConstants {
         // Update wait interval
         curi.setWaitInterval(waitInterval);
         curi.setWaitReevaluated(true);
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(WaitEvaluator.class);
     }
 }

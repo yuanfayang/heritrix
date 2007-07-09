@@ -33,6 +33,7 @@ import org.archive.processors.fetcher.FetchStats;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 /**
  * A simple quota enforcer. If the host, server, or frontier group
@@ -273,5 +274,11 @@ public class QuotaEnforcer extends CrawlerProcessor {
             return true;
         }
         return false; 
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(QuotaEnforcer.class);
     }
 }

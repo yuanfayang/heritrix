@@ -26,7 +26,9 @@ package org.archive.processors.util;
 import java.io.Serializable;
 import java.util.List;
 
+import org.archive.processors.fetcher.FetchHTTP;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 /**
@@ -194,4 +196,9 @@ public class RobotsHonoringPolicy implements Serializable {
         return type == getType(context);
     }
 
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(RobotsHonoringPolicy.class);
+    }
 }

@@ -35,6 +35,7 @@ import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 
@@ -100,5 +101,11 @@ public class FrontierScheduler extends Processor {
      */
     protected void schedule(CrawlURI caUri) {
         frontier.schedule(caUri);
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(FrontierScheduler.class);
     }
 }

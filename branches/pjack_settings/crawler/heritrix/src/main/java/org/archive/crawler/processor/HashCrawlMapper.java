@@ -29,6 +29,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.net.PublicSuffixes;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.TextUtils;
 
@@ -127,5 +128,11 @@ public class HashCrawlMapper extends CrawlMapper {
         long fp = FPGenerator.std64.fp(key);
         long bucket = fp % bucketCount;
         return Long.toString(bucket >= 0 ? bucket : -bucket);
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(HashCrawlMapper.class);
     }
 }

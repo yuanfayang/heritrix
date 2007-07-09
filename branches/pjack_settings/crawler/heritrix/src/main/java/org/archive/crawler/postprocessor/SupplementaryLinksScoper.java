@@ -39,6 +39,7 @@ import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.state.Expert;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -136,5 +137,11 @@ public class SupplementaryLinksScoper extends Scoper {
             return;
         }
         LOGGER.info(caUri.getUURI().toString());
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(SupplementaryLinksScoper.class);
     }
 }

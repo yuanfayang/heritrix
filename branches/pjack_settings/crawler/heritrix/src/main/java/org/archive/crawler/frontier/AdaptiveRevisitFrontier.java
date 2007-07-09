@@ -68,6 +68,7 @@ import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
@@ -1193,5 +1194,11 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     
     public long deepestUri() {
         return hostQueues.getDeepestQueueSize();
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(AdaptiveRevisitFrontier.class);
     }
 }

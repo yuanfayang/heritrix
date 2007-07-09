@@ -488,5 +488,9 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return km.toKey();
     }
 
-
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(ExperimentalWARCWriterProcessor.class);
+    }
 }

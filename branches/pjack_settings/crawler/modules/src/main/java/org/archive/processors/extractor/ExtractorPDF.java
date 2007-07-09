@@ -36,6 +36,7 @@ import org.archive.processors.util.DefaultTempDirProvider;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 
@@ -164,5 +165,11 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 
         return ret.toString();
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(ExtractorPDF.class);
     }
 }

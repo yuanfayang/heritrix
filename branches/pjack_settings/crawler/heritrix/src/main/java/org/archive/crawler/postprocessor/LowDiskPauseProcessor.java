@@ -37,6 +37,7 @@ import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Global;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.util.IoUtils;
 
 /**
@@ -163,5 +164,11 @@ public class LowDiskPauseProcessor extends Processor {
             curi.getNonFatalFailures().add(e);
         }
         return ProcessResult.PROCEED;
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(LowDiskPauseProcessor.class);
     }
 }

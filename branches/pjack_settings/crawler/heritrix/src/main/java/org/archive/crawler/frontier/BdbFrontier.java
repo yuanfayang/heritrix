@@ -39,6 +39,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
+import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.queue.StoredQueue;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.BdbModule;
@@ -260,5 +261,11 @@ implements Serializable, Checkpointable {
         // may exist
         snoozedClassQueues = Collections
                 .synchronizedSortedSet(new TreeSet<WorkQueue>());
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(BdbFrontier.class);
     }
 }
