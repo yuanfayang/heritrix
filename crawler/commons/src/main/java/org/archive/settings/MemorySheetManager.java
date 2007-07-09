@@ -25,6 +25,7 @@ package org.archive.settings;
 
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,9 +33,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
 
+import org.archive.settings.file.PrefixFinder;
 import org.archive.settings.path.PathChangeException;
 
 
@@ -72,7 +75,7 @@ public class MemorySheetManager extends SheetManager {
      * Associations; maps context string to its sheet.  Requires no 
      * synchronization.
      */
-    final private ConcurrentMap<String,Sheet> associations;
+    final private SortedMap<String,Set<Sheet>> associations;
 
 
 
@@ -92,7 +95,7 @@ public class MemorySheetManager extends SheetManager {
      */
     public MemorySheetManager(boolean online) {
         sheets = new HashMap<String,Sheet>();
-        associations = new ConcurrentHashMap<String,Sheet>();
+        associations = new TreeMap<String,Set<Sheet>>();
         defaults = addSingleSheet("default");
         this.online = online;
         defaults.set(getManagerModule(), MANAGER, this);
@@ -192,24 +195,40 @@ public class MemorySheetManager extends SheetManager {
     
     
     @Override
-    public Sheet getAssociation(String surt) {
-        return associations.get(surt);
+    public Collection<String> getAssociations(String context) {
+        Set<String> result = new HashSet<String>();
+        Set<Sheet> sheets = associations.get(context);
+        for (Sheet sheet: sheets) {
+            result.add(sheet.getName());
+        }
+        return result;
     }
     
     
     
     @Override
-    public void associate(Sheet sheet, Iterable<String> surts) {
+    public void associate(Sheet sheet, Collection<String> surts) {
         for (String surt: surts) {
-            associations.put(surt, sheet);
+            Set<Sheet> sheets = associations.get(surt);
+            if (sheets == null) {
+                sheets = new HashSet<Sheet>();
+                associations.put(surt, sheets);
+            }
+            sheets.add(sheet);
         }
     }
 
 
     @Override
-    public void disassociate(Sheet sheet, Iterable<String> surts) {
+    public void disassociate(Sheet sheet, Collection<String> surts) {
         for (String surt: surts) {
-            associations.remove(surt, sheet);
+            Set<Sheet> sheets = associations.get(surt);
+            if (sheets != null) {
+                sheets.remove(sheet);
+                if (sheets.isEmpty()) {
+                    associations.remove(surt);
+                }
+            }
         }
     }
 
@@ -244,4 +263,44 @@ public class MemorySheetManager extends SheetManager {
     public List<PathChangeException> getSingleSheetProblems(String sheet) {
         return Collections.emptyList();
     }
+
+
+    @Override
+    public List<Association> findConfigNames(String uri) {
+        final List<Association> result = new ArrayList<Association>();
+        List<String> prefixes = new ArrayList<String>();
+        PrefixFinder.find((SortedSet<String>)associations.keySet(), uri, prefixes);
+        for (String prefix: prefixes) {
+            Set<Sheet> sheets = associations.get(prefix);
+            for (Sheet sheet: sheets) {
+                result.add(new Association(prefix, sheet.getName()));
+            }
+        }
+        return result;
+    }
+    
+    
+    @Override
+    public Sheet findConfig(String context) {
+        final List<Sheet> result = new ArrayList<Sheet>();
+        List<String> prefixes = new ArrayList<String>();
+        PrefixFinder.find((SortedSet<String>)associations.keySet(), context, prefixes);
+        for (String prefix: prefixes) {
+            Set<Sheet> sheets = associations.get(prefix);
+            for (Sheet sheet: sheets) {
+                result.add(sheet);
+            }
+        }
+
+        if (result.isEmpty()) {
+            return getDefault();
+        }
+        
+        if (result.size() == 1) {
+            return result.get(0);
+        }
+
+        return this.createSheetBundle("anonymous", result);
+    }
+
 }

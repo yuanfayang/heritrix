@@ -27,90 +27,72 @@
 package org.archive.settings.file;
 
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.SortedMap;
+import java.util.SortedSet;
 
-import org.archive.util.SimpleMapEntry;
+import org.apache.commons.lang.StringUtils;
+
+import com.sleepycat.util.keyrange.KeyRangeException;
+
 
 /**
  * Utility class for extracting prefixes of a given string from a SortedMap.
  * 
  * @author pjack
  */
-class PrefixFinder {
+public class PrefixFinder {
 
 
     /**
-     * Extracts prefixes of a given string from a SortedMap.  If a key in the
-     * sorted map is a prefix of the given string, then the key/value pair
-     * is added to the result list.  
+     * Extracts prefixes of a given string from a SortedSet.  If an element
+     * of the given set is a prefix of the given string, then that element
+     * is added to the result list.
      * 
      * <p>Put another way, for every element in the result list, the following 
      * expression will be true: <tt>string.startsWith(element.getKey())</tt>.
      * 
-     * @param <T>     the value type of the map
-     * @param map     the sorted map containing potential prefixes
+     * @param set     the sorted set containing potential prefixes
      * @param string  the string whose prefixes to find 
-     * @param result  the list of prefix/value mappings 
-     * @return   the number of times the map was consulted; 
+     * @param result  the list of prefixes 
+     * @return   the number of times the set was consulted; 
      *            used for unit testing
      */
-    public static <T> int find(
-            SortedMap<String,T> map, 
-            String string, 
-            List<Map.Entry<String,T>> result) {
+    public static int find(SortedSet<String> set, String input, List<String> result) {
+        set = set.headSet(input + '\0');
         int opCount = 0;
-        while (!map.isEmpty()) {
-            T sheet = map.get(string);
+        for (String last = last(set); last != null; last = last(set)) {
             opCount++;
-            if (sheet != null) {
-                SimpleMapEntry<String,T> sme = 
-                    new SimpleMapEntry<String,T>(string, sheet); 
-                result.add(sme);
-                map = map.headMap(string);
-                string = string.substring(0, string.length() - 1);
+            if (input.startsWith(last)) {
+                result.add(last);
             } else {
-                map = map.headMap(string);
-                String last;
-                try {
-                    last = map.lastKey();
-                } catch (NoSuchElementException e) {
+                // Find the longest common prefix.
+                int p = StringUtils.indexOfDifference(input, last);
+                if (p <= 0) {
                     return opCount;
                 }
-                string = longestCommonPrefix(string, last);
-                if (string.length() == 0) {
-                    return opCount;
-                }
+                last = input.substring(0, p) + '\0';
             }
+            try {
+                set = set.headSet(last);
+            } catch (KeyRangeException e) {
+                // StoredSortedSet incorrectly raises this instead of 
+                // returning an empty set from headSet.  This simply means
+                // there are no more elements to consider.
+                return opCount;
+            }
+            
         }
-
         return opCount;
     }
-    
 
-    /**
-     * Returns the longest common prefix of two strings.
-     * 
-     * @param one   the first string to compare
-     * @param two   the second string to compare
-     * @return   the longest common prefix of those strings
-     */
-    private static String longestCommonPrefix(String one, String two) {
-        // Make sure one is shorter than two
-        if (two.length() < one.length()) {
-            String temp = one;
-            one = two;
-            two = temp;
-        }
-        
-        for (int i = 0; i < one.length(); i++) {
-            if (one.charAt(i) != two.charAt(i)) {
-                return one.substring(0, i);
-            }
-        }
-        
-        return one;
-    }
     
+    private static String last(SortedSet<String> set) {
+        try {
+            return set.last();
+        } catch (NoSuchElementException e) {
+            return null;
+        }
+        
+    }
+
 }

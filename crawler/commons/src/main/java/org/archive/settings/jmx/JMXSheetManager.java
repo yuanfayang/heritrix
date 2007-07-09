@@ -124,11 +124,7 @@ public interface JMXSheetManager {
             @Parameter(name = "surt", desc = "The SURT to disassociate from that sheet.")
             String surt);
 
-    @Operation(desc = "Returns the sheet associated with the given SURT prefix, if any.")
-    String getSheetFor(
 
-    @Parameter(name = "surt", desc = "The SURT whose sheet to return.")
-    String surt);
 
     @Operation(desc = "Resolves all settings in the given sheet.")
     String resolveAllAsString(
