@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
@@ -45,6 +46,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.FileModule;
+import org.archive.util.SURT;
 
 
 /**
@@ -55,6 +57,9 @@ import org.archive.state.FileModule;
  */
 public class Misc {
 
+    
+    final private static Pattern SURT_PATTERN = Pattern.compile("^[a-z]+:\\(");
+    
     
     private static boolean isLocal(
             String host, 
@@ -261,4 +266,24 @@ public class Misc {
         }        
     }
 
+    
+    /**
+     * Converts a line of user input to a SURT.  If the input already looks
+     * like a SURT -- if it starts with xxx://( -- then the input is returned
+     * unchanged.
+     * 
+     * <p>If the input doesn't start with a scheme, then http is assumed.
+     * 
+     * @param url
+     * @return
+     */
+    public static String toSURT(String input) {
+        // If it already looks like a surt, return it unchanged.
+        if (SURT_PATTERN.matcher(input).find()) {
+            return input;
+        }
+        
+        return SURT.fromURI(input);
+    }
+    
 }

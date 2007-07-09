@@ -28,7 +28,6 @@ import java.io.Closeable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,14 +35,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.settings.file.Checkpointable;
 import org.archive.settings.path.PathChangeException;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
-import org.archive.surt.SURTTokenizer;
 
 
 /**
@@ -251,14 +248,12 @@ implements StateProvider, Serializable { //, DirectoryModule {
 
     
     /**
-     * Associates a sheet with one or more context strings.  If one or more
-     * of the given strings already has an association, then those 
-     * associations are replaced.
+     * Associates a sheet with one or more context strings.
      * 
      * @param sheet     the sheet to associate
      * @param strings   the context strings to associate with that sheet
      */
-    public abstract void associate(Sheet sheet, Iterable<String> strings);
+    public abstract void associate(Sheet sheet, Collection<String> strings);
     
     
     /**
@@ -269,19 +264,18 @@ implements StateProvider, Serializable { //, DirectoryModule {
      * @param sheet   the sheet to disassociate
      * @param strings   the context strings to disassociate from that sheet
      */
-    public abstract void disassociate(Sheet sheet, Iterable<String> strings);
+    public abstract void disassociate(Sheet sheet, Collection<String> strings);
 
 
     /**
-     * Returns the sheet for a given context.  If no association exists for
-     * that context, this method returns null.  Otherwise the sheet that is
-     * associated with the context is returned.
+     * Returns the sheets for a given context.  If no association exists for
+     * that context, this method returns an empty collection.  Otherwise the 
+     * sheets that are associated with the context are returned.
      * 
      * @param context   the context whose association to look up
-     * @return   the sheet associated with that context, or null if no sheet
-     * is associated with that context
+     * @return   the sheets associated with that context
      */
-    public abstract Sheet getAssociation(String context);
+    public abstract Collection<String> getAssociations(String context);
 
 
     
@@ -349,54 +343,10 @@ implements StateProvider, Serializable { //, DirectoryModule {
      * @param uri
      * @return
      */
-    public Sheet findConfig(String uri) {
-        SURTTokenizer st;
-        try {
-            st = new SURTTokenizer(uri.toString());
-        } catch (URIException e) {
-            throw new IllegalArgumentException(e);
-        }
-        
-        List<Sheet> list = null;
-        for (String s = st.nextSearch(); s != null; s = st.nextSearch()) {
-            Sheet sheet = getAssociation(s);
-            if (sheet != null) {
-                if (list == null) {
-                    list = new ArrayList<Sheet>();
-                }
-                list.add(sheet);
-            }
-        }
-        if (list == null) {
-            return getDefault();
-        }
+    public abstract Sheet findConfig(String uri);
 
-        if (list.size() == 1) {
-            return list.get(0);
-        }
-        
-        list.add(getDefault());
-        return new SheetBundle(this, "anonymous", list);
-    }    
 
-    
-    public Map<String,String> findConfigNames(String uri) {
-        SURTTokenizer st;
-        try {
-            st = new SURTTokenizer(uri.toString());
-        } catch (URIException e) {
-            throw new IllegalArgumentException(e);
-        }
-
-        Map<String,String> result = new LinkedHashMap<String,String>();
-        for (String s = st.nextSearch(); s != null; s = st.nextSearch()) {
-            Sheet sheet = getAssociation(s);
-            String sheetName = (sheet == null) ? null : sheet.getName();
-            result.put(s, sheetName);
-        }
-        
-        return result;
-    }
+    public abstract List<Association> findConfigNames(String uri);
     
     /**
      * Closes any modules that require special cleanup.  First, this method

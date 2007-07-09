@@ -29,10 +29,9 @@ package org.archive.settings.file;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import junit.framework.TestCase;
 
@@ -51,47 +50,46 @@ public class PrefixFinderTest extends TestCase {
     }
 
     
-    public void testSmallMap() {
-        SortedMap<String,String> testData = new TreeMap<String,String>();
-        testData.put("foo", "bar");
-        List<Map.Entry<String,String>> result = 
-            new ArrayList<Map.Entry<String,String>>();
+    public void testSmallSet() {
+        SortedSet<String> testData = new TreeSet<String>();
+        testData.add("foo");
+        List<String> result = new ArrayList<String>();
         int count = PrefixFinder.find(testData, "baz", result);
         assertTrue(result.isEmpty());
-        assertEquals(count, 1);
+        assertEquals(count, 0);
     }
-    
+
+
     
     private void doTest() {
         // Generate test data.
-        SortedMap<String,String> testData = new TreeMap<String,String>();        
+        SortedSet<String> testData = new TreeSet<String>();
         Random random = new Random();
         String prefix = "0";
-        testData.put(prefix, "mapped0");
+        testData.add(prefix);
         for (int i = 1; i < 10000; i++) {
             if (random.nextInt(1024) == 0) {
                 prefix += " " + i;
-                testData.put(prefix, "mapped" + i);
+                testData.add(prefix);
             } else {
-                testData.put(prefix + " " + i, "mapped" + i);
+                testData.add(prefix + " " + i);
             }
         }
 
         // Brute-force to get the expected results.
-        List<Map.Entry<String,String>> expected 
-            = new ArrayList<Map.Entry<String,String>>();
-        for (Map.Entry<String,String> me: testData.entrySet()) {
-            if (prefix.startsWith(me.getKey())) {
-                expected.add(me);
+        List<String> expected = new ArrayList<String>();
+        for (String value: testData) {
+            if (prefix.startsWith(value)) {
+                expected.add(value);
             }
         }
         
         // Results go from longest to shortest.
         Collections.reverse(expected);
 
-        List<Map.Entry<String,String>> result = 
-            new ArrayList<Map.Entry<String,String>>();
+        final List<String> result = new ArrayList<String>();
         int count = PrefixFinder.find(testData, prefix, result);
+
         if (!result.equals(expected)) {
             System.out.println("Expected: " + expected);
             System.out.println("Result:   " + result);
@@ -103,15 +101,15 @@ public class PrefixFinderTest extends TestCase {
         assertTrue("Operation count too high: " + count + " > 100", count < 100);
 
         // Double-check.
-        for (Map.Entry<String,String> me: result) {
-            if (!prefix.startsWith(me.getKey())) {
+        for (String value: result) {
+            if (!prefix.startsWith(value)) {
                 System.out.println("Result: " + result);                
-                assertTrue("Prefix string \"" + prefix 
+                fail("Prefix string \"" + prefix 
                         + "\" does not start with result key \"" 
-                        + me.getKey() + "\"", false);
+                        + value + "\"");
             }
         }
     }
-    
+
     
 }

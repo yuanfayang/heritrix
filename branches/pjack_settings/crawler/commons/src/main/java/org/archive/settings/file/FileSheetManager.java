@@ -31,6 +31,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,9 +41,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.settings.Association;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.Offline;
@@ -65,7 +68,15 @@ import org.archive.util.IoUtils;
 import static org.archive.settings.file.BdbModule.BDB_CACHE_PERCENT;
 import static org.archive.settings.file.BdbModule.CHECKPOINT_COPY_BDBJE_LOGS;
 
+import com.sleepycat.bind.EntryBinding;
+import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.collections.StoredSortedMap;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.SecondaryConfig;
+import com.sleepycat.je.SecondaryDatabase;
+import com.sleepycat.je.SecondaryKeyCreator;
 
 /**
  * Simple sheet manager that stores settings in a directory hierarchy.
@@ -191,9 +202,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     /** Sheets that are currently in memory. */
     final private Map<String, Sheet> sheets;
 
-    /** The database of associations. Maps string context to sheet name. */
-    final private Map<String, String> associations;
+    /** The database of associations. Maps string context to sheet names. */
+    final private StoredSortedMap surtToSheets;
 
+    /** The reverse db of associations. Maps sheet name to string contexts. */
+    final private StoredSortedMap sheetToSurts;
+
+    
     /** The default sheet. */
     private SingleSheet defaultSheet;
 
@@ -282,8 +297,39 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         this.sheetsDir = getRelative(main, prop, DEFAULT_SHEETS);
         validateDir(sheetsDir);
         sheets = new HashMap<String, Sheet>();
-        this.associations = 
-            bdb.getBigMap("associations", String.class, String.class);
+
+        Database db = bdb.openDatabase("surtToSheets", false);
+        EntryBinding stringBinding 
+            = TupleBinding.getPrimitiveBinding(String.class);
+        
+        this.surtToSheets = new StoredSortedMap(
+                db, stringBinding, stringBinding, true); 
+
+        SecondaryKeyCreator creator = new SecondaryKeyCreator() {
+            public boolean createSecondaryKey(
+                    SecondaryDatabase db, 
+                    DatabaseEntry key, 
+                    DatabaseEntry data, 
+                    DatabaseEntry result) throws DatabaseException {
+                result.setData(data.getData(), data.getOffset(), data.getSize());
+                return true;
+            }
+            
+        };
+        
+        SecondaryConfig secConfig = new SecondaryConfig();
+        secConfig.setAllowCreate(true);
+        secConfig.setSortedDuplicates(true);
+        secConfig.setKeyCreator(creator);
+        
+        SecondaryDatabase secDb = bdb.openSecondaryDatabase(
+                "sheetToSurts", 
+                db,
+                secConfig);
+
+        this.sheetToSurts = new StoredSortedMap(
+                secDb, stringBinding, stringBinding, true); 
+
         reload();
     }
 
@@ -428,31 +474,69 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     }
 
     @Override
-    public void associate(Sheet sheet, Iterable<String> strings) {
+    public void associate(Sheet sheet, Collection<String> strings) {
         for (String s : strings) {
-            associations.put(s, sheet.getName());
+            surtToSheets.put(s, sheet.getName());
         }
     }
 
-    @Override
-    public void disassociate(Sheet sheet, Iterable<String> strings) {
-        for (String s : strings) {
-            String n = associations.get(s);
-            if (n.equals(sheet.getName())) {
-                associations.remove(s);
+    @Override @SuppressWarnings("unchecked")
+    public void disassociate(Sheet sheet, Collection<String> strings) {
+        Collection c = sheetToSurts.duplicates(sheet.getName());
+        c.removeAll(strings);
+    }
+
+    @Override @SuppressWarnings("unchecked")
+    public Collection<String> getAssociations(String context) {
+        return surtToSheets.duplicates(context);
+    }
+
+    
+    @Override @SuppressWarnings("unchecked")
+    public List<Association> findConfigNames(String uri) {
+        final List<Association> result = new ArrayList<Association>();
+        List<String> prefixes = new ArrayList<String>();
+        PrefixFinder.find((SortedSet)surtToSheets.keySet(), uri, prefixes);
+        for (String prefix: prefixes) {
+            Collection<String> all = surtToSheets.duplicates(prefix);
+            for (String surt: all) {
+                result.add(new Association(prefix, surt));
             }
         }
+        return result;
     }
-
-    @Override
-    public Sheet getAssociation(String context) {
-        String sheetName = associations.get(context);
-        if (sheetName == null) {
-            return null;
+    
+    
+    @Override @SuppressWarnings("unchecked")
+    public Sheet findConfig(String context) {
+        final List<Sheet> sheets = new ArrayList<Sheet>();
+        List<String> prefixes = new ArrayList<String>();
+        PrefixFinder.find((SortedSet)surtToSheets.keySet(), context, prefixes);
+        for (String prefix: prefixes) {
+            Collection<String> all = surtToSheets.duplicates(prefix);
+            for (String sheetName: all) {
+                try {
+                    Sheet sheet = getSheet(sheetName);
+                    sheets.add(sheet);
+                } catch (IllegalArgumentException e) {
+                    LOGGER.warning("Association had unknown sheet: " 
+                            + sheetName);
+                }
+            }
         }
-        return getSheet(sheetName);
-    }
+        
+        if (sheets.isEmpty()) {
+            return getDefault();
+        }
+        
+        if (sheets.size() == 1) {
+            return sheets.get(0);
+        }
 
+        return this.createSheetBundle("anonymous", sheets);
+    }
+    
+    
     @Override
     public SingleSheet getDefault() {
         return (SingleSheet)getSheet("default");

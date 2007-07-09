@@ -52,7 +52,6 @@ import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.Types;
 import org.archive.settings.path.PathValidator;
-import org.archive.surt.SURTTokenizer;
 
 import static org.archive.settings.path.PathChanger.LIST_TAG;
 import static org.archive.settings.path.PathChanger.MAP_TAG;
@@ -473,10 +472,7 @@ public class Sheets {
         try {
             for (String s = br.readLine(); s != null; s = br.readLine()) {
                 if (!s.startsWith("#") && s.trim().length() > 0) {
-                    String surt = SURTTokenizer.prefixKey(s);
-                    if (surt.startsWith("http://")) {
-                        surt = surt.substring(7);
-                    }
+                    String surt = Misc.toSURT(s);
                     if (add) {
                         sheetManager.associate(sheet, surt);
                     } else {
@@ -518,8 +514,9 @@ public class Sheets {
         String url = request.getParameter("url");
         request.setAttribute("sheet", url);
         try {
+            String surt = Misc.toSURT(url);
             if (request.getParameter("button").equals("Sheets")) {
-                String[] pairs = sheetManager.findConfigNames(url);
+                String[] pairs = sheetManager.findConfigNames(surt);
                 Map<String,String> map = new LinkedHashMap<String,String>();
                 for (int i = 0; i < pairs.length; i += 2) {
                     map.put(pairs[i], pairs[i + 1]);
@@ -527,7 +524,7 @@ public class Sheets {
                 request.setAttribute("surtToSheet", map);
                 Misc.forward(request, response, "page_config_names.jsp");
             } else {
-                CompositeData[] settings = sheetManager.findConfig(url);
+                CompositeData[] settings = sheetManager.findConfig(surt);
                 request.setAttribute("settings", Arrays.asList(settings));
                 request.setAttribute("problems", Collections.emptyList());
                 Misc.forward(request, response, "page_sheet_detail.jsp");

@@ -27,6 +27,7 @@
 package org.archive.settings.file;
 
 import java.io.File;
+import java.io.FileOutputStream;
 
 import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
@@ -42,7 +43,7 @@ public class ValidatorTest extends TmpDirTestCase {
      * Tests the default profile that gets put in the heritrix tarball.
      */
     public void testDefaultProfile() throws Exception {
-	File srcDir = new File("../src/main/conf/profiles/default");
+        File srcDir = new File("../src/main/conf/profiles/default");
         if (!srcDir.exists()) {
             srcDir = new File("src/main/conf/profiles/default");
         }
@@ -55,6 +56,7 @@ public class ValidatorTest extends TmpDirTestCase {
         FileUtils.copyFiles(srcDir, tmpDir);
 
         File config = new File(tmpDir, "config.txt");
+        new FileOutputStream(config).close();
         
         int errors = Validator.validate(config.getAbsolutePath());
         assertEquals(0, errors);

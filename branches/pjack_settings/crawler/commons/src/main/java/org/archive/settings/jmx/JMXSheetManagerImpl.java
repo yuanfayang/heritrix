@@ -41,6 +41,7 @@ import javax.management.openmbean.OpenDataException;
 import org.archive.util.Transform;
 import org.archive.util.Transformer;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.settings.Association;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
@@ -312,15 +313,6 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
 
-    public synchronized String getSheetFor(            
-            String surt) {
-        Sheet s = manager.getAssociation(surt);
-        if (s == null) {
-            return null;
-        }
-        return s.getName();
-    }
-
 
     public synchronized String resolveAllAsString(
             String sheetName) {
@@ -398,12 +390,12 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     
     
     public String[] findConfigNames(String uri) {
-        Map<String,String> surtToSheet = manager.findConfigNames(uri);
+        List<Association> surtToSheet = manager.findConfigNames(uri);
         String[] result = new String[surtToSheet.size() * 2];
         int i = 0;
-        for (Map.Entry<String,String> me: surtToSheet.entrySet()) {
-            result[i] = me.getKey();
-            result[i + 1] = me.getValue();
+        for (Association assoc: surtToSheet) {
+            result[i] = assoc.getContext();
+            result[i + 1] = assoc.getSheetName();
             i += 2;
         }
         return result;
