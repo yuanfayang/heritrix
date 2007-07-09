@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.scope;
 
+import org.archive.state.KeyManager;
+
 
 
 /**
@@ -77,5 +79,11 @@ public class BroadScope extends ClassicScope {
      */
     protected boolean focusAccepts(Object o) {
         return true;
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(BroadScope.class);
     }
 }

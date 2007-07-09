@@ -44,6 +44,7 @@ import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
@@ -338,5 +339,11 @@ public class FetchDNS extends Processor implements Initializable {
             break;
         }
         return arecord;
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(FetchDNS.class);
     }
 }

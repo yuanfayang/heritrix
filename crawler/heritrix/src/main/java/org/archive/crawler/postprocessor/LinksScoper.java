@@ -38,8 +38,10 @@ import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
+import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.state.Expert;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 /**
  * Determine which extracted links are within scope.
@@ -284,5 +286,11 @@ public class LinksScoper extends Scoper {
                 // Everything else normal (at least for now)
                 return NORMAL;
         }
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(LinksScoper.class);
     }
 }

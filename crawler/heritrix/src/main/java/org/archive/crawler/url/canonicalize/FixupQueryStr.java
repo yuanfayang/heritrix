@@ -53,7 +53,7 @@ extends BaseRule {
         */
 
     static {
-        KeyManager.addKeys(ExampleConcreteProcessor.class);
+        KeyManager.addKeys(FixupQueryStr.class);
     }
     
     public FixupQueryStr() {

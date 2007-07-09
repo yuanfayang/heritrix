@@ -31,6 +31,7 @@ import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Expert;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.util.TextUtils;
 
 
@@ -140,5 +141,11 @@ public class Preselector extends Scoper {
         }
         
         return ProcessResult.PROCEED;
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(Preselector.class);
     }
 }

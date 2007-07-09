@@ -34,6 +34,7 @@ import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -174,4 +175,9 @@ public class RuntimeLimitEnforcer extends CrawlerProcessor {
         return curi.get(this, RUNTIME_SECONDS) * 1000L;
     }
     
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(RuntimeLimitEnforcer.class);
+    }
 }

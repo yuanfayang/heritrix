@@ -31,6 +31,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.KeyManager;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -193,5 +194,11 @@ public class ExtractorJS extends ContentExtractor {
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 
         return ret.toString();
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(ExtractorJS.class);
     }
 }

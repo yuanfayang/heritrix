@@ -47,6 +47,7 @@ import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.state.Expert;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 /**
  * Ensures the preconditions for a fetch -- such as DNS lookup 
@@ -487,5 +488,11 @@ public class PreconditionEnforcer
         curi.incrementDeferrals();
         curi.setFetchStatus(S_DEFERRED);
         //skipToPostProcessing();
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(PreconditionEnforcer.class);
     }
 }

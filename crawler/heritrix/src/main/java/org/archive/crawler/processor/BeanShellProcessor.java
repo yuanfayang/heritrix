@@ -37,6 +37,7 @@ import org.archive.settings.Sheet;
 import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 import bsh.EvalError;
@@ -188,5 +189,11 @@ public class BeanShellProcessor extends CrawlerProcessor {
     private <T> T get(Key<T> key) {
         Sheet def = controller.getSheetManager().getDefault();
         return def.get(this, key);
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(BeanShellProcessor.class);
     }
 }

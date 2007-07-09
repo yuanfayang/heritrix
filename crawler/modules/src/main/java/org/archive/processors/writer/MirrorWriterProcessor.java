@@ -49,6 +49,7 @@ import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
+import org.archive.state.KeyManager;
 import org.archive.state.PatternConstraint;
 import org.archive.util.IoUtils;
 
@@ -1662,5 +1663,10 @@ public class MirrorWriterProcessor extends Processor {
         km.constraints.add(new PatternConstraint(pattern));
         return km.toKey();
     }
-
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(MirrorWriterProcessor.class);
+    }
 }

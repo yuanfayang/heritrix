@@ -48,6 +48,7 @@ import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 
@@ -551,5 +552,9 @@ public class FetchFTP extends Processor  {
         }        
     }
 
-
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(FetchFTP.class);
+    }
 }

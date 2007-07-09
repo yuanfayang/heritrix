@@ -39,6 +39,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
@@ -189,5 +190,11 @@ public class LexicalCrawlMapper extends CrawlMapper {
             map.put(entry[0],entry[1]);
         }
         reader.close();
+    }
+    
+ // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(LexicalCrawlMapper.class);
     }
 }

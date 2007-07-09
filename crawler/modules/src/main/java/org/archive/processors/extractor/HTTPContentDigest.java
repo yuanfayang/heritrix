@@ -36,6 +36,7 @@ import org.archive.io.ReplayCharSequence;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.util.TextUtils;
 
 /**
@@ -174,5 +175,11 @@ public class HTTPContentDigest extends Processor {
                 }
             }
         }
+    }
+    
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(HTTPContentDigest.class);
     }
 }
