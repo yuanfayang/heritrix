@@ -186,10 +186,6 @@ final public class KeyManager {
         }
         
         KeyManagerData result = keys.get(c);
-        if (result == null) {
-            addKeys(c);
-            result = keys.get(c);
-        }
         
         return result;
     }
@@ -209,6 +205,8 @@ final public class KeyManager {
         if (KeyTypes.isSimple(c)) {
             return Collections.emptyMap();
         }
+        // Ensure static initializer has been run on c.
+        initialize(c);
         KeyManagerData result = lookup(c);
         if (result == null) {
             return Collections.emptyMap();
