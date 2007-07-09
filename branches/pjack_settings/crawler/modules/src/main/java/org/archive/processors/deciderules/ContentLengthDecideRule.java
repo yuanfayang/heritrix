@@ -24,6 +24,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 public class ContentLengthDecideRule extends DecideRule {
 
@@ -38,6 +39,10 @@ public class ContentLengthDecideRule extends DecideRule {
     final public static Key<Long> CONTENT_LENGTH_THRESHOLD = 
         Key.make(Long.MAX_VALUE);
 
+    
+    static {
+        KeyManager.addKeys(ContentLengthDecideRule.class);
+    }
 
     /**
      * Usual constructor. 

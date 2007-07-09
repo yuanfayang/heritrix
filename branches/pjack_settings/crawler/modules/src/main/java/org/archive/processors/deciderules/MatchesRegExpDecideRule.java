@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -42,6 +43,10 @@ public class MatchesRegExpDecideRule extends PredicatedAcceptDecideRule {
     
     public static final Key<Pattern> REGEXP = Key.make(Pattern.compile("."));
 
+    static {
+        KeyManager.addKeys(MatchesRegExpDecideRule.class);
+    }
+    
     /**
      * Usual constructor. 
      */

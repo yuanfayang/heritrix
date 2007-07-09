@@ -26,6 +26,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 
@@ -52,6 +53,11 @@ public class TooManyHopsDecideRule extends PredicatedRejectDecideRule {
      */
     static final Integer DEFAULT_MAX_HOPS = new Integer(20);
 
+    
+    static {
+        KeyManager.addKeys(TooManyHopsDecideRule.class);
+    }
+    
     /**
      * Usual constructor. 
      */

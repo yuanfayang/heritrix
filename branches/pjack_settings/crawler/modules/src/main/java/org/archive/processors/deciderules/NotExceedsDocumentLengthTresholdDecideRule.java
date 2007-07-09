@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.HttpMethod;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -63,6 +64,11 @@ extends PredicatedAcceptDecideRule {
     // Header predictor state constants
     public static final int HEADER_PREDICTS_MISSING = -1;
 	
+    
+    static {
+        KeyManager.addKeys(NotExceedsDocumentLengthTresholdDecideRule.class);
+    }
+    
     public NotExceedsDocumentLengthTresholdDecideRule() {
     }
     

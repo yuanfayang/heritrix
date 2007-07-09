@@ -39,6 +39,10 @@ public abstract class DecideRule implements Module, Serializable {
     final public static Key<Boolean> ENABLED = Key.make(true);
 
     
+    static {
+        KeyManager.addKeys(DecideRule.class);
+    }
+    
     public DecideRule() {
         KeyManager.addKeys(getClass());
     }

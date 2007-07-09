@@ -24,6 +24,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 /**
  * A rule that can be configured to take alternate implementations
@@ -46,7 +47,10 @@ public class ExternalImplDecideRule extends DecideRule {
      */
     final public static Key<ExternalImplInterface> IMPLEMENTATION =
         Key.makeNull(null);
-    
+
+    static {
+        KeyManager.addKeys(ExternalImplDecideRule.class);
+    }
 
     /**
      * Constructor.

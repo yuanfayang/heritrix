@@ -32,7 +32,10 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.ServerCache;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 import org.xbill.DNS.Address;
 
 /**
@@ -50,7 +53,8 @@ import org.xbill.DNS.Address;
  * 
  * @author Igor Ranitovic
  */
-public class ExternalGeoLocationDecideRule extends PredicatedAcceptDecideRule {
+public class ExternalGeoLocationDecideRule extends PredicatedAcceptDecideRule 
+implements Initializable {
 
     private static final long serialVersionUID = 3L;
 
@@ -66,15 +70,25 @@ public class ExternalGeoLocationDecideRule extends PredicatedAcceptDecideRule {
      */
     final public static Key<String> COUNTRY_CODE = Key.make("--");
 
-    final private ServerCache serverCache;
-
-    public ExternalGeoLocationDecideRule(ServerCache cache) {
-        this.serverCache = cache;
-    }
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.make(ServerCache.class, null);
+    
+    private ServerCache serverCache;
 
     
+    static {
+        KeyManager.addKeys(ExternalGeoLocationDecideRule.class);
+    }
+
+    public ExternalGeoLocationDecideRule() {
+    }
+
+    public void initialTasks(StateProvider provider) {
+        this.serverCache = provider.get(this, SERVER_CACHE);
+    }
+    
     @Override
-    protected boolean evaluate(ProcessorURI uri) {
+    protected boolean evaluate(ProcessorURI uri) {        
         String countryCode = uri.get(this, COUNTRY_CODE);
         ExternalGeoLookupInterface impl = uri.get(this, LOOKUP);
         if (impl == null) {

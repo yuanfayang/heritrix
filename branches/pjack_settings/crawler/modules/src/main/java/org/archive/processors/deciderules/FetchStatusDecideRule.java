@@ -26,6 +26,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 
@@ -45,6 +46,11 @@ public class FetchStatusDecideRule extends PredicatedAcceptDecideRule {
      * Default access so available to test code.
      */
     static final Integer DEFAULT_TARGET_STATUS = new Integer(0);
+    
+    
+    static {
+        KeyManager.addKeys(FetchStatusDecideRule.class);
+    }
     
     /**
      * Usual constructor. 

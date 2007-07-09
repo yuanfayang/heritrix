@@ -29,6 +29,12 @@ import org.archive.processors.ProcessorURI;
 public class AcceptDecideRule extends DecideRule {
 
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 3L;
+
+
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {
         return DecideResult.ACCEPT;

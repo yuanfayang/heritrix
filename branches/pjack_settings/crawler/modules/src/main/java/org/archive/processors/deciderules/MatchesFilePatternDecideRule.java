@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 /**
  * Compares suffix of a passed CrawlURI, UURI, or String against a regular
@@ -80,6 +81,9 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
 
     final public static Key<Preset> USE_PRESET_PATTERN = Key.make(Preset.ALL);
 
+    static {
+        KeyManager.addKeys(MatchesFilePatternDecideRule.class);
+    }
 
     /**
      * Usual constructor.
