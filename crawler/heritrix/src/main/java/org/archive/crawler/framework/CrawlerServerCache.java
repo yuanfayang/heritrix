@@ -7,6 +7,7 @@ import org.archive.settings.file.BdbModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 import com.sleepycat.je.DatabaseException;
@@ -21,6 +22,11 @@ implements Initializable {
     @Immutable
     final public static Key<BdbModule> BDB =
         Key.make(BdbModule.class, null);
+    
+    
+    static {
+        KeyManager.addKeys(CrawlerServerCache.class);
+    }
     
     
     public CrawlerServerCache() {
