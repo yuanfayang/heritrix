@@ -47,6 +47,7 @@ import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
 
@@ -90,6 +91,11 @@ public class SeedModule implements Initializable {
     
     private FileModule seedsFile;
 
+    
+    static {
+        KeyManager.addKeys(SeedModule.class);
+    }
+    
 
     /** 
      * Constructor.
