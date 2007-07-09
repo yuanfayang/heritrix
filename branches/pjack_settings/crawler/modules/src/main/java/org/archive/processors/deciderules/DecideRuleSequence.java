@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 public class DecideRuleSequence extends DecideRule {
@@ -42,6 +43,9 @@ public class DecideRuleSequence extends DecideRule {
     final public static Key<List<DecideRule>> RULES = 
         Key.makeList(DecideRule.class);
 
+    static {
+        KeyManager.addKeys(DecideRuleSequence.class);
+    }
 
     public DecideResult innerDecide(ProcessorURI uri) {
         DecideResult result = DecideResult.PASS;
