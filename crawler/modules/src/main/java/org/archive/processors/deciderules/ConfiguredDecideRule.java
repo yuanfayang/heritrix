@@ -26,6 +26,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -42,6 +43,10 @@ public class ConfiguredDecideRule extends DecideRule {
     final public static Key<DecideResult> DECISION = 
         Key.make(DecideResult.ACCEPT);
     
+    
+    static {
+        KeyManager.addKeys(ConfiguredDecideRule.class);
+    }
     
     public ConfiguredDecideRule() {
     }

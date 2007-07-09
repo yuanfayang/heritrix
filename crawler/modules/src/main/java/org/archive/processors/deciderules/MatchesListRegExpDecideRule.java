@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -65,6 +66,9 @@ public class MatchesListRegExpDecideRule extends PredicatedAcceptDecideRule {
      */
     final public static Key<Boolean> LIST_LOGIC = Key.make(true);
     
+    static {
+        KeyManager.addKeys(MatchesListRegExpDecideRule.class);
+    }
 
     /**
      * Usual constructor. 

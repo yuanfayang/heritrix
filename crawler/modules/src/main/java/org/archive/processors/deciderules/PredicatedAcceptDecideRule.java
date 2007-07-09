@@ -28,6 +28,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 /**
  * PredicatedDecideRule whose default decision is REJECT.
@@ -38,6 +39,10 @@ public abstract class PredicatedAcceptDecideRule extends PredicatedDecideRule {
 
     final public static Key<DecideResult> DECISION = 
         Key.make(DecideResult.ACCEPT);
+    
+    static {
+        KeyManager.addKeys(PredicatedAcceptDecideRule.class);
+    }
 
     @Override
     protected DecideResult getDefaultDecision(ProcessorURI uri) {

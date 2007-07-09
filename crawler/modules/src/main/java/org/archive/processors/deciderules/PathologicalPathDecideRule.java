@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Global;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 
@@ -57,6 +58,9 @@ public class PathologicalPathDecideRule extends DecideRule {
 
     private AtomicReference<Pattern> pattern = new AtomicReference<Pattern>();
 
+    static {
+        KeyManager.addKeys(PathologicalPathDecideRule.class);
+    }
     
     /** Constructs a new PathologicalPathFilter.
      *
