@@ -70,5 +70,9 @@ public class DecideRuleSequence extends DecideRule {
         return result;
     }
 
-
+    // good to keep at end of source: must run after all per-Key 
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(DecideRuleSequence.class);
+    }
 }
