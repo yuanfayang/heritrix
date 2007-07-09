@@ -32,6 +32,7 @@ import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.processors.extractor.Hop;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -83,6 +84,10 @@ public class ClassicScope extends CrawlScope {
     final public static Key<DecideRuleSequence> EXCLUDE_RULES = 
         Key.make(new DecideRuleSequence());
 
+    static {
+        KeyManager.addKeys(ClassicScope.class);
+    }
+    
     public ClassicScope() {
         super();
         // Try to preserve the values of these attributes when we exchange
