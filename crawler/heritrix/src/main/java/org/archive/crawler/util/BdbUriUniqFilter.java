@@ -36,6 +36,7 @@ import org.archive.settings.file.BdbModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 import st.ata.util.FPGenerator;
@@ -94,6 +95,9 @@ implements Initializable, Serializable {
     public static final Key<BdbModule> BDB = 
         Key.make(BdbModule.class, null);
     
+    static {
+        KeyManager.addKeys(BdbUriUniqFilter.class);
+    }
     
     private BdbModule bdb;
     

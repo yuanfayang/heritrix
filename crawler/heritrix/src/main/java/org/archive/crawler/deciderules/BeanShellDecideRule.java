@@ -40,6 +40,7 @@ import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 import bsh.EvalError;
@@ -93,7 +94,10 @@ public class BeanShellDecideRule extends DecideRule implements Initializable {
 
     private FileModule scriptFile;
     private CrawlController controller;
-    
+
+    static {
+        KeyManager.addKeys(BeanShellDecideRule.class);
+    }
     
     public BeanShellDecideRule() {
     }
