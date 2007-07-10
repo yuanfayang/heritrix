@@ -21,12 +21,11 @@
  *
  * $Header$
  */
-package org.archive.modules.util;
+package org.archive.modules.net;
 
 import java.io.Serializable;
 import java.util.List;
 
-import org.archive.modules.fetcher.FetchHTTP;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;

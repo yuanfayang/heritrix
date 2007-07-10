@@ -17,30 +17,47 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * CrawlServerTest.java
+ * DefaultTempDirProvider.java
  *
- * Created on Jan 31, 2007
+ * Created on Feb 1, 2007
  *
  * $Id:$
  */
-package org.archive.modules.util;
 
-import org.archive.modules.util.CrawlServer;
-import org.archive.util.TestUtils;
+package org.archive.modules.net;
 
-import junit.framework.TestCase;
+import java.io.File;
+import java.io.IOException;
+
+import org.archive.modules.extractor.TempDirProvider;
 
 /**
  * @author pjack
  *
  */
-public class CrawlServerTest extends TestCase {
+public class DefaultTempDirProvider implements TempDirProvider {
+
+
+    private static final long serialVersionUID = 1L;
 
     
-    public void testSerialization() throws Exception {
-        TestUtils.testSerialization(new CrawlServer("hi"));
+    final private static File TEMP_DIR = makeTempDir();
+    
+    
+    static File makeTempDir() {
+        File f;
+        try {
+            f = File.createTempFile("xxx", null);
+            File r = f.getParentFile();
+            f.delete();
+            return r;
+        } catch (IOException e) {
+            return new File("temp");
+        }        
     }
-
     
     
+    public File getScratchDisk() {
+        return TEMP_DIR;
+    }
 }

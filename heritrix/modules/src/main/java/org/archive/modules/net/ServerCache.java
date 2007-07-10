@@ -1,5 +1,10 @@
-/* 
- * Copyright (C) 2007 Internet Archive.
+/* CrawlHostCache.java
+ *
+ * $Id$
+ *
+ * Created on Nov 21, 2006
+ *
+ * Copyright (C) 2006 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,38 +21,15 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * RobotsHonoringPolicyTest.java
- *
- * Created on Jan 31, 2007
- *
- * $Id:$
  */
+package org.archive.modules.net;
 
-package org.archive.modules.util;
+public interface ServerCache {
 
-import org.archive.modules.util.RobotsHonoringPolicy;
-import org.archive.state.StateProcessorTestBase;
-
-/**
- * @author pjack
- *
- */
-public class RobotsHonoringPolicyTest extends StateProcessorTestBase {
+    CrawlHost getHostFor(String host);
+    
+    CrawlServer getServerFor(String serverKey);
 
     
-    @Override
-    protected Class getModuleClass() {
-        return RobotsHonoringPolicy.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new RobotsHonoringPolicy();
-    }
-
-    
-    // TODO TESTME
-    
+    void cleanup();
 }

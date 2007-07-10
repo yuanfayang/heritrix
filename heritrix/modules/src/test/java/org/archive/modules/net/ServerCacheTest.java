@@ -20,14 +20,14 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.modules.util;
+package org.archive.modules.net;
 
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.fetcher.DefaultServerCache;
-import org.archive.modules.util.CrawlServer;
-import org.archive.modules.util.ServerCacheUtil;
+import org.archive.modules.net.CrawlServer;
+import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 

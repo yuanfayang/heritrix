@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.modules.util;
+package org.archive.modules.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.archive.modules.util.Robotstxt;
+import org.archive.modules.net.Robotstxt;
 
 import junit.framework.TestCase;
 

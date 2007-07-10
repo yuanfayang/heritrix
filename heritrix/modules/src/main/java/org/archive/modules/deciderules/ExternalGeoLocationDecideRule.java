@@ -30,8 +30,8 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.util.CrawlHost;
-import org.archive.modules.util.ServerCache;
+import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.ServerCache;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;

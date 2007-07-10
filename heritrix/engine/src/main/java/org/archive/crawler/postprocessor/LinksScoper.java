@@ -39,7 +39,7 @@ import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRuleSequence;
 import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
-import org.archive.modules.util.RobotsHonoringPolicy;
+import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;

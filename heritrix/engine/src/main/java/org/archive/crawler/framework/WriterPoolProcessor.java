@@ -49,9 +49,9 @@ import org.archive.state.FileModule;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.util.CrawlHost;
-import org.archive.modules.util.ServerCache;
-import org.archive.modules.util.ServerCacheUtil;
+import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.ServerCache;
+import org.archive.modules.net.ServerCacheUtil;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 

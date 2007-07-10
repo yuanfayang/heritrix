@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.util.RobotsHonoringPolicy;
+import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.DevUtils;

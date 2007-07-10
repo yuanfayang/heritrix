@@ -40,8 +40,8 @@ import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.util.CrawlHost;
-import org.archive.modules.util.ServerCache;
+import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.ServerCache;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
