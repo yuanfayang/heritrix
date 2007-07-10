@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
-import org.archive.processors.util.RobotsHonoringPolicy;
+import org.archive.modules.util.RobotsHonoringPolicy;
 import org.archive.queue.StoredQueue;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.BdbModule;

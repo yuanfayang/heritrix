@@ -23,8 +23,8 @@
 package org.archive.crawler.frontier;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIRE;
-import static org.archive.processors.fetcher.FetchStatusCodes.S_DEFERRED;
-import static org.archive.processors.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
 
 import java.io.Closeable;
 import java.io.IOException;

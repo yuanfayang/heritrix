@@ -29,10 +29,10 @@ package org.archive.extractor;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.modules.extractor.Hop;
+import org.archive.modules.extractor.Link;
+import org.archive.modules.extractor.LinkContext;
 import org.archive.net.UURIFactory;
-import org.archive.processors.extractor.Hop;
-import org.archive.processors.extractor.Link;
-import org.archive.processors.extractor.LinkContext;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 

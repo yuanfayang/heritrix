@@ -26,7 +26,7 @@
 package org.archive.crawler.framework;
 
 
-import org.archive.processors.ProcessorTestBase;
+import org.archive.modules.ProcessorTestBase;
 
 
 /**

@@ -43,9 +43,9 @@ import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
 
 
-import org.archive.processors.ProcessResult;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.extractor.Link;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
 import org.archive.io.ReplayInputStream;
@@ -53,7 +53,7 @@ import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.ExperimentalWARCWriter;
 import static org.archive.io.warc.WARCConstants.*;
-import static org.archive.processors.recrawl.RecrawlAttributeConstants.*;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
 
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.state.Expert;

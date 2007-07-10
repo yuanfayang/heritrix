@@ -28,11 +28,13 @@ package org.archive.crawler.postprocessor;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
+
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.frontier.EmptyFrontier;
-import org.archive.processors.Processor;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;

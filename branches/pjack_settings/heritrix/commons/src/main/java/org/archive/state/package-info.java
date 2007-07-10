@@ -13,7 +13,7 @@
  * <p>The {@link ExampleConcreteProcessor} exists for unit testing purposes,
  * but it does provide an example of what a concrete context-sensitive 
  * processor would look like.  Much better examples exist over in 
- * {@link org.archive.processors.extractor}, which implements processes that 
+ * {@link org.archive.modules.extractor}, which implements processes that 
  * extract links from documents.
  * 
  * <h2>Rationales</h2>

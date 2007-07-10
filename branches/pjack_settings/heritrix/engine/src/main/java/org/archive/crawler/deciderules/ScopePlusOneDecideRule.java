@@ -25,9 +25,9 @@ package org.archive.crawler.deciderules;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.DecideResult;
 import org.archive.net.UURI;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.DecideResult;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;

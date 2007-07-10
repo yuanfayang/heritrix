@@ -25,10 +25,12 @@ package org.archive.crawler.prefetch;
 
 
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
+
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
 import org.archive.crawler.framework.Scoper;
-import org.archive.processors.ProcessResult;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.ProcessorURI;
 import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;

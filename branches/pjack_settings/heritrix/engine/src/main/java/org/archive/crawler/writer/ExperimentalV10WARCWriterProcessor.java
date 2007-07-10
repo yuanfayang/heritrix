@@ -38,9 +38,9 @@ import java.util.logging.Logger;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.processors.ProcessResult;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.extractor.Link;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;

@@ -31,8 +31,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
+import org.archive.modules.fetcher.FetchStats;
 import org.archive.net.UURI;
-import org.archive.processors.fetcher.FetchStats;
 import org.archive.state.Module;
 import org.archive.util.Reporter;
 

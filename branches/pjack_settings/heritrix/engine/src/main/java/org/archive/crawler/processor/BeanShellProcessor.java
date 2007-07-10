@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 
 //import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlerProcessor;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessorURI;
 import org.archive.settings.Sheet;
 import org.archive.state.FileModule;
 import org.archive.state.Immutable;

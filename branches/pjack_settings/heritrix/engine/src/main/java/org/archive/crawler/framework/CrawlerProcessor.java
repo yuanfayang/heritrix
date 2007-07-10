@@ -23,12 +23,12 @@
  */
 package org.archive.crawler.framework;
 
-import org.archive.processors.Processor;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.util.CrawlHost;
-import org.archive.processors.util.CrawlServer;
-import org.archive.processors.util.ServerCache;
-import org.archive.processors.util.ServerCacheUtil;
+import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.util.CrawlHost;
+import org.archive.modules.util.CrawlServer;
+import org.archive.modules.util.ServerCache;
+import org.archive.modules.util.ServerCacheUtil;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;

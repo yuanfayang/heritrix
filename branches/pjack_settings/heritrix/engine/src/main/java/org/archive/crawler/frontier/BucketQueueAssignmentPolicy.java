@@ -28,7 +28,7 @@ package org.archive.crawler.frontier;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.processors.util.CrawlHost;
+import org.archive.modules.util.CrawlHost;
 
 /**
  * Uses the target IPs as basis for queue-assignment,

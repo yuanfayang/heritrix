@@ -28,13 +28,13 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.processors.Processor;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
 import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
-import static org.archive.processors.recrawl.RecrawlAttributeConstants.*;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
 
 /**
  * Maintain a history of fetch information inside the CrawlURI's attributes. 
