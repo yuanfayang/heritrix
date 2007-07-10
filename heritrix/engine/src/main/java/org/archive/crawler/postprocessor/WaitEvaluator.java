@@ -29,8 +29,8 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
-import org.archive.processors.Processor;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 

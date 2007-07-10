@@ -32,9 +32,9 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.processors.ProcessResult;
-import org.archive.processors.Processor;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
 import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;

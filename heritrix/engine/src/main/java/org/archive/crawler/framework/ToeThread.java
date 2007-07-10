@@ -32,10 +32,12 @@ import java.util.logging.Logger;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
+
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
 import org.archive.crawler.framework.exceptions.EndedException;
-import org.archive.processors.Processor;
-import org.archive.processors.fetcher.HostResolver;
+import org.archive.modules.Processor;
+import org.archive.modules.fetcher.HostResolver;
 import org.archive.io.SinkHandlerLogThread;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;

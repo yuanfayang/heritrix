@@ -47,7 +47,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerLoggerModule;
@@ -57,11 +58,11 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
+import org.archive.modules.util.CrawlHost;
+import org.archive.modules.util.CrawlServer;
+import org.archive.modules.util.ServerCache;
+import org.archive.modules.util.ServerCacheUtil;
 import org.archive.net.UURI;
-import org.archive.processors.util.CrawlHost;
-import org.archive.processors.util.CrawlServer;
-import org.archive.processors.util.ServerCache;
-import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.SheetManager;
 import org.archive.state.FileModule;

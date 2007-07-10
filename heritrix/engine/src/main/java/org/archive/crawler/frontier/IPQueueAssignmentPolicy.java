@@ -26,9 +26,9 @@ package org.archive.crawler.frontier;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.processors.util.CrawlHost;
-import org.archive.processors.util.ServerCache;
-import org.archive.processors.util.ServerCacheUtil;
+import org.archive.modules.util.CrawlHost;
+import org.archive.modules.util.ServerCache;
+import org.archive.modules.util.ServerCacheUtil;
 
 /**
  * Uses target IP as basis for queue-assignment, unless it is unavailable,

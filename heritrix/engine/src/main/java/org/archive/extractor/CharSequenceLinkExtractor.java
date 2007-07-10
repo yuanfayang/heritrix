@@ -30,8 +30,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.archive.modules.extractor.Link;
 import org.archive.net.UURI;
-import org.archive.processors.extractor.Link;
 
 /**
  * Abstract superclass providing utility methods for LinkExtractors which

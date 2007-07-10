@@ -24,7 +24,7 @@
 */
 package org.archive.crawler.deciderules;
 
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessorURI;
 
 
 /**

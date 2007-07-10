@@ -31,7 +31,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.SerializationUtils;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.io.CrawlerJournal;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessorURI;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;

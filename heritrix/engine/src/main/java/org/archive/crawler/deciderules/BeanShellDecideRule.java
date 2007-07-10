@@ -33,9 +33,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.framework.CrawlController;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.DecideResult;
-import org.archive.processors.deciderules.DecideRule;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.DecideResult;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;

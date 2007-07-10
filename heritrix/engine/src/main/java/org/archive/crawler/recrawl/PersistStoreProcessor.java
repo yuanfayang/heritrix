@@ -22,7 +22,7 @@
  */
 package org.archive.crawler.recrawl;
 
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessorURI;
 import org.archive.state.StateProvider;
 
 /**

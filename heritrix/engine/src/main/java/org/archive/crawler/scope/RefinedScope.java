@@ -25,9 +25,9 @@
 package org.archive.crawler.scope;
 
 
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.DecideResult;
-import org.archive.processors.deciderules.DecideRule;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.DecideResult;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.state.Key;
 
 /**

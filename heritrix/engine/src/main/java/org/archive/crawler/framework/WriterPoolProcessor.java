@@ -46,13 +46,15 @@ import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.state.FileModule;
-import org.archive.processors.ProcessResult;
-import org.archive.processors.Processor;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.util.CrawlHost;
-import org.archive.processors.util.ServerCache;
-import org.archive.processors.util.ServerCacheUtil;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.util.CrawlHost;
+import org.archive.modules.util.ServerCache;
+import org.archive.modules.util.ServerCacheUtil;
+
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
 import org.archive.settings.RecoverAction;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;

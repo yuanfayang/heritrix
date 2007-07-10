@@ -29,14 +29,16 @@ import org.apache.commons.httpclient.URIException;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
+
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
-import org.archive.processors.util.CrawlHost;
-import org.archive.processors.util.CrawlServer;
-import org.archive.processors.util.RobotsHonoringPolicy;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.util.CrawlHost;
+import org.archive.modules.util.CrawlServer;
+import org.archive.modules.util.RobotsHonoringPolicy;
 import org.archive.state.KeyManager;
 
 

@@ -27,10 +27,10 @@ package org.archive.crawler.recrawl;
 
 import java.util.Map;
 
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.PredicatedRejectDecideRule;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.PredicatedRejectDecideRule;
 
-import static org.archive.processors.recrawl.RecrawlAttributeConstants.*;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
 
 
 /**

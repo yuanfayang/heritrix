@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
-import org.archive.processors.fetcher.FetchStats;
+import org.archive.modules.fetcher.FetchStats;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 

@@ -27,9 +27,9 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.util.LogUtils;
-import org.archive.processors.Processor;
-import org.archive.processors.deciderules.DecideResult;
-import org.archive.processors.deciderules.DecideRule;
+import org.archive.modules.Processor;
+import org.archive.modules.deciderules.DecideResult;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;

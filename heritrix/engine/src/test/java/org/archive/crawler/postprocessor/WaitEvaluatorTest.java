@@ -26,7 +26,7 @@
 package org.archive.crawler.postprocessor;
 
 
-import org.archive.processors.ProcessorTestBase;
+import org.archive.modules.ProcessorTestBase;
 
 
 /**

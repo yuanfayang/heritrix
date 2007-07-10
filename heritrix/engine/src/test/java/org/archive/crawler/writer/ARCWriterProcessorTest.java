@@ -30,8 +30,8 @@ import java.io.File;
 
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.state.FileModule;
-import org.archive.processors.ProcessorTestBase;
-import org.archive.processors.fetcher.DefaultServerCache;
+import org.archive.modules.ProcessorTestBase;
+import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 

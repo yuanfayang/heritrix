@@ -25,9 +25,9 @@ package org.archive.crawler.scope;
 
 
 import org.archive.crawler.framework.CrawlScope;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.DecideResult;
-import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.DecideResult;
+import org.archive.modules.deciderules.DecideRuleSequence;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 

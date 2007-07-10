@@ -26,12 +26,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
+
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
-import org.archive.processors.fetcher.FetchStats;
-import org.archive.processors.ProcessResult;
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.fetcher.FetchStats;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 

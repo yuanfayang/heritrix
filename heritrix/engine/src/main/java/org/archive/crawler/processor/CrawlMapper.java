@@ -31,13 +31,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.processors.fetcher.FetchStatusCodes.*;
-import org.archive.processors.ProcessResult;
-import org.archive.processors.Processor;
-import org.archive.processors.ProcessorURI;
-import org.archive.processors.deciderules.DecideResult;
-import org.archive.processors.deciderules.DecideRule;
-import org.archive.processors.deciderules.DecideRuleSequence;
+
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
+
+import org.archive.modules.ProcessResult;
+import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.DecideResult;
+import org.archive.modules.deciderules.DecideRule;
+import org.archive.modules.deciderules.DecideRuleSequence;
 import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;

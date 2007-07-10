@@ -24,7 +24,7 @@ package org.archive.crawler.recrawl;
 
 import java.util.Map;
 
-import org.archive.processors.ProcessorURI;
+import org.archive.modules.ProcessorURI;
 
 /**
  * Store CrawlURI attributes from latest fetch to persistent storage for

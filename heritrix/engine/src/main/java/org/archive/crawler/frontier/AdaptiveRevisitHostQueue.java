@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
-import org.archive.processors.fetcher.FetchStats;
+import org.archive.modules.fetcher.FetchStats;
 import org.archive.settings.file.BdbModule;
 import org.archive.util.ArchiveUtils;
 
