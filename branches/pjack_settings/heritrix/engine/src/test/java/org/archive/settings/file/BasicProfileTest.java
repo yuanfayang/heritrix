@@ -36,7 +36,7 @@ import org.archive.util.TmpDirTestCase;
  * @author pjack
  *
  */
-public class ValidatorTest extends TmpDirTestCase {
+public class BasicProfileTest extends TmpDirTestCase {
 
     
     /**
