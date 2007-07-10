@@ -187,7 +187,7 @@ public class BeanShellProcessor extends CrawlerProcessor {
     
     
     private <T> T get(Key<T> key) {
-        Sheet def = controller.getSheetManager().getDefault();
+        Sheet def = controller.getSheetManager().getGlobalSheet();
         return def.get(this, key);
     }
     

@@ -58,7 +58,7 @@ public class MemorySheetManager extends SheetManager {
     /**
      * The default sheet.
      */
-    private SingleSheet defaults;
+    private SingleSheet globals;
 
 
     private boolean online;
@@ -96,10 +96,10 @@ public class MemorySheetManager extends SheetManager {
     public MemorySheetManager(boolean online) {
         sheets = new HashMap<String,Sheet>();
         associations = new TreeMap<String,Set<Sheet>>();
-        defaults = addSingleSheet("default");
+        globals = addSingleSheet(GLOBAL_SHEET_NAME);
         this.online = online;
-        defaults.set(getManagerModule(), MANAGER, this);
-        this.root = new SettingsMap<Object>(defaults, Object.class);
+        globals.set(getManagerModule(), MANAGER, this);
+        this.root = new SettingsMap<Object>(globals, Object.class);
     }
 
 
@@ -115,8 +115,8 @@ public class MemorySheetManager extends SheetManager {
 
 
     @Override
-    public SingleSheet getDefault() {
-        return defaults;
+    public SingleSheet getGlobalSheet() {
+        return globals;
     }
 
 
@@ -293,7 +293,7 @@ public class MemorySheetManager extends SheetManager {
         }
 
         if (result.isEmpty()) {
-            return getDefault();
+            return getGlobalSheet();
         }
         
         if (result.size() == 1) {

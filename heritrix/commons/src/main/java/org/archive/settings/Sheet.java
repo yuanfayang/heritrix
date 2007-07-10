@@ -232,7 +232,7 @@ public abstract class Sheet implements StateProvider, Serializable {
 
 
     SingleSheet getGlobalSheet() {
-        return getSheetManager().getDefault();
+        return getSheetManager().getGlobalSheet();
     }
 
 }

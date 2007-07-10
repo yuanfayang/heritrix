@@ -54,7 +54,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
     final public static Logger LOGGER = 
         Logger.getLogger(SheetManager.class.getName());
     
-    final public static String DEFAULT_SHEET_NAME = "default";
+    final public static String GLOBAL_SHEET_NAME = "global";
     
     final private UnspecifiedSheet unspecified;
     
@@ -84,7 +84,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
      * Constructor.
      */
     public SheetManager() {
-        this.unspecified = new UnspecifiedSheet(this, "unspecified");
+        this.unspecified = new UnspecifiedSheet(this, "default");
         offlineThis = Offline.make(getClass());
         moduleListeners.add(checkpointables);
         moduleListeners.add(closeables);
@@ -127,14 +127,12 @@ implements StateProvider, Serializable { //, DirectoryModule {
     
 
     /**
-     * Returns the default sheet.  This sheet is consulted if there is no
+     * Returns the global sheet.  This sheet is consulted if there is no
      * association for a given SURT or its predecessors.
-     * 
-     * FIXME: Rename this to getGlobal()
      * 
      * @return   the default sheet
      */
-    public abstract SingleSheet getDefault();
+    public abstract SingleSheet getGlobalSheet();
     
     
     /**
@@ -143,7 +141,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
      * @return  the root module
      */
     public Map<String,Object> getRoot() {
-        return getDefault().get(getManagerModule(), ROOT);
+        return getGlobalSheet().get(getManagerModule(), ROOT);
     }
 
 
@@ -204,7 +202,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
      */
     final protected SingleSheet createSingleSheet(String name) 
     throws IllegalArgumentException {
-        boolean global = name.equals("default");
+        boolean global = name.equals(GLOBAL_SHEET_NAME);
         SingleSheet result = new SingleSheet(this, name, global);
         return result;
     }
@@ -299,7 +297,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
 
 
     public <T> T get(Object module, Key<T> key) {
-        Sheet def = getDefault();
+        Sheet def = getGlobalSheet();
         return def.get(module, key);
     }
 

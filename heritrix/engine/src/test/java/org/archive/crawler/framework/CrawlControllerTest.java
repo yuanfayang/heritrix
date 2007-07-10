@@ -85,7 +85,7 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         }
 
         MemorySheetManager manager = new MemorySheetManager();
-        SingleSheet def = manager.getDefault();
+        SingleSheet def = manager.getGlobalSheet();
         
         File state = new File(tmp, "state");
         state.mkdirs();

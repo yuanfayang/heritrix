@@ -47,6 +47,8 @@ import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.settings.SheetManager;
+import org.archive.settings.file.FileSheetManager;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxWaiter;
@@ -98,7 +100,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         
         // Copy the selftest's profile in the project directory to the
         // default profile in the temporary Heritrix directory.
-        File tmpDefProfile = new File(tmpProfiles, "default");
+        File tmpDefProfile = new File(tmpProfiles, "basic");
         FileUtils.copyFiles(new File(src, "profile"), tmpDefProfile);
         
         // Start up a Jetty that servers the selftest's content directory.
@@ -111,10 +113,10 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         FileUtils.copyFiles(srcConf, tmpConfDir);
 
         String globalSheetText = FileUtils.readFileAsString(
-                new File(srcConf, "default.single"));
+                new File(srcConf, "global.sheet"));
         globalSheetText = changeGlobalConfig(globalSheetText);
         File sheets = new File(tmpDefProfile, "sheets");
-        File globalSheet = new File(sheets, "default.single");
+        File globalSheet = new File(sheets, "global.sheet");
         FileWriter fw = new FileWriter(globalSheet);
         fw.write(globalSheetText);
         fw.close();
@@ -217,7 +219,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         server.invoke(
                 cjm, 
                 "launchProfile", 
-                new Object[] { "default", "the_job" },
+                new Object[] { "basic", "the_job" },
                 new String[] { "java.lang.String", "java.lang.String" });
         
         // Above invocation should have created a new SheetManager and a new

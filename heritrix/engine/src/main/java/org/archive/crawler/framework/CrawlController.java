@@ -364,7 +364,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
 
     
     public <T> T getOrderSetting(Key<T> key) {
-        Sheet def = sheetManager.getDefault();
+        Sheet def = sheetManager.getGlobalSheet();
         return def.get(order, key);
     }
     
@@ -1480,7 +1480,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
     
     
     public <T> T get(Object module, Key<T> key) {
-        SingleSheet def = sheetManager.getDefault();
+        SingleSheet def = sheetManager.getGlobalSheet();
         return def.get(module, key);
     }
 

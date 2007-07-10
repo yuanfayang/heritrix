@@ -238,7 +238,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         // Find the crawlcontroller.
         // FIXME: Do a JMX query here instead (that way we don't have to 
         // worry about something being at a particular path)
-        Sheet sheet = fsm.getDefault();
+        Sheet sheet = fsm.getGlobalSheet();
         Object o = PathValidator.validate(sheet, "root:controller");
         if (!(o instanceof CrawlController)) {
             LOGGER.warning("Could not find CrawlController in job named " 
