@@ -65,7 +65,8 @@ import org.archive.util.TextUtils;
  * @author Gojomo
  */
 public class PublicSuffixes {
-    protected static Pattern topmostAssignedSurtPrefixRegex;
+    protected static Pattern topmostAssignedSurtPrefixPattern;
+    protected static String topmostAssignedSurtPrefixRegex;
 
     /**
      * Utility method for dumping a regex String, based on a published public
@@ -251,21 +252,23 @@ public class PublicSuffixes {
     }
 
     public static synchronized Pattern getTopmostAssignedSurtPrefixPattern() {
-        if (topmostAssignedSurtPrefixRegex == null) {
-            topmostAssignedSurtPrefixRegex = Pattern
+        if (topmostAssignedSurtPrefixPattern == null) {
+            topmostAssignedSurtPrefixPattern = Pattern
                     .compile(getTopmostAssignedSurtPrefixRegex());
         }
-        return topmostAssignedSurtPrefixRegex;
+        return topmostAssignedSurtPrefixPattern;
     }
 
-    public static String getTopmostAssignedSurtPrefixRegex() {
-        // use bundled list
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                PublicSuffixes.class.getClassLoader().getResourceAsStream(
-                        "effective_tld_names.dat")));
-        String returnValue = getTopmostAssignedSurtPrefixRegex(reader);
-        IOUtils.closeQuietly(reader);
-        return returnValue;
+    public static synchronized String getTopmostAssignedSurtPrefixRegex() {
+        if (topmostAssignedSurtPrefixRegex == null) {
+            // use bundled list
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    PublicSuffixes.class.getClassLoader().getResourceAsStream(
+                            "effective_tld_names.dat")));
+            topmostAssignedSurtPrefixRegex = getTopmostAssignedSurtPrefixRegex(reader);
+            IOUtils.closeQuietly(reader);
+        }
+        return topmostAssignedSurtPrefixRegex;
     }
 
     public static String getTopmostAssignedSurtPrefixRegex(BufferedReader reader) {
