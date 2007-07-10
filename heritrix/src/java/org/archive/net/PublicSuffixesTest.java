@@ -76,6 +76,11 @@ public class PublicSuffixesTest extends TestCase {
         assertFalse("unexpected match found in 'example'", m.find());
     }
 
+    public void testTopmostAssignedCaching() {
+        assertSame("topmostAssignedSurtPrefixPattern not cached",PublicSuffixes.getTopmostAssignedSurtPrefixPattern(),PublicSuffixes.getTopmostAssignedSurtPrefixPattern());
+        assertSame("topmostAssignedSurtPrefixRegex not cached",PublicSuffixes.getTopmostAssignedSurtPrefixRegex(),PublicSuffixes.getTopmostAssignedSurtPrefixRegex()); 
+    }
+    
     // TODO: test UTF domains?
 
     protected void matchPrefix(String surtDomain, String expectedAssignedPrefix) {
