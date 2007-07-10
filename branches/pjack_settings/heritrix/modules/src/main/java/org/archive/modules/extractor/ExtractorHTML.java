@@ -33,7 +33,7 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.util.RobotsHonoringPolicy;
+import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.Expert;

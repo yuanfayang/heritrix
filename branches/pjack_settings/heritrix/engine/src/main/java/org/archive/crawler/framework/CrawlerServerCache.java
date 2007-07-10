@@ -1,8 +1,8 @@
 package org.archive.crawler.framework;
 
 import org.archive.modules.fetcher.DefaultServerCache;
-import org.archive.modules.util.CrawlHost;
-import org.archive.modules.util.CrawlServer;
+import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.CrawlServer;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;

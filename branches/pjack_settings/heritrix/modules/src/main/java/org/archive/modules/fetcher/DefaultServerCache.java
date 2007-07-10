@@ -29,9 +29,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.modules.util.CrawlHost;
-import org.archive.modules.util.CrawlServer;
-import org.archive.modules.util.ServerCache;
+import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.CrawlServer;
+import org.archive.modules.net.ServerCache;
 import org.archive.net.UURI;
 
 

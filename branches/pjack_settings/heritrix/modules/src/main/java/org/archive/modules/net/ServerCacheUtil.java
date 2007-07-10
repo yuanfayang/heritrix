@@ -21,7 +21,7 @@
  *
  * $Id$
  */
-package org.archive.modules.util;
+package org.archive.modules.net;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

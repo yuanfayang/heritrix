@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.modules.util;
+package org.archive.modules.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;

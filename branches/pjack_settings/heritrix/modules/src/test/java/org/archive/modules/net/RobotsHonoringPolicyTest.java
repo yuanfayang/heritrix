@@ -17,30 +17,37 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * CrawlHostTest.java
+ * RobotsHonoringPolicyTest.java
  *
  * Created on Jan 31, 2007
  *
  * $Id:$
  */
 
-package org.archive.modules.util;
+package org.archive.modules.net;
 
-import org.archive.modules.util.CrawlHost;
-import org.archive.util.TestUtils;
-
-import junit.framework.TestCase;
+import org.archive.modules.net.RobotsHonoringPolicy;
+import org.archive.state.StateProcessorTestBase;
 
 /**
  * @author pjack
  *
  */
-public class CrawlHostTest extends TestCase {
+public class RobotsHonoringPolicyTest extends StateProcessorTestBase {
 
     
-    public void testSerialization() throws Exception {
-        TestUtils.testSerialization(new CrawlHost("hi"));
+    @Override
+    protected Class getModuleClass() {
+        return RobotsHonoringPolicy.class;
     }
     
+    
+    @Override
+    protected Object makeModule() {
+        return new RobotsHonoringPolicy();
+    }
+
+    
+    // TODO TESTME
     
 }

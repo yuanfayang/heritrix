@@ -36,9 +36,9 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.util.CrawlHost;
-import org.archive.modules.util.CrawlServer;
-import org.archive.modules.util.RobotsHonoringPolicy;
+import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.CrawlServer;
+import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.state.KeyManager;
 
 

@@ -56,7 +56,7 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.modules.Processor;
 import org.archive.modules.credential.CredentialStore;
-import org.archive.modules.util.ServerCache;
+import org.archive.modules.net.ServerCache;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.FileModule;

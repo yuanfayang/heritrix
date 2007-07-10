@@ -1,10 +1,5 @@
-/* CrawlHostCache.java
- *
- * $Id$
- *
- * Created on Nov 21, 2006
- *
- * Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -21,15 +16,31 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * CrawlServerTest.java
+ *
+ * Created on Jan 31, 2007
+ *
+ * $Id:$
  */
-package org.archive.modules.util;
+package org.archive.modules.net;
 
-public interface ServerCache {
+import org.archive.modules.net.CrawlServer;
+import org.archive.util.TestUtils;
 
-    CrawlHost getHostFor(String host);
+import junit.framework.TestCase;
+
+/**
+ * @author pjack
+ *
+ */
+public class CrawlServerTest extends TestCase {
+
     
-    CrawlServer getServerFor(String serverKey);
+    public void testSerialization() throws Exception {
+        TestUtils.testSerialization(new CrawlServer("hi"));
+    }
 
     
-    void cleanup();
+    
 }

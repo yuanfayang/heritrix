@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.archive.modules.util.RobotsHonoringPolicy;
+import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
