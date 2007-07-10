@@ -212,4 +212,15 @@ public interface JMXSheetManager {
 
     @Attribute(desc="Returns true if the sheet manager is online.", def="false")
     boolean isOnline();
+
+
+    @Operation(desc="Lists the context prefixes associated with a given sheet.")
+    String[] listContexts(
+            
+            @Parameter(name="sheetName", desc="The name of the sheet whose contexts to list.")
+            String sheetName, 
+
+            @Parameter(name="start", desc="The number of contexts to skip before listing.")
+            int start);
+
 }

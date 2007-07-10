@@ -32,6 +32,11 @@ Add Sheet Bundle
 
 
 <table class="info">
+<tr>
+<th class="info">Sheet Name</th>
+<th class="info">Actions</th>
+<th class="info">Associations</th>
+</tr>
 <% for (String sheet: sheets) { %>
 <% row = -row + 1; %>
 <% String qs = Text.jobQueryString(request) + "&sheet=" + sheet; %>
@@ -76,12 +81,13 @@ Rollback
 
 <% } %>
 
-|
+</td>
+<td class="info<%=row%>">
 
 <a 
    title="Associate SURT prefixes with this sheet."
    href="do_show_associate.jsp?<%=qs%>&add=Y">
-Associate
+Add
 </a>
 
 |
@@ -89,9 +95,16 @@ Associate
 <a 
    title="Disassociate SURT prefixes with this sheet."
    href="do_show_associate.jsp?<%=qs%>&add=N">
-Disassociate
+Remove
 </a>
 
+|
+
+<a
+  title="List SURT prefixes associated with this sheet."
+  href="do_show_surts.jsp?<%=qs%>">
+List
+</a>
 
 
 

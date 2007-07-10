@@ -72,11 +72,9 @@ import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
+import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.SecondaryConfig;
-import com.sleepycat.je.SecondaryDatabase;
-import com.sleepycat.je.SecondaryKeyCreator;
+
 
 /**
  * Simple sheet manager that stores settings in a directory hierarchy.
@@ -205,9 +203,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     /** The database of associations. Maps string context to sheet names. */
     final private StoredSortedMap surtToSheets;
 
-    /** The reverse db of associations. Maps sheet name to string contexts. */
-    final private StoredSortedMap sheetToSurts;
-
+  
     
     /** The default sheet. */
     private SingleSheet defaultSheet;
@@ -298,38 +294,16 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         validateDir(sheetsDir);
         sheets = new HashMap<String, Sheet>();
 
-        Database db = bdb.openDatabase("surtToSheets", false);
+        DatabaseConfig config = new DatabaseConfig();
+        config.setAllowCreate(true);
+        config.setSortedDuplicates(true);
+        Database db = bdb.openDatabase("surtToSheets", config, true);
         EntryBinding stringBinding 
             = TupleBinding.getPrimitiveBinding(String.class);
         
         this.surtToSheets = new StoredSortedMap(
                 db, stringBinding, stringBinding, true); 
-
-        SecondaryKeyCreator creator = new SecondaryKeyCreator() {
-            public boolean createSecondaryKey(
-                    SecondaryDatabase db, 
-                    DatabaseEntry key, 
-                    DatabaseEntry data, 
-                    DatabaseEntry result) throws DatabaseException {
-                result.setData(data.getData(), data.getOffset(), data.getSize());
-                return true;
-            }
-            
-        };
         
-        SecondaryConfig secConfig = new SecondaryConfig();
-        secConfig.setAllowCreate(true);
-        secConfig.setSortedDuplicates(true);
-        secConfig.setKeyCreator(creator);
-        
-        SecondaryDatabase secDb = bdb.openSecondaryDatabase(
-                "sheetToSurts", 
-                db,
-                secConfig);
-
-        this.sheetToSurts = new StoredSortedMap(
-                secDb, stringBinding, stringBinding, true); 
-
         reload();
     }
 
@@ -482,8 +456,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     @Override @SuppressWarnings("unchecked")
     public void disassociate(Sheet sheet, Collection<String> strings) {
-        Collection c = sheetToSurts.duplicates(sheet.getName());
-        c.removeAll(strings);
+        for (String s: strings) {
+            surtToSheets.duplicates(s).remove(sheet.getName());
+        }
     }
 
     @Override @SuppressWarnings("unchecked")
@@ -917,5 +892,27 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         return Collections.unmodifiableList(r);
     }
 
+    
+    public Collection<String> listContexts(String sheetName, int ofs, int len) {
+        int count = 0;
+        @SuppressWarnings("unchecked")
+        Set<Map.Entry<String,String>> entries = surtToSheets.entrySet();
+        List<String> result = new ArrayList<String>();
+        for (Map.Entry<String,String> me: entries) {
+            String surt = me.getKey();
+            String sheet = me.getValue();
+            if (sheet.equals(sheetName)) {
+                if (count >= ofs) {
+                    result.add(surt);
+                    if (result.size() > len) {
+                        return result;
+                    }
+                    count++;                    
+                }
+            }
+        }
+        
+        return result;
+    }
 
 }

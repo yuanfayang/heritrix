@@ -1,11 +1,13 @@
-<%@ page import="java.util.Map" %>
+<%@ page import="java.util.List" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
+<%@ page import="org.archive.settings.Association" %>
+
 <%
 
 Crawler crawler = (Crawler)Text.get(request, "crawler");
 String url = (String)Text.get(request, "sheet");
-Map<String,String> map = (Map)Text.get(request, "surtToSheet");
+List<Association> list = (List)Text.get(request, "surtToSheet");
 int row = 1;
 
 %>
@@ -22,18 +24,18 @@ int row = 1;
 
 <table class="info">
 
-<% for (Map.Entry<String,String> me: map.entrySet()) { %>
+<% for (Association a: list) { %>
 
 <% 
 
-   String surt = me.getKey();
-   String sheet = me.getValue();
+   String surt = a.getContext();
+   String sheet = a.getSheetName();
    
 %>
 
 <tr>
 <td class="info<%=row%>">
-<%=Text.html(surt) %>
+<code><%=Text.html(surt) %></code>
 </td>
 <td class="info<%=row%>">
   <% if (sheet != null) { %>

@@ -303,4 +303,23 @@ public class MemorySheetManager extends SheetManager {
         return this.createSheetBundle("anonymous", result);
     }
 
+    
+    public Collection<String> listContexts(String sheetName, int ofs, int len) {
+        int count = 0;
+        List<String> result = new ArrayList<String>();
+        for (Map.Entry<String,Set<Sheet>> me: associations.entrySet()) {
+            for (Sheet sheet: me.getValue()) {
+                if (sheet.getName().equals(sheetName)) {
+                    if (count >= ofs) {
+                        result.add(me.getKey());
+                        if (result.size() >= len) {
+                            return result;
+                        }
+                    }
+                    count++;
+                }
+            }
+        }
+        return result;
+    }
 }

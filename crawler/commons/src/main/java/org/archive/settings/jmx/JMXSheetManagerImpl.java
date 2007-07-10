@@ -478,5 +478,10 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     public boolean isOnline() {
         return manager.isOnline();
     }
+
     
+    public String[] listContexts(String sheetName, int start) {
+        Collection<String> c = manager.listContexts(sheetName, start, 100);
+        return c.toArray(new String[c.size()]);
+    }
 }
