@@ -173,7 +173,7 @@ public class WebUIJUnit extends TmpDirTestCase {
         this.host = extract(url, "host");
         doGet(url);
         
-        this.urlSheets = findHref("do_show_sheets.jsp", managerId, "default");
+        this.urlSheets = findHref("do_show_sheets.jsp", managerId, "basic");
         doGet(urlSheets);
         
         addSingleAndOverride(
@@ -207,14 +207,14 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", "the_bundle");
         
         doPost("do_move_bundled_sheets.jsp",
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", "the_bundle",
                 "move", "foo",
                 "index", "0");
@@ -223,7 +223,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", "the_bundle",
                 "move", "bar",
                 "index", "1");
@@ -232,7 +232,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", "the_bundle",
                 "move", "baz",
                 "index", "2");
@@ -251,7 +251,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", "the_bundle", 
                 "add", "Y",
                 "surts", "http://the_bundle.archive.org");
@@ -290,14 +290,14 @@ public class WebUIJUnit extends TmpDirTestCase {
         doGet(urlSheets);
 
         // Create a new single sheet with the specified name.
-        String url = findHref("do_show_add_single_sheet.jsp", managerId, "default");
+        String url = findHref("do_show_add_single_sheet.jsp", managerId, "basic");
         doGet(url);
         
         doPost("do_add_single_sheet.jsp",
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", sheet);
 
         // Override the specified setting to be newValue instead of oldValue. 
@@ -311,7 +311,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", sheet, 
                 "path", path, 
                 "type-" + path, "int",
@@ -332,7 +332,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "sheet", sheet, 
                 "add", "Y",
                 "surts", "# Comment line to ignore\n\n" + assoc);
@@ -343,7 +343,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "default",
+                "profile", "basic",
                 "button", "Settings",
                 "url", assoc + "/a/b/c/d");
 
@@ -490,7 +490,7 @@ public class WebUIJUnit extends TmpDirTestCase {
         jobs.mkdirs();
         File profiles = getProfilesDir();
         profiles.mkdirs();
-        File defProf = new File(profiles, "default");
+        File defProf = new File(profiles, "basic");
         defProf.mkdirs();
         File defProfSheets = new File(defProf, "sheets");
         defProfSheets.mkdirs();

@@ -36,6 +36,7 @@ import java.util.Set;
 
 import javax.servlet.jsp.JspWriter;
 
+import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathValidator;
@@ -555,7 +556,7 @@ public class Settings {
             return true;
         }
         
-        if (key.isGlobal() && !sheet.equals("default")) {
+        if (key.isGlobal() && !sheet.equals(SheetManager.GLOBAL_SHEET_NAME)) {
             return false;
         }
         

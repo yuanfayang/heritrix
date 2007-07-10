@@ -63,7 +63,7 @@ public class CredentialStoreTest extends StateProcessorTestBase {
 
     final public void testCredentials() throws Exception {
         MemorySheetManager manager = new MemorySheetManager();
-        SingleSheet global = manager.getDefault();
+        SingleSheet global = manager.getGlobalSheet();
         SingleSheet domain = manager.addSingleSheet("domain");
         SingleSheet hostSingle = manager.addSingleSheet("hostSingle");
         SheetBundle host = manager.addSheetBundle("host", 

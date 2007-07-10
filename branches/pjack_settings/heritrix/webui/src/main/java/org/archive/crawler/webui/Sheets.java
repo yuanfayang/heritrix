@@ -50,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.settings.Association;
+import org.archive.settings.SheetManager;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.Types;
 import org.archive.settings.path.PathValidator;
@@ -578,7 +579,7 @@ public class Sheets {
             
 
     public static Settings getGlobalSettings(JMXSheetManager mgr) {
-        return getSettings(mgr, "default");
+        return getSettings(mgr, SheetManager.GLOBAL_SHEET_NAME);
     }
     
 

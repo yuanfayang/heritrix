@@ -192,7 +192,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     }
 
     public <T> T get(Key<T> key) {
-        Sheet sheet = controller.getSheetManager().getDefault();
+        Sheet sheet = controller.getSheetManager().getGlobalSheet();
         return sheet.get(this, key);
     }
     
@@ -267,7 +267,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        StateProvider def = controller.getSheetManager().getDefault();
+        StateProvider def = controller.getSheetManager().getGlobalSheet();
         List<CanonicalizationRule> rules = 
             controller.getOrderSetting(CrawlController.URI_CANONICALIZATION_RULES);
         return Canonicalizer.canonicalize(def, uuri.toString(), rules);

@@ -362,7 +362,7 @@ public class SingleSheet extends Sheet {
     public Map resolveEditableMap(Object o, Key<Map> k) {
         Map result = check(o, k);
         if ((result == null) && !global) {
-            result = getSheetManager().getDefault().check(o, k);
+            result = getSheetManager().getGlobalSheet().check(o, k);
         }
         return result;
     }
@@ -371,7 +371,7 @@ public class SingleSheet extends Sheet {
     public List resolveEditableList(Object o, Key<List> k) {
         List result = check(o, k);
         if ((result == null) && !global) {
-            result = getSheetManager().getDefault().check(o, k);
+            result = getSheetManager().getGlobalSheet().check(o, k);
         }
         return result;
     }
@@ -382,6 +382,6 @@ public class SingleSheet extends Sheet {
         if (this.global) {
             return this;
         }
-        return getSheetManager().getDefault();
+        return getSheetManager().getGlobalSheet();
     }
 }

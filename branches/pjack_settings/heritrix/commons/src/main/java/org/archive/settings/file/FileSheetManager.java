@@ -98,7 +98,7 @@ import com.sleepycat.je.DatabaseException;
  * extension.
  * 
  * <p>
- * A <code>.single</code> file is a list of key/value pairs, where the key is
+ * A <code>.sheet</code> file is a list of key/value pairs, where the key is
  * a path and the value is the stringified value for that path. See the
  * {@link org.archive.settings.path} package for more information.
  * 
@@ -115,7 +115,7 @@ import com.sleepycat.je.DatabaseException;
  * 
  * <pre>
  *  main/roots.txt    
- *  main/sheets/X.single
+ *  main/sheets/X.sheet
  *  main/sheets/Y.bundle
  *  main/assoc
  * </pre>
@@ -130,7 +130,7 @@ import com.sleepycat.je.DatabaseException;
  * </pre>
  * 
  * <p>
- * A sample <code>.single</code> file:
+ * A sample <code>.sheet</code> file:
  * 
  * <pre>
  *  html.ENABLED=true
@@ -182,7 +182,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     final private static String DEFAULT_SHEETS = "sheets";
 
     /** The extension for files containing SingleSheet information. */
-    final private static String SINGLE_EXT = ".single";
+    final private static String SINGLE_EXT = ".sheet";
 
     /** The extension for files containing SingleBundle information. */
     final private static String BUNDLE_EXT = ".bundle";
@@ -375,16 +375,16 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         sheets.clear();
         
         // Load default sheet first, since every other sheet relies on it.
-        this.defaultSheet = loadSingleSheet(DEFAULT_SHEET_NAME);
+        this.defaultSheet = loadSingleSheet(GLOBAL_SHEET_NAME);
         if (defaultSheet == null) {
             throw new IllegalStateException("Could not load default sheet.");
         }
-        sheets.put("default", defaultSheet);
+        sheets.put(GLOBAL_SHEET_NAME, defaultSheet);
         
         // Load single sheets next, since bundles rely on them
         for (File f: sheetsDir.listFiles()) {
             String name = f.getName();
-            if (!name.equals(DEFAULT_SHEET_NAME + SINGLE_EXT) 
+            if (!name.equals(GLOBAL_SHEET_NAME + SINGLE_EXT) 
                     && name.endsWith(SINGLE_EXT)) {
                 int p = name.lastIndexOf('.');
                 String sname = name.substring(0, p);
@@ -501,7 +501,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
         
         if (sheets.isEmpty()) {
-            return getDefault();
+            return getGlobalSheet();
         }
         
         if (sheets.size() == 1) {
@@ -513,8 +513,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     
     
     @Override
-    public SingleSheet getDefault() {
-        return (SingleSheet)getSheet("default");
+    public SingleSheet getGlobalSheet() {
+        return (SingleSheet)getSheet(GLOBAL_SHEET_NAME);
     }
 
 
@@ -625,7 +625,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         File f = new File(sheetsDir, name + SINGLE_EXT);
         try {
             SingleSheet r = createSingleSheet(name);
-            if (name.equals(DEFAULT_SHEET_NAME)) {
+            if (name.equals(GLOBAL_SHEET_NAME)) {
                 setManagerDefaults(r);
             }
             sheets.put(name, r);

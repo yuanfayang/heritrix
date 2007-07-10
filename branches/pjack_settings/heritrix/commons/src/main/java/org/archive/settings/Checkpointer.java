@@ -113,7 +113,7 @@ public class Checkpointer {
             File f = new File(dir, OBJECT_GRAPH_FILE);
             cinp = new CheckpointInputStream(new FileInputStream(f), recovery);
             SheetManager mgr = (SheetManager)cinp.readObject();
-            recovery.apply(mgr.getDefault());
+            recovery.apply(mgr.getGlobalSheet());
             return mgr;
         } catch (ClassNotFoundException e) { 
             IOException io = new IOException();

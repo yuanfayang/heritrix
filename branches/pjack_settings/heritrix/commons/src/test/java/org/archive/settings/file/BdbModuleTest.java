@@ -82,8 +82,8 @@ public class BdbModuleTest extends TmpDirTestCase {
         
         BdbModule bdb = new BdbModule();
         mgr.getRoot().put("module", bdb);
-        mgr.getDefault().set(bdb, BdbModule.DIR, firstState.getAbsolutePath());
-        bdb.initialTasks(mgr.getDefault());
+        mgr.getGlobalSheet().set(bdb, BdbModule.DIR, firstState.getAbsolutePath());
+        bdb.initialTasks(mgr.getGlobalSheet());
         
         Map<String,String> testData = bdb.getBigMap("testData", 
                 String.class, String.class);
