@@ -412,4 +412,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
     public abstract List<PathChangeException> getSingleSheetProblems(
             String sheet);
 
+    public abstract Collection<String> listContexts(String sheetName, 
+            int ofs, int len);
+
 }

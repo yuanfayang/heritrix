@@ -63,6 +63,16 @@ h3 {
 .help {
     text-decoration: none;
 }
+
+a {
+  text-decoration: none;
+  color: blue;
+}
+
+a:hover {
+   text-decoration: underline;
+}
+
 a.underLineOnHover {
     text-decoration: none;
 }

@@ -49,6 +49,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.settings.Association;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.Types;
 import org.archive.settings.path.PathValidator;
@@ -505,6 +506,27 @@ public class Sheets {
     }
 
     
+    public static void showSurts(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        String sheet = request.getParameter("sheet");
+        String startString = request.getParameter("start");
+        int start = (startString == null) ? 0 : Integer.parseInt(startString);
+        try {
+            String[] surts = sheetManager.listContexts(sheet, start);
+            request.setAttribute("sheet", sheet);
+            request.setAttribute("start", start);
+            request.setAttribute("surts", Arrays.asList(surts));
+            Misc.forward(request, response, "page_list_surts.jsp");
+        } finally {
+            remote.close();
+        }
+    }
+
+    
     public static void showConfig(
             ServletContext sc,
             HttpServletRequest request,
@@ -517,11 +539,11 @@ public class Sheets {
             String surt = Misc.toSURT(url);
             if (request.getParameter("button").equals("Sheets")) {
                 String[] pairs = sheetManager.findConfigNames(surt);
-                Map<String,String> map = new LinkedHashMap<String,String>();
+                List<Association> list = new ArrayList<Association>();
                 for (int i = 0; i < pairs.length; i += 2) {
-                    map.put(pairs[i], pairs[i + 1]);
+                    list.add(new Association(pairs[i], pairs[i + 1]));
                 }
-                request.setAttribute("surtToSheet", map);
+                request.setAttribute("surtToSheet", list);
                 Misc.forward(request, response, "page_config_names.jsp");
             } else {
                 CompositeData[] settings = sheetManager.findConfig(surt);
