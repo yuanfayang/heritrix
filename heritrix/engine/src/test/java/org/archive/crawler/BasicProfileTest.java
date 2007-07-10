@@ -24,11 +24,12 @@
  * $Id:$
  */
 
-package org.archive.settings.file;
+package org.archive.crawler;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
+import org.archive.settings.file.Validator;
 import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 
