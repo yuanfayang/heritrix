@@ -178,14 +178,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         Boolean.TRUE;
 
     // top-level stats
-    protected long queuedUriCount = 0; // total URIs queued to be visited
+    /** total URIs queued to be visited */
+    protected AtomicLong queuedUriCount = new AtomicLong(0); 
 
-    protected long succeededFetchCount = 0;
+    protected AtomicLong succeededFetchCount = new AtomicLong(0);
 
-    protected long failedFetchCount = 0;
+    protected AtomicLong failedFetchCount = new AtomicLong(0);
 
-    protected long disregardedUriCount = 0; //URIs that are disregarded (for
-                                          // example because of robot.txt rules)
+    /** URIs that are disregarded (for example because of robot.txt rules */
+    protected AtomicLong disregardedUriCount = new AtomicLong(0);
 
     /**
      * Used when bandwidth constraint are used.
@@ -425,16 +426,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * 
      * @return True if queues are empty.
      */
-    public synchronized boolean isEmpty() {
-        return queuedUriCount == 0;
+    public boolean isEmpty() {
+        return queuedUriCount.get() == 0;
     }
 
     /**
-     * Increment the running count of queued URIs. Synchronized because
-     * operations on longs are not atomic.
+     * Increment the running count of queued URIs. 
      */
-    protected synchronized void incrementQueuedUriCount() {
-        queuedUriCount++;
+    protected void incrementQueuedUriCount() {
+        queuedUriCount.incrementAndGet();
     }
 
     /**
@@ -444,8 +444,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @param increment
      *            amount to increment the queued count
      */
-    protected synchronized void incrementQueuedUriCount(long increment) {
-        queuedUriCount += increment;
+    protected void incrementQueuedUriCount(long increment) {
+        queuedUriCount.addAndGet(increment);
     }
 
     /**
@@ -453,8 +453,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * 
      * @param numberOfDeletes
      */
-    protected synchronized void decrementQueuedCount(long numberOfDeletes) {
-        queuedUriCount -= numberOfDeletes;
+    protected void decrementQueuedCount(long numberOfDeletes) {
+        queuedUriCount.addAndGet(-numberOfDeletes);
     }
 
     /**
@@ -463,7 +463,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
     public long queuedUriCount() {
-        return queuedUriCount;
+        return queuedUriCount.get();
     }
 
     /**
@@ -472,15 +472,14 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
-        return succeededFetchCount + failedFetchCount + disregardedUriCount;
+        return succeededFetchCount.get() + failedFetchCount.get() + disregardedUriCount.get();
     }
 
     /**
-     * Increment the running count of successfully fetched URIs. Synchronized
-     * because operations on longs are not atomic.
+     * Increment the running count of successfully fetched URIs. 
      */
-    protected synchronized void incrementSucceededFetchCount() {
-        succeededFetchCount++;
+    protected void incrementSucceededFetchCount() {
+        succeededFetchCount.incrementAndGet();
     }
 
     /**
@@ -489,15 +488,14 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
     public long succeededFetchCount() {
-        return succeededFetchCount;
+        return succeededFetchCount.get();
     }
 
     /**
-     * Increment the running count of failed URIs. Synchronized because
-     * operations on longs are not atomic.
+     * Increment the running count of failed URIs. 
      */
-    protected synchronized void incrementFailedFetchCount() {
-        failedFetchCount++;
+    protected void incrementFailedFetchCount() {
+        failedFetchCount.incrementAndGet();
     }
 
     /**
@@ -506,19 +504,19 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#failedFetchCount()
      */
     public long failedFetchCount() {
-        return failedFetchCount;
+        return failedFetchCount.get();
     }
 
     /**
      * Increment the running count of disregarded URIs. Synchronized because
      * operations on longs are not atomic.
      */
-    protected synchronized void incrementDisregardedUriCount() {
-        disregardedUriCount++;
+    protected void incrementDisregardedUriCount() {
+        disregardedUriCount.incrementAndGet();
     }
 
     public long disregardedUriCount() {
-        return disregardedUriCount;
+        return disregardedUriCount.get();
     }
 
     /** @deprecated misnomer; use StatisticsTracking figures instead */
