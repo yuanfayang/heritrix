@@ -1230,7 +1230,7 @@ implements Closeable, HasUriReceiver, Serializable {
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.size();
         int totalQueueCount = (activeCount+inactiveCount);
-        return (totalQueueCount == 0) ? 0 : queuedUriCount / totalQueueCount;
+        return (totalQueueCount == 0) ? 0 : queuedUriCount.get() / totalQueueCount;
     }
     public float congestionRatio() {
         int inProcessCount = inProcessQueues.uniqueSet().size();
@@ -1249,7 +1249,7 @@ implements Closeable, HasUriReceiver, Serializable {
      * @see org.archive.crawler.framework.Frontier#isEmpty()
      */
     public synchronized boolean isEmpty() {
-        return queuedUriCount == 0 && alreadyIncluded.pending() == 0;
+        return queuedUriCount.get() == 0 && alreadyIncluded.pending() == 0;
     }
 
     
