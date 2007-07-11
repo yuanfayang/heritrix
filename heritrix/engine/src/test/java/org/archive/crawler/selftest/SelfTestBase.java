@@ -47,8 +47,6 @@ import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.settings.SheetManager;
-import org.archive.settings.file.FileSheetManager;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxWaiter;
@@ -161,6 +159,8 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             open();
             verifyCommon();
             verify();
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             try {
                 close();
@@ -248,7 +248,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     protected File getTestDataDir() {
         File r = new File("testdata");
         if (!r.exists()) {
-            r = new File("heritrix");
+            r = new File("engine");
             r = new File(r, "testdata");
             if (!r.exists()) {
                 throw new IllegalStateException(

@@ -125,9 +125,9 @@ public class AuthSelfTest
         int p = config.indexOf(token);
         String newConfig = 
             "root:controller:credential-store:credentials" +
-            "=map, org.archive.processors.credential.Credential\n" +
+            "=map, org.archive.modules.credential.Credential\n" +
             "root:controller:credential-store:credentials:test" +
-            "=object, org.archive.processors.credential.Rfc2617Credential\n" +
+            "=object, org.archive.modules.credential.Rfc2617Credential\n" +
             "root:controller:credential-store:credentials:test:" +
             "credential-domain=string, localhost:7777\n" +
             "root:controller:credential-store:credentials:test:realm" +
@@ -137,7 +137,7 @@ public class AuthSelfTest
             "root:controller:credential-store:credentials:test:password" +
             "=string, xyzzy\n" +
             "root:controller:credential-store:credentials:test2" +
-            "=object, org.archive.processors.credential.HtmlFormCredential\n" +
+            "=object, org.archive.modules.credential.HtmlFormCredential\n" +
             "root:controller:credential-store:credentials:test2:credential-domain" +
             "=string, localhost:7777\n" +
             "root:controller:credential-store:credentials:test2:login-uri" +
