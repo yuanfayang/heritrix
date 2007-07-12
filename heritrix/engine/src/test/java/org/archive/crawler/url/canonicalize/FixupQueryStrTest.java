@@ -24,14 +24,14 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 /**
  * Test we strip trailing question mark.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class FixupQueryStrTest extends StateProcessorTestBase {
+public class FixupQueryStrTest extends ModuleTestBase {
 
     @Override
     protected Class getModuleClass() {

@@ -26,13 +26,13 @@
 
 package org.archive.crawler.frontier;
 
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 /**
  * @author pjack
  *
  */
-public class AdaptiveRevisitFrontierTest extends StateProcessorTestBase {
+public class AdaptiveRevisitFrontierTest extends ModuleTestBase {
 
     
     @Override

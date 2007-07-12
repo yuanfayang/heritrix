@@ -27,13 +27,13 @@
 package org.archive.modules.credential;
 
 import org.archive.modules.credential.HtmlFormCredential;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 /**
  * @author pjack
  *
  */
-public class HtmlFormCredentialTest extends StateProcessorTestBase {
+public class HtmlFormCredentialTest extends ModuleTestBase {
 
     @Override
     protected Class getModuleClass() {
