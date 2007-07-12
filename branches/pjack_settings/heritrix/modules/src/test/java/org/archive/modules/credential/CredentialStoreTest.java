@@ -36,7 +36,7 @@ import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SingleSheet;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 
 
@@ -46,7 +46,7 @@ import org.archive.state.StateProcessorTestBase;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStoreTest extends StateProcessorTestBase {
+public class CredentialStoreTest extends ModuleTestBase {
 
     protected static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.CredentialTest");

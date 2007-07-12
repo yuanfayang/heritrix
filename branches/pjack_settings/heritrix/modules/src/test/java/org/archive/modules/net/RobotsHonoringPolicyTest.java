@@ -27,13 +27,13 @@
 package org.archive.modules.net;
 
 import org.archive.modules.net.RobotsHonoringPolicy;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 /**
  * @author pjack
  *
  */
-public class RobotsHonoringPolicyTest extends StateProcessorTestBase {
+public class RobotsHonoringPolicyTest extends ModuleTestBase {
 
     
     @Override

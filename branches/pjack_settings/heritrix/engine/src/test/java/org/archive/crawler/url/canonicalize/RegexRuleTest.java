@@ -31,7 +31,7 @@ import javax.management.InvalidAttributeValueException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.state.ExampleStateProvider;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 
 /**
@@ -39,7 +39,7 @@ import org.archive.state.StateProcessorTestBase;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class RegexRuleTest extends StateProcessorTestBase {
+public class RegexRuleTest extends ModuleTestBase {
 
 
     private List<CanonicalizationRule> rules;

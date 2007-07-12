@@ -27,13 +27,13 @@
 package org.archive.modules.credential;
 
 import org.archive.modules.credential.Rfc2617Credential;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 /**
  * @author pjack
  *
  */
-public class Rfc2617CredentialTest extends StateProcessorTestBase {
+public class Rfc2617CredentialTest extends ModuleTestBase {
 
     @Override
     protected Class getModuleClass() {

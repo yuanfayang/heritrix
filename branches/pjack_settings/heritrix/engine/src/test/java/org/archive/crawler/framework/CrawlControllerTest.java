@@ -39,14 +39,14 @@ import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 import org.archive.util.IoUtils;
 
 /**
  * 
  * @author pjack
  */
-public class CrawlControllerTest extends StateProcessorTestBase {
+public class CrawlControllerTest extends ModuleTestBase {
     
     
     @Override

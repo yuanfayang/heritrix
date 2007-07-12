@@ -24,7 +24,7 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 
 /**
@@ -32,7 +32,7 @@ import org.archive.state.StateProcessorTestBase;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class StripWWWRuleTest extends StateProcessorTestBase {
+public class StripWWWRuleTest extends ModuleTestBase {
 
     
     @Override

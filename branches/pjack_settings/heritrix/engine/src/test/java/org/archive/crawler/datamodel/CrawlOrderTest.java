@@ -26,13 +26,13 @@
 
 package org.archive.crawler.datamodel;
 
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 /**
  * @author pjack
  *
  */
-public class CrawlOrderTest extends StateProcessorTestBase {
+public class CrawlOrderTest extends ModuleTestBase {
 
     @Override
     protected Class getModuleClass() {

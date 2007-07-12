@@ -33,7 +33,7 @@ import org.archive.modules.DefaultProcessorURI;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 import org.archive.util.Recorder;
 
 
@@ -53,7 +53,7 @@ public abstract class ContentExtractorTestBase extends ProcessorTestBase {
     
     /**
      * Sets up the {@link #extractor} and 
-     * {@link StateProcessorTestBase#processorClass}
+     * {@link ModuleTestBase#processorClass}
      * fields.
      */
     final public void setUp() {

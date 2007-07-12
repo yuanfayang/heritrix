@@ -38,7 +38,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlControllerTest;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -47,7 +47,7 @@ import org.archive.util.TmpDirTestCase;
 * @author stack gojomo
 * @version $Revision$, $Date$
 */
-public class SeedCachingScopeTest extends StateProcessorTestBase {
+public class SeedCachingScopeTest extends ModuleTestBase {
     
     private static Set<UURI> seeds = null;
 

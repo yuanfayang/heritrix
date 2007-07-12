@@ -36,8 +36,7 @@ package org.archive.state;
  * 
  * @author pjack
  */
-public abstract class ExampleAbstractProcessor 
-implements StateProcessor<ExampleStateProvider,Integer,RuntimeException> {
+public abstract class ExampleAbstractProcessor {
 
 
     /**

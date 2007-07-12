@@ -44,12 +44,12 @@ import junit.framework.TestCase;
  * 
  * @author pjack
  */
-public abstract class StateProcessorTestBase extends TestCase {
+public abstract class ModuleTestBase extends TestCase {
 
 
 
     
-    public StateProcessorTestBase() {
+    public ModuleTestBase() {
         File srcDir = getProjectDir("src/main/java");
         File resourceDir = getProjectDir("src/main/resources");
         if ((srcDir != null) && (resourceDir != null)) {

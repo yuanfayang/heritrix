@@ -24,7 +24,7 @@
 package org.archive.modules;
 
 
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
 
 /**
@@ -32,7 +32,7 @@ import org.archive.state.StateProcessorTestBase;
  * 
  * @author pjack
  */
-public abstract class ProcessorTestBase extends StateProcessorTestBase {
+public abstract class ProcessorTestBase extends ModuleTestBase {
 
     
     

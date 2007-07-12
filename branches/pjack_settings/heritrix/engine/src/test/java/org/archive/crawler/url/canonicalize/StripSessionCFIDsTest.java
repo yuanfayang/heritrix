@@ -2,9 +2,9 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
-import org.archive.state.StateProcessorTestBase;
+import org.archive.state.ModuleTestBase;
 
-public class StripSessionCFIDsTest extends StateProcessorTestBase {
+public class StripSessionCFIDsTest extends ModuleTestBase {
 
     @Override
     protected Class getModuleClass() {

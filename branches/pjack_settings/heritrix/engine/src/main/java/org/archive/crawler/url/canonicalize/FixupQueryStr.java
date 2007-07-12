@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.url.canonicalize;
 
-import org.archive.state.ExampleConcreteProcessor;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
