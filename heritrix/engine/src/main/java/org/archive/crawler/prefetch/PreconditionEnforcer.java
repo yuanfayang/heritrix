@@ -91,7 +91,7 @@ public class PreconditionEnforcer
      * annotated in the crawl.log, but still fetched. Default is false.
      */
     @Expert
-    final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.make(true);
+    final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.make(false);
     
     
     public PreconditionEnforcer() {
