@@ -69,6 +69,8 @@ public class FilePathListConsumer extends StringPathListConsumer {
         sb.append(path).append(pathDelim);
         sb.append(type).append(typeDelim);
         sb.append(value); // FIXME: Escape special characters
+        sb.append('\n');
+        writer.write(sb.toString());
     }
 
 }
