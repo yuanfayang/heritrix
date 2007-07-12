@@ -233,7 +233,7 @@ public class Misc {
         }
         
         Setting setting = settings.getSetting(actual);
-        if (setting.getType() != PathChanger.OBJECT_TAG) {
+        if (! setting.getType().equals(PathChanger.OBJECT_TAG)) {
             throw new IllegalArgumentException("Expected object at " + path);
         }
         
