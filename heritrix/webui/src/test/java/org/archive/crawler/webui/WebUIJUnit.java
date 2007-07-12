@@ -496,8 +496,8 @@ public class WebUIJUnit extends TmpDirTestCase {
         defProfSheets.mkdirs();
         new FileOutputStream(new File(defProf, "config.txt")).close();
         new FileOutputStream(new File(defProf, "seeds.txt")).close();
-        File defProfGlobal = new File(defProfSheets, "default.single");
-        copyResource("/org/archive/crawler/webui/default.single", defProfGlobal);
+        File defProfGlobal = new File(defProfSheets, "global.sheet");
+        copyResource("/org/archive/crawler/webui/global.sheet", defProfGlobal);
     }
 
 
