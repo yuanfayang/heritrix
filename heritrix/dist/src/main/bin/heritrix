@@ -84,7 +84,7 @@ fi
 
 # Ignore previous classpath.  Build one that contains heritrix jar and content
 # of the lib directory into the variable CP.
-for jar in `ls $HERITRIX_HOME/lib/*.jar $HERITRIX_HOME/*.jar`
+for jar in `ls $HERITRIX_HOME/lib/*.jar`
 do
     CP=${CP}:${jar}
 done
