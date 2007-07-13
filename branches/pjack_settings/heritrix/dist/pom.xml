@@ -79,6 +79,18 @@
              <type>war</type>
              <scope>compile</scope>
         </dependency>
+        <dependency>
+		      <groupId>jetty</groupId>
+		      <artifactId>jasper-compiler</artifactId>
+		      <version>4.2.20RC0</version>
+		      <scope>compile</scope>
+	    </dependency>
+	    <dependency>
+	      <groupId>jetty</groupId>
+	      <artifactId>jasper-runtime</artifactId>
+	      <version>4.2.20RC0</version>
+	      <scope>compile</scope>
+	    </dependency>
   </dependencies>
 
   <build>
