@@ -551,11 +551,14 @@ public class Settings {
 
     
     public boolean canOverride(Setting setting) {
+        if (!setting.getPath().startsWith(SheetManager.ROOT.getFieldName())) {
+            return false;
+        }
         Key key = getKey(setting);
         if (key == null) {
             return true;
         }
-        
+
         if (key.isGlobal() && !sheet.equals(SheetManager.GLOBAL_SHEET_NAME)) {
             return false;
         }

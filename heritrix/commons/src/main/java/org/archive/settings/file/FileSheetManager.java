@@ -702,7 +702,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         try {
             fw = new FileWriter(temp);
             FilePathListConsumer c = new FilePathListConsumer(fw);
-            PathLister.getAll(ss, c);
+            PathLister.getAll(ss, c, true);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Can't save " + ss.getName(), e);
             return;
