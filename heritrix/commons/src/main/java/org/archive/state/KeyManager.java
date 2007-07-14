@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
- * Manager for keys.  All {@link StateProcessor} implementations that define
+ * Manager for keys.  All {@link Module} implementations that define
  * keys must use the {@link #addKeys(Class)} method to register themselves
  * with the KeyManager.  This should be done in a static initializer, so that
  * the Keys are registered as soon as the class is loaded, eg:
@@ -63,7 +63,7 @@ final public class KeyManager {
     /**
      * Maps a class to the keys defined by that class and its superclasses.
      * Anticipates hundreds of keys, but few newly loaded classes.  (It is 
-     * assumed that most StateProcessor implementations will be initialized at 
+     * assumed that most Module implementations will be initialized at 
      * application start-up time, and that loading new processors will be
      * a rare event.)
      */
@@ -179,16 +179,6 @@ final public class KeyManager {
         return true;
     }
 
-    
-    private static KeyManagerData lookup(Class c) {
-        if (c == null) {
-            return null;
-        }
-        
-        KeyManagerData result = keys.get(c);
-        
-        return result;
-    }
 
     /**
      * Returns the set of keys defined by the given class and its
@@ -207,7 +197,7 @@ final public class KeyManager {
         }
         // Ensure static initializer has been run on c.
         initialize(c);
-        KeyManagerData result = lookup(c);
+        KeyManagerData result = keys.get(c);
         if (result == null) {
             return Collections.emptyMap();
         } else {

@@ -40,14 +40,75 @@ import org.archive.settings.Offline;
 
 
 /**
- * The key to a processor property.  Note this class is immutable.
+ * The key to a configurable module setting.  Modules should declare keys
+ * as public, static, final fields.  Those keys should be registered in the
+ * class's static initializer.  For instance:
+ * 
+ * <pre>
+ * public static class FileModule implements Module ... {
+ * 
+ *     &amp;Immutable
+ *     final public static Key&lt;FileModule&gt; PARENT = 
+ *         Key.make(FileModule.class, null);
+ *     
+ *     &amp;Immutable
+ *     final public static Key&lt;String&gt; PATH = 
+ *         Key.make("");
+ *         
+ *         
+ *     static {
+ *         KeyManager.addKeys(FileModule.class);
+ *     }
+ * 
+ * }
+ * </pre>
+ * 
+ * <p>All classes that define static Key fields <i>must</i> register those keys 
+ * in a static initializer, even abstract classes.
+ * 
+ * <p>Keys define the type of the setting, as well as a default value for the
+ * setting.  The KeyManager also determines the Key's name, the Key's 
+ * description and the class that declared the static Key field.
+ * 
+ * <p>Keys may have three flavors of types:
+ * 
+ * <ol>
+ * <li>Simple types.  The Java primitive types and java.lang.String are examples
+ * of simple Key types.  See {@link KeyTypes} for the complete list of simple
+ * types.</li>
+ * <li>Container types.  There are only two container types understood by 
+ * the KeyManager (and by {@link org.archive.settings}).  Those two types are
+ * {@link java.util.List} and {@link java.util.Map}.
+ * <li>Module types.  Any type that is not a simple type or a container type
+ * is considered to be a module type.  See {@link Module} for how to define
+ * an appropriate module type.</li>
+ * </ol>
+ * 
+ * <p>The three flavors behave somewhat differently depending on the state of
+ * an application.  For instance, in the {@link org.archive.settings} system,
+ * an application can either be online or offline.  When an application is 
+ * offline, the settings system provides {@link Offline} proxy values for 
+ * modules types, instead of actually constructing classes.  However, simple
+ * types and container types are not replaced with Offline proxies.
+ * 
+ * <p>A static Key field can be annotated with additional metadata.  See
+ * {@link Global}, {@link Immutable} and {@link Expert} for more information.
+ * 
+ * <p>Keys may have {@link Constraint} instances applied to them.  
+ * Implementations of {@link StateProvider#get} must guarantee that any value
+ * returned for a particular key is allowed by that key's constraints.
+ * 
+ * <p>Note this class is immutable.  You can use the {@link #make(Object)}
+ * family of methods to quickly construct unconstrained, basic keys.  More
+ * elaborate Keys can be constructed using the {@link KeyMaker} class.
  * 
  * @author pjack
  *
- * @param <Value>
+ * @param <Value>  the type of the setting's value
  */
 final public class Key<Value> implements Serializable {
 
+    /** For serialization. */
     private static final long serialVersionUID = 1L;
 
     /** The name of the field.  Set by the KeyManager. */
@@ -55,24 +116,20 @@ final public class Key<Value> implements Serializable {
     
     /** The class who declares the field.  Set by the KeyManager. */
     private Class owner;
-    
-    
-    
+
     /** The type of the field. */
     transient final private Class<Value> type;
-
 
     /**
      * The element type of a List or Map.  Will be null if this.type is 
      * anything other than java.util.List or java.util.Map.
      */
     private Class elementType;
-    
-    
+        
     /** The default value of the field. */
     transient final private Value def;
     
-    /** The default offline value of the field. */
+    /** The default offline value of the field. This is needed because  */
     transient final private Object offlineDef;
     
     /** The constraints that determine valid values for the field. */
@@ -131,7 +188,13 @@ final public class Key<Value> implements Serializable {
         }
     }
 
-    
+
+    /**
+     * The element type of a List or Map.  Will be null if {@link #getType()}
+     * is anything other than java.util.List or java.util.Map.
+     * 
+     * @return  the element type of a List or Map key, or null if 
+     */
     public Class getElementType() {
         return elementType;
     }
@@ -159,7 +222,16 @@ final public class Key<Value> implements Serializable {
         return global;
     }
     
-    
+
+    /**
+     * Returns true if the setting is immutable.  Immutable settings cannot
+     * be changed in a running application, and may be safely cached in 
+     * instance fields.  
+     * 
+     * @return  true if the setting is immutable, or false if the setting can
+     *            be changed in a running application
+     * @see Initializable 
+     */
     public boolean isImmutable() {
         return immutable;
     }
@@ -263,6 +335,16 @@ final public class Key<Value> implements Serializable {
     }
 
 
+    /**
+     * Creates a basic Key with the specified type and default value.  Use
+     * this if the Key has an interface type and you want to specify a 
+     * default value.
+     * 
+     * @param <X>   the type of the key
+     * @param type  the type of the key
+     * @param def   the default value of the key
+     * @return   the new Key
+     */
     public static <X> Key<X> make(Class<X> type, X def) {
         KeyMaker<X> result = new KeyMaker<X>();
         result.type = type;
@@ -300,36 +382,45 @@ final public class Key<Value> implements Serializable {
     }
 
 
-
+    /**
+     * Returns a Key with a <code>null</code> default value.  
+     * 
+     * @param <X>  the type of the key to create
+     * @param cls  the type of the key to create
+     * @return   the new Key
+     */
     public static <X> Key<X> makeNull(Class<X> cls) {
         return KeyMaker.makeNull(cls).toKey();
     }
 
     
-    public boolean hasOffline() {
-        return hasOffline(type);
-    }
-
-    
-    private static boolean hasOffline(Class type) {
-        if (List.class.isAssignableFrom(type)) {
-            return false;
-        }
-        if (Map.class.isAssignableFrom(type)) {
-            return false;
-        }
-        if (KeyTypes.isSimple(type)) {
-            return false;
-        }
-        return true;
-    }
-
-    
+    /**
+     * Returns the offline default value for this key.  For keys with simple
+     * types, this method always returns the same value as {@link #getType()}.
+     * 
+     * <p>If the key has a module type, then this method will return an
+     * {@link Offline} proxy for the default value.  Eg, if 
+     * {@link #getDefaultValue()} returns a {@link FileModule} instance, then
+     * this method will return a {@link Offline}&lt;FileModule&gt;.
+     * 
+     * <p>If the key has a list or map type, then this method will return the
+     * default value with any element modules replaced with {@link Offline}
+     * proxies.  Simple element values, or nested list and map element values,
+     * will be included unchanged.
+     * 
+     * @return   the offline default for this key
+     */
     public Object getOfflineDefault() {
         return offlineDef;
     }
     
 
+    /**
+     * Creates the offline default as described in {@link #getOfflineDefault}.
+     * 
+     * @param def   the default value
+     * @return     the offline default value
+     */
     private static Object makeOfflineDefault(Object def) {
         if (def == null) {
             return null;
@@ -348,6 +439,13 @@ final public class Key<Value> implements Serializable {
     }
 
 
+    /**
+     * Returns a new list with any module elements replaced by {@link Offline}
+     * proxies.
+     * 
+     * @param def   the list to convert
+     * @return      the list of offline values
+     */
     private static List<Object> makeOfflineList(Object def) {
         @SuppressWarnings("unchecked")
         List<Object> list = (List)def;
@@ -358,7 +456,14 @@ final public class Key<Value> implements Serializable {
         return Collections.unmodifiableList(result);
     }
 
-    
+
+    /**
+     * Returns a new map with any module elements replaced by {@link Offline}
+     * proxies.
+     * 
+     * @param def   the map to convert
+     * @return      the map with offline values
+     */
     private static Map<String,Object> makeOfflineMap(Object def) {
         @SuppressWarnings("unchecked")
         Map<String,Object> map = (Map)def;
@@ -372,12 +477,25 @@ final public class Key<Value> implements Serializable {
     }
 
     
-    // Preserve singleton status 
+    /**
+     * Custom serialization to preserve Key field singleton status.
+     * 
+     * @return  the Key with this Key's owner and fieldName that was 
+     *    actually registered with the KeyManager
+     */
     private Object readResolve() {
         return KeyManager.getKeys(owner).get(fieldName);
     }
 
 
+    /**
+     * Casts this Key to a key with the specified type.
+     * 
+     * @param <T>   the type to cast to
+     * @param cls   the type to cast to
+     * @return   this key, cast to that type
+     * @throws   ClassCastException  if cls is not actually the type of this Key
+     */
     @SuppressWarnings("unchecked")
     public <T> Key<T> cast(Class<T> cls) {
         if (cls != type) {

@@ -1,20 +1,25 @@
 /**
- * Defines processes that rely on context-sensitive state.  The 
+ * Defines modules that rely on context-sensitive state.  The 
  * {@link StateProvider} interface defines a generic mechanism for retrieving
  * context-sensitive properties from an object representing the context.
- * The {@link StateProcessor} interface defines a process that relies on
+ * The {@link Module} interface defines a process that relies on
  * a StateProvider for context.
  * 
  * <p>The point of this package is to make it easy for developers to define the 
  * properties that a context-sensitive process needs.  The properties are
  * defined by creating {@link Key} fields and registering them with the
- * static {@link KeyManager}.  
+ * static {@link KeyManager}.  See {@link Key} and {@link KeyMaker} for more
+ * information about defining and registering keys, and see {@link Module}
+ * for how to build a context-sensitive configurable module.
  * 
- * <p>The {@link ExampleConcreteProcessor} exists for unit testing purposes,
- * but it does provide an example of what a concrete context-sensitive 
- * processor would look like.  Much better examples exist over in 
- * {@link org.archive.modules.extractor}, which implements processes that 
- * extract links from documents.
+ * <p>This package is used as a building block for the 
+ * {@link org.archive.settings} package, which is used to configure the
+ * Heritrix web crawler. but modules defined using this package
+ * can be used independently of the {@link org.archive.settings} system.
+ * 
+ * <p>The {@link FileModule} class provides a simple example of a configurable
+ * module.  More complex examples can be found in the 
+ * org.archive.crawler.modules maven2 subproject.
  * 
  * <h2>Rationales</h2>
  * 

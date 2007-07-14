@@ -25,12 +25,29 @@ package org.archive.state;
 
 import java.util.Map;
 
+
+/**
+ * FIXME: This class was born when the KeyManager kept track of elaborate
+ * dependency information, as well as the list of keys.  Since it's now just
+ * a list of keys, this class can probably be eliminated.
+ * 
+ * @author pjack
+ *
+ */
 class KeyManagerData {
 
-    
+
+    /**
+     * Maps a key name to the key.
+     */
     final Map<String,Key<Object>> keys;
     
     
+    /**
+     * Constructor.
+     * 
+     * @param keys   the map of keys for a particular class.
+     */
     public KeyManagerData(Map<String,Key<Object>> keys) {
         this.keys = keys;
     }
