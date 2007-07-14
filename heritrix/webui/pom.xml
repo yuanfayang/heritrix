@@ -50,15 +50,15 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>jetty</groupId>
+      <groupId>tomcat</groupId>
       <artifactId>jasper-compiler</artifactId>
-      <version>4.2.20RC0</version>
+      <version>5.5.15</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>jetty</groupId>
+      <groupId>tomcat</groupId>
       <artifactId>jasper-runtime</artifactId>
-      <version>4.2.20RC0</version>
+      <version>5.5.15</version>
       <scope>test</scope>
     </dependency>
     
