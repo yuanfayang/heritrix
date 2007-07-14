@@ -36,11 +36,11 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
         <div style="float:right;padding-right:50px;">
             <b>Memory</b><br>
             <div style="padding-left:20px">
-                <%=((Long)memory.get("used"))/1024%> KB 
+                <%=((Long)memory.get("used"))/1024L%> KB 
                 used<br>
-                <%=((Long)memory.get("committed"))/1024%> KB
+                <%=((Long)memory.get("committed"))/1024L%> KB
                 committed heap<br>
-                <%=((Long)memory.get("max"))/1024%> KB
+                <%=((Long)memory.get("max"))/1024L%> KB
                 max heap
             </div>
         </div>
