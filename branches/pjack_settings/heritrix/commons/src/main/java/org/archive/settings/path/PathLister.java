@@ -25,12 +25,14 @@ package org.archive.settings.path;
 
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.archive.settings.Offline;
 import org.archive.settings.Resolved;
+import org.archive.settings.SheetManager;
 import org.archive.settings.TypedList;
 import org.archive.settings.TypedMap;
 import org.archive.settings.Sheet;
@@ -65,7 +67,8 @@ public class PathLister {
     
     /** Maps objects that were already seen to the path where they were seen. */
     final private IdentityHashMap<Object,String> alreadySeen;
-    
+
+    final private boolean rootOnly;
     
     /**
      * Constructor.  Private so the API is a static utility library.
@@ -76,11 +79,12 @@ public class PathLister {
      * @param c         the consumer 
      * @param resolve   true to use "resolve" mode, false to use "get" mode
      */
-    private PathLister(Sheet sheet, PathListConsumer c, boolean resolve) {
+    private PathLister(Sheet sheet, PathListConsumer c, boolean resolve, boolean rootOnly) {
         this.startSheet = sheet;
         this.resolve = resolve;
         this.consumer = c;
         this.alreadySeen = new IdentityHashMap<Object,String>();
+        this.rootOnly = rootOnly;
 //        alreadySeen.put(
 //                sheet.getSheetManager().getManagerModule(),
 //                SheetManager.MANAGER.getFieldName());
@@ -94,10 +98,45 @@ public class PathLister {
     private void list() {
         Object start = startSheet.getSheetManager().getManagerModule();
         Class type = Offline.getType(start);
-        Collection<Key<Object>> keys = KeyManager.getKeys(type).values();
-        for (Key<Object> k: keys) {            
-            this.handleKey("", start, k);
+        if (!rootOnly) {
+            // Consume manager first thing.
+            Sheet global = startSheet.getSheetManager().getGlobalSheet();
+            List<Sheet> globalList = Collections.singletonList(global);
+            consume("manager", globalList, start, type);
+            alreadySeen.put(start, SheetManager.MANAGER.getFieldName());
+
+            // Consume everythign EXCEPT the root key.
+            Collection<Key<Object>> keys = KeyManager.getKeys(type).values();
+            for (Key<Object> k: keys) {
+                Object ref = k;
+                if (ref != SheetManager.ROOT) {
+                    this.handleKey("", start, k);
+                }
+            }
+        } else {
+            // Mark these as already seen so they're not listed if referenced
+            // from root: settings.
+            Collection<Key<Object>> keys = KeyManager.getKeys(type).values();
+            for (Key<Object> k: keys) {
+                Sheet global = startSheet.getSheetManager().getGlobalSheet();
+                Object ref = k;
+                if (ref != SheetManager.ROOT) {
+                    Object v;
+                    if (startSheet.getSheetManager().isOnline()) {
+                        v = global.get(start, k);
+                    } else {
+                        v = global.checkOffline((Offline)start, k);
+                    }
+                    alreadySeen.put(v, k.getFieldName());
+                }
+            }
         }
+        
+        // Finally consume ROOT.
+        Key k = SheetManager.ROOT;
+        @SuppressWarnings("unchecked")
+        Key<Object> k2 = k;
+        handleKey("", start, k2);
     }
 
 
@@ -109,8 +148,8 @@ public class PathLister {
      * @param sheet     the sheet whose settings to list
      * @param consumer  the consumer for the listed settings
      */
-    public static void resolveAll(Sheet sheet, PathListConsumer consumer) {
-        new PathLister(sheet, consumer, true).list();
+    public static void resolveAll(Sheet sheet, PathListConsumer consumer, boolean rootOnly) {
+        new PathLister(sheet, consumer, true, rootOnly).list();
     }
 
 
@@ -120,8 +159,8 @@ public class PathLister {
      * @param sheet      the sheet whose settings to list
      * @param consumer   the consumer for the listed settings
      */
-    public static void getAll(SingleSheet sheet, PathListConsumer consumer) {
-        new PathLister(sheet, consumer, false).list();
+    public static void getAll(SingleSheet sheet, PathListConsumer consumer, boolean rootOnly) {
+        new PathLister(sheet, consumer, false, rootOnly).list();
     }
 
 

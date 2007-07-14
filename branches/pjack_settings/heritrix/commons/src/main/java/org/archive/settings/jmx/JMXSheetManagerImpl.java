@@ -135,7 +135,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     public synchronized CompositeData[] getAll(String name) {
         SingleSheet sheet = (SingleSheet)getSheet(name);
         JMXPathListConsumer c = new JMXPathListConsumer();
-        PathLister.getAll(sheet, c);
+        PathLister.getAll(sheet, c, true);
         return c.getData();
     }
 
@@ -143,7 +143,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     public synchronized CompositeData[] resolveAll(String name) {
         Sheet sheet = getSheet(name);
         JMXPathListConsumer c = new JMXPathListConsumer();
-        PathLister.resolveAll(sheet, c);
+        PathLister.resolveAll(sheet, c, false);
         return c.getData();
     }
 
@@ -320,7 +320,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         StringWriter sw = new StringWriter();
         
         FilePathListConsumer c = new FilePathListConsumer(sw);
-        PathLister.resolveAll(ss, c);
+        PathLister.resolveAll(ss, c, false);
         return sw.toString();
     }
 
@@ -330,7 +330,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         SingleSheet ss = getSingleSheet(sheetName);
         StringWriter sw = new StringWriter();
         FilePathListConsumer c = new FilePathListConsumer(sw);
-        PathLister.getAll(ss, c);
+        PathLister.getAll(ss, c, true);
         return sw.toString();
     }
 
@@ -384,7 +384,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     public CompositeData[] findConfig(String uri) {
         Sheet sheet = manager.findConfig(uri);
         JMXPathListConsumer c = new JMXPathListConsumer();
-        PathLister.resolveAll(sheet, c);
+        PathLister.resolveAll(sheet, c, false);
         return c.getData();        
     }
     
