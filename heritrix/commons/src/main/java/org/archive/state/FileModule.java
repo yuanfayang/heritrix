@@ -286,10 +286,9 @@ implements Initializable, Serializable, Module {
 
         
         public boolean allowed(FileModule module) {
-            if (module == null) {
-                return true;
-            }
-            return module.getFile().isDirectory();
+            // FIXME: This was never going to work, delete this class and
+            // use standard key.
+            return true;
         }
 
     }
