@@ -91,10 +91,13 @@
 
 
 <!-- Uncomment below to actually compile all the JSP. -->
-<!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>jspc-maven-plugin</artifactId>
+                <configuration>
+	                <source>1.5</source>
+	                <target>1.5</target>
+	            </configuration>
                 <executions>
                     <execution>
                         <id>jspc</id>
@@ -111,7 +114,6 @@
                     <webXml>${basedir}/target/jspweb.xml</webXml>
                 </configuration>
             </plugin>
--->
     </plugins>
 
   </build>
