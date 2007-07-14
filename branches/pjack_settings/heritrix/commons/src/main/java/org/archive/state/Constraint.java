@@ -23,6 +23,8 @@
  */
 package org.archive.state;
 
+import java.io.Serializable;
+
 
 /**
  * Constraints values for properties.
@@ -31,7 +33,7 @@ package org.archive.state;
  *
  * @param <T>   the type of the values to constrain
  */
-public interface Constraint<T> {
+public interface Constraint<T> extends Serializable {
 
     /**
      * Returns true if the given value is legal.

@@ -25,15 +25,45 @@ package org.archive.state;
 
 import java.util.regex.Pattern;
 
+
+/**
+ * Only allows strings that match a regular expression.
+ * 
+ * @author pjack
+ */
 public class PatternConstraint implements Constraint<String> {
 
-    final private Pattern pattern;
+    /**
+     * For serialization. 
+     */
+    private static final long serialVersionUID = 1L;
+
     
+    /**
+     * The pattern that string values must match to pass this constraint.
+     */
+    final private Pattern pattern;
+
+    
+    /**
+     * Constructor.
+     * 
+     * @param p   the pattern that string values must match to pass this
+     *     constraint.
+     */
     public PatternConstraint(Pattern p) {
+        if (p == null) {
+            throw new IllegalArgumentException("Pattern may not be null.");
+        }
         this.pattern = p;
     }
     
-    
+
+    /**
+     * Returns true if the given string matches this constraint's pattern.
+     * 
+     * @return  true if the given string matches this constraint's pattern
+     */
     public boolean allowed(String s) {
         return pattern.matcher(s).matches();
     }

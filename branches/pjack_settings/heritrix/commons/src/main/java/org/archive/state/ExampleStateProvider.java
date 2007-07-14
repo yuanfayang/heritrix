@@ -29,11 +29,7 @@ import java.util.Map;
 
 
 /**
- * Example of a StateProvider.  This implementation just stores keys and
- * values in an ordinary HashMap.
- *
- * <p>This class really only exists for unit testing purposes.  FIXME:
- * We really need a separate test source directory for this sort of thing.
+ * Default implementations of StateProvider that keeps all settings in memory.
  *
  * @author pjack
  */
@@ -41,7 +37,7 @@ public class ExampleStateProvider implements StateProvider {
 
 
     /**
-     * The keys and their values.
+     * Maps a module to the key/value settings for that module.
      */
     private Map<Object,Map<Key,Object>> values 
     = new IdentityHashMap<Object,Map<Key,Object>>();
@@ -77,7 +73,8 @@ public class ExampleStateProvider implements StateProvider {
      * Sets the value for the given key.
      * 
      * @param <T>  the type of value to set
-     * @param key   the key whose value to set
+     * @param module  the module whose value to set
+     * @param key     one of that module's keys
      * @param value  the value to set
      */
     public <T> void set(Object module, Key<T> key, T value) {
