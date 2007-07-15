@@ -75,6 +75,9 @@ public class Home {
             ServletContext sc, 
             HttpServletRequest request, 
             HttpServletResponse response) {
+        if(allCrawlers.isEmpty()) {
+            tryLocal(sc);
+        }
         request.setAttribute("crawlers", allCrawlers);
         request.setAttribute("jndiWarning", jndiWarning);
         Misc.forward(request, response, "page_home.jsp");
@@ -171,7 +174,22 @@ public class Home {
         
         showHome(sc, request, response);
     }
-            
+    
+    protected static void tryLocal(ServletContext sc) {
+        Crawler crawler = new Crawler();
+        crawler.setHost("ignored");
+        crawler.setPort(-1); // special flag value for 'local' 
+        crawler.setUsername("ignored");
+        crawler.setPassword("ignored");
+        
+        // Discover all crawlers.
+        Collection<Crawler> all = crawler.testConnection();
+        
+        // Add the discovered crawlers.
+        manualCrawlers.addAll(all);
+
+        populateCrawlers(sc);
+    }
 
     public static void removeCrawler(
             ServletContext sc, 

@@ -66,9 +66,7 @@ public class Misc {
             int port, 
             String username,
             String password) {
-        return (port == -1) 
-                && username.equals("local")
-                && password.equals("local");
+        return port == -1;
     }
     
     
