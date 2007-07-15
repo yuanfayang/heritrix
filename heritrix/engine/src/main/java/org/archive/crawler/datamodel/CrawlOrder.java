@@ -31,14 +31,17 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.archive.modules.net.RobotsHonoringPolicy;
+import org.archive.net.UURIFactory;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
 import org.archive.state.Module;
+import org.archive.state.PatternConstraint;
 
 
 /**
@@ -134,21 +137,8 @@ public class CrawlOrder implements Module, Serializable {
     final public static Key<Integer> RECORDER_IN_BUFFER_BYTES = 
         Key.make(65536);
 
-            
-    /**
-     * HTTP headers. Information that will be used when constructing the HTTP 
-     * headers of the crawler's HTTP requests.
-     */
-    @Immutable
-    final public static Key<Map<String,String>> HTTP_HEADERS
-     = makeHttpHeaders();
-
-
     final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
         Key.makeNull(RobotsHonoringPolicy.class);
-
-
-
 
     /**
      * Optional. Points at recover log (or recover.gz log) OR the checkpoint 
@@ -168,7 +158,23 @@ public class CrawlOrder implements Module, Serializable {
     final public static Key<Boolean> RECOVER_RETAIN_FAILURES = 
         Key.make(false);
 
-
+    final public static Key<String> HTTP_USER_AGENT =
+        KeyMaker
+            .make("Mozilla/5.0 (compatible; heritrix/@VERSION@ +@OPERATOR_CONTACT_URL@)")
+            .addConstraint(new PatternConstraint(Pattern.compile("^.*\\+@OPERATOR_CONTACT_URL@.*$")))
+            .toKey();
+    
+    final public static Key<String> OPERATOR_FROM =
+        KeyMaker
+            .make("@OPERATOR_FROM_EMAIL@")
+            .addConstraint(new PatternConstraint(Pattern.compile("^[-\\w]+@[-\\w]+\\.[-\\w\\.]+$")))
+            .toKey();
+    
+    final public static Key<String> OPERATOR_CONTACT_URL =
+        KeyMaker
+            .make("@OPERATOR_CONTACT_URL@")
+            .addConstraint(new PatternConstraint(UURIFactory.RFC2396REGEX))
+            .toKey();
     
     static {
         KeyManager.addKeys(CrawlOrder.class);
@@ -179,22 +185,4 @@ public class CrawlOrder implements Module, Serializable {
      */
     public CrawlOrder() {
     }
-
-
-    private static Key<Map<String,String>> makeHttpHeaders() {
-        Map<String,String> hh = new HashMap<String,String>();
-        hh.put("user-agent", 
-         "Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE)");
-        hh.put("from", "CONTACT_EMAIL_ADDRESS_HERE");
-        hh = Collections.unmodifiableMap(hh);
-        
-        KeyMaker<Map<String,String>> km = KeyMaker.makeMap(String.class);
-        km.def = hh;
-        
-        // FIXME: Add header constraints to enforce valid email etc
-        
-        return new Key<Map<String,String>>(km);
-    }
-
-
 }

@@ -46,10 +46,10 @@ public class UserAgentSelfTest extends SelfTestBase {
 
     
     final private static String EXPECTED_UA = 
-        "Mozilla/5.0 (compatible; heritrix/11 +http://www.archive.org)";
+        "Mozilla/5.0 (compatible; heritrix/@VERSION@ +http://example.com/CrawlInfoPage)";
     
     final private static String EXPECTED_FROM = 
-        "info@archive.org";
+        "dummy@example.com";
     
     @Override
     protected void verify() throws Exception {
