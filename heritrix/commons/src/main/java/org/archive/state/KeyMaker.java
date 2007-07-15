@@ -118,7 +118,18 @@ public class KeyMaker<T> {
         // allow empty constraints        
     }
     
-
+    /**
+     * Adds a constraint, returning this KeyMaker (for 
+     * chained invocations). 
+     * 
+     * @return  this KeyMaker
+     */
+    public KeyMaker<T> addConstraint(Constraint<T> c) {
+        constraints.add(c);
+        return this;
+    }
+    
+    
     /**
      * Makes a key, then resets this KeyMaker.
      * 
