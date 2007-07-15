@@ -115,6 +115,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                     + profilesDir.getAbsolutePath());
         }
         this.jobsDir = new File(config.getJobsDirectory());
+        this.jobsDir.mkdirs();
         this.jobs = new HashMap<String,CrawlController>();
         this.oname = JMXModuleListener.nameOf(DOMAIN, NAME, this);
         
