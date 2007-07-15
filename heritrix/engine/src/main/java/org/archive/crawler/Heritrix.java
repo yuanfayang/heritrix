@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
@@ -198,8 +199,16 @@ public class Heritrix {
 
         if (cl.hasOption('b')) {
             String hosts = cl.getOptionValue('b');
-            List<String> list = Arrays.asList(hosts.split(","));
+            List<String> list;
+            if("/".equals(hosts)) {
+                list = new ArrayList<String>(); 
+            } else {
+                list = Arrays.asList(hosts.split(","));
+            }
             webConfig.getHosts().addAll(list);
+        } else {
+            // default: only localhost
+            webConfig.getHosts().add("localhost");
         }
         if (cl.hasOption('l')) {
             int port = Integer.parseInt(cl.getOptionValue('l'));
