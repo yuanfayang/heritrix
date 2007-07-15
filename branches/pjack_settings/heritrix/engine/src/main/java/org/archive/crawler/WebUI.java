@@ -51,9 +51,6 @@ public class WebUI {
     
     public WebUI(WebUIConfig config) {
         this.hosts = new HashSet<String>(config.getHosts());
-        if (this.hosts.isEmpty()) {
-            hosts.add("localhost");
-        }
         this.port = config.getPort();
         this.pathToWAR = config.getPathToWAR();
         if (this.pathToWAR == null) {
@@ -85,6 +82,13 @@ public class WebUI {
         for (String host: hosts) {
             SocketConnector sc = new SocketConnector();
             sc.setHost(host);
+            sc.setPort(port);
+            server.addConnector(sc);
+        }
+        
+        if(hosts.isEmpty()) {
+            // wildcard connector
+            SocketConnector sc = new SocketConnector();
             sc.setPort(port);
             server.addConnector(sc);
         }
