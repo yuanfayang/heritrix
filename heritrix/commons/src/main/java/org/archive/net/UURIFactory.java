@@ -127,7 +127,7 @@ public class UURIFactory extends URI {
      * regex characters and we allow a URI made of a fragment only (Added extra
      * group so indexing is off by one after scheme).
      */
-    final static Pattern RFC2396REGEX = Pattern.compile(
+    final public static Pattern RFC2396REGEX = Pattern.compile(
         "^(([^:/?#]+):)?((//([^/?#]*))?([^?#]*)(\\?([^#]*))?)?(#(.*))?");
     //    12            34  5          6       7   8          9 A
     //              2 1             54        6          87 3      A9
