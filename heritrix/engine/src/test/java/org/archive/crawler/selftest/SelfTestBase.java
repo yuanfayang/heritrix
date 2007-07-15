@@ -159,8 +159,6 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             open();
             verifyCommon();
             verify();
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             try {
                 close();
