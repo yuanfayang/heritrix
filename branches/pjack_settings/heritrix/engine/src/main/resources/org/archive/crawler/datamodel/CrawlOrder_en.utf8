@@ -63,9 +63,19 @@ Percentage of heap to allocate to BerkeleyDB JE cache. Default of zero means
 no preference (accept BDB's default, usually 60%, or the je.maxMemoryPercent 
 property value).
 
-http-headers-description
-HTTP headers. Information that will be used when constructing the HTTP headers 
-of the crawler's HTTP requests.
+http-user-agent-description:
+The user-agent to use for the crawler. Must include the string
+@OPERATOR_CONTACT_URL@, which will be replaced with the contact
+URL given in that other setting.
+
+operator-contact-url-description:
+An HTTP URL describing the crawl in progress, which should at a minimum
+provide a way to contact the crawl operator for cases where the crawler
+is causing problems on target sites. 
+
+operator-from-description:
+An email address for contacting the crawl operator. Will be sent as the 
+'From' header on crawler HTTP requests. 
 
 frontier-description:
 The frontier to use for the crawl.

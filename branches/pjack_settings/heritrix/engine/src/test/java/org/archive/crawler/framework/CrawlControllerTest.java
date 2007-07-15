@@ -91,12 +91,11 @@ public class CrawlControllerTest extends ModuleTestBase {
         state.mkdirs();
         
         CrawlOrder order = new CrawlOrder();
-        Map<String,String> headers = new SettingsMap<String>(def, String.class);
-        headers.put("user-agent", "Heritrix (+http://www.archive.org) abc");
-        headers.put("from", "info@archive.org");
-        
+                
         def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
-        def.set(order, CrawlOrder.HTTP_HEADERS, headers);
+        def.set(order, CrawlOrder.HTTP_USER_AGENT, "Heritrix (+@OPERATOR_CONTACT_URL@) abc");
+        def.set(order, CrawlOrder.OPERATOR_CONTACT_URL, "http://www.example.com/OurCrawlDetails");
+        def.set(order, CrawlOrder.OPERATOR_FROM, "complain@example.com");
         
         BdbModule bdb = new BdbModule();
         def.set(bdb, BdbModule.DIR, state.getAbsolutePath());

@@ -96,13 +96,6 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         ArchiveUtils.classnameBasedUID(CrawlController.class,1);
 
     
-    private static String ACCEPTABLE_USER_AGENT =
-        "\\S+.*\\(.*\\+http(s)?://\\S+\\.\\S+.*\\).*";
-
-    /**
-     * Regex for acceptable from address.
-     */
-    private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
 
     
     @Immutable
@@ -299,11 +292,6 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         this.manifest = new StringBuffer();
         String onFailMessage = "";
         try {
-            onFailMessage = "You must set the User-Agent and From HTTP" +
-            " header values to acceptable strings. \n" +
-            " User-Agent: [software-name](+[info-url])[misc]\n" +
-            " From: [email-address]\n";
-            checkUserAgentAndFrom();
 
             onFailMessage = "Unable to setup disk";
             
@@ -1483,42 +1471,17 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         SingleSheet def = sheetManager.getGlobalSheet();
         return def.get(module, key);
     }
-
-    
-    
-    
-    public void checkUserAgentAndFrom() throws FatalConfigurationException {
-        Map<String,String> hh = get(order, CrawlOrder.HTTP_HEADERS);
-        String userAgent = hh.get("user-agent");
-        String from = hh.get("from");
-        boolean valid = true;
-        if (userAgent == null) {
-            valid = false;
-        }
-        if (from == null) {
-            valid = false;
-        }
-        if (valid && !userAgent.matches(ACCEPTABLE_USER_AGENT)) {
-            valid = false;
-        }
-        if (valid && !from.matches(ACCEPTABLE_FROM)) {
-            valid = false;
-        }
-
-        if (!valid) {
-            throw new FatalConfigurationException("unacceptable user-agent " +
-                    " or from (Reedit your order file).");
-        }
-    }
-
     
     public String getUserAgent() {
-        return sheetManager.get(order, CrawlOrder.HTTP_HEADERS).get("user-agent");
+        // TODO: reduce the number of times this regex-replace is redundantly done
+        return sheetManager.get(order, CrawlOrder.HTTP_USER_AGENT)
+            .replaceFirst("@OPERATOR_CONTACT_URL@", 
+                    sheetManager.get(order, CrawlOrder.OPERATOR_CONTACT_URL));
     }
     
     
     public String getFrom() {
-        return sheetManager.get(order, CrawlOrder.HTTP_HEADERS).get("from");
+        return sheetManager.get(order, CrawlOrder.OPERATOR_FROM);
     }
 
 
