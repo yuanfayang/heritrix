@@ -77,7 +77,7 @@ public interface CrawlJobManager extends Closeable {
 
     
     @Operation(desc="Loads a profile for editing.")
-    public void openProfile(
+    public String getProfile(
             
             @Parameter(name="profile", desc="The name of the profile to load.")
             String profile
