@@ -280,7 +280,14 @@ public class SingleSheet extends Sheet {
         T v = key.getType().cast(value);
         for (Constraint<T> c: key.getConstraints()) {
             if (!c.allowed(v)) {
-                throw new IllegalArgumentException("IllegalValue");
+                // if not online, complete change to invalid value anyway
+                if(!getSheetManager().isOnline()) {
+                    set2(module, key, value);
+                }
+                throw new IllegalArgumentException(
+                    "Value '" + v + "' disallowed for " 
+                    + key.getFieldName() +" by constraint "
+                    + c);
             }
         }
         
