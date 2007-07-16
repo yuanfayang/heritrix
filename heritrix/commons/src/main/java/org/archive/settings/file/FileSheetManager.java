@@ -725,8 +725,14 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
 
         File saved = new File(sheetsDir, ss.getName() + SINGLE_EXT);
-        if (!temp.renameTo(saved)) {
-            LOGGER.severe("Could not rename temp file for " + ss.getName());
+        try {
+            // Copy temp -> Saved
+            org.apache.commons.io.FileUtils.copyFile(temp, saved, true);
+            // Remove temp
+            org.apache.commons.io.FileUtils.forceDelete(temp);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, 
+                    "Could not rename temp file for " + ss.getName(), e);
         }
     }
 
@@ -754,8 +760,14 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
 
         File saved = new File(sheetsDir, sb.getName() + BUNDLE_EXT);
-        if (!temp.renameTo(saved)) {
-            LOGGER.severe("Could not rename temp file for " + sb.getName());
+        try {
+            // Copy temp -> Saved
+            org.apache.commons.io.FileUtils.copyFile(temp, saved, true);
+            // Remove temp
+            org.apache.commons.io.FileUtils.forceDelete(temp);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, 
+                    "Could not rename temp file for " + sb.getName(), e);
         }
     }
 
