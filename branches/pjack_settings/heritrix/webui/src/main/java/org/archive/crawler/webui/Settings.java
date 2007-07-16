@@ -36,6 +36,7 @@ import java.util.Set;
 
 import javax.servlet.jsp.JspWriter;
 
+import org.apache.commons.lang.StringUtils;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.path.PathChanger;
@@ -551,7 +552,8 @@ public class Settings {
 
     
     public boolean canOverride(Setting setting) {
-        if (!setting.getPath().startsWith(SheetManager.ROOT.getFieldName())) {
+        if (!setting.getPath().startsWith(StringUtils.defaultString(
+                SheetManager.ROOT.getFieldName()))) {
             return false;
         }
         Key key = getKey(setting);
