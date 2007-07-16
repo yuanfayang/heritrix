@@ -300,6 +300,6 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     }
     
     protected String prefixFrom(String uri) {
-        return SurtPrefixSet.prefixFromPlain(uri);
+        return SurtPrefixSet.prefixFromPlainForceHttp(uri);
     }
 }

@@ -474,7 +474,7 @@ public class Sheets {
         try {
             for (String s = br.readLine(); s != null; s = br.readLine()) {
                 if (!s.startsWith("#") && s.trim().length() > 0) {
-                    String surt = Misc.toSURT(s);
+                    String surt = Misc.toSURTPrefix(s);
                     if (add) {
                         sheetManager.associate(sheet, surt);
                     } else {

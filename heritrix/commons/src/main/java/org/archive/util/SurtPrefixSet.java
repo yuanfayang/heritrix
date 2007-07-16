@@ -194,7 +194,7 @@ public class SurtPrefixSet extends TreeSet<String> {
      * @param u String of URI or hostname
      */
     private void addFromPlain(String u) {
-        u = prefixFromPlain(u);
+        u = prefixFromPlainForceHttp(u);
         add(u);
     }
 
@@ -204,32 +204,16 @@ public class SurtPrefixSet extends TreeSet<String> {
      * be interpreted as URIs. 
      * 
      * UURI 'fixup' is applied to the URI that is built. 
+     * 
+     * HTTPS URIs are changed to HTTP as a convenience for the usual
+     * preferred common-treatment. 
      *
      * @param u URI or almost-URI to consider
      * @return implied SURT prefix form
      */
-    public static String prefixFromPlain(String u) {
-        u = ArchiveUtils.addImpliedHttpIfNecessary(u);
+    public static String prefixFromPlainForceHttp(String u) {
+        u = SURT.prefixFromPlain(u);
         u = coerceFromHttpsForComparison(u);
-        boolean trailingSlash = u.endsWith("/");
-        // ensure all typical UURI cleanup (incl. IDN-punycoding) is done
-        try {
-            u = UURIFactory.getInstance(u).toString();
-        } catch (URIException e) {
-            e.printStackTrace();
-            // allow to continue with original string uri
-        }
-        // except: don't let UURI-fixup add a trailing slash
-        // if it wasn't already there (presence or absence of
-        // such slash has special meaning specifying implied
-        // SURT prefixes)
-        if(!trailingSlash && u.endsWith("/")) {
-            u = u.substring(0,u.length()-1);
-        }
-        // convert to full SURT
-        u = SURT.fromURI(u);
-        // truncate to implied prefix
-        u = SurtPrefixSet.asPrefix(u);
         return u;
     }
 
@@ -269,7 +253,7 @@ public class SurtPrefixSet extends TreeSet<String> {
      * @param s String to work on.
      * @return As prefix.
      */
-    private static String asPrefix(String s) {
+    public static String asPrefix(String s) {
         // Strip last path-segment, if more than 3 slashes
         s = s.replaceAll("^(.*//.*/)[^/]*","$1");
         // Strip trailing ")", if present and NO path (no 3rd slash).
@@ -399,7 +383,7 @@ public class SurtPrefixSet extends TreeSet<String> {
             if(line.indexOf("#")>0) line=line.substring(0,line.indexOf("#"));
             line = line.trim();
             if(line.length()==0) continue;
-            out.println(prefixFromPlain(line));
+            out.println(prefixFromPlainForceHttp(line));
         }
         br.close();
         out.close();

@@ -47,6 +47,7 @@ import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.FileModule;
 import org.archive.util.SURT;
+import org.archive.util.SurtPrefixSet;
 
 
 /**
@@ -270,7 +271,7 @@ public class Misc {
      * like a SURT -- if it starts with xxx://( -- then the input is returned
      * unchanged.
      * 
-     * <p>If the input doesn't start with a scheme, then http is assumed.
+     * <p>TODO: ? If the input doesn't start with a scheme, then http is assumed.
      * 
      * @param url
      * @return
@@ -280,8 +281,23 @@ public class Misc {
         if (SURT_PATTERN.matcher(input).find()) {
             return input;
         }
-        
-        return SURT.fromURI(input);
+        return SURT.fromPlain(input);
+    }
+    
+    /**
+     * Converts a line of user input to a SURT prefix. Leaves lines
+     * already looking like SURTs unchanged (so that expert users
+     * can supply exact, atypical SURT prefixes). 
+     * 
+     * @param url
+     * @return
+     */
+    public static String toSURTPrefix(String input) {
+        // If it already looks like a surt, return it unchanged.
+        if (SURT_PATTERN.matcher(input).find()) {
+            return input;
+        }
+        return SURT.prefixFromPlain(input);
     }
     
 }
