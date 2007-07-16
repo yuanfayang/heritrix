@@ -275,6 +275,13 @@ public class SingleSheet extends Sheet {
             throw new IllegalArgumentException(
                     "Attempt to set key value on null module.");
         }
+        
+        if (value == null) {
+            // Skip constraint checking because we're removing a setting.
+            set2(module, key, value);
+            return;
+        }
+        
         Class vtype = (value == null) ? null: value.getClass();
         validateTypes(module, key, vtype);
         T v = key.getType().cast(value);
