@@ -7,6 +7,7 @@
 
 { // Start a new local variable scope so we don't clobber other pages.
 
+String the_headline = (String)request.getAttribute("headline"); 
 Crawler the_crawler = (Crawler)request.getAttribute("crawler");
 String the_job = (String)request.getAttribute("job");
 CrawlJob crawljob = null;
@@ -21,14 +22,23 @@ String the_sheet = (String)request.getAttribute("sheet");
 
 %>
 
+<div style="float:right">
+<a href="<%=request.getContextPath()%>/help/do_show_about.jsp">About</a><br/>
+<a href="<%=request.getContextPath()%>/help/do_show_help.jsp">Help</a>
+</div>
+
 <table>
 <tr>
 <td>
 <a border="0" href="<%=request.getContextPath()%>/index.jsp">
-<img border="0" src="<%=request.getContextPath()%>/images/logo.gif" height="37" width="145">
+<img border="0" src="<%=request.getContextPath()%>/images/logo.gif" height="37" width="145" hspace="10">
 </a>
 </td>
 <td>
+
+<% if (the_headline != null) { %>
+    <h1><%=the_headline %></h1>
+<% } %>
 
 <% if (the_crawler != null) { %>
     <b>Crawler:</b> 
@@ -59,7 +69,15 @@ String the_sheet = (String)request.getAttribute("sheet");
 <% } %>
 
 <% if (the_profile != null) { %>
-<b>Profile:</b> <%=Text.html(the_profile)%><br/>
+<b>Profile:</b> <%=Text.html(the_profile)%>
+<%
+    Integer tabObject = (Integer)request.getAttribute("tab");
+    int tab = (tabObject == null) ? -1 : tabObject.intValue();
+    String the_qs = Text.jobQueryString(request);
+%>
+    <a class="rowLink" href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=the_qs%>">sheets</a>
+    <a class="rowLink" href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=the_qs%>">seeds</a>
+    <br/>
 <% } %>
 
 <% if (the_sheet != null) { %>
@@ -69,35 +87,5 @@ String the_sheet = (String)request.getAttribute("sheet");
 </td>
 </table>
 
-
-
-<% if (the_profile != null) { 
-     Integer tabObject = (Integer)request.getAttribute("tab");
-     int tab = (tabObject == null) ? -1 : tabObject.intValue();
-     String the_qs = Text.jobQueryString(request);
-%>
-
-<table border="0" cellspacing="0" cellpadding="0" width="100%" height="20">
-  <tr>
-    <td class="jobnav_seperator">&nbsp;</td>
-    <td class="jobnav<%=tab==1?"_selected":""%>">
-      <a href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=the_qs%>" class="tab_text<%=tab==1?"_selected":""%>">Sheets</a>
-    </td>
-    <td class="jobnav_seperator">&nbsp;</td>
-    <td class="jobnav<%=tab==2?"_selected":""%>">
-      <a href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=the_qs%>" class="tab_text<%=tab==1?"_selected":""%>">Seeds</a>
-    </td>
-    
-    <td class="jobnav_seperator" style="width:100%;">
-    &nbsp;
-    </td>
-    
-  </tr>
-</table>
-
-<% } // end if %>
-
-
-
-
+<hr/>
 <% } // end of local variable scope %>

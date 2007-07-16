@@ -29,91 +29,77 @@ Collection<CrawlJob> completed = crawler.getJobs(State.COMPLETED);
 
 <%@include file="/include/nav.jsp"%>
 
+<h2>Active Jobs:</h2>
 <% if (active.isEmpty()) { %>
-    <p>There are no active jobs on <%=Text.html(crawler.getLegend())%>.
+    <span class="placeholder">There are no active jobs on 
+    <%=Text.html(crawler.getLegend())%>.</span>
 <% } else { %>
-
-    <h3>Active Jobs:</h3>
-    
-    <table class="info">
-    <% boolean alt = false; %>
     <% for (CrawlJob job: active) { %>
+    <div class="multilineItem">
     <% String jqs = crawler.getQueryString() + "&job=" + job.getName(); %>
-    <tr <%=alt?"class=\"infoalt\"":""%>>
-    <td>
+    <span class="label">Job:</span>
         <%=job.getName()%>
-    </td>
-    <td>
+    <div class="itemDetails">
         <a 
+           class="rowLink" 
            title="View and control the current status for this job."
            href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=jqs%>">Console</a>
-        |
-        <a title="View or edit this profile's settings sheets."
-           href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=jqs%>">Sheets</a>
-        | 
-        Seeds | 
         <a 
+           class="rowLink" 
+           title="View or edit this job's settings sheets."
+           href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=jqs%>">Sheets</a>
+        <a 
+           class="rowLink" 
+           title="View or edit this jobs's seeds."
+           href="javascript:alert('not yet implemented')">Seeds</a>
+        <a 
+           class="rowLink" 
            title="View reports for this job."
            href="<%=request.getContextPath()%>/reports/do_show_reports.jsp?<%=jqs%>">Reports</a>
-        | 
         <a 
+           class="rowLink" 
            title="View logs for this job."
            href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
-    </td>
-    </tr>
-    <% alt = !alt; %>
+    </div>
+    </div>
     <% } %>
-    </table>
 <% } %>
 
-<h3>Profiles:</h3>
+<h2>Profiles:</h2>
 
-<table class="info">
-<% boolean alt = false; %>
-<% for (CrawlJob job: profiles) { %>
-    <tr <%=alt?"class=\"infoalt\"":""%>>
-    <td class="info">
-        <%=job.getName()%>
-    </td>
-    <% String pqs = crawler.getQueryString() + "&profile=" + job.getName(); %>
-    <td class="info">
-        <a title="View or edit this profile's settings sheets."
+<% for (CrawlJob profile: profiles) { %>
+    <div class="multilineItem">
+    <span class="label">Profile:</span> <%=profile.getName()%>
+    <div class="itemDetails">
+    <% String pqs = crawler.getQueryString() + "&profile=" + profile.getName(); %>
+        <a class="rowLink" title="View or edit this profile's settings sheets."
            href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=pqs%>">Sheets</a>
-        | 
-        <a title="View or edit this profile's seeds."
+        <a class="rowLink" title="View or edit this profile's seeds."
            href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=pqs%>">Seeds</a>
-        | 
-        Copy 
-        | 
-        <a title="Launch a new job based on this profile." 
-           href="do_show_launch_profile.jsp?<%=pqs%>">Launch</a>
-    </td>
-    </tr>
-    <% alt = !alt; %>
+        <a class="rowLink" title="Duplicate to another profile name."
+           href="javascript:alert('not yet implemented')">Duplicate</a>
+        <a class="rowLink" title="Launch a new job based on this profile." 
+           href="do_show_launch_profile.jsp?<%=pqs%>">Launch as Job</a>
+    </div>
+    </div>
 <% } %>
-</table>
 
-
+<h2>Completed Jobs:</h2>
 <% if (completed.isEmpty()) { %>
-    <p>There are no completed jobs.
+    <span class="placeholder">There are no completed jobs.</span>
 <% } else { %>
-    <h3>Completed Jobs:</h3>
-    
-    <table class="info">
-    <% alt = false; %>
     <% for (CrawlJob job: completed) { %>
+        <div class="multilineItem">
         <% String jqs = crawler.getQueryString() + "&job=" + job.getName(); %>
-        <tr <%=alt?"class=\"infoalt\"":""%>>
-        <td class="info">
-            <%=job.getName()%>
-        </td>
-        <td class="info">
-            Sheets | Seeds | Reports | 
-            <a title="View logs for this job."
+        <span class="label">Job:</span> <%=job.getName()%>
+        <div class="itemDetails">
+            <a class="rowLink" href="javascript:alert('not yet implemented')">Sheets</a>
+            <a class="rowLink" href="javascript:alert('not yet implemented')">Seeds</a> 
+            <a class="rowLink" href="javascript:alert('not yet implemented')">Reports</a>
+            <a class="rowLink" title="View logs for this job."
                href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
-        </td>
-        </tr>
-        <% alt = !alt; %>
+        </div>
+        </div>
     <% } %>
     </table>
 <% } %>

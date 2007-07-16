@@ -25,7 +25,7 @@ String profile = (String)Text.get(request, "profile");
 
 Enter a name for the new job: <input type="text" name="job" value=""/>
 
-<input class="nospace" type="submit" value="Launch"></form><form class="nospace" action="index.jsp"><input class="nospace" type="submit" value="Cancel"></form>
+<input class="nospace" type="submit" value="Launch"></form><form class="nospace" action="index.jsp"></form>
 
 </body>
 </html>

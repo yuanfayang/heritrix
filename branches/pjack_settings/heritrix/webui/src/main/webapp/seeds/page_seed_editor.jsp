@@ -38,6 +38,7 @@ Boolean successMessage = (Boolean)request.getAttribute("success");
 <textarea rows="25" cols="75" name="seeds">
 <%=Text.html(seeds)%>
 </textarea>
+<br/>
 <input type="submit" value="Submit">
 </form>
 

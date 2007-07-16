@@ -15,14 +15,11 @@ int row = 1;
 int count = 0;
 
 %>
+<%@page import="org.apache.commons.lang.StringUtils"%>
 <html>
 <head>
 <%@include file="/include/header.jsp"%>
 <title>Heritrix <%=Text.html(crawler.getLegend())%></title>
-<style>
-input { width: 100%; }
-select { width: 100%; }
-</style>
 </head>
 <body>
 
@@ -30,14 +27,19 @@ select { width: 100%; }
 
 <h3>Settings for sheet "<%=editedSheet%>":</h3>
 
+<div class="indent">
 <form action="do_save_single_sheet.jsp" method="post">
+
 <% Text.printSheetFormFields(request, out); %>
 
-<table class="info">
 <% 
-
+String previousPath = "";
+int previousIndent = 0; 
 for (Setting setting: settings.getSettings()) {
     String path = setting.getPath();
+    int lastColon = path.lastIndexOf(':');
+    String pathPrefix = path.substring(0,(lastColon>=0)?lastColon+1:0);
+    String pathLast = path.substring((lastColon>=0)?lastColon+1:0,path.length());
     String type = setting.getType();
     String value = setting.getValue();
     String[] sheets = setting.getSheets();
@@ -46,53 +48,77 @@ for (Setting setting: settings.getSettings()) {
     }
     String error = setting.getErrorMessage();
     String disabled = sheets[0].equals(editedSheet) ? "" : "disabled=\"disabled\"";
-    String qs = Text.sheetQueryString(request) + "&path=" + path + "&type=" + type + "&value=" + value;
+    String qs = Text.sheetQueryString(request) + "&path=" + path + "&type=" + type + "&value=" + Text.query(value);
     row = -row + 1;
     count++;
+    if(path.startsWith(previousPath) && path.charAt(previousPath.length())==':') {
 %>
-<tr>
-<td class="info<%=row%>">
-  <a 
-     href="do_show_path_detail.jsp?<%=qs%>"
-     title="View details for this setting.">     
-   Details
-  </a>
-  <% if (settings.canOverride(setting)) { %>
-  |
-  <% if (sheets[0].equals(editedSheet)) { %>
-    <a href="do_remove_path.jsp?<%=qs%>">
-      Remove
-    </a>
-  <% } else { %>
-    <a href="do_override_path.jsp?<%=qs%>">
-      Add
-    </a>  
-  <% } %>
-  <% } %>
-</td>
-<td class="info<%=row%>">
- <% for (String sheet: sheets) { %>
-   <%=Text.html(sheet)%>,
- <% } %>
-</td>
-<td class="info<%=row%>">
- <%=Text.html(path)%>
+        <div class="subsettings">
+<%
+    }
+    int indent = StringUtils.split(path,':').length - 1;
+    while(previousIndent>indent) {
+%>
+        </div>
+<%
+        previousIndent--;
+    }
+    previousIndent = indent; 
+    previousPath = path; 
+%>
+
+<div class="editSetting">
+
+ <span class="settingPath" title="<%=Text.html(path)%>">
+ <%=Text.html(pathLast)%>
+ </span>
+ 
+ &nbsp;&nbsp;
+
+<% for (String sheet: sheets) { %>
+   <span title="Sheet(s) where this setting is defined." class="settingSource"><%=Text.html(sheet)%></span>
+<% } %>
+    
  <% if (error != null) { %>
    <br/>
-   <font color="red"><%=Text.html(error)%></font>
- <% } %>
- 
-</td>
-<td class="info<%=row%>">
+   <span class="alert">Problem: <%=Text.html(error)%></span>
+ <% } %><br/>
  <input type="hidden" name="<%=count%>" value="<%=Text.attr(path)%>">
  <% settings.printFormField(out, setting); %>
-</td>
-</tr>
+  <% if (settings.canOverride(setting)) { %>
+  <% if (sheets[0].equals(editedSheet)) { %>
+    <a class="rowLink" href="do_remove_path.jsp?<%=qs%>"
+       title="Remove setting from current sheet.">remove</a>
+  <% } else { %>
+    <a class="rowLink" href="do_override_path.jsp?<%=qs%>"
+       title="Add a value for this setting to the current sheet.">add</a>  
+  <% } %>
+  <% } %>
+  <a 
+    class="rowLink"
+    href="do_show_path_detail.jsp?<%=qs%>"
+    title="View details for this setting.">details</a>
+</div>
 
-<% } %> 
-</table>
-<input type="Submit" value="Submit"/>
+<% } // end for %> 
+<%
+while(previousIndent>0) {
+    %>
+    </div>
+    <%
+      previousIndent--;
+}
+%>
+
+<br/>
+
+<input type="Submit" value="Submit Changes"/> <br/>
+
+Note: you must also 'commit' any changes in the job's 
+<a href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=Text.jobQueryString(request)%>">
+sheets overview page</a> to make changes permanent on disk. 
 </form>
+</div>
 
 </body>
 </html>

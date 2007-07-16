@@ -1,6 +1,6 @@
 body {
-    margin-left: 2;
-    margin-top: 2;
+    margin:0px 10px;
+    font-family:sans-serif;
 }
 h1 {
     font-weight:bold;
@@ -15,8 +15,9 @@ h3 {
     font-weight:bold;
     font-size:110%;
 }
-.flashMessage, .error, .warning {
+.flashMessage, .error, .warning, .alert {
     color:red;
+    font-weight:bold; 
 }
 .margined {
     margin:20px;
@@ -113,9 +114,13 @@ a.plain{
 .Running {
 	color:darkgreen;
 }
-.Preparing {
+.Prepared {
 	color:darkorange;
 }
+.Completed {
+  font-weight:bold;
+}
+
 .indent {
 	padding-left:20px;
 }
@@ -155,39 +160,23 @@ th.info {
     padding: 2px;
 }
 
-td.info {
-    padding: 2px;
+tr.info {
+    padding: 5px;
+    NOTborder: solid black 1px;
+    border-collapse: collapse;    
 }
 
-td.info0 {
-    border: solid black 1px;
-    border-collapse: collapse;    
-    padding: 2px;
+.row0 { 
+ 
 }
 
-td.info1 {
-    border: solid black 1px;
-    border-collapse: collapse;    
-    background-color: #FFFFCC;
-    padding: 2px;
+.row1 {
+    background-color: #FFFFEE;
 }
 
 
 tr.infoalt{
     background-color: #FFFFCC;
-}
-
-td.info0 {
-    border: solid black 1px;
-    border-collapse: collapse;    
-    padding: 2px;
-}
-
-td.info1 {
-    border: solid black 1px;
-    border-collapse: collapse;    
-    background-color: #FFFFCC;
-    padding: 2px;
 }
 
 .nospace {
@@ -213,4 +202,82 @@ td.jobnav_seperator {
     text-decoration: none;
     border-top: solid blue 1px;
     border-bottom: solid blue 1px;
+}
+
+.label {
+  font-weight:bold;
+}
+
+.placeholder {
+  font-style:italic;
+  padding:10px;
+}
+
+.multilineItem {
+  border:1px solid black;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
+  padding:10px;
+  margin:10px;
+}
+
+.itemDetails {
+ padding:10px 20px; 
+}
+
+.indent {
+ margin-left:20px; 
+}
+
+hr {
+ border:2px dotted #CCC;
+}
+
+.rowLink {
+ padding-right:6px; 
+ padding-left:6px;
+}
+
+.rowLink:before {
+ content:'\bb '
+}
+
+.settingPath {
+    font-weight:bold;
+}
+
+.editSetting {
+ padding:5px; 
+}
+.editSetting input {
+ width:30em;
+}
+
+.settingSource {
+    font-weight:bold;
+    color:#CCC;
+}
+
+.subsettings {
+ margin-left:20px;
+ padding-left:10px;
+ border-left:5px solid #CCC;
+ padding-bottom:10px;
+}
+
+.settingActions {
+    width:12em;
+}
+.addplus {
+    font-weight:bold;
+    color:darkgreen;
+    text-transform: uppercase;
+}
+.delx {
+    font-weight:bold;
+    color:darkred;
+    text-transform: uppercase;
+}
+.disabled {
+    color:#CCC;
 }

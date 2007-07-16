@@ -19,106 +19,85 @@ int row = 1;
 
 <%@include file="/include/nav.jsp"%>
 
-<h3>Sheets:</h3>
+<h3>Settings Sheets:</h3>
 
-<a href="do_show_add_single_sheet.jsp?<%=Text.jobQueryString(request)%>">
-Add Single Sheet
-</a>
-|
-<a href="do_show_add_sheet_bundle.jsp?<%=Text.jobQueryString(request)%>">
-Add Sheet Bundle
-</a>
-
-
-
-<table class="info">
-<tr>
-<th class="info">Sheet Name</th>
-<th class="info">Actions</th>
-<th class="info">Associations</th>
-</tr>
 <% for (String sheet: sheets) { %>
-<% row = -row + 1; %>
-<% String qs = Text.jobQueryString(request) + "&sheet=" + sheet; %>
-<tr>
-<td class="info<%=row%>">
-<%=Text.html(sheet)%>
-<% if (problems.contains(sheet)) { %>
-*
-<% } %>
-</td>
-<td class="info<%=row%>">
-<a
-   title="View settings without changing them."
-   href="do_show_sheet_detail.jsp?<%=qs%>">
-View
-</a>
+    <div class="multilineItem">
+    <% String qs = Text.jobQueryString(request) + "&sheet=" + sheet; %>
+    <span class="label">Sheet:</span> <%=Text.html(sheet)%>
+    <div class="itemDetails">
 
-|
+    <% if (problems.contains(sheet)) { %>
+        <span class="alert">validation problems</span><br/>
+    <% } %>
+    
+    <a class="rowLink"
+       title="View settings without changing them."
+       href="do_show_sheet_detail.jsp?<%=qs%>">
+    View
+    </a>
 
-<a
-   title="Edit settings."
-   href="do_show_sheet_editor.jsp?<%=qs%>">
-Edit
-</a>
+    <a class="rowLink"
+       title="Edit settings."
+       href="do_show_sheet_editor.jsp?<%=qs%>">
+    Edit
+    </a>
+    
+    <br/>
 
 <% if (checkedOut.contains(sheet)) { %>
-|
+    <span class="alert">(!)</span> <span class="label">Unsaved edits:</a>
 
-<a
-   title="Commit changes to this sheet."
-   href="do_commit_sheet.jsp?<%=qs%>">
-Commit
-</a>
-
-|
-
-<a
-   title="Abandon changes to this sheet."
-   href="do_cancel_sheet.jsp?<%=qs%>">
-Rollback
-</a>
-
+    <a class="rowLink"
+       title="Commit changes to this sheet."
+       href="do_commit_sheet.jsp?<%=qs%>">
+    Commit
+    </a>
+       
+    <a class="rowLink"
+       title="Abandon changes to this sheet."
+       href="do_cancel_sheet.jsp?<%=qs%>">
+    Rollback
+    </a>
+    <br/>
 <% } %>
 
-</td>
-<td class="info<%=row%>">
+    <span class="">SURT prefix associations:</span>
+    
+    <a class="rowLink"
+      title="List SURT prefixes associated with this sheet."
+      href="do_show_surts.jsp?<%=qs%>">
+    List
+    </a>
 
-<a 
-   title="Associate SURT prefixes with this sheet."
-   href="do_show_associate.jsp?<%=qs%>&add=Y">
-Add
-</a>
+    <a class="rowLink"
+       title="Associate SURT prefixes with this sheet."
+       href="do_show_associate.jsp?<%=qs%>&add=Y">
+    Add
+    </a>
 
-|
-
-<a 
-   title="Disassociate SURT prefixes with this sheet."
-   href="do_show_associate.jsp?<%=qs%>&add=N">
-Remove
-</a>
-
-|
-
-<a
-  title="List SURT prefixes associated with this sheet."
-  href="do_show_surts.jsp?<%=qs%>">
-List
-</a>
-
-
-
-</td>
-</tr>
+    <a class="rowLink"
+       title="Disassociate SURT prefixes with this sheet."
+       href="do_show_associate.jsp?<%=qs%>&add=N">
+    Remove
+    </a>
+    </div>
+    </div>
 <% } %>
-</table>
+
+<a href="do_show_add_single_sheet.jsp?<%=Text.jobQueryString(request)%>">
+Add Single Sheet...
+</a><br/>
+<a href="do_show_add_sheet_bundle.jsp?<%=Text.jobQueryString(request)%>">
+Add Sheet Bundle...
+</a>
 
 <h3>Test Settings</h3>
 
 <form method="get" action="do_show_config.jsp">
 <% Text.printJobFormFields(request, out); %>
 Enter a URL below to see what settings will be applied for that URL:<br>
-<input type="text" name="url" value="">
+<input type="text" name="url" size="60" value=""><br/>
 <input type="submit" name="button" value="Settings">
 <input type="submit" name="button" value="Sheets">
 </form>

@@ -17,7 +17,12 @@ String add = (String)Text.get(request, "add");
 
 <%@include file="/include/nav.jsp"%>
 
-<h3>Associate URL prefixes with '<%=sheet%>'</h3>
+<h2>Associate URL prefixes with '<%=sheet%>'</h2>
+
+One entry per line. SURT prefixes entered will be used directly. Other
+URIs will be converted to SURT form then truncated to the implied 
+prefix. Plain hosts/domains will be changed to the implied HTTP URI 
+then converted as above.
 
 <form method="post" action="do_associate.jsp">
 <% Text.printSheetFormFields(request, out); %>
@@ -26,7 +31,7 @@ String add = (String)Text.get(request, "add");
 <textarea name="surts" rows="25" cols="75">
 </textarea>
 <br>
-<input type="submit" name="Submit">
+<input type="submit" name="Submit" value="Submit">
 </form>
 
 </body>

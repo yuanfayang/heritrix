@@ -17,9 +17,9 @@ boolean single = (Boolean)request.getAttribute("single");
 
 <%@include file="/include/nav.jsp"%>
 
-<h3>Add New <%= single ? "Single Sheet" : "Sheet Bundle" %></h3>
+<h3>Add New Settings Sheet <%= single ? "" : "Bundle" %></h3>
 
-Enter a name for the new single sheet below.<br/>
+Enter a name for the new Settings Sheet <%= single ? "" : "Bundle" %> below.<br/>
 
 <form class="nospace" method="post" action="<%= single ? "do_add_single_sheet.jsp" : "do_add_sheet_bundle.jsp"%>">
 <% Text.printJobFormFields(request, out); %>
