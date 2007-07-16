@@ -80,6 +80,10 @@ implements StateProvider, Serializable { //, DirectoryModule {
     final public static Key<SheetManager> MANAGER = 
         Key.make(SheetManager.class, null);
 
+    static {
+        KeyManager.addKeys(SheetManager.class);
+    }
+    
     /**
      * Constructor.
      */
@@ -89,7 +93,6 @@ implements StateProvider, Serializable { //, DirectoryModule {
         moduleListeners.add(checkpointables);
         moduleListeners.add(closeables);
         moduleListeners.add(finishables);
-        KeyManager.addKeys(getClass());
     }
     
     
@@ -413,4 +416,5 @@ implements StateProvider, Serializable { //, DirectoryModule {
     public abstract Collection<String> listContexts(String sheetName, 
             int ofs, int len);
 
+    public abstract void offlineCleanup();
 }

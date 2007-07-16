@@ -915,4 +915,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         return result;
     }
 
+    
+    public void offlineCleanup() {
+        bdb.close();
+    }
 }
