@@ -25,6 +25,8 @@ package org.archive.state;
 
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
+
 
 /**
  * Only allows strings that match a regular expression.
@@ -65,6 +67,6 @@ public class PatternConstraint implements Constraint<String> {
      * @return  true if the given string matches this constraint's pattern
      */
     public boolean allowed(String s) {
-        return pattern.matcher(s).matches();
+        return pattern.matcher(StringUtils.defaultString(s)).matches();
     }
 }
