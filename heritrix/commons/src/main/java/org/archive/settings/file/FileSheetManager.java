@@ -201,6 +201,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     final private Map<String, Sheet> sheets;
 
     /** The database of associations. Maps string context to sheet names. */
+    final private Database surtToSheetsDB;
+    
+    /** The database of associations. Maps string context to sheet names. */
     final private StoredSortedMap surtToSheets;
 
   
@@ -297,12 +300,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         DatabaseConfig config = new DatabaseConfig();
         config.setAllowCreate(true);
         config.setSortedDuplicates(true);
-        Database db = bdb.openDatabase("surtToSheets", config, true);
+        config.setDeferredWrite(true);
+        surtToSheetsDB = bdb.openDatabase("surtToSheets", config, true);
         EntryBinding stringBinding 
             = TupleBinding.getPrimitiveBinding(String.class);
         
         this.surtToSheets = new StoredSortedMap(
-                db, stringBinding, stringBinding, true); 
+                surtToSheetsDB, stringBinding, stringBinding, true); 
         
         reload();
     }
@@ -452,12 +456,22 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         for (String s : strings) {
             surtToSheets.put(s, sheet.getName());
         }
+        try {
+            surtToSheetsDB.sync();
+        } catch (DatabaseException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override @SuppressWarnings("unchecked")
     public void disassociate(Sheet sheet, Collection<String> strings) {
         for (String s: strings) {
             surtToSheets.duplicates(s).remove(sheet.getName());
+        }
+        try {
+            surtToSheetsDB.sync();
+        } catch (DatabaseException e) {
+            throw new IllegalStateException(e);                
         }
     }
 
