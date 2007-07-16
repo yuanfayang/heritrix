@@ -2,6 +2,7 @@
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
+<%@ page import="java.util.Collection"%>
 
 <% 
 
@@ -81,7 +82,26 @@ String the_sheet = (String)request.getAttribute("sheet");
 <% } %>
 
 <% if (the_sheet != null) { %>
-<b>Sheet:</b> <%=Text.html(the_sheet)%><br/>
+<b>Sheet:</b> <%=Text.html(the_sheet)%>
+<%
+    // Check for uncommitted changes to the sheet and display commit/rollback options if so
+    Collection<String> navCheckedOut = (Collection)request.getAttribute("checkedOut");
+    if(navCheckedOut != null && navCheckedOut.contains(the_sheet)){
+        String the_qs = Text.jobQueryString(request) + "&sheet=" + the_sheet;
+%>
+    <span class="alert">(!)</span> Unsaved edits:
+
+    <a class="rowLink" 
+       title="Commit changes to this sheet."
+       href="do_commit_sheet.jsp?<%=the_qs%>">commit</a>
+       
+    <a class="rowLink" 
+       title="Abandon changes to this sheet."
+       href="do_cancel_sheet.jsp?<%=the_qs%>">rollback</a>
+<%
+    }
+%>
+<br/>
 <% } %>
 
 </td>
