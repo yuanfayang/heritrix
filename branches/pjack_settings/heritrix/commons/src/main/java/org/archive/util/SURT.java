@@ -35,6 +35,9 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.regex.Matcher;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURIFactory;
+
 /**
  * Sort-friendly URI Reordering Transform.
  * 
@@ -173,7 +176,57 @@ public class SURT {
         }
         b.append(cs, start, end);
     }
-        
+
+    /**
+     * Given a plain URI or hostname/hostname+path, deduce an implied SURT 
+     * prefix from it. Results may be unpredictable on strings that cannot
+     * be interpreted as URIs. 
+     * 
+     * UURI 'fixup' is applied to the URI that is built. 
+     *
+     * @param u URI or almost-URI to consider
+     * @return implied SURT prefix form
+     */
+    public static String prefixFromPlain(String u) {
+        u = fromPlain(u);
+        // truncate to implied prefix
+        u = SurtPrefixSet.asPrefix(u);
+        return u;
+    }
+
+    /**
+     * Given a plain URI or hostname/hostname+path, give its SURT form.
+     * Results may be unpredictable on strings that cannot
+     * be interpreted as URIs. 
+     * 
+     * UURI 'fixup' is applied to the URI before conversion to SURT 
+     * form. 
+     *
+     * @param u URI or almost-URI to consider
+     * @return implied SURT prefix form
+     */
+    public static String fromPlain(String u) {
+        u = ArchiveUtils.addImpliedHttpIfNecessary(u);
+        boolean trailingSlash = u.endsWith("/");
+        // ensure all typical UURI cleanup (incl. IDN-punycoding) is done
+        try {
+            u = UURIFactory.getInstance(u).toString();
+        } catch (URIException e) {
+            e.printStackTrace();
+            // allow to continue with original string uri
+        }
+        // except: don't let UURI-fixup add a trailing slash
+        // if it wasn't already there (presence or absence of
+        // such slash has special meaning specifying implied
+        // SURT prefixes)
+        if(!trailingSlash && u.endsWith("/")) {
+            u = u.substring(0,u.length()-1);
+        }
+        // convert to full SURT
+        u = SURT.fromURI(u);
+        return u;
+    }
+    
     /**
      * Allow class to be used as a command-line tool for converting 
      * URL lists (or naked host or host/path fragments implied
