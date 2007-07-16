@@ -118,7 +118,7 @@ public class CrawlOrder implements Module, Serializable {
      * Maximum number of threads processing URIs at the same time.
      */
     @Immutable
-    final public static Key<Integer> MAX_TOE_THREADS = Key.make(0);
+    final public static Key<Integer> MAX_TOE_THREADS = Key.make(25);
 
 
     /**
@@ -166,14 +166,14 @@ public class CrawlOrder implements Module, Serializable {
     
     final public static Key<String> OPERATOR_FROM =
         KeyMaker
-            .make("@OPERATOR_FROM_EMAIL@")
+            .make("ENTER-A-CONTACT-EMAIL-FOR-CRAWL-OPERATOR")
             .addConstraint(new PatternConstraint(Pattern.compile("^[-\\w]+@[-\\w]+\\.[-\\w\\.]+$")))
             .toKey();
     
     final public static Key<String> OPERATOR_CONTACT_URL =
         KeyMaker
-            .make("@OPERATOR_CONTACT_URL@")
-            .addConstraint(new PatternConstraint(UURIFactory.RFC2396REGEX))
+            .make("ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR")
+            .addConstraint(new PatternConstraint(Pattern.compile("^https?://.*$")))
             .toKey();
     
     static {
