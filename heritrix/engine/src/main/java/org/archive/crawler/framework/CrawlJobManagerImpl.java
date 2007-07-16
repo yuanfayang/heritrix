@@ -36,29 +36,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.openmbeans.annotations.Bean;
-import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
@@ -66,7 +65,6 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
-import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
 import org.archive.settings.path.PathValidator;
 import org.archive.util.FileUtils;
@@ -105,6 +103,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     final private Thread heritrixThread;
     
     private HashMap<String, LogRemoteAccessImpl> logRemoteAccess;
+    private HashMap<String, JMXSheetManagerImpl> jmxSheetManagers;
     
     public CrawlJobManagerImpl(CrawlJobManagerConfig config) {
         super(CrawlJobManager.class);
@@ -123,13 +122,14 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         this.oname = JMXModuleListener.nameOf(DOMAIN, NAME, this);
         
         logRemoteAccess = new HashMap<String, LogRemoteAccessImpl>();
+        jmxSheetManagers = new HashMap<String, JMXSheetManagerImpl>();
         
         register(this, oname);
         this.heritrixThread = config.getHeritrixThread();
     }
     
 
-    public void copyProfile(String origName, String copiedName) 
+    public synchronized void copyProfile(String origName, String copiedName) 
     throws IOException {
         File src = new File(getProfilesDir(), origName);
         File dest = new File(getProfilesDir(), copiedName);
@@ -147,7 +147,12 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     
-    public synchronized void openProfile(String profile) throws IOException {
+    public synchronized String getProfile(String profile) throws IOException {
+        if(jmxSheetManagers.containsKey(profile)){
+            // Already open. Return object name
+            return jmxSheetManagers.get(profile).getObjectName().getCanonicalName();
+        }
+        // Not already open. Open it and return object name.
         File src = new File(getProfilesDir(), profile);
         
         if (!src.exists()) {
@@ -164,12 +169,13 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(fsm);
-        ObjectName name = JMXModuleListener.nameOf(DOMAIN, profile, jmx);
-        register(jmx, name);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(profile, DOMAIN, fsm);
+        register(jmx, jmx.getObjectName());
+        jmxSheetManagers.put(profile, jmx);
+        return jmx.getObjectName().getCanonicalName();
     }
 
-    public String getLogs(String job) throws IOException {
+    public synchronized String getLogs(String job) throws IOException {
         if(logRemoteAccess.containsKey(job)){
             return logRemoteAccess.get(job).getObjectName().getCanonicalName();
         }
@@ -189,47 +195,23 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
     
     public synchronized void closeProfile(String profile) {
-        String query = "org.archive.crawler:*," +
-        "name=" + profile +
-        ",type=" + JMXSheetManager.class.getName();
-
-        try {
-            @SuppressWarnings("unchecked")
-            Set<ObjectName> set = server.queryNames(null, new ObjectName(query));
-            for (ObjectName name: set) {
-                    JMXSheetManager jsm =
-                        BeanProxy.proxy(server, name, JMXSheetManager.class);
-                    if (!jsm.isOnline()) {
-                        jsm.offlineCleanup();
-                        unregister(name);
-                    }
+        if (jmxSheetManagers.containsKey(profile)) {
+            JMXSheetManagerImpl jmx = jmxSheetManagers.get(profile);
+            if(jmx.isOnline()==false){
+                // Only close offline profiles
+                jmxSheetManagers.remove(profile);
+                unregister(jmx.getObjectName());
+            } else {
+                LOGGER.log(Level.WARNING, "Can not close an online profile: " + profile);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-            throw new IllegalStateException(e);
+        } else {
+            LOGGER.log(Level.WARNING, "Can not close, not an open profile: " + profile);
         }
     }
-    
-    
-    public static Set<ObjectName> find(JMXConnector jmxc, String query) {
-        try {
-            MBeanServerConnection conn = jmxc.getMBeanServerConnection();
-            @SuppressWarnings("unchecked")
-            Set<ObjectName> set = conn.queryNames(null, new ObjectName(query));
-            return set;
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalStateException(e);
-        }
-        
-    }
-
     
     
     public synchronized void launchProfile(String profile, final String job) 
-    throws IOException {
+            throws IOException {
         closeProfile(profile);
         File src = new File(getProfilesDir(), profile);
         File dest = new File(getJobsDir(), job);
@@ -258,8 +240,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(fsm);
-        final ObjectName smName = jmxListener.nameOf(jmx); // register(job, "SheetManager", jmx);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(job,DOMAIN, fsm);
+        final ObjectName smName = jmx.getObjectName();
+        jmxSheetManagers.put(job, jmx);
         try {
             server.registerMBean(jmx, smName);
         } catch (Exception e) {
@@ -292,6 +275,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                         for (Object m: jmxListener.getModules()) {
                             unregister(jmxListener.nameOf(m));
                         }
+                        jmxSheetManagers.remove(job);
                         jobs.remove(job);
                     }
                 }, new NotificationFilter() {
@@ -306,8 +290,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         jobs.put(job, cc);
     }
-
-
+    
     
     private ObjectName register(Object o, ObjectName oname) {
         try {
@@ -332,19 +315,19 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     
-    public String[] listAllJobs() {
+    public synchronized String[] listAllJobs() {
         File jobsDir = getJobsDir();
         return jobsDir.list();
     }
 
 
-    public String[] listProfiles() {
+    public synchronized String[] listProfiles() {
         File profDir = getProfilesDir();
         return profDir.list();
     }
 
     
-    public ObjectName getObjectName() {
+    public synchronized ObjectName getObjectName() {
         return this.oname;
     }
 
@@ -358,7 +341,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
 
-    public String[] listCheckpoints() {
+    public synchronized String[] listCheckpoints() {
         ArrayList<String> checkpoints = new ArrayList<String>();
         for (File f: getJobsDir().listFiles()) {
             if (f.isDirectory()) {
@@ -377,10 +360,10 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
     
     
-    public void recoverCheckpoint(String cpPath, 
+    public synchronized void recoverCheckpoint(String cpPath, 
             String[] oldPaths, 
             String[] newPaths) 
-    throws IOException {
+            throws IOException {
         if (cpPath.startsWith(".")) {
             throw new IllegalArgumentException("Illegal checkpoint: " + cpPath);
         }
@@ -405,7 +388,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         jml.setServer(server);
     }
 
-    public void close() {
+    public synchronized void close() {
         if (!jobs.isEmpty()) {
             throw new IllegalStateException("Cannot close CrawlJobManager " + 
                     "when jobs are still active.");
@@ -423,17 +406,17 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
 
-    public void systemExit() {
+    public synchronized void systemExit() {
         System.exit(1);
     }
 
 
-    public String[] listActiveJobs() {
+    public synchronized String[] listActiveJobs() {
         return jobs.keySet().toArray(new String[0]);
     }
 
 
-    public String[] listCompletedJobs() {
+    public synchronized String[] listCompletedJobs() {
         Set<String> result = new HashSet<String>();
         result.addAll(Arrays.asList(jobsDir.list()));
         result.removeAll(jobs.keySet());
@@ -442,7 +425,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
     
     public synchronized String readLines(String fileName, int startLine, int lineCount) 
-    throws IOException {
+            throws IOException {
         if (startLine < 0) {
             throw new IllegalArgumentException("startLine must be positive.");
         }
@@ -478,7 +461,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
     public synchronized void writeLines(String fileName, int startLine, 
             int lineCount, String lines)
-    throws IOException {
+            throws IOException {
         if (startLine < 0) {
             throw new IllegalArgumentException("startLine must be positive.");
         }

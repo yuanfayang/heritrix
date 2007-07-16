@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.OpenDataException;
@@ -76,9 +77,9 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     
     final private Map<String,Map<String,PathChangeException>> problems;
     
+    private ObjectName oname;
     
-    
-    public JMXSheetManagerImpl(SheetManager manager) {
+    public JMXSheetManagerImpl(String job, String domain, SheetManager manager) {
         super(JMXSheetManager.class);
         this.manager = manager;
         this.problems = new HashMap<String,Map<String,PathChangeException>>();
@@ -90,8 +91,12 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
                 sheetProblems.put(e.getPathChange().getPath(), e);
             }
         }
+        this.oname = JMXModuleListener.nameOf(domain, job, this);
     }
 
+    public ObjectName getObjectName(){
+        return oname;
+    }
     
     private Sheet getSheet(String sheetName) {
         Sheet result = checkedOut.get(sheetName);

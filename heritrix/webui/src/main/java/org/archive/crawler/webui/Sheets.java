@@ -671,20 +671,6 @@ public class Sheets {
         String job = getJob(request);
         
         JMXConnector jmxc = crawler.connect();
-        String query = "org.archive.crawler:*," + 
-            "name=" + job + 
-            ",type=" + JMXSheetManager.class.getName();
-
-        Set<ObjectName> set = Misc.find(jmxc, query);
-        if (set.size() == 1) {
-            ObjectName name = set.iterator().next();
-            return Remote.make(jmxc, name, JMXSheetManager.class);
-        }
-
-        if (set.size() != 0) {
-            throw new IllegalStateException("Expected unique SheetManager for "
-                    + query + " but found " + set);
-        }
         
         if (!profile) {
             throw new IllegalStateException("Can't open sheets for completed job.");
@@ -692,9 +678,8 @@ public class Sheets {
         
         Remote<CrawlJobManager> manager = Remote.make(
                 jmxc, crawler.getObjectName(), CrawlJobManager.class);
-        manager.getObject().openProfile(job);
         
-        ObjectName name = Misc.waitFor(jmxc, query, true);
+        ObjectName name = new ObjectName(manager.getObject().getProfile(job));
         return Remote.make(jmxc, name, JMXSheetManager.class);
     }
 
