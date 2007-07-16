@@ -33,6 +33,7 @@ import java.net.URLEncoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspWriter;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.archive.settings.path.PathValidator;
 import org.archive.util.TextUtils;
 
@@ -79,7 +80,7 @@ public class Text {
      */
     public static String query(Object s) {
         try {
-            return URLEncoder.encode(s.toString(), "UTF-8");
+            return URLEncoder.encode(ObjectUtils.toString(s), "UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
