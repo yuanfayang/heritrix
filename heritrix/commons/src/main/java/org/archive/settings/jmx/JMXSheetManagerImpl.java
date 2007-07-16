@@ -484,4 +484,10 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         Collection<String> c = manager.listContexts(sheetName, start, 100);
         return c.toArray(new String[c.size()]);
     }
+
+
+    public synchronized void offlineCleanup() {
+        manager.offlineCleanup();
+    }
+
 }

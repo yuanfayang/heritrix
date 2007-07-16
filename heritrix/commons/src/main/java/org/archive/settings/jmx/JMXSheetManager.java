@@ -223,4 +223,6 @@ public interface JMXSheetManager {
             @Parameter(name="start", desc="The number of contexts to skip before listing.")
             int start);
 
+    @Operation(desc="Cleans up an offline manager.")
+    void offlineCleanup();
 }
