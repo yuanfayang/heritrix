@@ -47,7 +47,7 @@ public class Log {
 	public enum Mode{
 		LINE_NUMBER ("Line number"),
 		TIMESTAMP ("Timestamp"),
-		REGEXPR ("Regular expr."),
+		REGEXPR ("RegExp"),
 		TAIL ("Tail");
 		
 		String description;
