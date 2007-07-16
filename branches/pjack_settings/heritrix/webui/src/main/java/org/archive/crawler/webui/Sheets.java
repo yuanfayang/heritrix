@@ -105,6 +105,10 @@ public class Sheets {
         JMXSheetManager sheetManager = remote.getObject();
         String sheet = request.getParameter("sheet");
         request.setAttribute("sheet", sheet);
+        Set<String> checkedOut = new HashSet<String>(
+                Arrays.asList(sheetManager.getCheckedOutSheets()));
+        request.setAttribute("checkedOut", checkedOut);
+        
         try {
             CompositeData[] settings = sheetManager.getAll(sheet);
             CompositeData[] problems = sheetManager.getSingleSheetProblems(sheet);
@@ -125,6 +129,10 @@ public class Sheets {
         JMXSheetManager sheetManager = remote.getObject();
         String sheet = request.getParameter("sheet");
         request.setAttribute("sheet", sheet);
+        Set<String> checkedOut = new HashSet<String>(
+                Arrays.asList(sheetManager.getCheckedOutSheets()));
+        request.setAttribute("checkedOut", checkedOut);
+
         try {
             if (!Arrays.asList(sheetManager.getCheckedOutSheets()).contains(sheet)) {
                 sheetManager.checkout(sheet);
