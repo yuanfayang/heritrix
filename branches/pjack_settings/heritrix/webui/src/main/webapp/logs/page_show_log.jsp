@@ -28,6 +28,14 @@
           URL=do_show_log.jsp?<%=crawler.getQueryString()+"&"+log.getQueryString(log.getCurrentLog(),log.getMode())%>">
 <% } %>
 
+<form method="GET" action="do_show_log.jsp">
+<input type="hidden" name="host" value="<%=crawler.getHost()%>">
+<input type="hidden" name="port" value="<%=crawler.getPort()%>">
+<input type="hidden" name="id" value="<%=crawler.getIdentityHashCode()%>">
+<input type="hidden" name="job" value="<%=log.getJob()%>">
+<input type="hidden" name="log" value="<%=currentLog%>">
+<input type="hidden" name="mode" value="<%=mode%>">
+
 <table border="0" cellspacing="0" cellpadding="0">
     <tr>
         <td height="3"></td>
@@ -41,9 +49,8 @@
                     </td>
                     <td align="left" valign="top" width="160">
                      <% for(Logs logtype : Logs.values()){ %>
-	                    	<a href="do_show_log.jsp?<%=crawler.getQueryString()+"&"+log.getQueryString(logtype,log.getMode())%>" <%=currentLog==logtype?"class='plain'":""%>><%=logtype.getFilename()%></a><br>
-    	                <% } %>
-                        <input type="hidden" name="log" value="<%=currentLog%>">
+                    	<a href="do_show_log.jsp?<%=crawler.getQueryString()+"&"+log.getQueryString(logtype,log.getMode())%>" <%=currentLog==logtype?"class='plain'":""%>><%=logtype.getFilename()%></a><br>
+	                <% } %>
                     </td>
                 </tr>
             </table>
@@ -225,5 +232,6 @@
         </td>
     </tr>
 </table>
+</form>
 </body>
 </html>
