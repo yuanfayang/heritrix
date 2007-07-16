@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.util.LogRemoteAccess;
@@ -19,7 +20,7 @@ public class CrawlJob {
     public enum State{
         // TODO: Consider pending jobs
         PROFILE,
-        PENDING, // An active job whose crawl status is 'Preparing'
+        PENDING, // An active job whose crawl status is 'Prepared'
         ACTIVE,
         COMPLETED
     }
@@ -121,8 +122,8 @@ public class CrawlJob {
     }
 
     public State getState(){
-        if(getCrawlStatus().equals("PREPARING")){
-            // Handle this border case. 'Preparing' jobs may not have all
+        if(getCrawlStatus().equals(CrawlController.State.PREPARED.toString())){
+            // Handle this border case. 'Prepared' jobs may not have all
             // reports ready etc. so it is important to distingush them.
             return State.PENDING;
         }

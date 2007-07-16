@@ -209,9 +209,9 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
 
     
     // FIXME: Make this an outer class.
-    private static enum State {
+    public static enum State {
         NASCENT, RUNNING, PAUSED, PAUSING, CHECKPOINTING, 
-        STOPPING, FINISHED, STARTED, PREPARING 
+        STOPPING, FINISHED, STARTED, PREPARED 
     }
 
     transient private State state = State.NASCENT;
@@ -283,7 +283,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         this.scratchDir = provider.get(this, SCRATCH_DIR);
         this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
-        sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
+        sendCrawlStateChangeEvent(State.PREPARED, CrawlStatus.PREPARED);
 
         this.singleThreadLock = new ReentrantLock();
 //        this.order = new CrawlOrder();
@@ -720,7 +720,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
                 case FINISHED:
                     l.crawlEnded(status.getDescription());
                     break;
-                case PREPARING:
+                case PREPARED:
                     l.crawlResuming(status.getDescription());
                     break;
                 default:
@@ -1503,7 +1503,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
     @Emitter(desc="Emitted when the crawl status changes (eg, when a crawl "
         + " goes from CRAWLING to ENDED)",         
         types={ "PAUSED", "RUNNING", "PAUSING", "STARTED", "STOPPING", 
-            "FINISHED", "PREPARING" })
+            "FINISHED", "PREPARED" })
     void emit(Notification n) {
         sendNotification(n);
     }

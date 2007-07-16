@@ -68,8 +68,8 @@ public enum CrawlStatus {
     PROFILE("Profile"),
     
 
-    /** Preparing. */
-    PREPARING("Preparing");
+    /** Prepared. */
+    PREPARED("Prepared");
 
     
     
