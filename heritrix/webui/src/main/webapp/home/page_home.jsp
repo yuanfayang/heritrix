@@ -13,26 +13,20 @@
 <html>
 <head>
     <%@include file="/include/header.jsp"%>
-    <title>Heritrix Crawler List</title>
+    <title>Heritrix: Administered Crawl Engines</title>
+    <% request.setAttribute("headline","Administered Crawl Engines"); %>
 </head>
 <body>
 
 <%@include file="/include/nav.jsp"%>
 
-<h3>Known Crawlers:</h3>
-
-<table class="info">
-    <tr>
-        <th class="info">Crawler</th>
-        <th class="info">Status</th>
-        <th class="info">Actions</th>
-    </tr>
+This web console knows of the following crawl engines:
 
     <% boolean alt = false; %>
     <% for (Crawler crawler: crawlers) { %>
 
-    <tr <%=alt?"class=\"infoalt\"":""%>>
-        <td class="info">
+    <div class="multilineItem">
+    <span class="label">Engine ID:</span>
         <% if (crawler.getError() == null) { %>
             <a href="<%=request.getContextPath()%>/crawler_area/do_show_crawler.jsp?<%=crawler.getQueryString()%>">
         <% } %>
@@ -40,51 +34,47 @@
         <% if (crawler.getError() == null) { %>
             </a>
         <% } %>
-        </td>
-        <td class="info">
+        <div class="itemDetails">
         <%
-                        if (crawler.getError() != null) { 
-                        out.println(crawler.getError());
-                    } else {
-                        Collection<CrawlJob> activeJobs = crawler.getJobs(State.ACTIVE);
-                        if(activeJobs.size()==0){
-                            out.println("No active jobs");
-                        } else {
-                            for(CrawlJob job : activeJobs){
-                                out.println(job.getCrawlStatus() + ": ");
-                                out.println("<a href=\"" + request.getContextPath());
-                                out.println("/console/do_show_job_console.jsp?");
-                                out.println(crawler.getQueryString());
-                                out.println("&job=" + job.getName() + "\">");
-                                out.println(job.getName() + "</a>");
-                            }
-                        }
-                    }
+           if (crawler.getError() != null) { 
+               out.println(crawler.getError());
+           } else {
+               Collection<CrawlJob> activeJobs = crawler.getJobs(State.ACTIVE);
+               if(activeJobs.size()==0){
+                   out.println("No active jobs");
+               } else {
+                   for(CrawlJob job : activeJobs){
+                       out.println(job.getCrawlStatus() + ": ");
+                       out.println("<a href=\"" + request.getContextPath());
+                       out.println("/console/do_show_job_console.jsp?");
+                       out.println(crawler.getQueryString());
+                       out.println("&job=" + job.getName() + "\">");
+                       out.println(job.getName() + "</a>");
+                   }
+               }
+           }
         %>
-        </td>
-
-        <td class="info">
-            <a href="do_show_authenticate_crawler.jsp?<%=crawler.getQueryString()%>">Authenticate</a>
+        <br/>
+        <% if (crawler.getError() != null) { %>
+            <a class="rowLink" href="do_show_authenticate_crawler.jsp?<%=crawler.getQueryString()%>">Authenticate</a>
+        <% } %>
+          <a class="rowLink" href="<%=request.getContextPath()%>/crawler_area/do_show_about_crawler.jsp?<%=crawler.getQueryString()%>">About</a>
         <% if (crawler.getError() == null) { %>
-            | <a href="do_stop_crawler.jsp?<%=crawler.getQueryString()%>">Stop</a>
+          <a class="rowLink" href="javascript:alert('not yet implemented');">Stop</a>
         <% } %>
-        <% if (crawler.getSource() == Crawler.Source.MANUAL) { %>
-            | <a href="do_remove_crawler.jsp?<%=crawler.getQueryString()%>">Remove</a>
+        <% if (crawler.getSource() == Crawler.Source.MANUAL && crawler.getPort() != -1) { %>
+            <a class="rowLink" href="do_remove_crawler.jsp?<%=crawler.getQueryString()%>">Remove from UI</a>
         <% } %>
-        | <a href="<%=request.getContextPath()%>/crawler_area/do_show_about_crawler.jsp?<%=crawler.getQueryString()%>">About</a>
-        </td>
-    </tr>
-    <% alt = !alt; %>
+        </div>
+    </div>
+    <% } %>
+    <% if (crawlers.isEmpty()) { %>
+       <div class="placeholder">(none)</div>
     <% } %>
 
-</table>
-
-<a href="do_show_add_crawler.jsp">Add</a>
-|
-<a href="do_crawler_refresh.jsp">Refresh</a>
-|
-<a href="<%=request.getContextPath()%>/help/do_show_help.jsp">Help</a>
+<a href="do_show_add_crawler.jsp">Add a remote crawl engine...</a>
 
 <% if (jndiWarning) { %>
-   <p>Note: No JNDI server was configured for the servlet container JVM.
+   <p>Note: No directory server (JNDI) was configured as a source of
+   crawl engine information.</p>
 <% } %>
