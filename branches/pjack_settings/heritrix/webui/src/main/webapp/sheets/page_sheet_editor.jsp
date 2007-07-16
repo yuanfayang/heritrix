@@ -70,7 +70,7 @@ for (Setting setting: settings.getSettings()) {
 <div class="editSetting">
 
  <span class="settingPath" title="<%=Text.html(path)%>">
- <%=Text.html(pathLast)%>
+ <a name="<%=Text.attr(path)%>"></a><%=Text.html(pathLast)%>
  </span>
  
  &nbsp;&nbsp;
@@ -87,10 +87,10 @@ for (Setting setting: settings.getSettings()) {
  <% settings.printFormField(out, setting); %>
   <% if (settings.canOverride(setting)) { %>
   <% if (sheets[0].equals(editedSheet)) { %>
-    <a class="rowLink" href="do_remove_path.jsp?<%=qs%>"
+    <a class="rowLink" href="do_remove_path.jsp?<%=qs%>#<%=Text.attr(path)%>"
        title="Remove setting from current sheet.">remove</a>
   <% } else { %>
-    <a class="rowLink" href="do_override_path.jsp?<%=qs%>"
+    <a class="rowLink" href="do_override_path.jsp?<%=qs%>#<%=Text.attr(path)%>"
        title="Add a value for this setting to the current sheet.">add</a>  
   <% } %>
   <% } %>
