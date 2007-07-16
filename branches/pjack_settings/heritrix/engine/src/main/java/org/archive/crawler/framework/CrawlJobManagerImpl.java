@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,17 +45,20 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
@@ -64,6 +66,7 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
+import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
 import org.archive.settings.path.PathValidator;
 import org.archive.util.FileUtils;
@@ -144,7 +147,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     
-    public void openProfile(String profile) throws IOException {
+    public synchronized void openProfile(String profile) throws IOException {
         File src = new File(getProfilesDir(), profile);
         
         if (!src.exists()) {
@@ -185,20 +188,49 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     
-    public void closeProfile(String profile) {
-        File src = new File(getProfilesDir(), profile);
-        
-        if (!src.exists()) {
-            throw new IllegalArgumentException("No such profile: " + profile);
+    public synchronized void closeProfile(String profile) {
+        String query = "org.archive.crawler:*," +
+        "name=" + profile +
+        ",type=" + JMXSheetManager.class.getName();
+
+        try {
+            @SuppressWarnings("unchecked")
+            Set<ObjectName> set = server.queryNames(null, new ObjectName(query));
+            for (ObjectName name: set) {
+                    JMXSheetManager jsm =
+                        BeanProxy.proxy(server, name, JMXSheetManager.class);
+                    if (!jsm.isOnline()) {
+                        jsm.offlineCleanup();
+                        unregister(name);
+                    }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+            throw new IllegalStateException(e);
         }
-        
-        ObjectName sm = name(profile, "SheetManager");
-        unregister(sm);
     }
     
     
-    public void launchProfile(String profile, final String job) 
+    public static Set<ObjectName> find(JMXConnector jmxc, String query) {
+        try {
+            MBeanServerConnection conn = jmxc.getMBeanServerConnection();
+            @SuppressWarnings("unchecked")
+            Set<ObjectName> set = conn.queryNames(null, new ObjectName(query));
+            return set;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalStateException(e);
+        }
+        
+    }
+
+    
+    
+    public synchronized void launchProfile(String profile, final String job) 
     throws IOException {
+        closeProfile(profile);
         File src = new File(getProfilesDir(), profile);
         File dest = new File(getJobsDir(), job);
         
@@ -274,18 +306,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         jobs.put(job, cc);
     }
-    
-    
-    private ObjectName name(String name, String type) {
-        try {
-            Hashtable<String,String> ht = new Hashtable<String,String>();
-            ht.put("name", name);
-            ht.put("type", type);
-            return new ObjectName(DOMAIN, ht);
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalStateException(e);
-        }
-    }
+
 
     
     private ObjectName register(Object o, ObjectName oname) {
