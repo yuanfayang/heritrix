@@ -18,6 +18,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 
 %>
 
+<%@page import="org.archive.crawler.framework.CrawlController"%>
 <html>
 <head>
     <%@include file="/include/header.jsp"%>
@@ -97,7 +98,7 @@ String qs = crawler.getQueryString() + "&job=" + job.getName();
 String status = job.getCrawlStatus();
 %>
 <%
-if (status.equals("PREPARING")) {
+if (status.equals(CrawlController.State.PREPARED.toString())) {
 %>
     <a 
     title="Start the crawl."
