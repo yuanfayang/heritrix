@@ -57,7 +57,7 @@ public class TransclusionDecideRule extends PredicatedAcceptDecideRule {
     /**
      * Maximum number of non-navlink (non-'L') hops to ACCEPT.
      */
-    public static final Key<Integer> MAX_TRANS_HOPS = Key.make(3);
+    public static final Key<Integer> MAX_TRANS_HOPS = Key.make(2);
 
     
     /**
