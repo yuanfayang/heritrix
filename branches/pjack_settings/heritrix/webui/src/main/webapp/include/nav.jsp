@@ -42,7 +42,7 @@ String the_sheet = (String)request.getAttribute("sheet");
 <% } %>
 
 <% if (the_crawler != null) { %>
-    <b>Crawler:</b> 
+    <b>Crawl Engine:</b> 
     <a href="<%=request.getContextPath()%>/crawler_area/do_show_crawler.jsp?<%=the_crawler.getQueryString()%>">
         <%=Text.html(the_crawler.getLegend())%>
     </a>
