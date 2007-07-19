@@ -601,7 +601,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         }
 
         // optionally preferencing embeds up to MEDIUM
-        int prefHops = get(PREFERENCE_EMBED_HOPS); 
+        int prefHops = curi.get(this,PREFERENCE_EMBED_HOPS); 
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
@@ -648,7 +648,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     protected long retryDelayFor(CrawlURI curi) {
         int status = curi.getFetchStatus();
         return (status == S_CONNECT_FAILED || status == S_CONNECT_LOST ||
-                status == S_DOMAIN_UNRESOLVABLE)? get(RETRY_DELAY_SECONDS) : 0;
+                status == S_DOMAIN_UNRESOLVABLE)? curi.get(this,RETRY_DELAY_SECONDS) : 0;
                 // no delay for most
     }
 
@@ -669,22 +669,22 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
 
             long completeTime = curi.getFetchCompletedTime();
             long durationTaken = (completeTime - curi.getFetchBeginTime());
-            durationToWait = (long)(get(DELAY_FACTOR) * durationTaken);
+            durationToWait = (long)(curi.get(this,DELAY_FACTOR) * durationTaken);
 
-            long minDelay = get(MIN_DELAY_MS);
+            long minDelay = curi.get(this,MIN_DELAY_MS);
             if (minDelay > durationToWait) {
                 // wait at least the minimum
                 durationToWait = minDelay;
             }
 
-            long maxDelay = get(MAX_DELAY_MS);
+            long maxDelay = curi.get(this,MAX_DELAY_MS);
             if (durationToWait > maxDelay) {
                 // wait no more than the maximum
                 durationToWait = maxDelay;
             }
 
             long now = System.currentTimeMillis();
-            int maxBandwidthKB = get(MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
+            int maxBandwidthKB = curi.get(this, MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
                 ServerCache cache = controller.getServerCache();
@@ -798,7 +798,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
 
     protected boolean overMaxRetries(CrawlURI curi) {
         // never retry more than the max number of times
-        if (curi.getFetchAttempts() >= get(MAX_RETRIES)) {
+        if (curi.getFetchAttempts() >= curi.get(this,MAX_RETRIES)) {
             return true;
         }
         return false;
@@ -945,7 +945,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * @return a String token representing a queue
      */
     public String getClassKey(CrawlURI cauri) {
-        String queueKey = get(FORCE_QUEUE_ASSIGNMENT);
+        String queueKey = cauri.get(this,FORCE_QUEUE_ASSIGNMENT);
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
             queueKey = cauri.get(this, QUEUE_ASSIGNMENT_POLICY).getClassKey(
