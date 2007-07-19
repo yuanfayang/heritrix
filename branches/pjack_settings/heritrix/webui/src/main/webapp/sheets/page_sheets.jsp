@@ -87,9 +87,6 @@ int row = 1;
 
 <a href="do_show_add_single_sheet.jsp?<%=Text.jobQueryString(request)%>">
 Add Single Sheet...
-</a><br/>
-<a href="do_show_add_sheet_bundle.jsp?<%=Text.jobQueryString(request)%>">
-Add Sheet Bundle...
 </a>
 
 <h3>Test Settings</h3>
