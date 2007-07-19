@@ -25,6 +25,16 @@
           <version>5.1</version>
         </dependency>
   </dependencies>
+  
+  
+    <scm>
+       <connection>
+       scm:svn:https://archive-crawler.svn.sourceforge.net/svnroot/archive-crawler/trunk/subclasses
+       </connection>
+       <url>
+       https://archive-crawler.svn.sourceforge.net/svnroot/archive-crawler/trunk/subclasses
+       </url>
+    </scm>
 
     <distributionManagement>
         <repository>
