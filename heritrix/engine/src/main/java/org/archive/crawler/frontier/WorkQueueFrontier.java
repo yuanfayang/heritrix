@@ -596,7 +596,7 @@ implements Closeable, HasUriReceiver, Serializable {
     private int getCost(CrawlURI curi) {
         int cost = curi.getHolderCost();
         if (cost == CrawlURI.UNCALCULATED) {
-            cost = get(COST_POLICY).costOf(curi);
+            cost = curi.get(this,COST_POLICY).costOf(curi);
             curi.setHolderCost(cost);
         }
         return cost;

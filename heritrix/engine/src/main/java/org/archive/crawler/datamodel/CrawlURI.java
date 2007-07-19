@@ -62,6 +62,7 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
 import org.archive.util.Reporter;
+import org.archive.util.SURT;
 
 
 /**
@@ -1489,7 +1490,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     
     public void setStateProvider(SheetManager manager) {
         this.manager = manager;
-        this.provider = manager.findConfig(toString());
+        this.provider = manager.findConfig(SURT.fromURI(toString()));
     }
     
     
