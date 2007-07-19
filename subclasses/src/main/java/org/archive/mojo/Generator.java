@@ -248,23 +248,25 @@ public class Generator {
     
     private void writeSubs() throws IOException {
         for (Map.Entry<String,Set<String>> me: subclasses.entrySet()) {
-            String superclass = me.getKey();
-            String path = superclass.replace('.', '/');
-            File file = new File(outputDir, path + EXTENSION);
-            file.getParentFile().mkdirs();
-
-            FileWriter fw = null;
-            try {
-                fw = new FileWriter(file, true);
-                for (String sub: me.getValue()) {
-                    fw.write(sub);
-                    fw.write('\n');
-                }
-            } finally {
-                if (fw != null) try {
-                    fw.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            if (!me.getValue().isEmpty()) {
+                String superclass = me.getKey();
+                String path = superclass.replace('.', '/');
+                File file = new File(outputDir, path + EXTENSION);
+                file.getParentFile().mkdirs();
+    
+                FileWriter fw = null;
+                try {
+                    fw = new FileWriter(file, true);
+                    for (String sub: me.getValue()) {
+                        fw.write(sub);
+                        fw.write('\n');
+                    }
+                } finally {
+                    if (fw != null) try {
+                        fw.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
