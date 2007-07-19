@@ -263,7 +263,8 @@ public class RecordingOutputStream extends OutputStream {
             throw new RecorderLengthExceededException(); 
         }
         // taking too long? 
-        long duration = System.currentTimeMillis() - startTime + 1; // !divzero
+        long duration = System.currentTimeMillis() - startTime; 
+        duration = Math.min(duration,1); // !divzero
         if(duration>timeoutMs) {
             throw new RecorderTimeoutException(); 
         }
