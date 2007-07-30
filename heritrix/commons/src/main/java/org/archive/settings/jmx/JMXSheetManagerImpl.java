@@ -495,4 +495,9 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         manager.offlineCleanup();
     }
 
+    
+    public void remove(String sheetName, String path) {
+        SingleSheet sheet = getSingleSheet(sheetName);
+        PathChanger.remove(sheet, path);
+    }
 }

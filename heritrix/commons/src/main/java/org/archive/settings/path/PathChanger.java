@@ -256,7 +256,9 @@ public class PathChanger {
     
     private Object makeObject2(SingleSheet sheet, PathChange pc) {
         String value = pc.getValue();
-
+        if (value.equals("null")) {
+            return null;
+        }
         try {
             Class<?> c = Class.forName(value);
             if (!online(sheet, c)) {
@@ -384,6 +386,33 @@ public class PathChanger {
         } else {
             sheet.set(previous, key, value);
         }
+    }
+
+    
+    public static void remove(SingleSheet sheet, String path) {
+        int p = path.lastIndexOf(PathValidator.DELIMITER);
+        if (p < 0) {
+            throw new IllegalArgumentException("Can't remove " + path);
+        }
+        
+        String parentPath = path.substring(0, p);
+        String lastToken = path.substring(p + 1);
+        Object parent = PathValidator.check(sheet, parentPath);
+        if (parent instanceof Map) {
+            ((Map)parent).remove(lastToken);
+            return;
+        } else if (parent instanceof List) {
+            ((List)parent).remove(Integer.parseInt(lastToken));
+            return;
+        }
+        
+        Class type = Offline.getType(parent);
+        Map<String,Key<Object>> keys = KeyManager.getKeys(type);
+        Key<Object> key = keys.get(lastToken);
+        if (key == null) {
+            throw new IllegalArgumentException("No such path: " + path);
+        }
+        sheet.remove(parent, key);
     }
 
 }

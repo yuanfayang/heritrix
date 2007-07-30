@@ -225,4 +225,15 @@ public interface JMXSheetManager {
 
     @Operation(desc="Cleans up an offline manager.")
     void offlineCleanup();
+
+
+    @Operation(desc="Removes a setting from a sheet.")
+    void remove(
+            
+            @Parameter(name="sheetName", desc="The name of the sheet whose setting to remove.")
+            String sheetName, 
+            
+            @Parameter(name="path", desc="The path of the setting to remove.")
+            String path);
+
 }

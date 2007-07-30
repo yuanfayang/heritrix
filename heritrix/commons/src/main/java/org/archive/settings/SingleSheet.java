@@ -40,7 +40,8 @@ import org.archive.state.KeyTypes;
  * @author pjack
  */
 public class SingleSheet extends Sheet {
-    
+
+    private static enum NULL { VALUE };
 
     /**
      * 
@@ -118,18 +119,18 @@ public class SingleSheet extends Sheet {
     }
 
     
+    public boolean contains(Object module, Key<?> key) {
+        return checkUnsafe(module, key) != null;
+    }
+    
     
     @Override
-    public <T> T check(Object module, Key<T> key) {
+    <T> T check(Object module, Key<T> key) {
         if (module == null) {
             throw new IllegalArgumentException("Requested key on null module.");
         }
         validateModuleType(module, key);
-        Map<Key,Object> keys = settings.get(module);
-        if (keys == null) {
-            return null;
-        }
-        Object value = keys.get(key);
+        Object value = checkUnsafe(module, key);
         if (value == null) {
             return null;
         }
@@ -138,19 +139,22 @@ public class SingleSheet extends Sheet {
     
     
     @Override
-    public <T> Offline checkOffline(Offline module, Key<T> key) {
+    <T> Offline checkOffline(Offline module, Key<T> key) {
         validateModuleType(module, key);
         if (isOnline(key)) {
             throw new IllegalStateException("Not an offline key.");
         }
+        return (Offline)checkUnsafe(module, key);
+    }
+
+    
+    private Object checkUnsafe(Object module, Key<?> key) {
         Map<Key,Object> keys = settings.get(module);
         if (keys == null) {
             return null;
         }
-        Offline value = (Offline)keys.get(key);
-        return value;
+        return keys.get(key);
     }
-
 
     public <T> Resolved<T> resolve(Object module, Key<T> key) {
         if (module == null) {
@@ -177,16 +181,23 @@ public class SingleSheet extends Sheet {
         if (result == null) {
             return resolveDefault(module, key);
         }
+        if (result == NULL.VALUE) {
+            result = null;
+        }
         return Resolved.makeOnline(module, key, result, this);
     }
 
     
     private <T> Resolved<T> resolveOffline(Offline module, Key<T> key) {
-        Offline result = checkOffline(module, key);
+        Object result = checkUnsafe(module, key);
         if (result == null) {
             return resolveDefault(module, key);
         }
-        return Resolved.makeOffline(module, key, result, this);
+        if (result == NULL.VALUE) {
+            result = null;
+        }
+        Offline r = (Offline)result;
+        return Resolved.makeOffline(module, key, r, this);
     }
     
     
@@ -260,6 +271,27 @@ public class SingleSheet extends Sheet {
         return Resolved.makeList(module, key, result, sheets);
     }
     
+    
+    /**
+     * Removes a value from this sheet.
+     * 
+     * @param module   the module whose setting to remove
+     * @param key      the setting to remove
+     */
+    public void remove(Object module, Key<?> key) {
+        if (module == null) {
+            throw new IllegalArgumentException(
+                    "Attempt to remove key value on null module.");
+        }
+        
+        
+        Map<Key,Object> map = settings.get(module);
+        if (map == null) {
+            return;
+        }
+        
+        map.remove(key);
+    }
 
     /**
      * Sets a property.
@@ -274,12 +306,6 @@ public class SingleSheet extends Sheet {
         if (module == null) {
             throw new IllegalArgumentException(
                     "Attempt to set key value on null module.");
-        }
-        
-        if (value == null) {
-            // Skip constraint checking because we're removing a setting.
-            set2(module, key, value);
-            return;
         }
         
         Class vtype = (value == null) ? null: value.getClass();
@@ -338,14 +364,10 @@ public class SingleSheet extends Sheet {
                 map = prev;
             }
         }
-        if (value == null) {
-            map.remove(key);
-        } else {
-            value = transform(value);
-            Object old = map.put(key, value);
-            if (!KeyTypes.isSimple(Offline.getType(value))) {
-                getSheetManager().fireModuleChanged(old, value);
-            }
+        value = transform(value);
+        Object old = map.put(key, value);
+        if (!KeyTypes.isSimple(Offline.getType(value))) {
+            getSheetManager().fireModuleChanged(old, value);
         }
     }
 
@@ -368,6 +390,9 @@ public class SingleSheet extends Sheet {
         }
         if ((o instanceof List) && (!(o instanceof SettingsList))) {
             throw new IllegalArgumentException("Lists must be TypedList.");
+        }
+        if (o == null) {
+            return NULL.VALUE;
         }
         return o;
     }

@@ -93,7 +93,6 @@ implements TypedList<T>, TypeSubstitution, Serializable {
         for (T e: delegate) {
             newElements.add(d.duplicate(e));
         }
-        System.out.println(newElements);
         return new SettingsList(newElements, newSheets, manager, elementType);
     }
     

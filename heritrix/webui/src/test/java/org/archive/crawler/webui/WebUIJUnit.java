@@ -198,7 +198,8 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "http://www.baz.org/1.html");
 
         doGet(urlSheets);
-        
+
+        /*
         // Add a sheet bundle consiting of foo, bar, baz
         url = findHref("do_show_add_sheet_bundle.jsp", managerId);
         doGet(url);
@@ -255,7 +256,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "sheet", "the_bundle", 
                 "add", "Y",
                 "surts", "http://the_bundle.archive.org");
-
+*/
         if (System.getProperty("org.archive.crawler.webui.wait") != null) {
             Object eternity = new Object();
             synchronized (eternity) {
@@ -443,7 +444,7 @@ public class WebUIJUnit extends TmpDirTestCase {
     
     private String findHref(Object... tokens) {
         StringBuilder regex = new StringBuilder();
-        regex.append("\"(.*?");
+        regex.append("href=\"(.*?");
         for (Object t: tokens) {
             regex.append(t).append(".*?");
         }

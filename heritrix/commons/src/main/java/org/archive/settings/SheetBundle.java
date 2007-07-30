@@ -81,7 +81,7 @@ public class SheetBundle extends Sheet {
      * the given processor/key combination, then that value is returned and
      * any remaining sheets in the bundle are ignored.
      */
-    public <T> T check(Object processor, Key<T> key) {
+    <T> T check(Object processor, Key<T> key) {
         for (Sheet sheet: sheets) {
             T result = sheet.check(processor, key);
             if (result != null) {
@@ -92,7 +92,7 @@ public class SheetBundle extends Sheet {
     }
 
     
-    public <T> Offline checkOffline(Offline module, Key<T> key) {
+    <T> Offline checkOffline(Offline module, Key<T> key) {
         for (Sheet sheet: sheets) {
             Offline result = sheet.checkOffline(module, key);
             if (result != null) {
