@@ -36,6 +36,7 @@ import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SingleSheet;
+import org.archive.state.Key;
 import org.archive.state.ModuleTestBase;
 
 
@@ -88,8 +89,11 @@ public class CredentialStoreTest extends ModuleTestBase {
         checkContextNames(store, domain, types.size() * 2); // should be global + domain
         checkContextNames(store, host, types.size() * 3); // should be global + domain + host
 
-        Map<String,Credential> defMap = global.check(store, 
-                CredentialStore.CREDENTIALS);
+        Key k = CredentialStore.CREDENTIALS;
+        @SuppressWarnings("unchecked")
+        Key<Map> k2 = (Key<Map>)k;
+        @SuppressWarnings("unchecked")
+        Map<String,Credential> defMap = global.resolveEditableMap(store, k2);
         for (String name: globalNames) {
             defMap.remove(name);
         }
