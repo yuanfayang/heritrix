@@ -133,7 +133,7 @@ final public class Key<Value> implements Serializable {
     transient final private Object offlineDef;
     
     /** The constraints that determine valid values for the field. */
-    transient final private Set<Constraint<Value>> constraints;
+    transient private Set<Constraint<Value>> constraints;
 
     // Note that all flags are false by default, and set to true in the
     // presence of a corresponding annotation.
@@ -176,6 +176,20 @@ final public class Key<Value> implements Serializable {
     void setMetadata(Class owner, Field field) {
         this.fieldName = field.getName().toLowerCase().replace('_', '-');
         this.owner = owner;
+        if (field.getAnnotation(Nullable.class) == null) {
+            addNonNullConstraint();
+        } else {
+            if (KeyTypes.isSimple(type)) {
+                throw new IllegalStateException(owner.getName() + "." +
+                        fieldName + " uses @Nullable but has a simple type.");
+            } else if (type == List.class) {
+                throw new IllegalStateException(owner.getName() + "." +
+                        fieldName + " uses @Nullable but has a list type.");
+            } else if (type == Map.class) {
+                throw new IllegalStateException(owner.getName() + "." +
+                        fieldName + " uses @Nullable but has a map type.");                
+            }
+        }
         if (field.getAnnotation(Expert.class) != null) {
             this.expert = true;
         }
@@ -188,6 +202,14 @@ final public class Key<Value> implements Serializable {
         }
     }
 
+
+    @SuppressWarnings("unchecked")
+    private void addNonNullConstraint() {
+        Set s = new HashSet(constraints);
+        s.add(NonNullConstraint.INSTANCE);
+        this.constraints = Collections.unmodifiableSet(s);        
+    }
+    
 
     /**
      * The element type of a List or Map.  Will be null if {@link #getType()}

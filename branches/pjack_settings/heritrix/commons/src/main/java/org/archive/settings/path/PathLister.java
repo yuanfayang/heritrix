@@ -125,7 +125,7 @@ public class PathLister {
                     if (startSheet.getSheetManager().isOnline()) {
                         v = global.get(start, k);
                     } else {
-                        v = global.checkOffline((Offline)start, k);
+                        v = global.resolve(start, k).getValue();
                     }
                     alreadySeen.put(v, k.getFieldName());
                 }

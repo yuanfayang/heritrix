@@ -195,9 +195,8 @@ public class Sheets {
         request.setAttribute("sheet", sheet);
         
         String path = request.getParameter("path");
-        String type = request.getParameter("type");
         try {
-            sheetManager.set(sheet, path, type, null);
+            sheetManager.remove(sheet, path);
         } finally {
             remote.close();
         }

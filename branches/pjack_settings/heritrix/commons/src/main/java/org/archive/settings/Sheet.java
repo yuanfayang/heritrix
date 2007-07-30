@@ -113,7 +113,9 @@ public abstract class Sheet implements StateProvider, Serializable {
     
     
     /**
-     * Looks up a value for a property.  
+     * Looks up a value for a property.  TODO: Collapse checkOffline into 
+     * this for simplicity's sake.  There are two methods because they used
+     * to be public and required different signatures for type safety.
      * 
      * @param <T>
      * @param module   the module who needs the property value
@@ -122,10 +124,10 @@ public abstract class Sheet implements StateProvider, Serializable {
      * @return  either the value for that module/Key combination, or null
      *    if this sheet does not include such a value
      */
-    public abstract <T> T check(Object module, Key<T> key);
+    abstract <T> T check(Object module, Key<T> key);
 
     
-    public abstract <T> Offline checkOffline(Offline module, Key<T> key);
+    abstract <T> Offline checkOffline(Offline module, Key<T> key);
     
     public abstract <T> Resolved<T> resolve(Object module, Key<T> key);
 
