@@ -47,7 +47,6 @@ import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.FileModule;
 import org.archive.util.SURT;
-import org.archive.util.SurtPrefixSet;
 
 
 /**

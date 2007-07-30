@@ -27,8 +27,8 @@ package org.archive.state;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -107,7 +107,7 @@ final public class KeyManager {
         }
         
         // Construct new map of superclass keys.
-        Map<String,Key<Object>> discovered = new HashMap<String,Key<Object>>();
+        Map<String,Key<Object>> discovered = new TreeMap<String,Key<Object>>();
         discovered.putAll(getKeys(c.getSuperclass()));        
         
         // Add keys declared by given class
