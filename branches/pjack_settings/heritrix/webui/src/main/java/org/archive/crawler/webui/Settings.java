@@ -26,13 +26,19 @@
 
 package org.archive.crawler.webui;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.servlet.jsp.JspWriter;
 
@@ -44,6 +50,7 @@ import org.archive.settings.path.PathValidator;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
+import org.archive.util.IoUtils;
 
 import static org.archive.settings.path.PathChanger.REFERENCE_TAG;
 import static org.archive.settings.path.PathChanger.OBJECT_TAG;
@@ -57,6 +64,10 @@ import static org.archive.state.KeyTypes.ENUM_TAG;
  *
  */
 public class Settings {
+
+    
+    final static private Map<String,Set<String>> subclasses = 
+        new HashMap<String,Set<String>>();
 
     
 
@@ -303,28 +314,33 @@ public class Settings {
     
     private void printCreateOptions(JspWriter out, Setting setting) 
     throws IOException {
-        // FIXME: Use some kind of "subclass database" here.
-        // For now just using the existing value if it's a class name
-        if (setting.getType().equals(OBJECT_TAG)) {
+        Collection<String> options = getCreateOptions(setting);
+        for (String option: options) {
             out.print("<option value=\"");
             out.print(OBJECT_TAG);
             out.print(", ");
             out.print(Text.attr(setting.getValue()));
-            out.print("\" selected=\"selected\">Create ");
-            out.print(Text.html(Text.baseName(setting.getValue())));
+            out.print("\"");
+            if (option.equals(setting.getValue())) {
+                out.print(" selected=\"selected\"");
+            }
+            out.print(">Create ");
+            out.print(Text.html(Text.baseName(option)));
             out.println("</option>");
         }
     }
     
     
     private Collection<String> getCreateOptions(Setting setting) {
-        // FIXME: Use some kind of "subclass database" here.
-        // For now just using the existing value if it's a class name
-        if (setting.getType().equals(OBJECT_TAG)) {
-            return Collections.singleton(setting.getValue());
+        Set<String> options = getSubclasses(getActualType(setting));
+        if (setting.getType().equals(OBJECT_TAG) && 
+                !options.contains(setting.getValue())) {
+            Collection<String> old = options;
+            options = new TreeSet<String>(new BaseNameComp());
+            options.addAll(old);
+            options.add(setting.getValue());
         }
-        
-        return Collections.emptySet();        
+        return options;
     }
     
     
@@ -570,6 +586,54 @@ public class Settings {
         }
         
         return true;
+    }
+
+    
+    public static Set<String> getSubclasses(Class clz) {
+        synchronized (subclasses) {
+            Set<String> result = subclasses.get(clz.getName());
+            if (result != null) {
+                return result;
+            }
+            String path = '/' + clz.getName().replace('.', '/') + ".subclasses";
+            InputStream input = clz.getResourceAsStream(path);
+            if (input == null) {
+                result = Collections.emptySet();
+                subclasses.put(clz.getName(), result);
+                return result;
+            }
+            
+            BufferedReader br = null;
+            try {
+                result = new TreeSet<String>(new BaseNameComp());
+                br = new BufferedReader(new InputStreamReader(input));
+                for (String s = br.readLine(); s != null; s = br.readLine()) {
+                    s = s.trim();
+                    if (s.length() > 0 && !s.startsWith("#")) {
+                        result.add(s);
+                    }
+                }
+                subclasses.put(clz.getName(), result);
+                return result;
+            } catch (IOException e) {
+                e.printStackTrace();
+                result = Collections.emptySet();
+                subclasses.put(clz.getName(), result);
+                return result;                
+            } finally {
+                IoUtils.close(br);
+            }
+        }
+    }
+    
+    static class BaseNameComp implements Comparator<String> {
+
+        public int compare(String one, String two) {
+            String base1 = Text.baseName(one); 
+            String base2 = Text.baseName(two);
+            return base1.compareTo(base2);
+        }
+
     }
 
 }
