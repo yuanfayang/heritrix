@@ -224,7 +224,8 @@ public abstract class ArchiveRecord extends InputStream {
 	 * @return True if bytes remaining in record content.
 	 */
     public int available() {
-        return (int)(getHeader().getLength() - getPosition());
+        long amount = getHeader().getLength() - getPosition();
+        return (amount > Integer.MAX_VALUE? Integer.MAX_VALUE: (int)amount);
     }
 
     /**
@@ -240,7 +241,7 @@ public abstract class ArchiveRecord extends InputStream {
         // Read to the end of the body of the record.  Exhaust the stream.
         // Can't skip direct to end because underlying stream may be compressed
         // and we're calculating the digest for the record.
-        if (available() > 0) {
+        while (available() > 0 && !this.eor) {
             skip(available());
         }
     }

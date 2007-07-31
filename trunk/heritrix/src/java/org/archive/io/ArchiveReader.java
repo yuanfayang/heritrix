@@ -444,6 +444,12 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
             this.count = 0;
             ((RandomAccessInputStream)this.in).position(position);
         }
+        
+        public int available() throws IOException {
+            // Avoid overflow on large datastreams
+            long amount = (long)in.available() + (long)(count - pos);
+            return (amount >= Integer.MAX_VALUE)? Integer.MAX_VALUE: (int)amount;
+        }
     }
     
     /**
