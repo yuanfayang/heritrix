@@ -57,6 +57,27 @@ public class PublicSuffixesTest extends TestCase {
         matchPrefix("jp,tokyo,public,assigned,", "jp,tokyo,public,assigned,");
     }
 
+    public void testDomainWithDash() {
+        matchPrefix("de,bad-site,www", "de,bad-site,");
+    }
+    
+    public void testDomainWithNumbers() {
+        matchPrefix("de,archive4u,www", "de,archive4u,");
+    }
+    
+    public void testIPV4() {
+        assertEquals("unexpected reduction", 
+                "1.2.3.4",
+                PublicSuffixes.reduceSurtToTopmostAssigned("1.2.3.4"));
+    }
+    
+    public void testIPV6() {
+        assertEquals("unexpected reduction", 
+                "[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]",
+                PublicSuffixes.reduceSurtToTopmostAssigned(
+                        "[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]"));
+    }
+    
     public void testExceptions() {
         matchPrefix("uk,bl,www,", "uk,bl,");
         matchPrefix("uk,bl,", "uk,bl,");

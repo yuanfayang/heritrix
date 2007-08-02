@@ -187,10 +187,10 @@ public class PublicSuffixes {
         prefixes.addAll(list);
         prefixes.add("*,"); // for new/unknown TLDs
         buildRegex("", regex, prefixes);
-        regex.append("\n(\\w+,)");
+        regex.append("\n([\\-\\w]+,)");
         String rstring = regex.toString();
         // convert glob-stars to word-char-runs
-        rstring = rstring.replaceAll("\\*", "\\\\w+");
+        rstring = rstring.replaceAll("\\*", "[\\\\-\\\\w]+");
         return rstring;
     }
 
