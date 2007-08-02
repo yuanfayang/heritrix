@@ -177,16 +177,22 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected final static Boolean DEFAULT_ATTR_RECOVERY_ENABLED =
         Boolean.TRUE;
 
+    // to maintain serialization compatibility
+    protected long serializedQueuedUriCount;
+    protected long serializedSucceededFetchCount;
+    protected long serializedFailedFetchCount;
+    protected long serializedDisregardedUriCount;
+    
     // top-level stats
     /** total URIs queued to be visited */
-    protected AtomicLong queuedUriCount = new AtomicLong(0); 
+    transient protected AtomicLong queuedUriCount = new AtomicLong(0); 
 
-    protected AtomicLong succeededFetchCount = new AtomicLong(0);
+    transient protected AtomicLong succeededFetchCount = new AtomicLong(0);
 
-    protected AtomicLong failedFetchCount = new AtomicLong(0);
+    transient protected AtomicLong failedFetchCount = new AtomicLong(0);
 
     /** URIs that are disregarded (for example because of robot.txt rules */
-    protected AtomicLong disregardedUriCount = new AtomicLong(0);
+    transient protected AtomicLong disregardedUriCount = new AtomicLong(0);
 
     /**
      * Used when bandwidth constraint are used.
@@ -1083,5 +1089,24 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
 
     public void reportTo(PrintWriter writer) {
         reportTo(null, writer);
+    }
+    
+    //
+    // maintain serialization compatibility to pre-AtomicLong impl
+    private void writeObject(java.io.ObjectOutputStream out)
+    throws IOException {
+        serializedQueuedUriCount = queuedUriCount.get();
+        serializedSucceededFetchCount = succeededFetchCount.get();
+        serializedFailedFetchCount = failedFetchCount.get();
+        serializedDisregardedUriCount = disregardedUriCount.get();
+        out.defaultWriteObject();
+    }
+    private void readObject(java.io.ObjectInputStream in)
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        queuedUriCount = new AtomicLong(serializedQueuedUriCount);
+        succeededFetchCount = new AtomicLong(serializedSucceededFetchCount);
+        failedFetchCount = new AtomicLong(serializedFailedFetchCount);
+        disregardedUriCount = new AtomicLong(serializedDisregardedUriCount);
     }
 }
