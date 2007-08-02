@@ -339,7 +339,9 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     
     public void initialize(CrawlController c)
     throws FatalConfigurationException, IOException {
-        super.initialize(c);
+        this.controller = c;
+        // fill in anything from a checkpoint recovery first (because
+        // usual initialization will skip initQueueOfQueues in checkpoint)
         if (c.isCheckpointRecover()) {
             // If a checkpoint recover, copy old values from serialized
             // instance into this Frontier instance. Do it this way because 
@@ -352,7 +354,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             try {
                 f = (BdbFrontier)CheckpointUtils.
                     readObjectFromFile(this.getClass(),
-                        this.controller.getCheckpointRecover().getDirectory());
+                        c.getCheckpointRecover().getDirectory());
             } catch (FileNotFoundException e) {
                 throw new FatalConfigurationException("Failed checkpoint " +
                     "recover: " + e.getMessage());
@@ -380,6 +382,8 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             this.inProcessQueues = f.inProcessQueues;
             wakeQueues();
         }
+        // perform usual initialization 
+        super.initialize(c);
     }
 
     
