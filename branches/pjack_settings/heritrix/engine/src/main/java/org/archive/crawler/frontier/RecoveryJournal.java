@@ -31,6 +31,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
@@ -320,7 +321,15 @@ implements FrontierJournal {
                                 enough.countDown();
                             }
                         } catch (URIException e) {
-                            e.printStackTrace();
+                            LOGGER.log(Level.WARNING, "bad URI during " +
+                                "log-recovery of queue contents ",e);
+                            // and continue...
+                        } catch (RuntimeException e) {
+                            LOGGER.log(Level.SEVERE, "exception during " +
+                                    "log-recovery of queue contents ",e);
+                            // and continue, though this may be risky
+                            // if the exception wasn't a trivial NPE 
+                            // or wrapped interrupted-exception...
                         }
                     }
                     if((qLines%PROGRESS_INTERVAL)==0) {
