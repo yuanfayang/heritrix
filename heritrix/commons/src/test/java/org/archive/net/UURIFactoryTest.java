@@ -952,4 +952,22 @@ public class UURIFactoryTest extends TestCase {
     	}
     	assertTrue("Didn't throw exception when one expected", exception);
     }
+    
+    public void testNakedHttpsSchemeColon() {
+        boolean exception = false;
+        try {
+            UURIFactory.getInstance("https:");
+        } catch (URIException e) {
+            exception = true;
+        }
+        assertTrue("Didn't throw exception when one expected", exception);
+        exception = false;
+        try {
+            UURI base = UURIFactory.getInstance("http://www.example.com");
+            UURIFactory.getInstance(base, "https:");
+        } catch (URIException e) {
+            exception = true;
+        }
+        assertTrue("Didn't throw exception when one expected", exception);
+    }
 }

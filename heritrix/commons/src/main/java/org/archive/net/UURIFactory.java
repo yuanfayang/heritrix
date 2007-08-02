@@ -552,26 +552,28 @@ public class UURIFactory extends URI {
      * Scheme Syntax
      */
     protected void checkHttpSchemeSpecificPartSlashPrefix(final URI base,
-    		final String scheme, final String schemeSpecificPart)
+            final String scheme, final String schemeSpecificPart)
     throws URIException {
-    	// Only apply this check if no base.
-    	if (base != null) {
-    		return;
-    	}
-    	if (scheme == null || scheme.length() <= 0) {
-    		return;
-    	}
-    	if (!scheme.equals("http") && !scheme.equals("https")) {
-    		return;
-    	}
-    	if (!schemeSpecificPart.startsWith("//")) {
-    		throw new URIException("http scheme specific part must " +
-    		    "begin '//': " + schemeSpecificPart);
-    	}
-    	if (schemeSpecificPart.length() <= 2) {
-    		throw new URIException("http scheme specific part is " +
-        		"too short: " + schemeSpecificPart);
-    	}
+        if (scheme == null || scheme.length() <= 0) {
+            return;
+        }
+        if (!scheme.equals("http") && !scheme.equals("https")) {
+            return;
+        }
+        if ( schemeSpecificPart == null 
+                || !schemeSpecificPart.startsWith("//")) {
+            // only acceptable if schemes match
+            if (base == null || !scheme.equals(base.getScheme())) {
+                throw new URIException(
+                        "relative URI with scheme only allowed for " +
+                        "scheme matching base");
+            } 
+            return; 
+        }
+        if (schemeSpecificPart.length() <= 2) {
+            throw new URIException("http scheme specific part is " +
+                "too short: " + schemeSpecificPart);
+        }
     }
     
     /**
