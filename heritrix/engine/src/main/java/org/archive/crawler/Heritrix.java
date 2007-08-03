@@ -121,8 +121,6 @@ public class Heritrix {
         Options options = new Options();
         options.addOption("j", "jobs-dir", true, "The jobs directory.  " +
                         "Defaults to ./jobs");
-        options.addOption("p", "profiles-dir", true, "The profiles " +
-                        "directory.  Defaults to ./profiles");
         options.addOption("h", "heritrix-properties", true, 
                 "The full path to the heritrix properties file " + 
                 "(eg, conf/heritrix.properties).  If present, this file " +
@@ -131,7 +129,7 @@ public class Heritrix {
         options.addOption("b", "webui-bind-hosts", true, 
                 "A comma-separated list of hostnames for the " +
                 "webui to bind to.  Ignored if -r is not specified.");
-        options.addOption("l", "webui-port", true, "The port the webui " +
+        options.addOption("p", "webui-port", true, "The port the webui " +
                 "should listen on.  Ignored if -r is not specified.");
         options.addOption("w", "webui-war-path", true, "The path to the " +
                 "Heritrix webui WAR.  Ignored if -r is not specified.");
@@ -188,11 +186,7 @@ public class Heritrix {
         if (cl.hasOption('j')) {
             config.setJobsDirectory(cl.getOptionValue('j'));
         }
-        
-        if (cl.hasOption('p')) {
-            config.setProfilesDirectory(cl.getOptionValue('p'));
-        }
-        
+                
         if (cl.hasOption('h')) {
             properties = new File(cl.getOptionValue('h'));
         }
@@ -210,7 +204,7 @@ public class Heritrix {
             // default: only localhost
             webConfig.getHosts().add("localhost");
         }
-        if (cl.hasOption('l')) {
+        if (cl.hasOption('p')) {
             int port = Integer.parseInt(cl.getOptionValue('l'));
             webConfig.setPort(port);
         }

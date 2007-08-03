@@ -29,6 +29,8 @@ package org.archive.crawler.framework;
 import java.io.Closeable;
 import java.io.IOException;
 
+import javax.management.ObjectName;
+
 import org.archive.openmbeans.annotations.Attribute;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
@@ -41,63 +43,53 @@ import org.archive.openmbeans.annotations.Parameter;
 public interface CrawlJobManager extends Closeable {
 
     
-
-    @Operation(desc="Lists all jobs.")
-    public String[] listAllJobs();
-
-    @Operation(desc="Lists active jobs.")
-    public String[] listActiveJobs();
-
-    @Operation(desc="Lists completed jobs.")
-    public String[] listCompletedJobs();
-
     
-    @Operation(desc="Lists all profiles.")
-    public String[] listProfiles();
-    
-    
-    @Operation(desc="Copies a profile.")
-    public void copyProfile(
+
+    @Operation(desc="Lists all profiles, and all ready, active and completed jobs.")
+    public String[] listJobs();
+
+    @Operation(desc="Copies a job or profile to a new profile or a new ready job.")
+    public void copy(
             
-            @Parameter(name="origName", desc="The name of the profile to copy.")
+            @Parameter(name="oldJob", desc="stage-name of the profile to copy.")
             String origName, 
             
-            @Parameter(name="copiedName", desc="The name for the new profile.")
+            @Parameter(name="newJob", desc="stage-name of the copied job.")
             String copiedName) throws IOException;
     
     
-    @Operation(desc="Launches a profile into a new, pending job.")
-    public void launchProfile(
+    @Operation(desc="Launches a job.")
+    public void launchJob(
             
-            @Parameter(name="profile", desc="The name of the profile to launch.")
-            String profile,
-            
-            @Parameter(name="job", desc="The name for the new launched job.")
-            String job) throws IOException;
+            @Parameter(name="job", desc="The stage-name of the job to launch.")
+            String profile) throws IOException;
 
     
-    @Operation(desc="Loads a profile for editing.")
-    public String getProfile(
+    @Operation(desc="Loads a SheetManager for editing.  If a SheetManager " +
+                "for the given job already exists, it will be re-used.")
+    public ObjectName getSheetManagerStub(
             
-            @Parameter(name="profile", desc="The name of the profile to load.")
+            @Parameter(name="job", desc="The stage-name of the job whose " +
+                        "SheetManager to load and return.")
             String profile
             
             ) throws IOException;
 
     
-    @Operation(desc="Closes an open profile.")
-    public void closeProfile(
+    @Operation(desc="Closes an open SheetManager.")
+    public void closeSheetManagerStub(
             
-            @Parameter(name="profile", desc="The name of the open profile to close.")
+            @Parameter(name="job", desc="The stage-name of the job whose" +
+                        " SheetManager to close.")
             String profile
             
             ) throws IOException;
 
 
     @Operation(desc="Loads the logs for a job.")
-    public String getLogs(
+    public ObjectName getLogs(
             
-            @Parameter(name="job", desc="The name of the job.")
+            @Parameter(name="job", desc="The stage-name of the job.")
             String job
             
             ) throws IOException;
@@ -155,4 +147,9 @@ public interface CrawlJobManager extends Closeable {
 
     @Attribute(desc="The version of Heritrix.", def="Unknown")
     String getHeritrixVersion();
+
+    @Operation(desc="Returns some helpful information.")
+    String help();
+                
+
 }

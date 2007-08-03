@@ -26,11 +26,7 @@ Enter a name for the new Settings Sheet <%= single ? "" : "Bundle" %> below.<br/
 <input type="hidden" name="single" value="<%=single%>">
 
 <input type="text" name="sheet" value=""><br>
-<input type="submit" value="Submit"></form><form class="nospace"
- method="get" action="do_show_sheets.jsp"><input 
-   type="submit" value="Cancel"><% Text.printJobFormFields(request, out); %>
-   </form>
-
+<input type="submit" value="Submit"></form>
 
 </body>
 </html>

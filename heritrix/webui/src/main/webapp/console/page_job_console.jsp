@@ -11,7 +11,7 @@
 Crawler crawler = (Crawler)Text.get(request, "crawler");
 StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
 CompositeData memory = (CompositeData)Text.get(request, "memory"); 
-CrawlJob job = (CrawlJob)Text.get(request, "crawljob"); 
+CrawlJob job = (CrawlJob)Text.get(request, "job"); 
 
 String qs = crawler.getQueryString() + "&job=" + job.getName();
 

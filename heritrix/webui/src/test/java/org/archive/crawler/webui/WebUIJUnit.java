@@ -123,7 +123,6 @@ public class WebUIJUnit extends TmpDirTestCase {
         setupDirs();
         CrawlJobManagerConfig config = new CrawlJobManagerConfig();
         config.setJobsDirectory(getJobsDir().getAbsolutePath());
-        config.setProfilesDirectory(getProfilesDir().getAbsolutePath());
         this.manager = new CrawlJobManagerImpl(config);
         this.managerId = System.identityHashCode(manager);
     }
@@ -168,7 +167,7 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "port", "-1",
                 "username", "local",
                 "password", "local");
-        
+
         String url = findHref("do_show_crawler.jsp", managerId);
         this.host = extract(url, "host");
         doGet(url);
@@ -199,64 +198,6 @@ public class WebUIJUnit extends TmpDirTestCase {
 
         doGet(urlSheets);
 
-        /*
-        // Add a sheet bundle consiting of foo, bar, baz
-        url = findHref("do_show_add_sheet_bundle.jsp", managerId);
-        doGet(url);
-        
-        doPost("do_add_sheet_bundle.jsp",
-                "host", host,
-                "port", "-1",
-                "id", Integer.toString(managerId),
-                "profile", "basic",
-                "sheet", "the_bundle");
-        
-        doPost("do_move_bundled_sheets.jsp",
-                "host", host,
-                "port", "-1",
-                "id", Integer.toString(managerId),
-                "profile", "basic",
-                "sheet", "the_bundle",
-                "move", "foo",
-                "index", "0");
-
-        doPost("do_move_bundled_sheets.jsp",
-                "host", host,
-                "port", "-1",
-                "id", Integer.toString(managerId),
-                "profile", "basic",
-                "sheet", "the_bundle",
-                "move", "bar",
-                "index", "1");
-
-        doPost("do_move_bundled_sheets.jsp",
-                "host", host,
-                "port", "-1",
-                "id", Integer.toString(managerId),
-                "profile", "basic",
-                "sheet", "the_bundle",
-                "move", "baz",
-                "index", "2");
-
-        // Commit the new bundle.
-        doGet(urlSheets);
-        url = findHref("do_commit_sheet.jsp", managerId, "the_bundle");
-        doGet(url);
-
-        // Associate the URL prefix "http://the_bundle.archive.org" 
-        // with the new bundle.
-        url = findHref("do_show_associate.jsp", managerId, "the_bundle");
-        doGet(url);
-
-        doPost("do_associate.jsp",
-                "host", host,
-                "port", "-1",
-                "id", Integer.toString(managerId),
-                "profile", "basic",
-                "sheet", "the_bundle", 
-                "add", "Y",
-                "surts", "http://the_bundle.archive.org");
-*/
         if (System.getProperty("org.archive.crawler.webui.wait") != null) {
             Object eternity = new Object();
             synchronized (eternity) {
@@ -290,6 +231,11 @@ public class WebUIJUnit extends TmpDirTestCase {
         // Start on the sheets page for the default profile.
         doGet(urlSheets);
 
+        // FIXME: Make these parameters, repeat test on ready & active job,
+        // not just profiles.
+        String stage =  "PROFILE";
+        String job = "basic";
+        
         // Create a new single sheet with the specified name.
         String url = findHref("do_show_add_single_sheet.jsp", managerId, "basic");
         doGet(url);
@@ -298,7 +244,8 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "basic",
+                "stage", stage,
+                "job", job,
                 "sheet", sheet);
 
         // Override the specified setting to be newValue instead of oldValue. 
@@ -312,7 +259,8 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "basic",
+                "stage", stage,
+                "job", job,
                 "sheet", sheet, 
                 "path", path, 
                 "type-" + path, "int",
@@ -333,7 +281,8 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "basic",
+                "stage", stage,
+                "job", job,
                 "sheet", sheet, 
                 "add", "Y",
                 "surts", "# Comment line to ignore\n\n" + assoc);
@@ -344,7 +293,8 @@ public class WebUIJUnit extends TmpDirTestCase {
                 "host", host,
                 "port", "-1",
                 "id", Integer.toString(managerId),
-                "profile", "basic",
+                "job", job,
+                "stage", stage,
                 "button", "Settings",
                 "url", assoc + "/a/b/c/d");
 
@@ -478,9 +428,6 @@ public class WebUIJUnit extends TmpDirTestCase {
     }
     
     
-    public static File getProfilesDir() {
-        return new File(getCrawlerDir(), "profiles");
-    }
 
 
     public void setupDirs() throws Exception {
@@ -489,9 +436,7 @@ public class WebUIJUnit extends TmpDirTestCase {
         crawler.mkdirs();
         File jobs = getJobsDir();
         jobs.mkdirs();
-        File profiles = getProfilesDir();
-        profiles.mkdirs();
-        File defProf = new File(profiles, "basic");
+        File defProf = new File(jobs, "profile-basic");
         defProf.mkdirs();
         File defProfSheets = new File(defProf, "sheets");
         defProfSheets.mkdirs();

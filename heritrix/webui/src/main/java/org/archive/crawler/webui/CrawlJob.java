@@ -1,14 +1,11 @@
 package org.archive.crawler.webui;
 
-import java.util.Set;
-
-import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
+import javax.servlet.http.HttpServletRequest;
 
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobController;
-import org.archive.crawler.util.LogRemoteAccess;
+import org.archive.crawler.framework.JobStage;
 
 /**
  * Represents a crawl job (a profile, an active job or a completed
@@ -17,127 +14,126 @@ import org.archive.crawler.util.LogRemoteAccess;
  * @author Kristinn
  */
 public class CrawlJob {
-    public enum State{
-        // TODO: Consider pending jobs
-        PROFILE,
-        PENDING, // An active job whose crawl status is 'Prepared'
-        ACTIVE,
-        COMPLETED
-    }
+
     
     String name;
-    Crawler crawler; // TODO: Do we need to keep this?
-    State state;
+    JobStage stage;
     String crawlstatus;
+    // TODO: Completed jobs also have more specific crawl state (i.e. how they ended).
     
-    public CrawlJob(String name, Crawler crawler){
+    public CrawlJob(String name, JobStage stage, String crawlStatus) {
         this.name = name;
-        this.crawler = crawler;
-        JMXConnector jmxc = crawler.connect();
-        CrawlJobManager manager = Remote.make(
-                jmxc, 
-                crawler.getObjectName(), 
-                CrawlJobManager.class).getObject();
+        this.stage = stage;
+        this.crawlstatus = crawlStatus;
+    }
 
-        // Determine job state 
-        // TODO: This might be better handled on the server side
-        String[] profiles = manager.listProfiles();
-        for(String p : profiles){
-            if(p.equals(name)){
-                state = State.PROFILE;
-            }
-        }
-        if(state == null){
-            String[] jobs = manager.listActiveJobs();
-            for(String j : jobs){
-                if(j.equals(name)){
-                    state = State.ACTIVE;
-                }
-            }
-        }
-        if(state == null){
-            String[] jobs = manager.listCompletedJobs();
-            for(String j : jobs){
-                if(j.equals(name)){
-                    state = State.COMPLETED;
-                }
-            }
-        }
-        if(state==State.ACTIVE){
-            determineCrawlStatus(jmxc);
-        }
-        
-        Misc.close(jmxc);
-    }
     
-    public CrawlJob(String name, Crawler crawler, State state){
-        this.name = name;
-        this.crawler = crawler;
-        this.state = state;
-        
-        if(state==State.ACTIVE){
-            // Try to access the JobController and StatisticsTracking beans
-            // on the crawler to populate more detailed info.
-            JMXConnector jmxc = crawler.connect();
-            determineCrawlStatus(jmxc);
-            Misc.close(jmxc);
-        }
-    }
-    
-    private void determineCrawlStatus(JMXConnector jmxc){
-        JobController controller = findJobController(jmxc,name);
-        if(controller == null){
-            throw new IllegalStateException("Failed to find " +
-                    "JobController for job " + name);
-        }
-        crawlstatus = controller.getCrawlStatusString();
-    }
-    
-    /**
-     * Finds an appropriate LogRemoteAccess object.
-     * @param jmxc JMXConnector to the remote machine
-     * @param job The name of the job whose logs we are interested in
-     * @return The LogRemoteAccess object or null if none is found.
-     * @throws IllegalStateException If there are multiple 
-     *      {@link LogRemoteAccess} objects found. 
-     */
-    private static JobController findJobController(JMXConnector jmxc, String job){
-        String query = "org.archive.crawler:*," + 
-        "name=" + job + 
-        ",type=" + JobController.class.getName();
-
-        Set<ObjectName> set = Misc.find(jmxc, query);
-        if (set.size() == 1) {
-            ObjectName name = set.iterator().next();
-            return Remote.make(jmxc, name, JobController.class).getObject();
-        } else if(set.size() > 1) {
-            // Error
-            throw new IllegalStateException("Found multiple JobControllers for job " + job);
-        }
-        return null;
-    }
-    
-    public String getName(){
+    public String getName() {
         return name;
     }
 
-    public State getState(){
-        if(getCrawlStatus().equals(CrawlController.State.PREPARED.toString())){
-            // Handle this border case. 'Prepared' jobs may not have all
-            // reports ready etc. so it is important to distingush them.
-            return State.PENDING;
-        }
-        return state;
+    public JobStage getJobStage() {
+        return stage;
+    }
+
+    public String getCrawlStatus() {
+        return crawlstatus;
+    }
+    
+    
+    public String encode() {
+        return JobStage.encode(stage, name);
     }
 
     
-    public String getCrawlStatus(){
-        // TODO: Completed jobs also have more specific crawl state (i.e. how they ended).
-        if(state==State.ACTIVE){
-            return crawlstatus;
+    public static CrawlJob determineCrawlStatus(
+            JMXConnector jmxc, 
+            String name, 
+            JobStage stage) {
+        String crawlstatus;
+        if (stage == JobStage.ACTIVE) {
+            JobController jc = Misc.find(jmxc, name, JobController.class);
+            crawlstatus = jc.getCrawlStatusString();
         } else {
-            return state.toString();
+            crawlstatus = null;
         }
+        CrawlJob result = new CrawlJob(name, stage, crawlstatus);
+        return result;
     }
     
+    
+    private static CrawlJob determineCrawlStatus(
+            HttpServletRequest request, 
+            JMXConnector jmxc, 
+            String name, 
+            JobStage stage) {
+        CrawlJob result = determineCrawlStatus(jmxc, name, stage);
+        request.setAttribute("job", result);
+        return result;
+    }
+
+    
+    /**
+     * Constructs a new CrawlJob based on information in a http request.  The
+     * given request object must contain two parameters, "stage" and "job", 
+     * that specify the CrawlJob's stage and job.  If the stage is ACTIVE,
+     * then the given JMXConnector will be used to look up the job's 
+     * crawl status.
+     * 
+     * <p>Use this when a link requires that a job be in a certain stage in
+     * order to work correctly, eg editing sheets.
+     * 
+     * @param request  the request containing the job stage and name
+     * @param jmxc   the connector to use to lookup an active job's status
+     * @return   the CrawlJob
+     */
+    public static CrawlJob fromRequest(HttpServletRequest request, 
+            JMXConnector jmxc) {
+        String name = request.getParameter("job");
+        if (name == null) {
+            throw new IllegalStateException("Missing required parameter: job");
+        }
+        String stageString = request.getParameter("stage");
+        if (stageString == null) {
+            throw new IllegalStateException("Missing required parameter: stage");
+        }
+        JobStage stage = Enum.valueOf(JobStage.class, stageString);
+        return determineCrawlStatus(request, jmxc, name, stage);
+    }
+    
+
+    /**
+     * Looks up a CrawlJob given just the job's name, not its stage.  The
+     * given request object must contain a String parameter named "job".  The
+     * given CrawlJobManager will be consulted to find a job with that name,
+     * regardless of its stage.  If the job is active, a connection will be
+     * made to that job's CrawlController to get the crawl status.
+     * 
+     * <p>This is useful when you're dealing with a page such as the /logs
+     * pages that deal with a job whose stage might have changed.  The logs
+     * links should still work when an active job becomes a completed job.
+     * 
+     * @param request   request containing the job name
+     * @param remote    the CrawlJobManager used to look up the job
+     * @return   the CrawlJob with that name
+     */
+    public static CrawlJob lookup(HttpServletRequest request, 
+            Remote<CrawlJobManager> remote) {
+        String jobName = request.getParameter("job");
+        JMXConnector jmxc = remote.getJMXConnector();
+        for (String s: remote.getObject().listJobs()) {
+            String name = JobStage.getJobName(s);
+            JobStage stage = JobStage.getJobStage(s);
+            if (name.equals(jobName)) {
+                return determineCrawlStatus(request, jmxc, name, stage);
+            }
+        }
+        throw new IllegalStateException("No job named " + jobName);
+    }
+    
+    
+    public boolean hasReports() {
+        return stage == JobStage.ACTIVE && (!"PREPARED".equals(crawlstatus));
+    }
+
 }

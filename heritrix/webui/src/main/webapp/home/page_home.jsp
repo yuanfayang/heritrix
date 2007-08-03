@@ -1,11 +1,13 @@
 <%@ page import="java.util.Collection" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
-<%@ page import="org.archive.crawler.webui.CrawlJob.State"%>
+<%@ page import="org.archive.crawler.framework.JobStage"%>
 <%
 
-    Collection<Crawler> crawlers = (Collection)request.getAttribute("crawlers");
+    Collection<Crawler> crawlers = (Collection)Text.get(request, "crawlers");
+    Map<Crawler,Collection<CrawlJob>> actives = (Map)Text.get(request, "actives");
     boolean jndiWarning = (Boolean)request.getAttribute("jndiWarning");
 
 %>
@@ -39,7 +41,7 @@ This web console knows of the following crawl engines:
            if (crawler.getError() != null) { 
                out.println(crawler.getError());
            } else {
-               Collection<CrawlJob> activeJobs = crawler.getJobs(State.ACTIVE);
+               Collection<CrawlJob> activeJobs = actives.get(crawler);
                if(activeJobs.size()==0){
                    out.println("No active jobs");
                } else {

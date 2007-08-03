@@ -21,14 +21,14 @@
 
 
 <%
-    Crawler crawler = (Crawler)request.getAttribute("crawler");
-    CrawlJob crawljob = (CrawlJob)request.getAttribute("crawljob");
-    StatisticsTracking stats = (StatisticsTracking)request.getAttribute("stats");
+    Crawler crawler = (Crawler)Text.get(request, "crawler");
+    CrawlJob crawljob = (CrawlJob)Text.get(request, "job");
+    StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
 
     // TODO: Handle crawl reports for completed jobs.
 
-    if(crawljob.getState()!=CrawlJob.State.ACTIVE)
+    if(!crawljob.hasReports())
     {
         // NO JOB SELECTED - ERROR
         // TODO: Make report available for completed jobs

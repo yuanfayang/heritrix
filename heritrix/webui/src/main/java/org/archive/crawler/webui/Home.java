@@ -30,13 +30,16 @@ package org.archive.crawler.webui;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 import javax.naming.Context;
 import javax.naming.NameClassPair;
 import javax.naming.NamingEnumeration;
@@ -47,6 +50,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.archive.crawler.framework.JobController;
+import org.archive.crawler.framework.JobStage;
 import org.archive.util.JmxUtils;
 import org.archive.util.JndiUtils;
 
@@ -79,6 +84,30 @@ public class Home {
             tryLocal(sc);
         }
         request.setAttribute("crawlers", allCrawlers);
+        
+        // Find the active crawlers
+        Map<Crawler,Collection<CrawlJob>> actives = 
+            new HashMap<Crawler,Collection<CrawlJob>>();
+        String query = "org.archive.crawler:*,type=" 
+            + JobController.class.getName();
+        for (Crawler c: allCrawlers) {
+            Collection<CrawlJob> active = new TreeSet<CrawlJob>();
+            actives.put(c, active);
+            JMXConnector jmxc = c.connect();
+            try {
+                Set<ObjectName> onames = Misc.find(jmxc, query);
+                for (ObjectName oname: onames) {
+                    String jobName = oname.getKeyProperty("name");
+                    CrawlJob cj = CrawlJob.determineCrawlStatus(jmxc, jobName, 
+                            JobStage.ACTIVE);
+                    active.add(cj);
+                }
+            } finally {
+                Misc.close(jmxc);
+            }
+        }
+
+        request.setAttribute("actives", actives);
         request.setAttribute("jndiWarning", jndiWarning);
         Misc.forward(request, response, "page_home.jsp");
     }
