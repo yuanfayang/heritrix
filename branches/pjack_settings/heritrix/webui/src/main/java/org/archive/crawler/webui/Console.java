@@ -32,7 +32,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobController;
+import org.archive.crawler.framework.JobStage;
 import org.archive.crawler.framework.StatisticsTracking;
 
 
@@ -57,19 +59,15 @@ public class Console {
             HttpServletRequest request,
             HttpServletResponse response,
             Action action) {
-        Crawler crawler = Home.getCrawler(request);
-        JMXConnector jmxc = crawler.connect();
-        String job = request.getParameter("job");
-        if (job == null) {
-            throw new IllegalStateException("job must not be null");
-        }
-        request.setAttribute("job", job);
-        JobController controller;
-        StatisticsTracking stats;
-        
-        CrawlJob crawlJob = new CrawlJob(job,crawler); 
-
+        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
         try {
+            CrawlJob crawlJob = CrawlJob.lookup(request, remote);
+            JMXConnector jmxc = remote.getJMXConnector();
+            String job = crawlJob.getName();
+
+            JobController controller;
+            StatisticsTracking stats;
+
             // TODO: Better exception handling here.
             request.setAttribute(
                     "memory", 
@@ -77,7 +75,7 @@ public class Console {
                             new ObjectName("java.lang:type=Memory"), 
                         "HeapMemoryUsage"));
 
-            if(crawlJob.state==CrawlJob.State.ACTIVE){
+            if(crawlJob.getJobStage()==JobStage.ACTIVE){
                 controller = Misc.find(jmxc, job, JobController.class);
                 stats = Misc.find(jmxc, job, StatisticsTracking.class);
                 request.setAttribute("controller", controller);
@@ -95,14 +93,11 @@ public class Console {
                     }
                     // Rebuild the crawljob in case the crawl status has changed
                     // as result of our actions
-                    crawlJob = new CrawlJob(job,crawler); 
+                    crawlJob = CrawlJob.lookup(request, remote);
                 }
-
             }
-
-            request.setAttribute("crawljob", crawlJob);
             
-            if(crawlJob.state==CrawlJob.State.ACTIVE){
+            if(crawlJob.getJobStage()==JobStage.ACTIVE){
                 Misc.forward(request, response, "/console/page_job_console.jsp");
             } else {
                 Misc.forward(request, response, "/console/page_job_console_completed.jsp");
@@ -113,10 +108,8 @@ public class Console {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } finally {
-            Misc.close(jmxc);
+            remote.close();
         }
-
-        
     }
 
     

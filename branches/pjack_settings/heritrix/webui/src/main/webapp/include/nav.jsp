@@ -2,6 +2,7 @@
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
+<%@ page import="org.archive.crawler.framework.JobStage"%>
 <%@ page import="java.util.Collection"%>
 
 <% 
@@ -10,14 +11,11 @@
 
 String the_headline = (String)request.getAttribute("headline"); 
 Crawler the_crawler = (Crawler)request.getAttribute("crawler");
-String the_job = (String)request.getAttribute("job");
-CrawlJob crawljob = null;
+CrawlJob the_job = (CrawlJob)request.getAttribute("job");
 String the_jqs = "";
-if(the_crawler != null && the_job != null){
-    crawljob = new CrawlJob(the_job,the_crawler);
-    the_jqs = the_crawler.getQueryString() + "&job=" + the_job;
+if(the_job != null){
+    the_jqs = Text.jobQueryString(request);
 }
-String the_profile = (String)request.getAttribute("profile");
 String the_sheet = (String)request.getAttribute("sheet");
 
 
@@ -50,36 +48,30 @@ String the_sheet = (String)request.getAttribute("sheet");
 <% } %>
 
 <% if (the_job != null) { %>
-    <b>Job:</b> 
-    <%=Text.html(the_job)%>
-    <span class='status <%=crawljob.getCrawlStatus()%>'><%=crawljob.getCrawlStatus()%></span>
-	<% if(crawljob.getState()==CrawlJob.State.ACTIVE){ %>
+    <b><%=Text.html(the_job.getJobStage().getLabel())%>:</b>
+    <%=Text.html(the_job.getName())%>
+    <% if (the_job.getCrawlStatus() != null) { %>
+    <span class='status <%=the_job.getCrawlStatus()%>'><%=the_job.getCrawlStatus()%></span>
+    <% } %>
+	<% if (the_job.hasReports()) { %>
         <a title="View and control the current status for this job."
            href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=the_jqs%>">Console</a>
         |
-        <a title="View logs for this job."
+        <a title="View reports for this job."
            href="<%=request.getContextPath()%>/reports/do_show_reports.jsp?<%=the_jqs%>">Reports</a>
         | 
         <a title="View logs for this job."
            href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=the_jqs%>">Logs</a>
-   <% } else if(crawljob.getState()==CrawlJob.State.COMPLETED) { %>
+   <% } else if (the_job.getJobStage() == JobStage.COMPLETED) { %>
         <a title="View logs for this job."
            href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=the_jqs%>">Logs</a>
-   <% }  %>
+   <% } else { %>
+    <a class="rowLink" href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=the_jqs%>">sheets</a>
+    <a class="rowLink" href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=the_jqs%>">seeds</a>
+   <% } %>
    <br/>
 <% } %>
 
-<% if (the_profile != null) { %>
-<b>Profile:</b> <%=Text.html(the_profile)%>
-<%
-    Integer tabObject = (Integer)request.getAttribute("tab");
-    int tab = (tabObject == null) ? -1 : tabObject.intValue();
-    String the_qs = Text.jobQueryString(request);
-%>
-    <a class="rowLink" href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=the_qs%>">sheets</a>
-    <a class="rowLink" href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=the_qs%>">seeds</a>
-    <br/>
-<% } %>
 
 <% if (the_sheet != null) { %>
 <b>Sheet:</b> <%=Text.html(the_sheet)%>

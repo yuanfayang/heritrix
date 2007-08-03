@@ -35,6 +35,7 @@ import javax.servlet.jsp.JspWriter;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.archive.settings.path.PathValidator;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -143,25 +144,23 @@ public class Text {
     
     
     public static String jobQueryString(HttpServletRequest request) {
+        CrawlJob job = (CrawlJob)request.getAttribute("job");
+        return jobQueryString(request, job);
+    }
+
+    
+    public static String jobQueryString(HttpServletRequest request, CrawlJob job) {
         StringBuilder r = new StringBuilder();
         Crawler c = (Crawler)get(request, "crawler");
         r.append(c.getQueryString());
-        
-        String job = (String)request.getAttribute("job");
-        if (job == null) {
-            job = (String)request.getAttribute("profile");
-            if (job == null) {
-                throw new IllegalStateException(
-                        "Must specify job or profile in request.");
-            }
-            r.append("&profile=").append(query(job));
-        } else {
-            r.append("&job=").append(query(job));
-        }
+
+        r.append("&stage=").append(job.getJobStage());
+        r.append("&job=").append(job.getName());
         
         return r.toString();
     }
 
+    
     
     public static void printJobFormFields(
             HttpServletRequest request, 
@@ -170,17 +169,9 @@ public class Text {
         Crawler c = (Crawler)get(request, "crawler");
         c.printFormFields(out);
 
-        String job = (String)request.getAttribute("job");
-        if (job == null) {
-            job = (String)request.getAttribute("profile");
-            if (job == null) {
-                throw new IllegalStateException(
-                        "Must specify job or profile in request.");
-            }
-            hidden(out, "profile", job);
-        } else {
-            hidden(out, "job", job);
-        }
+        CrawlJob job = (CrawlJob)request.getAttribute("job");
+        hidden(out, "stage", job.getJobStage().toString());
+        hidden(out, "job", job.getName());
     }
 
     
@@ -206,4 +197,10 @@ public class Text {
         String sheet = (String)get(request, "sheet");
         return jobQueryString(request) + "&sheet=" + sheet;
     }
+
+
+    public static String jobTimestamp() {
+        return ArchiveUtils.get14DigitDate();
+    }
+
 }

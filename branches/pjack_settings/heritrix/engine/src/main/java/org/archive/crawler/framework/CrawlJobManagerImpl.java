@@ -33,21 +33,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
@@ -56,6 +50,7 @@ import javax.management.ObjectName;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
+import static org.archive.crawler.framework.JobStage.*;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.DefaultCheckpointRecovery;
@@ -65,16 +60,27 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
+import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
 import org.archive.settings.path.PathValidator;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
+import org.archive.util.JmxUtils;
 
 import com.sleepycat.je.DatabaseException;
 
 /**
+ * Implementation for CrawlJobManager.  Jobs and profiles are stored in a 
+ * directory called the jobsDir.  The jobs are contained as subdirectories of
+ * jobDir.  These subdirectories have strange names:  The are composed of 
+ * <i>both</i> the job's stage and the job's name.  Eg, a profile named "basic"
+ * is stored as <code>profile-basic</code>.
+ * 
+ * <p>Any operation that requires a "job" parameter requires a string that 
+ * represents the both stage and name; the parameter input should be the same
+ * as the directory names.  See {@link JobStage.encode}.
+ * 
  * @author pjack
- *
  */
 public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
@@ -93,17 +99,13 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     private MBeanServer server;
     
     final private File jobsDir;
-    
-    final private File profilesDir;
-    
-    final private Map<String,CrawlController> jobs;
 
     final private ObjectName oname;
     
     final private Thread heritrixThread;
     
     private HashMap<String, LogRemoteAccessImpl> logRemoteAccess;
-    private HashMap<String, JMXSheetManagerImpl> jmxSheetManagers;
+
     
     public CrawlJobManagerImpl(CrawlJobManagerConfig config) {
         super(CrawlJobManager.class);
@@ -111,52 +113,152 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         if (server == null) {
             throw new IllegalArgumentException("MBeanServer must not be null.");
         }
-        this.profilesDir = new File(config.getProfilesDirectory());
-        if (!profilesDir.isDirectory()) {
-            throw new IllegalArgumentException("Profiles directory unreadable: " 
-                    + profilesDir.getAbsolutePath());
-        }
         this.jobsDir = new File(config.getJobsDirectory());
         this.jobsDir.mkdirs();
-        this.jobs = new HashMap<String,CrawlController>();
         this.oname = JMXModuleListener.nameOf(DOMAIN, NAME, this);
         
+        // Any jobs that were previously running should now be marked as 
+        // complete.
+        for (String s: jobsDir.list()) {
+            if (s.startsWith(JobStage.ACTIVE.getPrefix())) {
+                this.changeState(s, JobStage.COMPLETED);
+            }
+        }
+        
         logRemoteAccess = new HashMap<String, LogRemoteAccessImpl>();
-        jmxSheetManagers = new HashMap<String, JMXSheetManagerImpl>();
         
         register(this, oname);
         this.heritrixThread = config.getHeritrixThread();
     }
     
-
-    public synchronized void copyProfile(String origName, String copiedName) 
-    throws IOException {
-        File src = new File(getProfilesDir(), origName);
-        File dest = new File(getProfilesDir(), copiedName);
+    
+    private String changeState(String job, JobStage newState) {
+        String name = getJobName(job);
+        String newJob = newState.getPrefix() + name;
         
-        if (!src.exists()) {
-            throw new IllegalArgumentException("No such profile: " + origName);
+        File existing = new File(getJobsDir(), job);
+        File target = new File(getJobsDir(), newJob);
+        
+        if (!existing.exists()) {
+            throw new IllegalStateException("Can't change " + job + " to " +
+                    newJob + ", no such dir: " + existing.getAbsolutePath());
+        }
+        if (!existing.renameTo(target)) {
+            throw new IllegalStateException("Rename of " + job + " to " +
+                    newJob + " failed, reason unknown.");
         }
         
-        if (dest.exists()) {
-            throw new IllegalArgumentException("Profile already exists: " + 
-                    copiedName);
-        }
-        
-        FileUtils.copyFiles(src, dest);
+        return newJob;
     }
 
     
-    public synchronized String getProfile(String profile) throws IOException {
-        if(jmxSheetManagers.containsKey(profile)){
-            // Already open. Return object name
-            return jmxSheetManagers.get(profile).getObjectName().getCanonicalName();
+    private boolean isValidJob(String job) {
+        return job.startsWith(PROFILE.getPrefix())
+            || job.startsWith(READY.getPrefix()) 
+            || job.startsWith(ACTIVE.getPrefix())
+            || job.startsWith(COMPLETED.getPrefix());
+    }
+    
+    
+    private void validateJobName(String job) {
+        if (isValidJob(job)) {
+            return;
         }
-        // Not already open. Open it and return object name.
-        File src = new File(getProfilesDir(), profile);
+        throw new IllegalArgumentException(job + " is not a valid state-name name.");
+    }
+    
+    
+    public static String getJobName(String pair) {
+        int p = pair.indexOf(DELIMITER);
+        if (p < 0) {
+            throw new IllegalArgumentException(pair + 
+                    " is not a valid state-name pair.");
+        }
+        return pair.substring(p + 1);
+    }
+    
+
+    public synchronized void copy(String origName, String copiedName) 
+    throws IOException {
+        validateJobName(origName);
+        validateJobName(copiedName);
+        if (!copiedName.startsWith(JobStage.PROFILE.getPrefix()) &&
+                !copiedName.startsWith(JobStage.READY.getPrefix())) {
+            throw new IllegalArgumentException("Can only copy to PROFILE or READY.");
+        }
+        File src = new File(getJobsDir(), origName);
+        File dest = new File(getJobsDir(), copiedName);
         
         if (!src.exists()) {
-            throw new IllegalArgumentException("No such profile: " + profile);
+            throw new IllegalArgumentException("No such job/profile: " + origName);
+        }
+        
+        String destName = JobStage.getJobName(copiedName);
+        for (String s: getJobsDir().list()) {
+            if ((s.indexOf(JobStage.DELIMITER) >= 0) 
+                    && JobStage.getJobName(s).equals(destName)) {
+                throw new IllegalArgumentException("Job already exists: " + s);
+            }
+        }
+        
+        dest.mkdirs();
+        
+        // FIXME: Add option for only copying history DB
+        // FIXME: Don't hardcode these names
+        
+        File srcConfig = new File(src, "config.txt");
+        if (srcConfig.exists()) {
+            FileUtils.copyFile(srcConfig, new File(dest, "config.txt"));
+        }
+
+        File srcSeeds = new File(src, "seeds.txt");
+        if (srcSeeds.exists()) {
+            FileUtils.copyFile(srcSeeds, new File(dest, "seeds.txt"));
+        }
+        
+        File srcSheets = new File(src, "sheets");
+        if (srcSheets.isDirectory()) {
+            FileUtils.copyFiles(srcSheets, new File(dest, "sheets"));
+        }
+    }
+
+    
+    private Set<ObjectName> getSheetManagers(String name) {
+        String query = DOMAIN + ":*,name=" + name + ",type=" 
+        + JMXSheetManager.class.getName();
+        Set<ObjectName> set = JmxUtils.find(server, query);
+        return set;
+    }
+
+
+    public synchronized ObjectName getSheetManagerStub(String job) 
+    throws IOException {
+        validateJobName(job);
+        if (job.startsWith(ACTIVE.getPrefix())) {
+            throw new IllegalArgumentException("Can't get stub for active job: "
+                    + job);
+        }
+        if (job.startsWith(COMPLETED.getPrefix())) {
+            throw new IllegalArgumentException("Can't edit a completed job: " + 
+                    job);
+        }
+
+        String name = getJobName(job);
+
+        Set<ObjectName> set = getSheetManagers(name);
+        if (set.size() == 1) {
+            return set.iterator().next();
+        }
+        if (set.size() > 1) {
+            throw new IllegalStateException("Found more than one " +
+                        "JMXSheetManager for " + job);
+        }
+        
+        // Not already open. Open it and return object name.
+        File src = new File(getJobsDir(), job);
+        
+        if (!src.exists()) {
+            throw new IllegalArgumentException("No such profile: " + job);
         }
 
         File bootstrap = new File(src, BOOTSTRAP);
@@ -169,15 +271,14 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(profile, DOMAIN, fsm);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(name, DOMAIN, fsm);
         register(jmx, jmx.getObjectName());
-        jmxSheetManagers.put(profile, jmx);
-        return jmx.getObjectName().getCanonicalName();
+        return jmx.getObjectName();
     }
 
-    public synchronized String getLogs(String job) throws IOException {
+    public synchronized ObjectName getLogs(String job) throws IOException {
         if(logRemoteAccess.containsKey(job)){
-            return logRemoteAccess.get(job).getObjectName().getCanonicalName();
+            return logRemoteAccess.get(job).getObjectName();
         }
         File src = new File(getJobsDir(), job);
         
@@ -190,45 +291,33 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                 src.getAbsolutePath() + File.separator + "logs"); // FIXME: Stop assuming location of logs
         register(lra, lra.getObjectName());
         logRemoteAccess.put(job, lra);
-        return lra.getObjectName().getCanonicalName();
+        return lra.getObjectName();
     }
 
     
-    public synchronized void closeProfile(String profile) {
-        if (jmxSheetManagers.containsKey(profile)) {
-            JMXSheetManagerImpl jmx = jmxSheetManagers.get(profile);
-            if(jmx.isOnline()==false){
-                // Only close offline profiles
-                jmxSheetManagers.remove(profile);
-                unregister(jmx.getObjectName());
-            } else {
-                LOGGER.log(Level.WARNING, "Can not close an online profile: " + profile);
-            }
-        } else {
-            LOGGER.log(Level.WARNING, "Can not close, not an open profile: " + profile);
+    public synchronized void closeSheetManagerStub(String job) {
+        validateJobName(job);
+        if (job.startsWith(ACTIVE.getPrefix())) {
+            throw new IllegalArgumentException("Can't close SheetManager for active job: " + job);
+        }
+        Set<ObjectName> set = getSheetManagers(getJobName(job));
+        for (ObjectName oname: set) {
+            this.unregister(oname);
         }
     }
-    
-    
-    public synchronized void launchProfile(String profile, final String job) 
-            throws IOException {
-        closeProfile(profile);
-        File src = new File(getProfilesDir(), profile);
+
+    public synchronized void launchJob(String j) throws IOException {
+        if (!j.startsWith(READY.getPrefix())) {
+            throw new IllegalArgumentException("Can't launch " + j);
+        }
+        closeSheetManagerStub(j);
+
+        final String job = changeState(j, ACTIVE);
         File dest = new File(getJobsDir(), job);
-        
-        if (!src.exists()) {
-            throw new IllegalArgumentException("No such profile: " + profile);
-        }
-        
-        if (dest.exists()) {
-            throw new IllegalArgumentException("Job already exists: " + job);
-        }
-        
-        FileUtils.copyFiles(src, dest);
-        
         File bootstrap = new File(dest, BOOTSTRAP);
         FileSheetManager fsm;
-        final JMXModuleListener jmxListener = new JMXModuleListener(DOMAIN, job, server);
+        final String name = getJobName(job);
+        final JMXModuleListener jmxListener = new JMXModuleListener(DOMAIN, name, server);
         try {
             List<ModuleListener> list = new ArrayList<ModuleListener>();
             list.add(jmxListener);
@@ -240,9 +329,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(job,DOMAIN, fsm);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(name, DOMAIN, fsm);
         final ObjectName smName = jmx.getObjectName();
-        jmxSheetManagers.put(job, jmx);
         try {
             server.registerMBean(jmx, smName);
         } catch (Exception e) {
@@ -258,7 +346,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         Object o = PathValidator.validate(sheet, "root:controller");
         if (!(o instanceof CrawlController)) {
             LOGGER.warning("Could not find CrawlController in job named " 
-                    + job + " at expected path (root.controller).");
+                    + name + " at expected path (root.controller).");
             return;
         }
         
@@ -275,8 +363,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                         for (Object m: jmxListener.getModules()) {
                             unregister(jmxListener.nameOf(m));
                         }
-                        jmxSheetManagers.remove(job);
-                        jobs.remove(job);
+                        changeState(job, COMPLETED);
                     }
                 }, new NotificationFilter() {
                     private static final long serialVersionUID = 1L;
@@ -286,10 +373,11 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                 }, null);
         } catch (InstanceNotFoundException e) {
             throw new IllegalStateException(e);
-        }
-        
-        jobs.put(job, cc);
+        }        
     }
+
+    
+    
     
     
     private ObjectName register(Object o, ObjectName oname) {
@@ -314,27 +402,11 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
     }
 
-    
-    public synchronized String[] listAllJobs() {
-        File jobsDir = getJobsDir();
-        return jobsDir.list();
-    }
 
-
-    public synchronized String[] listProfiles() {
-        File profDir = getProfilesDir();
-        return profDir.list();
-    }
-
-    
     public synchronized ObjectName getObjectName() {
         return this.oname;
     }
 
-    private File getProfilesDir() {
-        return profilesDir;
-    }
-    
     
     private File getJobsDir() {
         return jobsDir;
@@ -389,10 +461,12 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     public synchronized void close() {
+        String query = DOMAIN + ":*,type=" + JobController.class.getName();
+        Set<ObjectName> jobs = JmxUtils.find(server, query);
         if (!jobs.isEmpty()) {
             throw new IllegalStateException("Cannot close CrawlJobManager " + 
                     "when jobs are still active.");
-        }        
+        }
         unregister(oname);
         // Clean up LogRemoteAccessors that may have been opened
         for(String key : logRemoteAccess.keySet()){
@@ -410,18 +484,18 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         System.exit(1);
     }
 
-
-    public synchronized String[] listActiveJobs() {
-        return jobs.keySet().toArray(new String[0]);
+    
+    public String[] listJobs() {
+        String[] r = jobsDir.list();
+        ArrayList<String> result = new ArrayList<String>(r.length);
+        for (String f: r) {
+            if (isValidJob(f)) {
+                result.add(f);
+            }
+        }
+        return result.toArray(new String[result.size()]);
     }
 
-
-    public synchronized String[] listCompletedJobs() {
-        Set<String> result = new HashSet<String>();
-        result.addAll(Arrays.asList(jobsDir.list()));
-        result.removeAll(jobs.keySet());
-        return result.toArray(new String[0]);
-    }
 
     
     public synchronized String readLines(String fileName, int startLine, int lineCount) 
@@ -509,4 +583,15 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     public String getHeritrixVersion(){
         return Heritrix.getVersion();
     }
+
+
+    public String help() {
+        return 
+            "Any operation that takes a 'job' parameter requires that you\n" +
+            "specify *both* the job stage *and* the job name.  Eg, to\n" +
+            "operate on a profile named 'basic', you specify 'profile-basic'.\n" +
+            "To copy a profile named basic to a ready job named foo,\n" +
+            "You would invoke copy(\"profile-basic\", \"ready-foo\").";
+    }
+
 }

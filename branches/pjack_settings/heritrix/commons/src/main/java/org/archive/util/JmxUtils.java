@@ -22,12 +22,14 @@
  */
 package org.archive.util;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +37,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.RuntimeOperationsException;
@@ -366,4 +369,30 @@ public class JmxUtils {
         }
     }
 
+    
+    
+    public static Set<ObjectName> find(MBeanServerConnection conn, String query) {
+        try {
+            @SuppressWarnings("unchecked")
+            Set<ObjectName> set = conn.queryNames(null, new ObjectName(query));
+            return set;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalStateException(e);
+        }
+        
+    }
+    
+    public static ObjectName findUnique(
+            MBeanServerConnection conn, 
+            String query) {
+        Set<ObjectName> set = find(conn, query);
+        int size = set.size();
+        if (size == 1) {
+            return (ObjectName)set.iterator().next();
+        }
+        throw new IllegalStateException("Expected unique MBean for " 
+                + query + " but found " + set);
+    }
 }

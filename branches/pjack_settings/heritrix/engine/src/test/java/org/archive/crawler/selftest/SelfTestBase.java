@@ -87,9 +87,6 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         File tmpDir = new File(getTmpDir(), "selftest");
         File tmpTestDir = new File(tmpDir, name);
         
-        File tmpProfiles = new File(tmpTestDir, "profiles");
-        tmpProfiles.mkdirs();
-        
         // If we have an old job lying around from a previous run, delete it.
         File tmpJobs = new File(tmpTestDir, "jobs");
         if (tmpJobs.exists()) {
@@ -98,10 +95,10 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         
         // Copy the selftest's profile in the project directory to the
         // default profile in the temporary Heritrix directory.
-        File tmpDefProfile = new File(tmpProfiles, "basic");
+        File tmpDefProfile = new File(tmpJobs, "ready-basic");
         FileUtils.copyFiles(new File(src, "profile"), tmpDefProfile);
         
-        // Start up a Jetty that servers the selftest's content directory.
+        // Start up a Jetty that serves the selftest's content directory.
         startHttpServer();
         
         // Copy configuration for eg Logging over
@@ -204,7 +201,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     protected void startHeritrix(String path) throws Exception {
         // Launch heritrix in its own thread.
         // By interrupting the thread, we can gracefully clean up the test.
-        String[] args = { "-j", path + "/jobs", "-p", path + "/profiles" };
+        String[] args = { "-j", path + "/jobs" };
         heritrixThread = new HeritrixThread(args);
         heritrixThread.start();
 
@@ -216,14 +213,14 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         server.invoke(
                 cjm, 
-                "launchProfile", 
-                new Object[] { "basic", "the_job" },
-                new String[] { "java.lang.String", "java.lang.String" });
+                "launchJob", 
+                new Object[] { "ready-basic" },
+                new String[] { "java.lang.String" });
         
         // Above invocation should have created a new SheetManager and a new
         // CrawlController for the job.  Find the CrawlController.
         
-        waitFor("org.archive.crawler:*,name=the_job,type=org.archive.crawler.framework.JobController", true);
+        waitFor("org.archive.crawler:*,name=basic,type=org.archive.crawler.framework.JobController", true);
     }
     
     
@@ -273,21 +270,21 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
-    protected File getJobDir() {
+    protected File getCompletedJobDir() {
         File crawl = getCrawlDir();
         File jobs = new File(crawl, "jobs");
-        File theJob = new File(jobs, "the_job");
+        File theJob = new File(jobs, "completed-basic");
         return theJob;
     }
     
     
     protected File getArcDir() {
-        return new File(getJobDir(), "arcs");
+        return new File(getCompletedJobDir(), "arcs");
     }
     
     
     protected File getLogsDir() {
-        return new File(getJobDir(), "logs");
+        return new File(getCompletedJobDir(), "logs");
     }
 
 
@@ -345,7 +342,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         Set<ObjectName> set = server.queryNames(null, null);
         for (ObjectName name: set) {
             if (name.getDomain().equals("org.archive.crawler")
-                    && name.getKeyProperty("name").equals("the_job")
+                    && name.getKeyProperty("name").equals("basic")
                     && name.getKeyProperty("type").equals("org.archive.crawler.framework.JobController")) {
                 return name;
             }
@@ -427,7 +424,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
     
     protected void verifyProgressStatistics() throws IOException {
-        File logs = new File(getJobDir(), "logs");
+        File logs = new File(getCompletedJobDir(), "logs");
         File statsFile = new File(logs, "progress-statistics.log");
         String stats = IoUtils.readFullyAsString(new FileInputStream(statsFile));
         if (!stats.contains("CRAWL RESUMED - Prepared")) {

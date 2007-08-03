@@ -13,7 +13,7 @@
 <%@include file="/include/nav.jsp"%>
 <%
     Crawler crawler = (Crawler)request.getAttribute("crawler");
-    CrawlJob crawljob = (CrawlJob)request.getAttribute("crawljob");
+    CrawlJob crawljob = (CrawlJob)request.getAttribute("job");
     JobController controller = (JobController)request.getAttribute("controller");
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
 %>

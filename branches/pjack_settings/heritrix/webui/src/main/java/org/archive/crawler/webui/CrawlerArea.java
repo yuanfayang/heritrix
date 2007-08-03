@@ -27,6 +27,10 @@
 package org.archive.crawler.webui;
 
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.servlet.ServletContext;
@@ -34,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.JobStage;
 
 
 /**
@@ -51,8 +56,40 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        request.setAttribute("crawler", Home.getCrawler(request));
+        Remote<CrawlJobManager> remote = open(request);
+        JMXConnector jmxc = remote.getJMXConnector();
+        List<CrawlJob> active = new ArrayList<CrawlJob>();
+        List<CrawlJob> ready = new ArrayList<CrawlJob>();
+        List<CrawlJob> profile = new ArrayList<CrawlJob>();
+        List<CrawlJob> completed = new ArrayList<CrawlJob>();
+        try {
+            String[] jobs = remote.getObject().listJobs();
+            for (String job: jobs) {
+                JobStage stage = JobStage.getJobStage(job);
+                String name = JobStage.getJobName(job);
+                switch (stage) {
+                case ACTIVE:
+                    active.add(CrawlJob.determineCrawlStatus(jmxc, name, stage));
+                    break;
+                case READY:
+                    ready.add(new CrawlJob(name, stage, null));
+                    break;
+                case PROFILE:
+                    profile.add(new CrawlJob(name, stage, null));
+                    break;
+                case COMPLETED:
+                    completed.add(new CrawlJob(name, stage, null));
+                    break;
+                }
+            }            
+        } finally {
+            remote.close();
+        }
         
+        request.setAttribute("active", active);
+        request.setAttribute("ready", ready);
+        request.setAttribute("profiles", profile);
+        request.setAttribute("completed", completed);
         Misc.forward(request, response, "page_crawler.jsp");
     }
     
@@ -68,22 +105,23 @@ public class CrawlerArea {
     }
     
     
-    public static void launchProfile(
+    public static void launch(
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        String profile = request.getParameter("profile");
-        String job = request.getParameter("job");
         Remote<CrawlJobManager> remote = open(request);
         CrawlJobManager manager = remote.getObject();
+        JMXConnector jmxc = remote.getJMXConnector();
         try {
-            manager.launchProfile(profile, job);
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            String jobEnc = JobStage.encode(job.getJobStage(), job.getName());
+            manager.launchJob(jobEnc);
         } finally {
             remote.close();
         }
-        request.setAttribute("job", job);
         Console.showJobConsole(sc, request, response);
     }
+
     
     
     public static Remote<CrawlJobManager> open(HttpServletRequest request) {
@@ -144,4 +182,84 @@ public class CrawlerArea {
         
         Misc.forward(request, response, "page_about_crawler.jsp");
     }
+
+
+    public static void showCopy(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response){
+        Crawler c = Home.getCrawler(request);
+        JMXConnector jmxc = c.connect();
+        try {
+            CrawlJob cj = CrawlJob.fromRequest(request, jmxc);
+            String defaultName = getCopyDefaultName(cj);
+            request.setAttribute("defaultName", defaultName);
+        } finally {
+            Misc.close(jmxc);
+        }
+        
+        Misc.forward(request, response, "page_copy.jsp");
+    }
+    
+    
+    private static String getCopyDefaultName(CrawlJob cj) {
+        String name = cj.getName();
+        if (endsWith14Digits(name)) {
+            return name.substring(0, name.length() - 14) 
+                + Text.jobTimestamp();
+        } else {
+            return name + "-" + Text.jobTimestamp();
+        }
+    }
+    
+    
+    private static boolean endsWith14Digits(String s) {
+        if (s.length() < 14) {
+            return false;
+        }
+        for (int i = s.length() - 14; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    
+    public static void copy(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response){
+        Remote<CrawlJobManager> remote = open(request);
+        CrawlJobManager cjm = remote.getObject();
+        JMXConnector jmxc = remote.getJMXConnector();
+        try {
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            String newStageString = request.getParameter("newStage");
+            JobStage newStage = JobStage.valueOf(newStageString);
+            String newName = request.getParameter("newName");
+            
+            String oldJobEnc = JobStage.encode(job.getJobStage(), job.getName());
+            String newJobEnc = JobStage.encode(newStage, newName);
+            try {
+                cjm.copy(oldJobEnc, newJobEnc);
+            } catch (IOException e) {
+                String msg = "IO error during copy: " + e.getMessage();                
+                request.setAttribute("error", msg);
+                showCopy(sc, request, response);
+                return;
+            } catch (IllegalArgumentException e) {
+                request.setAttribute("error", e.getMessage());
+                showCopy(sc, request, response);
+                return;
+            }
+        } finally {
+            remote.close();
+        }
+        
+        showCrawler(sc, request, response);
+    }
+
+
+
 }

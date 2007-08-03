@@ -38,7 +38,6 @@ import javax.management.MBeanServer;
 public class CrawlJobManagerConfig {
 
     
-    private String profilesDirectory = "profiles";
     private String jobsDirectory = "jobs";
     private MBeanServer server = ManagementFactory.getPlatformMBeanServer();
     private Thread heritrixThread = Thread.currentThread();
@@ -62,14 +61,6 @@ public class CrawlJobManagerConfig {
 
     public void setJobsDirectory(String jobsDirectory) {
         this.jobsDirectory = jobsDirectory;
-    }
-
-    public String getProfilesDirectory() {
-        return profilesDirectory;
-    }
-
-    public void setProfilesDirectory(String profilesDirectory) {
-        this.profilesDirectory = profilesDirectory;
     }
 
     public MBeanServer getServer() {

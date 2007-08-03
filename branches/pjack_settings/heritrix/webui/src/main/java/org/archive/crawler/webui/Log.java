@@ -28,7 +28,6 @@ package org.archive.crawler.webui;
 import java.io.IOException;
 
 import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -83,159 +82,130 @@ public class Log {
 		
 	}
 	
-	/**
-	 * Retrieves the appropriate log and prepares it for display.
-	 * I.e. creates an proper Log object and sets the request's 'log' attribute
-	 * as the new object.
-	 * @param sc
-	 * @param request
-	 * @param response
-	 */
-	public static void showLog(
-            ServletContext sc,
-            HttpServletRequest request,
-            HttpServletResponse response){
-		Log log = new Log();
-		// Get parameters from request
-		
-	    /* Which log to display */
-		if(request.getParameter("log")!=null){
-			log.currentLog = Logs.valueOf(request.getParameter("log"));
-	    }
-	    if(log.currentLog == null) {
-	        log.currentLog = Logs.CRAWL;
-	    }
-	    
-	    /* How much of it to show at most */
-	    if(request.getParameter("linesToShow") != null && request.getParameter("linesToShow").length()>0 ){
-	        try{
-	            log.linesToShow = Integer.parseInt(request.getParameter("linesToShow"));
-	        } catch(java.lang.NumberFormatException e){
-	            log.linesToShow = 50;
-	        }
-	    }
-	    
-	    /* View mode */
-	    if(request.getParameter("mode") != null){
-	    	log.mode = Mode.valueOf(request.getParameter("mode"));
-	    }
-	    
-	    /* Mode dependant settings */
-	    // LINE_NUMBER
-    	try {
-    		if(request.getParameter("linenumber") != null){
-    			log.linenumber = Integer.
-                	parseInt(request.getParameter("linenumber"));
-    		}
-        } catch(Exception e){
-        	log.linenumber = 1;
+    /**
+     * Retrieves the appropriate log and prepares it for display. I.e. creates
+     * an proper Log object and sets the request's 'log' attribute as the new
+     * object.
+     * 
+     * @param sc
+     * @param request
+     * @param response
+     */
+    public static void showLog(ServletContext sc, HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+        Log log = new Log();
+        // Get parameters from request
+
+        /* Which log to display */
+        if (request.getParameter("log") != null) {
+            log.currentLog = Logs.valueOf(request.getParameter("log"));
         }
-	    
+        if (log.currentLog == null) {
+            log.currentLog = Logs.CRAWL;
+        }
+
+        /* How much of it to show at most */
+        if (request.getParameter("linesToShow") != null
+                && request.getParameter("linesToShow").length() > 0) {
+            try {
+                log.linesToShow = Integer.parseInt(request
+                        .getParameter("linesToShow"));
+            } catch (java.lang.NumberFormatException e) {
+                log.linesToShow = 50;
+            }
+        }
+
+        /* View mode */
+        if (request.getParameter("mode") != null) {
+            log.mode = Mode.valueOf(request.getParameter("mode"));
+        }
+
+        /* Mode dependant settings */
+        // LINE_NUMBER
+        try {
+            if (request.getParameter("linenumber") != null) {
+                log.linenumber = Integer.parseInt(request
+                        .getParameter("linenumber"));
+            }
+        } catch (Exception e) {
+            log.linenumber = 1;
+        }
+
         // REGEXPR
         try {
-        	if(request.getParameter("linesToSkip") != null){
-        		log.linesToSkip = 
-        			Integer.parseInt(request.getParameter("linesToSkip"));
-        	}
-        } catch(Exception e){
-        	log.linesToSkip = 1;
-        }
-        if(request.getParameter("regexpr")!=null){
-        	log.regexpr = request.getParameter("regexpr");
-        }
-        log.ln = request.getParameter("ln")!=null
-        	&& request.getParameter("ln").equalsIgnoreCase("true");
-        log.grep = request.getParameter("grep")!=null
-        	&& request.getParameter("grep").equalsIgnoreCase("true");
-        log.indent = request.getParameter("indent")!=null
-        	&& request.getParameter("indent").equalsIgnoreCase("true");
-
-	    // TAIL
-        try {
-        	if(request.getParameter("time")!= null){
-        		log.refreshInterval = Integer.parseInt(request.getParameter("time"));
-        	}
-        }
-        catch(Exception e){
-        	log.refreshInterval = -1;
-        }
-
-	    // TIMESTAMP
-        if(request.getParameter("timestamp")!=null){
-        	log.timestamp = request.getParameter("timestamp");
-        }
-
-        /* Crawler and job */
-        Crawler crawler = Home.getCrawler(request);
-        String job = request.getParameter("job");
-        if (job == null) {
-        	// TODO: Handle this more gracefully
-            throw new IllegalStateException("job must not be null");
-        }
-        log.job = job;
-        request.setAttribute("job", job);
-        
-        // All settings parsed.
-		// Get appropriate log content from crawler
-        try {
-	        JMXConnector jmxc = crawler.connect();
-
-	        Remote<CrawlJobManager> manager = Remote.make(
-	                jmxc, crawler.getObjectName(), CrawlJobManager.class);
-	        ObjectName oname;
-            try {
-                oname = new ObjectName(
-                        manager.getObject().getLogs(job));
-            } catch (Exception e) {
-                throw new IllegalStateException("Unable to aquire " +
-                        "LogRemoteAccess for job " + job, e);
+            if (request.getParameter("linesToSkip") != null) {
+                log.linesToSkip = Integer.parseInt(request
+                        .getParameter("linesToSkip"));
             }
+        } catch (Exception e) {
+            log.linesToSkip = 1;
+        }
+        if (request.getParameter("regexpr") != null) {
+            log.regexpr = request.getParameter("regexpr");
+        }
+        log.ln = request.getParameter("ln") != null
+                && request.getParameter("ln").equalsIgnoreCase("true");
+        log.grep = request.getParameter("grep") != null
+                && request.getParameter("grep").equalsIgnoreCase("true");
+        log.indent = request.getParameter("indent") != null
+                && request.getParameter("indent").equalsIgnoreCase("true");
 
-            LogRemoteAccess lra = Remote.make(
-                    jmxc, oname, LogRemoteAccess.class).getObject();
+        // TAIL
+        try {
+            if (request.getParameter("time") != null) {
+                log.refreshInterval = Integer.parseInt(request
+                        .getParameter("time"));
+            }
+        } catch (Exception e) {
+            log.refreshInterval = -1;
+        }
 
-	        switch(log.mode){
-	        case TAIL :
-	        	log.log = lra.getTail(
-	        			log.currentLog.toString(), 
-	        			log.linesToShow);
-	        	break;
-	        case LINE_NUMBER :
-	        	log.log = lra.getByLinenumber(
-	        			log.currentLog.toString(), 
-	        			log.linesToShow, 
-	        			log.linenumber);
-	        	break;
-	        case REGEXPR :
-	        	log.log = lra.getByRegExpr(
-	        			log.currentLog.toString(), 
-	        			log.linesToShow, 
-	        			log.regexpr, 
-	        			log.grep, 
-	        			log.ln, 
-	        			log.indent, 
-	        			log.linesToSkip);
-	        	break;
-	        case TIMESTAMP :
-	        	log.log = lra.getByPrefix(
-	        			log.currentLog.toString(), 
-	        			log.linesToShow, 
-	        			log.timestamp);
-	        	break;
-	        }
+        // TIMESTAMP
+        if (request.getParameter("timestamp") != null) {
+            log.timestamp = request.getParameter("timestamp");
+        }
 
-            jmxc.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		        
-		// Save log object
-		request.setAttribute("log", log);
-		
-		// Forward to display page.
-		Misc.forward(request, response, "page_show_log.jsp");
-	}
+        // All settings parsed.
+        // Get appropriate log content from crawler
+        Remote<CrawlJobManager> manager = CrawlerArea.open(request);
+        try {
+            CrawlJob job = CrawlJob.lookup(request, manager);
+            
+            ObjectName oname = manager.getObject().getLogs(job.encode());
+            log.job = job.getName();
+
+            LogRemoteAccess lra = Remote.make(manager.getJMXConnector(), oname,
+                    LogRemoteAccess.class).getObject();
+
+            switch (log.mode) {
+            case TAIL:
+                log.log = lra.getTail(log.currentLog.toString(),
+                        log.linesToShow);
+                break;
+            case LINE_NUMBER:
+                log.log = lra.getByLinenumber(log.currentLog.toString(),
+                        log.linesToShow, log.linenumber);
+                break;
+            case REGEXPR:
+                log.log = lra.getByRegExpr(log.currentLog.toString(),
+                        log.linesToShow, log.regexpr, log.grep, log.ln,
+                        log.indent, log.linesToSkip);
+                break;
+            case TIMESTAMP:
+                log.log = lra.getByPrefix(log.currentLog.toString(),
+                        log.linesToShow, log.timestamp);
+                break;
+            }
+        } finally {
+            manager.close();
+        }
+
+        // Save log object
+        request.setAttribute("log", log);
+
+        // Forward to display page.
+        Misc.forward(request, response, "page_show_log.jsp");
+    }
 	
 	public String[] getContent() {
 		return content;

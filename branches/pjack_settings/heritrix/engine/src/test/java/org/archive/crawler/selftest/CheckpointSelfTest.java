@@ -137,9 +137,9 @@ public class CheckpointSelfTest extends SelfTestBase {
                 new String[0]);
 
         assertEquals(1, checkpoints.length);
-        File recoverLoc = new File(getJobDir().getParentFile(), "recovered");
+        File recoverLoc = new File(getCompletedJobDir().getParentFile(), "recovered");
         FileUtils.deleteDir(recoverLoc);
-        String[] oldPath = new String[] { getJobDir().getAbsolutePath() };
+        String[] oldPath = new String[] { getCompletedJobDir().getAbsolutePath() };
         String[] newPath = new String[] { recoverLoc.getAbsolutePath() };
         server.invoke(
                 cjm,

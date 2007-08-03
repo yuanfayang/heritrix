@@ -49,6 +49,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.JobStage;
 import org.archive.settings.Association;
 import org.archive.settings.SheetManager;
 import org.archive.settings.jmx.JMXSheetManager;
@@ -232,8 +233,13 @@ public class Sheets {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        Home.getCrawler(request);
-        getJob(request);
+        Crawler c = Home.getCrawler(request);
+        JMXConnector jmxc = c.connect();
+        try {
+            CrawlJob.fromRequest(request, jmxc);
+        } finally {
+            Misc.close(jmxc);
+        }
         request.setAttribute("single", false);
         Misc.forward(request, response, "page_add_sheet.jsp");
     }
@@ -243,8 +249,13 @@ public class Sheets {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        Home.getCrawler(request);
-        getJob(request);
+        Crawler c = Home.getCrawler(request);
+        JMXConnector jmxc = c.connect();
+        try {
+            CrawlJob.fromRequest(request, jmxc);
+        } finally {
+            Misc.close(jmxc);
+        }
         request.setAttribute("single", true);
         Misc.forward(request, response, "page_add_sheet.jsp");
     }
@@ -623,32 +634,12 @@ public class Sheets {
         
         return new Settings(sheet, mgr.isOnline(), result);
     }
-    
-    
-    private static String getJob(HttpServletRequest request) {
-        String job = request.getParameter("job");
-        if (job == null) {
-            job = request.getParameter("profile");
-            if (job == null) {
-                throw new IllegalStateException("Must specify job or profile.");
-            }
-            request.setAttribute("profile", job);
-        } else {
-            request.setAttribute("job", job);
-        }
-        return job;
-    }
-    
-    
-    private static boolean isProfile(HttpServletRequest request) {
-        return request.getParameter("profile") != null;
-    }
-    
-    
+
+
     /**
      * Returns the JMXSheetManager specified in the request.
      * 
-     * Needs four request parameters.  The first three are host, port and
+     * Needs five request parameters.  The first three are host, port and
      * id; these identify the CrawlJobManager like always.  The last is
      * either a parameter named "job", which indicates we're dealing with
      * an active crawl job, or a parameter named "profile", which indicates
@@ -665,21 +656,26 @@ public class Sheets {
      */
     public static Remote<JMXSheetManager> getSheetManager(
             HttpServletRequest request) throws Exception {
-        Crawler crawler = Home.getCrawler(request);
-        boolean profile = isProfile(request);
-        String job = getJob(request);
-        
-        JMXConnector jmxc = crawler.connect();
-        
-        if (!profile) {
-            throw new IllegalStateException("Can't open sheets for completed job.");
+        Remote<CrawlJobManager> manager = CrawlerArea.open(request);
+        try {
+            CrawlJob job = CrawlJob.fromRequest(request, 
+                    manager.getJMXConnector());
+
+            JMXConnector jmxc = manager.getJMXConnector();
+
+            ObjectName name;
+            if (job.getJobStage() == JobStage.ACTIVE) {
+                String query = "org.archive.crawler:*,type=" 
+                    + JMXSheetManager.class.getName();
+                name = Misc.findUnique(jmxc, query);
+            } else {
+                name = manager.getObject().getSheetManagerStub(job.encode());
+            }
+            return Remote.make(jmxc, name, JMXSheetManager.class);
+        } catch (RuntimeException e) {
+            manager.close();
+            throw new IllegalStateException(e);
         }
-        
-        Remote<CrawlJobManager> manager = Remote.make(
-                jmxc, crawler.getObjectName(), CrawlJobManager.class);
-        
-        ObjectName name = new ObjectName(manager.getObject().getProfile(job));
-        return Remote.make(jmxc, name, JMXSheetManager.class);
     }
 
 }

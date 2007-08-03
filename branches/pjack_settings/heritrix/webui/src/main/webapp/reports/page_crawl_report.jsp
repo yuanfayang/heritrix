@@ -2,6 +2,7 @@
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
 <%@ page import="org.archive.crawler.webui.Crawler"%>
 <%@ page import="org.archive.crawler.framework.StatisticsTracking"%>
+<%@ page import="org.archive.crawler.framework.JobStage"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
 <%@ page import="org.archive.crawler.framework.CrawlController"%>
 <%@ page import="java.util.TreeSet"%>
@@ -25,7 +26,7 @@
 
 <%
     Crawler crawler = (Crawler)request.getAttribute("crawler");
-    CrawlJob crawljob = (CrawlJob)request.getAttribute("crawljob");
+    CrawlJob crawljob = (CrawlJob)request.getAttribute("job");
     StatisticsTracking stats = (StatisticsTracking)request.getAttribute("stats");
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
     String qsStatus = "&statusorder=" + request.getAttribute("statusorder");
@@ -34,7 +35,7 @@
 
     // TODO: Handle crawl reports for completed jobs.
 
-    if(crawljob.getState()!=CrawlJob.State.ACTIVE)
+    if(!crawljob.hasReports())
     {
         // NO JOB SELECTED - ERROR
 %>
@@ -259,7 +260,7 @@
             %>
                 <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                     <td nowrap>
-                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?<%=qs%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
                             <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt(rl.legend))%>
                         </a>&nbsp;
                     </td>
@@ -302,7 +303,7 @@
             %>
                 <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                     <td nowrap>
-                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?<%=qs%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
                             <%=rl.legend%>
                         </a>&nbsp;
                     </td>
@@ -351,7 +352,7 @@
             %>
                 <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                     <td nowrap>
-                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?<%=qs%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
                             <%=rl.legend%>
                         </a>&nbsp;
                     </td>
