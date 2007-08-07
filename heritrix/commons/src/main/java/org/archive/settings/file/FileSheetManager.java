@@ -268,8 +268,14 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
         
         this.bdbDir = f.getAbsolutePath();
-        this.bdbCachePercent = Integer.parseInt(
-                getBdbProperty(p, BDB_CACHE_PERCENT));
+        if (online) {
+            this.bdbCachePercent = Integer.parseInt(
+                    getBdbProperty(p, BDB_CACHE_PERCENT));
+        } else {
+            // Don't use as much memory for profiles & ready jobs.
+            this.bdbCachePercent = Integer.parseInt(
+                    p.getProperty(BDB_PREFIX + "stub-cache-percent", "5"));
+        }
         String truthiness = getBdbProperty(p, CHECKPOINT_COPY_BDBJE_LOGS);
         if (truthiness.equals("true")) {
             this.copyCheckpoint = true;

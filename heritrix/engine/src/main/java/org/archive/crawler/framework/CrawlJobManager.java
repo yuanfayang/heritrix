@@ -83,7 +83,7 @@ public interface CrawlJobManager extends Closeable {
                         " SheetManager to close.")
             String profile
             
-            ) throws IOException;
+            );
 
 
     @Operation(desc="Loads the logs for a job.")

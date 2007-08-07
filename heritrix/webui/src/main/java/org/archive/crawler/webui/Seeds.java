@@ -87,20 +87,20 @@ public class Seeds {
         Crawler crawler = Home.getCrawler(request);
         Remote<JMXSheetManager> remote = Sheets.getSheetManager(request);
         JMXConnector jmxc = remote.getJMXConnector();
-        JMXSheetManager sheetManager = remote.getObject(); 
-        CrawlJobManager crawlJobManager = BeanProxy.proxy(
-                jmxc.getMBeanServerConnection(), 
-                crawler.getObjectName(), 
-                CrawlJobManager.class);
-        int page = Integer.parseInt(request.getParameter("page"));
-        String seeds = request.getParameter("seeds");
         try {
+            JMXSheetManager sheetManager = remote.getObject(); 
+            CrawlJobManager crawlJobManager = BeanProxy.proxy(
+                    jmxc.getMBeanServerConnection(), 
+                    crawler.getObjectName(), 
+                    CrawlJobManager.class);
+            int page = Integer.parseInt(request.getParameter("page"));
+            String seeds = request.getParameter("seeds");
             Settings settings = Sheets.getGlobalSettings(sheetManager);
             File f = Misc.getFile(settings, "root:seeds:seedsfile");
             crawlJobManager.writeLines(f.getAbsolutePath(),
                     page * LINES_PER_PAGE,
                     LINES_PER_PAGE,
-                    seeds);            
+                    seeds);
         } finally {
             remote.close();
         }
