@@ -33,7 +33,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
@@ -60,8 +65,20 @@ import org.archive.state.KeyTypes;
 
 public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetManager {
 
+    // IMPORTANT: a JMXSheetManager in stub mode will automatically close itself
+    // after a 10 minute timeout.  We do this to prevent crawl operators from
+    // having to remember to manually close profiles.  If you add a method to
+    // the public API, it should invoke stamp() before doing anything, to 
+    // reset the "lastUse" timestamp.
+    
+    final private static Timer TIMER = new Timer(true);
+
+    final private static long TIMEOUT = 10 * 60 * 1000;
     
     final public static String DOMAIN = "org.archive";
+    
+    final private static Logger LOGGER = 
+        Logger.getLogger(JMXSheetManagerImpl.class.getName());
     
     /**
      * First version.
@@ -72,14 +89,19 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
     final private Map<String,Sheet> checkedOut 
         = new HashMap<String,Sheet>();
+    
 
 //    final private Map<String,List<PathChangeException>> problems;
     
     final private Map<String,Map<String,PathChangeException>> problems;
     
     private ObjectName oname;
+    private long lastUse;
+    final private TimerTask reapTask;
     
-    public JMXSheetManagerImpl(String job, String domain, SheetManager manager) {
+    
+    public JMXSheetManagerImpl(MBeanServer server, 
+            String job, String domain, SheetManager manager) {
         super(JMXSheetManager.class);
         this.manager = manager;
         this.problems = new HashMap<String,Map<String,PathChangeException>>();
@@ -92,6 +114,13 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
             }
         }
         this.oname = JMXModuleListener.nameOf(domain, job, this);
+        this.lastUse = System.currentTimeMillis();
+        if (manager.isOnline()) {
+            this.reapTask = null;
+        } else {
+            this.reapTask = new ReapTask(server);
+            TIMER.schedule(reapTask, TIMEOUT, TIMEOUT);
+        }
     }
 
     public ObjectName getObjectName(){
@@ -108,8 +137,13 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
+    private void stamp() {
+        this.lastUse = System.currentTimeMillis();
+    }
+    
 
     public synchronized Set<String> getSheetNames() {
+        stamp();
         return manager.getSheetNames();
     }
 
@@ -117,27 +151,32 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
     public synchronized void removeSheet(String sheetName) 
     throws IllegalArgumentException {
+        stamp();
         manager.removeSheet(sheetName);
     }
 
 
     public synchronized void renameSheet(String oldName, String newName) {
+        stamp();
         manager.renameSheet(oldName, newName);
     }
 
 
     public synchronized void makeSingleSheet(String name) {
+        stamp();
         manager.addSingleSheet(name);
     }
     
     
     public synchronized void makeSheetBundle(String name) {
+        stamp();
         Collection<Sheet> empty = Collections.emptyList();
         manager.addSheetBundle(name, empty);
     }
 
     
     public synchronized CompositeData[] getAll(String name) {
+        stamp();
         SingleSheet sheet = (SingleSheet)getSheet(name);
         JMXPathListConsumer c = new JMXPathListConsumer();
         PathLister.getAll(sheet, c, true);
@@ -146,6 +185,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
 
     public synchronized CompositeData[] resolveAll(String name) {
+        stamp();
         Sheet sheet = getSheet(name);
         JMXPathListConsumer c = new JMXPathListConsumer();
         PathLister.resolveAll(sheet, c, false);
@@ -154,6 +194,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
 
     public synchronized void setMany(String sheetName, CompositeData[] setData) {
+        stamp();
         Sheet sh = checkedOut.get(sheetName);
         if (sh == null) {
             throw new IllegalArgumentException(sheetName + 
@@ -226,13 +267,15 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
     public synchronized void moveElementUp(String sheetName, String path) {
+        stamp();
         moveElement(sheetName, path, true);
     }
 
 
     public synchronized void moveElementDown(String sheetName, String path) {
+        stamp();
         moveElement(sheetName, path, false);
-   }
+    }
 
 
     private SingleSheet getSingleSheet(String name) {
@@ -244,30 +287,22 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
-    public void associate(
+    public synchronized void associate(
             String sheetName, 
             String[] contexts) {
+        stamp();
         Sheet sheet = manager.getSheet(sheetName);
         manager.associate(sheet, Arrays.asList(contexts));
     }
     
     
     public synchronized String[] getSheets() {
+        stamp();
         Set<String> names = getSheetNames();
         return names.toArray(new String[names.size()]);
     }
 
 
-    public synchronized void save() {
-        manager.save();
-    }
-    
-    
-    public synchronized void reload() {
-        manager.reload();
-    }
-    
-    
     public void set(
             String sheet, 
             String path, 
@@ -290,6 +325,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
             String sheetName,
             String path
             ) {
+        stamp();
         Sheet sheet = getSheet(sheetName);
         Object v = PathValidator.validate(sheet, path);
         if (v == null) {
@@ -305,6 +341,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     public synchronized void associate(
             String sheetName, 
             String surt) {
+        stamp();
         Sheet sheet = manager.getSheet(sheetName);
         manager.associate(sheet, Collections.singleton(surt));
     }
@@ -313,6 +350,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     public synchronized void disassociate(
             String sheetName, 
             String surt) {
+        stamp();
         Sheet sheet = manager.getSheet(sheetName);
         manager.disassociate(sheet, Collections.singleton(surt));
     }
@@ -321,6 +359,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
     public synchronized String resolveAllAsString(
             String sheetName) {
+        stamp();
         Sheet ss = getSheet(sheetName);
         StringWriter sw = new StringWriter();
         
@@ -332,6 +371,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     
     public synchronized String getAllAsString(
             String sheetName) {
+        stamp();
         SingleSheet ss = getSingleSheet(sheetName);
         StringWriter sw = new StringWriter();
         FilePathListConsumer c = new FilePathListConsumer(sw);
@@ -341,34 +381,40 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
 
     public synchronized void checkout(String sheetName) {
+        stamp();
         Sheet sheet = manager.checkout(sheetName);
         checkedOut.put(sheetName, sheet);
     }
 
     
     public synchronized void commit(String sheetName) {
+        stamp();
         Sheet sheet = checkedOut.remove(sheetName);
         manager.commit(sheet);
     }
     
     
     public synchronized void cancel(String sheetName) {
+        stamp();
         checkedOut.remove(sheetName);
     }
 
     
     public synchronized String[] getCheckedOutSheets() {
+        stamp();
         return checkedOut.keySet().toArray(new String[0]);
     }
 
 
     public synchronized String[] getProblemSingleSheetNames() {
+        stamp();
         Set<String> problems = this.problems.keySet();
         return problems.toArray(new String[problems.size()]);
     }
 
 
     public synchronized CompositeData[] getSingleSheetProblems(String sheet) {
+        stamp();
         List<CompositeData> result = new ArrayList<CompositeData>();
         Map<String,PathChangeException> sheetProblems = problems.get(sheet);
         if (sheetProblems == null) {
@@ -386,7 +432,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
 
-    public CompositeData[] findConfig(String uri) {
+    public synchronized CompositeData[] findConfig(String uri) {
+        stamp();
         Sheet sheet = manager.findConfig(uri);
         JMXPathListConsumer c = new JMXPathListConsumer();
         PathLister.resolveAll(sheet, c, false);
@@ -394,7 +441,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
-    public String[] findConfigNames(String uri) {
+    public synchronized String[] findConfigNames(String uri) {
+        stamp();
         List<Association> surtToSheet = manager.findConfigNames(uri);
         String[] result = new String[surtToSheet.size() * 2];
         int i = 0;
@@ -408,6 +456,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
 
     public synchronized boolean isSingleSheet(String sheetName) {
+        stamp();
         Sheet sheet = getSheet(sheetName);
         if (sheet == null) {
             throw new IllegalArgumentException("No such sheet: " + sheetName);
@@ -418,6 +467,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     
     
     public synchronized String[] getBundledSheets(String bundleName) {
+        stamp();
         Sheet sheet = getSheet(bundleName);
         if (!(sheet instanceof SheetBundle)) {
             throw new IllegalArgumentException(bundleName + " is not a bundle.");
@@ -437,6 +487,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
             String bundleName, 
             String move, 
             int index) {
+        stamp();
         Sheet sheet = checkedOut.get(bundleName);
         if (sheet == null) {
             throw new IllegalArgumentException(bundleName + 
@@ -480,24 +531,62 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
-    public boolean isOnline() {
+    public synchronized boolean isOnline() {
+        stamp();
         return manager.isOnline();
     }
 
     
-    public String[] listContexts(String sheetName, int start) {
+    public synchronized String[] listContexts(String sheetName, int start) {
+        stamp();
         Collection<String> c = manager.listContexts(sheetName, start, 100);
         return c.toArray(new String[c.size()]);
     }
 
 
     public synchronized void offlineCleanup() {
+        if (reapTask != null) {
+            reapTask.cancel();
+        }
         manager.offlineCleanup();
     }
 
     
-    public void remove(String sheetName, String path) {
+    public synchronized void remove(String sheetName, String path) {
+        stamp();
         SingleSheet sheet = getSingleSheet(sheetName);
         PathChanger.remove(sheet, path);
     }
+
+
+    private class ReapTask extends TimerTask {
+        
+        private MBeanServer server;
+        
+        public ReapTask(MBeanServer server) {
+            this.server = server;
+        }
+        
+        public void run() {
+            long now = System.currentTimeMillis();
+            synchronized (JMXSheetManagerImpl.this) {
+                if (!checkedOut.isEmpty()) {
+                    return;
+                }
+                if (now  - lastUse > TIMEOUT) {
+                    try {
+                        offlineCleanup();
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, e.getMessage(), e);
+                    }
+                    try {
+                        server.unregisterMBean(oname);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, e.getMessage(), e);
+                    }
+                }
+            }
+        }
+    }
+
 }

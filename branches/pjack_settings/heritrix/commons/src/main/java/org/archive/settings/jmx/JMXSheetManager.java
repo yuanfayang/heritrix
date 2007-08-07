@@ -76,12 +76,6 @@ public interface JMXSheetManager {
     @org.archive.openmbeans.annotations.Attribute(desc = "The names of the sheets being managed.", def = "")
     String[] getSheets();
 
-    @Operation(desc = "Saves all settings currently in memory to persistent storage.")
-    void save();
-
-    @Operation(desc = "Reloads all settings from persistent storage.")
-    void reload();
-
     @Operation(desc = "Sets one setting in a SingleSheet.")
     void set(
 

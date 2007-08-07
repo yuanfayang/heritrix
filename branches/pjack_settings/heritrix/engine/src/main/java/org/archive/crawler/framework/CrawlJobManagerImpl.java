@@ -271,7 +271,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(name, DOMAIN, fsm);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, name, DOMAIN, fsm);
         register(jmx, jmx.getObjectName());
         return jmx.getObjectName();
     }
@@ -310,7 +310,6 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         if (!j.startsWith(READY.getPrefix())) {
             throw new IllegalArgumentException("Can't launch " + j);
         }
-        closeSheetManagerStub(j);
 
         final String job = changeState(j, ACTIVE);
         File dest = new File(getJobsDir(), job);
@@ -329,7 +328,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(name, DOMAIN, fsm);
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, name, DOMAIN, fsm);
         final ObjectName smName = jmx.getObjectName();
         try {
             server.registerMBean(jmx, smName);
