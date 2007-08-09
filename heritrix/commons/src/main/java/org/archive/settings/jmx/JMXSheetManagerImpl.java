@@ -23,6 +23,7 @@
  */
 package org.archive.settings.jmx;
 
+import java.io.File;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ import org.archive.util.Transform;
 import org.archive.util.Transformer;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Association;
+import org.archive.settings.Offline;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
@@ -334,7 +336,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         if (KeyTypes.isSimple(v.getClass())) {
             return v.toString();
         }
-        return v.getClass().getName();
+        return Offline.getType(v).getName();
     }
     
     
@@ -558,6 +560,26 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         PathChanger.remove(sheet, path);
     }
 
+    
+    public synchronized String getFilePath(String settingPath) {
+        Sheet global = manager.getGlobalSheet();
+        Object o = PathValidator.validate(global, settingPath);
+        if (o == null) {
+            return null;
+        }
+        String parentPath = getFilePath(settingPath + ":parent");
+        String path = (String)PathValidator.validate(global, settingPath + ":path");
+        File f;
+        if (parentPath != null) {
+            f = new File(new File(parentPath), path);
+        } else {
+            f = new File(path);
+        }
+        
+        return f.getAbsolutePath();
+    }
+    
+    
 
     private class ReapTask extends TimerTask {
         
