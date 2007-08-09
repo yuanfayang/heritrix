@@ -6,9 +6,12 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
+import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -21,6 +24,8 @@ import org.archive.util.Reporter;
  */
 public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
         Serializable, Reporter {
+    static final long serialVersionUID = -1939168792663316048L;
+    
     private static final Logger logger =
         Logger.getLogger(WorkQueue.class.getName());
     
@@ -202,7 +207,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
         // check whether running balance is depleted 
         // or totalExpenditure exceeds totalBudget
         return this.sessionBalance <= 0
-            || (this.totalBudget >= 0 && this.totalExpenditure > this.totalBudget);
+            || (this.totalBudget >= 0 && this.totalExpenditure >= this.totalBudget);
     }
 
     /**
@@ -579,5 +584,29 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
     
     public boolean isRetired() {
         return retired;
+    }
+
+    public UURI getContextUURI(WorkQueueFrontier wqf) {
+        if(lastPeeked!=null) {
+            try {
+                return UURIFactory.getInstance(lastPeeked);
+            } catch (URIException e) {
+                // just move along to next try
+            }
+        }
+        if(lastQueued!=null) {
+            try {
+                return UURIFactory.getInstance(lastQueued);
+            } catch (URIException e) {
+                // just move along to next try
+            }
+        }
+        if(peekItem!=null) {
+            return peekItem.getUURI();
+        }
+        // peek a CrawlURI temporarily just for context 
+        UURI contextUri = peek(wqf).getUURI(); 
+        unpeek(); // but don't insist on that URI being next released
+        return contextUri;
     }
 }

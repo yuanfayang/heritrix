@@ -46,6 +46,7 @@ import java.util.logging.Logger;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
+import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -767,8 +768,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param queue queue to replenish
      */
     private void replenishSessionBalance(WorkQueue queue) {
-        // get a CrawlURI for override context purposes
-        CrawlURI contextUri = queue.peek(this); 
+        UURI contextUri = queue.getContextUURI(this); 
+        
         // TODO: consider confusing cross-effects of this and IP-based politeness
         queue.setSessionBalance(((Integer) getUncheckedAttribute(contextUri,
                 ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
@@ -776,7 +777,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // TODO: is this the best way to be sensitive to potential mid-crawl changes
         long totalBudget = ((Long)getUncheckedAttribute(contextUri,ATTR_QUEUE_TOTAL_BUDGET)).longValue();
         queue.setTotalBudget(totalBudget);
-        queue.unpeek(); // don't insist on that URI being next released
     }
 
     /**
@@ -986,22 +986,36 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
 
     /**
-     * @param match String to  match.
+     * @param match regex of URIs to delete
      * @return Number of items deleted.
      */
-    public long deleteURIs(String match) {
+    public long deleteURIs(String uriMatch) {
+        return deleteURIs(uriMatch,null);
+    }
+
+    /**
+     * @param uriMatch regex of URIs to delete
+     * @param queueMatch regex of queues to affect, or null for all
+     * @return Number of items deleted.
+     */
+    public long deleteURIs(String uriMatch, String queueMatch) {
         long count = 0;
         // TODO: DANGER/ values() may not work right from CachedBdbMap
         Iterator iter = allQueues.keySet().iterator(); 
         while(iter.hasNext()) {
-            WorkQueue wq = getQueueFor(((String)iter.next()));
+            String queueKey = ((String)iter.next());
+            if(StringUtils.isNotEmpty(queueMatch) && !queueKey.matches(queueMatch)) {
+                // skip this queue
+                continue; 
+            }
+            WorkQueue wq = getQueueFor(queueKey);
             wq.unpeek();
-            count += wq.deleteMatching(this, match);
+            count += wq.deleteMatching(this, uriMatch);
         }
         decrementQueuedCount(count);
         return count;
     }
-
+    
     //
     // Reporter implementation
     //

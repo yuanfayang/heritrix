@@ -1265,8 +1265,20 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return the number of URIs deleted
      */
     public long deleteURIsFromPending(String regexpr) {
+        return deleteURIsFromPending(regexpr, null);
+    }
+    
+    /**
+     * Delete any URI from the frontier of the current (paused) job that match
+     * the specified regular expression. If the current job is not paused (or
+     * there is no current job) nothing will be done.
+     * @param uriPattern Regular expression to delete URIs by.
+     * @param queuePattern Regular expression of target queues (or null for all)
+     * @return the number of URIs deleted
+     */
+    public long deleteURIsFromPending(String uriPattern, String queuePattern) {
         return (this.currentJob != null)?
-                this.currentJob.deleteURIsFromPending(regexpr): 0;
+                this.currentJob.deleteURIsFromPending(uriPattern,queuePattern): 0;
     }
     
     public String importUris(String file, String style, String force) {

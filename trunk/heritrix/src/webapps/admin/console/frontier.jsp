@@ -5,6 +5,8 @@
 
 <%@ page import="java.util.ArrayList"%>
 
+<%@ page import="org.apache.commons.lang.StringUtils"%>
+
 <%
     /**
      * This page allows users to inspect URIs in the Frontier of a paused
@@ -26,10 +28,9 @@
     CORRUPT THE CRAWL!</b>
 <hr>
 <%      }
-        String regexpr = "";
-        if(request.getParameter("match") != null ){
-            regexpr = request.getParameter("match");
-        }
+        String regexpr = StringUtils.defaultString(request.getParameter("match"));
+
+        String queueRegex = StringUtils.defaultString(request.getParameter("queueRegex"));
         
         int numberOfMatches = 1000;
         try {
@@ -136,7 +137,7 @@
     <table cellspacing="0" cellpadding="0" width="100%">
         <tr>
             <td nowrap>
-                Regular expression:
+                URI match regex:
             </td>
             <td colspan="3">
                 <input name="match" size="33" value="<%=regexpr%>" onKeyPress="checkForEnter(event)">
@@ -148,6 +149,22 @@
                 <input type="button" value="Display URIs" onClick="doDisplayInitial()">&nbsp;&nbsp;&nbsp;
                 <input type="button" value="Count URIs" onClick="doCount()">&nbsp;&nbsp;&nbsp;
                 <input type="button" value="Delete URIs" onClick="doDelete()">
+            </td>
+            <td width="100%">
+            </td>
+        </tr>
+        <tr>
+            <td nowrap>
+                queue match regex:
+            </td>
+            <td colspan="3">
+                <input name="queueRegex" size="33" value="<%=queueRegex%>" onKeyPress="checkForEnter(event)">
+            </td>
+            <td nowrap>
+                &nbsp;<a href="<%=request.getContextPath()%>/help/regexpr.jsp">?</a>&nbsp;&nbsp;
+            </td>
+            <td>
+                (affects deletes only)
             </td>
             <td width="100%">
             </td>
@@ -215,7 +232,7 @@
                        out.println("<tr><td height='5'></td></tr>");
                      } else if(action.equals("delete")){
                        // Delete based on regexpr.
-                       long numberOfDeletes = handler.deleteURIsFromPending(regexpr);
+                       long numberOfDeletes = handler.deleteURIsFromPending(regexpr,queueRegex);
                        out.println("<tr><td height='5'></td></tr>");
                        out.println("<tr><td colspan='7'><b>All " + numberOfDeletes + " URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
                        out.println("<tr><td height='5'></td></tr>");
