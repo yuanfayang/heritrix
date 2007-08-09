@@ -528,17 +528,20 @@ implements Map<K,V>, Serializable {
 
     private void expungeStaleEntries() {
         int c = 0;
+        long startTime = System.currentTimeMillis();
         for(SoftEntry entry; (entry = refQueuePoll()) != null;) {
             expungeStaleEntry(entry);
             c++;
         }
         if (c > 0 && logger.isLoggable(Level.FINER)) {
+            long endTime = System.currentTimeMillis();
             try {
                 logger.finer("DB: " + db.getDatabaseName() + ",  Expunged: "
                         + c + ", Diskmap size: " + diskMapSize
-                        + ", Cache size: " + memMap.size());
+                        + ", Cache size: " + memMap.size()
+                        + ", in "+(endTime-startTime)+"ms");
             } catch (DatabaseException e) {
-                // Just for logging so ignore Exceptions
+                logger.log(Level.FINER,"exception while logging",e);
             }
         }
     }
