@@ -986,6 +986,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
 
     /**
+     * Delete all scheduled URIs matching the given regex. 
+     * 
      * @param match regex of URIs to delete
      * @return Number of items deleted.
      */
@@ -994,6 +996,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
 
     /**
+     * Delete all scheduled URIs matching the given regex, in queues with
+     * names matching the second given regex. 
+     * 
      * @param uriMatch regex of URIs to delete
      * @param queueMatch regex of queues to affect, or null for all
      * @return Number of items deleted.
