@@ -54,6 +54,8 @@ import java.util.logging.Level;
  */
 public abstract class Constraint 
 implements Comparable<Constraint>, Serializable {
+    static final long serialVersionUID = -646814290764700497L;
+    
     private final Level severity;
     private final String msg;
 

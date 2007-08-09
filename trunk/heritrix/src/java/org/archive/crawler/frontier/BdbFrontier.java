@@ -380,10 +380,12 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             this.retiredQueues = reinit(f.retiredQueues,"retiredQueues");
             this.snoozedClassQueues = f.snoozedClassQueues;
             this.inProcessQueues = f.inProcessQueues;
+            super.initialize(c);
             wakeQueues();
+        } else {
+            // perform usual initialization 
+            super.initialize(c);
         }
-        // perform usual initialization 
-        super.initialize(c);
     }
 
     
