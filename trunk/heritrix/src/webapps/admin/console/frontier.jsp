@@ -185,7 +185,7 @@
                 <input type="checkbox" value="true" name="verbose" <%=verbose?"checked":""%>>
             </td>
             <td align="right">
-                Grep style:
+                grep style URI regex:
             </td>
             <td align="right" width="20">
                 <input type="checkbox" value="true" name="grep" <%=grep?"checked":""%>>
@@ -234,7 +234,11 @@
                        // Delete based on regexpr.
                        long numberOfDeletes = handler.deleteURIsFromPending(regexpr,queueRegex);
                        out.println("<tr><td height='5'></td></tr>");
-                       out.println("<tr><td colspan='7'><b>All " + numberOfDeletes + " URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
+                       out.println("<tr><td colspan='7'><b>All " + numberOfDeletes + " URIs matching</b> <code>" + regexpr + "</code> <b> were deleted");
+                       if(StringUtils.isNotBlank(queueRegex)) {
+                          out.println(" from queues matching '"+queueRegex+"'");
+                       }
+                       out.println("</b></td></tr>");
                        out.println("<tr><td height='5'></td></tr>");
                     }
                     
