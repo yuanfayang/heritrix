@@ -1073,7 +1073,15 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @see org.archive.crawler.framework.Frontier#deleteURIs(java.lang.String)
      */
     public synchronized long deleteURIs(String match) {
-        // TODO Auto-generated method stub
+        // TODO: implement?
+        return 0;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#deleteURIs(java.lang.String)
+     */
+    public synchronized long deleteURIs(String uriMatch, String queueMatch) {
+        // TODO implement?
         return 0;
     }
 

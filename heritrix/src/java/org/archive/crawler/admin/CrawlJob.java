@@ -1125,10 +1125,21 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * @return the number of URIs deleted
      */
     public long deleteURIsFromPending(String regexpr){
+        return deleteURIsFromPending(regexpr,null);
+    }
+    
+    /**
+     * Delete any URI from the frontier of the current (paused) job that match
+     * the specified regular expression. If the current job is not paused (or
+     * there is no current job) nothing will be done.
+     * @param regexpr Regular expression to delete URIs by.
+     * @return the number of URIs deleted
+     */
+    public long deleteURIsFromPending(String uriPattern, String queuePattern){
         return (this.controller != null &&
                 this.controller.getFrontier() != null &&
                 this.controller.isPaused())?
-            this.controller.getFrontier().deleteURIs(regexpr): 0;
+            this.controller.getFrontier().deleteURIs(uriPattern,queuePattern): 0;
     }
     
     public String importUris(String file, String style, String force) {

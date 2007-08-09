@@ -379,6 +379,28 @@ public interface Frontier extends Reporter {
      * @return The number of URIs deleted
      */
     public long deleteURIs(String match);
+    
+    /**
+     * Delete any URI that matches the given regular expression from the list
+     * of discovered and pending URIs, if it is in a queue with a name matching
+     * the second regular expression. This does not prevent them from being
+     * rediscovered.
+     *
+     * <p>Any encountered URI that has not been successfully crawled, terminally
+     * failed, disregarded or is currently being processed is considered to be
+     * a pending URI.
+     *
+     * <p><b>Warning:</b> It is unsafe to make changes to the frontier while
+     * this method is executing. The crawler should be in a paused state before
+     * invoking it.
+     *
+     * @param uriMatch A regular expression, any URIs that matches will be
+     *              deleted from the affected queues.
+     * @param queueMatch A regular expression, any queues matching will have
+     *              their URIs checked. A null value means all queues.
+     * @return The number of URIs deleted
+     */
+    public long deleteURIs(String uriMatch, String queueMatch);
 
     /**
      * Notify Frontier that a CrawlURI has been deleted outside of the
