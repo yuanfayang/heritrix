@@ -96,21 +96,29 @@ public interface CrawlJobManager extends Closeable {
 
 
 
-    @Operation(desc="Lists all available checkpoints.")
-    String[] listCheckpoints();
+    @Operation(desc="Lists available checkpoints for the given job.")
+    String[] listCheckpoints(
+            @Parameter(name="job", desc="The stage-name of the job.")
+            String job);
 
     
     @Operation(desc="Recovers a checkpoint.")
     void recoverCheckpoint(
             
-            @Parameter(name="checkpointPath", desc="The path to the checkpoint directory.")
+            @Parameter(name="completedJob", desc="The stage-name of a completed job to recover.")
+            String completedJob,
+            
+            @Parameter(name="recoverJob", desc="The stage-name for the new recovered job.")
+            String recoverJob,
+            
+            @Parameter(name="checkpointPath", desc="The checkpoint to recover from.")
             String checkpoint, 
             
             @Parameter(name="oldPaths", desc="Old path prefixes to replace.")
             String[] oldPaths, 
             
             @Parameter(name="newPaths", desc="New path prefixes to replace.")
-            String[] newPaths) throws IOException;
+            String[] newPaths);
 
     @Operation(desc="Deregisters this CrawlJobManager from the MBeanServer.")
     void close();

@@ -26,6 +26,10 @@
 
 package org.archive.modules.fetcher;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.logging.Logger;
@@ -43,16 +47,17 @@ import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 
 /**
  * @author pjack
  *
  */
-public class BdbCookieStorage implements CookieStorage, Initializable {
+public class BdbCookieStorage 
+implements CookieStorage, Initializable, Serializable {
 
-    
+    private static final long serialVersionUID = 1L;
+
     final private static Logger LOGGER = 
         Logger.getLogger(BdbCookieStorage.class.getName()); 
     
@@ -69,8 +74,8 @@ public class BdbCookieStorage implements CookieStorage, Initializable {
 
     
     private BdbModule bdb;
-    private Database cookieDb;
-    private StoredSortedMap cookies;
+    private transient Database cookieDb;
+    private transient StoredSortedMap cookies;
 
     public BdbCookieStorage() {
     }
@@ -81,10 +86,9 @@ public class BdbCookieStorage implements CookieStorage, Initializable {
         String dbName = provider.get(this, COOKIEDB_NAME);
         try {
             StoredClassCatalog classCatalog = bdb.getClassCatalog();
-            DatabaseConfig dbConfig = new DatabaseConfig();
+            BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
             dbConfig.setTransactional(false);
             dbConfig.setAllowCreate(true);
-            dbConfig.setDeferredWrite(true);
             cookieDb = bdb.openDatabase(dbName, dbConfig, true);
             cookies = new StoredSortedMap(cookieDb,
                     new StringBinding(), new SerialBinding(classCatalog,
@@ -106,5 +110,24 @@ public class BdbCookieStorage implements CookieStorage, Initializable {
     }
     
     
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        try {
+            out.writeUTF(cookieDb.getDatabaseName());
+        } catch (DatabaseException e) {
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
+        }
+    }
+    
+    private void readObject(ObjectInputStream in)
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        cookieDb = bdb.getDatabase(in.readUTF());
+        cookies = new StoredSortedMap(cookieDb,
+                new StringBinding(), new SerialBinding(bdb.getClassCatalog(),
+                        Cookie.class), true);        
+    }
     
 }

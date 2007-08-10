@@ -235,8 +235,20 @@ implements Closeable, HasUriReceiver, Serializable {
         loadSeeds();
     }
     
-    
-    private void initAllQueues(boolean recycle) 
+
+    /**
+     * Initializes all queues.  May decide to keep all queues in memory based on
+     * {@link QueueAssignmentPolicy#maximumNumberOfKeys}.  Otherwise invokes
+     * {@link #initAllQueues2} to actually set up the queues.
+     * 
+     * Subclasses should invoke this method with recycle set to "true" in 
+     * a private readObject method, to restore queues after a checkpoint.
+     * 
+     * @param recycle
+     * @throws IOException
+     * @throws DatabaseException
+     */
+    protected void initAllQueues(boolean recycle) 
     throws IOException, DatabaseException {
         if (workQueueDataOnDisk()
                 && get(QUEUE_ASSIGNMENT_POLICY).maximumNumberOfKeys() >= 0
@@ -245,27 +257,14 @@ implements Closeable, HasUriReceiver, Serializable {
             this.allQueues = Collections.synchronizedMap(
                     new HashMap<String,WorkQueue>());
         } else {
-            this.initAllQueues();
-//            this.allQueues = controller.getBigMap("allqueues",
-//                    String.class, WorkQueue.class);
-//            if (logger.isLoggable(Level.FINE)) {
-//                Iterator i = this.allQueues.keySet().iterator();
-//                try {
-//                    for (; i.hasNext();) {
-//                        logger.fine((String) i.next());
-//                    }
-//                } finally {
-//                    StoredIterator.close(i);
-//                }
-//            }
+            this.initAllQueues2(recycle);
         }
-//        this.alreadyIncluded = createAlreadyIncluded();
         initQueue(recycle);
         
     }
 
     
-    protected abstract void initAllQueues() throws DatabaseException;
+    protected abstract void initAllQueues2(boolean recycle) throws DatabaseException;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
@@ -1258,13 +1257,6 @@ implements Closeable, HasUriReceiver, Serializable {
     throws IOException, ClassNotFoundException {
         inp.defaultReadObject();
         this.wakeTimer = new Timer("waker for " + controller.toString());
-        try {
-            initAllQueues(true);
-        } catch (DatabaseException e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
-        }
     }
 
 

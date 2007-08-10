@@ -40,7 +40,6 @@ import com.sleepycat.bind.tuple.IntegerBinding;
 import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
@@ -102,7 +101,7 @@ public class AdaptiveRevisitQueueList implements Reporter {
             sortedHostQueues = new TreeSet<AdaptiveRevisitHostQueueWrapper>();
 
             // Open the hostNamesDB
-            DatabaseConfig dbConfig = new DatabaseConfig();
+            BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
             dbConfig.setTransactional(false);
             dbConfig.setAllowCreate(true);
             hostNamesDB = env.openDatabase("hostNames", dbConfig, true);

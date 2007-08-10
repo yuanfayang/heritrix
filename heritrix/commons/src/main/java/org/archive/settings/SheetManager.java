@@ -25,6 +25,9 @@ package org.archive.settings;
 
 
 import java.io.Closeable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,17 +63,19 @@ implements StateProvider, Serializable { //, DirectoryModule {
     
     final transient private Offline offlineThis;
 
-    final private List<ModuleListener> moduleListeners = 
+    private List<ModuleListener> moduleListeners = 
         new CopyOnWriteArrayList<ModuleListener>();
     
-    final private ListModuleListener<Finishable> finishables = 
+    private ListModuleListener<Finishable> finishables = 
         ListModuleListener.make(Finishable.class);
     
-    final private ListModuleListener<Checkpointable> checkpointables =
+    private ListModuleListener<Checkpointable> checkpointables =
         ListModuleListener.make(Checkpointable.class);
     
-    final private ListModuleListener<Closeable> closeables = 
+    private ListModuleListener<Closeable> closeables = 
         ListModuleListener.make(Closeable.class);
+    
+    private boolean online;
     
     @Immutable
     final public static Key<Map<String,Object>> ROOT = 
@@ -87,7 +92,8 @@ implements StateProvider, Serializable { //, DirectoryModule {
     /**
      * Constructor.
      */
-    public SheetManager() {
+    public SheetManager(boolean online) {
+        this.online = online;
         this.unspecified = new UnspecifiedSheet(this, "default");
         offlineThis = Offline.make(getClass());
         moduleListeners.add(checkpointables);
@@ -96,6 +102,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
     }
     
     
+
     public List<Checkpointable> getCheckpointables() {
         return checkpointables.getList();
     }
@@ -109,8 +116,8 @@ implements StateProvider, Serializable { //, DirectoryModule {
         return finishables.getList();
     }
     
-    public SheetManager(Collection<ModuleListener> listeners) {
-        this();
+    public SheetManager(Collection<ModuleListener> listeners, boolean online) {
+        this(online);
         moduleListeners.addAll(listeners);
     }
 
@@ -294,8 +301,8 @@ implements StateProvider, Serializable { //, DirectoryModule {
     }
 
     
-    public boolean isOnline() {
-        return true; // FIXME: Make this abstract
+    final public boolean isOnline() {
+        return online;
     }
 
 
@@ -417,4 +424,26 @@ implements StateProvider, Serializable { //, DirectoryModule {
             int ofs, int len);
 
     public abstract void offlineCleanup();
+
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeBoolean(online);
+        out.writeObject(moduleListeners);
+        out.writeObject(checkpointables);
+        out.writeObject(closeables);
+        out.writeObject(finishables);
+    }
+
+    
+    @SuppressWarnings("unchecked")
+    private void readObject(ObjectInputStream in) 
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        online = in.readBoolean();
+        moduleListeners = (List)in.readObject();
+        checkpointables = (ListModuleListener)in.readObject();
+        closeables = (ListModuleListener)in.readObject();
+        finishables = (ListModuleListener)in.readObject();
+    }
 }

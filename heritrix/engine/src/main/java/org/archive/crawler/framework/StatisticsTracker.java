@@ -1253,8 +1253,10 @@ implements CrawlURIDispositionListener, Serializable {
     }
 }
 
-class LargestSet{
+class LargestSet implements Serializable {
     
+    private static final long serialVersionUID = 1L;
+
     int maxsize;
     HashMap<String, Long> set;
     long smallestKnownValue;

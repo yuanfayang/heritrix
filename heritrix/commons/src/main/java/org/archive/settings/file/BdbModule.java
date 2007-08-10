@@ -68,21 +68,121 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
+import com.sleepycat.je.SecondaryKeyCreator;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
 public class BdbModule implements Module, Initializable, Checkpointable, 
 Serializable, Closeable {
 
+    
+    
+    
+    
     final private static Logger LOGGER = 
         Logger.getLogger(BdbModule.class.getName()); 
 
     
-    private static class DatabasePlusConfig {
-        public Database database;
-        public DatabaseConfig config;
+    private static class DatabasePlusConfig implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public transient Database database;
+        public String name;
+        public String primaryName;
+        public BdbConfig config;
     }
     
+    
+    /**
+     * Configuration object for databases.  Needed because 
+     * {@link DatabaseConfig} is not serializable.  Also it prevents invalid
+     * configurations.  (All databases opened through this module must be
+     * deferred-write, because otherwise they can't sync(), and you can't
+     * run a checkpoint without doing sync() first.)
+     * 
+     * @author pjack
+     *
+     */
+    public static class BdbConfig implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        boolean allowCreate;
+        boolean sortedDuplicates;
+        boolean transactional;
+
+
+        public BdbConfig() {
+        }
+
+
+        public boolean isAllowCreate() {
+            return allowCreate;
+        }
+
+
+        public void setAllowCreate(boolean allowCreate) {
+            this.allowCreate = allowCreate;
+        }
+
+
+        public boolean getSortedDuplicates() {
+            return sortedDuplicates;
+        }
+
+
+        public void setSortedDuplicates(boolean sortedDuplicates) {
+            this.sortedDuplicates = sortedDuplicates;
+        }
+
+        public DatabaseConfig toDatabaseConfig() {
+            DatabaseConfig result = new DatabaseConfig();
+            result.setDeferredWrite(true);
+            result.setTransactional(transactional);
+            result.setAllowCreate(allowCreate);
+            result.setSortedDuplicates(sortedDuplicates);
+            return result;
+        }
+
+
+        public boolean isTransactional() {
+            return transactional;
+        }
+
+
+        public void setTransactional(boolean transactional) {
+            this.transactional = transactional;
+        }
+    }
+    
+    
+    public static class  SecondaryBdbConfig extends BdbConfig {
+
+        private static final long serialVersionUID = 1L;
+        
+        private SecondaryKeyCreator keyCreator;
+        
+        public SecondaryBdbConfig() {
+        }
+        
+        public SecondaryKeyCreator getKeyCreator() {
+            return keyCreator;
+        }
+
+        public void setKeyCreator(SecondaryKeyCreator keyCreator) {
+            this.keyCreator = keyCreator;
+        }
+
+        public SecondaryConfig toSecondaryConfig() {
+            SecondaryConfig result = new SecondaryConfig();
+            result.setDeferredWrite(true);
+            result.setTransactional(transactional);
+            result.setAllowCreate(allowCreate);
+            result.setSortedDuplicates(sortedDuplicates);
+            result.setKeyCreator(keyCreator);
+            return result;
+        }
+        
+    }
     
     /**
      * 
@@ -157,29 +257,7 @@ Serializable, Closeable {
         this.classCatalog = new StoredClassCatalog(classCatalogDB);
     }
 
-    /*
-    public Environment getEnvironment() {
-        return bdbEnvironment;
-    }
-    
-    
-    public Database getClassCatalogDB() {
-        return classCatalogDB;
-    }
-    */
 
-    
-    public Database openDatabase(String name, boolean recycle) 
-    throws DatabaseException {
-        if (databases.containsKey(name)) {
-            throw new IllegalStateException("Database already exists: " +name);
-        }
-        DatabaseConfig config = new DatabaseConfig();
-        config.setAllowCreate(!recycle);
-        return openDatabase(name, config, recycle);
-    }
-    
-    
     public void closeDatabase(Database db) {
         try {
             closeDatabase(db.getDatabaseName());
@@ -195,9 +273,7 @@ Serializable, Closeable {
         }
         Database db = dpc.database;
         try {
-            if (dpc.config.getDeferredWrite()) {
-                db.sync();
-            }
+            db.sync();
             db.close();
         } catch (DatabaseException e) {
             LOGGER.log(Level.SEVERE, "Error closing db " + name, e);
@@ -205,7 +281,7 @@ Serializable, Closeable {
     }
     
     
-    public Database openDatabase(String name, DatabaseConfig config, 
+    public Database openDatabase(String name, BdbConfig config, 
             boolean recycle) 
     throws DatabaseException {        
         if (databases.containsKey(name)) {
@@ -219,22 +295,25 @@ Serializable, Closeable {
             }
         }
         DatabasePlusConfig dpc = new DatabasePlusConfig();
-        dpc.database = bdbEnvironment.openDatabase(null, name, config);
+        dpc.database = bdbEnvironment.openDatabase(null, name, config.toDatabaseConfig());
+        dpc.name = name;
         dpc.config = config;
         databases.put(name, dpc);
         return dpc.database;
     }
-    
-    
+
+
     public SecondaryDatabase openSecondaryDatabase(String name, Database db, 
-            SecondaryConfig config) throws DatabaseException {
+            SecondaryBdbConfig config) throws DatabaseException {
         if (databases.containsKey(name)) {
             throw new IllegalStateException("Database already exists: " +name);
         }
         SecondaryDatabase result = bdbEnvironment.openSecondaryDatabase(null, 
-                name, db, config);
+                name, db, config.toSecondaryConfig());
         DatabasePlusConfig dpc = new DatabasePlusConfig();
         dpc.database = result;
+        dpc.name = name;
+        dpc.primaryName = db.getDatabaseName();
         dpc.config = config;
         databases.put(name, dpc);
         return result;
@@ -259,12 +338,13 @@ Serializable, Closeable {
         bigMaps.put(dbName, r);
         return r;
     }
-    
+
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
     }
     
+
     
     private void readObject(ObjectInputStream in) 
     throws IOException, ClassNotFoundException {
@@ -283,10 +363,24 @@ Serializable, Closeable {
                         map.getValueClass(), 
                         this.classCatalog);
             }
+            for (DatabasePlusConfig dpc: databases.values()) {
+                if (!(dpc.config instanceof SecondaryBdbConfig)) {
+                    dpc.database = bdbEnvironment.openDatabase(null, 
+                            dpc.name, dpc.config.toDatabaseConfig());
+                }
+            }
+            for (DatabasePlusConfig dpc: databases.values()) {
+                if (dpc.config instanceof SecondaryBdbConfig) {
+                    SecondaryBdbConfig conf = (SecondaryBdbConfig)dpc.config;
+                    Database primary = databases.get(dpc.primaryName).database;
+                    dpc.database = bdbEnvironment.openSecondaryDatabase(null, 
+                            dpc.name, primary, conf.toSecondaryConfig());
+                }
+            }
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);
-            throw io;            
+            throw io;
         }
     }
 
@@ -472,6 +566,15 @@ Serializable, Closeable {
 
     private static File getBdbSubDirectory(File checkpointDir) {
         return new File(checkpointDir, "bdbje-logs");
+    }
+    
+    
+    public Database getDatabase(String name) {
+        DatabasePlusConfig dpc = databases.get(name);
+        if (dpc == null) {
+            return null;
+        }
+        return dpc.database;
     }
 
 

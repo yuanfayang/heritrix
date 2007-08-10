@@ -28,12 +28,12 @@ import java.io.File;
 import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.archive.settings.file.BdbModule;
 import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 import org.archive.util.bdbje.EnhancedEnvironment;
 
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.EnvironmentConfig;
 
@@ -52,8 +52,8 @@ public class StoredQueueTest extends TmpDirTestCase {
             envConfig.setTransactional(false);
             envConfig.setAllowCreate(true);
             env = new EnhancedEnvironment(envDir,envConfig);
-            DatabaseConfig dbConfig = StoredQueue.databaseConfig();
-            db = env.openDatabase(null, "StoredMapTest", dbConfig);
+            BdbModule.BdbConfig dbConfig = StoredQueue.databaseConfig();
+            db = env.openDatabase(null, "StoredMapTest", dbConfig.toDatabaseConfig());
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
         }

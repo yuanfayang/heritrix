@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.Writer;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,7 +58,7 @@ import org.archive.util.DevUtils;
  * @author gojomo
  *
  */
-public class SeedModule implements Initializable {
+public class SeedModule implements Initializable, Serializable {
 
     private static final long serialVersionUID = 3L;
 

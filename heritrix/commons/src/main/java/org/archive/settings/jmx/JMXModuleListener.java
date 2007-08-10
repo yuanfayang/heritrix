@@ -25,6 +25,8 @@
  */
 package org.archive.settings.jmx;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -36,6 +38,7 @@ import java.util.Set;
 import javax.management.DynamicMBean;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
+import javax.management.MBeanInfo;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
@@ -67,7 +70,7 @@ public class JMXModuleListener implements ModuleListener, Serializable {
     
     
     final private String domain;
-    final private String name;
+    private String name;
     transient private MBeanServer server;
     final private Map<Object,ObjectInfo> counts = 
         new IdentityHashMap<Object,ObjectInfo>();
@@ -80,11 +83,14 @@ public class JMXModuleListener implements ModuleListener, Serializable {
     }
 
 
-    public void setServer(MBeanServer server) {
+    public void setServer(MBeanServer server, String name) {
         this.server = server;
+        this.name = name;
         for (Object o: counts.keySet()) {
             try {
-                server.registerMBean(o, nameOf(o));
+                ObjectName oname = nameOf(o);
+                
+                server.registerMBean(o, oname);
             } catch (InstanceAlreadyExistsException e) {
                 throw new IllegalStateException(e);
             } catch (MBeanRegistrationException e) {
@@ -167,7 +173,8 @@ public class JMXModuleListener implements ModuleListener, Serializable {
         }
         String type;
         if (o instanceof DynamicMBean) {
-            type = ((DynamicMBean)o).getMBeanInfo().getClassName();
+            MBeanInfo info = ((DynamicMBean)o).getMBeanInfo();
+            type = info.getClassName();
         } else {
             type = o.getClass().getName();
         }

@@ -28,6 +28,7 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -62,6 +63,9 @@ import org.archive.state.StateProvider;
  */
 public class CrawlerLoggerModule 
 implements LoggerModule, Initializable, Checkpointable {
+
+
+    private static final long serialVersionUID = 1L;
 
     @Immutable
     public final static Key<FileModule> DIR = 
@@ -334,6 +338,15 @@ implements LoggerModule, Initializable, Checkpointable {
         }
         Object[] array = {u, l};
         uriErrors.log(Level.INFO, e.getMessage(), array);
+    }
+    
+    
+    private void readObject(ObjectInputStream in) 
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        loggers = new HashMap<String,Logger>();
+        dir.getFile().mkdirs();        
+        this.setupLogs();
     }
     
 }

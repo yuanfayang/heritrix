@@ -43,7 +43,6 @@ import st.ata.util.FPGenerator;
 
 import com.sleepycat.bind.tuple.LongBinding;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.DatabaseNotFoundException;
@@ -108,7 +107,7 @@ implements Initializable, Serializable {
     public void initialTasks(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
         try {
-            DatabaseConfig config = getDatabaseConfig();
+            BdbModule.BdbConfig config = getDatabaseConfig();
             config.setAllowCreate(true);
             initialize(bdb.openDatabase(DB_NAME, config, false));
         } catch (DatabaseException e) {
@@ -151,14 +150,14 @@ implements Initializable, Serializable {
         try {
             createdEnvironment = true;
             Environment env = new Environment(bdbEnv, envConfig);
-            DatabaseConfig config = getDatabaseConfig();
+            BdbModule.BdbConfig config = getDatabaseConfig();
             config.setAllowCreate(true);
             try {
                 env.truncateDatabase(null, DB_NAME, false);
             } catch (DatabaseNotFoundException e) {
                 // ignored
             }
-            Database db = env.openDatabase(null, DB_NAME, config);
+            Database db = env.openDatabase(null, DB_NAME, config.toDatabaseConfig());
             initialize(db);
         } catch (DatabaseException e) {
             IOException io = new IOException();
@@ -180,9 +179,8 @@ implements Initializable, Serializable {
     /**
      * @return DatabaseConfig to use
      */
-    protected DatabaseConfig getDatabaseConfig() {
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setDeferredWrite(true);
+    protected BdbModule.BdbConfig getDatabaseConfig() {
+        BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
         return dbConfig;
     }
     
@@ -346,9 +344,9 @@ implements Initializable, Serializable {
         input.defaultReadObject();        
 
         try {
-            DatabaseConfig config = getDatabaseConfig();
+            BdbModule.BdbConfig config = getDatabaseConfig();
             config.setAllowCreate(false);
-            reopen(bdb.openDatabase(DB_NAME, false));
+            reopen(bdb.getDatabase(DB_NAME));
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);
