@@ -29,6 +29,8 @@ package org.archive.crawler.webui;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.management.ObjectName;
@@ -260,6 +262,49 @@ public class CrawlerArea {
         showCrawler(sc, request, response);
     }
 
+    
+    public static void showRecover(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<CrawlJobManager> remote = open(request);
+        CrawlJobManager cjm = remote.getObject();
+        JMXConnector jmxc = remote.getJMXConnector();
+        try {
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            String[] checkpoints = cjm.listCheckpoints(job.encode());
+            Arrays.sort(checkpoints, Collections.reverseOrder());
+            String defaultName = getCopyDefaultName(job);
+            request.setAttribute("checkpoints", Arrays.asList(checkpoints));
+            request.setAttribute("defaultName", defaultName);
+            Misc.forward(request, response, "page_recover.jsp");
+        } finally {
+            remote.close();
+        }
+    }
 
+    
+    public static void recover(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<CrawlJobManager> remote = open(request);
+        CrawlJobManager cjm = remote.getObject();
+        JMXConnector jmxc = remote.getJMXConnector();
+        try {
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            String recoverJob = JobStage.encode(JobStage.ACTIVE, 
+                    request.getParameter("newName"));
+            String checkpoint = request.getParameter("checkpoint");
+            cjm.recoverCheckpoint(job.encode(), recoverJob, checkpoint, 
+                    new String[0], new String[0]);
+            
+            String[] checkpoints = cjm.listCheckpoints(job.encode());
+            request.setAttribute("checkpoints", Arrays.asList(checkpoints));
+            showCrawler(sc, request, response);
+        } finally {
+            remote.close();
+        }
+    }
 
 }

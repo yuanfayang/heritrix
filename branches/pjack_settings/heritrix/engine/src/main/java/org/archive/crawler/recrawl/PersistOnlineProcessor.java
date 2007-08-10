@@ -34,7 +34,6 @@ import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 
 /**
@@ -68,7 +67,7 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
         StoredSortedMap historyMap;
         try {
             StoredClassCatalog classCatalog = bdb.getClassCatalog();
-            DatabaseConfig dbConfig = historyDatabaseConfig();
+            BdbModule.BdbConfig dbConfig = historyDatabaseConfig();
 
             historyDb = bdb.openDatabase(dbName, dbConfig, true);
             historyMap = new StoredSortedMap(historyDb,

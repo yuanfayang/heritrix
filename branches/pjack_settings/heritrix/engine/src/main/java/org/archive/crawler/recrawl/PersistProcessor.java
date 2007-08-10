@@ -36,6 +36,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.archive.crawler.io.CrawlerJournal;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
+import org.archive.settings.file.BdbModule;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.SURT;
 import org.archive.util.bdbje.EnhancedEnvironment;
@@ -47,7 +48,6 @@ import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.collections.StoredIterator;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.EnvironmentConfig;
 
@@ -66,11 +66,10 @@ public abstract class PersistProcessor extends Processor {
     /**
      * @return DatabaseConfig for history Database
      */
-    protected static DatabaseConfig historyDatabaseConfig() {
-        DatabaseConfig dbConfig = new DatabaseConfig();
+    protected static BdbModule.BdbConfig historyDatabaseConfig() {
+        BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
         dbConfig.setTransactional(false);
         dbConfig.setAllowCreate(true);
-        dbConfig.setDeferredWrite(true);
         return dbConfig;
     }
 
@@ -161,7 +160,7 @@ public abstract class PersistProcessor extends Processor {
         EnhancedEnvironment targetEnv = setupEnvironment(env);
         StoredClassCatalog classCatalog = targetEnv.getClassCatalog();
         Database historyDB = targetEnv.openDatabase(
-                null,URI_HISTORY_DBNAME,historyDatabaseConfig());
+                null,URI_HISTORY_DBNAME,historyDatabaseConfig().toDatabaseConfig());
         StoredSortedMap historyMap = new StoredSortedMap(historyDB,
                 new StringBinding(), new SerialBinding(classCatalog,
                         Map.class), true);
@@ -187,7 +186,7 @@ public abstract class PersistProcessor extends Processor {
             EnhancedEnvironment sourceEnv = setupEnvironment(source);
             StoredClassCatalog sourceClassCatalog = sourceEnv.getClassCatalog();
             Database sourceHistoryDB = sourceEnv.openDatabase(
-                    null,URI_HISTORY_DBNAME,historyDatabaseConfig());
+                    null,URI_HISTORY_DBNAME,historyDatabaseConfig().toDatabaseConfig());
             StoredSortedMap sourceHistoryMap = new StoredSortedMap(sourceHistoryDB,
                     new StringBinding(), new SerialBinding(sourceClassCatalog,
                             Map.class), true);
@@ -243,7 +242,7 @@ public abstract class PersistProcessor extends Processor {
             EnhancedEnvironment sourceEnv = setupEnvironment(source);
             StoredClassCatalog sourceClassCatalog = sourceEnv.getClassCatalog();
             Database sourceHistoryDB = sourceEnv.openDatabase(
-                    null,URI_HISTORY_DBNAME,historyDatabaseConfig());
+                    null,URI_HISTORY_DBNAME,historyDatabaseConfig().toDatabaseConfig());
             StoredSortedMap sourceHistoryMap = new StoredSortedMap(sourceHistoryDB,
                     new StringBinding(), new SerialBinding(sourceClassCatalog,
                             Map.class), true);

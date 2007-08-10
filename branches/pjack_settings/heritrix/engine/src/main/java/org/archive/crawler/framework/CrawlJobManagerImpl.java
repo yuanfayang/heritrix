@@ -53,6 +53,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import static org.archive.crawler.framework.JobStage.*;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
@@ -84,10 +85,19 @@ import com.sleepycat.je.DatabaseException;
  */
 public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
+    private static final long serialVersionUID = 3L;
+
     final public static String NAME = "CrawlJobManager";
     final public static String TYPE = "CrawlJobManager";
     
     
+    final private static String CONTROLLER_PATH = "root:controller";
+
+    
+    final private static String CHECKPOINT_DIR_PATH = 
+        CONTROLLER_PATH + ":" + CrawlController.CHECKPOINTS_DIR.getFieldName();
+    
+
     final private static Logger LOGGER = 
         Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
     
@@ -177,6 +187,15 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         return pair.substring(p + 1);
     }
     
+    
+    private void verifyUnique(String jobName) {
+        for (String s: getJobsDir().list()) {
+            if ((s.indexOf(JobStage.DELIMITER) >= 0) 
+                    && JobStage.getJobName(s).equals(jobName)) {
+                throw new IllegalArgumentException("Job already exists: " + s);
+            }
+        }        
+    }
 
     public synchronized void copy(String origName, String copiedName) 
     throws IOException {
@@ -194,12 +213,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
         
         String destName = JobStage.getJobName(copiedName);
-        for (String s: getJobsDir().list()) {
-            if ((s.indexOf(JobStage.DELIMITER) >= 0) 
-                    && JobStage.getJobName(s).equals(destName)) {
-                throw new IllegalArgumentException("Job already exists: " + s);
-            }
-        }
+        verifyUnique(destName);
         
         dest.mkdirs();
         
@@ -237,10 +251,6 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         if (job.startsWith(ACTIVE.getPrefix())) {
             throw new IllegalArgumentException("Can't get stub for active job: "
                     + job);
-        }
-        if (job.startsWith(COMPLETED.getPrefix())) {
-            throw new IllegalArgumentException("Can't edit a completed job: " + 
-                    job);
         }
 
         String name = getJobName(job);
@@ -410,20 +420,19 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     private File getJobsDir() {
         return jobsDir;
     }
-
-
-    public synchronized String[] listCheckpoints() {
+    
+    
+    public synchronized String[] listCheckpoints(String job) {
+        String path = getStubFilePath(job, "root:controller:checkpoints-dir");
+        File checkpointsDir = new File(path);
+        File[] files = checkpointsDir.listFiles();
+        if (files == null) {
+            return new String[0];
+        }
         ArrayList<String> checkpoints = new ArrayList<String>();
-        for (File f: getJobsDir().listFiles()) {
+        for (File f: checkpointsDir.listFiles()) {
             if (f.isDirectory()) {
-                File cp = new File(f, "checkpoints");
-                if (cp.exists()) {
-                    for (File d: cp.listFiles()) {
-                        if (d.isDirectory()) {
-                            checkpoints.add(d.getAbsolutePath());
-                        }
-                    }
-                }
+                checkpoints.add(f.getName());
             }
         }
         String[] arr = checkpoints.toArray(new String[checkpoints.size()]);
@@ -431,32 +440,61 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
     
     
-    public synchronized void recoverCheckpoint(String cpPath, 
+    public synchronized void recoverCheckpoint(
+            String oldJob,
+            String newJob,
+            String checkpointName,
             String[] oldPaths, 
-            String[] newPaths) 
-            throws IOException {
-        if (cpPath.startsWith(".")) {
-            throw new IllegalArgumentException("Illegal checkpoint: " + cpPath);
+            String[] newPaths) {
+        validateJobName(oldJob);
+        validateJobName(newJob);
+        File src = new File(getJobsDir(), oldJob);
+        if (!src.exists()) {
+            throw new IllegalArgumentException("No such job: " + oldJob);
         }
-        File checkpointDir = new File(cpPath);
+
+        if (!newJob.startsWith(JobStage.ACTIVE.getPrefix())) {
+            throw  new IllegalArgumentException(
+                    "Must specify active-name for recovered job.");
+        }
+
+        verifyUnique(JobStage.getJobName(newJob));
+
+        File dest = new File(getJobsDir(), newJob);
+        dest.mkdir();
+        
+        String cpPath = getStubFilePath(oldJob, CHECKPOINT_DIR_PATH);
+        File checkpointDir = new File(new File(cpPath), checkpointName);
         if (!checkpointDir.isDirectory()) {
             throw new IllegalArgumentException("Not a dir: " + cpPath);
         }
-        
+
         if (oldPaths.length != newPaths.length) {
             throw new IllegalArgumentException(
                     "oldPaths and newPaths must be parallel.");
         }
+
+        // Old job was "active" when it was checkpointed, so we need to 
+        // translate its old "active" path to the new job's directory.
+        String oldActive = JobStage.encode(JobStage.ACTIVE, 
+                JobStage.getJobName(oldJob));
         
         DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery();
+        cr.getFileTranslations().put(new File(getJobsDir(), oldActive).getAbsolutePath(), 
+                dest.getAbsolutePath());
         for (int i = 0; i < oldPaths.length; i++) {
             cr.getFileTranslations().put(oldPaths[i], newPaths[i]);
             new File(newPaths[i]).mkdirs();
         }
 
-        SheetManager mgr = org.archive.settings.Checkpointer.recover(checkpointDir, cr);
+        SheetManager mgr;
+        try {
+            mgr = org.archive.settings.Checkpointer.recover(checkpointDir, cr);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
         JMXModuleListener jml = JMXModuleListener.get(mgr);
-        jml.setServer(server);
+        jml.setServer(server, JobStage.getJobName(newJob));
     }
 
     public synchronized void close() {
@@ -591,6 +629,23 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             "operate on a profile named 'basic', you specify 'profile-basic'.\n" +
             "To copy a profile named basic to a ready job named foo,\n" +
             "You would invoke copy(\"profile-basic\", \"ready-foo\").";
+    }
+
+    
+    public String getStubFilePath(String job, String settingPath) {
+        ObjectName oname;
+        try {
+            oname = getSheetManagerStub(job);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        
+        try {
+            JMXSheetManager mgr = BeanProxy.proxy(server, oname, JMXSheetManager.class);
+            return mgr.getFilePath(settingPath);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
 }

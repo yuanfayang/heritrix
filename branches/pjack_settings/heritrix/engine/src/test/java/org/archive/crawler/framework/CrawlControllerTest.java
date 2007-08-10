@@ -31,14 +31,13 @@ import static org.archive.util.TmpDirTestCase.TEST_TMP_SYSTEM_PROPERTY_NAME;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.scope.DecidingScope;
 import org.archive.settings.MemorySheetManager;
-import org.archive.settings.SettingsMap;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
+import org.archive.state.FileModule;
 import org.archive.state.ModuleTestBase;
 import org.archive.util.IoUtils;
 
@@ -90,6 +89,9 @@ public class CrawlControllerTest extends ModuleTestBase {
         File state = new File(tmp, "state");
         state.mkdirs();
         
+        File checkpoints = new File(tmp, "checkpoints");
+        checkpoints.mkdirs();
+        
         CrawlOrder order = new CrawlOrder();
                 
         def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
@@ -101,6 +103,10 @@ public class CrawlControllerTest extends ModuleTestBase {
         def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
         bdb.initialTasks(def);
         
+        FileModule cp = new FileModule();
+        def.set(cp, FileModule.PATH, checkpoints.getAbsolutePath());
+        cp.initialTasks(def);
+        
         CrawlController controller = new CrawlController();
         CrawlScope scope = new DecidingScope();
         scope.initialTasks(def);
@@ -110,6 +116,7 @@ public class CrawlControllerTest extends ModuleTestBase {
 //        def.set(controller, CrawlController.SCOPE, scope);
         def.set(controller, CrawlController.SERVER_CACHE, 
                 new CrawlerServerCache());
+        def.set(controller, CrawlController.CHECKPOINTS_DIR, cp);
         controller.initialTasks(def);
         return controller;
     }

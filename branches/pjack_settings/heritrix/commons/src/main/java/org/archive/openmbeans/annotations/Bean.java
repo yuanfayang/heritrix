@@ -23,6 +23,10 @@
 package org.archive.openmbeans.annotations;
 
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -109,9 +113,10 @@ import javax.management.ReflectionException;
  *
  */
 public class Bean 
-implements DynamicMBean, NotificationEmitter {
+implements DynamicMBean, NotificationEmitter, Serializable {
 
-    
+    private static final long serialVersionUID = 1L;
+
     final public static int ACTION = MBeanOperationInfo.ACTION;
     final public static int INFO = MBeanOperationInfo.INFO;
     final public static int ACTION_INFO = MBeanOperationInfo.ACTION_INFO;
@@ -128,7 +133,7 @@ implements DynamicMBean, NotificationEmitter {
     /**
      * The metadata used to implement the DynamicMBean interface.
      */
-    final private Metadata metadata;
+    private transient Metadata metadata;
 
 
     /**
@@ -137,7 +142,7 @@ implements DynamicMBean, NotificationEmitter {
     final private Object target;
 
     
-    final private NotificationBroadcasterSupport emitter;
+    private transient NotificationBroadcasterSupport emitter;
 
     /**
      * Constructs a new BeanSupport for the given object.  The object's class
@@ -321,4 +326,18 @@ implements DynamicMBean, NotificationEmitter {
         sendNotification(n);
     }
 
+    
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeUTF(metadata.getOpenMBeanInfo().getClassName());
+    }
+    
+    private void readObject(ObjectInputStream in) 
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        String className = in.readUTF();
+        Class c = Class.forName(className);
+        this.metadata = getInfo(c);
+        this.emitter = new NotificationBroadcasterSupport();
+    }
 }

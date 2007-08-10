@@ -61,9 +61,6 @@ public class MemorySheetManager extends SheetManager {
     private SingleSheet globals;
 
 
-    private boolean online;
-    
-
     /**
      * Maps a sheet's name to the actual sheet.  All access to this field 
      * must be manually synchronized.
@@ -94,19 +91,14 @@ public class MemorySheetManager extends SheetManager {
      * Constructor.
      */
     public MemorySheetManager(boolean online) {
+        super(online);
         sheets = new HashMap<String,Sheet>();
         associations = new TreeMap<String,Set<Sheet>>();
         globals = addSingleSheet(GLOBAL_SHEET_NAME);
-        this.online = online;
         globals.set(getManagerModule(), MANAGER, this);
         this.root = new SettingsMap<Object>(globals, Object.class);
     }
 
-
-    @Override
-    public boolean isOnline() {
-        return online;
-    }
 
     @Override
     public Map<String,Object> getRoot() {

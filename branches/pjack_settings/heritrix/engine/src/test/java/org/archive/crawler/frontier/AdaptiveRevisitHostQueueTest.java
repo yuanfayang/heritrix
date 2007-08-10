@@ -30,12 +30,10 @@ import org.archive.net.UURIFactory;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
-import org.archive.util.FileUtils;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
+
 
 /**
  * A JUnit test for {@link AdaptiveRevisitHostQueue AdaptiveRevisitHostQueue}

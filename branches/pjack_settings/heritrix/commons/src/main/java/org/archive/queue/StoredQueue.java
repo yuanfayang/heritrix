@@ -29,13 +29,14 @@ import java.util.AbstractQueue;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.archive.settings.file.BdbModule;
+
 import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 
 /**
@@ -46,6 +47,9 @@ import com.sleepycat.je.DatabaseException;
  * @param <E>
  */
 public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  implements Serializable {
+
+    private static final long serialVersionUID = 3L;
+
     transient StoredSortedMap queueMap; // Long -> E
     transient Database queueDb; // Database
     AtomicLong tailIndex; // next spot for insert
@@ -134,11 +138,10 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  imple
      * 
      * @return DatabaseConfig suitable for queue
      */
-    public static DatabaseConfig databaseConfig() {
-        DatabaseConfig dbConfig = new DatabaseConfig();
+    public static BdbModule.BdbConfig databaseConfig() {
+        BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
         dbConfig.setTransactional(false);
         dbConfig.setAllowCreate(true);
-        dbConfig.setDeferredWrite(true);
         return dbConfig;
     }
     

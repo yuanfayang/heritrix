@@ -72,7 +72,6 @@ import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 
 
@@ -198,13 +197,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private File mainConfig;
     
     /** Sheets that are currently in memory. */
-    final private Map<String, Sheet> sheets;
+    private Map<String, Sheet> sheets;
 
     /** The database of associations. Maps string context to sheet names. */
-    final private Database surtToSheetsDB;
+    private transient Database surtToSheetsDB;
     
     /** The database of associations. Maps string context to sheet names. */
-    final private StoredSortedMap surtToSheets;
+    private transient StoredSortedMap surtToSheets;
 
   
     
@@ -217,9 +216,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      */
     final private Map<String,List<PathChangeException>> problems = 
         new HashMap<String,List<PathChangeException>>();
-    
-    private boolean online;
-
 
     final private BdbModule bdb;
     
@@ -254,10 +250,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     public FileSheetManager(File main, boolean online, 
             Collection<ModuleListener> listeners) 
     throws IOException, DatabaseException {
-        super(listeners);
+        super(listeners, online);
         this.mainConfig = main;
-        
-        this.online = online;
+
         Properties p = load(main);
         
         String path = getBdbProperty(p, BdbModule.DIR);
@@ -303,10 +298,16 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         validateDir(sheetsDir);
         sheets = new HashMap<String, Sheet>();
 
-        DatabaseConfig config = new DatabaseConfig();
+        initBdb();
+        
+        reload();
+    }
+
+    
+    private void initBdb() throws DatabaseException {
+        BdbModule.BdbConfig config = new BdbModule.BdbConfig();
         config.setAllowCreate(true);
         config.setSortedDuplicates(true);
-        config.setDeferredWrite(true);
         surtToSheetsDB = bdb.openDatabase("surtToSheets", config, true);
         EntryBinding stringBinding 
             = TupleBinding.getPrimitiveBinding(String.class);
@@ -314,9 +315,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         this.surtToSheets = new StoredSortedMap(
                 surtToSheetsDB, stringBinding, stringBinding, true); 
         
-        reload();
     }
-
+    
     
     private String getBdbProperty(Properties p, Key key) {
         String propName = BDB_PREFIX + key.getFieldName();
@@ -795,14 +795,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         return null;
     }
 
-    @Override
-    public boolean isOnline() {
-        return online;
-    }
 
-
-
-    
     private void setManagerDefaults(SingleSheet ss) {
         if (isOnline()) {
             ss.set(this, MANAGER, this);
@@ -865,6 +858,11 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             bdbDir = 
                 new File(cr.translatePath(bdbDir)).getAbsolutePath();
         }
+        surtToSheetsDB = bdb.getDatabase("surtToSheets");
+        EntryBinding stringBinding 
+            = TupleBinding.getPrimitiveBinding(String.class);            
+        this.surtToSheets = new StoredSortedMap(
+                surtToSheetsDB, stringBinding, stringBinding, true); 
     }
 
 
@@ -886,6 +884,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             mainConfig = recovery.translatePath(mainConfig);
             sheets = recovery.translatePath(sheets);
             File srcCfg = new File(checkpointDir, "config.txt");
+            new File(mainConfig).getParentFile().mkdirs();
             FileUtils.copyFile(srcCfg, new File(mainConfig));
             
             File srcSheets = new File(checkpointDir, "sheets");

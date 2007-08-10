@@ -44,12 +44,10 @@ import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
-import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
 
 /**
@@ -202,7 +200,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             nextReadyTime = Long.MAX_VALUE; //Empty and busy HQ get this value.
             
             // Set up the primary URI database, it is indexed by URI names 
-            DatabaseConfig dbConfig = new DatabaseConfig();
+            BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
             dbConfig.setTransactional(false); 
             dbConfig.setAllowCreate(true);
             primaryUriDB = env.openDatabase(hostName, dbConfig, true);
@@ -210,7 +208,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             this.classCatalog = catalog;
             
             // Set up a DB for storing URIs being processed
-            DatabaseConfig dbConfig2 = new DatabaseConfig();
+            BdbModule.BdbConfig dbConfig2 = new BdbModule.BdbConfig();
             dbConfig2.setTransactional(false); 
             dbConfig2.setAllowCreate(true);
             processingUriDB = env.openDatabase( 
@@ -223,7 +221,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
     
             // Open a secondary database to allow accessing the primary
             // database by the secondary key value.
-            SecondaryConfig secConfig = new SecondaryConfig();
+            BdbModule.SecondaryBdbConfig secConfig = new BdbModule.SecondaryBdbConfig();
             secConfig.setAllowCreate(true);
             secConfig.setSortedDuplicates(true);
             secConfig.setKeyCreator(

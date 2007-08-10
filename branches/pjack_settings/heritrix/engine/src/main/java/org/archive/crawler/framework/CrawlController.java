@@ -283,6 +283,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         this.scratchDir = provider.get(this, SCRATCH_DIR);
         this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
+        this.checkpointer = new Checkpointer(this, this.checkpointsDir.getFile());
         sendCrawlStateChangeEvent(State.PREPARED, CrawlStatus.PREPARED);
 
         this.singleThreadLock = new ReentrantLock();

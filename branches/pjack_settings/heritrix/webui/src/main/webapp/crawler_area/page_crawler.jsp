@@ -131,6 +131,13 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
             <a class="rowLink" href="javascript:alert('not yet implemented')">Reports</a>
             <a class="rowLink" title="View logs for this job."
                href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
+               
+            <a 
+               class="rowLink" 
+               title="Recover from checkpoint or recover.gz file."
+               href="<%=request.getContextPath()%>/crawler_area/do_show_recover.jsp?<%=jqs%>">
+               Recover</a>
+            
         </div>
         </div>
     <% } %>

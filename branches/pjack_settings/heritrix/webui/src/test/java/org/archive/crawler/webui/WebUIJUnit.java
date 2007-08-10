@@ -345,8 +345,7 @@ public class WebUIJUnit extends TmpDirTestCase {
             input = conn.getInputStream();
             lastUrl = url;
             lastFetched = IoUtils.readFullyAsString(conn.getInputStream());
-            System.out.println(lastFetched);
-            System.out.println("Above is for: " + urlString);
+            System.out.println("Fetched: " + urlString);
         } finally {
             IoUtils.close(input);
         }
@@ -385,7 +384,6 @@ public class WebUIJUnit extends TmpDirTestCase {
             input = conn.getInputStream();
             lastUrl = url;
             lastFetched = IoUtils.readFullyAsString(conn.getInputStream());
-            System.out.println(lastFetched);
         } finally {
             IoUtils.close(input);
         }
