@@ -225,7 +225,7 @@ implements Serializable, Checkpointable {
 
     
     @Override
-    protected void initAllQueues2(boolean recycle) throws DatabaseException {
+    protected void initAllQueues() throws DatabaseException {
         this.allQueues = bdb.getBigMap("allqueues",
                 String.class, WorkQueue.class);
         if (logger.isLoggable(Level.FINE)) {
@@ -245,15 +245,10 @@ implements Serializable, Checkpointable {
 
         Database retiredQueuesDb;
         Database inactiveQueuesDb;
-        if (recycle) {
-            retiredQueuesDb = bdb.getDatabase("retiredQueues");
-            inactiveQueuesDb = bdb.getDatabase("inactiveQueues");
-        } else {
-            inactiveQueuesDb = bdb.openDatabase("inactiveQueues",
-                    StoredQueue.databaseConfig(), false);
-            retiredQueuesDb = bdb.openDatabase("retiredQueues", 
-                    StoredQueue.databaseConfig(), false);
-        }
+        inactiveQueuesDb = bdb.openDatabase("inactiveQueues",
+                StoredQueue.databaseConfig(), false);
+        retiredQueuesDb = bdb.openDatabase("retiredQueues", 
+                StoredQueue.databaseConfig(), false);
 
         inactiveQueues = new StoredQueue<String>(inactiveQueuesDb,
                 String.class, null);
@@ -271,13 +266,24 @@ implements Serializable, Checkpointable {
     private void readObject(ObjectInputStream in) 
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
+        Database retiredQueuesDb;
+        Database inactiveQueuesDb;
+        retiredQueuesDb = bdb.getDatabase("retiredQueues");
+        inactiveQueuesDb = bdb.getDatabase("inactiveQueues");
+        inactiveQueues = new StoredQueue<String>(inactiveQueuesDb,
+                String.class, null);
+        retiredQueues = new StoredQueue<String>(retiredQueuesDb,
+                String.class, null);
+        
         try {
-            initAllQueues(true);
+            this.pendingUris = new BdbMultipleWorkQueues(bdb.getDatabase("pending"), 
+                    bdb.getClassCatalog());
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);
             throw io;
         }
+
     }
     
     // good to keep at end of source: must run after all per-Key 

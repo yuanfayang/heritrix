@@ -57,13 +57,11 @@ import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
-import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
 import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
-import org.archive.settings.path.PathValidator;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
@@ -345,31 +343,38 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw io;
         }
 
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, name, DOMAIN, fsm);
+        
+        final ObjectName smName = createJMXSheetManager(name, fsm);
+        final ObjectName ccName = findCrawlController(name);
+        addFinishedCallback(job, ccName, smName, jmxListener);
+    }
+
+    
+    private ObjectName createJMXSheetManager(String name, SheetManager fsm) {
+        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, 
+                name, DOMAIN, fsm);
         final ObjectName smName = jmx.getObjectName();
         try {
             server.registerMBean(jmx, smName);
         } catch (Exception e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
+            throw new IllegalStateException(e);
         }
-        
-        // Find the crawlcontroller.
-        // FIXME: Do a JMX query here instead (that way we don't have to 
-        // worry about something being at a particular path)
-        Sheet sheet = fsm.getGlobalSheet();
-        Object o = PathValidator.validate(sheet, "root:controller");
-        if (!(o instanceof CrawlController)) {
-            LOGGER.warning("Could not find CrawlController in job named " 
-                    + name + " at expected path (root.controller).");
-            return;
-        }
-        
-        CrawlController cc = (CrawlController)o;
-        
-        final ObjectName ccName = jmxListener.nameOf(cc);
-
+        return smName;
+    }
+    
+    
+    private ObjectName findCrawlController(String name) {
+        String query = DOMAIN + ":*,type=" + JobController.class.getName() 
+            + ",name=" + name;
+        return JmxUtils.findUnique(server, query);
+    }
+    
+    
+    private void addFinishedCallback(
+            final String job, 
+            final ObjectName ccName, 
+            final ObjectName smName, 
+            final JMXModuleListener jmxListener) {
         try {
             server.addNotificationListener(
                 ccName, 
@@ -389,9 +394,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                 }, null);
         } catch (InstanceNotFoundException e) {
             throw new IllegalStateException(e);
-        }        
+        }
     }
-
     
     
     
@@ -465,7 +469,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
                     "Must specify active-name for recovered job.");
         }
 
-        verifyUnique(JobStage.getJobName(newJob));
+        String newName = JobStage.getJobName(newJob);
+        verifyUnique(JobStage.getJobName(newName));
 
         File dest = new File(getJobsDir(), newJob);
         dest.mkdir();
@@ -502,6 +507,11 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
         JMXModuleListener jml = JMXModuleListener.get(mgr);
         jml.setServer(server, JobStage.getJobName(newJob));
+
+        ObjectName smName = createJMXSheetManager(newName, mgr);
+        ObjectName ccName = findCrawlController(newName);
+        addFinishedCallback(newJob, ccName, smName, jml);
+        
     }
 
     public synchronized void close() {

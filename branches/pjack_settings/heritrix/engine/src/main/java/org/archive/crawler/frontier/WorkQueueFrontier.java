@@ -148,7 +148,7 @@ implements Closeable, HasUriReceiver, Serializable {
 
     /** All known queues.
      */
-    protected transient Map<String,WorkQueue> allQueues = null; 
+    protected Map<String,WorkQueue> allQueues = null; 
     // of classKey -> ClassKeyQueue
 
     /**
@@ -239,7 +239,7 @@ implements Closeable, HasUriReceiver, Serializable {
     /**
      * Initializes all queues.  May decide to keep all queues in memory based on
      * {@link QueueAssignmentPolicy#maximumNumberOfKeys}.  Otherwise invokes
-     * {@link #initAllQueues2} to actually set up the queues.
+     * {@link #initAllQueues()} to actually set up the queues.
      * 
      * Subclasses should invoke this method with recycle set to "true" in 
      * a private readObject method, to restore queues after a checkpoint.
@@ -257,14 +257,14 @@ implements Closeable, HasUriReceiver, Serializable {
             this.allQueues = Collections.synchronizedMap(
                     new HashMap<String,WorkQueue>());
         } else {
-            this.initAllQueues2(recycle);
+            this.initAllQueues();
         }
         initQueue(recycle);
         
     }
 
     
-    protected abstract void initAllQueues2(boolean recycle) throws DatabaseException;
+    protected abstract void initAllQueues() throws DatabaseException;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
