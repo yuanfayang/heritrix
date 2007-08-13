@@ -158,6 +158,15 @@ public interface CrawlJobManager extends Closeable {
 
     @Operation(desc="Returns some helpful information.")
     String help();
-                
+
+
+    @Operation(desc="Returns a filesystem path based on a settings path to a FileModule.")
+    String getFilePath(
+            
+            @Parameter(name="job", desc="The stage=name of the job whose settings to examine.")
+            String job, 
+            
+            @Parameter(name="settingsPath", desc="The settings path to the FileModule.")
+            String settingsPath);
 
 }

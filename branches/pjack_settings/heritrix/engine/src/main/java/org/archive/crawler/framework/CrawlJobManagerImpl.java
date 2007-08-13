@@ -97,6 +97,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     final private static String CHECKPOINT_DIR_PATH = 
         CONTROLLER_PATH + ":" + CrawlController.CHECKPOINTS_DIR.getFieldName();
     
+    final public static String LOGS_DIR_PATH =
+        CONTROLLER_PATH + ":logger-module:dir";
 
     final private static Logger LOGGER = 
         Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
@@ -214,7 +216,12 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         
         String destName = JobStage.getJobName(copiedName);
         verifyUnique(destName);
-        
+
+        copy(src, dest);
+    }
+    
+    
+    private void copy(File src, File dest) throws IOException {       
         dest.mkdirs();
         
         // FIXME: Add option for only copying history DB
@@ -296,9 +303,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw new IllegalArgumentException("No such job: " + job);
         }
 
+        String logsPath = this.getFilePath(job, LOGS_DIR_PATH);
         LogRemoteAccessImpl lra = new LogRemoteAccessImpl(
-                job, DOMAIN,
-                src.getAbsolutePath() + File.separator + "logs"); // FIXME: Stop assuming location of logs
+                job, DOMAIN, logsPath);
         register(lra, lra.getObjectName());
         logRemoteAccess.put(job, lra);
         return lra.getObjectName();
@@ -423,7 +430,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
     
     public synchronized String[] listCheckpoints(String job) {
-        String path = getStubFilePath(job, "root:controller:checkpoints-dir");
+        String path = getFilePath(job, "root:controller:checkpoints-dir");
         File checkpointsDir = new File(path);
         File[] files = checkpointsDir.listFiles();
         if (files == null) {
@@ -463,7 +470,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         File dest = new File(getJobsDir(), newJob);
         dest.mkdir();
         
-        String cpPath = getStubFilePath(oldJob, CHECKPOINT_DIR_PATH);
+        String cpPath = getFilePath(oldJob, CHECKPOINT_DIR_PATH);
         File checkpointDir = new File(new File(cpPath), checkpointName);
         if (!checkpointDir.isDirectory()) {
             throw new IllegalArgumentException("Not a dir: " + cpPath);
@@ -632,12 +639,21 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     
-    public String getStubFilePath(String job, String settingPath) {
+    public synchronized String getFilePath(String job, String settingPath) {
+        String jobName = JobStage.getJobName(job);
+        JobStage stage = JobStage.getJobStage(job);
+
         ObjectName oname;
-        try {
-            oname = getSheetManagerStub(job);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
+        if (stage == JobStage.ACTIVE) {
+            String query = DOMAIN + ":*,type=" + JMXSheetManager.class.getName() 
+                + ",name=" + jobName;
+            oname = JmxUtils.findUnique(server, query);
+        } else {
+            try {
+                oname = getSheetManagerStub(job);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
         }
         
         try {
@@ -647,5 +663,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw new IllegalStateException(e);
         }
     }
+    
+
 
 }

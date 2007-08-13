@@ -33,6 +33,8 @@ import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.net.UURI;
+import org.archive.openmbeans.annotations.Operation;
+import org.archive.openmbeans.annotations.Parameter;
 import org.archive.state.Module;
 import org.archive.util.Reporter;
 
@@ -293,7 +295,14 @@ public interface Frontier extends Module, Reporter {
      * the corresponding URIs will be retried in the recovered crawl.)
      * @throws IOException If problems occur reading the recover log.
      */
-    public void importRecoverLog(String pathToLog, boolean retainFailures)
+    @Operation(desc="Recover earlier state by reading a recovery log.")
+    public void importRecoverLog(
+            @Parameter(name="pathToLog", desc="The full path of the recover log.")
+            String pathToLog, 
+            
+            @Parameter(name="retainFailures", desc="Whether failures in the log" +
+                        "should count as having been included.")
+            boolean retainFailures)
 			throws IOException;
 
     /**

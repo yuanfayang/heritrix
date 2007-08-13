@@ -13,7 +13,7 @@ StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
 CompositeData memory = (CompositeData)Text.get(request, "memory"); 
 CrawlJob job = (CrawlJob)Text.get(request, "job"); 
 
-String qs = crawler.getQueryString() + "&job=" + job.getName();
+String qs = Text.jobQueryString(request);
 
 
 %>
@@ -126,6 +126,12 @@ if (status.equals(CrawlController.State.PREPARED.toString())) {
     <a 
     title="Terminates the crawl."
     href="<%=request.getContextPath()%>/console/do_stop.jsp?<%=qs%>">Terminate</a>
+|
+    <a
+    title="Import a frontier recovery log into this crawl."
+    href="<%=request.getContextPath()%>/console/do_show_import.jsp?<%=qs%>">
+    Import Frontier Log
+    </a>
 
 </legend>
 

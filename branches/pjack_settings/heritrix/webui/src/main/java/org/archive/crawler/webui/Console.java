@@ -26,6 +26,11 @@
 
 package org.archive.crawler.webui;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.servlet.ServletContext;
@@ -33,6 +38,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.CrawlJobManagerImpl;
+import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.JobStage;
 import org.archive.crawler.framework.StatisticsTracking;
@@ -159,4 +166,58 @@ public class Console {
             HttpServletResponse response) {
         consoleAction(sc, request, response, Action.CHECKPOINT);
     }
+
+
+    public static void showImport(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        CrawlJobManager cjm = remote.getObject();
+        JMXConnector jmxc = remote.getJMXConnector();
+        try {
+            CrawlJob.fromRequest(request, jmxc);
+            String[] all = cjm.listJobs();
+            List<CrawlJob> completed = new ArrayList<CrawlJob>();
+            for (String s: all) {
+                JobStage stage = JobStage.getJobStage(s);
+                if (stage == JobStage.COMPLETED) {
+                    CrawlJob j = CrawlJob.determineCrawlStatus(jmxc, 
+                            JobStage.getJobName(s), stage);
+                    completed.add(j);
+                }
+            }
+            request.setAttribute("completed", completed);
+            Misc.forward(request, response, "page_import.jsp");
+        } finally {
+            remote.close();
+        }
+    }
+
+    
+    public static void importLog(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        CrawlJobManager cjm = remote.getObject();
+        JMXConnector jmxc = remote.getJMXConnector();
+        try {
+            String path = request.getParameter("path");
+            if (path == null || path.trim().length() == 0) {
+                String recoverJob = request.getParameter("recoverJob");
+                path = cjm.getFilePath(recoverJob, CrawlJobManagerImpl.LOGS_DIR_PATH);
+                path = path + File.separator + "recover.gz";
+            }
+            boolean retainFailures = Boolean.parseBoolean(request.getParameter("retainFailures"));
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            Frontier frontier = Misc.find(jmxc, job.getName(), Frontier.class);
+            // TODO: Examine whether to do this in a background thread.
+            frontier.importRecoverLog(path, retainFailures);
+            showJobConsole(sc, request, response);
+        } finally {
+            remote.close();
+        }
+    }
+
 }
