@@ -63,6 +63,7 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
+import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.SheetManager;
 import org.archive.state.FileModule;
@@ -79,7 +80,7 @@ import org.archive.util.ArchiveUtils;
  * 
  * @author gojomo
  */
-public abstract class AbstractFrontier 
+public abstract class AbstractFrontier extends Bean
 implements CrawlStatusListener, Frontier, Serializable, Initializable {
     private static final long serialVersionUID = 555881755284996860L;
 
@@ -278,6 +279,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * @param description Description for this frontier.
      */
     public AbstractFrontier() {
+        super(Frontier.class);
     }
 
     

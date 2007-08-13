@@ -314,6 +314,7 @@ implements Closeable, HasUriReceiver, Serializable {
     public void schedule(CrawlURI caUri) {
         // Canonicalization may set forceFetch flag.  See
         // #canonicalization(CrawlURI) javadoc for circumstance.
+        caUri.setStateProvider(manager);
         String canon = canonicalize(caUri);
         if (caUri.forceFetch()) {
             alreadyIncluded.addForce(canon, caUri);
@@ -1200,6 +1201,7 @@ implements Closeable, HasUriReceiver, Serializable {
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(canonicalize(u));
         CrawlURI temp = new CrawlURI(u);
+        temp.setStateProvider(manager);
         temp.setClassKey(getClassKey(temp));
         getQueueFor(temp).expend(getCost(temp));
     }
