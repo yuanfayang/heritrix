@@ -204,16 +204,13 @@ implements CrawlURIDispositionListener, Serializable {
      * Each of these Maps are individually unsynchronized, and cannot 
      * be trivially synchronized with the Collections wrapper. Thus
      * their synchronized access is enforced by this class.
-     * 
-     * <p>They're transient because usually bigmaps that get reconstituted
-     * on recover from checkpoint.
      */
-    protected transient Map<String,LongWrapper> hostsDistribution = null;
-    protected transient Map<String,LongWrapper> hostsBytes = null;
-    protected transient Map<String,Long> hostsLastFinished = null;
+    protected Map<String,LongWrapper> hostsDistribution = null;
+    protected Map<String,LongWrapper> hostsBytes = null;
+    protected Map<String,Long> hostsLastFinished = null;
 
     /** Keep track of URL counts per host per seed */
-    protected transient 
+    protected  
     Map<String,HashMap<String,LongWrapper>> sourceHostDistribution = null;
 
     /* Keep track of 'top' hosts for live reports */
@@ -224,7 +221,7 @@ implements CrawlURIDispositionListener, Serializable {
     /**
      * Record of seeds' latest actions.
      */
-    protected transient Map<String,SeedRecord> processedSeedsRecords;
+    protected Map<String,SeedRecord> processedSeedsRecords;
 
     // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
     private int seedsCrawled;

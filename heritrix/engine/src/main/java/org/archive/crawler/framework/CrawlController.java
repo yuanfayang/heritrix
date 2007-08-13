@@ -180,8 +180,8 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
 
     private transient ToePool toePool;
     
-    private transient ServerCache serverCache;
-    
+    private ServerCache serverCache;
+    private Frontier frontier;
 
     /**
      * Sheet manager for context (SURT) based settings.  Passed to the
@@ -284,6 +284,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         this.scratchDir = provider.get(this, SCRATCH_DIR);
         this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
         this.checkpointer = new Checkpointer(this, this.checkpointsDir.getFile());
+        this.frontier = provider.get(this, FRONTIER);
         sendCrawlStateChangeEvent(State.PREPARED, CrawlStatus.PREPARED);
 
         this.singleThreadLock = new ReentrantLock();
@@ -1051,7 +1052,8 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
     public void setupToePool() {
         toePool = new ToePool(this);
         // TODO: make # of toes self-optimizing
-        toePool.setSize(get(order, CrawlOrder.MAX_TOE_THREADS));
+        int max = getOrderSetting(CrawlOrder.MAX_TOE_THREADS);
+        toePool.setSize(max);
         toePool.waitForAll();
     }
 
@@ -1076,8 +1078,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
      * @return The frontier.
      */
     public Frontier getFrontier() {
-        return get(this, FRONTIER);
-//        return frontier;
+        return frontier;
     }
 
     /**
@@ -1120,7 +1121,9 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
      * settings. This includes, number of toe threads and seeds.
      */
     public void kickUpdate() {
-        toePool.setSize(get(this, CrawlOrder.MAX_TOE_THREADS));
+        int max = getOrderSetting(CrawlOrder.MAX_TOE_THREADS);
+
+        toePool.setSize(max);
         
         // getScope().kickUpdate(this);
         getFrontier().kickUpdate();
