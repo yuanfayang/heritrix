@@ -99,9 +99,6 @@ public class EmptyFrontier implements Frontier, Serializable {
         return false;
     }
 
-    public void kickUpdate() {
-    }
-
     public void loadSeeds() {
     }
 

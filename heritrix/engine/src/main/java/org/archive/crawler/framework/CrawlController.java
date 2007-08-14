@@ -1125,15 +1125,6 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
 
         toePool.setSize(max);
         
-        // getScope().kickUpdate(this);
-        getFrontier().kickUpdate();
-        for (Processor p: get(this, PROCESSORS).values()) {
-            p.kickUpdate(this);
-        }
-        
-        // TODO: continue to generalize this, so that any major 
-        // component can get a kick when it may need to refresh its data
-
         setThresholds();
     }
 

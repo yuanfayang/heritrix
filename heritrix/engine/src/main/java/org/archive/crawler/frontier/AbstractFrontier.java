@@ -56,6 +56,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.scope.SeedModule;
+import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.modules.net.CrawlHost;
@@ -65,6 +66,7 @@ import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.FileModule;
 import org.archive.state.Expert;
@@ -81,7 +83,7 @@ import org.archive.util.ArchiveUtils;
  * @author gojomo
  */
 public abstract class AbstractFrontier extends Bean
-implements CrawlStatusListener, Frontier, Serializable, Initializable {
+implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefreshListener {
     private static final long serialVersionUID = 555881755284996860L;
 
     private static final Logger logger = Logger
@@ -221,8 +223,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * Can be null if user chose not to run a recovery.log.
      */
     private transient FrontierJournal recover = null;
-
-    protected StateProvider global;
     
     protected SheetManager manager;
     
@@ -285,12 +285,15 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
 
     
     public void initialTasks(StateProvider provider) {
-        this.global = provider;
         this.scratchDir = provider.get(this, SCRATCH_DIR);
         this.recoveryDir = provider.get(this, RECOVERY_DIR);
         this.controller = provider.get(this, CONTROLLER);
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         this.manager = provider.get(this, MANAGER);
+        
+        SeedModule seeds = provider.get(this, SEEDS);
+        seeds.addSeedRefreshListener(this);
+        
         if (provider.get(this, RECOVERY_LOG_ENABLED)) try {
             initJournal(loggerModule.getLogsDir().getAbsolutePath());
         } catch (IOException e) {
@@ -309,7 +312,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
     
     
     public <T> T get(Key<T> key) {
-        return global.get(this, key);
+        return manager.getGlobalSheet().get(this, key);
     }
 
     public void start() {
@@ -478,14 +481,13 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * 
      * This method is called on initialize and inside in the crawlcontroller
      * when it wants to force reloading of configuration.
-     * 
-     * @see org.archive.crawler.framework.CrawlController#kickUpdate()
      */
     public void loadSeeds() {
-        Writer ignoredWriter = new StringWriter();
         logger.info("beginning");
         // Get the seeds to refresh.
-        Iterator iter = global.get(this, SEEDS).seedsIterator(ignoredWriter);
+        Writer ignoredWriter = new StringWriter();
+        Iterator iter = manager.getGlobalSheet().get(this, SEEDS)
+            .seedsIterator(ignoredWriter);
         int count = 0; 
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
@@ -504,8 +506,14 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         }
         // save ignored items (if any) where they can be consulted later
         saveIgnoredItems(ignoredWriter.toString(), recoveryDir.getFile());
-        logger.info("finished");
+        logger.info("finished");        
     }
+
+    
+    public void seedsRefreshed() {
+        loadSeeds();
+    }
+    
 
     /**
      * Dump ignored seed items (if any) to disk; delete file otherwise.
@@ -597,7 +605,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
             // This is a feature. This is handling for case where a seed
             // gets immediately redirected to another page. What we're doing is
             // treating the immediate redirect target as a seed.
-            global.get(this, SEEDS).addSeed(curi);
+            manager.getGlobalSheet().get(this, SEEDS).addSeed(curi);
             // And it needs rapid scheduling.
 	    if (curi.getSchedulingDirective() == SchedulingConstants.NORMAL)
                 curi.setSchedulingDirective(SchedulingConstants.MEDIUM);
@@ -816,15 +824,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
         RecoveryJournal.importRecoverLog(source, this, retainFailures);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.framework.URIFrontier#kickUpdate()
-     */
-    public void kickUpdate() {
-        // by default, do nothing
-        // (scope will loadSeeds, if appropriate)
-    }
 
     /**
      * Log to the main crawl.log
@@ -903,6 +902,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable {
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
+        Sheet global = manager.getGlobalSheet();
         List<CanonicalizationRule> rules = global.get(this, RULES);
         return Canonicalizer.canonicalize(global, uuri.toString(), rules);
     }

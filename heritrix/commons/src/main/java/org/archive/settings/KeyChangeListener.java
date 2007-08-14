@@ -17,24 +17,21 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * SeedRefreshListener.java
+ * KeyChangeListener.java
  *
- * Created on Mar 20, 2007
+ * Created on Aug 14, 2007
  *
  * $Id:$
  */
 
-package org.archive.crawler.scope;
-
+package org.archive.settings;
 
 /**
  * @author pjack
  *
  */
-public interface SeedRefreshListener {
+public interface KeyChangeListener {
 
-    
-    void seedsRefreshed();
-    
-    
+    void keyChanged(KeyChangeEvent event);
+
 }

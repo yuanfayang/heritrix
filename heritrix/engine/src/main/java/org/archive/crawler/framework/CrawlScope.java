@@ -139,7 +139,7 @@ public abstract class CrawlScope extends DecideRule implements Initializable {
     
     protected void fireSeedsRefreshed() {
         for (SeedRefreshListener l: seedRefreshListeners) {
-            l.seedsRefreshed(seedsIterator(null));
+            l.seedsRefreshed();
         }
     }
 

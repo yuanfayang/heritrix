@@ -220,8 +220,6 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
 
     /**
      * Loads the seeds
-     * <p>
-     * This method is called by initialize() and kickUpdate()
      */
     public void loadSeeds() {
         Writer ignoredWriter = new StringWriter();
@@ -1011,9 +1009,6 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
 
     }
 
-    public void kickUpdate() {
-        loadSeeds();
-    }
     
     public void start() {
         unpause(); 

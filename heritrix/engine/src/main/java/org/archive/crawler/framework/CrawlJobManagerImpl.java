@@ -325,6 +325,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         if (!j.startsWith(READY.getPrefix())) {
             throw new IllegalArgumentException("Can't launch " + j);
         }
+        
+        closeSheetManagerStub(j);
 
         final String job = changeState(j, ACTIVE);
         File dest = new File(getJobsDir(), job);

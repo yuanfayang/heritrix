@@ -36,6 +36,8 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
+import org.archive.settings.KeyChangeEvent;
+import org.archive.settings.KeyChangeListener;
 import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
@@ -61,7 +63,8 @@ import bsh.Interpreter;
  * 
  * @author gojomo
  */
-public class BeanShellDecideRule extends DecideRule implements Initializable {
+public class BeanShellDecideRule extends DecideRule 
+implements Initializable, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -182,15 +185,18 @@ public class BeanShellDecideRule extends DecideRule implements Initializable {
      * Setup (or reset) Intepreter variables, as appropraite based on 
      * thread-isolation setting. 
      */
-    public void kickUpdate(StateProvider context) {
+    public void keyChanged(KeyChangeEvent event) {
         // TODO make it so running state (tallies, etc.) isn't lost on changes
         // unless unavoidable
-        if (context.get(this, ISOLATE_THREADS)) {
-            sharedInterpreter = null; 
-            threadInterpreter = new ThreadLocal<Interpreter>(); 
-        } else {
-            sharedInterpreter = newInterpreter(context); 
-            threadInterpreter = null;
+        if (event.getKey() == ISOLATE_THREADS) {
+            boolean isolate = (Boolean)event.getNewValue();
+            if (isolate) {
+                sharedInterpreter = null; 
+                threadInterpreter = new ThreadLocal<Interpreter>(); 
+            } else {
+                sharedInterpreter = newInterpreter(event.getStateProvider()); 
+                threadInterpreter = null;
+            }
         }
     }
 }

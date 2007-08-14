@@ -666,7 +666,7 @@ public class Sheets {
             ObjectName name;
             if (job.getJobStage() == JobStage.ACTIVE) {
                 String query = "org.archive.crawler:*,type=" 
-                    + JMXSheetManager.class.getName();
+                    + JMXSheetManager.class.getName() + ",name=" + job.getName();
                 name = Misc.findUnique(jmxc, query);
             } else {
                 name = manager.getObject().getSheetManagerStub(job.encode());

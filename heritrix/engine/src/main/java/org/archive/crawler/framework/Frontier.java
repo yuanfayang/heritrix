@@ -405,12 +405,6 @@ public interface Frontier extends Module, Reporter {
     public void considerIncluded(UURI u);
 
     /**
-     * Notify Frontier that it should consider updating configuration
-     * info that may have changed in external files.
-     */
-    public void kickUpdate();
-
-    /**
      * Notify Frontier that it should not release any URIs, instead
      * holding all threads, until instructed otherwise. 
      */

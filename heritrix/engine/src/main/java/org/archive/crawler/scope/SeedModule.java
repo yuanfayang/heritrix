@@ -42,6 +42,8 @@ import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
+import org.archive.settings.KeyChangeEvent;
+import org.archive.settings.KeyChangeListener;
 import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
@@ -58,7 +60,8 @@ import org.archive.util.DevUtils;
  * @author gojomo
  *
  */
-public class SeedModule implements Initializable, Serializable {
+public class SeedModule 
+implements Initializable, Serializable, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -121,7 +124,7 @@ public class SeedModule implements Initializable, Serializable {
     
     protected void fireSeedsRefreshed() {
         for (SeedRefreshListener l: seedRefreshListeners) {
-            l.seedsRefreshed(seedsIterator(null));
+            l.seedsRefreshed();
         }
     }
 
@@ -181,7 +184,8 @@ public class SeedModule implements Initializable, Serializable {
      * involved reconfiguration (such as reading from external
      * files) may be necessary.
      */
-    public void kickUpdate(StateProvider context) {
+    public void keyChanged(KeyChangeEvent event) {
+        StateProvider context = event.getStateProvider();
         // TODO: further improve this so that case with hundreds of
         // thousands or millions of seeds works better without requiring
         // this specific settings check 
@@ -270,5 +274,9 @@ public class SeedModule implements Initializable, Serializable {
     
     public void addSeedListener(SeedListener sl) {
         seedListeners.add(sl);
+    }
+    
+    public void addSeedRefreshListener(SeedRefreshListener srl) {
+        seedRefreshListeners.add(srl);
     }
 }
