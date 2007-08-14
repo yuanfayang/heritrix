@@ -43,13 +43,14 @@ extends SWFActionsImpl {
     ProcessorURI curi;
     
     private long linkCount;
+    private UriErrorLoggerModule uriErrors;
     static final String JSSTRING = "javascript:";
 
     /**
      *
      * @param curi
      */
-    public CrawlUriSWFAction(ProcessorURI curi) {
+    public CrawlUriSWFAction(UriErrorLoggerModule uriErrors, ProcessorURI curi) {
         assert (curi != null) : "CrawlURI should not be null";
         this.curi = curi;
         this.linkCount = 0;
@@ -68,7 +69,8 @@ extends SWFActionsImpl {
         // to use 'target.' Most of the time 'target' is not set, or it is set
         // to '_self' or '_blank'.
         if (url.startsWith(JSSTRING)) {
-            linkCount =+ ExtractorJS.considerStrings(curi, url, false);
+            linkCount =+ ExtractorJS.considerStrings(uriErrors, curi, url, 
+                    false);
         } else {
             Link.addRelativeToVia(curi, url, LinkContext.EMBED_MISC, Hop.EMBED);
             linkCount++;

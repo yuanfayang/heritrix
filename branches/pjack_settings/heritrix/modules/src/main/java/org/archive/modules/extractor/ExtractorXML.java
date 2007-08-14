@@ -104,7 +104,7 @@ public class ExtractorXML extends ContentExtractor {
             return false;
         }
         try {
-            this.linksExtracted.addAndGet(processXml(curi, cs));
+            this.linksExtracted.addAndGet(processXml(uriErrors, curi, cs));
 
             // Set flag to indicate that link extraction is completed.
             return true;
@@ -120,7 +120,8 @@ public class ExtractorXML extends ContentExtractor {
         }
     }
 
-    public static long processXml(ProcessorURI curi, CharSequence cs) {
+    public static long processXml(UriErrorLoggerModule uriErrors, 
+            ProcessorURI curi, CharSequence cs) {
         long foundLinks = 0;
         Matcher uris = null;
         String xmlUri;
@@ -139,7 +140,7 @@ public class ExtractorXML extends ContentExtractor {
             } catch (URIException e) {
                 // There may not be a controller (e.g. If we're being run
                 // by the extractor tool).
-                logUriError(e, curi, xmlUri);
+                uriErrors.logUriError(e, curi.getUURI(), xmlUri);
             }
         }
         return foundLinks;

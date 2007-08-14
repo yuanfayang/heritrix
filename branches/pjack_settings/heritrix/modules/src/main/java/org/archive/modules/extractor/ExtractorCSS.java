@@ -122,7 +122,7 @@ public class ExtractorCSS extends ContentExtractor {
         // for sure close it before we leave.
         try {
             this.numberOfLinksExtracted +=
-                processStyleCode(curi, cs);
+                processStyleCode(uriErrors, curi, cs);
             // Set flag to indicate that link extraction is completed.
             return true;
         } finally {
@@ -137,7 +137,8 @@ public class ExtractorCSS extends ContentExtractor {
         }
     }
 
-    public static long processStyleCode(ProcessorURI curi, CharSequence cs) {
+    public static long processStyleCode(UriErrorLoggerModule uriErrors, 
+            ProcessorURI curi, CharSequence cs) {
         long foundLinks = 0;
         Matcher uris = null;
         String cssUri;
@@ -155,7 +156,7 @@ public class ExtractorCSS extends ContentExtractor {
                     Link.addRelativeToBase(curi, cssUri, 
                             LinkContext.EMBED_MISC, Hop.EMBED);
                 } catch (URIException e) {
-                    logUriError(e, curi, cssUri);
+                    uriErrors.logUriError(e, curi.getUURI(), cssUri);
                 }
             }
         } catch (StackOverflowError e) {

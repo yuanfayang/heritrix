@@ -246,8 +246,8 @@ public class JerichoExtractorHTML extends ExtractorHTML {
                  ((attrValue = attr.getValue()) != null)) {
             // STYLE inline attribute
             // then, parse for URIs
-            this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(curi,
-                    attrValue);
+            this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
+                    uriErrors, curi, attrValue);
         }
 
         // handle codebase/resources
@@ -330,8 +330,8 @@ public class JerichoExtractorHTML extends ExtractorHTML {
         processGeneralTag(curi, element, element.getAttributes());
 
         // then, parse for URIs
-        this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(curi,
-                element.getContent());
+        this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
+                uriErrors, curi, element.getContent());
     }
 
     protected void processForm(ProcessorURI curi, Element element) {

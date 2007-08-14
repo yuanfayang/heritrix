@@ -29,9 +29,12 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.Processor;
-import org.archive.modules.ProcessorLevel;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURIFactory;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -42,13 +45,24 @@ import org.archive.net.UURIFactory;
  * 
  * @author pjack
  */
-public abstract class Extractor extends Processor {
+public abstract class Extractor extends Processor implements Initializable {
 
 
     /** Logger. */
     private static final Logger logger = 
         Logger.getLogger(Extractor.class.getName());
 
+
+    @Immutable
+    final public static Key<UriErrorLoggerModule> URI_ERROR_LOGGER_MODULE = 
+        Key.make(UriErrorLoggerModule.class, null);
+
+    
+    protected UriErrorLoggerModule uriErrors;
+    
+    public void initialTasks(StateProvider global) {
+        this.uriErrors = global.get(this, URI_ERROR_LOGGER_MODULE);    
+    }
 
     /**
      * Processes the given URI.  This method just delegates to 
@@ -96,14 +110,13 @@ public abstract class Extractor extends Processor {
     protected abstract void extract(ProcessorURI uri);
 
     
-    protected static void logUriError(URIException e, ProcessorURI uri, 
+    protected void logUriError(URIException e, ProcessorURI uri, 
             CharSequence l) {
         if (e.getReasonCode() == UURIFactory.IGNORED_SCHEME) {
             // don't log those that are intentionally ignored
             return; 
         }
-        Object[] array = { uri.getUURI(), l };
-        logger.log(ProcessorLevel.URI, e.getMessage(), array);
+        uriErrors.logUriError(e, uri.getUURI(), l);
     }
 
 }
