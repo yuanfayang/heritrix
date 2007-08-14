@@ -79,6 +79,7 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
 
     
     public void initialTasks(StateProvider p) {
+        super.initialTasks(p);
         this.tempDirProvider = p.get(this, TEMP_DIR_PROVIDER);
     }
     

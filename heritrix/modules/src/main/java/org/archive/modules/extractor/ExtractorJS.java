@@ -132,7 +132,8 @@ public class ExtractorJS extends ContentExtractor {
 
         try {
             try {
-                numberOfLinksExtracted += considerStrings(curi, cs, true);
+                numberOfLinksExtracted += considerStrings(uriErrors, curi, cs, 
+                        true);
             } catch (StackOverflowError e) {
                 DevUtils.warnHandle(e, "ExtractorJS StackOverflowError");
             }
@@ -151,8 +152,8 @@ public class ExtractorJS extends ContentExtractor {
         }
     }
 
-    public static long considerStrings(ProcessorURI curi, CharSequence cs,
-            boolean handlingJSFile) {
+    public static long considerStrings(UriErrorLoggerModule uriErrors, 
+            ProcessorURI curi, CharSequence cs, boolean handlingJSFile) {
         long foundLinks = 0;
         Matcher strings =
             TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, cs);
@@ -172,10 +173,11 @@ public class ExtractorJS extends ContentExtractor {
                         Link.addRelativeToBase(curi, string, JS_MISC, SPECULATIVE);
                     }
                 } catch (URIException e) {
-                    logUriError(e, curi, string);
+                    uriErrors.logUriError(e, curi.getUURI(), string);
                 }
             } else {
-               foundLinks += considerStrings(curi, subsequence, handlingJSFile);
+               foundLinks += considerStrings(uriErrors, curi, subsequence, 
+                       handlingJSFile);
             }
             TextUtils.recycleMatcher(uri);
         }

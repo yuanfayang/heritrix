@@ -45,7 +45,7 @@ import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.io.GenerationFileHandler;
-import org.archive.modules.LoggerModule;
+import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.FileModule;
@@ -62,7 +62,7 @@ import org.archive.state.StateProvider;
  *
  */
 public class CrawlerLoggerModule 
-implements LoggerModule, Initializable, Checkpointable {
+implements UriErrorLoggerModule, Initializable, Checkpointable {
 
 
     private static final long serialVersionUID = 1L;
@@ -348,5 +348,5 @@ implements LoggerModule, Initializable, Checkpointable {
         dir.getFile().mkdirs();        
         this.setupLogs();
     }
-    
+
 }

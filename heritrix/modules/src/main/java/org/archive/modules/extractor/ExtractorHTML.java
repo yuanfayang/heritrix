@@ -239,8 +239,9 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
     }
 
     
-    
+    @Override
     public void initialTasks(StateProvider global) {
+        super.initialTasks(global);
         this.honoringPolicy = global.get(this, ROBOTS_HONORING_POLICY);
     }
     
@@ -365,7 +366,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
                 // STYLE inline attribute
                 // then, parse for URIs
                 this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
-                    curi, value);
+                        uriErrors, curi, value);
                 
             } else if (attr.start(12) > -1) {
                 // any other attribute
@@ -417,7 +418,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
     protected void processScriptCode(ProcessorURI curi, CharSequence cs) {
         if (curi.get(this, EXTRACT_JAVASCRIPT)) {
             this.numberOfLinksExtracted +=
-                ExtractorJS.considerStrings(curi, cs, false);
+                ExtractorJS.considerStrings(uriErrors, curi, cs, false);
         }
     }
 
@@ -730,6 +731,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 
         // then, parse for URIs
         this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
+                uriErrors,
             curi, sequence.subSequence(endOfOpenTag,sequence.length()));
     }
     

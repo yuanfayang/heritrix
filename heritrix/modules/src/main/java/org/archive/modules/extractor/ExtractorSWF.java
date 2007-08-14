@@ -92,7 +92,8 @@ public class ExtractorSWF extends ContentExtractor {
 
             // Create SWF action that will add discoved URIs to CrawlURI
             // alist(s).
-            CrawlUriSWFAction curiAction = new CrawlUriSWFAction(curi);
+            CrawlUriSWFAction curiAction = new CrawlUriSWFAction(uriErrors, 
+                    curi);
 
             // Overwrite parsing of specific tags that might have URIs.
             CustomSWFTags customTags = new CustomSWFTags(curiAction);
