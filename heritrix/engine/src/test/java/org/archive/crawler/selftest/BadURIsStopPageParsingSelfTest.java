@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -55,4 +56,18 @@ public class BadURIsStopPageParsingSelfTest extends SelfTestBase
         assertTrue(EXPECTED.equals(files));
     }
 
+
+    @Override
+    protected void verifyLogFileEmpty(String logFileName) {
+        if (logFileName.equals("uri-errors.log")) {
+            File logsDir = getLogsDir();
+            File log = new File(logsDir, logFileName);
+            if (log.length() == 0) {
+                throw new IllegalStateException("Log " + logFileName + 
+                        " is empty, expected URI failure.");
+            }
+            return;
+        }
+        super.verifyLogFileEmpty(logFileName);
+    }
 }
