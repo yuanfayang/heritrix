@@ -968,5 +968,29 @@ public class UURIFactoryTest extends TestCase {
         }
         assertTrue("Didn't throw exception when one expected", exception);
     }
+    
+    /**
+     * Test motivated by [#HER-616] The UURI class may throw 
+     * NullPointerException in getReferencedHost()
+     * 
+     * @throws URIException
+     */
+    public void testMissingHttpColon() throws URIException {
+        String suspectUri = "http//www.test.foo";
+        UURI base = UURIFactory.getInstance("http://www.example.com");
+        boolean exceptionThrown = false; 
+        try {
+            UURI badUuri = UURIFactory.getInstance(suspectUri);
+            badUuri.getReferencedHost(); // not reached
+        } catch (URIException e) {
+            // should get relative-uri-no-base exception
+            exceptionThrown = true;
+        } finally {
+            assertTrue("expected exception not thrown",exceptionThrown);
+        }
+        UURI goodUuri = UURIFactory.getInstance(base,suspectUri);
+        goodUuri.getReferencedHost();
+    }
+    
 
 }
