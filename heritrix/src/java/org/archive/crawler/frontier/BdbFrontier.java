@@ -368,12 +368,12 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
 
             this.nextOrdinal = f.nextOrdinal;
             this.totalProcessedBytes = f.totalProcessedBytes;
-            this.disregardedUriCount = f.disregardedUriCount;
-            this.failedFetchCount = f.failedFetchCount;
+            this.liveDisregardedUriCount = f.liveDisregardedUriCount;
+            this.liveFailedFetchCount = f.liveFailedFetchCount;
             this.processedBytesAfterLastEmittedURI =
                 f.processedBytesAfterLastEmittedURI;
-            this.queuedUriCount = f.queuedUriCount;
-            this.succeededFetchCount = f.succeededFetchCount;
+            this.liveQueuedUriCount = f.liveQueuedUriCount;
+            this.liveSucceededFetchCount = f.liveSucceededFetchCount;
             this.lastMaxBandwidthKB = f.lastMaxBandwidthKB;
             this.readyClassQueues = f.readyClassQueues;
             this.inactiveQueues = reinit(f.inactiveQueues,"inactiveQueues");

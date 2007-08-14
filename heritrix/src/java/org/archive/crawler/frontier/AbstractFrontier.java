@@ -177,22 +177,22 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected final static Boolean DEFAULT_ATTR_RECOVERY_ENABLED =
         Boolean.TRUE;
 
-    // to maintain serialization compatibility
-    protected long serializedQueuedUriCount;
-    protected long serializedSucceededFetchCount;
-    protected long serializedFailedFetchCount;
-    protected long serializedDisregardedUriCount;
+    // to maintain serialization compatibility, stored under old names
+    protected long queuedUriCount;
+    protected long succeededFetchCount;
+    protected long failedFetchCount;
+    protected long disregardedUriCount;
     
     // top-level stats
     /** total URIs queued to be visited */
-    transient protected AtomicLong queuedUriCount = new AtomicLong(0); 
+    transient protected AtomicLong liveQueuedUriCount = new AtomicLong(0); 
 
-    transient protected AtomicLong succeededFetchCount = new AtomicLong(0);
+    transient protected AtomicLong liveSucceededFetchCount = new AtomicLong(0);
 
-    transient protected AtomicLong failedFetchCount = new AtomicLong(0);
+    transient protected AtomicLong liveFailedFetchCount = new AtomicLong(0);
 
     /** URIs that are disregarded (for example because of robot.txt rules */
-    transient protected AtomicLong disregardedUriCount = new AtomicLong(0);
+    transient protected AtomicLong liveDisregardedUriCount = new AtomicLong(0);
 
     /**
      * Used when bandwidth constraint are used.
@@ -433,14 +433,14 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @return True if queues are empty.
      */
     public boolean isEmpty() {
-        return queuedUriCount.get() == 0;
+        return liveQueuedUriCount.get() == 0;
     }
 
     /**
      * Increment the running count of queued URIs. 
      */
     protected void incrementQueuedUriCount() {
-        queuedUriCount.incrementAndGet();
+        liveQueuedUriCount.incrementAndGet();
     }
 
     /**
@@ -451,7 +451,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      *            amount to increment the queued count
      */
     protected void incrementQueuedUriCount(long increment) {
-        queuedUriCount.addAndGet(increment);
+        liveQueuedUriCount.addAndGet(increment);
     }
 
     /**
@@ -460,7 +460,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @param numberOfDeletes
      */
     protected void decrementQueuedCount(long numberOfDeletes) {
-        queuedUriCount.addAndGet(-numberOfDeletes);
+        liveQueuedUriCount.addAndGet(-numberOfDeletes);
     }
 
     /**
@@ -469,7 +469,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
     public long queuedUriCount() {
-        return queuedUriCount.get();
+        return liveQueuedUriCount.get();
     }
 
     /**
@@ -478,14 +478,14 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
-        return succeededFetchCount.get() + failedFetchCount.get() + disregardedUriCount.get();
+        return liveSucceededFetchCount.get() + liveFailedFetchCount.get() + liveDisregardedUriCount.get();
     }
 
     /**
      * Increment the running count of successfully fetched URIs. 
      */
     protected void incrementSucceededFetchCount() {
-        succeededFetchCount.incrementAndGet();
+        liveSucceededFetchCount.incrementAndGet();
     }
 
     /**
@@ -494,14 +494,14 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
     public long succeededFetchCount() {
-        return succeededFetchCount.get();
+        return liveSucceededFetchCount.get();
     }
 
     /**
      * Increment the running count of failed URIs. 
      */
     protected void incrementFailedFetchCount() {
-        failedFetchCount.incrementAndGet();
+        liveFailedFetchCount.incrementAndGet();
     }
 
     /**
@@ -510,7 +510,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @see org.archive.crawler.framework.Frontier#failedFetchCount()
      */
     public long failedFetchCount() {
-        return failedFetchCount.get();
+        return liveFailedFetchCount.get();
     }
 
     /**
@@ -518,11 +518,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * operations on longs are not atomic.
      */
     protected void incrementDisregardedUriCount() {
-        disregardedUriCount.incrementAndGet();
+        liveDisregardedUriCount.incrementAndGet();
     }
 
     public long disregardedUriCount() {
-        return disregardedUriCount.get();
+        return liveDisregardedUriCount.get();
     }
 
     /** @deprecated misnomer; use StatisticsTracking figures instead */
@@ -1095,18 +1095,18 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     // maintain serialization compatibility to pre-AtomicLong impl
     private void writeObject(java.io.ObjectOutputStream out)
     throws IOException {
-        serializedQueuedUriCount = queuedUriCount.get();
-        serializedSucceededFetchCount = succeededFetchCount.get();
-        serializedFailedFetchCount = failedFetchCount.get();
-        serializedDisregardedUriCount = disregardedUriCount.get();
+        queuedUriCount = liveQueuedUriCount.get();
+        succeededFetchCount = liveSucceededFetchCount.get();
+        failedFetchCount = liveFailedFetchCount.get();
+        disregardedUriCount = liveDisregardedUriCount.get();
         out.defaultWriteObject();
     }
     private void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        queuedUriCount = new AtomicLong(serializedQueuedUriCount);
-        succeededFetchCount = new AtomicLong(serializedSucceededFetchCount);
-        failedFetchCount = new AtomicLong(serializedFailedFetchCount);
-        disregardedUriCount = new AtomicLong(serializedDisregardedUriCount);
+        liveQueuedUriCount = new AtomicLong(queuedUriCount);
+        liveSucceededFetchCount = new AtomicLong(succeededFetchCount);
+        liveFailedFetchCount = new AtomicLong(failedFetchCount);
+        liveDisregardedUriCount = new AtomicLong(disregardedUriCount);
     }
 }
