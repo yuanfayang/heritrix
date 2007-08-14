@@ -35,6 +35,8 @@ import org.archive.crawler.scope.SeedModule;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.PredicatedAcceptDecideRule;
 import org.archive.net.UURI;
+import org.archive.settings.KeyChangeEvent;
+import org.archive.settings.KeyChangeListener;
 import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
@@ -62,7 +64,7 @@ import org.archive.util.SurtPrefixSet;
  * @author gojomo
  */
 public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule 
-        implements SeedListener, Initializable {
+        implements SeedListener, Initializable, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -270,11 +272,9 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
 
     /**
      * Re-read prefixes after an update.
-     * 
-     * @see org.archive.crawler.framework.CrawlScope#kickUpdate()
      */
-    public synchronized void kickUpdate(StateProvider provider) {
-        super.kickUpdate(provider); // FIXME: Kick update
+    public synchronized void keyChanged(KeyChangeEvent event) {
+        StateProvider provider = event.getStateProvider();
         if (provider.get(this, REBUILD_ON_RECONFIG)) {
             readPrefixes(provider);
         }

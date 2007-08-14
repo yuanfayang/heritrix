@@ -55,6 +55,8 @@ import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.net.UURI;
+import org.archive.settings.KeyChangeEvent;
+import org.archive.settings.KeyChangeListener;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -74,7 +76,7 @@ import com.sleepycat.je.DatabaseException;
  * @author Christian Kohlschuetter
  */
 public abstract class WorkQueueFrontier extends AbstractFrontier
-implements Closeable, HasUriReceiver, Serializable {
+implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
 	private static final long serialVersionUID = 570384305871965843L;
 	
     public class WakeTask extends TimerTask {
@@ -195,7 +197,7 @@ implements Closeable, HasUriReceiver, Serializable {
 
     
     public <T> T get(Key<T> key) {
-        return global.get(this, key);
+        return manager.getGlobalSheet().get(this, key);
     }
 
     
@@ -427,29 +429,24 @@ implements Closeable, HasUriReceiver, Serializable {
     
     /** 
      * Accomodate any changes in settings.
-     * 
-     * @see org.archive.crawler.framework.Frontier#kickUpdate()
      */
-    public void kickUpdate() {
-        super.kickUpdate();
-        int target = get(TARGET_READY_BACKLOG);
-        if (target < 1) {
-            target = 1;
+    public void keyChanged(KeyChangeEvent event) {
+        if (event.getKey() == TARGET_READY_BACKLOG) {
+            int target = (Integer)event.getNewValue();
+            if (target < 1) {
+                target = 1;
+            }
+            this.targetSizeForReadyQueues = target;             
         }
-        this.targetSizeForReadyQueues = target; 
-
-        // TODO: See about caching costPolicy again
-        //        try {
-//            initCostPolicy();
-//        } catch (FatalConfigurationException fce) {
-//            throw new RuntimeException(fce);
-//        }
 
         // The rules for a 'retired' queue may have changed; so,
         // unretire all queues to 'inactive'. If they still qualify
         // as retired/overbudget next time they come up, they'll
         // be re-retired; if not, they'll get a chance to become
         // active under the new rules.
+        
+        // TODO: Only do this when necessary.
+        
         Object key = this.retiredQueues.poll();
         while (key != null) {
             WorkQueue q = (WorkQueue)this.allQueues.get(key);

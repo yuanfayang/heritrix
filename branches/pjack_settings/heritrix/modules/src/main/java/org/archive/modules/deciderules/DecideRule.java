@@ -30,7 +30,6 @@ import org.archive.modules.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.Module;
-import org.archive.state.StateProvider;
 
 
 public abstract class DecideRule implements Module, Serializable {
@@ -66,10 +65,6 @@ public abstract class DecideRule implements Module, Serializable {
     
     public DecideResult onlyDecision(ProcessorURI uri) {
         return null;
-    }
-
-    public void kickUpdate(StateProvider provider) {
-        
     }
 
 }

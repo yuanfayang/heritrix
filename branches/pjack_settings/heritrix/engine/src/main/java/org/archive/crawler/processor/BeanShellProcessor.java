@@ -33,6 +33,8 @@ import java.util.logging.Logger;
 //import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.modules.ProcessorURI;
+import org.archive.settings.KeyChangeEvent;
+import org.archive.settings.KeyChangeListener;
 import org.archive.settings.Sheet;
 import org.archive.state.FileModule;
 import org.archive.state.Immutable;
@@ -59,7 +61,8 @@ import bsh.Interpreter;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class BeanShellProcessor extends CrawlerProcessor {
+public class BeanShellProcessor extends CrawlerProcessor 
+implements KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -166,23 +169,30 @@ public class BeanShellProcessor extends CrawlerProcessor {
 
     public void initialTasks(StateProvider context) {
         super.initialTasks(context);
-        kickUpdate();
+        isolate(context.get(this, ISOLATE_THREADS));
     }
 
     /**
      * Setup (or reset) Intepreter variables, as appropraite based on 
      * thread-isolation setting. 
      */
-    public void kickUpdate() {
-        // TODO make it so running state (tallies, etc.) isn't lost on changes
-        // unless unavoidable
-        if (get(ISOLATE_THREADS)) {
+    public void keyChanged(KeyChangeEvent event) {
+        if (event.getKey() == ISOLATE_THREADS) {
+            // TODO make it so running state (tallies, etc.) isn't lost on changes
+            // unless unavoidable
+            isolate((Boolean)event.getNewValue());
+        }
+    }
+    
+    
+    private void isolate(boolean isolate) {
+        if (isolate) {
             sharedInterpreter = null; 
             threadInterpreter = new ThreadLocal<Interpreter>(); 
         } else {
             sharedInterpreter = newInterpreter(); 
             threadInterpreter = null;
-        }
+        }        
     }
     
     

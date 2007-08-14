@@ -28,10 +28,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.settings.KeyChangeEvent;
+import org.archive.settings.KeyChangeListener;
 import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 
 
@@ -42,7 +43,8 @@ import org.archive.state.StateProvider;
  *
  * @author gojomo
  */
-public class PathologicalPathDecideRule extends DecideRule {
+public class PathologicalPathDecideRule extends DecideRule 
+implements KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -105,11 +107,8 @@ public class PathologicalPathDecideRule extends DecideRule {
     
     /**
      * Repetitions may have changed; refresh constructedRegexp
-     * 
-     * @see org.archive.crawler.deciderules.DecideRule#kickUpdate()
      */
-    public void kickUpdate(StateProvider context) {
-        super.kickUpdate(context);
+    public void keyChanged(KeyChangeEvent event) {
         pattern.set(null);
     }
 }

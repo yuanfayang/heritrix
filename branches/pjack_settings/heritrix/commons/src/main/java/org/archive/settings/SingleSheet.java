@@ -67,6 +67,8 @@ public class SingleSheet extends Sheet {
      */
     final private boolean global;
 
+    
+    private List<KeyChangeEvent> pending;
 
     /**
      * Constructor.
@@ -369,8 +371,32 @@ public class SingleSheet extends Sheet {
         if (!KeyTypes.isSimple(Offline.getType(value))) {
             getSheetManager().fireModuleChanged(old, value);
         }
+        if ((module instanceof KeyChangeListener) && (pending != null)) {
+            if (!eq(old, value)) {
+                KeyChangeEvent event = new KeyChangeEvent(this, 
+                        module, key, old, value);
+                pending.add(event);
+            }
+        }
     }
 
+    
+    private boolean eq(Object o1, Object o2) {
+        if (o1 == o2) {
+            return true;
+        }
+        if (o1 == null) {
+            return false;
+        }
+        if (o2 == null) {
+            return false;
+        }
+        if (KeyTypes.isSimple(Offline.getType(o1))) {
+            return o1.equals(o2);
+        } else {
+            return false;
+        }
+    }
 
     private static <T> void validateTypes(Object module, Key<T> key, Class vtype) {
         validateModuleType(module, key);
@@ -422,5 +448,21 @@ public class SingleSheet extends Sheet {
             return this;
         }
         return getSheetManager().getGlobalSheet();
+    }
+
+
+    List<KeyChangeEvent> clearKeyChangeEvents() {
+        List<KeyChangeEvent> result = pending;
+        pending = null;
+        return result;
+    }
+
+    
+    @Override
+    void setClone(boolean clone) {
+        super.setClone(clone);
+        if (clone) {
+            this.pending = new ArrayList<KeyChangeEvent>();
+        }
     }
 }

@@ -395,6 +395,19 @@ implements StateProvider, Serializable { //, DirectoryModule {
     
     protected void clearCloneFlag(Sheet sheet) {
         sheet.setClone(false);
+        if (sheet instanceof SingleSheet) {
+            SingleSheet ss = (SingleSheet)sheet;
+            List<KeyChangeEvent> list = ss.clearKeyChangeEvents();
+            for (KeyChangeEvent event: list) {
+                KeyChangeListener listener = (KeyChangeListener)event.getSource();
+                try {
+                    listener.keyChanged(event);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, 
+                            "Exception during property change " + event, e);
+                }
+            }
+        }
     }
 
     
