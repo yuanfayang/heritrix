@@ -1632,11 +1632,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
      */
     public void crawlCheckpoint(File checkpointDir) {
-        try {
-            cookieDb.sync();
-        } catch (DatabaseException e) {
-            // TODO Auto-generated catch block
-            throw new RuntimeException(e);
+        if(cookieDb!=null) {
+            try {
+                cookieDb.sync();
+            } catch (DatabaseException e) {
+                // TODO Auto-generated catch block
+                throw new RuntimeException(e);
+            }
         }
     }
 
