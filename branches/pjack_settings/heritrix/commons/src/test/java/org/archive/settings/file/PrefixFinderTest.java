@@ -64,7 +64,9 @@ public class PrefixFinderTest extends TestCase {
     private void doTest() {
         // Generate test data.
         SortedSet<String> testData = new TreeSet<String>();
-        Random random = new Random();
+        long seed = System.currentTimeMillis();
+        System.out.println("Used seed: " + seed);
+        Random random = new Random(seed);
         String prefix = "0";
         testData.add(prefix);
         for (int i = 1; i < 10000; i++) {
