@@ -39,7 +39,7 @@ public class WebUIConfig {
     private Set<String> hosts = new HashSet<String>();
     private int port = 8080;
     private String pathToWAR = null;
-    
+    private String uiPassword = null;
     
     public WebUIConfig() {
     }
@@ -73,8 +73,14 @@ public class WebUIConfig {
     public void setPort(int port) {
         this.port = port;
     }
-    
-    
-    
-    
+
+
+    public String getUiPassword() {
+        return uiPassword;
+    }
+
+
+    public void setUiPassword(String uiPassword) {
+        this.uiPassword = uiPassword;
+    }
 }

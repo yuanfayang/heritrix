@@ -14,22 +14,24 @@
       </exception-type>
       <location>/heritrix/error.jsp</location>
     </error-page>
-  <!--    <filter> 
-        <filter-name>RootFilter</filter-name> 
-        <filter-class>org.archive.crawler.admin.ui.RootFilter</filter-class> 
+    <filter>
+        <filter-name>AuthFilter</filter-name>
+        <filter-class>org.archive.crawler.webui.AuthFilter</filter-class>
         <init-param>
-            <param-name>rootFilter.redirectTo</param-name>
-            <param-value>/index.jsp</param-value>
+            <param-name>authUrl</param-name>
+            <param-value>/auth.jsp</param-value>
         </init-param>
-    </filter> 
-    <filter-mapping> 
-        <filter-name>RootFilter</filter-name> 
-        <url-pattern>/</url-pattern> 
+    </filter>
+    <filter-mapping>
+        <filter-name>AuthFilter</filter-name>
+        <url-pattern>/*</url-pattern>
     </filter-mapping> 
+<!-- 
     <listener>
         <listener-class>org.archive.crawler.WebappLifecycle
         </listener-class>
-    </listener> -->
+    </listener> 
+-->
     <!--
         This is configuration for the beanshell servlet. Uncomment this
         servlet-name and the below 'bshservlet' servlet-mapping to enable.
