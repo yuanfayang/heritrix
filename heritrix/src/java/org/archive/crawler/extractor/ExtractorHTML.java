@@ -119,7 +119,7 @@ implements CoreAttributeConstants {
     // matched by the above. attributes known to be URIs of various
     // sorts are matched specially
     static final String EACH_ATTRIBUTE_EXTRACTOR =
-      "(?is)\\s((href)|(action)|(on\\w*)" // 1, 2, 3, 4 
+      "(?is)\\s?((href)|(action)|(on\\w*)" // 1, 2, 3, 4 
      +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)" // ...
      +"|(?:usemap)|(?:profile)|(?:datasrc))" // 5
      +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)" // 6, 7, 8, 9

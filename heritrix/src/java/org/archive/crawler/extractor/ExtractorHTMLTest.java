@@ -296,6 +296,23 @@ implements CoreAttributeConstants {
         }));
     }
     
+    /**
+     * Test a missing whitespace issue found in form
+     * 
+     * [HER-1128] ExtractorHTML fails to extract FRAME SRC link without
+     * whitespace before SRC http://webteam.archive.org/jira/browse/HER-1128
+     */
+    public void testNoWhitespaceBeforeValidAttribute() throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory
+                .getInstance("http://www.example.com"));
+        CharSequence cs = "<frame name=\"main\"src=\"http://www.example.com/\"> ";
+        this.extractor.extract(curi, cs);
+        Link[] links = curi.getOutLinks().toArray(new Link[0]);
+        assertTrue("no links found",links.length==1);
+        assertTrue("expected link not found", 
+                links[0].getDestination().toString().equals("http://www.example.com/"));
+    }
+    
     public static void main(String[] args) throws Exception {
         if (args.length != 1 && args.length != 2) {
             System.err.println("Usage: " + ExtractorHTMLTest.class.getName() +
