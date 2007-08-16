@@ -149,7 +149,7 @@ implements CharSequence, Serializable {
      * @throws NullPointerException
      * @throws URIException
      */
-    public UURI(String uri, boolean escaped) throws URIException, NullPointerException {
+    protected UURI(String uri, boolean escaped) throws URIException, NullPointerException {
         super(uri,escaped);
         normalize();
     }
