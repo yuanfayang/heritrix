@@ -47,6 +47,7 @@ public class WebUI {
     private Set<String> hosts;
     private int port;
     private String pathToWAR;
+    private String uiPassword; 
     
     
     public WebUI(WebUIConfig config) {
@@ -56,6 +57,7 @@ public class WebUI {
         if (this.pathToWAR == null) {
             this.pathToWAR = getDefaultPathToWAR();
         }
+        this.uiPassword = config.getUiPassword();
     }
 
     
@@ -93,8 +95,9 @@ public class WebUI {
             server.addConnector(sc);
         }
 
-        WebAppContext webapp = new WebAppContext(pathToWAR, "/heritrix");
+        WebAppContext webapp = new WebAppContext(pathToWAR, "/");
 //        webapp.setClassLoader(ClassLoader.getSystemClassLoader());
+        webapp.setAttribute("uiPassword",uiPassword);
         
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[] { 

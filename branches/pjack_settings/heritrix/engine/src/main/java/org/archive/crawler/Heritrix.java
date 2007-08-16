@@ -138,11 +138,13 @@ public class Heritrix {
                 "should listen on.  Ignored if -r is not specified.");
         options.addOption("w", "webui-war-path", true, "The path to the " +
                 "Heritrix webui WAR.  Ignored if -r is not specified.");
-        options.addOption("r", "run-webui", false,  "If set, then no web " +
-                 "server will be launched, and the Heritrix web UI will not " +
-                 "be available on this machine.  Use this option if you have " +
-                 "multiple crawlers that you want to control with a single" +
-                 "web UI.");
+        options.addOption("r", "run-webui", false,  "If set, launches " +
+        		 "a local web server and crawler webui. If not set, " +
+        		 "the launched crawl engine will need to be controlled " +
+        		 "via JMX (and possibly a remote webui).");
+        options.addOption("a", "webui-admin", true,  "Specifies the " +
+        		"authorization password which must be supplied to " +
+        		"access the webui. Required if launching the webui.");
         return options;
     }
     
@@ -188,6 +190,10 @@ public class Heritrix {
         CommandLine cl = getCommandLine(args);
         if (cl == null) return;
 
+        if (cl.hasOption('a')) {
+            webConfig.setUiPassword(cl.getOptionValue('a'));
+        }
+        
         if (cl.hasOption('j')) {
             config.setJobsDirectory(cl.getOptionValue('j'));
         }
