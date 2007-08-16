@@ -51,6 +51,7 @@ import org.archive.io.ReplayCharSequence;
 import org.archive.net.ClientFTP;
 import org.archive.net.FTPException;
 import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
 
@@ -421,7 +422,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
             base = base.substring(0, base.length() - 1);
         }
         try {
-            UURI n = new UURI(base + "/" + file, true);
+            UURI n = UURIFactory.getInstance(base + "/" + file);
             Link link = new Link(curi.getUURI(), n, NAVLINK_MISC, NAVLINK_HOP);
             curi.addOutLink(link);
         } catch (URIException e) {
@@ -457,7 +458,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
             String scheme = uuri.getScheme();
             String auth = uuri.getEscapedAuthority();
             String path = uuri.getEscapedCurrentHierPath();
-            UURI parent = new UURI(scheme + "://" + auth + path, false);
+            UURI parent = UURIFactory.getInstance(scheme + "://" + auth + path);
 
             Link link = new Link(uuri, parent, NAVLINK_MISC, NAVLINK_HOP);
             curi.addOutLink(link);
