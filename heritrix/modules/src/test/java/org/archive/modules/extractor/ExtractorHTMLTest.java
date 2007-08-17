@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.DefaultProcessorURI;
 import org.archive.modules.extractor.Extractor;
 import org.archive.modules.extractor.ExtractorHTML;
@@ -14,6 +16,7 @@ import org.archive.modules.extractor.LinkContext;
 import org.archive.modules.extractor.StringExtractorTestBase;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.settings.MemorySheetManager;
 import org.archive.util.Recorder;
 
 public class ExtractorHTMLTest extends StringExtractorTestBase {
@@ -114,4 +117,38 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
         return LinkContext.NAVLINK_MISC;
     }
 
+    /**
+     * Test a missing whitespace issue found in form
+     * 
+     * [HER-1128] ExtractorHTML fails to extract FRAME SRC link without
+     * whitespace before SRC http://webteam.archive.org/jira/browse/HER-1128
+     */
+    public void testNoWhitespaceBeforeValidAttribute() throws URIException {
+        expectSingleLink(
+                "http://expected.example.com/",
+                "<frame name=\"main\"src=\"http://expected.example.com/\"> ");
+    }
+    
+    /**
+     * Expect the extractor to find the single given URI in the supplied
+     * source material. Fail if that one lik is not found. 
+     * 
+     * TODO: expand to capture expected Link instance characteristics 
+     * (source, hop, context, etc?)
+     * 
+     * @param expected String target URI that should be extracted
+     * @param source CharSequence source material to extract
+     * @throws URIException
+     */
+    protected void expectSingleLink(String expected, CharSequence source) throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory
+                .getInstance("http://www.example.com"));
+        curi.setStateProvider(new MemorySheetManager());
+        ExtractorHTML extractor = new ExtractorHTML();
+        extractor.extract(curi, source);
+        Link[] links = curi.getOutLinks().toArray(new Link[0]);
+        assertTrue("did not find single link",links.length==1);
+        assertTrue("expected link not found", 
+                links[0].getDestination().toString().equals(expected));
+    }
 }
