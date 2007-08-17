@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.DefaultProcessorURI;
+import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.Extractor;
 import org.archive.modules.extractor.ExtractorHTML;
 import org.archive.modules.extractor.HTMLLinkContext;
@@ -141,12 +142,11 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
      * @throws URIException
      */
     protected void expectSingleLink(String expected, CharSequence source) throws URIException {
-        CrawlURI curi = new CrawlURI(UURIFactory
-                .getInstance("http://www.example.com"));
-        curi.setStateProvider(new MemorySheetManager());
+        DefaultProcessorURI puri = new DefaultProcessorURI(UURIFactory
+                .getInstance("http://www.example.com"), null);
         ExtractorHTML extractor = new ExtractorHTML();
-        extractor.extract(curi, source);
-        Link[] links = curi.getOutLinks().toArray(new Link[0]);
+        extractor.extract(puri, source);
+        Link[] links = puri.getOutLinks().toArray(new Link[0]);
         assertTrue("did not find single link",links.length==1);
         assertTrue("expected link not found", 
                 links[0].getDestination().toString().equals(expected));
