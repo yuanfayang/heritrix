@@ -5,19 +5,9 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.DefaultProcessorURI;
-import org.archive.modules.ProcessorURI;
-import org.archive.modules.extractor.Extractor;
-import org.archive.modules.extractor.ExtractorHTML;
-import org.archive.modules.extractor.HTMLLinkContext;
-import org.archive.modules.extractor.Hop;
-import org.archive.modules.extractor.Link;
-import org.archive.modules.extractor.LinkContext;
-import org.archive.modules.extractor.StringExtractorTestBase;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.settings.MemorySheetManager;
 import org.archive.util.Recorder;
 
 public class ExtractorHTMLTest extends StringExtractorTestBase {
