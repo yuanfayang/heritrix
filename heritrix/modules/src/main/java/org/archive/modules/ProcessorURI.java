@@ -86,7 +86,6 @@ public interface ProcessorURI extends StateProvider {
     
     String getUserAgent();
     void setUserAgent(String ua);
-    String getFrom();
 
     long getContentSize();
     void setContentSize(long size);

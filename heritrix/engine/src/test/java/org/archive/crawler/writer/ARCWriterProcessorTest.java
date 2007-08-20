@@ -60,7 +60,6 @@ public class ARCWriterProcessorTest extends ProcessorTestBase {
         FileModule dir = new FileModule();
         sp.set(dir, FileModule.PATH, tmp.getAbsolutePath());
         
-        
         ARCWriterProcessor result = new ARCWriterProcessor();
         sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
         sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());

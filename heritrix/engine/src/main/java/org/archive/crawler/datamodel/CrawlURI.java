@@ -146,7 +146,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     
     // From header
     // TODO: This and user-agent really belong in FetchHTTP
-    private transient String from = null;
+//    private transient String from = null;
 
     // Once a link extractor has finished processing this curi this will be
     // set as true
@@ -1273,15 +1273,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         return fetchType;
     }
 
-    public String getFrom() {
-        return from;
-    }
 
-    
-    public void setFrom(String from) {
-        this.from = from;
-    }
-    
     public Collection<Throwable> getNonFatalFailures() {
     	@SuppressWarnings("unchecked")
     	List<Throwable> list = (List)getData().get(A_LOCALIZED_ERRORS);

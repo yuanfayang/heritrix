@@ -147,6 +147,14 @@ final public class Key<Value> implements Serializable {
     /** True if the property can be mutated. */
     transient private boolean immutable;
     
+    
+    /**
+     * True if the settings framework should attempt to autodetect the right 
+     * value for this setting.  Only if the autodetect attempt fails will the
+     * value specified by {@link def} be used.
+     */
+    final private boolean autoDetect;
+    
     /**
      * Constructs a new key.
      * 
@@ -160,6 +168,7 @@ final public class Key<Value> implements Serializable {
         this.type = maker.type;
         this.elementType = maker.elementType;
         this.def = maker.def;
+        this.autoDetect = maker.autoDetect;
         this.offlineDef = makeOfflineDefault(maker.def);
         Set<Constraint<Value>> s = new HashSet<Constraint<Value>>(maker.constraints);
         this.constraints = Collections.unmodifiableSet(s);
@@ -259,6 +268,11 @@ final public class Key<Value> implements Serializable {
     }
 
 
+    public boolean isAutoDetected() {
+        return autoDetect;
+    }
+    
+    
     /**
      * Returns the name of the Java field that declared this key.
      * 
@@ -374,6 +388,14 @@ final public class Key<Value> implements Serializable {
         return result.toKey();
     }
 
+    
+    public static <X> Key<X> makeAuto(Class<X> type) {
+        KeyMaker<X> result = new KeyMaker<X>();
+        result.type = type;
+        result.def = null;
+        result.autoDetect = true;
+        return result.toKey();
+    }
     
     
     /**

@@ -190,8 +190,13 @@ public class Heritrix {
         CommandLine cl = getCommandLine(args);
         if (cl == null) return;
 
-        if (cl.hasOption('a')) {
-            webConfig.setUiPassword(cl.getOptionValue('a'));
+        if (cl.hasOption('r')) {
+            if (cl.hasOption('a')) {
+                webConfig.setUiPassword(cl.getOptionValue('a'));
+            } else {
+                System.err.println("If -r is specified, -a must be specified too.");
+                System.exit(1);
+            }
         }
         
         if (cl.hasOption('j')) {

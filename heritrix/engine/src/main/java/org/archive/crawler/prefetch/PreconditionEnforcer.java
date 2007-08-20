@@ -41,13 +41,16 @@ import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
 import org.archive.modules.fetcher.FetchStatusCodes;
+import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.Expert;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 
 /**
  * Ensures the preconditions for a fetch -- such as DNS lookup 
@@ -65,6 +68,10 @@ public class PreconditionEnforcer
     private static final Logger logger =
         Logger.getLogger(PreconditionEnforcer.class.getName());
 
+
+    @Immutable
+    final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
+        Key.make(UserAgentProvider.class, null);
 
     /**
      * The minimum interval for which a dns-record will be considered valid (in
@@ -191,7 +198,7 @@ public class PreconditionEnforcer
         // test against robots.txt if available
         CrawlServer cs = getServerFor(curi);
         if (cs.isValidRobots()) {
-            String ua = controller.getUserAgent();
+            String ua = getUserAgent(curi);
             if(cs.getRobots().disallows(curi, ua)) {
                 if(curi.get(this, CALCULATE_ROBOTS_ONLY)) {
                     // annotate URI as excluded, but continue to process normally
@@ -218,6 +225,13 @@ public class PreconditionEnforcer
         }
         return true;
     }
+    
+    
+    private String getUserAgent(StateProvider context) {
+        UserAgentProvider uap = context.get(this, USER_AGENT_PROVIDER);
+        return uap.getUserAgent(context);
+    }
+
 
     /**
      * @param curi ProcessorURI whose dns prerequisite we're to check.

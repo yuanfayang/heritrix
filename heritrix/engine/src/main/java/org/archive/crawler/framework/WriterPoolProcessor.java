@@ -39,7 +39,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 
 import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
-import org.archive.crawler.writer.EmptyMetadataProvider;
 import org.archive.crawler.writer.MetadataProvider;
 import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
@@ -163,8 +162,8 @@ implements Closeable {
 
     @Immutable
     final public static Key<MetadataProvider> METADATA_PROVIDER = 
-        Key.make(MetadataProvider.class, new EmptyMetadataProvider());
-    
+        Key.make(MetadataProvider.class, null);
+
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE = 
         Key.make(ServerCache.class, null);
@@ -208,18 +207,12 @@ implements Closeable {
 
     @Override
     public synchronized void initialTasks(StateProvider context) {
-        // Add this class to crawl state listeners and setup pool.
-//        controller.addCrawlStatusListener(this);
         this.serverCache = context.get(this, SERVER_CACHE);
         this.directory = context.get(this, DIRECTORY);
         this.maxActive = context.get(this, POOL_MAX_ACTIVE);
         this.maxWait = context.get(this, POOL_MAX_WAIT);
         this.settings = getWriterPoolSettings(context);
         setupPool(serial);
-        // Run checkpoint recovery code.
-//        if (controller.isCheckpointRecover()) {
-//            checkpointRecover();
-//        }
     }
     
     
@@ -315,11 +308,6 @@ implements Closeable {
         return h.getIP().getHostAddress();
     }
 
-/*    
-    protected String getCheckpointStateFile() {
-    	return this.getClass().getName() + ".state";
-    }
-*/
     
     public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
     throws IOException {
@@ -332,7 +320,7 @@ implements Closeable {
             // we're paused checkpointing (Revisit if this assumption changes).
             serial = getSerialNo().incrementAndGet();
         }
-//        saveCheckpointSerialNumber(checkpointDir, serial);
+
         // Close all ARCs on checkpoint.
         try {
             this.pool.close();
@@ -343,20 +331,6 @@ implements Closeable {
         }
     }
   
-    /*
-    public void crawlPausing(String statusMessage) {
-        // sExitMessage is unused.
-    }
-
-    public void crawlPaused(String statusMessage) {
-        // sExitMessage is unused.
-    }
-
-    public void crawlResuming(String statusMessage) {
-        // sExitMessage is unused.
-    }*/
-
-    
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
     }
@@ -384,73 +358,9 @@ implements Closeable {
         this.totalBytesWritten = totalBytesWritten;
     }
 	
-    /**
-     * Called out of {@link #initialTasks()} when recovering a checkpoint.
-     * Restore state.
-     */
-    /*
-    protected void checkpointRecover() {
-        int serialNo = loadCheckpointSerialNumber();
-        if (serialNo != -1) {
-            getSerialNo().set(serialNo);
-        }
-    }*/
+    
+    protected abstract List<String> getMetadata(StateProvider context);
 
-    /**
-     * @return Serial number from checkpoint state file or if unreadable, -1
-     * (Client should check for -1).
-     */
-    /*
-    protected int loadCheckpointSerialNumber() {
-        int result = -1;
-        
-        // If in recover mode, read in the Writer serial number saved
-        // off when we checkpointed.
-        File stateFile = new File(controller.getCheckpointRecover().getDirectory(),
-                getCheckpointStateFile());
-        if (!stateFile.exists()) {
-            logger.info(stateFile.getAbsolutePath()
-                    + " doesn't exist so cannot restore Writer serial number.");
-        } else {
-            DataInputStream dis = null;
-            try {
-                dis = new DataInputStream(new FileInputStream(stateFile));
-                result = dis.readShort();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (dis != null) {
-                        dis.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return result;
-    }
-    
-    protected void saveCheckpointSerialNumber(final File checkpointDir,
-            final int serialNo)
-    throws IOException {
-        // Write out the current state of the ARCWriter serial number.
-        File f = new File(checkpointDir, getCheckpointStateFile());
-        DataOutputStream dos = new DataOutputStream(new FileOutputStream(f));
-        try {
-            dos.writeShort(serialNo);
-        } finally {
-            dos.close();
-        }
-    }
-    */
-    
-    protected List<String> getMetadata(StateProvider context) {
-        MetadataProvider provider = context.get(this, METADATA_PROVIDER);
-        return provider.getMetadata();
-    }
 
     
     protected abstract  Key<List<String>> getPathKey();

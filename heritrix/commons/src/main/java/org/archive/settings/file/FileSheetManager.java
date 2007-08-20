@@ -227,15 +227,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     private boolean copyCheckpoint;
     
-    public FileSheetManager() 
-    throws IOException, DatabaseException {
-        this(new File("config.txt"), true);
-    }
 
-    
-    public FileSheetManager(File main, boolean online) 
+    public FileSheetManager(File main, String name, boolean online) 
     throws IOException, DatabaseException {
-        this(main, online, emptyList());
+        this(main, name, online, emptyList());
     }
 
 
@@ -247,10 +242,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      * @param maxSheets
      *            the maximum number of sheets to keep in memory
      */
-    public FileSheetManager(File main, boolean online, 
+    public FileSheetManager(File main, String name, boolean online, 
             Collection<ModuleListener> listeners) 
     throws IOException, DatabaseException {
-        super(listeners, online);
+        super(name, listeners, online);
         this.mainConfig = main;
 
         Properties p = load(main);

@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -75,6 +77,8 @@ implements StateProvider, Serializable { //, DirectoryModule {
     private ListModuleListener<Closeable> closeables = 
         ListModuleListener.make(Closeable.class);
     
+    private ConcurrentMap<Class,Object> primaries = new ConcurrentHashMap<Class,Object>();
+    
     private boolean online;
     
     @Immutable
@@ -89,10 +93,13 @@ implements StateProvider, Serializable { //, DirectoryModule {
         KeyManager.addKeys(SheetManager.class);
     }
     
+    private String jobName;
+    
     /**
      * Constructor.
      */
-    public SheetManager(boolean online) {
+    public SheetManager(String jobName, boolean online) {
+        this.jobName = jobName;
         this.online = online;
         this.unspecified = new UnspecifiedSheet(this, "default");
         offlineThis = Offline.make(getClass());
@@ -101,6 +108,41 @@ implements StateProvider, Serializable { //, DirectoryModule {
         moduleListeners.add(finishables);
     }
     
+    
+    public void addPrimary(Object primary) {
+        Class type = Offline.getType(primary);
+        Object old = primaries.putIfAbsent(type, primary);
+        if (old != null) {
+            throw new IllegalStateException("Duplicate primary attempted for " 
+                    + type.getName());
+        }
+    }
+    
+    
+    public Object findPrimary(Class type) {
+        // Can't do simple lookup here because type may be an interface.
+        Object result = null;
+        for (Object o: primaries.values()) {
+            Class otype = Offline.getType(o);
+            if (type.isAssignableFrom(otype)) {
+                if (result != null) {
+                    throw new IllegalStateException(
+                            "More than one primary found for " 
+                            + type.getName());
+                }
+                result = o;
+            }
+        }
+        return result;
+    }
+    
+    
+    public boolean isPrimary(Object o) {
+        if (o == null) {
+            return false;
+        }
+        return primaries.values().contains(o);
+    }
     
 
     public List<Checkpointable> getCheckpointables() {
@@ -116,8 +158,8 @@ implements StateProvider, Serializable { //, DirectoryModule {
         return finishables.getList();
     }
     
-    public SheetManager(Collection<ModuleListener> listeners, boolean online) {
-        this(online);
+    public SheetManager(String jobName, Collection<ModuleListener> listeners, boolean online) {
+        this(jobName, online);
         moduleListeners.addAll(listeners);
     }
 
@@ -297,7 +339,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
     
     
     public String getCrawlName() {
-        return "unknown"; // FIXME: Make this abstract 
+        return jobName; 
     }
 
     

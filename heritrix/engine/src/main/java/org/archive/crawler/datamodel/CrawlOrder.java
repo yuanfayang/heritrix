@@ -158,24 +158,7 @@ public class CrawlOrder implements Module, Serializable {
     final public static Key<Boolean> RECOVER_RETAIN_FAILURES = 
         Key.make(false);
 
-    final public static Key<String> HTTP_USER_AGENT =
-        KeyMaker
-            .make("Mozilla/5.0 (compatible; heritrix/@VERSION@ +@OPERATOR_CONTACT_URL@)")
-            .addConstraint(new PatternConstraint(Pattern.compile("^.*\\+@OPERATOR_CONTACT_URL@.*$")))
-            .toKey();
-    
-    final public static Key<String> OPERATOR_FROM =
-        KeyMaker
-            .make("ENTER-A-CONTACT-EMAIL-FOR-CRAWL-OPERATOR")
-            .addConstraint(new PatternConstraint(Pattern.compile("^[-\\w]+@[-\\w]+\\.[-\\w\\.]+$")))
-            .toKey();
-    
-    final public static Key<String> OPERATOR_CONTACT_URL =
-        KeyMaker
-            .make("ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR")
-            .addConstraint(new PatternConstraint(Pattern.compile("^https?://.*$")))
-            .toKey();
-    
+
     static {
         KeyManager.addKeys(CrawlOrder.class);
     }

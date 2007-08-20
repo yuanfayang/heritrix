@@ -85,6 +85,14 @@ public class KeyMaker<T> {
      */ 
     public Class elementType;
 
+    
+    /**
+     * True if the settings framework should attempt to autodetect the right 
+     * value for this setting.  Only if the autodetect attempt fails will the
+     * value specified by {@link def} be used.
+     */
+    public boolean autoDetect;
+    
     /** Constructor. */
     public KeyMaker() {
         constraints = new HashSet<Constraint<T>>();

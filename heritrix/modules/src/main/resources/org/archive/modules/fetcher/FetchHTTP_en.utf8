@@ -127,3 +127,6 @@ send-if-none-match-description:
 Send 'If-None-Match' header, if previous 'Etag' fetch history information
 is available in URI history.
 
+
+user-agent-provider-description:
+Provides the user-agent and from header.

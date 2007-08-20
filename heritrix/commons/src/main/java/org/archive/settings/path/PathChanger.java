@@ -59,6 +59,12 @@ public class PathChanger {
     
     final public static String LIST_TAG = "list";
     
+    final public static String PRIMARY_TAG = "primary";
+    
+    final public static String AUTO_TAG = "auto";
+    
+    final public static Object AUTO = new Object();
+    
     private static class PendingInit {
         Initializable module;
         String path;
@@ -133,12 +139,14 @@ public class PathChanger {
             v = null;
         } else if (typeTag.equals(REFERENCE_TAG)) {
             v = makeReference(sheet, value);
-        } else if (typeTag.equals(OBJECT_TAG)) {
+        } else if (typeTag.equals(OBJECT_TAG) || typeTag.equals(PRIMARY_TAG)) {
             v = makeObject(sheet, pair);
         } else if (typeTag.equals(MAP_TAG)) {
             v = makeMap(sheet, pair);
         } else if (typeTag.equals(LIST_TAG)) {
             v = makeList(sheet, pair);
+        } else if (typeTag.equals(AUTO_TAG)) {
+            v = AUTO;
         } else {
             v = makeSimple(typeTag, value);
         }
@@ -252,8 +260,8 @@ public class PathChanger {
         }
         return result;
     }
-    
-    
+
+
     private Object makeObject2(SingleSheet sheet, PathChange pc) {
         String value = pc.getValue();
         if (value.equals("null")) {
@@ -261,11 +269,16 @@ public class PathChanger {
         }
         try {
             Class<?> c = Class.forName(value);
+            Object result;
             if (!online(sheet, c)) {
-                Offline offline = Offline.make(c);
-                return offline;
+                result = Offline.make(c);
+            } else {
+                result = c.newInstance();
             }
-            return c.newInstance();
+            if (pc.getType().equals(PRIMARY_TAG)) {
+                sheet.getSheetManager().addPrimary(result);
+            }
+            return result;
         } catch (ClassNotFoundException e) {
             throw new PathChangeException("No such class: " + value);
         } catch (InstantiationException e) {
@@ -343,6 +356,9 @@ public class PathChanger {
         }
         
         if (previous instanceof List) {
+            if (value == AUTO) {
+                throw new PathChangeException("Can't autowire list elements.");
+            }
             int index;
             try {
                 index = Integer.parseInt(lastToken);
@@ -363,6 +379,9 @@ public class PathChanger {
         }
         
         if (previous instanceof Map) {
+            if (value == AUTO) {
+                throw new PathChangeException("Can't autowire map elements.");
+            }
             @SuppressWarnings("unchecked")
             Map<String,Object> map = (Map<String,Object>)previous;
             map.put(lastToken, value);
@@ -381,6 +400,11 @@ public class PathChanger {
         if (key == null) {
             throw new PathChangeException("No such key: " + path);
         }
+        
+        if (value == AUTO) {
+            value = sheet.getSheetManager().findPrimary(key.getType());
+        }
+        
         if (value instanceof Offline) {
             sheet.setOffline((Offline)previous, key, (Offline)value);
         } else {

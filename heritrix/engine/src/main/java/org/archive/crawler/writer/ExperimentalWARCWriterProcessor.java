@@ -61,6 +61,7 @@ import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -488,6 +489,11 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return km.toKey();
     }
 
+    
+    public List<String> getMetadata(StateProvider context) {
+        return null; // FIXME
+    }
+    
     // good to keep at end of source: must run after all per-Key 
     // initialization values are set.
     static {

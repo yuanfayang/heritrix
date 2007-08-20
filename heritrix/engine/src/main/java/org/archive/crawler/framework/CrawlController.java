@@ -88,16 +88,18 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Gordon Mohr
  */
-public class CrawlController extends Bean 
-implements Serializable, Reporter, StateProvider, Initializable, JobController {
+public class CrawlController extends Bean implements 
+    Serializable, 
+    Reporter, 
+    StateProvider, 
+    Initializable, 
+    JobController {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlController.class,1);
 
-    
 
-    
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE = 
         Key.make(ServerCache.class, null);
@@ -1466,21 +1468,7 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         SingleSheet def = sheetManager.getGlobalSheet();
         return def.get(module, key);
     }
-    
-    public String getUserAgent() {
-        // TODO: reduce the number of times this regex-replace is redundantly done
-        return sheetManager.get(order, CrawlOrder.HTTP_USER_AGENT)
-            .replaceFirst("@OPERATOR_CONTACT_URL@", 
-                    sheetManager.get(order, CrawlOrder.OPERATOR_CONTACT_URL));
-    }
-    
-    
-    public String getFrom() {
-        return sheetManager.get(order, CrawlOrder.OPERATOR_FROM);
-    }
 
-
-    
     public CrawlOrder getOrder() {
         return order;
     }
@@ -1548,4 +1536,5 @@ implements Serializable, Reporter, StateProvider, Initializable, JobController {
         this.reportTo(CrawlController.PROCESSORS_REPORT,new PrintWriter(sw));
         return sw.toString();
     }
+
 }

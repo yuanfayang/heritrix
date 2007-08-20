@@ -27,12 +27,20 @@ package org.archive.crawler.writer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang.StringEscapeUtils;
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.ReplayInputStream;
@@ -46,6 +54,7 @@ import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 import org.archive.util.IoUtils;
 
 
@@ -61,6 +70,8 @@ import org.archive.util.IoUtils;
  */
 public class ARCWriterProcessor extends WriterPoolProcessor {
 
+    final static private String TEMPLATE = readTemplate();
+    
     private static final long serialVersionUID = 3L;
 
     private static final Logger logger = 
@@ -88,7 +99,8 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
     private static final String [] DEFAULT_PATH = {"arcs"};
 
 
-    
+    private transient List<String> cachedMetadata;
+
     
     /**
      * @param name Name of this writer.
@@ -199,6 +211,98 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
         KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
         km.def = Collections.singletonList("arcs");
         return km.toKey();
+    }
+
+    protected List<String> getMetadata(StateProvider global) {
+        if (TEMPLATE == null) {
+            return null;
+        }
+        
+        if (cachedMetadata != null) {
+            return cachedMetadata;
+        }
+        
+        MetadataProvider provider = global.get(this, METADATA_PROVIDER);
+        
+        String meta = TEMPLATE;
+        meta = replace(meta, "${VERSION}", Heritrix.getVersion());
+        meta = replace(meta, "${HOST}", getHostName());
+        meta = replace(meta, "${IP}", getHostAddress());
+        
+        if (provider != null) {
+            meta = replace(meta, "${JOB_NAME}", provider.getJobName());
+            meta = replace(meta, "${DESCRIPTION}", provider.getJobDescription());
+            meta = replace(meta, "${OPERATOR}", provider.getJobOperator());
+            meta = replace(meta, "${DATE}", GMT());
+            meta = replace(meta, "${USER_AGENT}", provider.getUserAgent());
+            meta = replace(meta, "${FROM}", provider.getFrom());
+            meta = replace(meta, "${ROBOTS}", provider.getRobotsPolicy());
+        }
+
+        this.cachedMetadata = Collections.singletonList(meta);
+        return this.cachedMetadata;
+        // ${VERSION}
+        // ${HOST}
+        // ${IP}
+        // ${JOB_NAME}
+        // ${DESCRIPTION}
+        // ${OPERATOR}
+        // ${DATE}
+        // ${USER_AGENT}
+        // ${FROM}
+        // ${ROBOTS}
+
+    }
+
+    
+    private String GMT() {
+        TimeZone gmt = TimeZone.getTimeZone("GMT+00:00");
+        Calendar calendar = Calendar.getInstance(gmt);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-ddThh:mm:ss");
+        Date date = calendar.getTime();
+        return sdf.format(date) + "+00:00";
+    }
+    
+    
+    private static String replace(String meta, String find, String replace) {
+        replace = StringEscapeUtils.escapeXml(replace);
+        return meta.replace(find, replace);
+    }
+    
+    private static String getHostName() {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            logger.log(Level.SEVERE, "Could not get local host name.", e);
+            return "localhost";
+        }
+    }
+    
+    
+    private static String getHostAddress() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            logger.log(Level.SEVERE, "Could not get local host address.", e);
+            return "localhost";
+        }        
+    }
+
+
+    private static String readTemplate() {
+        InputStream input = ARCWriterProcessor.class.getResourceAsStream(
+                "arc_metadata_template.xml");
+        if (input == null) {
+            logger.severe("No metadata template.");
+            return null;
+        }
+        try {
+            return IoUtils.readFullyAsString(input);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            IoUtils.close(input);
+        }
     }
 
 }
