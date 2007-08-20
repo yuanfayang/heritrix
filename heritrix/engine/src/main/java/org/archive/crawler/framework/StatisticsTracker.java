@@ -134,11 +134,11 @@ implements CrawlURIDispositionListener, Serializable {
     
     @Immutable
     final public static Key<SeedModule> SEEDS =
-        Key.make(SeedModule.class, null);
+        Key.makeAuto(SeedModule.class);
 
     @Immutable
     final public static Key<BdbModule> BDB =
-        Key.make(BdbModule.class, null);
+        Key.makeAuto(BdbModule.class);
     
     @Immutable
     final public static Key<FileModule> REPORTS_DIR =

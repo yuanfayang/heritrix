@@ -28,20 +28,13 @@
 package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.archive.modules.net.RobotsHonoringPolicy;
-import org.archive.net.UURIFactory;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
 import org.archive.state.Module;
-import org.archive.state.PatternConstraint;
 
 
 /**
@@ -138,7 +131,7 @@ public class CrawlOrder implements Module, Serializable {
         Key.make(65536);
 
     final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-        Key.makeNull(RobotsHonoringPolicy.class);
+        Key.makeAuto(RobotsHonoringPolicy.class);
 
     /**
      * Optional. Points at recover log (or recover.gz log) OR the checkpoint 

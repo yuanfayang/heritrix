@@ -92,7 +92,7 @@ implements Initializable, Serializable {
     
     @Immutable
     public static final Key<BdbModule> BDB = 
-        Key.make(BdbModule.class, null);
+        Key.makeAuto(BdbModule.class);
     
     static {
         KeyManager.addKeys(BdbUriUniqFilter.class);

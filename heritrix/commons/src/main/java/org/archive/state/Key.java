@@ -115,7 +115,7 @@ final public class Key<Value> implements Serializable {
     private String fieldName;
     
     /** The class who declares the field.  Set by the KeyManager. */
-    private Class owner;
+    private Class<?> owner;
 
     /** The type of the field. */
     transient final private Class<Value> type;
@@ -124,7 +124,7 @@ final public class Key<Value> implements Serializable {
      * The element type of a List or Map.  Will be null if this.type is 
      * anything other than java.util.List or java.util.Map.
      */
-    private Class elementType;
+    private Class<?> elementType;
         
     /** The default value of the field. */
     transient final private Value def;
@@ -182,7 +182,7 @@ final public class Key<Value> implements Serializable {
      * @param owner  the class that declared this key
      * @param field   the Key's field
      */
-    void setMetadata(Class owner, Field field) {
+    void setMetadata(Class<?> owner, Field field) {
         this.fieldName = field.getName().toLowerCase().replace('_', '-');
         this.owner = owner;
         if (field.getAnnotation(Nullable.class) == null) {
@@ -226,7 +226,7 @@ final public class Key<Value> implements Serializable {
      * 
      * @return  the element type of a List or Map key, or null if 
      */
-    public Class getElementType() {
+    public Class<?> getElementType() {
         return elementType;
     }
     
@@ -469,7 +469,7 @@ final public class Key<Value> implements Serializable {
         if (def == null) {
             return null;
         }
-        Class type = def.getClass();
+        Class<?> type = def.getClass();
         if (KeyTypes.isSimple(type)) {
             return def;
         }

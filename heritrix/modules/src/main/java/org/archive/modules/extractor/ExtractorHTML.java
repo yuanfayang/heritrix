@@ -222,7 +222,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * The robots honoring policy to use when considering a robots META tag.
      */
     public static final Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-        Key.make(RobotsHonoringPolicy.class, null);
+        Key.makeAuto(RobotsHonoringPolicy.class);
     
     static {
         KeyManager.addKeys(ExtractorHTML.class);

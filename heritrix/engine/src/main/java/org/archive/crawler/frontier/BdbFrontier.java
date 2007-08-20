@@ -73,7 +73,7 @@ implements Serializable, Checkpointable {
     protected transient BdbMultipleWorkQueues pendingUris;
 
     @Immutable
-    final public static Key<BdbModule> BDB = Key.make(BdbModule.class, null);
+    final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
 
     static {
         KeyManager.addKeys(BdbFrontier.class);

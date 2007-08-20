@@ -235,17 +235,17 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      */
     @Immutable
     final public static Key<CrawlController> CONTROLLER = 
-        Key.make(CrawlController.class, null);
+        Key.makeAuto(CrawlController.class);
     
     
     @Immutable
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
-        Key.make(CrawlerLoggerModule.class, null);
+        Key.makeAuto(CrawlerLoggerModule.class);
 
     
     @Immutable
     final public static Key<SeedModule> SEEDS = 
-        Key.make(SeedModule.class, null);
+        Key.makeAuto(SeedModule.class);
     
     
     /**
@@ -258,7 +258,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     
     @Immutable
     final public static Key<SheetManager> MANAGER =
-        Key.make(SheetManager.class, null);
+        Key.makeAuto(SheetManager.class);
 
     
     private FileModule scratchDir;

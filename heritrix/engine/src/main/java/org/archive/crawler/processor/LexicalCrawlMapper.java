@@ -101,7 +101,7 @@ public class LexicalCrawlMapper extends CrawlMapper {
 
 
     @Immutable
-    final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, null); 
+    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class); 
     
     @Immutable
     final public static Key<FileModule> DIR = 

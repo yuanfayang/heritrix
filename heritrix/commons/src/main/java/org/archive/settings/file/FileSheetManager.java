@@ -54,8 +54,10 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
+import org.archive.settings.path.ConstraintChecker;
 import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
+import org.archive.settings.path.PathListConsumer;
 import org.archive.settings.path.PathLister;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.FileModule;
@@ -647,10 +649,17 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             SheetFileReader sfr = new SheetFileReader(new FileReader(f));
             PathChanger pc = new PathChanger();
             pc.change(r, sfr);
-            if (!pc.getProblems().isEmpty()) {
-                this.problems.put(name, pc.getProblems());
+            
+            List<PathChangeException> problems = pc.getProblems();
+            
+            PathListConsumer plc = new ConstraintChecker(problems, r);
+            PathLister.resolveAll(r, plc, true);
+
+            if (!problems.isEmpty()) {
+                this.problems.put(name, problems);
             }
-            new PathChanger().change(r, sfr);
+
+            
             return r;
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
@@ -800,6 +809,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
             ss.set(dir, FileModule.PATH, dir.getFile().getAbsolutePath());
+            addPrimary(bdb);
         } else {
             @SuppressWarnings("unchecked")
             Offline<SheetManager> manager = (Offline)getManagerModule();
@@ -812,6 +822,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
             ss.setOffline(dir, FileModule.PATH, this.dir.getFile().getAbsolutePath());
+            addPrimary(bdb);
         }
     }
     

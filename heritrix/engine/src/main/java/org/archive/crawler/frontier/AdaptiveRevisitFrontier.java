@@ -98,19 +98,19 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     
     @Immutable
     final public static Key<CrawlController> CONTROLLER = 
-        Key.make(CrawlController.class, null);
+        Key.makeAuto(CrawlController.class);
     
     @Immutable
     final public static Key<BdbModule> BDB =
-        Key.make(BdbModule.class, null);
+        Key.makeAuto(BdbModule.class);
     
     @Immutable
     final public static Key<SeedModule> SEEDS =
-        Key.make(SeedModule.class, null);
+        Key.makeAuto(SeedModule.class);
     
     @Immutable
     final public static Key<UriUniqFilter> URI_UNIQ_FILTER =
-        Key.make(UriUniqFilter.class, null);
+        Key.makeAuto(UriUniqFilter.class);
     
     @Immutable
     final public static Key<FileModule> DIR = 

@@ -65,7 +65,7 @@ public abstract class Scoper extends Processor {
     
     @Immutable
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
-        Key.make(CrawlerLoggerModule.class, null);
+        Key.makeAuto(CrawlerLoggerModule.class);
     
     
     @Immutable

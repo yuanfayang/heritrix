@@ -77,7 +77,7 @@ implements Initializable, KeyChangeListener {
         Key.make(FileModule.class, null);
 
     final public static Key<CrawlController> CONTROLLER =
-        Key.make(CrawlController.class, null);
+        Key.makeAuto(CrawlController.class);
 
     /**
      * Whether each ToeThread should get its own independent script context, or

@@ -94,7 +94,7 @@ public class FetchDNS extends Processor implements Initializable {
      */
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE = 
-        Key.make(ServerCache.class, null);
+        Key.makeAuto(ServerCache.class);
     
     /**
      * Whether or not to perform an on-the-fly digest hash of retrieved

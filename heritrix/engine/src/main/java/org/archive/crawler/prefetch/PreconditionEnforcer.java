@@ -71,7 +71,7 @@ public class PreconditionEnforcer
 
     @Immutable
     final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
-        Key.make(UserAgentProvider.class, null);
+        Key.makeAuto(UserAgentProvider.class);
 
     /**
      * The minimum interval for which a dns-record will be considered valid (in
