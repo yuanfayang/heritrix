@@ -288,12 +288,6 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
             controller.get(controller, CrawlController.PROCESSORS);
         currentCuri.setStateProvider(controller.getSheetManager());
         currentCuri.setRecorder(httpRecorder);
-        if (currentCuri.getUserAgent() == null) {
-            currentCuri.setUserAgent(controller.getUserAgent());
-        }        
-        if (currentCuri.getFrom() == null) {
-            currentCuri.setFrom(controller.getFrom());
-        }
         try {
             for (Map.Entry<String,Processor> me: localProcessors.entrySet()) {
                 setStep(STEP_ABOUT_TO_BEGIN_PROCESSOR);

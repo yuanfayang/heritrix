@@ -55,19 +55,15 @@ class UnspecifiedSheet extends Sheet {
     @Override
     public <T> T check(Object module, Key<T> key) {
         validateModuleType(Offline.getType(module), key);
-        if (getSheetManager().isOnline()) {
-            return key.getDefaultValue();
-        } else {
-            @SuppressWarnings("unchecked")
-            T t = (T)key.getOfflineDefault();
-            return t;
-        }
+        Object def = getDefaultValue(module, key);
+        return key.getType().cast(def);
     }
 
     @Override
     public <T> Offline checkOffline(Offline module, Key<T> key) {
         validateModuleType(module.getType(), key);
-        return (Offline)key.getOfflineDefault();
+        Object def = getDefaultValue(module, key);
+        return (Offline)def;
     }
 
     @SuppressWarnings("unchecked")
@@ -92,14 +88,23 @@ class UnspecifiedSheet extends Sheet {
                 }
                 value = new SettingsList(this, list, key.getElementType());                
             }
-        } else if (getSheetManager().isOnline()) {
-            value = key.getDefaultValue();
         } else {
-            value = key.getOfflineDefault();
+            value = getDefaultValue(module, key);
         }
 
         return Resolved.make(module, k, value, thisList);
     }
 
 
+    private <T> Object getDefaultValue(Object module, Key<T> key) {
+        Class<T> type = key.getType();
+        if (key.isAutoDetected()) {
+            return getSheetManager().findPrimary(type);
+        }
+        if (getSheetManager().isOnline()) {
+            return key.getDefaultValue();
+        } else {
+            return key.getOfflineDefault();
+        }
+    }
 }

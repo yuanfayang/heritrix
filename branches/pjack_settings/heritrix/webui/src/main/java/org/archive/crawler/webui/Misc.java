@@ -58,7 +58,8 @@ import org.archive.util.SURT;
 public class Misc {
 
     
-    final private static Pattern SURT_PATTERN = Pattern.compile("^[a-z]+:\\(");
+    final private static Pattern SURT_PATTERN = 
+        Pattern.compile("^[a-z]+:(//){0,1}\\(");
     
     
     private static boolean isLocal(

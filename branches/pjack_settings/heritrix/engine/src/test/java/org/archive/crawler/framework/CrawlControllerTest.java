@@ -95,9 +95,9 @@ public class CrawlControllerTest extends ModuleTestBase {
         CrawlOrder order = new CrawlOrder();
                 
         def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
-        def.set(order, CrawlOrder.HTTP_USER_AGENT, "Heritrix (+@OPERATOR_CONTACT_URL@) abc");
-        def.set(order, CrawlOrder.OPERATOR_CONTACT_URL, "http://www.example.com/OurCrawlDetails");
-        def.set(order, CrawlOrder.OPERATOR_FROM, "complain@example.com");
+//        def.set(order, CrawlOrder.HTTP_USER_AGENT, "Heritrix (+@OPERATOR_CONTACT_URL@) abc");
+//        def.set(order, CrawlOrder.OPERATOR_CONTACT_URL, "http://www.example.com/OurCrawlDetails");
+//        def.set(order, CrawlOrder.OPERATOR_FROM, "complain@example.com");
         
         BdbModule bdb = new BdbModule();
         def.set(bdb, BdbModule.DIR, state.getAbsolutePath());

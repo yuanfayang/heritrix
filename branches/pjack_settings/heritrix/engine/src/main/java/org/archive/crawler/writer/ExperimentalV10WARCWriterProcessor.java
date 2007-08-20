@@ -52,6 +52,7 @@ import org.archive.io.warc.v10.WARCWriterPool;
 import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
+import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -327,7 +328,7 @@ public class ExperimentalV10WARCWriterProcessor extends WriterPoolProcessor {
         return result;
     }  
 
-    public List getMetadata() {
+    public List<String> getMetadata(StateProvider context) {
         // TODO: As ANVL?
         return null;
     }
@@ -344,6 +345,7 @@ public class ExperimentalV10WARCWriterProcessor extends WriterPoolProcessor {
         km.def = Collections.singletonList("arcs");
         return km.toKey();
     }
+
 
 
 }

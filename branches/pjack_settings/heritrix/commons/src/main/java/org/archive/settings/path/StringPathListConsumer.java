@@ -31,6 +31,7 @@ import java.util.Map;
 
 import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
 import org.archive.settings.TypedList;
 import org.archive.settings.TypedMap;
 import org.archive.state.KeyTypes;
@@ -39,6 +40,8 @@ import static org.archive.settings.path.PathChanger.REFERENCE_TAG;
 import static org.archive.settings.path.PathChanger.OBJECT_TAG;
 import static org.archive.settings.path.PathChanger.LIST_TAG;
 import static org.archive.settings.path.PathChanger.MAP_TAG;
+import static org.archive.settings.path.PathChanger.PRIMARY_TAG;
+import static org.archive.settings.path.PathChanger.AUTO_TAG;
 
 /**
  * @author pjack
@@ -53,6 +56,9 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             Object value, 
             Class type, 
             String seenPath) {
+        SheetManager sm = sheets.get(0).getSheetManager();
+        boolean primary = sm.isPrimary(value);
+        
         String[] snames = new String[sheets.size()];
         for (int i = 0; i < snames.length; i++) {
             snames[i] = sheets.get(i).getName();
@@ -66,7 +72,11 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             typeTag = KeyTypes.getSimpleTypeTag(type);
             v = KeyTypes.toString(value);
         } else if (seenPath != null) {
-            typeTag = REFERENCE_TAG;
+            if (primary) {
+                typeTag = REFERENCE_TAG;
+            } else {
+                typeTag = AUTO_TAG;
+            }
             v = seenPath;
         } else if (Map.class.isAssignableFrom(actual)) {
             typeTag = MAP_TAG;
@@ -75,7 +85,11 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             typeTag = LIST_TAG;
             v = ((TypedList)value).getElementType().getName();
         } else {
-            typeTag = OBJECT_TAG;
+            if (primary) {
+                typeTag = PRIMARY_TAG;
+            } else {
+                typeTag = OBJECT_TAG;
+            }
             v = (value == null) ? "null" : Offline.getType(value).getName();
         }
 

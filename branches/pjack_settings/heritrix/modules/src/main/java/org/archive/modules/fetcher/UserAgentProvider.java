@@ -1,11 +1,5 @@
-/*
- * MetadataProvider
- *
- * $Id$
- *
- * Created on Nov 29, 2006
- *
- * Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -22,19 +16,28 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * UserAgentModule.java
+ *
+ * Created on Aug 17, 2007
+ *
+ * $Id:$
  */
-package org.archive.crawler.writer;
 
+package org.archive.modules.fetcher;
 
+import org.archive.state.StateProvider;
 
-public interface MetadataProvider {
+/**
+ * @author pjack
+ *
+ */
+public interface UserAgentProvider {
+
     
-    String getJobName();
-    String getJobOperator();
-    String getJobDescription();
-    String getUserAgent();
-    String getFrom();
-    String getRobotsPolicy();
-
+    public String getUserAgent(StateProvider context);
+    
+    public String getFrom(StateProvider context);
+    
     
 }

@@ -1,3 +1,8 @@
+user-agent-provider-description:
+Provides the user-agent string used to check if a remote site's robots.txt
+allows us to crawl.
+
+
 calculate-robots-only-description:
 Whether to only calculate the robots status of an URI, without actually 
 applying any exclusions found. If true, exlcuded URIs will only be 

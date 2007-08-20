@@ -191,9 +191,9 @@ public class FetchHTTP extends Processor implements Initializable {
     @Expert
     final public static Key<Integer> FETCH_BANDWIDTH = Key.make(0);
 
-    /**
-     * SSL trust level setting attribute name.
-     */
+
+    final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
+        Key.make(UserAgentProvider.class, null);
 
     /**
      * SSL certificate trust level. Range is from the default 'open' (trust all
@@ -330,7 +330,8 @@ public class FetchHTTP extends Processor implements Initializable {
      */
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE =
-        Key.make(ServerCache.class, null);
+        Key.makeAuto(ServerCache.class);
+//        Key.make(ServerCache.class, null);
 
     /*
      * FIXME: This needs to live somewhere else static {
@@ -716,8 +717,15 @@ public class FetchHTTP extends Processor implements Initializable {
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         method.getParams().setVersion(HttpVersion.HTTP_1_0);
 
-        method.setRequestHeader("User-Agent", curi.getUserAgent());
-        method.setRequestHeader("From", curi.getFrom());
+        UserAgentProvider uap = curi.get(this, USER_AGENT_PROVIDER);
+        String from = uap.getFrom(curi);
+        String userAgent = curi.getUserAgent();
+        if (userAgent == null) {
+            userAgent = uap.getUserAgent(curi);
+        }
+        
+        method.setRequestHeader("User-Agent", userAgent);
+        method.setRequestHeader("From", from);
 
         // Set retry handler.
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,

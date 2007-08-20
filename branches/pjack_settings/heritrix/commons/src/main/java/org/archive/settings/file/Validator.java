@@ -42,7 +42,7 @@ public class Validator {
     
     public static int validate(String mainConfigPath) throws Exception {
         File main = new File(mainConfigPath);
-        FileSheetManager fsm = new FileSheetManager(main, false);
+        FileSheetManager fsm = new FileSheetManager(main, "unknown", false);
 
         int count = 0;
         for (String sheet: fsm.getProblemSingleSheetNames()) {

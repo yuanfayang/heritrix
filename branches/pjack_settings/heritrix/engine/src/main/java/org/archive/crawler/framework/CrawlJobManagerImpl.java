@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -98,8 +97,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     final public static String LOGS_DIR_PATH =
         CONTROLLER_PATH + ":logger-module:dir";
 
-    final private static Logger LOGGER = 
-        Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
+//    final private static Logger LOGGER = 
+//        Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
     
     final public static String DOMAIN = "org.archive.crawler";
     
@@ -211,7 +210,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         if (!src.exists()) {
             throw new IllegalArgumentException("No such job/profile: " + origName);
         }
-        
+
+        closeSheetManagerStub(origName);
+
         String destName = JobStage.getJobName(copiedName);
         verifyUnique(destName);
 
@@ -279,7 +280,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         File bootstrap = new File(src, BOOTSTRAP);
         FileSheetManager fsm;
         try {
-            fsm = new FileSheetManager(bootstrap, false);
+            fsm = new FileSheetManager(bootstrap, name, false);
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);
@@ -338,7 +339,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             List<ModuleListener> list = new ArrayList<ModuleListener>();
             list.add(jmxListener);
             list.add(ListModuleListener.make(CrawlStatusListener.class));
-            fsm = new FileSheetManager(bootstrap, true, list);
+            fsm = new FileSheetManager(bootstrap, name, true, list);
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);

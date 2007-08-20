@@ -91,7 +91,7 @@ public class MemorySheetManager extends SheetManager {
      * Constructor.
      */
     public MemorySheetManager(boolean online) {
-        super(online);
+        super("unkownn", online);
         sheets = new HashMap<String,Sheet>();
         associations = new TreeMap<String,Set<Sheet>>();
         globals = addSingleSheet(GLOBAL_SHEET_NAME);
