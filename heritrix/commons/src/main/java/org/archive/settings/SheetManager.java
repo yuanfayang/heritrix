@@ -328,13 +328,6 @@ implements StateProvider, Serializable { //, DirectoryModule {
      */
     public abstract Collection<String> getAssociations(String context);
 
-
-    
-    public abstract void reload();
-    
-    
-    public abstract void save();
-
     
     public void cleanup() {}
     

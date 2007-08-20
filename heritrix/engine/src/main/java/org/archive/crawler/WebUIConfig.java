@@ -83,4 +83,17 @@ public class WebUIConfig {
     public void setUiPassword(String uiPassword) {
         this.uiPassword = uiPassword;
     }
+
+
+    public String hostAndPort() {
+        StringBuilder sb = new StringBuilder();
+        if (hosts == null || hosts.isEmpty()) {
+            sb.append("localhost");
+        } else {
+            sb.append(hosts.iterator().next());
+        }
+        sb.append(':').append(port);
+        return sb.toString();
+    }
+
 }

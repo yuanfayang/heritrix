@@ -225,11 +225,6 @@ public class MemorySheetManager extends SheetManager {
     }
 
 
-    public void reload() {}
-    
-    public void save() {}
-
-
     public File getDirectory() {
         return new File(".");
     }
