@@ -258,7 +258,7 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
     private String GMT() {
         TimeZone gmt = TimeZone.getTimeZone("GMT+00:00");
         Calendar calendar = Calendar.getInstance(gmt);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-ddThh:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
         Date date = calendar.getTime();
         return sdf.format(date) + "+00:00";
     }
