@@ -106,6 +106,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
         moduleListeners.add(checkpointables);
         moduleListeners.add(closeables);
         moduleListeners.add(finishables);
+        addPrimary(this.getManagerModule());
     }
     
     

@@ -56,11 +56,11 @@ public class DefaultMetadataProvider implements
 
     @Immutable
     final public static Key<SheetManager> SHEET_MANAGER = 
-        Key.make(SheetManager.class, null);
+        Key.makeAuto(SheetManager.class);
     
     @Immutable
     final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-        Key.make(RobotsHonoringPolicy.class, null);
+        Key.makeAuto(RobotsHonoringPolicy.class);
 
     @Immutable
     final public static Key<String> OPERATOR_NAME = Key.make("");

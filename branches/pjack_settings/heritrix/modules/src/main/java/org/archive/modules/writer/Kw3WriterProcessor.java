@@ -139,7 +139,7 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
    */
   @Immutable
   final public static Key<ServerCache> SERVER_CACHE = 
-      Key.make(ServerCache.class, null);
+      Key.makeAuto(ServerCache.class);
 
   
   /**

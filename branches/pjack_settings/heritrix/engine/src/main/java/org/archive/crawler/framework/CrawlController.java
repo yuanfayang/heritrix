@@ -102,14 +102,14 @@ public class CrawlController extends Bean implements
 
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE = 
-        Key.make(ServerCache.class, null);
+        Key.makeAuto(ServerCache.class);
 
 
     /**
      * The frontier to use for the crawl.
      */
     @Immutable
-    final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, null);
+    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class);
 
     
     @Immutable
@@ -142,7 +142,7 @@ public class CrawlController extends Bean implements
     
     @Expert @Immutable
     final public static Key<CredentialStore> CREDENTIAL_STORE = 
-        Key.make(new CredentialStore());
+        Key.makeAuto(CredentialStore.class);
 
 
     final public static Key<Map<String,Processor>> PROCESSORS =
@@ -155,11 +155,11 @@ public class CrawlController extends Bean implements
     
     @Immutable
     final public static Key<SheetManager> SHEET_MANAGER = 
-        Key.make(SheetManager.class, null);
+        Key.makeAuto(SheetManager.class);
 
 
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
-        Key.make(CrawlerLoggerModule.class, null);
+        Key.makeAuto(CrawlerLoggerModule.class);
 
     static {
         KeyManager.addKeys(CrawlController.class);

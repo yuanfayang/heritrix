@@ -61,8 +61,8 @@ public class FrontierScheduler extends Processor {
      * The frontier to use.
      */
     @Immutable
-    final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, 
-            new EmptyFrontier());
+    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class);
+
 
     /**
      */

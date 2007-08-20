@@ -21,7 +21,7 @@ implements Initializable {
 
     @Immutable
     final public static Key<BdbModule> BDB =
-        Key.make(BdbModule.class, null);
+        Key.makeAuto(BdbModule.class);
     
     
     static {

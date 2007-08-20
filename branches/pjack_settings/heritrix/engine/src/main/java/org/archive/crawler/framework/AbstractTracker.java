@@ -71,7 +71,7 @@ Initializable, Finishable {
     
     @Immutable
     final public static Key<CrawlController> CONTROLLER = 
-        Key.make(CrawlController.class, null);
+        Key.makeAuto(CrawlController.class);
 
     
     

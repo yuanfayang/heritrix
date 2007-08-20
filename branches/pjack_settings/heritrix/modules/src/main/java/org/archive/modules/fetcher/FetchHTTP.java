@@ -193,7 +193,7 @@ public class FetchHTTP extends Processor implements Initializable {
 
 
     final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
-        Key.make(UserAgentProvider.class, null);
+        Key.makeAuto(UserAgentProvider.class);
 
     /**
      * SSL certificate trust level. Range is from the default 'open' (trust all
@@ -322,7 +322,7 @@ public class FetchHTTP extends Processor implements Initializable {
      */
     @Immutable
     final public static Key<CredentialStore> CREDENTIAL_STORE =
-        Key.make(CredentialStore.class, null);
+        Key.makeAuto(CredentialStore.class);
     
     
     /**

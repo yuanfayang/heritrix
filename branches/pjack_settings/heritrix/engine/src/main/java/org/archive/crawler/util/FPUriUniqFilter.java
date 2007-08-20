@@ -59,7 +59,7 @@ implements Initializable, Serializable {
     
     @Immutable
     final public static Key<LongFPSet> LONG_FP_SET = 
-        Key.make(LongFPSet.class, null);
+        Key.makeAuto(LongFPSet.class);
 
 
     static {

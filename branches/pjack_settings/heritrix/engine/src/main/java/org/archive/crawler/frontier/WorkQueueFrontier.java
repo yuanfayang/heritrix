@@ -206,7 +206,7 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
      */
     @Immutable
     public final static Key<UriUniqFilter> URI_UNIQ_FILTER =
-        Key.make(UriUniqFilter.class, null);
+        Key.makeAuto(UriUniqFilter.class);
     
     
     /**

@@ -45,7 +45,7 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
     private static final long serialVersionUID = -666479480942267268L;
     
     @Immutable
-    final public static Key<BdbModule> BDB = Key.make(BdbModule.class, null);
+    final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
     
     @Immutable
     final public static Key<String> HISTORYDB_NAME = Key.make("uri_history");

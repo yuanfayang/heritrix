@@ -55,7 +55,7 @@ public abstract class Extractor extends Processor implements Initializable {
 
     @Immutable
     final public static Key<UriErrorLoggerModule> URI_ERROR_LOGGER_MODULE = 
-        Key.make(UriErrorLoggerModule.class, null);
+        Key.makeAuto(UriErrorLoggerModule.class);
 
     
     protected UriErrorLoggerModule uriErrors;

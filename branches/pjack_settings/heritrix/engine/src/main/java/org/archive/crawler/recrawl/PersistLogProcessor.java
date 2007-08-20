@@ -56,7 +56,7 @@ public class PersistLogProcessor extends PersistProcessor implements Checkpointa
 
     @Immutable
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
-        Key.make(CrawlerLoggerModule.class, null);
+        Key.makeAuto(CrawlerLoggerModule.class);
 
     @Immutable
     final public static Key<String> LOG_FILENAME = Key.make("persistlog.txtser.gz");

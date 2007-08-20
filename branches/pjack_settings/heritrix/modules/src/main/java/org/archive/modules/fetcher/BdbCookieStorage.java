@@ -62,7 +62,7 @@ implements CookieStorage, Initializable, Serializable {
         Logger.getLogger(BdbCookieStorage.class.getName()); 
     
     @Immutable
-    final public static Key<BdbModule> BDB = Key.make(BdbModule.class, null);
+    final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
     
     @Immutable
     final public static Key<String> COOKIEDB_NAME = Key.make("http_cookies");

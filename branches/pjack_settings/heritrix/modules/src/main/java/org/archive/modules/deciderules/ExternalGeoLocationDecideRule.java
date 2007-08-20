@@ -71,7 +71,7 @@ implements Initializable {
     final public static Key<String> COUNTRY_CODE = Key.make("--");
 
     final public static Key<ServerCache> SERVER_CACHE = 
-        Key.make(ServerCache.class, null);
+        Key.makeAuto(ServerCache.class);
     
     private ServerCache serverCache;
 

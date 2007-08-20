@@ -123,7 +123,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     
     @Immutable 
     final public static Key<SeedModule> SEEDS = 
-        Key.make(SeedModule.class, null);
+        Key.makeAuto(SeedModule.class);
     
     
     protected SurtPrefixSet surtPrefixes = null;

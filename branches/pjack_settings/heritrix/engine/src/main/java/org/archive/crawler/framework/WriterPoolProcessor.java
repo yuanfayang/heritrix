@@ -162,11 +162,11 @@ implements Closeable {
 
     @Immutable
     final public static Key<MetadataProvider> METADATA_PROVIDER = 
-        Key.make(MetadataProvider.class, null);
+        Key.makeAuto(MetadataProvider.class);
 
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE = 
-        Key.make(ServerCache.class, null);
+        Key.makeAuto(ServerCache.class);
 
     @Immutable
     final public static Key<FileModule> DIRECTORY =
