@@ -378,7 +378,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
     }
 
-    public void reload() {
+    private void reload() {
         sheets.clear();
         
         // Load default sheet first, since every other sheet relies on it.
@@ -411,11 +411,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         // FIXME: Load or at least clear associations...
     }
 
-    public void save() {
-        for (Sheet s : sheets.values()) {
-            saveSheet(s);
-        }
-    }
 
     @Override
     public SingleSheet addSingleSheet(String name) {

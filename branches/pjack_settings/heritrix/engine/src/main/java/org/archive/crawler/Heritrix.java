@@ -250,13 +250,18 @@ public class Heritrix {
             CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(config);
             registerJndi(cjm.getObjectName(), out);
             out.println("CrawlJobManager registered at " + cjm.getObjectName());
+            
+            // Start WebUI, if desired.
+            if (cl.hasOption('r')) {
+                new WebUI(webConfig).start();
+                out.println("Web UI listing on " 
+                        + webConfig.hostAndPort() + ".");
+            }
         } catch (Exception e) {
             // Show any exceptions in STARTLOG.
             e.printStackTrace(out);
             throw e;
-        }
-
-        finally {
+        } finally {
             // If not development, close the file that signals the wrapper
             // script that we've started.  Otherwise, just flush it; if in
             // development, the output is probably a console.
@@ -273,10 +278,6 @@ public class Heritrix {
             }
         }
         
-        // Start WebUI, if desired.
-        if (cl.hasOption('r')) {
-            new WebUI(webConfig).start();
-        }
         
         try {
             Object eternity = new Object();
