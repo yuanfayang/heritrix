@@ -25,7 +25,7 @@
     <body>
 
     <form>
-    Auth? <input method="POST" name="enteredPassword"/>
+    Auth? <input method="POST" type="password" name="enteredPassword"/>
     </form>
 
     </body>
