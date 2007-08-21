@@ -25,8 +25,6 @@
  */
 package org.archive.settings.jmx;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -36,12 +34,10 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.management.DynamicMBean;
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 import org.archive.settings.ModuleListener;
@@ -87,17 +83,7 @@ public class JMXModuleListener implements ModuleListener, Serializable {
         this.server = server;
         this.name = name;
         for (Object o: counts.keySet()) {
-            try {
-                ObjectName oname = nameOf(o);
-                
-                server.registerMBean(o, oname);
-            } catch (InstanceAlreadyExistsException e) {
-                throw new IllegalStateException(e);
-            } catch (MBeanRegistrationException e) {
-                throw new IllegalStateException(e);
-            } catch (NotCompliantMBeanException e) {
-                throw new IllegalStateException(e);
-            }
+            LoggingDynamicMBean.register(server, o, nameOf(o));
         }
     }
 
@@ -122,6 +108,8 @@ public class JMXModuleListener implements ModuleListener, Serializable {
                 ObjectInfo info = counts.get(newModule);
                 if (info == null) {
                     info = new ObjectInfo();
+                    DynamicMBean mbean = (DynamicMBean)newModule;
+                    info.name = nameOf(mbean);
                     counts.put(newModule, info);
                     toBeAdded = true;
                 }
@@ -138,22 +126,11 @@ public class JMXModuleListener implements ModuleListener, Serializable {
             }
         }
         
-        if (!toBeAdded) {
-            return;
+        if (toBeAdded) {
+            LoggingDynamicMBean.register(server, newModule, nameOf(newModule));
         }
-        
-        try {
-            server.registerMBean(newModule, nameOf(newModule));
-        } catch (InstanceAlreadyExistsException e) {
-            throw new IllegalStateException(e);
-        } catch (MBeanRegistrationException e) {
-            throw new IllegalStateException(e);
-        } catch (NotCompliantMBeanException e) {
-            throw new IllegalStateException(e);
-        }
-        
     }
-    
+
 
     public ObjectName nameOf(Object o) {
         return nameOf(this.domain, this.name, o);
@@ -171,13 +148,7 @@ public class JMXModuleListener implements ModuleListener, Serializable {
         if (port == null) {
             port = "-1";
         }
-        String type;
-        if (o instanceof DynamicMBean) {
-            MBeanInfo info = ((DynamicMBean)o).getMBeanInfo();
-            type = info.getClassName();
-        } else {
-            type = o.getClass().getName();
-        }
+        String type = getRegisteredType(o);
 
         return JmxUtils.makeObjectName(
                 domain, 
@@ -187,7 +158,19 @@ public class JMXModuleListener implements ModuleListener, Serializable {
                 JmxUtils.HOST, host,
                 JmxUtils.JMX_PORT, port);        
     }
-    
+
+
+    private static String getRegisteredType(Object o) {
+        String type;
+        if (o instanceof DynamicMBean) {
+            MBeanInfo info = ((DynamicMBean)o).getMBeanInfo();
+            type = info.getClassName();
+        } else {
+            type = o.getClass().getName();
+        }
+        return type;
+    }
+
     
     public static String getHost() {
         try {

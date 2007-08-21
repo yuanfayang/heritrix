@@ -116,6 +116,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
             }
         }
         this.oname = JMXModuleListener.nameOf(domain, job, this);
+        LoggingDynamicMBean.register(server, this, oname);
         this.lastUse = System.currentTimeMillis();
         if (manager.isOnline()) {
             this.reapTask = null;
@@ -259,9 +260,9 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         if (o instanceof SettingsList) {
             int index = Integer.parseInt(key);
             int index2 = up ? index-- : index++;
-            Collections.swap((SettingsList)o, index, index2);
+            Collections.swap((SettingsList<?>)o, index, index2);
         } else if (o instanceof SettingsMap) {
-            ((SettingsMap)o).moveElement(key, up);
+            ((SettingsMap<?>)o).moveElement(key, up);
         } else {
             throw new IllegalArgumentException(parentPath + 
                     " is not a container.");

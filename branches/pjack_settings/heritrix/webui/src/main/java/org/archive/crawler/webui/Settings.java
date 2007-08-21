@@ -52,6 +52,7 @@ import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
 import org.archive.util.IoUtils;
 
+import static org.archive.settings.path.PathChanger.PRIMARY_TAG;
 import static org.archive.settings.path.PathChanger.REFERENCE_TAG;
 import static org.archive.settings.path.PathChanger.OBJECT_TAG;
 import static org.archive.settings.path.PathChanger.MAP_TAG;
@@ -347,7 +348,8 @@ public class Settings {
     private static boolean validParentType(String type) {
         return type.equals(OBJECT_TAG)
          || type.equals(MAP_TAG)
-         || type.equals(LIST_TAG);
+         || type.equals(LIST_TAG)
+         || type.equals(PRIMARY_TAG);
     }
 
     
@@ -390,7 +392,8 @@ public class Settings {
         // type that was specified.
         if (parentType.equals(MAP_TAG) || parentType.equals(LIST_TAG)) {
             result = forName(parent.getValue());
-        } else if (parentType.equals(OBJECT_TAG)) {
+        } else if (parentType.equals(OBJECT_TAG) 
+                || parentType.equals(PRIMARY_TAG)) {
             // A child of an object will have a type dicated by one of that
             // object's keys.
             

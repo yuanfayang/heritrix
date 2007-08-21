@@ -37,11 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
@@ -58,6 +55,7 @@ import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
+import org.archive.settings.jmx.LoggingDynamicMBean;
 import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
@@ -288,7 +286,6 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
 
         JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, name, DOMAIN, fsm);
-        register(jmx, jmx.getObjectName());
         return jmx.getObjectName();
     }
 
@@ -356,13 +353,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     private ObjectName createJMXSheetManager(String name, SheetManager fsm) {
         JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, 
                 name, DOMAIN, fsm);
-        final ObjectName smName = jmx.getObjectName();
-        try {
-            server.registerMBean(jmx, smName);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-        return smName;
+        return jmx.getObjectName();
     }
     
     
@@ -404,16 +395,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
     
     private ObjectName register(Object o, ObjectName oname) {
-        try {
-            server.registerMBean(o, oname);
-            return oname;
-        } catch (InstanceAlreadyExistsException e) {
-            throw new IllegalStateException(e);
-        } catch (NotCompliantMBeanException e) {
-            throw new IllegalStateException(e);
-        } catch (MBeanRegistrationException e) {
-            throw new IllegalStateException(e);
-        }
+        LoggingDynamicMBean.register(server, o, oname);
+        return oname;
     }
     
     
