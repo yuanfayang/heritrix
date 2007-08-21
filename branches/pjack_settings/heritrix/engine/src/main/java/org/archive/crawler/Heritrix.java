@@ -221,7 +221,7 @@ public class Heritrix {
             webConfig.getHosts().add("localhost");
         }
         if (cl.hasOption('p')) {
-            int port = Integer.parseInt(cl.getOptionValue('l'));
+            int port = Integer.parseInt(cl.getOptionValue('p'));
             webConfig.setPort(port);
         }
         if (cl.hasOption('w')) {
