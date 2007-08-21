@@ -202,7 +202,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
         // check whether running balance is depleted 
         // or totalExpenditure exceeds totalBudget
         return this.sessionBalance <= 0
-            || (this.totalBudget >= 0 && this.totalExpenditure > this.totalBudget);
+            || (this.totalBudget >= 0 && this.totalExpenditure >= this.totalBudget);
     }
 
     /**
