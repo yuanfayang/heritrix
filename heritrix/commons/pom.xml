@@ -144,12 +144,14 @@
               <version>2.0.3</version>
               <scope>compile</scope>
         </dependency>
+        <!--
         <dependency>
               <groupId>tomcat</groupId>
               <artifactId>servlet</artifactId>
               <version>4.1.34</version>
               <scope>compile</scope>
         </dependency>
+        -->
         <dependency>
               <groupId>poi</groupId>
               <artifactId>poi</artifactId>
