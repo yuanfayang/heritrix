@@ -23,12 +23,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.jsp.JspWriter;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
@@ -217,8 +216,9 @@ public class TextUtils {
      * @param out destination JspWriter
      * @throws IOException
      */
-    public static void writeEscapedForHTML(String s, JspWriter out)
+    public static void writeEscapedForHTML(String s, Writer w)
     throws IOException {
+        PrintWriter out = new PrintWriter(w);
         BufferedReader reader = new BufferedReader(new StringReader(s));
         String line;
         while((line=reader.readLine()) != null){
