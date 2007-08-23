@@ -44,7 +44,7 @@
 	<classpathentry kind="var" path="M2_REPO/jboss/jnp-client/4.0.2/jnp-client-4.0.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/ant/ant/1.6.5/ant-1.6.5.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-io/commons-io/1.3.1/commons-io-1.3.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/archive/overlays/archive-overlay-je/3.2.23/archive-overlay-je-3.2.23.jar"/>
+	<classpathentry kind="var" path="M2_REPO/berkeleydb/je/3.2.43/je-3.2.43.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/archive/overlays/archive-overlay-commons-httpclient/3.0.1/archive-overlay-commons-httpclient-3.0.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/archive/overlays/archive-overlay-commons-pool/1.3/archive-overlay-commons-pool-1.3.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/dnsjava/dnsjava/2.0.3/dnsjava-2.0.3.jar"/>
