@@ -146,6 +146,7 @@ public class LoggingDynamicMBean implements DynamicMBean, NotificationBroadcaste
             if (params.length > 0) {
                 appendObject(sb, params[0]);
                 for (int i = 1; i < params.length; i++) {
+                    sb.append(", ");
                     appendObject(sb, params[i]);
                 }
             }
