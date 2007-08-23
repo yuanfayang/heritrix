@@ -63,8 +63,7 @@ public class Seeds {
         int page = (pageString == null) ? 0 : Integer.parseInt(pageString);
         
         try {
-            Settings settings = Sheets.getGlobalSettings(sheetManager);
-            File f = Misc.getFile(settings, "root:seeds:seedsfile");
+            File f = new File(sheetManager.getFilePath("root:seeds:seedsfile"));
             String seeds = crawlJobManager.readLines(f.getAbsolutePath(), 
                     page * LINES_PER_PAGE, 
                     LINES_PER_PAGE);
@@ -95,8 +94,7 @@ public class Seeds {
                     CrawlJobManager.class);
             int page = Integer.parseInt(request.getParameter("page"));
             String seeds = request.getParameter("seeds");
-            Settings settings = Sheets.getGlobalSettings(sheetManager);
-            File f = Misc.getFile(settings, "root:seeds:seedsfile");
+            File f = new File(sheetManager.getFilePath("root:seeds:seedsfile"));
             crawlJobManager.writeLines(f.getAbsolutePath(),
                     page * LINES_PER_PAGE,
                     LINES_PER_PAGE,

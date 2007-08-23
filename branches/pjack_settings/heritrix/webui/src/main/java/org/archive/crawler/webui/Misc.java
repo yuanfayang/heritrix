@@ -191,79 +191,8 @@ public class Misc {
             return (ObjectName)set.iterator().next();
         }
     }
-    
-    
-    /**
-     * Returns the file represented by a settings path to a FileModule.
-     * 
-     * <p>If the given settings path contains any references, then they are
-     * first dereferenced.  Eg, if you're looking for 
-     * <tt>root:controller:seeds:dir</tt>, but <tt>root:controller:seeds</tt>
-     * is a reference to <tt>root:foo</tt>, then this method will
-     * actually return the file at <tt>root:foo:dir</tt>.
-     * 
-     * <p>The (dereferenced) settings path must point to a Setting whose
-     * type is "object" and whose value is {@link FileModule} or one of its
-     * subclasses.  This method will then examine the values of 
-     * {@link FileModule#PARENT} and {@link FileModule#PATH} to determine 
-     * the actual path represented by the module.
-     * 
-     * @param settings  The settings containing the file module
-     * @param path  the settings path to the file module
-     * @return  the file represented by that module
-     */
-    public static File getFile(Settings settings, String path) {
-        String[] tokens = path.split(
-                Character.toString(PathValidator.DELIMITER));
-        String actual = null;
-        for (int i = 0; i < tokens.length; i++) {
-            if (actual == null) {
-                actual = tokens[i];
-            } else {
-                actual = actual + PathValidator.DELIMITER + tokens[i];
-            }
-            Setting setting = settings.getSetting(actual);
-            if (setting == null) {
-                throw new IllegalArgumentException("No setting at " + actual);
-            }
-            if (setting.getType().equals(PathChanger.REFERENCE_TAG)) {
-                actual = setting.getValue();
-            }
-        }
-        
-        Setting setting = settings.getSetting(actual);
-        if (! setting.getType().equals(PathChanger.OBJECT_TAG)) {
-            throw new IllegalArgumentException("Expected object at " + path);
-        }
-        
-        Class c;
-        try {
-            c = Class.forName(setting.getValue());
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("No such class " +
-                    setting.getValue() + " at " + path);
-        }
-        if (!FileModule.class.isAssignableFrom(c)) {
-            throw new IllegalArgumentException("Object at " + path +
-                    "is not a FileModule, it's a " + c.getName());
-        }
-        
-        String parentPath = actual + PathValidator.DELIMITER + 
-            FileModule.PARENT.getFieldName();
-        Setting parentSetting = settings.getSetting(parentPath);
-        String parentValue = parentSetting.getValue();
-        File parent = parentValue.equals("null") ? null : getFile(settings, parentPath);
 
-        String filePath = actual + PathValidator.DELIMITER + 
-            FileModule.PATH.getFieldName();
-        String fileValue = settings.getSetting(filePath).getValue();
-        File result = new File(fileValue);
-        if ((parent != null) && !result.isAbsolute()) {
-            return new File(parent, fileValue);
-        } else {
-            return result;
-        }        
-    }
+
 
     
     /**
