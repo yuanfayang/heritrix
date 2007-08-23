@@ -75,10 +75,7 @@ import com.sleepycat.je.utilint.DbLsn;
 public class BdbModule implements Module, Initializable, Checkpointable, 
 Serializable, Closeable {
 
-    
-    
-    
-    
+
     final private static Logger LOGGER = 
         Logger.getLogger(BdbModule.class.getName()); 
 
@@ -221,6 +218,7 @@ Serializable, Closeable {
     private Map<String,DatabasePlusConfig> databases =
         new ConcurrentHashMap<String,DatabasePlusConfig>();
 
+    private transient Thread shutdownHook;
     
     public BdbModule() {
     }
@@ -235,6 +233,8 @@ Serializable, Closeable {
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
+        shutdownHook = new BdbShutdownHook(this);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
     
     private void setUp(String path, int cachePercent, boolean create) 
@@ -382,6 +382,8 @@ Serializable, Closeable {
             io.initCause(e);
             throw io;
         }
+        this.shutdownHook = new BdbShutdownHook(this);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
 
@@ -535,7 +537,15 @@ Serializable, Closeable {
     }
 
     
-    public void close() {        
+    public void close() {
+        close2();
+        Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    }
+    
+    void close2() {
+        if (classCatalog == null) {
+            return;
+        }
         for (Map.Entry<String,CachedBdbMap> me: bigMaps.entrySet()) try {
             me.getValue().close();
         } catch (Exception e) {
@@ -551,6 +561,7 @@ Serializable, Closeable {
 
         try {
             this.classCatalog.close();
+            this.classCatalog = null;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Exception closing StoredClassCatalog", e);
         }
@@ -593,6 +604,22 @@ Serializable, Closeable {
             File bdbDir = getBdbSubDirectory(checkpointDir);
             path = recovery.translatePath(path);
             FileUtils.copyFiles(bdbDir, new File(path));
+        }
+        
+    }
+
+    
+    private static class BdbShutdownHook extends Thread {
+ 
+        final private BdbModule bdb;
+        
+        
+        public BdbShutdownHook(BdbModule bdb) {
+            this.bdb = bdb;
+        }
+        
+        public void run() {
+            this.bdb.close2();
         }
         
     }

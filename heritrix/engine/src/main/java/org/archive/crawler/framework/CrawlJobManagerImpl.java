@@ -30,6 +30,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -237,6 +238,17 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         File srcSheets = new File(src, "sheets");
         if (srcSheets.isDirectory()) {
             FileUtils.copyFiles(srcSheets, new File(dest, "sheets"));
+        }
+        
+        File srcState = new File(src, "state");
+        if (srcState.isDirectory()) {
+            FilenameFilter ff = new FilenameFilter() {
+                public boolean accept(File parent, String name) {
+                    return !name.equals("je.lck");
+                }
+            };
+            FileUtils.copyFiles(srcState, ff, new File(dest, "state"), 
+                    false, true);
         }
     }
 
