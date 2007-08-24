@@ -56,6 +56,9 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             Object value, 
             Class type, 
             String seenPath) {
+        if (path.equals("root:controller:frontier:rules")) {
+            System.out.println("break");
+        }
         Sheet last = sheets.get(sheets.size() - 1);
         boolean primary;
         if ((last instanceof SingleSheet) && ((SingleSheet)last).isGlobal()) {
@@ -78,9 +81,9 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             v = KeyTypes.toString(value);
         } else if (seenPath != null) {
             if (primary) {
-                typeTag = REFERENCE_TAG;
-            } else {
                 typeTag = AUTO_TAG;
+            } else {
+                typeTag = REFERENCE_TAG;
             }
             v = seenPath;
         } else if (Map.class.isAssignableFrom(actual)) {
