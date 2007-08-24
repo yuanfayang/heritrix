@@ -38,7 +38,8 @@ Select a completed job below to import that job's frontier log:<br>
 </select>
 
 <p>Or, enter a full filesystem path to the frontier recovery log you'd like to
-import.  (This is a path on the <i>crawler<i>, not the web UI server.) 
+import.  (This is a path at the <i>crawl engine<i>, which may not be same as
+the web UI host.) 
 
 <br>
 
