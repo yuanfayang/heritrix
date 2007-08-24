@@ -11,7 +11,7 @@
     request.getSession(true).setAttribute(AuthFilter.IS_AUTHORIZED,true);
     // send to continueUrl or servlet root
     String continueUrl = (String)request.getSession(true).getAttribute(AuthFilter.CONTINUE_URL);
-    if(continueUrl == null) {
+    if(continueUrl == null || continueUrl.matches("(?i).*\\.(gif|jpe?g|ico|png)$")) {
         continueUrl = request.getContextPath();
     }
     response.sendRedirect(continueUrl);
@@ -22,9 +22,9 @@
         <title>Auth</title>
     </head>
 
-    <body>
+    <body onLoad="document.passwordForm.enteredPassword.focus()">
 
-    <form>
+    <form name="passwordForm">
     Auth? <input method="POST" type="password" name="enteredPassword"/>
     </form>
 

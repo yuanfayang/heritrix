@@ -14,6 +14,9 @@
       </exception-type>
       <location>/heritrix/error.jsp</location>
     </error-page>
+    <session-config>
+        <session-timeout>2880</session-timeout> <!-- 48h * 60 minutes -->
+    </session-config>
     <filter>
         <filter-name>AuthFilter</filter-name>
         <filter-class>org.archive.crawler.webui.AuthFilter</filter-class>
@@ -54,9 +57,6 @@
         <url-pattern>/bsh</url-pattern>
     </servlet-mapping>
 
-    <session-config>
-        <session-timeout>1440</session-timeout>
-    </session-config>
     <security-constraint>
         <display-name>Heritrix Console Constraint</display-name>
         <web-resource-collection>
