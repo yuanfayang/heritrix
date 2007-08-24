@@ -26,6 +26,7 @@
 
 package org.archive.crawler.webui;
 
+import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.Key;
 
@@ -132,4 +133,8 @@ public class Setting {
         this.key = NO_KEY;
     }
 
+    
+    public boolean isObjectType() {
+        return PathChanger.isObjectTag(type);
+    }
 }

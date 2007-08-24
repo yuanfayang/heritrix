@@ -24,10 +24,13 @@
 package org.archive.settings.path;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.archive.settings.Offline;
 import org.archive.settings.SettingsList;
@@ -62,7 +65,7 @@ public class PathChanger {
     final public static String PRIMARY_TAG = "primary";
     
     final public static String AUTO_TAG = "auto";
-    
+
     final public static Object AUTO = new Object();
     
     private static class PendingInit {
@@ -248,6 +251,14 @@ public class PathChanger {
         // has the type we want to change to, do NOT destroy the old object.
         Object pre = getPreexistingObject(sheet, pc);
         if (pre != null) {
+            // We still might need to change the primary status.
+            if (sheet.isGlobal()) {
+                if (pc.getType().equals(OBJECT_TAG)) {
+                    sheet.removePrimary(pre);
+                } else {
+                    sheet.addPrimary(pre);
+                }
+            }
             return pre;
         }
         
@@ -275,8 +286,12 @@ public class PathChanger {
             } else {
                 result = c.newInstance();
             }
-            if (pc.getType().equals(PRIMARY_TAG)) {
-                sheet.getSheetManager().addPrimary(result);
+            if (sheet.isGlobal()) {
+                if (pc.getType().equals(PRIMARY_TAG)) {
+                    sheet.addPrimary(result);
+                } else {
+                    sheet.removePrimary(result);
+                }
             }
             return result;
         } catch (ClassNotFoundException e) {
@@ -402,7 +417,7 @@ public class PathChanger {
         }
         
         if (value == AUTO) {
-            value = sheet.getSheetManager().findPrimary(key.getType());
+            value = sheet.findPrimary(key.getType());
         }
         
         if (value instanceof Offline) {
@@ -438,5 +453,24 @@ public class PathChanger {
         }
         sheet.remove(parent, key);
     }
+
+    
+    public static boolean isObjectTag(String tag) {
+        return tag.equals(OBJECT_TAG)
+        || tag.equals(PRIMARY_TAG)
+        || tag.equals(REFERENCE_TAG)
+        || tag.equals(AUTO_TAG);
+    }
+
+
+    public static boolean isCreateTag(String tag) {
+        return tag.equals(OBJECT_TAG) || tag.equals(PRIMARY_TAG);
+    }
+    
+    
+    public static boolean isReuseTag(String tag) {
+        return tag.equals(AUTO_TAG) || tag.equals(REFERENCE_TAG);
+    }
+
 
 }

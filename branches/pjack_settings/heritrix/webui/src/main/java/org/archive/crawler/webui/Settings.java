@@ -55,6 +55,7 @@ import org.archive.util.IoUtils;
 import static org.archive.settings.path.PathChanger.PRIMARY_TAG;
 import static org.archive.settings.path.PathChanger.REFERENCE_TAG;
 import static org.archive.settings.path.PathChanger.OBJECT_TAG;
+import static org.archive.settings.path.PathChanger.AUTO_TAG;
 import static org.archive.settings.path.PathChanger.MAP_TAG;
 import static org.archive.settings.path.PathChanger.LIST_TAG;
 import static org.archive.state.KeyTypes.ENUM_TAG;
@@ -127,7 +128,7 @@ public class Settings {
         String type = setting.getType();
         
         try {
-            if (type.equals(OBJECT_TAG) || type.equals(REFERENCE_TAG)) {
+            if (PathChanger.isObjectTag(type)) {
                 printObjectSelect(out, setting);
             } else if (type.equals(ENUM_TAG)) {
                 printEnumSelect(out, setting);   
@@ -264,7 +265,7 @@ public class Settings {
     }
 
     
-    private void printReuseOptions(JspWriter out, Setting setting) 
+    public void printReuseOptions(JspWriter out, Setting setting) 
     throws IOException {
         Collection<Setting> reuse = getReuseOptions(setting);
         boolean foundSelected = false;
@@ -294,7 +295,7 @@ public class Settings {
     }
     
     
-    private Set<Setting> getReuseOptions(Setting setting) {
+    public Set<Setting> getReuseOptions(Setting setting) {
         Set<Setting> result = new HashSet<Setting>();
         Class<?> actualType = getActualType(setting);
         for (Setting s: settings.values()) {
@@ -302,18 +303,19 @@ public class Settings {
                 // Don't include objects that haven't been defined yet.
                 return result;
             }
-            if (s.getType().equals(OBJECT_TAG) && !s.getValue().equals("null")) {
+            if (PathChanger.isCreateTag(s.getType()) 
+                    && !s.getValue().equals("null")) {
                 Class sclass = forName(s.getValue());
                 if (actualType.isAssignableFrom(sclass)) {
                     result.add(s);
                 }
             }
         }
-        return result;        
+        return result;
     }
     
     
-    private void printCreateOptions(JspWriter out, Setting setting) 
+    public void printCreateOptions(JspWriter out, Setting setting) 
     throws IOException {
         Collection<String> options = getCreateOptions(setting);
         for (String option: options) {
@@ -332,9 +334,9 @@ public class Settings {
     }
     
     
-    private Collection<String> getCreateOptions(Setting setting) {
+    public Collection<String> getCreateOptions(Setting setting) {
         Set<String> options = getSubclasses(getActualType(setting));
-        if (setting.getType().equals(OBJECT_TAG) && 
+        if (PathChanger.isCreateTag(setting.getType()) && 
                 !options.contains(setting.getValue())) {
             Collection<String> old = options;
             options = new TreeSet<String>(new BaseNameComp());
@@ -346,10 +348,9 @@ public class Settings {
     
     
     private static boolean validParentType(String type) {
-        return type.equals(OBJECT_TAG)
+        return PathChanger.isCreateTag(type)
          || type.equals(MAP_TAG)
-         || type.equals(LIST_TAG)
-         || type.equals(PRIMARY_TAG);
+         || type.equals(LIST_TAG);
     }
 
     
@@ -369,7 +370,7 @@ public class Settings {
     }
 
 
-    private Class getActualType(Setting setting) {
+    public Class getActualType(Setting setting) {
         Class result = setting.getActualType();
         if (result != null) {
             return result;
@@ -392,8 +393,7 @@ public class Settings {
         // type that was specified.
         if (parentType.equals(MAP_TAG) || parentType.equals(LIST_TAG)) {
             result = forName(parent.getValue());
-        } else if (parentType.equals(OBJECT_TAG) 
-                || parentType.equals(PRIMARY_TAG)) {
+        } else if (PathChanger.isCreateTag(parentType)){
             // A child of an object will have a type dicated by one of that
             // object's keys.
             
@@ -448,7 +448,7 @@ public class Settings {
         String type = setting.getType();
         
         try {
-            if (type.equals(OBJECT_TAG) || type.equals(REFERENCE_TAG)) {
+            if (PathChanger.isObjectTag(type)) {
                 printDetailObjectFields(out, setting);
             } else if (type.equals(ENUM_TAG)) {                
                 printEnumSelect(out, setting);   
@@ -471,12 +471,24 @@ public class Settings {
 
         out.println("<table>");
         
-        boolean selected = setting.getType().equals(REFERENCE_TAG) 
+        boolean selected = setting.getType().equals(AUTO_TAG);
+        radio(out, "ref_auto", "Automatically reuse the primary object.", 
+                selected);
+        out.println("</td>\n</tr>");
+        
+        selected = setting.getType().equals(REFERENCE_TAG) 
          && reuse.contains(setting.getValue());
         radio(out, "ref_select", "Reuse an existing object:", selected);
         this.printSelectOpenTag(out, "ref_select", setting);
         this.printReuseOptions(out, setting);
         out.println("</select>\n</td>\n</tr>");
+        
+        selected = setting.getType().equals(REFERENCE_TAG) 
+        && !reuse.contains(setting.getValue());
+        radio(out, "ref_manual", "Manually enter a path to reuse:", selected);
+        String value = setting.getType().equals(REFERENCE_TAG) ? setting.getValue() : "";
+        printTextField(out, setting, "ref_manual", value);
+        out.println("</td>\n</tr>");
         
         selected = setting.getType().equals(OBJECT_TAG)
          && create.contains(setting.getValue());
@@ -485,12 +497,6 @@ public class Settings {
         this.printCreateOptions(out, setting);
         out.println("</select>\n</td>\n</tr>");
         
-        selected = setting.getType().equals(REFERENCE_TAG) 
-         && !reuse.contains(setting.getValue());
-        radio(out, "ref_manual", "Manually enter a path to reuse:", selected);
-        String value = setting.getType().equals(REFERENCE_TAG) ? setting.getValue() : "";
-        printTextField(out, setting, "ref_manual", value);
-        out.println("</td>\n</tr>");
         
         selected = setting.getType().equals(OBJECT_TAG) 
          && !reuse.contains(setting.getValue());
@@ -547,7 +553,7 @@ public class Settings {
 
         Setting parent = getParentSetting(setting);
         String parentType = parent.getType();
-        if (parentType.equals(OBJECT_TAG)) {
+        if (PathChanger.isCreateTag(parentType)) {
             String path = setting.getPath();
             Class parentClass = forName(parent.getValue());
             Map<String,Key<Object>> keys = KeyManager.getKeys(parentClass);                

@@ -804,7 +804,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
             ss.set(dir, FileModule.PATH, dir.getFile().getAbsolutePath());
-            addPrimary(bdb);
+            ss.addPrimary(getManagerModule());
+            ss.addPrimary(bdb);
         } else {
             @SuppressWarnings("unchecked")
             Offline<SheetManager> manager = (Offline)getManagerModule();
@@ -817,7 +818,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
             ss.setOffline(dir, FileModule.PATH, this.dir.getFile().getAbsolutePath());
-            addPrimary(bdb);
+            ss.addPrimary(getManagerModule());
+            ss.addPrimary(bdb);
         }
     }
     

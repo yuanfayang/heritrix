@@ -31,7 +31,7 @@ import java.util.Map;
 
 import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
-import org.archive.settings.SheetManager;
+import org.archive.settings.SingleSheet;
 import org.archive.settings.TypedList;
 import org.archive.settings.TypedMap;
 import org.archive.state.KeyTypes;
@@ -56,8 +56,13 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             Object value, 
             Class type, 
             String seenPath) {
-        SheetManager sm = sheets.get(0).getSheetManager();
-        boolean primary = sm.isPrimary(value);
+        Sheet last = sheets.get(sheets.size() - 1);
+        boolean primary;
+        if ((last instanceof SingleSheet) && ((SingleSheet)last).isGlobal()) {
+            primary = ((SingleSheet)last).isPrimary(value);
+        } else {
+            primary = last.getSheetManager().getGlobalSheet().isPrimary(value);
+        }
         
         String[] snames = new String[sheets.size()];
         for (int i = 0; i < snames.length; i++) {

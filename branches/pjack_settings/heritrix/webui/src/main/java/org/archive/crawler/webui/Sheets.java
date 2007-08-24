@@ -54,12 +54,15 @@ import org.archive.settings.Association;
 import org.archive.settings.SheetManager;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.Types;
+import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathValidator;
 
 import static org.archive.settings.path.PathChanger.LIST_TAG;
 import static org.archive.settings.path.PathChanger.MAP_TAG;
 import static org.archive.settings.path.PathChanger.OBJECT_TAG;
 import static org.archive.settings.path.PathChanger.REFERENCE_TAG;
+import static org.archive.settings.path.PathChanger.PRIMARY_TAG;
+import static org.archive.settings.path.PathChanger.AUTO_TAG;
 import static org.archive.crawler.webui.Settings.TYPE_PREFIX;
 import static org.archive.crawler.webui.Settings.VALUE_PREFIX;
 
@@ -177,7 +180,7 @@ public class Sheets {
                     || setting.getType().equals(MAP_TAG)) {
                 Misc.forward(request, response, "page_list_detail.jsp");
             } else {
-                Misc.forward(request, response, "page_path_detail.jsp");
+                Misc.forward(request, response, "page_path_detail.jsp");                
             }
         } finally {
             remote.close();
@@ -319,7 +322,7 @@ public class Sheets {
                 String type = request.getParameter(TYPE_PREFIX + path);
                 String value = request.getParameter(VALUE_PREFIX + path);
                 if (value != null) {
-                    if (type.equals(OBJECT_TAG) || type.equals(REFERENCE_TAG)) {
+                    if (PathChanger.isObjectTag(type)) {
                         int p = value.indexOf(',');
                         type = value.substring(0, p);
                         value = value.substring(p + 2);
@@ -352,14 +355,7 @@ public class Sheets {
         try {
             String path = request.getParameter("path");
             String type = request.getParameter(TYPE_PREFIX + path);
-            String value;
-            if (type.equals(OBJECT_TAG) || type.equals(REFERENCE_TAG)) {
-                String valueKind = request.getParameter("value_kind");
-                value = request.getParameter(valueKind);
-                type = valueKind.startsWith("obj") ? OBJECT_TAG : REFERENCE_TAG;
-            } else {
-                value = request.getParameter(VALUE_PREFIX + path);
-            }
+            String value = request.getParameter(VALUE_PREFIX + path);
             sheetManager.set(sheet, path, type, value);
         } finally {
             remote.close();
@@ -369,6 +365,46 @@ public class Sheets {
     }
     
     
+    public static void saveObjectPath(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        String sheet = request.getParameter("sheet");
+        String primary = request.getParameter("primary");
+        request.setAttribute("sheet", sheet);
+        try {
+            String path = request.getParameter("path");
+            String type;
+            String value;
+            String kind = request.getParameter("kind");
+            if (kind.equals("auto")) {
+                type = AUTO_TAG;
+                value = "";
+            } else if (kind.endsWith("_known")) {
+                String s = request.getParameter(kind);
+                int p = s.indexOf(',');
+                type = s.substring(0, p);
+                value = s.substring(p + 2);
+            } else if (kind.startsWith("create")) {
+                type = OBJECT_TAG;
+                value = request.getParameter(kind);
+            } else {
+                type = REFERENCE_TAG;
+                value = request.getParameter(kind);
+            }
+            if (type.equals(OBJECT_TAG) && "primary".equals(primary)) {
+                type = PRIMARY_TAG;
+            }
+            sheetManager.set(sheet, path, type, value);
+        } finally {
+            remote.close();
+        }
+
+        showSheetEditor(sc, request, response);
+    }
+
     public static void commitSheet(
             ServletContext sc,
             HttpServletRequest request,
