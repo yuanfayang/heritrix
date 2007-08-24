@@ -99,7 +99,7 @@ class UnspecifiedSheet extends Sheet {
     private <T> Object getDefaultValue(Object module, Key<T> key) {
         Class<T> type = key.getType();
         if (key.isAutoDetected()) {
-            return getSheetManager().findPrimary(type);
+            return getSheetManager().getGlobalSheet().findPrimary(type);
         }
         if (getSheetManager().isOnline()) {
             return key.getDefaultValue();

@@ -23,10 +23,15 @@
  */
 package org.archive.settings;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.archive.state.Constraint;
@@ -68,6 +73,9 @@ public class SingleSheet extends Sheet {
     final private boolean global;
 
     
+    private transient WeakHashMap<Object,String> primaries;
+    
+    
     private List<KeyChangeEvent> pending;
 
     /**
@@ -79,6 +87,7 @@ public class SingleSheet extends Sheet {
         super(manager, name);
         this.global = global;
         this.settings = new SheetMap<Object,Map<Key,Object>>();
+        this.primaries = new WeakHashMap<Object,String>();
     }
 
     
@@ -92,6 +101,7 @@ public class SingleSheet extends Sheet {
             settings.rawBuckets();
         SingleSheet result = new SingleSheet(
                 getSheetManager(), getName(), global);
+        result.primaries.putAll(this.primaries);
         Duplicator d = new Duplicator(this, result);
         for (int i = 0; i < oldBuckets.size(); i++) {
             SheetMap.Node<Object,Map<Key,Object>> n;
@@ -465,4 +475,53 @@ public class SingleSheet extends Sheet {
             this.pending = new ArrayList<KeyChangeEvent>();
         }
     }
+
+    
+    public void addPrimary(Object primary) {
+        primaries.put(primary, "");
+    }
+
+
+    public void removePrimary(Object primary) {
+        primaries.remove(primary);
+    }
+
+
+    public boolean isPrimary(Object primary) {
+        return primaries.containsKey(primary);
+    }
+
+
+    public Object findPrimary(Class<?> type) {
+        Object result = null;
+        for (Object o: primaries.keySet()) {
+            Class<?> otype = Offline.getType(o);
+            if (type.isAssignableFrom(otype)) {
+                if (result != null) {
+                    throw new IllegalStateException(
+                            "More than one primary found for " 
+                            + type.getName());
+                }
+                result = o;
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void readObject(ObjectInputStream input) 
+    throws IOException, ClassNotFoundException {
+        input.defaultReadObject();
+        Map<Object,String> map = (Map)input.readObject();
+        this.primaries = new WeakHashMap<Object,String>(map);
+    }
+    
+    
+    private void writeObject(ObjectOutputStream output) 
+    throws IOException {
+        output.defaultWriteObject();
+        Map<Object,String> map = new HashMap<Object,String>(primaries);
+        output.writeObject(map);
+    }
+
 }

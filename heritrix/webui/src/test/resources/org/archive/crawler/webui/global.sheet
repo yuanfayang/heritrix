@@ -1,5 +1,5 @@
 root=map, java.lang.Object
-root:metadata=object, org.archive.crawler.writer.DefaultMetadataProvider
+root:metadata=primary, org.archive.crawler.writer.DefaultMetadataProvider
 root:metadata:sheet-manager=reference, manager
 root:metadata:robots-honoring-policy=object, org.archive.modules.net.RobotsHonoringPolicy
 root:metadata:robots-honoring-policy:masquerade=boolean, false

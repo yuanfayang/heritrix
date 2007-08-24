@@ -44,11 +44,21 @@ input.textbox { width: 400px; }
 
 <p>Enter a value for the setting below.
 
+<% if (setting.isObjectType()) { %>
+<form action="do_save_object_path.jsp" method="post">
+<% } else { %>
 <form action="do_save_path.jsp" method="post">
+<% } %>
 <% Text.printSheetFormFields(request, out); %>
 <input type="hidden" name="path" value="<%=Text.attr(path)%>">
 
-<% settings.printDetailFormField(out, setting); %>
+
+<% if (setting.isObjectType()) { %>
+<jsp:include page="include_object_detail.jsp" flush="true"/>
+<% } else {
+    settings.printDetailFormField(out, setting); 
+}
+%>
 
 <input type="submit" value="Submit">
 </form>

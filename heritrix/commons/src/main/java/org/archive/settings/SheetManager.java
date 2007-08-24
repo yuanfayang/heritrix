@@ -34,8 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,7 +62,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
     
     final private UnspecifiedSheet unspecified;
     
-    final transient private Offline offlineThis;
+    final transient private Offline<?> offlineThis;
 
     private List<ModuleListener> moduleListeners = 
         new CopyOnWriteArrayList<ModuleListener>();
@@ -76,9 +75,7 @@ implements StateProvider, Serializable { //, DirectoryModule {
     
     private ListModuleListener<Closeable> closeables = 
         ListModuleListener.make(Closeable.class);
-    
-    private ConcurrentMap<Class,Object> primaries = new ConcurrentHashMap<Class,Object>();
-    
+
     private boolean online;
     
     @Immutable
@@ -106,43 +103,6 @@ implements StateProvider, Serializable { //, DirectoryModule {
         moduleListeners.add(checkpointables);
         moduleListeners.add(closeables);
         moduleListeners.add(finishables);
-        addPrimary(this.getManagerModule());
-    }
-    
-    
-    public void addPrimary(Object primary) {
-        Class type = Offline.getType(primary);
-        Object old = primaries.putIfAbsent(type, primary);
-        if (old != null) {
-            throw new IllegalStateException("Duplicate primary attempted for " 
-                    + type.getName());
-        }
-    }
-    
-    
-    public Object findPrimary(Class type) {
-        // Can't do simple lookup here because type may be an interface.
-        Object result = null;
-        for (Object o: primaries.values()) {
-            Class otype = Offline.getType(o);
-            if (type.isAssignableFrom(otype)) {
-                if (result != null) {
-                    throw new IllegalStateException(
-                            "More than one primary found for " 
-                            + type.getName());
-                }
-                result = o;
-            }
-        }
-        return result;
-    }
-    
-    
-    public boolean isPrimary(Object o) {
-        if (o == null) {
-            return false;
-        }
-        return primaries.values().contains(o);
     }
     
 
