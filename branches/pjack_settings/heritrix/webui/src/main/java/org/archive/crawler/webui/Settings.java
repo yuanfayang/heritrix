@@ -320,7 +320,7 @@ public class Settings {
         Collection<String> options = getCreateOptions(setting);
         for (String option: options) {
             out.print("<option value=\"");
-            out.print(OBJECT_TAG);
+            out.print(setting.getType());
             out.print(", ");
             out.print(Text.attr(setting.getValue()));
             out.print("\"");
