@@ -56,9 +56,6 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             Object value, 
             Class type, 
             String seenPath) {
-        if (path.equals("root:controller:frontier:rules")) {
-            System.out.println("break");
-        }
         Sheet last = sheets.get(sheets.size() - 1);
         boolean primary;
         if ((last instanceof SingleSheet) && ((SingleSheet)last).isGlobal()) {
