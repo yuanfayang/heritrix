@@ -129,8 +129,14 @@ public interface CrawlJobManager extends Closeable {
     
     @Operation(desc="Reads lines from a text file.")
     String readLines(
-            @Parameter(name="filename", desc="The name of the file to read.")
-            String fileName,
+            @Parameter(name="job", desc="The job whose file to read.")
+            String job,
+            
+            @Parameter(name="filename", desc="An optional filename if the settingsPath resolves to a directory.")
+            String filename,
+
+            @Parameter(name="settingsPath", desc="The settings path to a FileModule in that job.")
+            String settingsPath,
             
             @Parameter(name="startLine", desc="The starting line number to read.")
             int startLine,
@@ -141,9 +147,15 @@ public interface CrawlJobManager extends Closeable {
     
     @Operation(desc="Writes lines to a text file.")
     void writeLines(
-            @Parameter(name="filename", desc="The name of the file to write.")
-            String fileName,
+            @Parameter(name="job", desc="The job whose file to read.")
+            String job,
             
+            @Parameter(name="settingsPath", desc="The settings path to a FileModule in that job.")
+            String settingsPath,
+
+            @Parameter(name="filename", desc="An optional filename if the settingsPath resolves to a directory.")
+            String filename,
+
             @Parameter(name="startLine", desc="The starting line number to write.")
             int startLine,
 
@@ -163,10 +175,21 @@ public interface CrawlJobManager extends Closeable {
     @Operation(desc="Returns a filesystem path based on a settings path to a FileModule.")
     String getFilePath(
             
-            @Parameter(name="job", desc="The stage=name of the job whose settings to examine.")
+            @Parameter(name="job", desc="The stage-name of the job whose settings to examine.")
             String job, 
             
             @Parameter(name="settingsPath", desc="The settings path to the FileModule.")
             String settingsPath);
+
+     @Operation(desc="Lists files in a directory.")
+     String[] listFiles(
+             @Parameter(name="job", desc="The stage-name of the job whose directory to read.")
+             String job,
+             
+             @Parameter(name="settings", desc="The settings path to the FileModule representing the directory.")
+             String settingsPath,
+             
+             @Parameter(name="regex", desc="A regex filename filter.  Only filenames that match the regex will be included in the result.")
+             String regex);
 
 }
