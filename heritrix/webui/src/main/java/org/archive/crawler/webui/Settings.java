@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +68,31 @@ import static org.archive.state.KeyTypes.ENUM_TAG;
  */
 public class Settings {
 
+    public enum Editability {
+        /** The setting can be edited. */
+        EDITABLE,
+        
+        /** The setting was set by the sheet manager and shouldn't change. */
+        BOOTSTRAP,
+        
+        /** The setting marked as immutable, and the crawl is running. */
+        IMMUTABLE,
+        
+        /** The setting is marked as global, and it's not the global sheet. */
+        GLOBAL,
+        
+        /** 
+         * The setting can't be edited because it hasn't been overridden in 
+         * the sheet yet.
+         */
+        NOT_OVERRIDDEN,
+        
+        /**
+         * The job is completed, and the settings are for historical reference.
+         */
+        COMPLETED
+    }
+    
     
     final static private Map<String,Set<String>> subclasses = 
         new HashMap<String,Set<String>>();
@@ -86,6 +112,8 @@ public class Settings {
     
     final private boolean online;
     
+    final private boolean completed;
+    
     
     /**
      * The settings for that sheet.
@@ -99,9 +127,11 @@ public class Settings {
      * @param sheet
      * @param settings
      */
-    public Settings(String sheet, boolean online, Map<String,Setting> settings) {
+    public Settings(String sheet, boolean online, boolean completed,
+            Map<String,Setting> settings) {
         this.settings = settings;
         this.sheet = sheet;
+        this.completed = completed;
         this.online = online;
     }
     
@@ -320,9 +350,16 @@ public class Settings {
         Collection<String> options = getCreateOptions(setting);
         for (String option: options) {
             out.print("<option value=\"");
-            out.print(setting.getType());
+            if (setting.getType().equals(PRIMARY_TAG)) {
+                out.print(PRIMARY_TAG);
+            } else {
+                // Setting.getType might be map or list, and we are trying
+                // to create an element of that map or list.  Force this to
+                // be object.
+                out.print(OBJECT_TAG);
+            }
             out.print(", ");
-            out.print(Text.attr(setting.getValue()));
+            out.print(Text.attr(option));
             out.print("\"");
             if (option.equals(setting.getValue())) {
                 out.print(" selected=\"selected\"");
@@ -335,7 +372,8 @@ public class Settings {
     
     
     public Collection<String> getCreateOptions(Setting setting) {
-        Set<String> options = getSubclasses(getActualType(setting));
+        Class<?> actual = getActualType(setting);
+        Set<String> options = getSubclasses(actual);
         if (PathChanger.isCreateTag(setting.getType()) && 
                 !options.contains(setting.getValue())) {
             Collection<String> old = options;
@@ -378,7 +416,14 @@ public class Settings {
         
         String path = setting.getPath();
         if (path.indexOf(PathValidator.DELIMITER) < 0) {
-            return KeyManager.getKeys(FileSheetManager.class).get(path).getType();
+            Key<?> key = KeyManager.getKeys(FileSheetManager.class).get(path);
+            if (key.getType() == Map.class || key.getType() == List.class) {
+                result = key.getElementType();
+            } else {
+                result = key.getType();
+            }
+            setting.setActualType(result);
+            return result;
         }
         
         Setting parent = getParentSetting(setting);
@@ -569,35 +614,55 @@ public class Settings {
 
     
     public boolean isEnabled(Setting setting) {
-        if (!canOverride(setting)) {
-            return false;
-        }
-        return setting.getSheets()[0].equals(sheet);
+        return getEditability(setting) == Editability.EDITABLE;
     }
 
     
     public boolean canOverride(Setting setting) {
+        Editability e = getEditability(setting);
+        return e == (Editability.EDITABLE) || (e == Editability.NOT_OVERRIDDEN);
+    }
+    
+    public Editability getEditability(Setting setting) {
+        if (completed) {
+            return Editability.COMPLETED;
+        }
         if (!setting.getPath().startsWith(StringUtils.defaultString(
                 SheetManager.ROOT.getFieldName()))) {
-            return false;
+            return Editability.BOOTSTRAP;
         }
         Key key = getKey(setting);
         if (key == null) {
-            return true;
+            if (setting.getSheets()[0].equals(sheet)) {
+                return Editability.EDITABLE;
+            } else {
+                return Editability.NOT_OVERRIDDEN;
+            }
+        }
+
+        if (online && key.isImmutable()) {
+            return Editability.IMMUTABLE;
         }
 
         if (key.isGlobal() && !sheet.equals(SheetManager.GLOBAL_SHEET_NAME)) {
-            return false;
+            return Editability.GLOBAL;
         }
         
-        if (online && key.isImmutable()) {
-            return false;
-        }
         
-        return true;
+        return Editability.EDITABLE;
+    }
+    
+    
+    public boolean isObjectElementType(Setting setting) {
+        Class<?> c = this.getActualType(setting);
+        Key<?> key = getKey(setting);
+        if (key == null) {
+            return true;
+        }
+        return !KeyTypes.isSimple(key.getElementType());
     }
 
-    
+
     public static Set<String> getSubclasses(Class clz) {
         synchronized (subclasses) {
             Set<String> result = subclasses.get(clz.getName());

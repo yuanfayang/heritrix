@@ -1,10 +1,13 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.archive.crawler.framework.JobStage" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
+<%@ page import="org.archive.crawler.webui.CrawlJob" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%
 
 Crawler crawler = (Crawler)Text.get(request, "crawler");
+CrawlJob job = (CrawlJob)Text.get(request, "job");
 String seedsfile = (String)Text.get(request, "seedfile");
 String seeds = (String)Text.get(request, "seeds");
 int pageNum = (Integer)Text.get(request, "page");
@@ -39,7 +42,12 @@ Boolean successMessage = (Boolean)request.getAttribute("success");
 <%=Text.html(seeds)%>
 </textarea>
 <br/>
+
+<% if (job.getJobStage() == JobStage.COMPLETED) { %>
+You cannot edit seeds for a completed job.
+<% } else { %>
 <input type="submit" value="Submit">
+<% } %>
 </form>
 
 </body>

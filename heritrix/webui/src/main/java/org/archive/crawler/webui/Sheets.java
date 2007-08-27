@@ -143,7 +143,7 @@ public class Sheets {
             }
             
             if (sheetManager.isSingleSheet(sheet)) {
-                Settings settings = getSettings(sheetManager, sheet);
+                Settings settings = getSettings(request, sheetManager, sheet);
                 request.setAttribute("settings", settings);
                 Misc.forward(request, response, "page_sheet_editor.jsp");
             } else {
@@ -172,7 +172,7 @@ public class Sheets {
                     contains(sheet)) {
                 sheetManager.checkout(sheet);
             }
-            Settings settings = getSettings(sheetManager, sheet);
+            Settings settings = getSettings(request, sheetManager, sheet);
             request.setAttribute("settings", settings);
             
             Setting setting = settings.getSetting(path);
@@ -364,8 +364,8 @@ public class Sheets {
         showSheetEditor(sc, request, response);
     }
     
-    
-    public static void saveObjectPath(
+
+    private static void saveObjectPath(String path, 
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
@@ -375,7 +375,6 @@ public class Sheets {
         String primary = request.getParameter("primary");
         request.setAttribute("sheet", sheet);
         try {
-            String path = request.getParameter("path");
             String type;
             String value;
             String kind = request.getParameter("kind");
@@ -403,6 +402,14 @@ public class Sheets {
         }
 
         showSheetEditor(sc, request, response);
+    }
+    
+    
+    public static void saveObjectPath(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        saveObjectPath(request.getParameter("path"), sc, request, response);
     }
 
     public static void commitSheet(
@@ -497,20 +504,42 @@ public class Sheets {
             String elementPath = path + PathValidator.DELIMITER
                    + request.getParameter("key");
             String type = request.getParameter(TYPE_PREFIX + path);
-            String value;
-            if (type.equals(OBJECT_TAG) || type.equals(REFERENCE_TAG)) {
-                String valueKind = request.getParameter("value_kind");
-                value = request.getParameter(valueKind);
-                type = valueKind.startsWith("obj") ? OBJECT_TAG : REFERENCE_TAG;
-            } else {
-                value = request.getParameter(VALUE_PREFIX + path);
-            }
+            String value = request.getParameter(VALUE_PREFIX + path);
             sheetManager.set(sheet, elementPath, type, value);
         } finally {
             remote.close();
         }
         
         showPathDetail(sc, request, response);
+    }
+
+    
+    public static void addObjectElement(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        String path = getElementPath(sc, request, response);
+        if (path == null) {
+            showPathDetail(sc, request, response);
+            return;            
+        }
+        saveObjectPath(path, sc, request, response);
+    }
+
+    
+    private static String getElementPath(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        String key = request.getParameter("key");
+        if (key.length() == 0) {
+            request.setAttribute("error", "You must specify a name for the new element.");
+            return null;
+        }
+        String path = request.getParameter("path");
+        String elementPath = path + PathValidator.DELIMITER
+               + request.getParameter("key");
+        return elementPath;
     }
     
     
@@ -630,14 +659,10 @@ public class Sheets {
         
         showSheetEditor(sc, request, response);
     }
-            
 
-    public static Settings getGlobalSettings(JMXSheetManager mgr) {
-        return getSettings(mgr, SheetManager.GLOBAL_SHEET_NAME);
-    }
-    
 
-    private static Settings getSettings(JMXSheetManager mgr,
+    private static Settings getSettings(HttpServletRequest request, 
+            JMXSheetManager mgr,
             String sheet) {
         Map<String,Setting> result = new LinkedHashMap<String,Setting>();
         CompositeData[] settings = mgr.resolveAll(sheet);
@@ -668,7 +693,10 @@ public class Sheets {
             setting.setErrorMessage(error);
         }
         
-        return new Settings(sheet, mgr.isOnline(), result);
+        CrawlJob job = (CrawlJob)request.getAttribute("job");
+        boolean completed = job.getJobStage() == JobStage.COMPLETED;
+        
+        return new Settings(sheet, mgr.isOnline(), completed, result);
     }
 
 

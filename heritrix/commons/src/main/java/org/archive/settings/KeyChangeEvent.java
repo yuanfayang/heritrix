@@ -47,9 +47,6 @@ public class KeyChangeEvent extends EventObject {
     public KeyChangeEvent(StateProvider provider, Object source, 
             Key<?> key, Object old, Object newV) {
         super(source);
-        if (key.getOwner() != Offline.getType(source)) {
-            throw new IllegalArgumentException();
-        }
         this.stateProvider = provider;
         this.key = key;
         this.oldValue = old;

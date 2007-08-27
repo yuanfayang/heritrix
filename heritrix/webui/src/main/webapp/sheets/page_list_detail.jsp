@@ -101,8 +101,9 @@ for (Setting s: settings.getSettings()) {
 
 <h3>Add New Element</h3>
 
+<% String action = settings.isObjectElementType(setting) ? "do_add_object_element.jsp" : "do_add_element.jsp"; %>
 
-<form action="do_add_element.jsp" method="post">
+<form action="<%=action%>" method="post">
 <% Text.printSheetFormFields(request, out); %>
 <input type="hidden" name="path" value="<%=Text.attr(setting.getPath())%>">
 
@@ -115,7 +116,11 @@ for (Setting s: settings.getSettings()) {
 
 <p>Enter the value for the new element below:<br/>
 
-<% settings.printElementFormField(out, setting); %>
+<% if (settings.isObjectElementType(setting)) { %>
+<jsp:include page="include_object_detail.jsp" flush="true"/>
+<% } else { %>
+  <% settings.printElementFormField(out, setting); %>
+<% } %>
 
 <input type="submit" value="Submit">
 </form>
