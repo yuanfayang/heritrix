@@ -121,8 +121,14 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
         <% String jqs = Text.jobQueryString(request, job); %>
         <span class="label">Job:</span> <%=job.getName()%>
         <div class="itemDetails">
-            <a class="rowLink" href="javascript:alert('not yet implemented')">Sheets</a>
-            <a class="rowLink" href="javascript:alert('not yet implemented')">Seeds</a> 
+            <a 
+               class="rowLink" 
+               title="View this job's settings sheets."
+               href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=jqs%>">Sheets</a>
+            <a 
+               class="rowLink" 
+               title="View this jobs's seeds."
+               href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=jqs%>">Seeds</a>
             <a 
                class="rowLink" 
                title="Copy this job to a profile or a new ready job."

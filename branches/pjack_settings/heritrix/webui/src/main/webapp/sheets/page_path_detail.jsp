@@ -42,6 +42,8 @@ input.textbox { width: 400px; }
 </tr>
 </table>
 
+<jsp:include page="include_editability_detail.jsp" flush="true"/>
+
 <p>Enter a value for the setting below.
 
 <% if (setting.isObjectType()) { %>
