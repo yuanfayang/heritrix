@@ -303,7 +303,7 @@
             %>
                 <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                     <td nowrap>
-                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^.{24}.*<%=rl.legend%>&grep=true">
                             <%=rl.legend%>
                         </a>&nbsp;
                     </td>
@@ -352,7 +352,7 @@
             %>
                 <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                     <td nowrap>
-                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^.{24}\s*<%=rl.legend%>&grep=true">
+                        <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^.{24}.*<%=rl.legend%>&grep=true">
                             <%=rl.legend%>
                         </a>&nbsp;
                     </td>
