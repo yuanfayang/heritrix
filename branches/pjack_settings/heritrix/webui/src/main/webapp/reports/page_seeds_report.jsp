@@ -71,7 +71,7 @@
              <%
                  }
              %>
-                            <a href="<%=request.getContextPath()%>/logs.jsp?job=<%=qs%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=seed.get("uri")%>&grep=true" style="text-decoration: none;">
+                            <a href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=qs%>&log=CRAWL&mode=REGEXPR&regexpr=^[^ ].*<%=seed.get("uri")%>&grep=true" style="text-decoration: none;">
                             <%=seed.get("disposition")%></a>
                         </td>
                         <td style="border-bottom:solid 1px #666666;" nowrap>
