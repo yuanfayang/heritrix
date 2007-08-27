@@ -133,8 +133,12 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
                class="rowLink" 
                title="Copy this job to a profile or a new ready job."
                href="<%=copyUrl%>?<%=jqs%>">Copy</a>
+
+            <a 
+               class="rowLink" 
+               title="View this job's reports."
+               href="<%=request.getContextPath()%>/reports/do_list_completed_reports.jsp?<%=jqs%>">Reports</a>
             
-            <a class="rowLink" href="javascript:alert('not yet implemented')">Reports</a>
             <a class="rowLink" title="View logs for this job."
                href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
                

@@ -1,6 +1,8 @@
 package org.archive.crawler.webui;
 
 
+import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.TreeSet;
 
 import javax.management.remote.JMXConnector;
@@ -246,6 +248,54 @@ public class Reports {
             HttpServletResponse response) {
         handleReports(sc, request, response, ReportPages.KILL_THREAD);
     }
+
+    public static void listCompletedReports(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        CrawlJobManager cjm = remote.getObject();
+        CrawlJob job = CrawlJob.fromRequest(request, remote.getJMXConnector());
+        try {
+            String[] reports = cjm.listFiles(job.encode(), 
+                    "root:controller:loggers:0:reports-dir", 
+                    "^.*-report\\.txt");
+            request.setAttribute("reports", Arrays.asList(reports));
+        } finally {
+            remote.close();
+        }
+        Misc.forward(request, response, "page_completed_reports.jsp");
+    }
+    
+    
+    public static void showCompletedReport(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        String report = request.getParameter("report");
+        CrawlJobManager cjm = remote.getObject();
+        CrawlJob job = CrawlJob.fromRequest(request, remote.getJMXConnector());
+        response.setContentType("text/plain");
+        PrintWriter pw = response.getWriter();
+        try {
+            int start = 0;
+            String lines;
+            do {
+                lines = cjm.readLines(job.encode(), 
+                        "root:controller:loggers:0:reports-dir",                         
+                        report,
+                        start,
+                        200);
+                start += 200;
+                pw.print(lines);
+            } while (lines.length() > 0);
+        } finally {
+            remote.close();
+        }
+    }
+
+
 }
 
 

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
@@ -550,8 +551,14 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
 
     
-    public synchronized String readLines(String fileName, int startLine, int lineCount) 
-            throws IOException {
+    public synchronized String readLines(String job, String settingsPath, 
+            String fileName,
+            int startLine, int lineCount) throws IOException {
+        String path = getFilePath(job, settingsPath);
+        File f = new File(path);
+        if (f.isDirectory()) {
+            f = new File(f, fileName);
+        }
         if (startLine < 0) {
             throw new IllegalArgumentException("startLine must be positive.");
         }
@@ -565,7 +572,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         BufferedReader br = null;
         StringBuilder result = new StringBuilder();
         try {
-            br = new BufferedReader(new FileReader(fileName));
+            br = new BufferedReader(new FileReader(f));
             for (int i = 0; i < startLine; i++) {
                 String line = br.readLine();
                 if (line == null) {
@@ -585,21 +592,27 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
     }
 
-    public synchronized void writeLines(String fileName, int startLine, 
-            int lineCount, String lines)
-            throws IOException {
+    public synchronized void writeLines(String job, 
+            String settingsPath,
+            String fileName,
+            int startLine, int lineCount, String lines) throws IOException {
+        String path = getFilePath(job, settingsPath);
+        File f = new File(path);
+        if (fileName != null) {
+            f = new File(f, fileName);
+        }
         if (startLine < 0) {
             throw new IllegalArgumentException("startLine must be positive.");
         }
 
-        String tempFilename = fileName + ".temp";
+        File tempFile = new File(f.getAbsolutePath() + ".temp");
         
         BufferedReader br = null;
         BufferedWriter bw = null;
         try {
             BufferedReader linesBr = new BufferedReader(new StringReader(lines));
-            br = new BufferedReader(new FileReader(fileName));
-            bw = new BufferedWriter(new FileWriter(tempFilename));
+            br = new BufferedReader(new FileReader(f));
+            bw = new BufferedWriter(new FileWriter(tempFile));
             for (int i = 0; i < startLine; i++) {
                 String line = br.readLine();
                 if (line == null) {
@@ -629,7 +642,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             IoUtils.close(br);
             IoUtils.close(bw);
         }
-        new File(tempFilename).renameTo(new File(fileName));
+        tempFile.renameTo(f);
     }
     
     public String getHeritrixVersion(){
@@ -671,7 +684,22 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             throw new IllegalStateException(e);
         }
     }
+
     
+    public synchronized String[] listFiles(String job, 
+            String settingsPath, 
+            String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        String path = getFilePath(job, settingsPath);
+        File dir = new File(path);
+        List<String> result = new ArrayList<String>();
+        for (String s: dir.list()) {
+            if (pattern.matcher(s).find()) {
+                result.add(s);
+            }
+        }
+        return result.toArray(new String[result.size()]);
+    }
 
 
 }

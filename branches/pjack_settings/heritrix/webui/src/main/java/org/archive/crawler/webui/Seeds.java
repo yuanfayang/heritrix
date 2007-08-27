@@ -52,6 +52,7 @@ public class Seeds {
             HttpServletResponse response) throws Exception {
         Crawler crawler = Home.getCrawler(request);
         Remote<JMXSheetManager> remote = Sheets.getSheetManager(request);
+        CrawlJob job = (CrawlJob)request.getAttribute("job");
         JMXConnector jmxc = remote.getJMXConnector();
         JMXSheetManager sheetManager = remote.getObject(); 
         CrawlJobManager crawlJobManager = BeanProxy.proxy(
@@ -64,8 +65,10 @@ public class Seeds {
         
         try {
             File f = new File(sheetManager.getFilePath("root:seeds:seedsfile"));
-            String seeds = crawlJobManager.readLines(f.getAbsolutePath(), 
-                    page * LINES_PER_PAGE, 
+            String seeds = crawlJobManager.readLines(job.encode(),
+                    "root:seeds:seedsfile",
+                    null,
+                    page * LINES_PER_PAGE,
                     LINES_PER_PAGE);
             request.setAttribute("seeds", seeds);
             request.setAttribute("seedfile", f.getAbsolutePath());
@@ -85,17 +88,18 @@ public class Seeds {
             HttpServletResponse response) throws Exception {
         Crawler crawler = Home.getCrawler(request);
         Remote<JMXSheetManager> remote = Sheets.getSheetManager(request);
+        CrawlJob job = (CrawlJob)request.getAttribute("job");
         JMXConnector jmxc = remote.getJMXConnector();
         try {
-            JMXSheetManager sheetManager = remote.getObject(); 
             CrawlJobManager crawlJobManager = BeanProxy.proxy(
                     jmxc.getMBeanServerConnection(), 
                     crawler.getObjectName(), 
                     CrawlJobManager.class);
             int page = Integer.parseInt(request.getParameter("page"));
             String seeds = request.getParameter("seeds");
-            File f = new File(sheetManager.getFilePath("root:seeds:seedsfile"));
-            crawlJobManager.writeLines(f.getAbsolutePath(),
+            crawlJobManager.writeLines(job.encode(),
+                    "root:seeds:seedsfile",
+                    null,
                     page * LINES_PER_PAGE,
                     LINES_PER_PAGE,
                     seeds);
