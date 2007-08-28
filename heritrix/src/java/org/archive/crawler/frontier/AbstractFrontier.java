@@ -47,12 +47,15 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
+import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.CrawlSubstats.Stage;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
+import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.ModuleType;
@@ -397,27 +400,62 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         unpause();
     }
 
+    /**
+     * Report CrawlURI to each of the three 'substats' accumulators
+     * (group/queue, server, host) for a given stage. 
+     * 
+     * @param curi
+     * @param stage
+     */
+    protected void tally(CrawlURI curi, Stage stage) {
+        // Tally per-server, per-host, per-frontier-class running totals
+        CrawlServer server =
+            controller.getServerCache().getServerFor(curi);
+        if (server != null) {
+            server.getSubstats().tally(curi, stage);
+        }
+        CrawlHost host = 
+            controller.getServerCache().getHostFor(curi);
+        if (host != null) {
+            host.getSubstats().tally(curi, stage);
+        } 
+        FrontierGroup group = 
+            controller.getFrontier().getGroup(curi);
+        group.getSubstats().tally(curi, stage);
+    }
+    
     protected void doJournalFinishedSuccess(CrawlURI c) {
+        tally(c,CrawlSubstats.Stage.SUCCEEDED);
         if (this.recover != null) {
             this.recover.finishedSuccess(c);
         }
     }
 
     protected void doJournalAdded(CrawlURI c) {
+        tally(c,CrawlSubstats.Stage.SCHEDULED);
         if (this.recover != null) {
             this.recover.added(c);
         }
     }
 
     protected void doJournalRescheduled(CrawlURI c) {
+        tally(c,CrawlSubstats.Stage.RETRIED);
         if (this.recover != null) {
             this.recover.rescheduled(c);
         }
     }
 
     protected void doJournalFinishedFailure(CrawlURI c) {
+        tally(c,CrawlSubstats.Stage.FAILED);
         if (this.recover != null) {
             this.recover.finishedFailure(c);
+        }
+    }
+    
+    protected void doJournalDisregarded(CrawlURI c) {
+        tally(c,CrawlSubstats.Stage.DISREGARDED);
+        if (this.recover != null) {
+            this.recover.finishedDisregard(c);
         }
     }
 

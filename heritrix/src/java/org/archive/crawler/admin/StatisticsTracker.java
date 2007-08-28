@@ -41,6 +41,8 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.collections.Closure;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
@@ -937,26 +939,49 @@ implements CrawlURIDispositionListener, Serializable {
     }
 
     
-    protected void writeHostsReportTo(PrintWriter writer) {
+    protected void writeHostsReportTo(final PrintWriter writer) {
+        // TODO: use CrawlHosts for all stats; only perform sorting on 
+        // manageable number of hosts
         SortedMap hd = getReverseSortedHostsDistribution();
         // header
-        writer.print("[#urls] [#bytes] [host]\n");
+        writer.print("[#urls] [#bytes] [host] [#robots] [#remaining]\n");
         for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
             // Key is 'host'.
-            Object key = i.next();
-            if (hd.get(key)!=null) {
-                writer.print(((LongWrapper)hd.get(key)).longValue);
-            } else {
-                writer.print("-");
-            }
-            writer.print(" ");
-            writer.print(getBytesPerHost((String)key));
-            writer.print(" ");
-            writer.print((String)key);
-            writer.print("\n");
+            String key = (String) i.next();
+            CrawlHost host = controller.getServerCache().getHostFor(key);
+            LongWrapper val = (LongWrapper)hd.get(key);
+            writeReportLine(writer,
+                    ((val==null)?"-":val.longValue),
+                    getBytesPerHost(key),
+                    key,
+                    host.getSubstats().getRobotsDenials(),
+                    host.getSubstats().getRemaining());
         }
+        // StatisticsTracker doesn't know of zero-completion hosts; 
+        // so supplement report with those entries from host cache
+        Closure logZeros = new Closure() {
+            public void execute(Object obj) {
+                CrawlHost host = (CrawlHost)obj;
+                if(host.getSubstats().getRecordedFinishes()==0) {
+                    writeReportLine(writer,
+                            host.getSubstats().getRecordedFinishes(),
+                            host.getSubstats().getTotalBytes(),
+                            host.getHostName(),
+                            host.getSubstats().getRobotsDenials(),
+                            host.getSubstats().getRemaining());
+                }
+            }};
+        controller.getServerCache().forAllHostsDo(logZeros);
     }
     
+    protected void writeReportLine(PrintWriter writer, Object  ... fields) {
+       for(Object field : fields) {
+           writer.print(field);
+           writer.print(" ");
+       }
+       writer.print("\n");
+    }
+
     /**
      * Return a copy of the hosts distribution in reverse-sorted
      * (largest first) order. 

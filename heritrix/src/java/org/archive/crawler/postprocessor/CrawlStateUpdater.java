@@ -57,20 +57,8 @@ public class CrawlStateUpdater extends Processor implements
     }
 
     protected void innerProcess(CrawlURI curi) {
-        // Tally per-server, per-host, per-frontier-class running totals
         CrawlServer server =
             getController().getServerCache().getServerFor(curi);
-        if (server != null) {
-            server.getSubstats().tally(curi);
-        }
-        CrawlHost host = 
-            getController().getServerCache().getHostFor(curi);
-        if (host != null) {
-            host.getSubstats().tally(curi);
-        } 
-        FrontierGroup group = 
-            getController().getFrontier().getGroup(curi);
-        group.getSubstats().tally(curi);
         
         String scheme = curi.getUURI().getScheme().toLowerCase();
         if (scheme.equals("http") || scheme.equals("https") &&
