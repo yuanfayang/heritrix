@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import javax.management.InstanceNotFoundException;
@@ -97,8 +99,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     final public static String LOGS_DIR_PATH =
         CONTROLLER_PATH + ":logger-module:dir";
 
-//    final private static Logger LOGGER = 
-//        Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
+    final private static Logger LOGGER = 
+        Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
     
     final public static String DOMAIN = "org.archive.crawler";
     
@@ -328,6 +330,13 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
         Set<ObjectName> set = getSheetManagers(getJobName(job));
         for (ObjectName oname: set) {
+            try {
+                JMXSheetManager jsm = BeanProxy.proxy(server, oname, 
+                        JMXSheetManager.class);
+                jsm.offlineCleanup();
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error closing stub SheetManager", e);
+            }
             this.unregister(oname);
         }
     }
