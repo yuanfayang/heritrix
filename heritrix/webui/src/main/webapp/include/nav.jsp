@@ -104,7 +104,7 @@ String the_sheet = (String)request.getAttribute("sheet");
 
 <% 
 out.flush();
-Flash.fromSession(request,response);
+Flash.writeAllFromSession(request,response);
 } // end of local variable scope 
 
 %>
