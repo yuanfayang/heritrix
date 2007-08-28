@@ -29,12 +29,12 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class RecoveryJournalTest extends TmpDirTestCase {
-    private RecoveryJournal rj;
+public class FrontierJournalTest extends TmpDirTestCase {
+    private FrontierJournal rj;
 
     protected void setUp() throws Exception {
         super.setUp();
-        this.rj = new RecoveryJournal(this.getTmpDir().getAbsolutePath(),
+        this.rj = new FrontierJournal(this.getTmpDir().getAbsolutePath(),
             this.getClass().getName());
     }
 
@@ -46,7 +46,7 @@ public class RecoveryJournalTest extends TmpDirTestCase {
     }
 
     public static void main(String [] args) {
-        junit.textui.TestRunner.run(RecoveryJournalTest.class);
+        junit.textui.TestRunner.run(FrontierJournalTest.class);
     }
 
     public void testAdded() throws URIException {

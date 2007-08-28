@@ -562,32 +562,6 @@ public class CrawlController extends Bean implements
         } */
 
 //    }
-    
-    protected void runFrontierRecover(String recoverPath)
-            throws AttributeNotFoundException, MBeanException,
-            ReflectionException, FatalConfigurationException {
-        if (recoverPath == null || recoverPath.length() <= 0) {
-            return;
-        }
-        File f = new File(recoverPath);
-        if (!f.exists()) {
-            LOGGER.severe("Recover file does not exist " + recoverPath);
-            return;
-        }
-        if (!f.isFile()) {
-            // Its a directory if supposed to be doing a checkpoint recover.
-            return;
-        }
-        boolean retainFailures = getOrderSetting(
-                CrawlOrder.RECOVER_RETAIN_FAILURES);
-        try {
-            getFrontier().importRecoverLog(recoverPath, retainFailures);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw (FatalConfigurationException) new FatalConfigurationException(
-                "Recover.log " + recoverPath + " problem: " + e).initCause(e);
-        }
-    }
 
     /*
     private void setupDisk() {

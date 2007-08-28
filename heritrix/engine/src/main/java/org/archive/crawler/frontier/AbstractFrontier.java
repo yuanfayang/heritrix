@@ -24,10 +24,28 @@
  */
 package org.archive.crawler.frontier;
 
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_BEGAN_TIME;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_COMPLETED_TIME;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_LOCALIZED_ERRORS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_CUSTOM_PROCESSOR;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_USER;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_FAILED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_LOST;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DELETED_BY_USER;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DOMAIN_UNRESOLVABLE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_OUT_OF_SCOPE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_ROBOTS_PRECLUDED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TOO_MANY_EMBED_HOPS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TOO_MANY_LINK_HOPS;
+
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -43,12 +61,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
-
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerLoggerModule;
@@ -59,23 +74,29 @@ import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
-import org.archive.state.FileModule;
 import org.archive.state.Expert;
+import org.archive.state.FileModule;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.iterator.LineReadingIterator;
+import org.archive.util.iterator.RegexpLineIterator;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Shared facilities for Frontier implementations.
@@ -104,7 +125,10 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      */
     protected transient boolean shouldTerminate = false;
 
-
+    @Immutable
+    final public static Key<DecideRule> SCOPE =
+        Key.make(DecideRule.class, null);
+    
     @Immutable
     final public static Key<FileModule> SCRATCH_DIR = 
         Key.make(FileModule.class, null);
@@ -305,7 +329,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     private void initJournal(String logsDisk) throws IOException {
         if (logsDisk != null) {
             String logsPath = logsDisk + File.separatorChar;
-            this.recover = new RecoveryJournal(logsPath,
+            this.recover = new FrontierJournal(logsPath,
                     FrontierJournal.LOGNAME_RECOVER);
         }
     }
@@ -815,16 +839,97 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         return false;
     }
 
-    public void importRecoverLog(String pathToLog, boolean retainFailures)
+    public DecideRule getScope() {
+        return controller.get(this, SCOPE);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#importURIs(java.util.Map)
+     */
+    public void importURIs(String jsonParams)
             throws IOException {
-        File source = new File(pathToLog);
-        if (!source.isAbsolute()) {
-            source = new File(recoveryDir.getFile(), pathToLog);
+        JSONObject params;
+        try {
+            params = new JSONObject(jsonParams);
+        } catch (JSONException e) {
+            throw new IOException(e);
         }
-        RecoveryJournal.importRecoverLog(source, this, retainFailures);
+        if("recoverLog".equals(params.optString("format"))) {
+            FrontierJournal.importRecoverLog(params, this);
+            return;
+        }
+        // otherwise, do a 'simple' import
+        importURIsSimple(params);
     }
 
+    /**
+     * Import URIs from either a simple (one URI per line) or crawl.log
+     * format.
+     * 
+     * @param params Map of options to control import
+     * @see org.archive.crawler.framework.Frontier#importURIs(java.util.Map)
+     */
+    protected void importURIsSimple(JSONObject params) {
+        // Figure the regex to use parsing each line of input stream.
+        String extractor;
+        String output;
+        String format = params.optString("format");
+        if("crawlLog".equals(format)) {
+            // Skip first 3 fields
+            extractor = "\\S+\\s+\\S+\\s+\\S+\\s+(\\S+\\s+\\S+\\s+\\S+\\s+).*";
+            output = "$1";
+        } else {
+            extractor =
+                RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
+            output = RegexpLineIterator.ENTRY;
+        }
+        
+        // Read the input stream.
+        BufferedReader br = null;
+        String path = params.optString("path");
+        boolean forceRevisit = params.optBoolean("forceRevisit");
+        boolean asSeeds = params.optBoolean("asSeeds");
+        boolean scopeSchedules = params.optBoolean("scopeSchedules");
+        DecideRule scope = scopeSchedules ? getScope() : null;
+        try {
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+            Iterator<String> iter = new RegexpLineIterator(new LineReadingIterator(br),
+                RegexpLineIterator.COMMENT_LINE, extractor, output);
+            while(iter.hasNext()) {
+                try {
+                    importUri((String)iter.next(), forceRevisit, asSeeds,
+                        scope);
+                } catch (URIException e) {
+                    e.printStackTrace();
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
+    public void importUri(final String str, final boolean forceFetch,
+            final boolean isSeed, DecideRule scope)
+    throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory.getInstance(str));
+        curi.setForceFetch(forceFetch);
+        if (isSeed) {
+            curi.setSeed(isSeed);
+            if (curi.getVia() == null || curi.getVia().length() <= 0) {
+                // Danger of double-add of seeds because of this code here.
+                // Only call addSeed if no via.  If a via, the schedule will
+                // take care of updating scope.
+                manager.getGlobalSheet().get(this, SEEDS).addSeed(curi);
+            }
+        }
+        if(scope!=null && !scope.accepts(curi)) {
+            return; // without scheduling
+        }
+        this.controller.getFrontier().schedule(curi);
+    }
+    
+    
     /**
      * Log to the main crawl.log
      * 

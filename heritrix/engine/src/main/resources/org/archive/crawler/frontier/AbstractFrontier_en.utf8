@@ -93,3 +93,8 @@ The directory that the ignored seeds report and the recovery log will live in.
 scratch-dir-description:
 The directory where temporary files will be written.
 
+scope-description:
+The decide rule used to determine whether or not URIs are in the scope of 
+the crawl. Here in the frontier, it is only applied to bulk URI imports, 
+not usual discoveries. This value should be shared with the other Scoper
+processors for consistency. 

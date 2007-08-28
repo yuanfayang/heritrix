@@ -26,17 +26,20 @@ package org.archive.crawler.framework;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
 import org.archive.state.Module;
 import org.archive.util.Reporter;
+import org.json.JSONException;
 
 
 /**
@@ -283,26 +286,55 @@ public interface Frontier extends Module, Reporter {
     public long totalBytesWritten();
 
     /**
-     * Recover earlier state by reading a recovery log.
+     * Load URIs from a file, for scheduling and/or considered-included 
+     * status (if from a recovery log). 
      *
-     * <p>Some Frontiers are able to write detailed logs that can be loaded
-     * after a system crash to recover the state of the Frontier prior to the
-     * crash. This method is the one used to achive this.
+     * <p> The 'params' Map describes the source file to use and options
+     * in effect regarding its format and handling. Significant keys 
+     * are:
+     * 
+     * <p>"path": full path to source file. If the path ends '.gz', it 
+     * will be considered to be GZIP compressed.
+     * <p>"format": one of "onePer", "crawlLog", or "recoveryLog"
+     * <p>"forceRevisit": if "true", URIs will be force-scheduled even
+     * if already considered included
+     * 
+     * <p>If the "format" is "recoveryLog", 8 more keys are significant:
+     * 
+     * <p>"includeSuccesses": if "true", success lines ("Fs") in the log
+     * will be considered-included. (Usually, this is the aim of
+     * a recovery-log import.)
+     * <p>"includeFailures": if "true", failure lines ("Ff") in the log
+     * will be considered-included. (Sometimes, this is desired.)
+     * <p>"includeScheduleds": If "true", scheduled lines ("F+") in the 
+     * log will be considered-included. (Atypical, but an option for 
+     * completeness.)
+     * <p>"scopeIncludes": if "true", any of the above will be checked
+     * against the frontier's configured scope before consideration
      *
-     * @param pathToLog The name (with full path) of the recover log.
-     * @param retainFailures If true, failures in log should count as 
-     * having been included. (If false, failures will be ignored, meaning
-     * the corresponding URIs will be retried in the recovered crawl.)
-     * @throws IOException If problems occur reading the recover log.
+     * <p>"scheduleSuccesses": if "true", success lines ("Fs") in the log
+     * will be schedule-attempted. (Atypical, as all successes
+     * are preceded by "F+" lines.)
+     * <p>"scheduleFailures": if "true", failure lines ("Ff") in the log
+     * will be schedule-attempted. (Atypical, as all failures
+     * are preceded by "F+" lines.)
+     * <p>"scheduleScheduleds": if "true", scheduled lines ("F+") in the 
+     * log will be considered-included. (Usually, this is the aim of a
+     * recovery-log import.)
+     * <p>"scopeSchedules": if "true", any of the above will  be checked
+     * against the frontier's configured scope before scheduling 
+     * 
+     * TODO: add parameter for auto-unpause-at-good-time
+     * 
+     * @param params Map describing source file and options as above
+     * @throws IOException If problems occur reading file.
+     * @throws JSONException 
      */
-    @Operation(desc="Recover earlier state by reading a recovery log.")
-    public void importRecoverLog(
-            @Parameter(name="pathToLog", desc="The full path of the recover log.")
-            String pathToLog, 
-            
-            @Parameter(name="retainFailures", desc="Whether failures in the log" +
-                        "should count as having been included.")
-            boolean retainFailures)
+    @Operation(desc="Import URIs from a file, to be scheduled and/or " +
+    		"considered-included.")
+    public void importURIs(
+            @Parameter(name="params", desc="JSONified map of parameters ")
+            String params)
 			throws IOException;
 
     /**
@@ -436,6 +468,12 @@ public interface Frontier extends Module, Reporter {
      */
     public String getClassKey(CrawlURI cauri);
 
+    /*
+     * Return the internally-configured crawl 'scope' (rules for
+     * deciding whether a URI is crawled or not). 
+     */
+    public DecideRule getScope();
+    
     /**
      * Request that the Frontier load (or reload) crawl seeds, 
      * typically by contacting the Scope. 

@@ -29,6 +29,8 @@ package org.archive.crawler.webui;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.management.ObjectName;
@@ -43,6 +45,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.JobStage;
 import org.archive.crawler.framework.StatisticsTracking;
+import org.json.JSONObject;
 
 
 /**
@@ -168,7 +171,7 @@ public class Console {
     }
 
 
-    public static void showImport(
+    public static void showFrontierImport(
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
@@ -187,15 +190,15 @@ public class Console {
                     completed.add(j);
                 }
             }
-            request.setAttribute("completed", completed);
-            Misc.forward(request, response, "page_import.jsp");
+            request.setAttribute("completedJobs", completed);
+            Misc.forward(request, response, "page_frontier_import.jsp");
         } finally {
             remote.close();
         }
     }
 
     
-    public static void importLog(
+    public static void frontierImport(
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
@@ -203,17 +206,34 @@ public class Console {
         CrawlJobManager cjm = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
-            String path = request.getParameter("path");
-            if (path == null || path.trim().length() == 0) {
-                String recoverJob = request.getParameter("recoverJob");
-                path = cjm.getFilePath(recoverJob, CrawlJobManagerImpl.LOGS_DIR_PATH);
-                path = path + File.separator + "recover.gz";
+            
+            // just package it all for the other side
+            HashMap<String,String> params = new HashMap<String,String>(); 
+            Enumeration<String> paramEnum = request.getParameterNames();
+            while(paramEnum.hasMoreElements()) {
+                String key = paramEnum.nextElement();
+                Object value = request.getParameter(key);
+                if(value instanceof String) {
+                    params.put(key, (String)value);
+                }
             }
-            boolean retainFailures = Boolean.parseBoolean(request.getParameter("retainFailures"));
+            
+            String source = request.getParameter("source");
+            if(!source.equals("file")) {
+                // use prior job's recovery ;
+                String path = cjm.getFilePath(source, CrawlJobManagerImpl.LOGS_DIR_PATH);
+                // FIXME: this will break when WUI is on different platform than engine
+                path = path + File.separator + "recover.gz";
+                params.put("path",path);
+            }
+            String jsonParams = new JSONObject(params).toString();
+
             CrawlJob job = CrawlJob.fromRequest(request, jmxc);
             Frontier frontier = Misc.find(jmxc, job.getName(), Frontier.class);
-            // TODO: Examine whether to do this in a background thread.
-            frontier.importRecoverLog(path, retainFailures);
+            // TODO: Do this in a background thread, with WUI indicator 
+            // of as long as it stays in progress
+            
+            frontier.importURIs(jsonParams);
             showJobConsole(sc, request, response);
         } finally {
             remote.close();
