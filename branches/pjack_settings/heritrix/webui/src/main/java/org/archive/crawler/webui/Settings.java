@@ -648,6 +648,10 @@ public class Settings {
             return Editability.GLOBAL;
         }
         
+        if (!setting.getSheets()[0].equals(sheet)) {
+            return Editability.NOT_OVERRIDDEN;
+        }
+        
         
         return Editability.EDITABLE;
     }
