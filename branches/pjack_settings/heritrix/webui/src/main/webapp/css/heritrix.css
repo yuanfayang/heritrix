@@ -19,6 +19,30 @@ h3 {
     color:red;
     font-weight:bold; 
 }
+.flash {
+    font-weight:bold; 
+    width:100%;
+    border:2px solid;
+}
+.flash div {
+    margin:5px;
+    padding:10px;
+ }
+.ACK {
+    color:darkGreen;
+    background-color:lightGreen;
+    border-color:darkGreen;
+}
+.NACK {
+    color:darkRed;
+    background-color:lightRed;
+    border-color:darkRed;
+}
+.ADVISORY {
+    color:darkOrange;
+    background-color:lightOrange;
+    border-color:darkOrange;
+}
 .margined {
     margin:20px;
 }

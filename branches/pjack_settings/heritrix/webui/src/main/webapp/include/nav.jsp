@@ -2,6 +2,7 @@
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
+<%@ page import="org.archive.crawler.webui.Flash" %>
 <%@ page import="org.archive.crawler.framework.JobStage"%>
 <%@ page import="java.util.Collection"%>
 
@@ -30,7 +31,7 @@ String the_sheet = (String)request.getAttribute("sheet");
 <tr>
 <td>
 <a border="0" href="<%=request.getContextPath()%>/index.jsp">
-<img border="0" src="<%=request.getContextPath()%>/images/logo.gif" height="37" width="145" hspace="10">
+<img border="0" src="<%=request.getContextPath()%>/images/heritrix-v1-logo.png" height="47" width="155" hspace="10">
 </a>
 </td>
 <td>
@@ -100,4 +101,10 @@ String the_sheet = (String)request.getAttribute("sheet");
 </table>
 
 <hr/>
-<% } // end of local variable scope %>
+
+<% 
+out.flush();
+Flash.fromSession(request,response);
+} // end of local variable scope 
+
+%>

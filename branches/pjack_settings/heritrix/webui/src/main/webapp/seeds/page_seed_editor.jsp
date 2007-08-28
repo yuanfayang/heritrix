@@ -11,7 +11,6 @@ CrawlJob job = (CrawlJob)Text.get(request, "job");
 String seedsfile = (String)Text.get(request, "seedfile");
 String seeds = (String)Text.get(request, "seeds");
 int pageNum = (Integer)Text.get(request, "page");
-Boolean successMessage = (Boolean)request.getAttribute("success");
 
 %>
 <html>
@@ -24,10 +23,6 @@ Boolean successMessage = (Boolean)request.getAttribute("success");
 <%@include file="/include/nav.jsp"%>
 
 <h3>Seeds</h3>
-
-<% if ((successMessage != null) && successMessage) { %>
-<font color="green">Your changes were saved successfully.</font>
-<% } %>
 
 <p>
 

@@ -106,7 +106,7 @@ public class Seeds {
         } finally {
             remote.close();
         }
-        request.setAttribute("success", true);
+        new Flash("Your seeds were updated successfully.").addToSession(request);
         showSeeds(sc, request, response);
     }
             
