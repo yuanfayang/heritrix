@@ -852,7 +852,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         try {
             params = new JSONObject(jsonParams);
         } catch (JSONException e) {
-            throw new IOException(e);
+            IOException io = new IOException();
+            io.initCause(e);
+            throw io;
         }
         if("recoverLog".equals(params.optString("format"))) {
             FrontierJournal.importRecoverLog(params, this);
