@@ -67,4 +67,7 @@ public abstract class DecideRule implements Module, Serializable {
         return null;
     }
 
+    public boolean accepts(ProcessorURI uri) {
+        return DecideResult.ACCEPT == decisionFor(uri);
+    }
 }

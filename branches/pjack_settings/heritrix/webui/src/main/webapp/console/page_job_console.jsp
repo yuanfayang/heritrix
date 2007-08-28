@@ -126,12 +126,6 @@ if (status.equals(CrawlController.State.PREPARED.toString())) {
     <a 
     title="Terminates the crawl."
     href="<%=request.getContextPath()%>/console/do_stop.jsp?<%=qs%>">Terminate</a>
-|
-    <a
-    title="Import a frontier recovery log into this crawl."
-    href="<%=request.getContextPath()%>/console/do_show_import.jsp?<%=qs%>">
-    Import Frontier Log
-    </a>
 
 </legend>
 
@@ -207,8 +201,11 @@ if (status.equals(CrawlController.State.PREPARED.toString())) {
             %>
             		<b>Paused Operations</b>
             		<div class='indent'>
-	                	<a href='<%= request.getContextPath() %>/console/frontier.jsp'>View or Edit Frontier URIs</a>
+	                	<a href='<%= request.getContextPath() %>/console/do_show_frontier_import.jsp?<%=qs%>'>Frontier Add/Import URIs</a>
 	                </div>
+                    <div class='indent'>
+                        <a href='<%= request.getContextPath() %>/console/do_show_frontier_edit.jsp?<%=qs%>'>Frontier View/Edit</a>
+                    </div>
 	        <%
             	}
             %>

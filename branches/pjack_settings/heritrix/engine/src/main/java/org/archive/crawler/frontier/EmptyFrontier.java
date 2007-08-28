@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
@@ -12,7 +13,9 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.net.UURI;
+import org.json.JSONObject;
 
 
 /**
@@ -74,6 +77,10 @@ public class EmptyFrontier implements Frontier, Serializable {
         return null;
     }
 
+    public DecideRule getScope() {
+        return null;
+    }
+    
     public FrontierGroup getGroup(CrawlURI curi) {
         return null;
     }
@@ -87,7 +94,7 @@ public class EmptyFrontier implements Frontier, Serializable {
         return null;
     }
 
-    public void importRecoverLog(String pathToLog, boolean retainFailures)
+    public void importURIs(String jsonParams)
             throws IOException {
     }
 
@@ -155,5 +162,4 @@ public class EmptyFrontier implements Frontier, Serializable {
     public void singleLineReportTo(PrintWriter writer) throws IOException {
         writer.println("EmptyFrontier");
     }
-
 }

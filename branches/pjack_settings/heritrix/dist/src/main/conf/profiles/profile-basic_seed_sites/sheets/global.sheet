@@ -33,6 +33,7 @@ root:order=primary, org.archive.crawler.datamodel.CrawlOrder
 root:queue-assignment-policy=primary, org.archive.crawler.frontier.SurtAuthorityQueueAssignmentPolicy
 root:controller=primary, org.archive.crawler.framework.CrawlController
 root:controller:frontier=primary, org.archive.crawler.frontier.BdbFrontier
+root:controller:frontier:scope=reference, root:scope
 root:controller:frontier:scratch-dir=object, org.archive.state.FileModule
 root:controller:frontier:scratch-dir:path=string, scratch
 root:controller:frontier:scratch-dir:parent=reference, dir

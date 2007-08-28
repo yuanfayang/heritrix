@@ -40,7 +40,7 @@
  */
 package org.archive.crawler.util;
 
-import org.archive.crawler.frontier.RecoveryJournal;
+import org.archive.crawler.frontier.FrontierJournal;
 
 import java.io.File;
 import java.io.LineNumberReader;
@@ -57,7 +57,7 @@ import java.util.logging.Logger;
 
 public class RecoveryLogMapper {
     private static final char LOG_LINE_START_CHAR =
-        RecoveryJournal.F_ADD.charAt(0);
+        FrontierJournal.F_ADD.charAt(0);
     private static final Logger logger =
         Logger.getLogger(RecoveryLogMapper.class.getName());
     private PrintWriter seedNotFoundPrintWriter = null;
@@ -116,7 +116,7 @@ public class RecoveryLogMapper {
     protected void load(String recoverLogFileName)
     throws java.io.FileNotFoundException, java.io.IOException,
             SeedUrlNotFoundException {
-        LineNumberReader reader = new LineNumberReader(RecoveryJournal.
+        LineNumberReader reader = new LineNumberReader(FrontierJournal.
             getBufferedReader(new File(recoverLogFileName)));
         String curLine = null;
         while ((curLine = reader.readLine()) != null) {
@@ -131,7 +131,7 @@ public class RecoveryLogMapper {
             if (firstUrl.startsWith("dns:")) {
                 continue;
             }
-            if (curLine.startsWith(RecoveryJournal.F_ADD)) {
+            if (curLine.startsWith(FrontierJournal.F_ADD)) {
                 // Seed URL
                 if (curLineNumWords == 2) {
                     if (logger.isLoggable(Level.FINE)) {
@@ -186,7 +186,7 @@ public class RecoveryLogMapper {
                         theSeedUrlList.add(firstUrl);
                     }
                 }
-            } else if (curLine.startsWith(RecoveryJournal.F_SUCCESS)) {
+            } else if (curLine.startsWith(FrontierJournal.F_SUCCESS)) {
                 if (logger.isLoggable(Level.FINE)) {
                     logger.fine("F_SUCCESS for URL " + firstUrl);
                 }

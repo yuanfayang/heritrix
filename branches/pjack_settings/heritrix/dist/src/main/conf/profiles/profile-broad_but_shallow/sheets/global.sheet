@@ -35,6 +35,7 @@ root:controller:scratch-dir=object, org.archive.state.FileModule
 root:controller:scratch-dir:path=string, scratch
 root:controller:scratch-dir:parent=reference, dir
 root:controller:frontier=primary, org.archive.crawler.frontier.BdbFrontier
+root:controller:frontier:scope=reference, root:scope
 root:controller:frontier:recovery-dir=reference, dir
 root:controller:frontier:scratch-dir=reference, root:controller:scratch-dir
 root:controller:frontier:rules=reference, root:uri-canonicalization-rules

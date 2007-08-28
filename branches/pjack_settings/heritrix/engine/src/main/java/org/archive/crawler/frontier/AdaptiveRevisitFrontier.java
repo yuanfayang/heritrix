@@ -57,6 +57,7 @@ import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
@@ -965,10 +966,10 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
 
     /**
      * Method is not supported by this Frontier implementation..
-     * @param pathToLog
+     * @param params
      * @throws IOException
      */
-    public void importRecoverLog(String pathToLog) throws IOException {
+    public void importURIs(String jsonParams) throws IOException {
         throw new IOException("Unsupported by this frontier.");
     }
 
@@ -1030,6 +1031,10 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      * @see org.archive.crawler.framework.Frontier#getFrontierJournal()
      */
     public FrontierJournal getFrontierJournal() {
+        return null;
+    }
+    
+    public DecideRule getScope() {
         return null;
     }
 

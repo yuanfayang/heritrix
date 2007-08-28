@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -58,32 +59,20 @@ public class CrawlerJournal {
     /**
      * Get a BufferedReader on the crawler journal given
      * 
+     * TODO: move to a general utils class 
+     * 
      * @param source File journal
      * @return journal buffered reader.
      * @throws IOException
      */
     public static BufferedReader getBufferedReader(File source) throws IOException {
+        InputStream is = new BufferedInputStream(new FileInputStream(source));
         boolean isGzipped = source.getName().toLowerCase().
             endsWith(GZIP_SUFFIX);
-        FileInputStream fis = new FileInputStream(source);
-        return new BufferedReader(isGzipped?
-            new InputStreamReader(new GZIPInputStream(fis)):
-            new InputStreamReader(fis));   
-    }
-
-    /**
-     * Get a BufferedInputStream on the recovery file given.
-     *
-     * @param source file to open
-     * @return journal buffered input stream.
-     * @throws IOException
-     */
-    public static BufferedInputStream getBufferedInput(File source) throws IOException {
-        boolean isGzipped = source.getName().toLowerCase().
-            endsWith(GZIP_SUFFIX);
-        FileInputStream fis = new FileInputStream(source);
-        return isGzipped ? new BufferedInputStream(new GZIPInputStream(fis))
-                : new BufferedInputStream(fis);
+        if(isGzipped) {
+            is = new GZIPInputStream(is);
+        }
+        return new BufferedReader(new InputStreamReader(is));
     }
 
     /**
