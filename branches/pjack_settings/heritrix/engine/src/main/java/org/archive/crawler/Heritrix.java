@@ -254,7 +254,7 @@ public class Heritrix {
             // Start WebUI, if desired.
             if (cl.hasOption('r')) {
                 new WebUI(webConfig).start();
-                out.println("Web UI listing on " 
+                out.println("Web UI listening on " 
                         + webConfig.hostAndPort() + ".");
             }
         } catch (Exception e) {
