@@ -36,10 +36,12 @@ import java.util.List;
 import java.util.Queue;
 import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.collections.Closure;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.framework.CrawlController;
@@ -88,6 +90,13 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     private final static String DEFAULT_INCLUDED =
         BdbUriUniqFilter.class.getName();
     
+    /** URI-already-included to use (by class name) */
+    public final static String ATTR_DUMP_PENDING_AT_CLOSE = 
+        "dump-pending-at-close";
+    private final static Boolean DEFAULT_DUMP_PENDING_AT_CLOSE = 
+        Boolean.FALSE;
+
+    
     /**
      * Constructor.
      * @param name Name for of this Frontier.
@@ -100,6 +109,12 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                 "Structure to use for tracking already-seen URIs. Non-default " +
                 "options may require additional configuration via system " +
                 "properties.", DEFAULT_INCLUDED, AVAILABLE_INCLUDED_OPTIONS));
+        t.setExpertSetting(true);
+        t = addElementToDefinition(new SimpleType(ATTR_DUMP_PENDING_AT_CLOSE,
+                "Whether to dump all URIs waiting in queues to crawl.log " +
+                "when a crawl ends. May add a significant delay to " +
+                "crawl termination. Dumped lines will have a zero (0) " +
+                "status.", DEFAULT_DUMP_PENDING_AT_CLOSE));
         t.setExpertSetting(true);
     }
 
@@ -323,6 +338,13 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     }
     
     protected void closeQueue() {
+        if((Boolean)getUncheckedAttribute(null,ATTR_DUMP_PENDING_AT_CLOSE)) {
+            try {
+                dumpAllPendingToLog();
+            } catch (DatabaseException e) {
+                logger.log(Level.WARNING,"dump pending problem",e);
+            }
+        }
         if (this.pendingUris != null) {
             this.pendingUris.close();
             this.pendingUris = null;
@@ -411,5 +433,20 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             + "of checkpoint.");
         // Serialize ourselves.
         CheckpointUtils.writeObjectToFile(this, checkpointDir);
+    }
+    
+    /**
+     * Dump all still-enqueued URIs to the crawl.log -- without actually
+     * dequeuing. Useful for understanding what was remaining in a
+     * crawl that was ended early, for example at a time limit. 
+     * 
+     * @throws DatabaseException
+     */
+    public void dumpAllPendingToLog() throws DatabaseException {
+        Closure tolog = new Closure() {
+            public void execute(Object curi) {
+                log((CrawlURI)curi);
+            }};
+        pendingUris.forAllPendingDo(tolog);
     }
 }
