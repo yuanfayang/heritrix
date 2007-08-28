@@ -27,6 +27,7 @@ import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.collections.Closure;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SettingsHandler;
@@ -207,6 +208,12 @@ public class ServerCache {
         if (this.servers != null) { 
             this.servers.clear();
             this.servers = null;
+        }
+    }
+
+    public void forAllHostsDo(Closure c) {
+        for(String host : hosts.keySet()) {
+            c.execute(hosts.get(host));
         }
     }
 }

@@ -36,20 +36,34 @@ import org.apache.commons.httpclient.HttpStatus;
  * @author gojomo
  */
 public class CrawlSubstats implements Serializable, FetchStatusCodes {
-
     private static final long serialVersionUID = 8624425657056569036L;
 
+    public enum Stage {SCHEDULED, SUCCEEDED, RETRIED, DISREGARDED, FAILED};
+    
     public interface HasCrawlSubstats {
         public CrawlSubstats getSubstats();
     }
     
-    long fetchSuccesses;   // 2XX response codes
+    long totalScheduled;   // anything initially scheduled
+                           // (totalScheduled - (fetchSuccesses + fetchFailures)
+    long fetchSuccesses;   // anything disposed-success 
+                           // (HTTP 2XX response codes, other non-errors)
+    long fetchFailures;    // anything disposed-failure
+    long fetchDisregards;  // anything disposed-disregard
     long fetchResponses;   // all positive responses (incl. 3XX, 4XX, 5XX)
+    long robotsDenials;    // all robots-precluded failures
     long successBytes;     // total size of all success responses
     long totalBytes;       // total size of all responses
     long fetchNonResponses; // processing attempts resulting in no response
                            // (both failures and temp deferrals)
     
+    /**
+     * Examing the CrawlURI and based on its status and internal values,
+     * update tallies. 
+     * 
+     * @param curi
+     * @deprecated
+     */
     public synchronized void tally(CrawlURI curi) {
         if(curi.getFetchStatus()<=0) {
             fetchNonResponses++;
@@ -61,6 +75,39 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
                 curi.getFetchStatus()<300) {
             fetchSuccesses++;
             successBytes += curi.getContentSize();
+        }
+    }
+    
+    public synchronized void tally(CrawlURI curi, Stage stage) {
+        switch(stage) {
+            case SCHEDULED:
+                totalScheduled++;
+                break;
+            case RETRIED:
+                if(curi.getFetchStatus()<=0) {
+                    fetchNonResponses++;
+                    return;
+                }
+                break;
+            case SUCCEEDED:
+                fetchSuccesses++;
+                totalBytes += curi.getContentSize();
+                successBytes += curi.getContentSize();
+                break;
+            case DISREGARDED:
+                fetchDisregards++;
+                if(curi.getFetchStatus()==S_ROBOTS_PRECLUDED) {
+                    robotsDenials++;
+                }
+                break;
+            case FAILED:
+                if(curi.getFetchStatus()<=0) {
+                    fetchNonResponses++;
+                } else {
+                    totalBytes += curi.getContentSize();
+                }
+                fetchFailures++;
+                break;
         }
     }
     
@@ -78,5 +125,21 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
     }
     public long getFetchNonResponses() {
         return fetchNonResponses;
+    }
+    public long getTotalScheduled() {
+        return totalScheduled;
+    }
+    public long getFetchDisregards() {
+        return fetchDisregards;
+    }
+    public long getRobotsDenials() {
+        return robotsDenials;
+    }
+    
+    public long getRemaining() {
+        return totalScheduled - (fetchSuccesses + fetchFailures + fetchDisregards);
+    }
+    public long getRecordedFinishes() {
+        return fetchSuccesses + fetchFailures;
     }
 }

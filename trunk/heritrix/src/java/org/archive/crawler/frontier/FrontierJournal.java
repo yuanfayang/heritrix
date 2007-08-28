@@ -72,6 +72,11 @@ public interface FrontierJournal {
     public abstract void finishedFailure(CrawlURI curi);
 
     /**
+     * @param curi CrawlURI finished disregarded (uncounted failure).
+     */
+    public abstract void finishedDisregard(CrawlURI curi);
+    
+    /**
      * @param curi CrawlURI that was returned to the Frontier for 
      * another try.
      */
