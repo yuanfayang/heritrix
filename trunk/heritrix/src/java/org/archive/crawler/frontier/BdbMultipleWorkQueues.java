@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections.Closure;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.util.ArchiveUtils;
@@ -560,6 +561,26 @@ public class BdbMultipleWorkQueues {
                     new DatabaseEntry(new byte[0]));
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
+        }
+    }
+    
+    
+    /**
+     * Utility method to perform action for all pending CrawlURI instances.
+     * @param c Closure action to perform
+     * @throws DatabaseException
+     */
+    protected void forAllPendingDo(Closure c) throws DatabaseException {
+        DatabaseEntry key = new DatabaseEntry();
+        DatabaseEntry value = new DatabaseEntry();
+        Cursor cursor = pendingUrisDB.openCursor(null,null);
+        OperationStatus status;
+        while(cursor.getNext(key,value,null)==OperationStatus.SUCCESS) {
+            if(value.getData().length==0) {
+                continue;
+            }
+            CrawlURI item = (CrawlURI)crawlUriBinding.entryToObject(value);
+            c.execute(item);
         }
     }
 }
