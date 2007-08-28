@@ -57,7 +57,8 @@ implements ProcessorURI {
     final private List<Link> outLinks = new ArrayList<Link>();
     final private List<ExceptionHolder> uriErrors 
      = new ArrayList<ExceptionHolder>();
-    
+
+    private int discardedOutLinks;
 
     private String from;
     private String userAgent;
@@ -365,27 +366,29 @@ implements ProcessorURI {
     }
 
 
-	public String getContentDigestSchemeString() {
-		// FIXME
-		return null;
-	}
+    public String getContentDigestSchemeString() {
+        // FIXME
+        return null;
+    }
 
+    public void makeHeritable(String attr) {
+        // FIXME? -- maybe irrelevant
 
-	public void makeHeritable(String attr) {
-		// FIXME? -- maybe irrelevant
-		
-	}
+    }
 
+    public boolean isSuccess() {
+        // FIXME?
+        return false;
+    }
 
-	public boolean isSuccess() {
-		// FIXME? 
-		return false;
-	}
+    public Map<String, Object> getPersistentDataMap() {
+        // FIXME?
+        return null;
+    }
 
-
-	public Map<String, Object> getPersistentDataMap() {
-		// FIXME?
-		return null;
-	}
+    
+    public void incrementDiscardedOutLinks() {
+        discardedOutLinks++;
+    }
 
 }

@@ -1746,4 +1746,8 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         return getUURI().toString();
     }
 
+    
+    public void incrementDiscardedOutLinks() {
+        discardedOutlinks++;
+    }
 }

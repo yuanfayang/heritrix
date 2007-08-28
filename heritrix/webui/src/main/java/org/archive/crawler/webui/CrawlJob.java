@@ -52,8 +52,12 @@ public class CrawlJob {
             JobStage stage) {
         String crawlstatus;
         if (stage == JobStage.ACTIVE) {
-            JobController jc = Misc.find(jmxc, name, JobController.class);
-            crawlstatus = jc.getCrawlStatusString();
+            try {
+                JobController jc = Misc.find(jmxc, name, JobController.class);
+                crawlstatus = jc.getCrawlStatusString();
+            } catch (RuntimeException e) {
+                crawlstatus = "UNKNOWN";
+            }
         } else {
             crawlstatus = null;
         }

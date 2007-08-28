@@ -157,9 +157,11 @@ public class CrawlController extends Bean implements
     final public static Key<SheetManager> SHEET_MANAGER = 
         Key.makeAuto(SheetManager.class);
 
-
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
         Key.makeAuto(CrawlerLoggerModule.class);
+
+    @Immutable
+    final public static Key<Integer> CHECKPOINTER_PERIOD = Key.make(-1);
 
     static {
         KeyManager.addKeys(CrawlController.class);

@@ -34,6 +34,7 @@ import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.StringExtractorTestBase;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 import org.archive.util.Recorder;
 
 import static org.archive.modules.extractor.LinkContext.EMBED_MISC;
@@ -73,7 +74,12 @@ public class ExtractorCSSTest extends StringExtractorTestBase {
     
     @Override
     protected Extractor makeExtractor() {
-        return new ExtractorCSS();
+        ExtractorCSS result = new ExtractorCSS();
+        UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();
+        ExampleStateProvider dsp = new ExampleStateProvider();
+        dsp.set(result, Extractor.URI_ERROR_LOGGER_MODULE, ulm);
+        result.initialTasks(dsp);
+        return result;    
     }
  
 

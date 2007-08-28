@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.modules.DefaultProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 import org.archive.util.Recorder;
 
 public class ExtractorHTMLTest extends StringExtractorTestBase {
@@ -58,7 +59,12 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
 
     @Override
     protected Extractor makeExtractor() {
-        return new ExtractorHTML();
+        ExtractorHTML result = new ExtractorHTML();
+        UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();
+        ExampleStateProvider dsp = new ExampleStateProvider();
+        dsp.set(result, Extractor.URI_ERROR_LOGGER_MODULE, ulm);
+        result.initialTasks(dsp);
+        return result;
     }
     
     @Override
@@ -134,7 +140,7 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
     protected void expectSingleLink(String expected, CharSequence source) throws URIException {
         DefaultProcessorURI puri = new DefaultProcessorURI(UURIFactory
                 .getInstance("http://www.example.com"), null);
-        ExtractorHTML extractor = new ExtractorHTML();
+        ExtractorHTML extractor = (ExtractorHTML)makeExtractor();
         extractor.extract(puri, source);
         Link[] links = puri.getOutLinks().toArray(new Link[0]);
         assertTrue("did not find single link",links.length==1);

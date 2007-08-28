@@ -167,10 +167,13 @@ public class ExtractorJS extends ContentExtractor {
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
                 foundLinks++;
                 try {
+                    int max = uriErrors.getMaxOutlinks(curi);
                     if (handlingJSFile) {
-                        Link.addRelativeToVia(curi, string, JS_MISC, SPECULATIVE);
+                        Link.addRelativeToVia(curi, max, string, JS_MISC, 
+                                SPECULATIVE);
                     } else {
-                        Link.addRelativeToBase(curi, string, JS_MISC, SPECULATIVE);
+                        Link.addRelativeToBase(curi, max, string, JS_MISC, 
+                                SPECULATIVE);
                     }
                 } catch (URIException e) {
                     uriErrors.logUriError(e, curi.getUURI(), string);

@@ -152,8 +152,9 @@ public class ExtractorCSS extends ContentExtractor {
                 cssUri = TextUtils.replaceAll(CSS_BACKSLASH_ESCAPE, cssUri,
                         "$1");
                 foundLinks++;
+                int max = uriErrors.getMaxOutlinks(curi);
                 try {
-                    Link.addRelativeToBase(curi, cssUri, 
+                    Link.addRelativeToBase(curi, max, cssUri, 
                             LinkContext.EMBED_MISC, Hop.EMBED);
                 } catch (URIException e) {
                     uriErrors.logUriError(e, curi.getUURI(), cssUri);

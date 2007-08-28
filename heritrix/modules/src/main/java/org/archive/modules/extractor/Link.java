@@ -130,33 +130,37 @@ public class Link implements Serializable {
          ^ context.hashCode() ^ hop.hashCode();
     }
 
-    public static Link addRelativeToBase(ProcessorURI uri, String newUri,
-            LinkContext context, Hop hop) throws URIException {
+    public static void addRelativeToBase(ProcessorURI uri, int max, 
+            String newUri, LinkContext context, Hop hop) throws URIException {
         UURI dest = UURIFactory.getInstance(uri.getUURI(), newUri);
-        return add2(uri, dest, context, hop);
+        add2(uri, max, dest, context, hop);
     }
 
     
-    public static Link addRelativeToVia(ProcessorURI uri, String newUri,
-            LinkContext context, Hop hop) throws URIException {
+    public static void addRelativeToVia(ProcessorURI uri, int max,
+            String newUri, LinkContext context, Hop hop) throws URIException {
         UURI dest = UURIFactory.getInstance(uri.getVia(), newUri);
-        return add2(uri, dest, context, hop);
+        add2(uri, max, dest, context, hop);
     }
 
 
-    public static Link add(ProcessorURI uri, String newUri, LinkContext context,
-            Hop hop) throws URIException {
+    public static void add(ProcessorURI uri, int max, String newUri, 
+            LinkContext context, Hop hop) throws URIException {
         UURI dest = UURIFactory.getInstance(newUri);
-        return add2(uri, dest, context, hop);
+        add2(uri, max, dest, context, hop);
     }
 
 
-    private static Link add2(ProcessorURI uri, UURI dest, LinkContext context,
-            Hop hop) throws URIException {
-        UURI src = uri.getUURI();
-        Link link = new Link(src, dest, context, hop);
-        uri.getOutLinks().add(link);
-        return link;
+    private static void add2(ProcessorURI uri, int max, UURI dest, 
+            LinkContext context, Hop hop) throws URIException {
+        if (uri.getOutLinks().size() < max) {
+            UURI src = uri.getUURI();
+            Link link = new Link(src, dest, context, hop);
+            uri.getOutLinks().add(link);
+//            return link;
+        } else {
+            uri.incrementDiscardedOutLinks();
+        }
     }
 
 }

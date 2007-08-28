@@ -60,3 +60,8 @@ The directory where temporary files will be written.
 
 checkpoints-dir-description:
 The directory where checkpoints will be stored.
+
+
+checkpointer-period-description:
+Number of hours to wait between automatic checkpoints.  If less than zero, no
+automatic checkpoints will be performed.
