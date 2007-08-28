@@ -34,6 +34,12 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
     <% String jqs = Text.jobQueryString(request, job); %>
     <span class="label">Job:</span>
         <%=job.getName()%>
+    <% if (job.getCrawlStatus().equals("UNKNOWN")) { %>
+        <div>
+        <span class="alert">(!)</span> The job is present in the jobs 
+        directory, but it cannot be contacted via JMX.
+        </div>
+    <% } else { %>
     <div class="itemDetails">
         <a 
            class="rowLink" 
@@ -56,6 +62,7 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
            title="View logs for this job."
            href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=jqs%>">Logs</a>
     </div>
+    <% } %>
     </div>
     <% } %>
 <% } %>

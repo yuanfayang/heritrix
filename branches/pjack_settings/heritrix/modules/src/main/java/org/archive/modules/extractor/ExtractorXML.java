@@ -135,7 +135,8 @@ public class ExtractorXML extends ContentExtractor {
                 // treat as speculative, as whether context really 
                 // intends to create a followable/fetchable URI is
                 // unknown
-                Link.add(curi, xmlUri, LinkContext.SPECULATIVE_MISC, 
+                int max = uriErrors.getMaxOutlinks(curi);
+                Link.add(curi, max, xmlUri, LinkContext.SPECULATIVE_MISC, 
                         Hop.SPECULATIVE);
             } catch (URIException e) {
                 // There may not be a controller (e.g. If we're being run

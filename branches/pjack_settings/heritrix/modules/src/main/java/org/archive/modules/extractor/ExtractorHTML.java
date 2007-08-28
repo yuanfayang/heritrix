@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
@@ -37,6 +38,7 @@ import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.Expert;
+import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -59,6 +61,13 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         Logger.getLogger(ExtractorHTML.class.getName());
 
     
+    
+    private final static String MAX_ELEMENT_REPLACE = "MAX_ELEMENT";
+    
+    private final static String MAX_ATTR_NAME_REPLACE = "MAX_ATTR_NAME";
+    
+    private final static String MAX_ATTR_VAL_REPLACE = "MAX_ATTR_VAL";
+
     public final static String A_META_ROBOTS = "meta-robots";
     
     
@@ -84,14 +93,15 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * <li> 8: !-- comment --
      */
 // version w/ less unnecessary backtracking
-      private static final int MAX_ELEMENT_LENGTH =
-          Integer.parseInt(System.getProperty(ExtractorHTML.class.getName() +
-              ".maxElementNameLength", "1024"));
+    
+    @Immutable @Expert
+    final public static Key<Integer> MAX_ELEMENT_LENGTH = Key.make(1024);
+
       
       static final String RELEVANT_TAG_EXTRACTOR =
           "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
           "|((style[^>]*+)>.*?</style)" + // 3, 4
-          "|(((meta)|(?:\\w{1,"+MAX_ELEMENT_LENGTH+"}))\\s+[^>]*+)" + // 5, 6, 7
+          "|(((meta)|(?:\\w{1,"+MAX_ELEMENT_REPLACE+"}))\\s+[^>]*+)" + // 5, 6, 7
           "|(!--.*?--))>"; // 8 
 
 //    version w/ problems with unclosed script tags 
@@ -109,13 +119,13 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 //    static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
 //     "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
 
-      private static final int MAX_ATTR_NAME_LENGTH =
-          Integer.parseInt(System.getProperty(ExtractorHTML.class.getName() +
-              ".maxAttributeNameLength", "1024")); // 1K; 
-      
-      static final int MAX_ATTR_VAL_LENGTH = 
-          Integer.parseInt(System.getProperty(ExtractorHTML.class.getName() +
-              ".maxAttributeValueLength", "16384")); // 16K; 
+    @Immutable @Expert
+    public static final Key<Integer> MAX_ATTR_NAME_LENGTH = Key.make(1024);
+
+
+    @Immutable @Expert
+    public static final Key<Integer> MAX_ATTR_VAL_LENGTH = Key.make(16384);
+
       
     // TODO: perhaps cut to near MAX_URI_LENGTH
     
@@ -127,11 +137,11 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)" // ...
      +"|(?:usemap)|(?:profile)|(?:datasrc))" // 5
      +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)" // 6, 7, 8, 9
-     +"|(value)|(style)|([-\\w]{1,"+MAX_ATTR_NAME_LENGTH+"}))" // 10, 11, 12
+     +"|(value)|(style)|([-\\w]{1,"+MAX_ATTR_NAME_REPLACE+"}))" // 10, 11, 12
      +"\\s*=\\s*"
-     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:\"|$))" // 13
-     +"|(?:'(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:'|$))" // 14
-     +"|(\\S{1,"+MAX_ATTR_VAL_LENGTH+"}))"; // 15
+     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_REPLACE+"}?)(?:\"|$))" // 13
+     +"|(?:'(.{0,"+MAX_ATTR_VAL_REPLACE+"}?)(?:'|$))" // 14
+     +"|(\\S{1,"+MAX_ATTR_VAL_REPLACE+"}))"; // 15
     // groups:
     // 1: attribute name
     // 2: HREF - single URI relative to doc base, or occasionally javascript:
@@ -233,6 +243,9 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 
     
     RobotsHonoringPolicy honoringPolicy;
+    
+    private Pattern relevantTagExtractor;
+    private Pattern eachAttributeExtractor;
 
     
     public ExtractorHTML() {
@@ -243,13 +256,28 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
     public void initialTasks(StateProvider global) {
         super.initialTasks(global);
         this.honoringPolicy = global.get(this, ROBOTS_HONORING_POLICY);
+        int maxElementLength = global.get(this, MAX_ELEMENT_LENGTH);
+        int maxAttrNameLength = global.get(this, MAX_ATTR_NAME_LENGTH);
+        int maxAttrValLength = global.get(this, MAX_ATTR_VAL_LENGTH);
+
+        String regex = RELEVANT_TAG_EXTRACTOR;
+        regex = regex.replace(MAX_ELEMENT_REPLACE, 
+                    Integer.toString(maxElementLength));
+        this.relevantTagExtractor = Pattern.compile(regex);
+        
+        regex = EACH_ATTRIBUTE_EXTRACTOR;
+        regex = regex.replace(MAX_ATTR_NAME_REPLACE, 
+                    Integer.toString(maxAttrNameLength));
+        regex = regex.replace(MAX_ATTR_VAL_REPLACE,
+                    Integer.toString(maxAttrValLength));
+        this.eachAttributeExtractor = Pattern.compile(regex);
     }
     
 
     protected void processGeneralTag(ProcessorURI curi, CharSequence element,
             CharSequence cs) {
 
-        Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
+        Matcher attr = eachAttributeExtractor.matcher(cs);
 
         // Just in case it's an OBJECT or APPLET tag
         String codebase = null;
@@ -455,7 +483,8 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
             // to become a part of is expected to outlive the current
             // ReplayCharSequence.
             HTMLLinkContext hc = new HTMLLinkContext(context.toString());
-            Link.addRelativeToBase(curi, uri, hc, hop);
+            int max = uriErrors.getMaxOutlinks(curi);
+            Link.addRelativeToBase(curi, max, uri, hc, hop);
         } catch (URIException e) {
             logUriError(e, curi, uri);
         }
@@ -554,7 +583,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * of this extractors' lifetime.
      */
     void extract(ProcessorURI curi, CharSequence cs) {
-        Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
+        Matcher tags = relevantTagExtractor.matcher(cs);
         while(tags.find()) {
             if(Thread.interrupted()){
                 break;
@@ -668,7 +697,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * @return True robots exclusion metatag.
      */
     protected boolean processMeta(ProcessorURI curi, CharSequence cs) {
-        Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
+        Matcher attr = eachAttributeExtractor.matcher(cs);
         String name = null;
         String httpEquiv = null;
         String content = null;
@@ -707,7 +736,9 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                Link.addRelativeToBase(curi, refreshUri, HTMLLinkContext.META, Hop.REFER);
+                int max = uriErrors.getMaxOutlinks(curi);
+                Link.addRelativeToBase(curi, max, refreshUri, 
+                        HTMLLinkContext.META, Hop.REFER);
             } catch (URIException e) {
                 logUriError(e, curi, refreshUri);
             }

@@ -232,7 +232,7 @@ public class UURIFactory extends URI {
     /**
      * System property key for list of purposefully-ignored schemes.
      */
-    private static final String IGNORED_SCHEMES_KEY = ".ignored-schemes";
+    public static final String IGNORED_SCHEMES_KEY = ".ignored-schemes";
 
     private String[] schemes = null;
     private String[] ignoredSchemes = null;

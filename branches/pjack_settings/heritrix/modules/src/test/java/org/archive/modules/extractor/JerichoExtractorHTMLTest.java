@@ -33,6 +33,7 @@ import org.archive.modules.extractor.JerichoExtractorHTML;
 import org.archive.modules.extractor.Link;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 
 
 /**
@@ -46,7 +47,12 @@ public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
     
     @Override
     protected Extractor makeExtractor() {
-        return new JerichoExtractorHTML();
+        JerichoExtractorHTML result = new JerichoExtractorHTML();
+        UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();
+        ExampleStateProvider dsp = new ExampleStateProvider();
+        dsp.set(result, Extractor.URI_ERROR_LOGGER_MODULE, ulm);
+        result.initialTasks(dsp);
+        return result;
     }
     
     
@@ -68,7 +74,8 @@ public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
         	"  </select>" +
         	"  <input type=\"submit\" name=\"test\" value=\"Go\">" +
         	"</form>";   
-        new JerichoExtractorHTML().extract(curi, cs);
+        JerichoExtractorHTML ex = (JerichoExtractorHTML)makeExtractor();
+        ex.extract(curi, cs);
         curi.getOutLinks();
         assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
             public boolean evaluate(Object object) {

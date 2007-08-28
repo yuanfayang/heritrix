@@ -183,6 +183,19 @@ public class Heritrix {
      */
     public static void main(String[] args)
     throws Exception {
+        // Set some system properties early.
+        // Can't use class names here without loading them.
+        String ignoredSchemes = "org.archive.net.UURIFactory.ignored-schemes";
+        if (System.getProperty(ignoredSchemes) == null) {
+            System.setProperty(ignoredSchemes,
+                    "mailto, clsid, res, file, rtsp, about");
+        }
+
+        String maxFormSize = "org.mortbay.jetty.Request.maxFormContentSize";
+        if (System.getProperty(maxFormSize) == null) {
+            System.setProperty(maxFormSize, "52428800");
+        }
+        
         CrawlJobManagerConfig config = new CrawlJobManagerConfig();
         WebUIConfig webConfig = new WebUIConfig();
         File properties = getDefaultPropertiesFile();

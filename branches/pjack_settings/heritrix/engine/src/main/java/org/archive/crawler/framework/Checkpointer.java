@@ -122,8 +122,7 @@ public class Checkpointer implements Serializable {
         this.controller = cc;
         this.checkpointPrefix = prefix;
         // Period is in hours.
-        int period = Integer.parseInt(System.getProperties().getProperty(
-            this.getClass().getName() + ".period", "-1"));
+        int period = cc.get(cc, CrawlController.CHECKPOINTER_PERIOD);
         if (period <= 0) {
             return;
         }

@@ -45,6 +45,7 @@ import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.io.GenerationFileHandler;
+import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -71,6 +72,8 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     public final static Key<FileModule> DIR = 
         Key.make(FileModule.class, null);
 
+    
+    public final static Key<Integer> MAX_OUTLINKS = Key.make(6000);
     
     static {
         KeyManager.addKeys(CrawlerLoggerModule.class);
@@ -349,4 +352,8 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
         this.setupLogs();
     }
 
+    
+    public int getMaxOutlinks(ProcessorURI puri) {
+        return puri.get(this, MAX_OUTLINKS);
+    }
 }

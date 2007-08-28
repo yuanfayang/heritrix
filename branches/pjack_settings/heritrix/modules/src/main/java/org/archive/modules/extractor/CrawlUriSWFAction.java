@@ -72,7 +72,9 @@ extends SWFActionsImpl {
             linkCount =+ ExtractorJS.considerStrings(uriErrors, curi, url, 
                     false);
         } else {
-            Link.addRelativeToVia(curi, url, LinkContext.EMBED_MISC, Hop.EMBED);
+            int max = uriErrors.getMaxOutlinks(curi);
+            Link.addRelativeToVia(curi, max, url, LinkContext.EMBED_MISC, 
+                    Hop.EMBED);
             linkCount++;
         }
     }

@@ -132,5 +132,7 @@ public interface ProcessorURI extends StateProvider {
 
     int getFetchAttempts();
 
-	boolean isSuccess();
+    boolean isSuccess();
+
+    void incrementDiscardedOutLinks();
 }
