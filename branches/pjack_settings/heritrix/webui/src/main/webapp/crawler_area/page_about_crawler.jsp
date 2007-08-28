@@ -95,7 +95,7 @@ governed by their respective licenses.</pre>
 
 </div>
 
-For more information, see 
+For more information about the Heritrix crawler software, see 
 <a href="http://crawler.archive.org">crawler.archive.org</a><br/>
 <br/>
 
