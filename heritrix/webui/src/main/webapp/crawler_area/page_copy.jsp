@@ -28,11 +28,11 @@ String error = (String)request.getAttribute("error");
 <% crawler.printFormFields(out); %>
 <% Text.printJobFormFields(request, out); %>
 
-<input id="ready" type="radio" name="newStage" value="READY" checked>
-<label for="ready">Copy to a new, ready-to-run job</label><br>
+<input id="asReady" type="radio" name="newStage" value="READY" checked>
+<label for="asReady">Copy to a new, ready-to-run job</label><br>
 
-<input id="ready" type="radio" name="newStage" value="PROFILE">
-<label for="ready">Copy to a new profile</label><br>
+<input id="asProfile" type="radio" name="newStage" value="PROFILE">
+<label for="asProfile">Copy to a new profile</label><br>
 
 <p>
 
