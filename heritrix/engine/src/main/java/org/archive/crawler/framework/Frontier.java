@@ -296,33 +296,33 @@ public interface Frontier extends Module, Reporter {
      * <p>"path": full path to source file. If the path ends '.gz', it 
      * will be considered to be GZIP compressed.
      * <p>"format": one of "onePer", "crawlLog", or "recoveryLog"
-     * <p>"forceRevisit": if "true", URIs will be force-scheduled even
+     * <p>"forceRevisit": if non-null, URIs will be force-scheduled even
      * if already considered included
+     * <p>"scopeSchedules": if non-null, any URI imported be checked
+     * against the frontier's configured scope before scheduling 
      * 
-     * <p>If the "format" is "recoveryLog", 8 more keys are significant:
+     * <p>If the "format" is "recoveryLog", 7 more keys are significant:
      * 
-     * <p>"includeSuccesses": if "true", success lines ("Fs") in the log
+     * <p>"includeSuccesses": if non-null, success lines ("Fs") in the log
      * will be considered-included. (Usually, this is the aim of
      * a recovery-log import.)
-     * <p>"includeFailures": if "true", failure lines ("Ff") in the log
+     * <p>"includeFailures": if non-null, failure lines ("Ff") in the log
      * will be considered-included. (Sometimes, this is desired.)
-     * <p>"includeScheduleds": If "true", scheduled lines ("F+") in the 
+     * <p>"includeScheduleds": If non-null, scheduled lines ("F+") in the 
      * log will be considered-included. (Atypical, but an option for 
      * completeness.)
-     * <p>"scopeIncludes": if "true", any of the above will be checked
+     * <p>"scopeIncludes": if non-null, any of the above will be checked
      * against the frontier's configured scope before consideration
      *
-     * <p>"scheduleSuccesses": if "true", success lines ("Fs") in the log
+     * <p>"scheduleSuccesses": if non-null, success lines ("Fs") in the log
      * will be schedule-attempted. (Atypical, as all successes
      * are preceded by "F+" lines.)
-     * <p>"scheduleFailures": if "true", failure lines ("Ff") in the log
+     * <p>"scheduleFailures": if non-null, failure lines ("Ff") in the log
      * will be schedule-attempted. (Atypical, as all failures
      * are preceded by "F+" lines.)
-     * <p>"scheduleScheduleds": if "true", scheduled lines ("F+") in the 
+     * <p>"scheduleScheduleds": if non-null, scheduled lines ("F+") in the 
      * log will be considered-included. (Usually, this is the aim of a
      * recovery-log import.)
-     * <p>"scopeSchedules": if "true", any of the above will  be checked
-     * against the frontier's configured scope before scheduling 
      * 
      * TODO: add parameter for auto-unpause-at-good-time
      * 

@@ -234,6 +234,13 @@ public class Console {
             // of as long as it stays in progress
             
             frontier.importURIs(jsonParams);
+            
+            // if no error, report success
+            // TODO: better handle lengthy imports with progress-report, 
+            // async completion report
+            new Flash("URIs imported.").addToSession(request);
+            // TODO: redirect to proper (reload-friendly) console URL, 
+            // rather than show console at frontier_import URL
             showJobConsole(sc, request, response);
         } finally {
             remote.close();

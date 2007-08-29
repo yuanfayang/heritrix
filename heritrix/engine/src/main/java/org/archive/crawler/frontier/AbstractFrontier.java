@@ -856,8 +856,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             io.initCause(e);
             throw io;
         }
-        if("recoverLog".equals(params.optString("format"))) {
-            FrontierJournal.importRecoverLog(params, this);
+        if("recoveryLog".equals(params.optString("format"))) {
+            FrontierJournal.importRecoverLog(params, controller);
             return;
         }
         // otherwise, do a 'simple' import
@@ -868,7 +868,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * Import URIs from either a simple (one URI per line) or crawl.log
      * format.
      * 
-     * @param params Map of options to control import
+     * @param params JSONObject of options to control import
      * @see org.archive.crawler.framework.Frontier#importURIs(java.util.Map)
      */
     protected void importURIsSimple(JSONObject params) {
@@ -889,18 +889,37 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         // Read the input stream.
         BufferedReader br = null;
         String path = params.optString("path");
-        boolean forceRevisit = params.optBoolean("forceRevisit");
-        boolean asSeeds = params.optBoolean("asSeeds");
-        boolean scopeSchedules = params.optBoolean("scopeSchedules");
-        DecideRule scope = scopeSchedules ? getScope() : null;
+        boolean forceRevisit = !params.isNull("forceRevisit");
+        boolean asSeeds = !params.isNull("asSeeds");
+        boolean scopeScheduleds = !params.isNull("scopeScheduleds");
+        DecideRule scope = scopeScheduleds ? getScope() : null;
         try {
             br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
             Iterator<String> iter = new RegexpLineIterator(new LineReadingIterator(br),
                 RegexpLineIterator.COMMENT_LINE, extractor, output);
             while(iter.hasNext()) {
                 try {
-                    importUri((String)iter.next(), forceRevisit, asSeeds,
-                        scope);
+                    
+                    CrawlURI curi = CrawlURI.fromHopsViaString(((String)iter.next()));
+                    curi.setForceFetch(forceRevisit);
+                    if (asSeeds) {
+                        curi.setSeed(asSeeds);
+                        if (curi.getVia() == null || curi.getVia().length() <= 0) {
+                            // Danger of double-add of seeds because of this code here.
+                            // Only call addSeed if no via.  If a via, the schedule will
+                            // take care of updating scope.
+                            manager.getGlobalSheet().get(this, SEEDS).addSeed(curi);
+                        }
+                    }
+                    if(scope!=null) {
+                        curi.setStateProvider(controller.getSheetManager());
+                        if(!scope.accepts(curi)) {
+                            continue;
+                        }
+                    }
+                        
+                    this.controller.getFrontier().schedule(curi);
+                    
                 } catch (URIException e) {
                     e.printStackTrace();
                 }
@@ -910,27 +929,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             e.printStackTrace();
         }
     }
-
-    public void importUri(final String str, final boolean forceFetch,
-            final boolean isSeed, DecideRule scope)
-    throws URIException {
-        CrawlURI curi = new CrawlURI(UURIFactory.getInstance(str));
-        curi.setForceFetch(forceFetch);
-        if (isSeed) {
-            curi.setSeed(isSeed);
-            if (curi.getVia() == null || curi.getVia().length() <= 0) {
-                // Danger of double-add of seeds because of this code here.
-                // Only call addSeed if no via.  If a via, the schedule will
-                // take care of updating scope.
-                manager.getGlobalSheet().get(this, SEEDS).addSeed(curi);
-            }
-        }
-        if(scope!=null && !scope.accepts(curi)) {
-            return; // without scheduling
-        }
-        this.controller.getFrontier().schedule(curi);
-    }
-    
     
     /**
      * Log to the main crawl.log
