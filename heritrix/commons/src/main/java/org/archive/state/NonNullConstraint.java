@@ -60,7 +60,13 @@ public class NonNullConstraint implements Constraint<Object> {
         return object != null;
     }
 
-
+    /* (non-Javadoc)
+     * @see org.archive.state.Constraint#description()
+     */
+    public String description() {
+        return "Value must not be null";
+    }
+    
     public String toString() {
         return "This setting does not permit null values.";
     }

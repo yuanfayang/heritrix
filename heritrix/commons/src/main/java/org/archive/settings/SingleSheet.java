@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.archive.settings.path.PathChangeException;
 import org.archive.state.Constraint;
 import org.archive.state.Key;
 import org.archive.state.KeyTypes;
@@ -329,9 +330,9 @@ public class SingleSheet extends Sheet {
                 if(!getSheetManager().isOnline()) {
                     set2(module, key, value);
                 }
-                throw new IllegalArgumentException(
-                    "Value '" + v + "' disallowed for " 
-                    + key.getFieldName() +" by constraint "
+                throw new PathChangeException(
+                    "value '" + v + "' disallowed for '" 
+                    + key.getFieldName() +"' by constraint: "
                     + c);
             }
         }
