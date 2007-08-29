@@ -56,7 +56,7 @@ public final class ConstraintChecker extends StringPathListConsumer {
     protected void consume(String path, String[] sheets,
             String value, String type) {
         if (faulty != null) {
-            PathChangeException pce = new PathChangeException(faulty.toString());
+            PathChangeException pce = new PathChangeException(faulty.description());
             pce.setPathChange(new PathChange(path, type, value));
             problems.add(pce);
         }

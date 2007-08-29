@@ -290,6 +290,10 @@ implements Initializable, Serializable, Module {
             // use standard key.
             return true;
         }
+        
+        public String description() {
+            return "parent must be a directory"; // ???
+        }
 
     }
     

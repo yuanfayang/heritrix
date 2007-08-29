@@ -69,4 +69,11 @@ public class PatternConstraint implements Constraint<String> {
     public boolean allowed(String s) {
         return pattern.matcher(StringUtils.defaultString(s)).matches();
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.state.Constraint#description()
+     */
+    public String description() {
+        return "value must be matched by pattern <" + pattern + ">";
+    }
 }

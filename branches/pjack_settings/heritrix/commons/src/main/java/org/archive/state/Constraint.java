@@ -43,4 +43,12 @@ public interface Constraint<T> extends Serializable {
      */
     boolean allowed(T value);
 
+    /**
+     * Give an imperative explanation of Constraint's implication for
+     * affected values. For example: "value must be a positive
+     * integer"
+     * 
+     * @return String description
+     */
+    String description();
 }
