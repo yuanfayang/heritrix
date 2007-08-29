@@ -89,8 +89,8 @@ log.
 <input id="forceRevisit" type="checkbox" name="forceRevisit" value="false">
 <label for="forceRevisit">Force revisit of URIs</label><br/>
 
-<input id="scopeSchedules" type="checkbox" name="scopeSchedules" checked="true">
-<label for="scopeSchedules">Apply scope before scheduling</label>
+<input id="scopeScheduleds" type="checkbox" name="scopeScheduleds" checked="true">
+<label for="scopeScheduleds">Apply scope before scheduling</label>
 
 </div>
 
@@ -100,8 +100,8 @@ log.
 
 <h3> First (consider-included) pass</h3>
 
-<input id="scopeIncludes" type="checkbox" name=""scopeIncludes"" checked="true">
-<label for=""scopeIncludes"">Apply scope before including</label><br/>
+<input id="scopeIncludes" type="checkbox" name="scopeIncludes" checked="true">
+<label for="scopeIncludes">Apply scope before including</label><br/>
 <br/>
 <input id="includeSuccesses" type="checkbox" name="includeSuccesses" checked="true">
 <label for="includeSuccesses">Include log successes ('Fs' lines; usual)</label><br/>

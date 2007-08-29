@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.io.CrawlerJournal;
 import org.archive.modules.DefaultProcessorURI;
@@ -142,14 +143,13 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
      * Utility method for scanning a recovery journal and applying it to
      * a Frontier.
      * 
-     * @param source Recover log path.
-     * @param frontier Frontier reference.
-     * @param retainFailures
+     * @param params JSONObject of import parameters; see Frontier.importURIS()
+     * @param controller CrawlController of crawl to update
      * @throws IOException
      * 
-     * @see org.archive.crawler.framework.Frontier#importRecoverLog(String, boolean)
+     * @see org.archive.crawler.framework.Frontier#importURIs(String)
      */
-    public static void importRecoverLog(final JSONObject params, final Frontier frontier)
+    public static void importRecoverLog(final JSONObject params, final CrawlController controller)
     throws IOException {
         String path = params.optString("path");
         if (path == null) {
@@ -161,7 +161,7 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
         // first, fill alreadyIncluded with successes (and possibly failures),
         // and count the total lines
         final int lines =
-            importCompletionInfoFromLog(source, frontier, params);
+            importCompletionInfoFromLog(source, controller, params);
         
         LOGGER.info("finished completion state; recovering queues from " +
             source);
@@ -172,7 +172,7 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
         final CountDownLatch recoveredEnough = new CountDownLatch(1);
         new Thread(new Runnable() {
             public void run() {
-                importQueuesFromLog(source, frontier, params, lines, 
+                importQueuesFromLog(source, controller, params, lines, 
                         recoveredEnough);
             }
         }, "queuesRecoveryThread").start();
@@ -191,19 +191,20 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
      * recovery log into the frontier as considered included. 
      * 
      * @param source recovery log file to use
-     * @param frontier frontier to update
+     * @param controller CrawlController of crawl to update
      * @param retainFailures whether failure ('Ff') URIs should count as done
      * @return number of lines in recovery log (for reference)
      * @throws IOException
      */
     private static int importCompletionInfoFromLog(File source, 
-            Frontier frontier, JSONObject params) throws IOException {
+            CrawlController controller, JSONObject params) throws IOException {
         // Scan log for 'Fs' (+maybe 'Ff') lines: add as 'alreadyIncluded'
-        boolean includeSuccesses = params.optBoolean("includeSuccesses");
-        boolean includeFailures = params.optBoolean("includeFailures");
-        boolean includeScheduleds = params.optBoolean("includeScheduleds");
-        boolean scopeIncludes = params.optBoolean("scopeIncludes");
+        boolean includeSuccesses = !params.isNull("includeSuccesses");
+        boolean includeFailures = !params.isNull("includeFailures");
+        boolean includeScheduleds = !params.isNull("includeScheduleds");
+        boolean scopeIncludes = !params.isNull("scopeIncludes");
         
+        Frontier frontier = controller.getFrontier(); 
         DecideRule scope = (scopeIncludes) ? frontier.getScope() : null;
         FrontierJournal newJournal = frontier.getFrontierJournal();
         
@@ -213,7 +214,10 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
         try {
             while ((read = br.readLine())!=null) {
                 lines++;
-                String lineType = read.substring(0, 4);
+                if(read.length()<4) {
+                    continue;
+                }
+                String lineType = read.substring(0, 3);
                 if(includeSuccesses && F_SUCCESS.equals(lineType) 
                         || includeFailures && F_FAILURE.equals(lineType) 
                         || includeScheduleds && F_ADD.equals(lineType)) {
@@ -221,8 +225,11 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
                     try {
                         UURI u = UURIFactory.getInstance(s);
                         if(scope!=null) {
+                            CrawlURI caUri = CrawlURI.fromHopsViaString(read.substring(3));
+                            
+                            caUri.setStateProvider(controller.getSheetManager());
                             // skip out-of-scope URIs if so configured
-                            if(!scope.accepts(new DefaultProcessorURI(u,null))) {
+                            if(!scope.accepts(caUri)) {
                                 continue;
                             }
                         }
@@ -255,22 +262,24 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
      * (excepting those the frontier drops as already having been included)
      * 
      * @param source recovery log file to use
-     * @param frontier frontier to update
+     * @param controller CrawlController of crawl to update
      * @param params Map of options to apply
      * @param enough latch signalling 'enough' URIs queued to begin crawling
      */
-    private static void importQueuesFromLog(File source, Frontier frontier,
+    private static void importQueuesFromLog(File source, CrawlController controller,
             JSONObject params, int lines, CountDownLatch enough) {
         BufferedReader br;
         String read;
+        Frontier frontier = controller.getFrontier(); 
         long queuedAtStart = frontier.queuedUriCount();
         long queuedDuringRecovery = 0;
         int qLines = 0;
         
-        boolean scheduleSuccesses = "true".equals(params.optString("scheduleSuccesses"));
-        boolean scheduleFailures = "true".equals(params.optString("scheduleFailures"));
-        boolean scheduleScheduleds = "true".equals(params.optString("scheduleScheduleds"));
-        boolean scopeScheduleds = "true".equals(params.optString("scopeScheduleds"));
+        boolean scheduleSuccesses = !params.isNull("scheduleSuccesses");
+        boolean scheduleFailures = !params.isNull("scheduleFailures");
+        boolean scheduleScheduleds = !params.isNull("scheduleScheduleds");
+        boolean scopeScheduleds = !params.isNull("scopeScheduleds");
+        boolean forceRevisit = !params.isNull("forceRevisit");
         
         DecideRule scope = (scopeScheduleds) ? frontier.getScope() : null;
         
@@ -281,30 +290,26 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
             try {
                 while ((read = br.readLine())!=null) {
                     qLines++;
-                    String lineType = read.substring(0, 4);
+                    if(read.length()<4) {
+                        continue;
+                    }
+                    String lineType = read.substring(0, 3);
                     if(scheduleSuccesses && F_SUCCESS.equals(lineType) 
                             || scheduleFailures && F_FAILURE.equals(lineType) 
                             || scheduleScheduleds && F_ADD.equals(lineType)) {
-                        UURI u;
-                        CharSequence args[] = splitOnSpaceRuns(read);
+                        
                         try {
-                            u = UURIFactory.getInstance(args[1].toString());
-                            String pathFromSeed = (args.length > 2)?
-                                args[2].toString() : "";
-                            UURI via = (args.length > 3)?
-                                UURIFactory.getInstance(args[3].toString()):
-                                null;
-                            LinkContext viaContext = (args.length > 4)?
-                                    new HTMLLinkContext(args[4].toString()): null;
-                            CrawlURI caUri = new CrawlURI(u, 
-                                    pathFromSeed, via, viaContext);
+                            CrawlURI caUri = CrawlURI.fromHopsViaString(read.substring(3));
                             
+                            caUri.setStateProvider(controller.getSheetManager());
                             if(scope!=null) {
                                 // skip out-of-scope URIs if so configured
                                 if(!scope.accepts(caUri)) {
                                     continue;
                                 }
                             }
+                            
+                            caUri.setForceFetch(forceRevisit);
                             
                             frontier.schedule(caUri);
                             

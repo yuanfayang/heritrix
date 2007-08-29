@@ -50,6 +50,7 @@ import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.credential.CredentialAvatar;
 import org.archive.modules.credential.Rfc2617Credential;
+import org.archive.modules.extractor.HTMLLinkContext;
 import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
@@ -263,6 +264,20 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         this.uuri = uuri;
     }
 
+    public static CrawlURI fromHopsViaString(String uriHopsViaContext) throws URIException {
+        UURI u;
+        String args[] = uriHopsViaContext.split("\\s+");
+        u = UURIFactory.getInstance(args[0]);
+        String pathFromSeed = (args.length > 1)?
+            args[1].toString() : "";
+        UURI via = (args.length > 2 && args[2].length()>1) ?
+            UURIFactory.getInstance(args[2].toString()):
+            null;
+        LinkContext viaContext = (args.length > 3 && args[2].length()>1) ?
+                new HTMLLinkContext(args[3].toString()): null;
+        CrawlURI caUri = new CrawlURI(u, pathFromSeed, via, viaContext);
+        return caUri;
+    }
     
     /**
      * @param u uuri instance this CrawlURI wraps.
