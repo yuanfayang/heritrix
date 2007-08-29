@@ -21,21 +21,23 @@ h3 {
 }
 .flash {
     font-weight:bold; 
-    width:100%;
-    border:2px solid;
+    border:1px solid;
 }
-.flash div {
-    margin:5px;
+div.flash  {
+    margin:10px;
     padding:10px;
+    -moz-border-radius:8px;
+    -webkit-border-radius:8px;
+    -border-radius:8px;
  }
 .ACK {
     color:darkGreen;
-    background-color:lightGreen;
+    background-color:#DFD;
     border-color:darkGreen;
 }
 .NACK {
     color:darkRed;
-    background-color:lightRed;
+    background-color:#FDD;
     border-color:darkRed;
 }
 .ADVISORY {
