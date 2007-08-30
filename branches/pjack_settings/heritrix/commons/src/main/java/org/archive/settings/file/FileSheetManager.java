@@ -574,8 +574,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         if (ext == null) {
             throw new IllegalArgumentException(sheetName + " does not exist.");
         }
-        if (!(new File(sheetName + ext).delete())) {
-            throw new IllegalStateException();
+        if (!(new File(sheetsDir, sheetName + ext).delete())) {
+            throw new IllegalStateException("Could not delete sheet.");
         }
     }
 

@@ -307,4 +307,37 @@ public class CrawlerArea {
         }
     }
 
+    
+    public static void showDelete(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<CrawlJobManager> remote = open(request);
+        JMXConnector jmxc = remote.getJMXConnector();
+        try {
+            CrawlJob.fromRequest(request, jmxc);
+        } finally {
+            remote.close();
+        }
+        Misc.forward(request, response, "page_delete.jsp");
+    }
+
+    
+    public static void delete(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<CrawlJobManager> remote = open(request);
+        CrawlJobManager cjm = remote.getObject();
+        JMXConnector jmxc = remote.getJMXConnector();
+        try {
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            cjm.deleteJob(job.encode());
+        } finally {
+            remote.close();
+        }
+        showCrawler(sc, request, response);
+    }
+
+
 }

@@ -13,6 +13,7 @@ Collection<CrawlJob> profiles = (Collection)Text.get(request, "profiles");
 Collection<CrawlJob> completed = (Collection)Text.get(request, "completed");
 
 String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
+String deleteUrl = request.getContextPath() + "/crawler_area/do_show_delete.jsp";
 
 %>
 <html>
@@ -96,6 +97,13 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
            class="rowLink" 
            title="Begin crawling!"
            href="<%=request.getContextPath()%>/crawler_area/do_launch.jsp?<%=jqs%>">Launch</a>
+           
+        <a 
+           class="rowLink" 
+           title="Delete this job."
+           href="<%=deleteUrl%>?<%=jqs%>">Delete</a>
+           
+        
     </div>
     </div>
     <% } %>
@@ -115,6 +123,10 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
            href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=jqs%>">Seeds</a>
         <a class="rowLink" title="Duplicate this profile to another profile or a new job."
            href="<%=copyUrl%>?<%=jqs%>">Copy</a>
+        <a 
+           class="rowLink" 
+           title="Delete this profile."
+           href="<%=deleteUrl%>?<%=jqs%>">Delete</a>
     </div>
     </div>
 <% } %>
@@ -154,6 +166,12 @@ String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
                title="Recover from checkpoint or recover.gz file."
                href="<%=request.getContextPath()%>/crawler_area/do_show_recover.jsp?<%=jqs%>">
                Recover</a>
+               
+            <a 
+               class="rowLink" 
+               title="Delete this job."
+               href="<%=deleteUrl%>?<%=jqs%>">Delete</a>
+            
             
         </div>
         </div>

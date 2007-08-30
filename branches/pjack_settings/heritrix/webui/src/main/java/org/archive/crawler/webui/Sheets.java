@@ -51,7 +51,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobStage;
 import org.archive.settings.Association;
-import org.archive.settings.SheetManager;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.Types;
 import org.archive.settings.path.PathChanger;
@@ -659,6 +658,40 @@ public class Sheets {
         
         showSheetEditor(sc, request, response);
     }
+    
+    
+
+    
+    public static void deleteSheet(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        String sheet = request.getParameter("sheet");
+        request.setAttribute("sheet", sheet);
+        try {
+            sheetManager.removeSheet(sheet);
+        } finally {
+            remote.close();
+        }
+        showSheets(sc, request, response);
+    }
+    
+    
+    public static void showDeleteSheet(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        String sheet = request.getParameter("sheet");
+        request.setAttribute("sheet", sheet);
+        remote.close();
+        Misc.forward(request, response, "page_delete_sheet.jsp");
+    }
+
+
+
 
 
     private static Settings getSettings(HttpServletRequest request, 
@@ -741,5 +774,6 @@ public class Sheets {
             throw new IllegalStateException(e);
         }
     }
+
 
 }

@@ -192,4 +192,10 @@ public interface CrawlJobManager extends Closeable {
              @Parameter(name="regex", desc="A regex filename filter.  Only filenames that match the regex will be included in the result.")
              String regex);
 
+     
+     @Operation(desc="Deletes a job.")
+     void deleteJob(
+             @Parameter(name="job", desc="The stage-name of the job to delete.")
+             String job);
+
 }
