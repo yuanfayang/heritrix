@@ -75,6 +75,7 @@ import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.modules.deciderules.DecideRule;
+import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
@@ -271,6 +272,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     final public static Key<SeedModule> SEEDS = 
         Key.makeAuto(SeedModule.class);
     
+    @Immutable
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.makeAuto(ServerCache.class);
     
     /**
      * Ordered list of url canonicalization rules.  Rules are applied in the 
@@ -367,31 +371,70 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         }
         unpause();
     }
+    
+    /**
+     * Report CrawlURI to each of the three 'substats' accumulators
+     * (group/queue, server, host) for a given stage.
+     * 
+     * @param curi
+     * @param stage
+     */
+    protected void tally(CrawlURI curi, Stage stage) {
+        // Tally per-server, per-host, per-frontier-class running totals
+        CrawlServer server = ServerCacheUtil.getServerFor(
+                getServerCache(),curi.getUURI());
+        if (server != null) {
+            server.getSubstats().tally(curi, stage);
+        }
+        CrawlHost host = ServerCacheUtil.getHostFor(
+                getServerCache(),curi.getUURI());
+        if (host != null) {
+            host.getSubstats().tally(curi, stage);
+        }
+        FrontierGroup group = getGroup(curi);
+        group.getSubstats().tally(curi, stage);
+    }
+
+    protected ServerCache getServerCache() {
+        return manager.get(this, SERVER_CACHE);
+    }
+
 
     protected void doJournalFinishedSuccess(CrawlURI c) {
+        tally(c,Stage.SUCCEEDED);
         if (this.recover != null) {
             this.recover.finishedSuccess(c);
         }
     }
 
     protected void doJournalAdded(CrawlURI c) {
+        tally(c,Stage.SCHEDULED);
         if (this.recover != null) {
             this.recover.added(c);
         }
     }
 
     protected void doJournalRescheduled(CrawlURI c) {
+        tally(c,Stage.RETRIED);
         if (this.recover != null) {
             this.recover.rescheduled(c);
         }
     }
 
     protected void doJournalFinishedFailure(CrawlURI c) {
+        tally(c,Stage.FAILED);
         if (this.recover != null) {
             this.recover.finishedFailure(c);
         }
     }
 
+    protected void doJournalDisregarded(CrawlURI c) {
+        tally(c, Stage.DISREGARDED);
+        if (this.recover != null) {
+            this.recover.finishedDisregard(c);
+        }
+    }
+    
     protected void doJournalEmitted(CrawlURI c) {
         if (this.recover != null) {
             this.recover.emitted(c);
@@ -666,14 +709,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     }
 
     /**
-     * @param curi
-     * @return the CrawlServer to be associated with this CrawlURI
-     */
-    protected CrawlServer getServer(CrawlURI curi) {
-        return this.controller.getServerCache().getServerFor(curi.toString());
-    }
-
-    /**
      * Return a suitable value to wait before retrying the given URI.
      * 
      * @param curi
@@ -852,9 +887,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         try {
             params = new JSONObject(jsonParams);
         } catch (JSONException e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
+            IOException ioe = new IOException(e.getMessage());
+            ioe.initCause(e);
+            throw ioe;
         }
         if("recoveryLog".equals(params.optString("format"))) {
             FrontierJournal.importRecoverLog(params, controller);

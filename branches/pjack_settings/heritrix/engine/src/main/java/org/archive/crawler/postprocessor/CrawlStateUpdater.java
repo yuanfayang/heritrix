@@ -76,16 +76,6 @@ public class CrawlStateUpdater extends CrawlerProcessor {
         
         // Tally per-server, per-host, per-frontier-class running totals
         CrawlServer server = getServerFor(curi);
-        if (server != null) {
-            server.getSubstats().tally(curi);
-        }
-        CrawlHost host = getHostFor(curi);
-        if (host != null) {
-            host.getSubstats().tally(curi);
-        } 
-        FrontierGroup group = 
-            controller.getFrontier().getGroup(curi);
-        group.getSubstats().tally(curi);
         
         String scheme = curi.getUURI().getScheme().toLowerCase();
         if (scheme.equals("http") || scheme.equals("https") &&
