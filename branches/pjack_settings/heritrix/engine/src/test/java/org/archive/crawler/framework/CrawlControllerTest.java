@@ -33,7 +33,8 @@ import java.io.File;
 import java.io.FileWriter;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.scope.DecidingScope;
+import org.archive.modules.deciderules.AcceptDecideRule;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
@@ -108,8 +109,7 @@ public class CrawlControllerTest extends ModuleTestBase {
         cp.initialTasks(def);
         
         CrawlController controller = new CrawlController();
-        CrawlScope scope = new DecidingScope();
-        scope.initialTasks(def);
+        DecideRule scope = new AcceptDecideRule();
         def.set(controller, CrawlController.SHEET_MANAGER, manager);
 //        def.set(controller, CrawlController.BDB, bdb);
         def.set(controller, CrawlController.ORDER, order);
