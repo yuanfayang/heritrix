@@ -68,6 +68,7 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
 
     public final static String F_ADD = "F+ ";
     public final static String F_EMIT = "Fe ";
+    public final static String F_DISREGARD = "Fd ";
     public final static String F_RESCHEDULE = "Fr ";
     public final static String F_SUCCESS = "Fs ";
     public final static String F_FAILURE = "Ff ";
@@ -124,6 +125,10 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
 
     public void finishedFailure(CrawlURI curi) {
         finishedFailure(curi.toString());
+    }
+    
+    public void finishedDisregard(CrawlURI curi) {
+        writeLine(F_DISREGARD, curi.toString());
     }
     
     public void finishedFailure(UURI uuri) {

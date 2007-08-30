@@ -24,12 +24,20 @@
  */
 package org.archive.modules.net;
 
+import org.apache.commons.collections.Closure;
+
 public interface ServerCache {
 
     CrawlHost getHostFor(String host);
     
     CrawlServer getServerFor(String serverKey);
 
-    
     void cleanup();
+
+    /**
+     * Utility for performing an action on every CrawlHost. 
+     * 
+     * @param action 1-argument Closure to apply to each CrawlHost
+     */
+    void forAllHostsDo(Closure action);
 }

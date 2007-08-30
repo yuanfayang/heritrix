@@ -774,6 +774,7 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
             incrementDisregardedUriCount();
             // Let interested listeners know of disregard disposition.
             controller.fireCrawledURIDisregardEvent(curi);
+            doJournalDisregarded(curi);
             // if exception, also send to crawlErrors
             if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
                 Object[] array = { curi };
@@ -1210,6 +1211,9 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
      * Returns <code>true</code> if the WorkQueue implementation of this
      * Frontier stores its workload on disk instead of relying
      * on serialization mechanisms.
+     * 
+     * TODO: rename! (this is a very misleading name) or kill (don't
+     * see any implementations that return false)
      * 
      * @return a constant boolean value for this class/instance
      */

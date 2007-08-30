@@ -28,6 +28,7 @@ import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.collections.Closure;
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
@@ -200,6 +201,15 @@ public class DefaultServerCache implements ServerCache, Serializable {
         if (this.servers != null) { 
             this.servers.clear();
             this.servers = null;
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.modules.net.ServerCache#forAllHostsDo(org.apache.commons.collections.Closure)
+     */
+    public void forAllHostsDo(Closure c) {
+        for(String host : hosts.keySet()) {
+            c.execute(hosts.get(host));
         }
     }
 }
