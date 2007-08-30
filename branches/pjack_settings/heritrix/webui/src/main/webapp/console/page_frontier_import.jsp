@@ -94,7 +94,7 @@ log.
 
 </div>
 
-<div id="recoveryOptions" style="display:none;">
+<div id="recoveryOptions">
 
 <h2> Recovery Log Options </h2>
 
