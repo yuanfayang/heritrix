@@ -38,6 +38,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.collections.Closure;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.queue.StoredQueue;
@@ -75,11 +76,10 @@ implements Serializable, Checkpointable {
     @Immutable
     final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
 
-    static {
-        KeyManager.addKeys(BdbFrontier.class);
-    }
+    @Immutable
+    final public static Key<Boolean> DUMP_PENDING_AT_CLOSE = 
+        Key.make(Boolean.class,false);
 
-    
     private BdbModule bdb;
     
     
@@ -183,6 +183,13 @@ implements Serializable, Checkpointable {
     }
     
     protected void closeQueue() {
+        if (manager.get(this, DUMP_PENDING_AT_CLOSE)) {
+            try {
+                dumpAllPendingToLog();
+            } catch (DatabaseException e) {
+                logger.log(Level.WARNING, "dump pending problem", e);
+            }
+        }
         if (this.pendingUris != null) {
             this.pendingUris.close();
             this.pendingUris = null;
@@ -286,7 +293,24 @@ implements Serializable, Checkpointable {
 
     }
     
-    // good to keep at end of source: must run after all per-Key 
+    /**
+     * Dump all still-enqueued URIs to the crawl.log -- without actually
+     * dequeuing. Useful for understanding what was remaining in a crawl that
+     * was ended early, for example at a time limit.
+     * 
+     * @throws DatabaseException
+     */
+    public void dumpAllPendingToLog() throws DatabaseException {
+        Closure tolog = new Closure() {
+            public void execute(Object curi) {
+                log((CrawlURI) curi);
+            }
+        };
+        pendingUris.forAllPendingDo(tolog);
+    }
+    
+
+    // good to keep at end of source: must run after all per-Key
     // initialization values are set.
     static {
         KeyManager.addKeys(BdbFrontier.class);
