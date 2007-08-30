@@ -4,7 +4,5 @@ The bdb module to use for the frontier.
 uri-included-structure-description:
 URI-already-included to use (by class name) 
 
-dump-pending-at-close:
-If true, dump all URIs waiting in queues to crawl.log when a crawl 
-ends. May add a significant delay to crawl termination. Dumped 
-lines will have a zero (0) status. Default is false. 
+dump-pending-at-close-description:
+If true, dump all URIs waiting in queues to crawl.log when a crawl ends. May add a significant delay to crawl termination. Dumped lines will have a zero (0) status. Default is false. 
