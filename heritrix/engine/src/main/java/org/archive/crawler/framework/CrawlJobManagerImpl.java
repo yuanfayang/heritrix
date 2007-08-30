@@ -711,4 +711,16 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
 
+    public synchronized void deleteJob(String job) {
+        validateJobName(job);
+        File f = new File(this.jobsDir, job);
+        if (f.exists()) {
+            if (!FileUtils.deleteDir(f)) {
+                throw new IllegalStateException("Could not delete job.");
+            }
+        } else {
+            throw new IllegalStateException("No such job: " + job);
+        }
+    }
+
 }

@@ -43,6 +43,13 @@ int row = 1;
     Edit
     </a>
     
+    <% if (!checkedOut.contains(sheet) && !sheet.equals("global")) { %>
+    <a class="rowLink"
+        title="Delete this sheet."
+        href="do_show_delete_sheet.jsp?<%=qs%>">
+    Delete
+    </a>
+    <% } %>
     <br/>
 
 <% if (checkedOut.contains(sheet)) { %>
