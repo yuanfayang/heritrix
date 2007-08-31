@@ -72,12 +72,6 @@
   
         <dependency>
               <groupId>org.archive.overlays</groupId>
-              <artifactId>archive-overlay-je</artifactId>
-              <version>3.2.23</version>
-              <scope>compile</scope>
-        </dependency>
-        <dependency>
-              <groupId>org.archive.overlays</groupId>
               <artifactId>archive-overlay-commons-httpclient</artifactId>
               <version>3.0.1</version>
               <scope>compile</scope>
@@ -90,6 +84,11 @@
         </dependency>
   
         <!-- These are normal dependencies. -->  
+        <dependency>
+              <groupId>berkeleydb</groupId>
+              <artifactId>je</artifactId>
+              <version>3.2.44</version>
+        </dependency> 
         <dependency>
              <groupId>commons-lang</groupId>
              <artifactId>commons-lang</artifactId>
