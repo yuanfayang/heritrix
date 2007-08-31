@@ -59,10 +59,10 @@ import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.jmx.Types;
-import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
@@ -143,15 +143,15 @@ implements CrawlURIDispositionListener, Serializable {
         Key.makeAuto(BdbModule.class);
     
     @Immutable
-    final public static Key<FileModule> REPORTS_DIR =
-        Key.make(FileModule.class, null);
+    final public static Key<Path> REPORTS_DIR =
+        Key.make(new Path("."));
     
     @Immutable
     final public static Key<Integer> LIVE_HOST_REPORT_SIZE = Key.make(20);
     
     private SeedModule seeds;
     private BdbModule bdb;
-    private FileModule reportsDir;
+    private Path reportsDir;
     
     /**
      * Messages from the StatisticsTracker.
@@ -962,7 +962,7 @@ implements CrawlURIDispositionListener, Serializable {
 
         seedsCrawled = 0;
         seedsNotCrawled = 0;
-        for (Iterator i = getSeedRecordsSortedByStatusCode(getSeeds());
+        for (Iterator<SeedRecord> i = getSeedRecordsSortedByStatusCode(getSeeds());
                 i.hasNext();) {
             SeedRecord sr = (SeedRecord)i.next();
             writer.print(sr.getStatusCode());
@@ -1150,7 +1150,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeReportFile(String reportName, String filename) {
-        File f = new File(reportsDir.getFile().getPath(), filename);
+        File f = new File(reportsDir.toFile().getPath(), filename);
         try {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
             writeReportTo(reportName, bw);

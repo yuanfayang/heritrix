@@ -26,7 +26,7 @@
 
 package org.archive.crawler.webui;
 
-import java.io.File;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,9 +43,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.settings.path.PathChanger;
-import org.archive.settings.path.PathValidator;
-import org.archive.state.FileModule;
 import org.archive.util.SURT;
 
 
@@ -172,7 +169,7 @@ public class Misc {
         MBeanServerConnection server = jmxc.getMBeanServerConnection();
         int count = 0;
         ObjectName name = new ObjectName(query);
-        Set set = server.queryNames(null, name);
+        Set<?> set = server.queryNames(null, name);
         while (set.isEmpty() == exist) {
             count++;
             if (count > 40) {

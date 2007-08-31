@@ -36,10 +36,10 @@ import org.archive.modules.ProcessorURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.Sheet;
-import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 
 import bsh.EvalError;
@@ -74,8 +74,8 @@ implements KeyChangeListener {
      *  BeanShell script file.
      */
     @Immutable
-    final public static Key<FileModule> SCRIPT_FILE = 
-        Key.make(FileModule.class, null);
+    final public static Key<Path> SCRIPT_FILE = 
+        Key.make(Path.EMPTY);
 
 
     /**
@@ -153,7 +153,7 @@ implements KeyChangeListener {
             interpreter.set("self", this);
             interpreter.set("controller", controller);
 
-            File file = get(SCRIPT_FILE).getFile();
+            File file = get(SCRIPT_FILE).toFile();
             try {
                 interpreter.source(file.getPath());
             } catch (IOException e) {

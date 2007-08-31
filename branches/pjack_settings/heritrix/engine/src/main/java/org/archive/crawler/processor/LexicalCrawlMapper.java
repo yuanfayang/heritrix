@@ -36,10 +36,10 @@ import java.util.TreeMap;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
-import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
@@ -91,23 +91,29 @@ public class LexicalCrawlMapper extends CrawlMapper {
 
 
     /**
-     * Path (or HTTP URL) to map specification file. Each line should include 2
+     * Path to map specification file. Each line should include 2
      * whitespace-separated tokens: the first a key indicating the end of a
      * range, the second the crawler node to which URIs in the key range should
-     * be mapped.
+     * be mapped.  This setting is ignored if MAP_URI is specified.
      */
     @Immutable
-    final public static Key<String> MAP_SOURCE = Key.make("");
+    final public static Key<Path> MAP_PATH = Key.make(new Path("."));
 
+
+    /**
+     * URI to map specification file. Each line should include 2
+     * whitespace-separated tokens: the first a key indicating the end of a
+     * range, the second the crawler node to which URIs in the key range should
+     * be mapped.  This setting takes precedence over MAP_PATH; if both are
+     * specified, then MAP_PATH is ignored.
+     */
+    @Immutable
+    final public static Key<String> MAP_URI = Key.make("");
 
     @Immutable
     final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class); 
     
-    @Immutable
-    final public static Key<FileModule> DIR = 
-        Key.make(FileModule.class, null);
-    
-    
+
     /**
      * Mapping of classKey ranges (as represented by their start) to 
      * crawlers (by abstract name/filename)
@@ -115,7 +121,7 @@ public class LexicalCrawlMapper extends CrawlMapper {
     TreeMap<String, String> map = new TreeMap<String, String>();
 
     private Frontier frontier;
-    private FileModule dir;
+
     
     /**
      * Constructor.
@@ -135,7 +141,7 @@ public class LexicalCrawlMapper extends CrawlMapper {
     protected String map(CrawlURI cauri) {
         // get classKey, via frontier to generate if necessary
         String classKey = frontier.getClassKey(cauri);
-        SortedMap tail = map.tailMap(classKey);
+        SortedMap<String,String> tail = map.tailMap(classKey);
         if(tail.isEmpty()) {
             // wraparound
             tail = map;
@@ -147,7 +153,6 @@ public class LexicalCrawlMapper extends CrawlMapper {
     public void initialTasks(StateProvider context) {
         super.initialTasks(context);
         this.frontier = context.get(this, FRONTIER);
-        this.dir = context.get(this, DIR);
 
         try {
             loadMap(context);
@@ -165,21 +170,18 @@ public class LexicalCrawlMapper extends CrawlMapper {
      */
     protected void loadMap(StateProvider context) throws IOException {
         map.clear();
-        String mapSource = context.get(this, MAP_SOURCE);
+        String uri = context.get(this, MAP_URI);
         Reader reader = null;
-        if(!mapSource.startsWith("http://")) {
-            // file-based source
-            File source = new File(mapSource);
-            if (!source.isAbsolute()) {
-                source = new File(dir.getFile(), mapSource);
-            }
+        if (uri.trim().length() == 0) {
+            Path path = context.get(this, MAP_PATH);
+            File source = path.toFile();
             reader = new FileReader(source);
         } else {
-            URLConnection conn = (new URL(mapSource)).openConnection();
+            URLConnection conn = (new URL(uri)).openConnection();
             reader = new InputStreamReader(conn.getInputStream());
         }
         reader = new BufferedReader(reader);
-        Iterator iter = 
+        Iterator<String> iter = 
             new RegexpLineIterator(
                     new LineReadingIterator((BufferedReader) reader),
                     RegexpLineIterator.COMMENT_LINE,

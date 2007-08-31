@@ -63,6 +63,7 @@ import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.KeyTypes;
+import org.archive.state.Path;
 
 
 public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetManager {
@@ -568,16 +569,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         if (o == null) {
             return null;
         }
-        String parentPath = getFilePath(settingPath + ":parent");
-        String path = (String)PathValidator.validate(global, settingPath + ":path");
-        File f;
-        if (parentPath != null) {
-            f = new File(new File(parentPath), path);
-        } else {
-            f = new File(path);
-        }
-        
-        return f.getAbsolutePath();
+        Path path = (Path)o;
+        return path.toFile().getAbsolutePath();
     }
     
     

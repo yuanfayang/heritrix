@@ -30,9 +30,9 @@ import java.io.File;
 
 import org.archive.crawler.framework.CrawlerProcessorTestBase;
 import org.archive.crawler.framework.WriterPoolProcessor;
-import org.archive.state.FileModule;
 import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.Path;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -45,7 +45,7 @@ public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBas
 
     
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return ExperimentalWARCWriterProcessor.class;
     }
     
@@ -57,10 +57,8 @@ public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBas
         tmp.mkdirs();
 
         ExampleStateProvider sp = new ExampleStateProvider();
-        FileModule dir = new FileModule();
-        sp.set(dir, FileModule.PATH, tmp.getAbsolutePath());
-        
-        
+        Path dir = new Path(tmp.getAbsolutePath());
+
         ExperimentalWARCWriterProcessor result = new ExperimentalWARCWriterProcessor();
         sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
         sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());

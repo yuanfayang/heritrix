@@ -40,9 +40,9 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.deciderules.DecideRuleSequence;
-import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
@@ -119,8 +119,8 @@ public abstract class CrawlMapper extends Processor {
      * Directory to write diversion logs.
      */
     @Immutable
-    final public static Key<FileModule> DIVERSION_DIR = 
-        Key.make(FileModule.class, null);
+    final public static Key<Path> DIVERSION_DIR = 
+        Key.make(new Path("diversions"));
 
 
     /**
@@ -150,7 +150,7 @@ public abstract class CrawlMapper extends Processor {
     
     protected ArrayLongFPCache cache;
 
-    private FileModule diversionDir;
+    private Path diversionDir;
     
     /**
      * Constructor.
@@ -234,7 +234,7 @@ public abstract class CrawlMapper extends Processor {
      */
     protected synchronized void updateGeneration(String nowGeneration) {
         // all existing logs are of a previous generation
-        Iterator iter = diversionLogs.values().iterator();
+        Iterator<PrintWriter> iter = diversionLogs.values().iterator();
         while(iter.hasNext()) {
             FilePrintWriter writer = (FilePrintWriter) iter.next();
             writer.close();
@@ -293,7 +293,7 @@ public abstract class CrawlMapper extends Processor {
     protected PrintWriter getDiversionLog(String target) {
         FilePrintWriter writer = (FilePrintWriter) diversionLogs.get(target);
         if(writer == null) {
-            File divertDir = this.diversionDir.getFile();
+            File divertDir = this.diversionDir.toFile();
             divertDir.mkdirs();
             File divertLog = 
                 new File(divertDir,

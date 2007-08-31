@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,6 +43,7 @@ import org.archive.settings.path.PathChangeException;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.PathContext;
 import org.archive.state.StateProvider;
 
 
@@ -53,7 +53,7 @@ import org.archive.state.StateProvider;
  * @author pjack
  */
 public abstract class SheetManager 
-implements StateProvider, Serializable { //, DirectoryModule {
+implements PathContext, StateProvider, Serializable {
 
     final public static Logger LOGGER = 
         Logger.getLogger(SheetManager.class.getName());
@@ -455,4 +455,6 @@ implements StateProvider, Serializable { //, DirectoryModule {
         closeables = (ListModuleListener)in.readObject();
         finishables = (ListModuleListener)in.readObject();
     }
+
+
 }

@@ -41,6 +41,7 @@ import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
+import org.archive.state.Path;
 
 
 /**
@@ -151,7 +152,7 @@ public class PathChanger {
         } else if (typeTag.equals(AUTO_TAG)) {
             v = AUTO;
         } else {
-            v = makeSimple(typeTag, value);
+            v = makeSimple(sheet, typeTag, value);
         }
 
         finish(sheet, path, v);        
@@ -180,7 +181,10 @@ public class PathChanger {
     }
     
     
-    private Object makeSimple(String typeTag, String value) {
+    private Object makeSimple(SingleSheet sheet, String typeTag, String value) {
+        if (typeTag.equals("file")) {
+            return new Path(sheet.getSheetManager(), value);
+        }
         Class type = KeyTypes.getSimpleType(typeTag);
         try {
             return KeyTypes.fromString(type, value);
