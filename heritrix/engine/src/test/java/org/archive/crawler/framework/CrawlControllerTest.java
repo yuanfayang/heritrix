@@ -33,13 +33,11 @@ import java.io.File;
 import java.io.FileWriter;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.modules.deciderules.AcceptDecideRule;
-import org.archive.modules.deciderules.DecideRule;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.FileModule;
 import org.archive.state.ModuleTestBase;
+import org.archive.state.Path;
 import org.archive.util.IoUtils;
 
 /**
@@ -50,7 +48,7 @@ public class CrawlControllerTest extends ModuleTestBase {
     
     
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return CrawlController.class;
     }
 
@@ -104,12 +102,9 @@ public class CrawlControllerTest extends ModuleTestBase {
         def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
         bdb.initialTasks(def);
         
-        FileModule cp = new FileModule();
-        def.set(cp, FileModule.PATH, checkpoints.getAbsolutePath());
-        cp.initialTasks(def);
+        Path cp = new Path(checkpoints.getAbsolutePath());
         
         CrawlController controller = new CrawlController();
-        DecideRule scope = new AcceptDecideRule();
         def.set(controller, CrawlController.SHEET_MANAGER, manager);
 //        def.set(controller, CrawlController.BDB, bdb);
         def.set(controller, CrawlController.ORDER, order);

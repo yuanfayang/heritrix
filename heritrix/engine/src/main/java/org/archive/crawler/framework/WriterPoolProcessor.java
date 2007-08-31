@@ -30,10 +30,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
@@ -44,7 +46,6 @@ import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.state.FileModule;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
@@ -60,6 +61,7 @@ import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 
 /**
@@ -72,8 +74,8 @@ public abstract class WriterPoolProcessor extends Processor
 implements Closeable {
     
     
-//    private static final Logger logger = 
-//        Logger.getLogger(WriterPoolProcessor.class.getName());
+    private static final Logger logger = 
+        Logger.getLogger(WriterPoolProcessor.class.getName());
 
 
     /**
@@ -169,8 +171,8 @@ implements Closeable {
         Key.makeAuto(ServerCache.class);
 
     @Immutable
-    final public static Key<FileModule> DIRECTORY =
-        Key.make(FileModule.class, null);
+    final public static Key<Path> DIRECTORY =
+        Key.make(new Path("."));
     
     
     static {
@@ -189,7 +191,7 @@ implements Closeable {
 
     
     private ServerCache serverCache;
-    private FileModule directory;
+    private Path directory;
     private WriterPoolSettings settings;
     private int maxActive;
     private int maxWait;
@@ -369,8 +371,7 @@ implements Closeable {
         List<String> list = context.get(this, getPathKey());
         ArrayList<File> results = new ArrayList<File>();
         for (String path: list) {
-            String p = directory.toAbsolutePath(path);
-            File f = new File(p);
+            File f = new File(directory.toFile(), path);
             if (!f.exists()) {
                 try {
                     f.mkdirs();
@@ -407,7 +408,19 @@ implements Closeable {
         result.setMetadata(getMetadata(context));
         result.setOutputDirs(getOutputDirs(context));
         result.setPrefix(context.get(this, PREFIX));
-        result.setSuffix(context.get(this, SUFFIX));
+        
+        String sfx = context.get(this, SUFFIX);
+        if (sfx.trim().equals(WriterPoolMember.HOSTNAME_VARIABLE)) {
+            String str = "localhost.localdomain";
+            try {
+                str = InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException ue) {
+                logger.severe("Failed getHostAddress for this host: " + ue);
+            }
+            sfx = str;
+        }
+        
+        result.setSuffix(sfx);
         result.setCompressed(context.get(this, COMPRESS));
         return result;
     }

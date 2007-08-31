@@ -314,4 +314,14 @@ public class MemorySheetManager extends SheetManager {
     public void offlineCleanup() {
         
     }
+
+
+    public File getBaseDir() {
+        return new File("."); // FIXME
+    }
+
+    
+    public Map<String,String> getPathVariables() {
+        return Collections.emptyMap();
+    }
 }

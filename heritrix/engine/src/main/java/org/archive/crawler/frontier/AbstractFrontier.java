@@ -81,17 +81,16 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
-import org.archive.net.UURIFactory;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.Expert;
-import org.archive.state.FileModule;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.iterator.LineReadingIterator;
@@ -131,13 +130,13 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         Key.make(DecideRule.class, null);
     
     @Immutable
-    final public static Key<FileModule> SCRATCH_DIR = 
-        Key.make(FileModule.class, null);
+    final public static Key<Path> SCRATCH_DIR = 
+        Key.make(new Path("scratch"));
     
 
     @Immutable
-    final public static Key<FileModule> RECOVERY_DIR =
-        Key.make(FileModule.class, null);
+    final public static Key<Path> RECOVERY_DIR =
+        Key.make(new Path("logs"));
     
     
     
@@ -289,8 +288,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         Key.makeAuto(SheetManager.class);
 
     
-    private FileModule scratchDir;
-    private FileModule recoveryDir;
+    private Path scratchDir;
+    private Path recoveryDir;
 
 
     /**
@@ -553,7 +552,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         logger.info("beginning");
         // Get the seeds to refresh.
         Writer ignoredWriter = new StringWriter();
-        Iterator iter = manager.getGlobalSheet().get(this, SEEDS)
+        Iterator<UURI> iter = manager.getGlobalSheet().get(this, SEEDS)
             .seedsIterator(ignoredWriter);
         int count = 0; 
         while (iter.hasNext()) {
@@ -572,7 +571,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             }
         }
         // save ignored items (if any) where they can be consulted later
-        saveIgnoredItems(ignoredWriter.toString(), recoveryDir.getFile());
+        saveIgnoredItems(ignoredWriter.toString(), recoveryDir.toFile());
         logger.info("finished");        
     }
 
@@ -859,7 +858,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             hex = "0" + hex;
         }
         int len = hex.length();
-        return new File(scratchDir.getFile(), hex.substring(len - 2,
+        return new File(scratchDir.toFile(), hex.substring(len - 2,
                 len)
                 + File.separator
                 + hex.substring(len - 4, len - 2)

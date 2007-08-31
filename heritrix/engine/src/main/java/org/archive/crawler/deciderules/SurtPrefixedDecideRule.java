@@ -37,13 +37,13 @@ import org.archive.modules.deciderules.PredicatedAcceptDecideRule;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
@@ -77,7 +77,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * converted to the implied SURT prefix, and literal SURT prefixes may be
      * listed on lines beginning with a '+' character.
      */
-    final public static Key<String> SURTS_SOURCE_FILE = Key.make("");
+    final public static Key<Path> SURTS_SOURCE_FILE = Key.make(Path.EMPTY);
     
 
     /**
@@ -91,7 +91,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * Dump file to save SURT prefixes actually used: Useful debugging SURTs.
      */
     @Expert
-    final public static Key<String> SURTS_DUMP_FILE = Key.make("");
+    final public static Key<Path> SURTS_DUMP_FILE = Key.make(Path.EMPTY);
 
 
     /**
@@ -115,12 +115,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     final public static Key<Boolean> ALSO_CHECK_VIA = 
         Key.make(false);
 
-    
-    @Immutable
-    final public static Key<FileModule> DIRECTORY = 
-        Key.make(FileModule.class, null);
-    
-    
+
     @Immutable 
     final public static Key<SeedModule> SEEDS = 
         Key.makeAuto(SeedModule.class);
@@ -129,7 +124,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     protected SurtPrefixSet surtPrefixes = null;
 
     
-    private FileModule directory;
+//    private Path directory;
     
     private SeedModule seeds;
     
@@ -148,7 +143,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
 
     
     public void initialTasks(StateProvider provider) {
-        this.directory = provider.get(this, DIRECTORY);
+//        this.directory = provider.get(this, DIRECTORY);
         this.seeds = provider.get(this, SEEDS);
         this.buildSurtPrefixSet(provider);
     }
@@ -207,10 +202,9 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      */
     protected void dumpSurtPrefixSet(StateProvider uri) {
         // dump surts to file, if appropriate
-        String dumpPath = uri.get(this, SURTS_DUMP_FILE);
-        dumpPath = directory.toAbsolutePath(dumpPath);
-        if (dumpPath.length() > 0) {
-            File dump = new File(dumpPath);
+        Path dumpPath = uri.get(this, SURTS_DUMP_FILE);
+        if (!dumpPath.isEmpty()) {
+            File dump = dumpPath.toFile();
             try {
                 FileWriter fw = new FileWriter(dump);
                 try {
@@ -234,10 +228,9 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
         FileReader fr = null;
 
         // read SURTs from file, if appropriate
-        String sourcePath = uri.get(this, SURTS_SOURCE_FILE);        
-        if (sourcePath.length() > 0) {
-            sourcePath = directory.toAbsolutePath(sourcePath);
-            File source = new File(sourcePath);
+        Path sourcePath = uri.get(this, SURTS_SOURCE_FILE);        
+        if (!sourcePath.isEmpty()) {
+            File source = sourcePath.toFile();
             try {
                 fr = new FileReader(source);
                 try {

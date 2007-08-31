@@ -60,10 +60,10 @@ import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathListConsumer;
 import org.archive.settings.path.PathLister;
 import org.archive.state.ExampleStateProvider;
-import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 
@@ -168,8 +168,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     /** The directory this sheet manager uses. */
     @Immutable
-    final public static Key<FileModule> DIR =
-        Key.make(FileModule.class, null);
+    final public static Key<Path> DIR =
+        Key.make(new Path("."));
 
     static {
         KeyManager.addKeys(FileSheetManager.class);
@@ -221,7 +221,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     final private BdbModule bdb;
     
-    final private FileModule dir;
+    final private Path dir;
     
     private String bdbDir;
     
@@ -279,9 +279,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         
         ExampleStateProvider dsp = new ExampleStateProvider();
 
-        this.dir = new FileModule();
-        dsp.set(dir, FileModule.PATH, main.getParentFile().getAbsolutePath());
-        dir.initialTasks(dsp);
+        this.dir = new Path(main.getParentFile().getAbsolutePath());
         
         this.bdb = new BdbModule();
         dsp.set(bdb, BdbModule.DIR, this.bdbDir);
@@ -315,7 +313,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     }
     
     
-    private String getBdbProperty(Properties p, Key key) {
+    private String getBdbProperty(Properties p, Key<?> key) {
         String propName = BDB_PREFIX + key.getFieldName();
         String defValue = key.getDefaultValue().toString();
         return p.getProperty(propName, defValue);
@@ -698,13 +696,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      * @param s
      *            the sheet to save
      */
-    private void saveSheet(Sheet s) {
-        if (s instanceof SingleSheet) {
-            saveSingleSheet((SingleSheet) s);
-        } else {
-            saveSheetBundle((SheetBundle) s);
-        }
-    }
+//    private void saveSheet(Sheet s) {
+//        if (s instanceof SingleSheet) {
+//            saveSingleSheet((SingleSheet) s);
+//        } else {
+//            saveSheetBundle((SheetBundle) s);
+//        }
+//    }
 
     /**
      * Saves a single sheet to disk. This method first saves the sheet to a
@@ -803,21 +801,18 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.set(bdb, BdbModule.DIR, bdbDir);
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
-            ss.set(dir, FileModule.PATH, dir.getFile().getAbsolutePath());
             ss.addPrimary(getManagerModule());
             ss.addPrimary(bdb);
         } else {
             @SuppressWarnings("unchecked")
             Offline<SheetManager> manager = (Offline)getManagerModule();
             Offline<BdbModule> bdb = Offline.make(BdbModule.class);
-            Offline<FileModule> dir = Offline.make(FileModule.class);
             ss.setOffline(manager, MANAGER, manager);
             ss.setOffline(manager, BDB, bdb);
             ss.setOffline(manager, DIR, dir);
             ss.set(bdb, BdbModule.DIR, bdbDir);
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
-            ss.setOffline(dir, FileModule.PATH, this.dir.getFile().getAbsolutePath());
             ss.addPrimary(getManagerModule());
             ss.addPrimary(bdb);
         }
@@ -953,4 +948,15 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     public void offlineCleanup() {
         bdb.close();
     }
+
+
+    public File getBaseDir() {
+        return mainConfig.getParentFile();
+    }
+    
+    
+    public Map<String,String> getPathVariables() {
+        return Collections.emptyMap();
+    }
+
 }

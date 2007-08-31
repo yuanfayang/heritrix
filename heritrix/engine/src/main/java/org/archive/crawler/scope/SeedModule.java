@@ -44,13 +44,13 @@ import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
 
@@ -73,8 +73,8 @@ implements Initializable, Serializable, KeyChangeListener {
      * File from which to extract seeds.
      */
     @Expert @Immutable
-    final public static Key<FileModule> SEEDSFILE = 
-        Key.make(FileModule.class, null);
+    final public static Key<Path> SEEDSFILE = 
+        Key.make(new Path("seeds.txt"));
 
 
     /**
@@ -93,7 +93,7 @@ implements Initializable, Serializable, KeyChangeListener {
         new HashSet<SeedRefreshListener>();
 
     
-    private FileModule seedsFile;
+    private Path seedsFile;
 
     
     static {
@@ -132,7 +132,7 @@ implements Initializable, Serializable, KeyChangeListener {
      * @return Seed list file or null if problem getting settings file.
      */
     public File getSeedfile() {
-        return seedsFile.getFile();
+        return seedsFile.toFile();
     }
 
     /** Check if a URI is in the seeds.
@@ -229,7 +229,7 @@ implements Initializable, Serializable, KeyChangeListener {
      * 
      * @param iter Iterator to check if SeedFileIterator needing closing
      */
-    protected void checkClose(Iterator iter) {
+    protected void checkClose(Iterator<?> iter) {
         if(iter instanceof SeedFileIterator) {
             ((SeedFileIterator)iter).close();
         }
@@ -260,7 +260,7 @@ implements Initializable, Serializable, KeyChangeListener {
                 fw.write(curi.toString());
                 fw.flush();
                 fw.close();
-                Iterator iter = seedListeners.iterator();
+                Iterator<SeedListener> iter = seedListeners.iterator();
                 while(iter.hasNext()) {
                     ((SeedListener)iter.next()).addedSeed(curi);
                 }

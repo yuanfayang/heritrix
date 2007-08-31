@@ -87,12 +87,12 @@ public class KeyTypes {
     /**
      * Maps Java class to type tag.
      */
-    final private static Map<Class,String> TYPES;
+    final private static Map<Class<?>,String> TYPES;
     
     /**
      * Maps type tag to Java class.
      */
-    final private static Map<String,Class> TAGS;
+    final private static Map<String,Class<?>> TAGS;
     
     /**
      * The type tag for Enum types.
@@ -100,7 +100,7 @@ public class KeyTypes {
     final public static String ENUM_TAG = "enum";
     
     static {
-        Map<Class,String> types = new HashMap<Class,String>();
+        Map<Class<?>,String> types = new HashMap<Class<?>,String>();
         types.put(Boolean.class, "boolean");
         types.put(Byte.class, "byte");
         types.put(Character.class, "char");
@@ -114,10 +114,11 @@ public class KeyTypes {
         types.put(BigInteger.class, "biginteger");
         types.put(BigInteger.class, "bigdecimal");
         types.put(Enum.class, ENUM_TAG);
+        types.put(Path.class, "file"); 
         TYPES = Collections.unmodifiableMap(types);
         
-        Map<String,Class> tags = new HashMap<String,Class>();
-        for (Map.Entry<Class,String> me: types.entrySet()) {
+        Map<String,Class<?>> tags = new HashMap<String,Class<?>>();
+        for (Map.Entry<Class<?>,String> me: types.entrySet()) {
             tags.put(me.getValue(), me.getKey());
         }
         TAGS = Collections.unmodifiableMap(tags);
@@ -138,7 +139,7 @@ public class KeyTypes {
      * @param type   the type to test
      * @return   true if the type is a simple type
      */
-    public static boolean isSimple(Class type) {
+    public static boolean isSimple(Class<?> type) {
         if (Enum.class.isAssignableFrom(type)) {
             return true;
         }
@@ -153,7 +154,7 @@ public class KeyTypes {
      * @param type   the type whose tag to return
      * @return   the tag for that type
      */
-    public static String getSimpleTypeTag(Class type) {
+    public static String getSimpleTypeTag(Class<?> type) {
         if (Enum.class.isAssignableFrom(type)) {
             return ENUM_TAG;
         }
@@ -168,7 +169,7 @@ public class KeyTypes {
      * @param tag   the tag whose class to return
      * @return   the type for that tag
      */
-    public static Class getSimpleType(String tag) {
+    public static Class<?> getSimpleType(String tag) {
         return TAGS.get(tag);
     }
     
@@ -182,7 +183,7 @@ public class KeyTypes {
      * @param value   a string form of that object
      * @return    the parsed object
      */
-    private static Object fromString2(Class type, String value) {
+    private static Object fromString2(Class<?> type, String value) {
         if (type == Enum.class) {
             return parseEnum(value);
         }
@@ -222,6 +223,9 @@ public class KeyTypes {
         if (type == Pattern.class) {
             return Pattern.compile(value);
         }
+        if (type == Path.class) {
+            return new Path(value);
+        }
         
         throw new IllegalArgumentException("Not a simple type: " + type);
     }
@@ -242,6 +246,7 @@ public class KeyTypes {
         String cname = value.substring(0, p);
         String field = value.substring(p + 1);
         try {
+            @SuppressWarnings("unchecked")
             Class c = Class.forName(cname);
             @SuppressWarnings("unchecked")
             Object result = Enum.valueOf(c, field);
@@ -297,6 +302,7 @@ public class KeyTypes {
      * <li>Enums must have strings in the form described by 
      * {@link #toString(Object)}.  This string is parsed to get the class
      * and field name of the enum constant, and that constant is then returned.
+     * <li>Path objects are converted using {@link Path#toString()}.
      * </ul>
      * 
      * If anything goes wrong, this method raises an IllegalArgumentException.
@@ -307,7 +313,7 @@ public class KeyTypes {
      * @throws IllegalArgumentException   if the given string cannot be 
      *    parsed as the given type
      */
-    public static Object fromString(Class simpleType, String value) {
+    public static Object fromString(Class<?> simpleType, String value) {
         try {
             return fromString2(simpleType, value);
         } catch (Exception e) {

@@ -37,10 +37,10 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.io.ReplayInputStream;
 
@@ -90,7 +90,7 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
    * Top-level directory for archive files.
    */
   @Immutable
-  public static final Key<String> PATH = Key.make("arcs");
+  public static final Key<Path> PATH = Key.make(new Path("arcs"));
   
 
   /**
@@ -141,14 +141,6 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
   final public static Key<ServerCache> SERVER_CACHE = 
       Key.makeAuto(ServerCache.class);
 
-  
-  /**
-   * Directory for relative path values.
-   */
-  @Immutable
-  final public static Key<FileModule> DIR = 
-      Key.make(FileModule.class, null);
-  
   private static String BOUNDARY_START = "KulturArw3_";
   
   /*
@@ -167,9 +159,7 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
   private String harvester;
   
   private ServerCache serverCache;
-  
-  private FileModule dirModule;
-  
+
   /**
    * Constructor.
    */
@@ -179,13 +169,9 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
   
   
   public void initialTasks(StateProvider global) {
-      String arcsDirPath = global.get(this, PATH);
-      this.dirModule = global.get(this, DIR);
-      if (dirModule != null) {
-          arcsDirPath = dirModule.toAbsolutePath(arcsDirPath);          
-      }
+      Path arcsDirPath = global.get(this, PATH);
       
-      this.arcsDir = new File(arcsDirPath);      
+      this.arcsDir = arcsDirPath.toFile();
       this.collection = global.get(this, COLLECTION);
       this.harvester = global.get(this, HARVESTER);
       this.chmod = global.get(this, CHMOD);

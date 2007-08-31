@@ -66,11 +66,11 @@ import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.FileModule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
@@ -114,8 +114,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         Key.makeAuto(UriUniqFilter.class);
     
     @Immutable
-    final public static Key<FileModule> DIR = 
-        Key.make(FileModule.class, null);
+    final public static Key<Path> DIR = Key.make(Path.class, null);
     
     /** How many multiples of last fetch elapsed time to wait before recontacting
      * same server */
@@ -185,7 +184,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
     
-    private FileModule dir;
+    private Path dir;
     
 
 
@@ -236,7 +235,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         // save ignored items (if any) where they can be consulted later
         AbstractFrontier.saveIgnoredItems(
                 ignoredWriter.toString(), 
-                dir.getFile());
+                dir.toFile());
     }
     
     public String getClassKey(CrawlURI cauri) {
@@ -394,7 +393,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     }
 
     private void innerBatchFlush() {
-        Queue q = threadWaiting.getQueue();
+        Queue<CrawlURI> q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
             CrawlURI caUri = (CrawlURI)q.dequeue();
             if(alreadyIncluded != null){
@@ -981,7 +980,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#getURIsList(org.archive.crawler.framework.FrontierMarker, int, boolean)
      */
-    public synchronized ArrayList getURIsList(FrontierMarker marker,
+    public synchronized ArrayList<UURI> getURIsList(FrontierMarker marker,
             int numberOfMatches, boolean verbose)
         throws InvalidFrontierMarkerException {
         // TODO Auto-generated method stub

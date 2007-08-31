@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.FileHandler;
@@ -49,13 +48,13 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.FileModule;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 
 /**
@@ -69,8 +68,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     private static final long serialVersionUID = 1L;
 
     @Immutable
-    public final static Key<FileModule> DIR = 
-        Key.make(FileModule.class, null);
+    public final static Key<Path> DIR = Key.make(new Path("logs"));
 
     
     public final static Key<Integer> MAX_OUTLINKS = Key.make(6000);
@@ -150,7 +148,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     transient private Map<String,Logger> loggers = new HashMap<String,Logger>();
 
 
-    private FileModule dir;
+    private Path dir;
 
     
     private StringBuffer manifest = new StringBuffer();
@@ -161,7 +159,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     
     public void initialTasks(StateProvider provider) {
         dir = provider.get(this, DIR);
-        dir.getFile().mkdirs();
+        dir.toFile().mkdirs();
         try {
             setupLogs();
         } catch (IOException e) {
@@ -171,7 +169,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     
     
     private void setupLogs() throws IOException {
-        String logsPath = dir.getFile().getAbsolutePath() + File.separatorChar;
+        String logsPath = dir.toFile().getAbsolutePath() + File.separatorChar;
         uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
         runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
             logsPath);
@@ -218,8 +216,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     
     protected void rotateLogFiles(String generationSuffix)
     throws IOException {
-        for (Iterator i = fileHandlers.keySet().iterator(); i.hasNext();) {
-            Logger l = (Logger)i.next();
+        for (Logger l: fileHandlers.keySet()) {
             GenerationFileHandler gfh =
                 (GenerationFileHandler)fileHandlers.get(l);
             GenerationFileHandler newGfh =
@@ -238,8 +235,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
      * Close all log files and remove handlers from loggers.
      */
     public void closeLogFiles() {
-       for (Iterator i = fileHandlers.keySet().iterator(); i.hasNext();) {
-            Logger l = (Logger)i.next();
+       for (Logger l: fileHandlers.keySet()) {
             GenerationFileHandler gfh =
                 (GenerationFileHandler)fileHandlers.get(l);
             gfh.close();
@@ -291,7 +287,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
 
 
     public File getLogsDir() {
-        return dir.getFile();
+        return dir.toFile();
     }
 
 
@@ -348,7 +344,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         loggers = new HashMap<String,Logger>();
-        dir.getFile().mkdirs();        
+        dir.toFile().mkdirs();        
         this.setupLogs();
     }
 

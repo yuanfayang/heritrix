@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.archive.state.Key;
+import org.archive.state.Path;
 
 class UnspecifiedSheet extends Sheet {
 
@@ -98,6 +99,10 @@ class UnspecifiedSheet extends Sheet {
 
     private <T> Object getDefaultValue(Object module, Key<T> key) {
         Class<T> type = key.getType();
+        if (Path.class.isAssignableFrom(type)) {
+            Path p = (Path)key.getDefaultValue();
+            return new Path(getSheetManager(), p.toString());
+        }
         if (key.isAutoDetected()) {
             return getSheetManager().getGlobalSheet().findPrimary(type);
         }

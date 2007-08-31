@@ -1,8 +1,16 @@
-map-source-description:
-Path (or HTTP URL) to map specification file. Each line should include 2 
-whitespace-separated tokens: the first a key indicating the end of a 
-range, the second the crawler node to which URIs in the key range should 
-be mapped. 
+map-path-description:
+Path to map specification file. Each line should include 2
+whitespace-separated tokens: the first a key indicating the end of a
+range, the second the crawler node to which URIs in the key range should
+be mapped.  This setting is ignored if map-uri is specified.
+
+
+map-uri-description:
+URI to map specification file. Each line should include 2
+whitespace-separated tokens: the first a key indicating the end of a
+range, the second the crawler node to which URIs in the key range should
+be mapped.  This setting takes precedence over map-path; if both are
+specified, then map-path is ignored.
 
 
 frontier-description:

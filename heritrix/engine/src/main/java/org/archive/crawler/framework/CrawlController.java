@@ -59,7 +59,6 @@ import org.archive.modules.credential.CredentialStore;
 import org.archive.modules.net.ServerCache;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.FileModule;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
@@ -70,6 +69,7 @@ import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
@@ -113,12 +113,12 @@ public class CrawlController extends Bean implements
 
     
     @Immutable
-    final public static Key<FileModule> SCRATCH_DIR = 
-        Key.make(FileModule.class, null);
+    final public static Key<Path> SCRATCH_DIR = 
+        Key.make(new Path("scratch"));
     
     @Immutable
-    final public static Key<FileModule> CHECKPOINTS_DIR =
-        Key.make(FileModule.class, null);
+    final public static Key<Path> CHECKPOINTS_DIR =
+        Key.make(new Path("checkpoints"));
     
 
     /**
@@ -231,12 +231,12 @@ public class CrawlController extends Bean implements
     /**
      * For discardable temp files (eg fetch buffers).
      */
-    private FileModule scratchDir;
+    private Path scratchDir;
 
     /**
      * Directory that holds checkpoint.
      */
-    private FileModule checkpointsDir;
+    private Path checkpointsDir;
     
     /**
      * Checkpointer.
@@ -287,7 +287,7 @@ public class CrawlController extends Bean implements
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         this.scratchDir = provider.get(this, SCRATCH_DIR);
         this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
-        this.checkpointer = new Checkpointer(this, this.checkpointsDir.getFile());
+        this.checkpointer = new Checkpointer(this, this.checkpointsDir.toFile());
         this.frontier = provider.get(this, FRONTIER);
         sendCrawlStateChangeEvent(State.PREPARED, CrawlStatus.PREPARED);
 
@@ -1451,12 +1451,12 @@ public class CrawlController extends Bean implements
 
     
     public File getScratchDir() {
-        return scratchDir.getFile();
+        return scratchDir.toFile();
     }
     
     
     public File getCheckpointsDir() {
-        return checkpointsDir.getFile();
+        return checkpointsDir.toFile();
     }
     
     @Emitter(desc="Emitted when the crawl status changes (eg, when a crawl "

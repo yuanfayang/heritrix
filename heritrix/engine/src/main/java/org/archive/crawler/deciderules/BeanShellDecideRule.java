@@ -38,11 +38,11 @@ import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.FileModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 
 import bsh.EvalError;
@@ -73,8 +73,7 @@ implements Initializable, KeyChangeListener {
     
     /** BeanShell script file. */
     @Immutable
-    final public static Key<FileModule> SCRIPT_FILE = 
-        Key.make(FileModule.class, null);
+    final public static Key<Path> SCRIPT_FILE = Key.make(new Path(""));
 
     final public static Key<CrawlController> CONTROLLER =
         Key.makeAuto(CrawlController.class);
@@ -95,7 +94,7 @@ implements Initializable, KeyChangeListener {
         Collections.synchronizedMap(new HashMap<Object,Object>());
     protected boolean initialized = false; 
 
-    private FileModule scriptFile;
+    private Path scriptFile;
     private CrawlController controller;
 
     static {
@@ -166,7 +165,7 @@ implements Initializable, KeyChangeListener {
             interpreter.set("self", this);
             interpreter.set("controller", controller);
             
-            File file = scriptFile.getFile();
+            File file = scriptFile.toFile();
             try {
                 interpreter.source(file.getPath());
             } catch (IOException e) {
