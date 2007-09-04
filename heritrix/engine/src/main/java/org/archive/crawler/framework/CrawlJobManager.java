@@ -127,22 +127,22 @@ public interface CrawlJobManager extends Closeable {
     void systemExit();
 
     
-    @Operation(desc="Reads lines from a text file.")
-    String readLines(
+    @Operation(desc="Reads from a text file.")
+    String readFile(
             @Parameter(name="job", desc="The job whose file to read.")
             String job,
             
             @Parameter(name="filename", desc="An optional filename if the settingsPath resolves to a directory.")
             String filename,
 
-            @Parameter(name="settingsPath", desc="The settings path to a FileModule in that job.")
+            @Parameter(name="settingsPath", desc="The settings path to a file setting in that job.")
             String settingsPath,
             
-            @Parameter(name="startLine", desc="The starting line number to read.")
-            int startLine,
+            @Parameter(name="startPos", desc="The starting byte offset in that file.")
+            long startPos,
             
-            @Parameter(name="lineCount", desc="The number of lines to read.")
-            int lineCount) throws IOException;
+            @Parameter(name="length", desc="The number of bytes to read.")
+            int length) throws IOException;
 
     
     @Operation(desc="Writes lines to a text file.")
@@ -198,4 +198,11 @@ public interface CrawlJobManager extends Closeable {
              @Parameter(name="job", desc="The stage-name of the job to delete.")
              String job);
 
+     @Operation(desc="Given the settings path to a file setting, returns the size of that file.")
+     long getFileSize(
+             @Parameter(name="job", desc="The stage-name of the job using the file.")
+             String job, 
+             
+             @Parameter(name="settingsPath", desc="The settings path to a file setting for that job.")
+             String settingsPath);
 }

@@ -17,6 +17,10 @@ import org.archive.crawler.framework.StatisticsTracking;
 
 public class Reports {
 
+    
+    private static int CHUNK_SIZE = 32 * 1024;
+    
+    
     private enum ReportPages{
         OVERVIEW ("page_reports.jsp"),
         CRAWL ("page_crawl_report.jsp"),
@@ -279,15 +283,15 @@ public class Reports {
         response.setContentType("text/plain");
         PrintWriter pw = response.getWriter();
         try {
-            int start = 0;
+            long start = 0;
             String lines;
             do {
-                lines = cjm.readLines(job.encode(), 
-                        "root:controller:loggers:0:reports-dir",                         
+                lines = cjm.readFile(job.encode(),
+                        "root:controller:loggers:0:reports-dir",
                         report,
                         start,
-                        200);
-                start += 200;
+                        CHUNK_SIZE);
+                start += CHUNK_SIZE;
                 pw.print(lines);
             } while (lines.length() > 0);
         } finally {

@@ -42,6 +42,8 @@ import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
+import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.Operation;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.state.Expert;
@@ -55,13 +57,13 @@ import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
 
 /**
- * Module that maintanis a list of seeds.
+ * Module that maintains a list of seeds.
  *
  * @author gojomo
  *
  */
-public class SeedModule 
-implements Initializable, Serializable, KeyChangeListener {
+public class SeedModule extends Bean 
+implements SeedModuleInterface, Initializable, Serializable, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -105,6 +107,7 @@ implements Initializable, Serializable, KeyChangeListener {
      * Constructor.
      */
     public SeedModule() {
+        super(SeedModuleInterface.class);
     }
 
 
@@ -117,6 +120,7 @@ implements Initializable, Serializable, KeyChangeListener {
      * Refresh seeds.
      *
      */
+    @Operation(desc="Notify all listeners that the seeds file has changed.")
     public void refreshSeeds() {
         fireSeedsRefreshed();
     }
@@ -191,7 +195,6 @@ implements Initializable, Serializable, KeyChangeListener {
         // this specific settings check 
         if (context.get(this, REREAD_SEEDS_ON_CONFIG)) {
             refreshSeeds();
-            this.fireSeedsRefreshed();
         }
     }
 
