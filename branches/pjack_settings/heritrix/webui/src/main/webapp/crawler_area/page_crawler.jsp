@@ -53,7 +53,7 @@ String deleteUrl = request.getContextPath() + "/crawler_area/do_show_delete.jsp"
         <a 
            class="rowLink" 
            title="View or edit this jobs's seeds."
-           href="javascript:alert('not yet implemented')">Seeds</a>
+           href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=jqs%>">Seeds</a>
         <a 
            class="rowLink" 
            title="View reports for this job."

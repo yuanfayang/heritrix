@@ -27,11 +27,13 @@ package org.archive.crawler.framework;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +54,7 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
 import static org.archive.crawler.framework.JobStage.*;
 import org.archive.crawler.util.LogRemoteAccessImpl;
+import org.archive.io.RandomAccessInputStream;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.DefaultCheckpointRecovery;
@@ -560,45 +563,25 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
 
     
-    public synchronized String readLines(String job, String settingsPath, 
-            String fileName,
-            int startLine, int lineCount) throws IOException {
+    public synchronized String readFile(String job, String settingsPath, 
+            String fileName, long startPos, int length) throws IOException {
         String path = getFilePath(job, settingsPath);
         File f = new File(path);
-        if (f.isDirectory()) {
-            f = new File(f, fileName);
-        }
-        if (startLine < 0) {
-            throw new IllegalArgumentException("startLine must be positive.");
-        }
-        if (lineCount < 0) {
-            throw new IllegalArgumentException("lineCount must be positive.");
-        }
-        if (lineCount > 10000) {
-            throw new IllegalArgumentException("lineCount exceeds max (10000)");
-        }
-
-        BufferedReader br = null;
-        StringBuilder result = new StringBuilder();
+        byte[] buf;
+        RandomAccessInputStream raf = null;
         try {
-            br = new BufferedReader(new FileReader(f));
-            for (int i = 0; i < startLine; i++) {
-                String line = br.readLine();
-                if (line == null) {
-                    return "";
-                }
-            }
-            for (int i = 0; i < lineCount; i++) {
-                String line = br.readLine();
-                if (line == null) {
-                    return result.toString();
-                }
-                result.append(line).append('\n');
-            }
-            return result.toString();
+            raf = new RandomAccessInputStream(f);
+            raf.position(startPos);
+            length = Math.min(length, (int)(f.length() - startPos));
+            buf = new byte[length];
+            IoUtils.readFully(raf, buf);
         } finally {
-            IoUtils.close(br);
+            IoUtils.close(raf);
         }
+        
+        ByteArrayInputStream binp = new ByteArrayInputStream(buf);
+        InputStreamReader isr = new InputStreamReader(binp);
+        return IoUtils.readFullyAsString(isr);
     }
 
     public synchronized void writeLines(String job, 
@@ -723,4 +706,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
     }
 
+    
+    public synchronized long getFileSize(String job, String settingsPath) {
+        String filePath = getFilePath(job, settingsPath);
+        return new File(filePath).length();
+    }
 }

@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -152,6 +153,15 @@ public class IoUtils {
         StringBuffer sb = new StringBuffer();
         int c;
         while((c = inputStream.read()) > -1) {
+            sb.append((char)c);
+        }
+        return sb.toString();
+    }
+    
+    
+    public static String readFullyAsString(Reader r) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        for (int c = r.read(); c >= 0; c = r.read()) {
             sb.append((char)c);
         }
         return sb.toString();

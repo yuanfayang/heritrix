@@ -34,6 +34,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.JobStage;
+import org.archive.crawler.scope.SeedModuleInterface;
 import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.jmx.JMXSheetManager;
 
@@ -45,6 +47,10 @@ public class Seeds {
 
     final private static int LINES_PER_PAGE = 10000;
     
+    final private static int MAX_FILE_SIZE = 32 * 1024;
+    
+    final private static String SETTINGS_PATH = "root:seeds:seedsfile";
+    
     
     public static void showSeeds(
             ServletContext sc,
@@ -52,27 +58,27 @@ public class Seeds {
             HttpServletResponse response) throws Exception {
         Crawler crawler = Home.getCrawler(request);
         Remote<JMXSheetManager> remote = Sheets.getSheetManager(request);
-        CrawlJob job = (CrawlJob)request.getAttribute("job");
-        JMXConnector jmxc = remote.getJMXConnector();
-        JMXSheetManager sheetManager = remote.getObject(); 
-        CrawlJobManager crawlJobManager = BeanProxy.proxy(
-                jmxc.getMBeanServerConnection(), 
-                crawler.getObjectName(), 
-                CrawlJobManager.class);
 
-        String pageString = request.getParameter("page");
-        int page = (pageString == null) ? 0 : Integer.parseInt(pageString);
-        
         try {
-            File f = new File(sheetManager.getFilePath("root:seeds:seedsfile"));
-            String seeds = crawlJobManager.readLines(job.encode(),
-                    "root:seeds:seedsfile",
+            CrawlJob job = (CrawlJob)request.getAttribute("job");
+            JMXConnector jmxc = remote.getJMXConnector();
+            JMXSheetManager sheetManager = remote.getObject(); 
+            CrawlJobManager crawlJobManager = BeanProxy.proxy(
+                    jmxc.getMBeanServerConnection(), 
+                    crawler.getObjectName(), 
+                    CrawlJobManager.class);
+            long size = crawlJobManager.getFileSize(job.encode(), 
+                    SETTINGS_PATH);
+            request.setAttribute("overflow", size > MAX_FILE_SIZE);
+
+            File f = new File(sheetManager.getFilePath(SETTINGS_PATH));
+            String seeds = crawlJobManager.readFile(job.encode(),
+                    SETTINGS_PATH,
                     null,
-                    page * LINES_PER_PAGE,
-                    LINES_PER_PAGE);
+                    0,
+                    MAX_FILE_SIZE);
             request.setAttribute("seeds", seeds);
             request.setAttribute("seedfile", f.getAbsolutePath());
-            request.setAttribute("page", page);
             Misc.forward(request, response, 
                 "/seeds/page_seed_editor.jsp");
         } finally {
@@ -81,6 +87,25 @@ public class Seeds {
         
     }
 
+    
+    public static void refreshSeeds(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Crawler crawler = Home.getCrawler(request);
+        JMXConnector jmxc = crawler.connect();
+        try {
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            SeedModuleInterface seedModule = getSeedModule(jmxc, job);
+            seedModule.refreshSeeds();
+        } finally {
+            Misc.close(jmxc);
+        }
+        
+        new Flash("Successfully sent seeds refresh.").addToSession(request);
+        CrawlerArea.showCrawler(sc, request, response);
+    }
+    
     
     public static void saveSeeds(
             ServletContext sc,
@@ -95,7 +120,7 @@ public class Seeds {
                     jmxc.getMBeanServerConnection(), 
                     crawler.getObjectName(), 
                     CrawlJobManager.class);
-            int page = Integer.parseInt(request.getParameter("page"));
+            int page = 0;
             String seeds = request.getParameter("seeds");
             crawlJobManager.writeLines(job.encode(),
                     "root:seeds:seedsfile",
@@ -103,13 +128,24 @@ public class Seeds {
                     page * LINES_PER_PAGE,
                     LINES_PER_PAGE,
                     seeds);
+            if (job.getJobStage() == JobStage.ACTIVE) {
+                SeedModuleInterface seedModule = getSeedModule(jmxc, job);
+                seedModule.refreshSeeds();
+            }
         } finally {
             remote.close();
         }
         new Flash("Your seeds were updated successfully.").addToSession(request);
         showSeeds(sc, request, response);
     }
-            
-            
-    
+
+
+    private static SeedModuleInterface getSeedModule(JMXConnector jmxc, 
+            CrawlJob job) {
+        SeedModuleInterface seedModule = Misc.find(
+                jmxc, 
+                job.getName(), 
+                SeedModuleInterface.class);
+        return seedModule;
+    }
 }

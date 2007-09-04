@@ -92,7 +92,9 @@ public class CrawlerArea {
         request.setAttribute("ready", ready);
         request.setAttribute("profiles", profile);
         request.setAttribute("completed", completed);
-        Misc.forward(request, response, "page_crawler.jsp");
+        String url = request.getContextPath() 
+            + "/crawler_area/page_crawler.jsp";
+        Misc.forward(request, response, url);
     }
     
     
