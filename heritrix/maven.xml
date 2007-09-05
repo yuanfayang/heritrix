@@ -42,6 +42,7 @@
        </util:available>
        <j:if test="${sDocbookSupportPresent == 'true'}">
         <attainGoal name="sdocbook:generate-html"/>
+        
         <attainGoal name="sdocbook:generate-pdf"/>
          
        </j:if>
