@@ -14,7 +14,6 @@
         <attainGoal name="docbook"/>
     </preGoal> 
 
-    <!--
     <postGoal name="sdocbook:transform">
         <maven:get var="docfile"
             plugin="maven-sdocbook-plugin"
@@ -33,7 +32,6 @@
             </fileset>
         </move>
     </postGoal>
-    -->
     
     <goal name="docbook">
     <!--Check that the jimi jars are present.  If not, skip docbook.
