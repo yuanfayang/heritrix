@@ -2817,7 +2817,7 @@
     <sect2 id="1_6_0_limitations">
       <title>Known Limitations/Issues</title>
 
-      <sect3 id="bdb_nfs">
+      <sect3 id="1_6_0_limitations_bdb_nfs">
         <title>java.io.IOException: No locks available</title>
 
         <para>BDB will complain 'No locks available' when crawler is being
