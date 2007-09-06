@@ -25,10 +25,13 @@
 package org.archive.crawler.frontier;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 /**
  * Uses target IP as basis for queue-assignment, unless it is unavailable,
@@ -37,13 +40,29 @@ import org.archive.modules.net.ServerCacheUtil;
  * @author gojomo
  */
 public class IPQueueAssignmentPolicy
-extends HostnameQueueAssignmentPolicy {
-    public String getClassKey(CrawlController controller, CrawlURI cauri) {
-        ServerCache cache = controller.getServerCache();
-        CrawlHost host = ServerCacheUtil.getHostFor(cache, cauri.getUURI());
+extends HostnameQueueAssignmentPolicy implements Initializable {
+    
+
+    private static final long serialVersionUID = 3L;
+
+    @Immutable
+    final private static Key<ServerCache> SERVER_CACHE =
+        Key.makeAuto(ServerCache.class);
+    
+    private ServerCache serverCache;
+
+    
+    public void initialTasks(StateProvider global) {
+        this.serverCache = global.get(this, SERVER_CACHE);
+    }
+
+    
+    public String getClassKey(CrawlURI cauri) {
+        CrawlHost host = ServerCacheUtil.getHostFor(serverCache, 
+                cauri.getUURI());
         if (host == null || host.getIP() == null) {
             // if no server or no IP, use superclass implementation
-            return super.getClassKey(controller, cauri);
+            return super.getClassKey(cauri);
         }
         // use dotted-decimal IP address
         return host.getIP().getHostAddress();

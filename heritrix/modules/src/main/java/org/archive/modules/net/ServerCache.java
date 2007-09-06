@@ -32,7 +32,6 @@ public interface ServerCache {
     
     CrawlServer getServerFor(String serverKey);
 
-    void cleanup();
 
     /**
      * Utility for performing an action on every CrawlHost. 

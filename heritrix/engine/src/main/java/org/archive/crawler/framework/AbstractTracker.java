@@ -74,11 +74,17 @@ Initializable, Finishable {
         Key.makeAuto(CrawlController.class);
 
     
+    @Immutable
+    final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
+        Key.makeAuto(CrawlerLoggerModule.class);
+    
     
     /** A reference to the CrawlContoller of the crawl that we are to track
      * statistics for.
      */
     protected CrawlController controller;
+    
+    protected CrawlerLoggerModule loggerModule;
 
     // Keep track of time.
     protected long crawlerStartTime;
@@ -101,6 +107,7 @@ Initializable, Finishable {
     
     public void initialTasks(StateProvider p) {
         this.controller = p.get(this, CONTROLLER);
+        this.loggerModule = p.get(this, LOGGER_MODULE);
     }
     
     /**
@@ -128,7 +135,7 @@ Initializable, Finishable {
                 Thread.sleep(getLogWriteInterval() * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                controller.getLoggerModule().getRuntimeErrors().log(Level.INFO,
+                loggerModule.getRuntimeErrors().log(Level.INFO,
                     "Periodic stat logger interrupted while sleeping.");
             }
 

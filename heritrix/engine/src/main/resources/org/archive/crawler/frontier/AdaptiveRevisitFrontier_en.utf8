@@ -62,3 +62,15 @@ or rely on the queues'.
 
 dir-description:
 The directory used by the frontier.
+
+
+logger-module-description:
+The logger module used during the crawl.
+
+
+server-cache-description:
+The server cache used during the crawl.
+
+
+uri-canonicalization-rules-description:
+The canonicalization rules used during the crawl.

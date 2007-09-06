@@ -25,7 +25,6 @@
 package org.archive.crawler.frontier;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.net.PublicSuffixes;
 
 /**
@@ -39,8 +38,8 @@ public class TopmostAssignedSurtQueueAssignmentPolicy extends
     private static final long serialVersionUID = -1533545293624791702L;
 
     @Override
-    public String getClassKey(CrawlController controller, CrawlURI cauri) {
-        String candidate =  super.getClassKey(controller, cauri);
+    public String getClassKey(CrawlURI cauri) {
+        String candidate =  super.getClassKey(cauri);
         candidate = PublicSuffixes.reduceSurtToTopmostAssigned(candidate); 
         return candidate; 
     }

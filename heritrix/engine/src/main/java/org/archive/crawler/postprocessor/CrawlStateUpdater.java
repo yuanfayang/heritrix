@@ -26,20 +26,21 @@ package org.archive.crawler.postprocessor;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlerProcessor;
-import org.archive.crawler.framework.Frontier.FrontierGroup;
+import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.RobotsHonoringPolicy;
+import org.archive.modules.net.ServerCache;
+import org.archive.modules.net.ServerCacheUtil;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
+import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -51,19 +52,36 @@ import org.archive.state.KeyManager;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class CrawlStateUpdater extends CrawlerProcessor {
+public class CrawlStateUpdater extends Processor implements Initializable {
 
     private static final long serialVersionUID = -1072728147960180091L;
 
     private static final Logger logger =
         Logger.getLogger(CrawlStateUpdater.class.getName());
 
+
+    @Immutable
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.makeAuto(ServerCache.class);
     
+    
+    @Immutable
+    final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
+        Key.makeAuto(RobotsHonoringPolicy.class);
+    
+    
+    private ServerCache serverCache;
+    private RobotsHonoringPolicy robotsHonoringPolicy;
 
     public CrawlStateUpdater() {
         super();
     }
 
+    
+    public void initialTasks(StateProvider global) {
+        this.serverCache = global.get(this, SERVER_CACHE);
+        this.robotsHonoringPolicy = global.get(this, ROBOTS_HONORING_POLICY);
+    }
 
     @Override
     protected boolean shouldProcess(ProcessorURI puri) {
@@ -75,8 +93,9 @@ public class CrawlStateUpdater extends CrawlerProcessor {
         CrawlURI curi = (CrawlURI)puri;
         
         // Tally per-server, per-host, per-frontier-class running totals
-        CrawlServer server = getServerFor(curi);
-        
+        CrawlServer server = ServerCacheUtil.getServerFor(serverCache, 
+                curi.getUURI());
+
         String scheme = curi.getUURI().getScheme().toLowerCase();
         if (scheme.equals("http") || scheme.equals("https") &&
                 server != null) {
@@ -91,10 +110,8 @@ public class CrawlStateUpdater extends CrawlerProcessor {
             try {
                 if (curi.getUURI().getPath() != null &&
                         curi.getUURI().getPath().equals("/robots.txt")) {
-                    RobotsHonoringPolicy rhp = controller.
-                        getOrderSetting(CrawlOrder.ROBOTS_HONORING_POLICY);
                     // Update server with robots info
-                    server.updateRobots(rhp,  curi);
+                    server.updateRobots(robotsHonoringPolicy,  curi);
                 }
             }
             catch (URIException e) {

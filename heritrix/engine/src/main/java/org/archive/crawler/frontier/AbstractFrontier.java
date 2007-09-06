@@ -756,7 +756,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             int maxBandwidthKB = curi.get(this, MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
-                ServerCache cache = controller.getServerCache();
+                ServerCache cache = this.getServerCache();
                 CrawlHost host = ServerCacheUtil.getHostFor(cache, curi.getUURI());
                 long minDurationToWait = host.getEarliestNextURIEmitTime()
                         - now;
@@ -1091,7 +1091,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
             queueKey = cauri.get(this, QUEUE_ASSIGNMENT_POLICY).getClassKey(
-                    controller, cauri);
+                    cauri);
         }
         return queueKey;
     }

@@ -50,6 +50,7 @@ import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -64,7 +65,6 @@ import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
-import org.archive.settings.Sheet;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
@@ -110,6 +110,10 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         Key.makeAuto(SeedModule.class);
     
     @Immutable
+    final public static Key<ServerCache> SERVER_CACHE =
+        Key.makeAuto(ServerCache.class);
+    
+    @Immutable
     final public static Key<UriUniqFilter> URI_UNIQ_FILTER =
         Key.makeAuto(UriUniqFilter.class);
     
@@ -146,6 +150,14 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     @Immutable
     final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
         Key.make("");
+    
+    @Immutable
+    final public static Key<List<CanonicalizationRule>> URI_CANONICALIZATION_RULES =
+        Key.makeList(CanonicalizationRule.class);
+    
+    @Immutable
+    final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
+        Key.makeAuto(CrawlerLoggerModule.class);
 
     /** Acceptable characters in forced queue names.
      *  Word chars, dash, period, comma, colon */
@@ -162,6 +174,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     private CrawlController controller;
     private SeedModule seeds;
     private BdbModule bdb;
+    private ServerCache serverCache;
     
     private AdaptiveRevisitQueueList hostQueues;
     
@@ -186,19 +199,20 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     
     private Path dir;
     
-
+    private List<CanonicalizationRule> rules;
+    
+    private CrawlerLoggerModule loggerModule;
 
     public AdaptiveRevisitFrontier() {
     }
 
-    public <T> T get(Key<T> key) {
-        Sheet sheet = controller.getSheetManager().getGlobalSheet();
-        return sheet.get(this, key);
-    }
     
     public synchronized void initialTasks(StateProvider provider) {
+        rules = provider.get(this, URI_CANONICALIZATION_RULES);
+        
         controller = provider.get(this, CONTROLLER);
         dir = provider.get(this, DIR);
+        this.serverCache = provider.get(this, SERVER_CACHE);
 
         queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
         alreadyIncluded = provider.get(this, URI_UNIQ_FILTER);
@@ -243,7 +257,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
             if ("".equals(queueKey)) {
                 // Typical case, barring overrides
                 queueKey =
-                    queueAssignmentPolicy.getClassKey(controller, cauri);
+                    queueAssignmentPolicy.getClassKey(cauri);
                 // The queueAssignmentPolicy is always based on Hostnames
                 // We may need to remove any www[0-9]{0,}\. prefixes from the
                 // hostnames
@@ -266,8 +280,6 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      */
     protected String canonicalize(UURI uuri) {
         StateProvider def = controller.getSheetManager().getGlobalSheet();
-        List<CanonicalizationRule> rules = 
-            controller.getOrderSetting(CrawlController.URI_CANONICALIZATION_RULES);
         return Canonicalizer.canonicalize(def, uuri.toString(), rules);
     }
 
@@ -415,9 +427,8 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      * @return the CrawlServer to be associated with this CrawlURI
      */
     protected CrawlServer getServer(CrawlURI curi) {
-        ServerCache cache = controller.getServerCache();
         UURI uuri = curi.getUURI();
-        return ServerCacheUtil.getServerFor(cache, uuri);
+        return ServerCacheUtil.getServerFor(serverCache, uuri);
     }
 
     /* (non-Javadoc)
@@ -566,7 +577,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
         	Collection<Throwable> x = curi.getNonFatalFailures();
         	for (Throwable e: x) {
-                    controller.getLoggerModule().getLocalErrors()
+                    loggerModule.getLocalErrors()
                      .log(Level.WARNING, curi.toString(), e);
         	}
             // once logged, discard
@@ -607,7 +618,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         }
         
         Object array[] = { curi };
-        controller.getLoggerModule().getUriProcessing().log(
+        loggerModule.getUriProcessing().log(
             Level.INFO,
             curi.getUURI().toString(),
             array);
@@ -701,14 +712,14 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         // send to basic log
         curi.aboutToLog();
         Object array[] = { curi };
-        this.controller.getLoggerModule().getUriProcessing().log(
+        loggerModule.getUriProcessing().log(
             Level.INFO,
             curi.getUURI().toString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
-            this.controller.getLoggerModule().getRuntimeErrors().log(
+            this.loggerModule.getRuntimeErrors().log(
                 Level.WARNING,
                 curi.getUURI().toString(),
                 array);
@@ -745,7 +756,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         // send to basic log
         curi.aboutToLog();
         Object array[] = { curi };
-        controller.getLoggerModule().getUriProcessing().log(
+        loggerModule.getUriProcessing().log(
             Level.INFO,
             curi.getUURI().toString(),
             array);

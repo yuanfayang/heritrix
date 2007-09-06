@@ -124,29 +124,29 @@ public class AuthSelfTest
         String token = "CredentialStore\n";        
         int p = config.indexOf(token);
         String newConfig = 
-            "root:controller:credential-store:credentials" +
+            "root:credential-store:credentials" +
             "=map, org.archive.modules.credential.Credential\n" +
-            "root:controller:credential-store:credentials:test" +
+            "root:credential-store:credentials:test" +
             "=object, org.archive.modules.credential.Rfc2617Credential\n" +
-            "root:controller:credential-store:credentials:test:" +
+            "root:credential-store:credentials:test:" +
             "credential-domain=string, localhost:7777\n" +
-            "root:controller:credential-store:credentials:test:realm" +
+            "root:credential-store:credentials:test:realm" +
             "=string, Hyrule\n" +
-            "root:controller:credential-store:credentials:test:login" +
+            "root:credential-store:credentials:test:login" +
             "=string, Mr. Happy Pants\n" +
-            "root:controller:credential-store:credentials:test:password" +
+            "root:credential-store:credentials:test:password" +
             "=string, xyzzy\n" +
-            "root:controller:credential-store:credentials:test2" +
+            "root:credential-store:credentials:test2" +
             "=object, org.archive.modules.credential.HtmlFormCredential\n" +
-            "root:controller:credential-store:credentials:test2:credential-domain" +
+            "root:credential-store:credentials:test2:credential-domain" +
             "=string, localhost:7777\n" +
-            "root:controller:credential-store:credentials:test2:login-uri" +
+            "root:credential-store:credentials:test2:login-uri" +
             "=string, http://localhost:7777/login/login.html\n" +
-            "root:controller:credential-store:credentials:test2:form-items" +
+            "root:credential-store:credentials:test2:form-items" +
             "=map, java.lang.String\n" +
-            "root:controller:credential-store:credentials:test2:form-items" +
+            "root:credential-store:credentials:test2:form-items" +
             ":username=string, Mr. Happy Pants\n" +
-            "root:controller:credential-store:credentials:test2:form-items" +
+            "root:credential-store:credentials:test2:form-items" +
             ":password=string, xyzzy\n";
         String result = config.substring(0, p + token.length()) + 
             newConfig + config.substring(p + token.length());

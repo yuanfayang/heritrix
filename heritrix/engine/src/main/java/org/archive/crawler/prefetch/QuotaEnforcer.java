@@ -30,12 +30,20 @@ import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlerProcessor;
+import org.archive.crawler.framework.Frontier;
 import org.archive.modules.ProcessResult;
+import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats;
+import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.CrawlServer;
+import org.archive.modules.net.ServerCache;
+import org.archive.modules.net.ServerCacheUtil;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 
 /**
  * A simple quota enforcer. If the host, server, or frontier group
@@ -45,7 +53,7 @@ import org.archive.state.KeyManager;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class QuotaEnforcer extends CrawlerProcessor {
+public class QuotaEnforcer extends Processor implements Initializable {
 
     private static final long serialVersionUID = 3L;
 
@@ -159,7 +167,16 @@ public class QuotaEnforcer extends CrawlerProcessor {
     final public static Key<Boolean> FORCE_RETIRE = Key.make(true);
 
     
-    protected static final Key[][] keys = new Key[][] {
+    @Immutable
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.makeAuto(ServerCache.class);
+    
+    
+    @Immutable
+    final public static Key<Frontier> FRONTIER =
+        Key.makeAuto(Frontier.class);
+    
+    protected static final Key<?>[][] keys = new Key<?>[][] {
         {
             //"server",
             SERVER_MAX_FETCH_SUCCESSES,
@@ -184,6 +201,9 @@ public class QuotaEnforcer extends CrawlerProcessor {
     };
 
     
+    private ServerCache serverCache;
+    private Frontier frontier;
+    
     /**
      * Constructor.
      */
@@ -191,6 +211,11 @@ public class QuotaEnforcer extends CrawlerProcessor {
         super();
     }
     
+    
+    public void initialTasks(StateProvider global) {
+        this.serverCache = global.get(this, SERVER_CACHE);
+        this.frontier = global.get(this, FRONTIER);
+    }
     
     protected boolean shouldProcess(ProcessorURI puri) {
         return puri instanceof CrawlURI;
@@ -202,11 +227,15 @@ public class QuotaEnforcer extends CrawlerProcessor {
     
     protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
+        final CrawlServer server = ServerCacheUtil.getServerFor(serverCache, 
+                curi.getUURI());
+        final CrawlHost host = ServerCacheUtil.getHostFor(serverCache, 
+                curi.getUURI());
         FetchStats.HasFetchStats[] haveStats = 
             new FetchStats.HasFetchStats[] {
-                getServerFor(curi), // server
-                getHostFor(curi), // host
-                controller.getFrontier().getGroup(curi) // group
+                server, 
+                host, 
+                frontier.getGroup(curi)
             };
         
         for(int cat=SERVER;cat<=GROUP;cat++) {
@@ -246,7 +275,9 @@ public class QuotaEnforcer extends CrawlerProcessor {
         };
         for(int q=SUCCESSES; q<=RESPONSE_KB; q++) {
             @SuppressWarnings("unchecked")
-            Key<Long> key = keys[CAT][q];
+            Key k = keys[CAT][q];
+            @SuppressWarnings("unchecked")
+            Key<Long> key = k;
             if (applyQuota(curi, key, actuals[q])) {
                 return true; 
             }

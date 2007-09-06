@@ -22,6 +22,7 @@
  */
 package org.archive.modules.fetcher;
 
+import java.io.Closeable;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Hashtable;
@@ -41,7 +42,7 @@ import org.archive.net.UURI;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class DefaultServerCache implements ServerCache, Serializable {
+public class DefaultServerCache implements ServerCache, Closeable, Serializable {
 
 
     private static final long serialVersionUID = 1L;
@@ -191,7 +192,7 @@ public class DefaultServerCache implements ServerCache, Serializable {
     /**
      * Called when shutting down the cache so we can do clean up.
      */
-    public void cleanup() {
+    public void close() {
         if (this.hosts != null) {
             // If we're using a bdb bigmap, the call to clear will
             // close down the bdb database.

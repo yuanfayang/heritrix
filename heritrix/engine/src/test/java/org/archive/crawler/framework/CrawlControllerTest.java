@@ -32,7 +32,6 @@ import static org.archive.util.TmpDirTestCase.TEST_TMP_SYSTEM_PROPERTY_NAME;
 import java.io.File;
 import java.io.FileWriter;
 
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
@@ -91,13 +90,6 @@ public class CrawlControllerTest extends ModuleTestBase {
         File checkpoints = new File(tmp, "checkpoints");
         checkpoints.mkdirs();
         
-        CrawlOrder order = new CrawlOrder();
-                
-        def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
-//        def.set(order, CrawlOrder.HTTP_USER_AGENT, "Heritrix (+@OPERATOR_CONTACT_URL@) abc");
-//        def.set(order, CrawlOrder.OPERATOR_CONTACT_URL, "http://www.example.com/OurCrawlDetails");
-//        def.set(order, CrawlOrder.OPERATOR_FROM, "complain@example.com");
-        
         BdbModule bdb = new BdbModule();
         def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
         bdb.initialTasks(def);
@@ -106,9 +98,6 @@ public class CrawlControllerTest extends ModuleTestBase {
         
         CrawlController controller = new CrawlController();
         def.set(controller, CrawlController.SHEET_MANAGER, manager);
-//        def.set(controller, CrawlController.BDB, bdb);
-        def.set(controller, CrawlController.ORDER, order);
-//        def.set(controller, CrawlController.SCOPE, scope);
         def.set(controller, CrawlController.SERVER_CACHE, 
                 new CrawlerServerCache());
         def.set(controller, CrawlController.CHECKPOINTS_DIR, cp);
