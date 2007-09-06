@@ -23,16 +23,15 @@
  */
 package org.archive.crawler.prefetch;
 
-import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlerProcessor;
+import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.modules.ProcessResult;
+import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.credential.Credential;
 import org.archive.modules.credential.CredentialAvatar;
@@ -40,17 +39,21 @@ import org.archive.modules.credential.CredentialStore;
 import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
-import org.archive.modules.fetcher.FetchStatusCodes;
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
+import org.archive.modules.net.ServerCache;
+import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+
 
 /**
  * Ensures the preconditions for a fetch -- such as DNS lookup 
@@ -59,9 +62,7 @@ import org.archive.state.StateProvider;
  *
  * @author gojomo
  */
-public class PreconditionEnforcer
-        extends CrawlerProcessor
-        implements CoreAttributeConstants, FetchStatusCodes {
+public class PreconditionEnforcer extends Processor implements Initializable {
 
     private static final long serialVersionUID = 3L;
 
@@ -101,8 +102,33 @@ public class PreconditionEnforcer
     final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.make(false);
     
     
+    @Immutable
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.makeAuto(ServerCache.class);
+    
+    
+    @Immutable
+    final public static Key<CredentialStore> CREDENTIAL_STORE =
+        Key.makeAuto(CredentialStore.class);
+    
+    
+    @Immutable
+    final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
+        Key.makeAuto(CrawlerLoggerModule.class);
+    
+    private ServerCache serverCache;
+    private CredentialStore credentialStore;
+    private CrawlerLoggerModule loggerModule;
+    
     public PreconditionEnforcer() {
         super();
+    }
+    
+    
+    public void initialTasks(StateProvider global) {
+        this.serverCache = global.get(this, SERVER_CACHE);
+        this.credentialStore = global.get(this, CREDENTIAL_STORE);
+        this.loggerModule = global.get(this, LOGGER_MODULE);
     }
 
     
@@ -398,7 +424,7 @@ public class PreconditionEnforcer
 
         boolean result = false;
 
-        CredentialStore cs = controller.getCredentialStore();
+        CredentialStore cs = credentialStore;
         if (cs == null) {
             logger.severe("No credential store for " + curi);
             return result;
@@ -417,7 +443,7 @@ public class PreconditionEnforcer
                 break;
             }
 
-            if (!c.rootUriMatch(controller.getServerCache(), curi)) {
+            if (!c.rootUriMatch(serverCache, curi)) {
                 continue;
             }
 
@@ -440,7 +466,7 @@ public class PreconditionEnforcer
                         markPrerequisite(curi, prereq);
                     } catch (URIException e) {
                         logger.severe("unable to set credentials prerequisite "+prereq);
-                        controller.logUriError(e,curi.getUURI(),prereq);
+                        loggerModule.logUriError(e,curi.getUURI(),prereq);
                         return false; 
                     }
                     result = true;
@@ -469,9 +495,8 @@ public class PreconditionEnforcer
         if (!server.hasCredentialAvatars()) {
             return result;
         }
-        Set avatars = server.getCredentialAvatars();
-        for (Iterator i = avatars.iterator(); i.hasNext();) {
-            CredentialAvatar ca = (CredentialAvatar)i.next();
+        Set<CredentialAvatar> avatars = server.getCredentialAvatars();
+        for (CredentialAvatar ca: avatars) {
             String key = null;
             key = credential.getKey(curi);
             if (ca.match(credential.getClass(), key)) {
@@ -503,6 +528,18 @@ public class PreconditionEnforcer
         curi.setFetchStatus(S_DEFERRED);
         //skipToPostProcessing();
     }
+    
+    
+    private CrawlServer getServerFor(ProcessorURI curi) {
+        return ServerCacheUtil.getServerFor(serverCache, curi.getUURI());
+    }
+    
+    
+    private CrawlHost getHostFor(ProcessorURI curi) {
+        return ServerCacheUtil.getHostFor(serverCache, curi.getUURI());
+    }
+
+    
     
     // good to keep at end of source: must run after all per-Key 
     // initialization values are set.

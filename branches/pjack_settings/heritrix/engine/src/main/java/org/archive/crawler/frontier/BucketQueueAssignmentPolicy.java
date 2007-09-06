@@ -27,8 +27,12 @@ package org.archive.crawler.frontier;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.modules.net.CrawlHost;
+import org.archive.modules.net.ServerCache;
+import org.archive.state.Immutable;
+import org.archive.state.Initializable;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 /**
  * Uses the target IPs as basis for queue-assignment,
@@ -36,17 +40,30 @@ import org.archive.modules.net.CrawlHost;
  * 
  * @author Christian Kohlschuetter
  */
-public class BucketQueueAssignmentPolicy extends QueueAssignmentPolicy {
+public class BucketQueueAssignmentPolicy extends QueueAssignmentPolicy 
+implements Initializable {
+
+    private static final long serialVersionUID = 3L;
+
     private static final int DEFAULT_NOIP_BITMASK = 1023;
     private static final int DEFAULT_QUEUES_HOSTS_MODULO = 1021;
 
-    public String getClassKey(final CrawlController controller,
-        final CrawlURI curi) {
+    @Immutable
+    final private static Key<ServerCache> SERVER_CACHE =
+        Key.makeAuto(ServerCache.class);
+    
+    private ServerCache serverCache;
+
+    
+    public void initialTasks(StateProvider global) {
+        this.serverCache = global.get(this, SERVER_CACHE);
+    }
+    
+    public String getClassKey(final CrawlURI curi) {
         
         CrawlHost host;
         try {
-            host = controller.getServerCache().getHostFor(
-                curi.getUURI().getReferencedHost());
+            host = serverCache.getHostFor(curi.getUURI().getReferencedHost());
         } catch (URIException e) {
             // FIXME error handling
             e.printStackTrace();

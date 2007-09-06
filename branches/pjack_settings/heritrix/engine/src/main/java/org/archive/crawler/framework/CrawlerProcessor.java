@@ -57,7 +57,7 @@ implements Initializable {
     public void initialTasks(StateProvider provider) {
         this.controller = provider.get(this, CONTROLLER);
     }
-    
+    /*
     protected CrawlServer getServerFor(ProcessorURI curi) {
         ServerCache cache = controller.getServerCache();
         return ServerCacheUtil.getServerFor(cache, curi.getUURI());
@@ -68,6 +68,7 @@ implements Initializable {
         ServerCache cache = controller.getServerCache();
         return ServerCacheUtil.getHostFor(cache, curi.getUURI());
     }
+    */
 
     
 }

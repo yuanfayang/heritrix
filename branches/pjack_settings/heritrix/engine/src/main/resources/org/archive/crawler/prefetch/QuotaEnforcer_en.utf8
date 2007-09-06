@@ -66,3 +66,9 @@ Maximum amount of fetch success content (e.g. 200 responses) in KB to
 collect from one server. Default is -1, meaning no limit. 
 
 
+server-cache-description:
+The server cached used to store information about servers and hosts.
+
+
+frontier-description:
+The frontier for the crawl.

@@ -147,9 +147,14 @@ implements CrawlURIDispositionListener, Serializable {
         Key.make(new Path("."));
     
     @Immutable
+    final public static Key<ServerCache> SERVER_CACHE =
+        Key.makeAuto(ServerCache.class);
+    
+    @Immutable
     final public static Key<Integer> LIVE_HOST_REPORT_SIZE = Key.make(20);
     
     private SeedModule seeds;
+    private ServerCache serverCache;
     private BdbModule bdb;
     private Path reportsDir;
     
@@ -246,6 +251,7 @@ implements CrawlURIDispositionListener, Serializable {
         this.seeds = p.get(this, SEEDS);
         this.bdb = p.get(this, BDB);
         this.reportsDir = p.get(this, REPORTS_DIR);
+        this.serverCache = p.get(this, SERVER_CACHE);
         try {
             this.sourceHostDistribution = bdb.getBigMap("sourceHostDistribution",
             	    String.class, HashMap.class);
@@ -806,7 +812,7 @@ implements CrawlURIDispositionListener, Serializable {
         incrementMapCount(mimeTypeBytes, mime, curi.getContentSize());
 
         // Save hosts stats.
-        ServerCache sc = controller.getServerCache();
+        ServerCache sc = serverCache;
         saveHostStats((curi.getFetchStatus() == 1)? "dns:":
                 ServerCacheUtil.getHostFor(sc, curi.getUURI()).getHostName(),
                 curi.getContentSize());
@@ -1031,7 +1037,7 @@ implements CrawlURIDispositionListener, Serializable {
         for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
             // Key is 'host'.
             String key = (String) i.next();
-            CrawlHost host = controller.getServerCache().getHostFor(key);
+            CrawlHost host = serverCache.getHostFor(key);
             LongWrapper val = (LongWrapper)hd.get(key);
             writeReportLine(writer,
                     ((val==null)?"-":val.longValue),
@@ -1054,7 +1060,7 @@ implements CrawlURIDispositionListener, Serializable {
                             host.getSubstats().getRemaining());
                 }
             }};
-        controller.getServerCache().forAllHostsDo(logZeros);
+        serverCache.forAllHostsDo(logZeros);
     }
     
     protected void writeReportLine(PrintWriter writer, Object  ... fields) {
@@ -1155,7 +1161,7 @@ implements CrawlURIDispositionListener, Serializable {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
             writeReportTo(reportName, bw);
             bw.close();
-            controller.getLoggerModule().addToManifest(f.getAbsolutePath(),
+            loggerModule.addToManifest(f.getAbsolutePath(),
                 CrawlerLoggerModule.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to write " + f.getAbsolutePath() +

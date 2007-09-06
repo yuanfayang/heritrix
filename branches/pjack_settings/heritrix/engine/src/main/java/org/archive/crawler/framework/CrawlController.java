@@ -39,28 +39,19 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InvalidAttributeValueException;
-import javax.management.MBeanException;
 import javax.management.Notification;
-import javax.management.ReflectionException;
 
-import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Emitter;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.modules.Processor;
-import org.archive.modules.credential.CredentialStore;
 import org.archive.modules.net.ServerCache;
-import org.archive.net.UURI;
-import org.archive.net.UURIFactory;
+import org.archive.settings.KeyChangeEvent;
+import org.archive.settings.KeyChangeListener;
 import org.archive.settings.ListModuleListener;
-import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Expert;
@@ -92,7 +83,8 @@ public class CrawlController extends Bean implements
     Serializable, 
     Reporter, 
     StateProvider, 
-    Initializable, 
+    Initializable,
+    KeyChangeListener,
     JobController {
  
     // be robust against trivial implementation changes
@@ -119,15 +111,6 @@ public class CrawlController extends Bean implements
     @Immutable
     final public static Key<Path> CHECKPOINTS_DIR =
         Key.make(new Path("checkpoints"));
-    
-
-    /**
-     * Ordered list of url canonicalization rules.  Rules are applied in the 
-     * order listed from top to bottom.
-     */
-    @Global
-    final public static Key<List<CanonicalizationRule>> URI_CANONICALIZATION_RULES = 
-        Key.makeList(CanonicalizationRule.class);
 
 
     /**
@@ -139,18 +122,56 @@ public class CrawlController extends Bean implements
     final public static Key<List<StatisticsTracking>> LOGGERS = 
         Key.makeList(StatisticsTracking.class);
 
-    
-    @Expert @Immutable
-    final public static Key<CredentialStore> CREDENTIAL_STORE = 
-        Key.makeAuto(CredentialStore.class);
-
-
     final public static Key<Map<String,Processor>> PROCESSORS =
         Key.makeMap(Processor.class);
 
     
+    /**
+     * Maximum number of bytes to download. Once this number is exceeded 
+     * the crawler will stop. A value of zero means no upper limit.
+     */
+    @Global
+    final public static Key<Long> MAX_BYTES_DOWNLOAD = Key.make(0L);
+
+
+    /**
+     * Maximum number of documents to download. Once this number is exceeded the 
+     * crawler will stop. A value of zero means no upper limit.
+     */
+    @Global
+    final public static Key<Long> MAX_DOCUMENT_DOWNLOAD = Key.make(0L);
+
+
+    /**
+     * Maximum amount of time to crawl (in seconds). Once this much time has 
+     * elapsed the crawler will stop. A value of zero means no upper limit.
+     */
+    @Global
+    final public static Key<Long> MAX_TIME_SEC = Key.make(0L);
+
+
+    /**
+     * Maximum number of threads processing URIs at the same time.
+     */
     @Immutable
-    final public static Key<CrawlOrder> ORDER = Key.make(new CrawlOrder());
+    final public static Key<Integer> MAX_TOE_THREADS = Key.make(25);
+
+
+    /**
+     * Size in bytes of in-memory buffer to record outbound traffic. One such 
+     * buffer is reserved for every ToeThread. 
+     */
+    @Expert @Immutable
+    final public static Key<Integer> RECORDER_OUT_BUFFER_BYTES = Key.make(4096);
+
+
+    /**
+     * Size in bytes of in-memory buffer to record inbound traffic. One such 
+     * buffer is reserved for every ToeThread.
+     */
+    @Expert @Immutable
+    final public static Key<Integer> RECORDER_IN_BUFFER_BYTES = 
+        Key.make(65536);
     
     
     @Immutable
@@ -175,16 +196,8 @@ public class CrawlController extends Bean implements
     private final static Logger LOGGER =
         Logger.getLogger(CrawlController.class.getName());
 
-
-    // key subcomponents which define and implement a crawl in progress
-    //private transient CrawlOrder order;
-//    private transient CrawlScope scope;
-    
-//    private transient Frontier frontier;
-
     private transient ToePool toePool;
-    
-    private ServerCache serverCache;
+
     private Frontier frontier;
 
     /**
@@ -220,14 +233,6 @@ public class CrawlController extends Bean implements
 
     transient private State state = State.NASCENT;
 
-    // disk paths
-//    transient private File disk;        // overall disk path
-    
-    /**
-     * For temp files representing state of crawler (eg queues)
-     */
-//    transient private File stateDisk;
-    
     /**
      * For discardable temp files (eg fetch buffers).
      */
@@ -244,8 +249,6 @@ public class CrawlController extends Bean implements
      * checkpoints.
      */
     private Checkpointer checkpointer;
-    
-    private CrawlOrder order;
 
 
     // crawl limits
@@ -283,7 +286,6 @@ public class CrawlController extends Bean implements
     
     public void initialTasks(StateProvider provider) {        
         this.sheetManager = provider.get(this, SHEET_MANAGER);
-        this.order = provider.get(this, ORDER);
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         this.scratchDir = provider.get(this, SCRATCH_DIR);
         this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
@@ -292,53 +294,8 @@ public class CrawlController extends Bean implements
         sendCrawlStateChangeEvent(State.PREPARED, CrawlStatus.PREPARED);
 
         this.singleThreadLock = new ReentrantLock();
-//        this.order = new CrawlOrder();
-//        this.order.setController(this);
         sExit = null;
         this.manifest = new StringBuffer();
-        String onFailMessage = "";
-        try {
-
-            onFailMessage = "Unable to setup disk";
-            
-            // Figure if we're to do a checkpoint restore. If so, get the
-            // checkpointRecover instance and then put into place the old bdb
-            // log files. If any of the log files already exist in target state
-            // diretory, WE DO NOT OVERWRITE (Makes for faster recovery).
-            // CrawlController checkpoint recovery code manages restoration of
-            // the old StatisticsTracker, any BigMaps used by the Crawler and
-            // the moving of bdb log files into place only. Other objects
-            // interested in recovery need to ask if
-            // CrawlController#isCheckpointRecover is set to figure if in
-            // recovery and then take appropriate recovery action
-            // (These objects can call CrawlController#getCheckpointRecover
-            // to get the directory that might hold files/objects dropped
-            // checkpointing).  Such objects will need to use a technique other
-            // than object serialization restoring settings because they'll
-            // have already been constructed when comes time for object to ask
-            // if its to recover itself. See ARCWriterProcessor for example.
-//            onFailMessage = "Unable to test/run checkpoint recover";
-//            this.checkpointRecover = getCheckpointRecover();
-//            if (this.checkpointRecover == null) {
-//                this.checkpointer =
-//                    new Checkpointer(this, this.checkpointsDisk);
-//            } else {
-//                setupCheckpointRecover();
-//            }
-//            
-//            onFailMessage = "Unable to setup bdb environment.";
-//            
-//            onFailMessage = "Unable to setup statistics";
-//            setupStatTracking();
-//            
-//            onFailMessage = "Unable to setup crawl modules";
-//            setupCrawlModules();
-        } catch (Exception e) {
-            String tmp = "On crawl: " + sheetManager.getCrawlName() + " " +
-                onFailMessage;
-            LOGGER.log(Level.SEVERE, tmp, e);
-            throw new IllegalStateException(tmp, e);
-        }
 
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
         // also cap size at 1 (we never wanta cached value; 0 is non-operative)
@@ -352,61 +309,8 @@ public class CrawlController extends Bean implements
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
-        
-//        processors = get(this, PROCESSORS);
-    }
 
-    
-    public <T> T getOrderSetting(Key<T> key) {
-        Sheet def = sheetManager.getGlobalSheet();
-        return def.get(order, key);
     }
-    
-    
-    /**
-     * Does setup of checkpoint recover.
-     * Copies bdb log files into state dir.
-     * @throws IOException
-     */
-//    protected void setupCheckpointRecover()
-//    throws IOException {
-//        long started = System.currentTimeMillis();;
-//        if (LOGGER.isLoggable(Level.FINE)) {
-//            LOGGER.fine("Starting recovery setup -- copying into place " +
-//                "bdbje log files -- for checkpoint named " +
-//                this.checkpointRecover.getDisplayName());
-//        }
-//        // Mark context we're in a recovery.
-//        this.checkpointer.recover(this);
-//        this.loggerModule.getProgressStats().info("CHECKPOINT RECOVER " +
-//            this.checkpointRecover.getDisplayName());
-//        // Copy the bdb log files to the state dir so we don't damage
-//        // old checkpoint.  If thousands of log files, can take
-//        // tens of minutes (1000 logs takes ~5 minutes to java copy,
-//        // dependent upon hardware).  If log file already exists over in the
-//        // target state directory, we do not overwrite -- we assume the log
-//        // file in the target same as one we'd copy from the checkpoint dir.
-//        File bdbSubDir = CheckpointUtils.
-//            getBdbSubDirectory(this.checkpointRecover.getDirectory());
-//        FileUtils.copyFiles(bdbSubDir, CheckpointUtils.getJeLogsFilter(),
-//            getStateDisk(), true,
-//            false);
-//        if (LOGGER.isLoggable(Level.INFO)) {
-//            LOGGER.info("Finished recovery setup for checkpoint named " +
-//                this.checkpointRecover.getDisplayName() + " in " +
-//                (System.currentTimeMillis() - started) + "ms.");
-//        }
-//    }
-    
-    
-//    public Environment getBdbEnvironment() {
-//        return this.bdb.getEnvironment();
-//    }
-//    
-//    public StoredClassCatalog getClassCatalog() {
-//        return this.bdb.getClassCatalog();
-//    }
-
 
     /**
      * Register for CrawlURIDisposition events.
@@ -538,99 +442,6 @@ public class CrawlController extends Bean implements
         }
     }
 
-//    private void setupCrawlModules() throws FatalConfigurationException,
-//             AttributeNotFoundException, MBeanException, ReflectionException {
-/*        if (scope == null) {
-            scope = getOrderSetting(SCOPE);
-            scope.initialize(this);
-        }
-        this.serverCache = get(this, SERVER_CACHE);
-        
-        if (this.frontier == null) {
-            this.frontier = getOrderSetting(FRONTIER);
-            try {
-                frontier.initialize(this);
-                frontier.pause(); // Pause until begun
-                // Run recovery if recoverPath points to a file (If it points
-                // to a directory, its a checkpoint recovery).
-                // TODO: make recover path relative to job root dir.
-                if (!isCheckpointRecover()) {
-                    runFrontierRecover(get(this, CrawlOrder.RECOVER_PATH));
-                }
-            } catch (IOException e) {
-                throw new FatalConfigurationException(
-                    "unable to initialize frontier: " + e);
-            }
-        } */
-
-//    }
-
-    /*
-    private void setupDisk() {
-        String diskPath = get(order, CrawlOrder.DISK_PATH);
-        diskPath = sheetManager.toAbsolutePath(diskPath);
-        this.disk = new File(diskPath);
-        this.disk.mkdirs();
-        this.checkpointsDisk = getSettingsDir(CrawlOrder.CHECKPOINTS_PATH);
-        this.stateDisk = getSettingsDir(CrawlOrder.STATE_PATH);
-        this.scratchDisk = getSettingsDir(CrawlOrder.SCRATCH_PATH);
-    }*/
-    
-    
-    /**
-     * Return fullpath to the directory named by <code>key</code>
-     * in settings.
-     * If directory does not exist, it and all intermediary dirs
-     * will be created.
-     * @param key Key to use going to settings.
-     * @return Full path to directory named by <code>key</code>.
-     * @throws AttributeNotFoundException
-     */
-/*    private File getSettingsDir(Key<String> key) {
-        String path = get(order, key);
-        File f = new File(path);
-        if (!f.isAbsolute()) {
-            f = new File(disk.getPath(), path);
-        }
-        if (!f.exists()) {
-            f.mkdirs();
-        }
-        return f;
-    } */
-
-    /**
-     * Setup the statistics tracker.
-     * The statistics object must be created before modules can use it.
-     * Do it here now so that when modules retrieve the object from the
-     * controller during initialization (which some do), its in place.
-     * @throws InvalidAttributeValueException
-     * @throws FatalConfigurationException
-     */
-/*    private void setupStatTracking()
-    throws InvalidAttributeValueException, FatalConfigurationException {
-        List<StatisticsTracking> loggers = 
-            getSheetManager().getDefault().check(this, LOGGERS);
-        final String cstName = "crawl-statistics";
-        if (loggers.isEmpty()) {
-            if (!isCheckpointRecover() && this.statistics == null) {
-                this.statistics = new StatisticsTracker(this);
-            }
-            loggers.add((StatisticsTracker)this.statistics);
-        }
-        
-        if (isCheckpointRecover()) {
-            restoreStatisticsTracker(loggers, cstName);
-        }
-
-        for (StatisticsTracking tracker: loggers) {
-            tracker.initialize(this);
-            if (this.statistics == null) {
-                this.statistics = tracker;
-            }
-        }
-        
-    }
-    */
 
     
     protected FatalConfigurationException
@@ -648,9 +459,9 @@ public class CrawlController extends Bean implements
      * Sets the values for max bytes, docs and time based on crawl order. 
      */
     private void setThresholds() {
-        maxBytes = getOrderSetting(CrawlOrder.MAX_BYTES_DOWNLOAD);
-        maxDocument = getOrderSetting(CrawlOrder.MAX_DOCUMENT_DOWNLOAD);
-        maxTime = getOrderSetting(CrawlOrder.MAX_TIME_SEC);
+        maxBytes = sheetManager.get(this, MAX_BYTES_DOWNLOAD);
+        maxDocument = sheetManager.get(this, MAX_DOCUMENT_DOWNLOAD);
+        maxTime = sheetManager.get(this, MAX_TIME_SEC);
     }
    
 
@@ -716,33 +527,7 @@ public class CrawlController extends Bean implements
         LOGGER.fine("Sent " + newState);
     }
     
-    /**
-     * Send the checkpoint event.
-     * Has its own method apart from
-     * {@link #sendCrawlStateChangeEvent(Object, String)} because checkpointing
-     * throws an Exception (Didn't want to have to wrap all of the
-     * sendCrawlStateChangeEvent in try/catches).
-     * @param checkpointDir Where to write checkpoint state to.
-     * @throws Exception
-     */
-/*    protected void sendCheckpointEvent(File checkpointDir) throws Exception {
-        synchronized (this.registeredCrawlStatusListeners) {
-            if (this.state != State.PAUSED) {
-                throw new IllegalStateException("Crawler must be completly " +
-                    "paused before checkpointing can start");
-            }
-            this.state = State.CHECKPOINTING;
-            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-                    i.hasNext();) {
-                CrawlStatusListener l = (CrawlStatusListener)i.next();
-                l.crawlCheckpoint(this, checkpointDir);
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("Sent " + State.CHECKPOINTING + " to " + l);
-                }
-            }
-            LOGGER.fine("Sent " + State.CHECKPOINTING);
-        }
-    }*/
+
 
     /** 
      * Operator requested crawl begin
@@ -790,10 +575,6 @@ public class CrawlController extends Bean implements
             this.sheetManager.cleanup();
         }
         this.reserveMemory = null;
-        if (this.serverCache != null) {
-            this.serverCache.cleanup();
-            this.serverCache = null;
-        }
         if (this.checkpointer != null) {
             this.checkpointer.cleanup();
             this.checkpointer = null;
@@ -872,57 +653,7 @@ public class CrawlController extends Bean implements
     public boolean isCheckpointing() {
         return this.state == State.CHECKPOINTING;
     }
-    
 
-
-    /**
-     * Get recover checkpoint.
-     * Returns null if we're NOT in recover mode.
-     * Looks at ATTR_RECOVER_PATH and if its a directory, assumes checkpoint
-     * recover. If checkpoint mode, returns Checkpoint instance if
-     * checkpoint was VALID (else null).
-     * @return Checkpoint instance if we're in recover checkpoint
-     * mode and the pointed-to checkpoint was valid.
-     * @see #isCheckpointRecover()
-     */
-//    public synchronized Checkpoint getCheckpointRecover() {
-//        if (this.checkpointRecover != null) {
-//            return this.checkpointRecover;
-//        }
-//        return getCheckpointRecover(this);
-//    }
-    
-    /*
-    public static Checkpoint getCheckpointRecover(CrawlController c) {
-        String path = c.get(c.order, CrawlOrder.RECOVER_PATH);
-        if (path == null || path.length() <= 0) {
-            return null;
-        }
-        File rp = new File(path);
-        // Assume if path is to a directory, its a checkpoint recover.
-        Checkpoint result = null;
-        if (rp.exists() && rp.isDirectory()) {
-            Checkpoint cp = new Checkpoint(rp);
-            if (cp.isValid()) {
-                // if valid, set as result.
-                result = cp;
-            }
-        }
-        return result;
-    }
-    
-    public static boolean isCheckpointRecover(CrawlController c) {
-        return getCheckpointRecover(c) != null;
-    }
-    */
-    /**
-     * @return True if we're in checkpoint recover mode. Call
-     * {@link #getCheckpointRecover()} to get at Checkpoint instance
-     * that has info on checkpoint directory being recovered from.
-     */
-//    public boolean isCheckpointRecover() {
-//        return this.checkpointRecover != null;
-//    }
 
     /**
      * Operator requested for crawl to stop.
@@ -1030,7 +761,7 @@ public class CrawlController extends Bean implements
     public void setupToePool() {
         toePool = new ToePool(this);
         // TODO: make # of toes self-optimizing
-        int max = getOrderSetting(CrawlOrder.MAX_TOE_THREADS);
+        int max = sheetManager.get(this, MAX_TOE_THREADS);
         toePool.setSize(max);
         toePool.waitForAll();
     }
@@ -1039,17 +770,9 @@ public class CrawlController extends Bean implements
     /**
      * @return The server cache instance.
      */
-    public ServerCache getServerCache() {
+    ServerCache getServerCache() {
         return get(this, SERVER_CACHE);
-//        return serverCache;
     }
-
-    /**
-     * @param o
-     */
-//    public void setOrder(CrawlOrder o) {
-//        order = o;
-//    }
 
 
     /**
@@ -1058,15 +781,6 @@ public class CrawlController extends Bean implements
     public Frontier getFrontier() {
         return frontier;
     }
-
-    /**
-     * @return This crawl scope.
-     */
-//    public CrawlScope getScope() {
-//        return get(this, SCOPE);
-////        return scope;
-//    }
-
 
 
     /**
@@ -1098,10 +812,11 @@ public class CrawlController extends Bean implements
      * modified, some settings need to be explicitly changed to reflect new
      * settings. This includes, number of toe threads and seeds.
      */
-    public void kickUpdate() {
-        int max = getOrderSetting(CrawlOrder.MAX_TOE_THREADS);
-
-        toePool.setSize(max);
+    public void keyChanged(KeyChangeEvent event) {
+        if (event.getKey() == MAX_TOE_THREADS) {
+            int max = sheetManager.get(this, MAX_TOE_THREADS);
+            toePool.setSize(max);
+        }
         
         setThresholds();
     }
@@ -1177,14 +892,14 @@ public class CrawlController extends Bean implements
         // order.  In particular, CrawlOrder and BdbModule must be deserialized
         // first since Modules that are constructed during defaultReadObject
         // may require those things.
-        stream.writeObject(order);
+//        stream.writeObject(order);
         stream.defaultWriteObject();
     }
     
     
     private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
-        this.order = (CrawlOrder)stream.readObject();
+//        this.order = (CrawlOrder)stream.readObject();
         this.state = State.PAUSED;
 
         this.manifest = new StringBuffer();
@@ -1294,23 +1009,6 @@ public class CrawlController extends Bean implements
         */
     }
     
-    /**
-     * Log a URIException from deep inside other components to the crawl's
-     * shared log. 
-     * 
-     * @param e URIException encountered
-     * @param u CrawlURI where problem occurred
-     * @param l String which could not be interpreted as URI without exception
-     */
-    public void logUriError(URIException e, UURI u, CharSequence l) {
-        if (e.getReasonCode() == UURIFactory.IGNORED_SCHEME) {
-            // don't log those that are intentionally ignored
-            return; 
-        }
-        Object[] array = {u, l};
-        loggerModule.getUriErrors().log(Level.INFO, e.getMessage(), array);
-    }
-    
     // 
     // Reporter
     //
@@ -1386,27 +1084,6 @@ public class CrawlController extends Bean implements
         // TODO improve
         return "nothingYet";
     }
-    
-    /**
-     * Call this method to get instance of the crawler BigMap implementation.
-     * A "BigMap" is a Map that knows how to manage ever-growing sets of
-     * key/value pairs. If we're in a checkpoint recovery, this method will
-     * manage reinstantiation of checkpointed bigmaps.
-     * @param dbName Name to give any associated database.  Also used
-     * as part of name serializing out bigmap.  Needs to be unique to a crawl.
-     * @param keyClass Class of keys we'll be using.
-     * @param valueClass Class of values we'll be using.
-     * @return Map that knows how to carry large sets of key/value pairs or
-     * if none available, returns instance of HashMap.
-     * @throws Exception
-     */
-//    public <K,V> Map<K,V> getBigMap(final String dbName, 
-//            final Class<? super K> keyClass,
-//            final Class<? super V> valueClass)
-//    throws DatabaseException {
-//        return bdb.getBigMap(dbName, keyClass, valueClass);
-//    }
-    
 
     /**
      * Called whenever progress statistics logging event.
@@ -1433,24 +1110,15 @@ public class CrawlController extends Bean implements
     public Object getState() {
         return this.state;
     }
-    
-    
-    public CredentialStore getCredentialStore() {
-        return get(this, CREDENTIAL_STORE);
-    }
-    
-    
+
+
     public <T> T get(Object module, Key<T> key) {
         SingleSheet def = sheetManager.getGlobalSheet();
         return def.get(module, key);
     }
 
-    public CrawlOrder getOrder() {
-        return order;
-    }
 
-    
-    public File getScratchDir() {
+    File getScratchDir() {
         return scratchDir.toFile();
     }
     
@@ -1468,16 +1136,6 @@ public class CrawlController extends Bean implements
     }
 
 
-//    public BdbModule getBdbModule() {
-//        return bdb;
-//    }
-
-
-    public CrawlerLoggerModule getLoggerModule() {
-        return loggerModule;
-    }
-
-    
     public String getCrawlStatusString() {
         return this.state.toString();
     }

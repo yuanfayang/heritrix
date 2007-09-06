@@ -30,7 +30,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
@@ -119,9 +118,9 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
         int outBufferSize = controller
-                .getOrderSetting(CrawlOrder.RECORDER_OUT_BUFFER_BYTES);
+                .get(controller, CrawlController.RECORDER_OUT_BUFFER_BYTES);
         int inBufferSize = controller
-                .getOrderSetting(CrawlOrder.RECORDER_IN_BUFFER_BYTES);
+                .get(controller, CrawlController.RECORDER_IN_BUFFER_BYTES);
         httpRecorder = new Recorder(controller.getScratchDir(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();

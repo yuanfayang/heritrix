@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 
@@ -38,8 +37,12 @@ import org.archive.net.UURIFactory;
  */
 public class SurtAuthorityQueueAssignmentPolicy
 extends QueueAssignmentPolicy {
+
+    private static final long serialVersionUID = 3L;
+
     private static final Logger logger = Logger
             .getLogger(SurtAuthorityQueueAssignmentPolicy.class.getName());
+    
     /**
      * When neat host-based class-key fails us
      */
@@ -47,7 +50,7 @@ extends QueueAssignmentPolicy {
     
     private static final String DNS = "dns";
 
-    public String getClassKey(CrawlController controller, CrawlURI cauri) {
+    public String getClassKey(CrawlURI cauri) {
         String scheme = cauri.getUURI().getScheme();
         String candidate = null;
         try {
