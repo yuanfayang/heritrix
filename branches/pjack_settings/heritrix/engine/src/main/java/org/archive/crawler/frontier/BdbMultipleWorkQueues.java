@@ -26,14 +26,16 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.OpenDataException;
+
 import org.apache.commons.collections.Closure;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.FrontierMarker;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -138,60 +140,72 @@ public class BdbMultipleWorkQueues {
      * @return list of matches starting from marker position
      * @throws DatabaseException
      */
-    public List getFrom(FrontierMarker m, int maxMatches) throws DatabaseException {
+    public CompositeData getFrom(
+            String m, 
+            int maxMatches, 
+            Pattern pattern, 
+            boolean verbose) 
+    throws DatabaseException {
         int matches = 0;
         int tries = 0;
-        ArrayList<CrawlURI> results = new ArrayList<CrawlURI>(maxMatches);
-        BdbFrontierMarker marker = (BdbFrontierMarker) m;
+        ArrayList<String> results = new ArrayList<String>(maxMatches);
+        byte[] marker = FrontierJMXTypes.fromString(m);
         
-        DatabaseEntry key = marker.getStartKey();
+        DatabaseEntry key;
+        if (marker == null) {
+            key = getFirstKey();
+        } else {
+            key = new DatabaseEntry(marker);
+        }
+
         DatabaseEntry value = new DatabaseEntry();
         
-        if (key != null) {
-            Cursor cursor = null;
-            OperationStatus result = null;
-            try {
-                cursor = pendingUrisDB.openCursor(null,null);
-                result = cursor.getSearchKey(key, value, null);
-                
-                while(matches<maxMatches && result == OperationStatus.SUCCESS) {
-                    if(value.getData().length>0) {
-                        CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
-                        if(marker.accepts(curi)) {
-                            results.add(curi);
-                            matches++;
-                        }
-                        tries++;
-                    }
-                    result = cursor.getNext(key,value,null);
-                }
-            } finally {
-                if (cursor !=null) {
-                    cursor.close();
-                }
-            }
-            
-            if(result != OperationStatus.SUCCESS) {
-                // end of scan
-                marker.setStartKey(null);
-            }
-        }
-        return results;
-    }
-    
-    /**
-     * Get a marker for beginning a scan over all contents
-     * 
-     * @param regexpr
-     * @return a marker pointing to the first item
-     */
-    public FrontierMarker getInitialMarker(String regexpr) {
+        Cursor cursor = null;
+        OperationStatus result = null;
         try {
-            return new BdbFrontierMarker(getFirstKey(), regexpr);
-        } catch (DatabaseException e) {
-            e.printStackTrace();
-            return null; 
+            cursor = pendingUrisDB.openCursor(null,null);
+            result = cursor.getSearchKey(key, value, null);
+            
+            while(matches < maxMatches && result == OperationStatus.SUCCESS) {
+                if(value.getData().length>0) {
+                    CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
+                    if(pattern.matcher(curi.toString()).matches()) {
+                        if (verbose) {
+                            results.add("[" + curi.getClassKey() + "] " 
+                                    + curi.singleLineReport());
+                        } else {
+                            results.add(curi.toString());
+                        }
+                        matches++;
+                    }
+                    tries++;
+                }
+                result = cursor.getNext(key,value,null);
+            }
+        } finally {
+            if (cursor !=null) {
+                cursor.close();
+            }
         }
+        
+        if(result != OperationStatus.SUCCESS) {
+            // end of scan
+            m = null;
+        } else {
+            m = FrontierJMXTypes.toString(key.getData());
+        }
+        
+        String[] arr = results.toArray(new String[results.size()]);
+        CompositeData cd;
+        try {
+            cd = new CompositeDataSupport(
+                    FrontierJMXTypes.URI_LIST_DATA,
+                    new String[] { "list", "marker" },
+                    new Object[] { arr, m });
+        } catch (OpenDataException e) {
+            throw new IllegalStateException(e);
+        }
+        return cd;
     }
     
     /**
@@ -501,76 +515,6 @@ public class BdbMultipleWorkQueues {
         } */
     }
     
-    /**
-     * Marker for remembering a position within the BdbMultipleWorkQueues.
-     * 
-     * @author gojomo
-     */
-    public class BdbFrontierMarker implements FrontierMarker {
-        DatabaseEntry startKey;
-        Pattern pattern; 
-        int nextItemNumber;
-        
-        /**
-         * Create a marker pointed at the given start location.
-         * 
-         * @param startKey
-         * @param regexpr
-         */
-        public BdbFrontierMarker(DatabaseEntry startKey, String regexpr) {
-            this.startKey = startKey;
-            pattern = Pattern.compile(regexpr);
-            nextItemNumber = 1;
-        }
-        
-        /**
-         * @param curi
-         * @return whether the marker accepts the given CrawlURI
-         */
-        public boolean accepts(CrawlURI curi) {
-            boolean retVal = pattern.matcher(curi.toString()).matches();
-            if(retVal==true) {
-                nextItemNumber++;
-            }
-            return retVal;
-        }
-        
-        /**
-         * @param key position for marker
-         */
-        public void setStartKey(DatabaseEntry key) {
-            startKey = key;
-        }
-        
-        /**
-         * @return startKey
-         */
-        public DatabaseEntry getStartKey() {
-            return startKey;
-        }
-        
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#getMatchExpression()
-         */
-        public String getMatchExpression() {
-            return pattern.pattern();
-        }
-        
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#getNextItemNumber()
-         */
-        public long getNextItemNumber() {
-            return nextItemNumber;
-        }
-        
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#hasNext()
-         */
-        public boolean hasNext() {
-            // as long as any startKey is stated, consider as having next
-            return startKey != null;
-        }
-    }
 
     /**
      * Add a dummy 'cap' entry at the given insertion key. Prevents

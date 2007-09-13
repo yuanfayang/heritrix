@@ -149,6 +149,16 @@ public class Misc {
         throw new IllegalStateException("Expected unique MBean for " 
                 + query + " but found " + set);
     }
+    
+    
+    public static ObjectName findUnique(
+            JMXConnector jmxc,
+            String jobName,
+            Class<?> cls) {
+        String query = "org.archive.crawler:*,name=" + jobName + ",type=" +
+        cls.getName();
+        return findUnique(jmxc, query);
+    }
 
     
     public static <T> T find(

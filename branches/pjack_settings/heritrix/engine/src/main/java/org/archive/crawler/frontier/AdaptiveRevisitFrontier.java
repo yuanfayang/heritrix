@@ -28,7 +28,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -38,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.openmbean.CompositeData;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -52,9 +52,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
-import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
-import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
@@ -983,18 +981,9 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         throw new IOException("Unsupported by this frontier.");
     }
 
-    public synchronized FrontierMarker getInitialMarker(String regexpr,
-            boolean inCacheOnly) {
-        return null;
-    }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#getURIsList(org.archive.crawler.framework.FrontierMarker, int, boolean)
-     */
-    public synchronized ArrayList<UURI> getURIsList(FrontierMarker marker,
-            int numberOfMatches, boolean verbose)
-        throws InvalidFrontierMarkerException {
-        // TODO Auto-generated method stub
+    public synchronized CompositeData getURIsList(String marker,
+            int numberOfMatches, String regex, boolean verbose) {
         return null;
     }
 

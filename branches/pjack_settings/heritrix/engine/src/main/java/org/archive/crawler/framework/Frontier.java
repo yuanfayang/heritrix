@@ -28,9 +28,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import javax.management.openmbean.CompositeData;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.EndedException;
-import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.fetcher.FetchStats;
@@ -351,8 +352,8 @@ public interface Frontier extends Module, Reporter {
      * @return A URIFrontierMarker that is set for the 'start' of the frontier's
      *                URI list.
      */
-    public FrontierMarker getInitialMarker(String regexpr,
-                                              boolean inCacheOnly);
+//    public FrontierMarker getInitialMarker(String regexpr,
+//                                              boolean inCacheOnly);
 
     /**
      * Returns a list of all uncrawled URIs starting from a specified marker
@@ -396,10 +397,29 @@ public interface Frontier extends Module, Reporter {
      * @see FrontierMarker
      * @see #getInitialMarker(String, boolean)
      */
-    public ArrayList getURIsList(FrontierMarker marker,
-                                 int numberOfMatches,
-                                 boolean verbose)
-                             throws InvalidFrontierMarkerException;
+    @Operation(desc="Returns a list of all uncrawled URIs starting from" +
+    		" a specified marker until numberOfMatches is reached.",
+    		type="org.archive.crawler.frontier.FrontierJMXTypes.URI_LIST_DATA")
+    public CompositeData getURIsList(
+            @Parameter(name="marker", desc="A marker specifying from what " +
+            		"position in the Frontier the list should begin.  " +
+            		"Set to null to start from the beginning.")
+            String marker,
+            
+            @Parameter(name="numberOfMatches", desc="The maximum number of " +
+            		"URIs to add to the list.")
+            int numberOfMatches,
+            
+            @Parameter(name="regex", desc="A regular expression used to " +
+            		"filter URIs.  Only URIs that match the regular " +
+            		"expression will be included in the result.  Use" +
+            		"a single period to include all URIs.")
+            String regex,
+            
+            @Parameter(name="verbose", desc="If set to true the strings " +
+            		"returned will contain additional information about " +
+            		"each URI beyond their names.")
+            boolean verbose);
 
     /**
      * Delete any URI that matches the given regular expression from the list
