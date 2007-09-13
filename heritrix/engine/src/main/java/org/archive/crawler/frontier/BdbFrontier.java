@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -37,10 +36,12 @@ import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+
+import javax.management.openmbean.CompositeData;
 
 import org.apache.commons.collections.Closure;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.FrontierMarker;
 import org.archive.queue.StoredQueue;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.BdbModule;
@@ -143,10 +144,6 @@ implements Serializable, Checkpointable {
         return wq;
     }
 
-    public FrontierMarker getInitialMarker(String regexpr,
-            boolean inCacheOnly) {
-        return pendingUris.getInitialMarker(regexpr);
-    }
 
     /**
      * Return list of urls.
@@ -155,22 +152,14 @@ implements Serializable, Checkpointable {
      * @param verbose 
      * @return List of URIs (strings).
      */
-    public ArrayList<String> getURIsList(FrontierMarker marker, 
-            int numberOfMatches, final boolean verbose) {
-        List curis;
+    public CompositeData getURIsList(String marker, 
+            int numberOfMatches, String pattern, final boolean verbose) {
         try {
-            curis = pendingUris.getFrom(marker, numberOfMatches);
+            Pattern p = Pattern.compile(pattern);
+            return pendingUris.getFrom(marker, numberOfMatches, p, verbose);
         } catch (DatabaseException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
-        ArrayList<String> results = new ArrayList<String>(curis.size());
-        Iterator iter = curis.iterator();
-        while(iter.hasNext()) {
-            CrawlURI curi = (CrawlURI) iter.next();
-            results.add("["+curi.getClassKey()+"] "+curi.singleLineReport());
-        }
-        return results;
     }
     
     @Override
@@ -236,7 +225,7 @@ implements Serializable, Checkpointable {
         this.allQueues = bdb.getBigMap("allqueues",
                 String.class, WorkQueue.class);
         if (logger.isLoggable(Level.FINE)) {
-            Iterator i = this.allQueues.keySet().iterator();
+            Iterator<String> i = this.allQueues.keySet().iterator();
             try {
                 for (; i.hasNext();) {
                     logger.fine((String) i.next());

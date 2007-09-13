@@ -36,6 +36,8 @@ public class Types {
 
     final public static ArrayType STRING_ARRAY;
     
+    final public static ArrayType BYTE_ARRAY;
+    
     final public static CompositeType SET_DATA;
 
     final public static CompositeType SET_RESULT;
@@ -53,6 +55,8 @@ public class Types {
     static {
         try {
             STRING_ARRAY = new ArrayType(1, SimpleType.STRING);
+            
+            BYTE_ARRAY = new ArrayType(1, SimpleType.BYTE);
             
             SET_DATA = new CompositeType(
                     "set_data", 

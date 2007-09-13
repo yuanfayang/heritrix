@@ -27,7 +27,6 @@ package org.archive.crawler.postprocessor;
 
 
 import org.archive.crawler.framework.CrawlerProcessorTestBase;
-import org.archive.crawler.frontier.EmptyFrontier;
 
 
 /**
@@ -39,7 +38,7 @@ public class FrontierSchedulerTest extends CrawlerProcessorTestBase {
 
     
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return FrontierScheduler.class;
     }
     

@@ -29,15 +29,19 @@ package org.archive.crawler.webui;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.CrawlJobManagerImpl;
@@ -244,6 +248,69 @@ public class Console {
             showJobConsole(sc, request, response);
         } finally {
             remote.close();
+        }
+    }
+    
+    
+    public static void showURIList(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {        
+        Remote<Frontier> remote = getFrontier(request);
+        URIList list = getURIList(request);
+        list.toAttributes(request);
+        remote.close();
+
+        Misc.forward(request, response, "page_uri_list.jsp");
+    }
+
+    
+    public static void updateURIList(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {        
+        Remote<Frontier> remote = getFrontier(request);
+        try {
+            URIList list = getURIList(request);
+            list.fromForm(request);
+            list.update(remote.getObject());
+            list.toAttributes(request);
+        } finally {
+            remote.close();
+        }
+
+        Misc.forward(request, response, "page_uri_list.jsp");
+    }
+
+
+    static URIList getURIList(HttpServletRequest request) {
+        CrawlJob job = (CrawlJob)request.getAttribute("job");
+        HttpSession session = request.getSession(true);
+        Map<CrawlJob,URIList> map = (Map)session.getAttribute("uriLists");
+        if (map == null) {
+            map = new HashMap<CrawlJob,URIList>();
+            session.setAttribute("uriLists", map);
+        }
+        URIList r = map.get(job);
+        if (r == null) {
+            r = new URIList();
+            map.put(job, r);
+        }
+        return r;
+    }
+    
+    
+    static Remote<Frontier> getFrontier(HttpServletRequest request) {
+        Crawler c = Home.getCrawler(request);
+        JMXConnector jmxc = c.connect();
+        try {
+            CrawlJob job = CrawlJob.fromRequest(request, jmxc);
+            ObjectName fname = Misc.findUnique(jmxc, job.getName(), 
+                    Frontier.class);
+            return Remote.make(jmxc, fname, Frontier.class);
+        } catch (RuntimeException e) {
+            Misc.close(jmxc);
+            throw e;
         }
     }
 

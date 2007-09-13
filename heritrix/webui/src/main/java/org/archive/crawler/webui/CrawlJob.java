@@ -28,6 +28,18 @@ public class CrawlJob {
     }
 
     
+    public int hashCode() {
+        return name.hashCode();
+    }
+    
+    public boolean equals(Object o) {
+        if (!(o instanceof CrawlJob)) {
+            return false;
+        }
+        CrawlJob cj = (CrawlJob)o;
+        return cj.name.equals(name);
+    }
+    
     public String getName() {
         return name;
     }

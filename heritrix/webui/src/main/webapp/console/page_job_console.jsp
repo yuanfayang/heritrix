@@ -204,7 +204,7 @@ if (status.equals(CrawlController.State.PREPARED.toString())) {
 	                	<a href='<%= request.getContextPath() %>/console/do_show_frontier_import.jsp?<%=qs%>'>Frontier Add/Import URIs</a>
 	                </div>
                     <div class='indent'>
-                        <a href='<%= request.getContextPath() %>/console/do_show_frontier_edit.jsp?<%=qs%>'>Frontier View/Edit</a>
+                        <a href='<%= request.getContextPath() %>/console/do_show_uri_list.jsp?<%=qs%>'>Frontier View/Edit</a>
                     </div>
 	        <%
             	}
