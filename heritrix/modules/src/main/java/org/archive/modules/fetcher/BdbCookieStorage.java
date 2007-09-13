@@ -29,15 +29,14 @@ package org.archive.modules.fetcher;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
@@ -53,8 +52,7 @@ import com.sleepycat.je.DatabaseException;
  * @author pjack
  *
  */
-public class BdbCookieStorage 
-implements CookieStorage, Initializable, Serializable {
+public class BdbCookieStorage extends AbstractCookieStorage {
 
     private static final long serialVersionUID = 1L;
 
@@ -81,7 +79,7 @@ implements CookieStorage, Initializable, Serializable {
     }
 
 
-    public void initialTasks(StateProvider provider) {
+    protected SortedMap<String,Cookie> prepareMap(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
         String dbName = provider.get(this, COOKIEDB_NAME);
         try {
@@ -93,23 +91,27 @@ implements CookieStorage, Initializable, Serializable {
             cookies = new StoredSortedMap(cookieDb,
                     new StringBinding(), new SerialBinding(classCatalog,
                             Cookie.class), true);
+            @SuppressWarnings("unchecked")
+            SortedMap<String,Cookie> result = cookies;
+            return result;
         } catch (DatabaseException e) {
             LOGGER.severe(e.getMessage());
             e.printStackTrace();
         }
+        return new TreeMap<String,Cookie>();
     }
 
 
     @SuppressWarnings("unchecked")
-    public SortedMap<String, Cookie> loadCookiesMap() {
+    public SortedMap<String, Cookie> getCookiesMap() {
         return cookies;
     }
 
 
-    public void saveCookiesMap(Map<String, Cookie> map) {
+    protected void innerSaveCookiesMap(Map<String, Cookie> map) {
     }
-    
-    
+
+
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         try {

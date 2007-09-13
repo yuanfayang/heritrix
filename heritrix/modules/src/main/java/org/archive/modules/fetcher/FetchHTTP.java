@@ -96,6 +96,7 @@ import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Nullable;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
@@ -300,9 +301,9 @@ public class FetchHTTP extends Processor implements Initializable {
     /**
      * 
      */
-    @Immutable
+    @Immutable @Nullable
     final public static Key<CookieStorage> COOKIE_STORAGE = 
-        Key.make(CookieStorage.class, new SimpleCookieStorage());
+        Key.make(CookieStorage.class, null);
 
     /**
      * Disable cookie handling.
@@ -1112,8 +1113,9 @@ public class FetchHTTP extends Processor implements Initializable {
         configureHttp(defaults);
 
         CookieStorage cm = defaults.get(this, COOKIE_STORAGE);
-        // load cookies from a file if specified in the order file.
-        http.getState().setCookiesMap(cm.loadCookiesMap());
+        if (cm != null) {        
+            http.getState().setCookiesMap(cm.getCookiesMap());
+        }
 
         this.trustLevel = defaults.get(this, TRUST_LEVEL);
         setSSLFactory();
@@ -1141,9 +1143,11 @@ public class FetchHTTP extends Processor implements Initializable {
     public void finalTasks(StateProvider defaults) {
         // At the end save cookies to the file specified in the order file.
         CookieStorage cs = defaults.get(this, COOKIE_STORAGE);
-        @SuppressWarnings("unchecked")
-        Map<String, Cookie> map = http.getState().getCookiesMap();
-        cs.saveCookiesMap(map);
+        if (cs != null) {
+            @SuppressWarnings("unchecked")
+            Map<String, Cookie> map = http.getState().getCookiesMap();
+            cs.saveCookiesMap(map);
+        }
         cleanupHttp();
         super.finalTasks(defaults);
     }
