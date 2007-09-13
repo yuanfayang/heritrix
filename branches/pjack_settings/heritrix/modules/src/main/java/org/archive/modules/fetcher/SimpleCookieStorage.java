@@ -29,18 +29,26 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.commons.httpclient.Cookie;
+import org.archive.state.StateProvider;
 
-public class SimpleCookieStorage implements CookieStorage {
+public class SimpleCookieStorage extends AbstractCookieStorage {
 
-    
+    private static final long serialVersionUID = 1L;
+
     final private SortedMap<String,Cookie> map = new TreeMap<String,Cookie>();
+
     
-    public SortedMap<String,Cookie> loadCookiesMap() {
+    protected SortedMap<String,Cookie> prepareMap(StateProvider p) {
         return map;
     }
     
     
-    public void saveCookiesMap(Map<String,Cookie> map) {
+    public SortedMap<String,Cookie> getCookiesMap() {
+        return map;
+    }
+    
+    
+    public void innerSaveCookiesMap(Map<String,Cookie> map) {
         // no-op
     }
 }

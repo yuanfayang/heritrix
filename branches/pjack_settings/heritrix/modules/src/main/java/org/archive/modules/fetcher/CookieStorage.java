@@ -31,7 +31,7 @@ import org.apache.commons.httpclient.Cookie;
 
 public interface CookieStorage {
 
-    SortedMap<String,Cookie> loadCookiesMap();
+    SortedMap<String,Cookie> getCookiesMap();
 
     void saveCookiesMap(Map<String,Cookie> map);
 

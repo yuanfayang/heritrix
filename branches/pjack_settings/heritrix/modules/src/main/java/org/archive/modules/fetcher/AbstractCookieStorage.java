@@ -34,9 +34,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
@@ -44,6 +44,7 @@ import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.IoUtils;
 
@@ -51,34 +52,38 @@ import org.archive.util.IoUtils;
  * @author pjack
  *
  */
-public class FileCookieStorage 
-implements CookieStorage, Initializable, Closeable {
+public abstract class AbstractCookieStorage 
+implements CookieStorage, Initializable, Closeable, Serializable {
 
     final private static Logger LOGGER = 
-        Logger.getLogger(FileCookieStorage.class.getName());
+        Logger.getLogger(AbstractCookieStorage.class.getName());
 
     @Immutable
-    final public static Key<String> LOAD_COOKIES_FROM_FILE = Key.make("");
+    final public static Key<Path> LOAD_COOKIES_FROM_FILE = Key.make(Path.EMPTY);
     
     @Immutable
-    final public static Key<String> SAVE_COOKIES_TO_FILE = Key.make("");
+    final public static Key<Path> SAVE_COOKIES_TO_FILE = Key.make(Path.EMPTY);
     
     
     static {
-        KeyManager.addKeys(FileCookieStorage.class);
+        KeyManager.addKeys(AbstractCookieStorage.class);
     }
     
     
-    private SortedMap<String,Cookie> cookies;
-    private String saveCookiesToFile;
+//    private SortedMap<String,Cookie> cookies;
+    private Path saveCookiesToFile;
 
 
     public void initialTasks(StateProvider provider) {
-        String fname = provider.get(this, LOAD_COOKIES_FROM_FILE);
-        this.cookies = loadCookies(fname);
+        Path fname = provider.get(this, LOAD_COOKIES_FROM_FILE);
+        SortedMap<String,Cookie> cookies = prepareMap(provider);
+        if (!fname.isEmpty()) {
+            loadCookies(fname.toFile().getAbsolutePath(), cookies);
+        }
         this.saveCookiesToFile = provider.get(this, SAVE_COOKIES_TO_FILE);
     }
-    
+
+    protected abstract SortedMap<String,Cookie> prepareMap(StateProvider provider);
     
     /**
      * Load cookies from a file before the first fetch.
@@ -104,12 +109,12 @@ implements CookieStorage, Initializable, Closeable {
      * @param cookiesFile
      *            file in the Netscape's 'cookies.txt' format.
      */
-    public static SortedMap<String,Cookie> loadCookies(String cookiesFile) {
-        SortedMap<String,Cookie> result = new TreeMap<String,Cookie>();
+    public static void loadCookies(String cookiesFile, 
+            SortedMap<String,Cookie> result) {
 
         // Do nothing if cookiesFile is not specified.
         if (cookiesFile == null || cookiesFile.length() <= 0) {
-            return result;
+            return;
         }
         RandomAccessFile raf = null;
         try {
@@ -147,8 +152,6 @@ implements CookieStorage, Initializable, Closeable {
         } finally {
             IoUtils.close(raf);
         }
-        
-        return result;
     }
     
     
@@ -199,16 +202,18 @@ implements CookieStorage, Initializable, Closeable {
     }
 
 
-
-    public SortedMap<String, Cookie> loadCookiesMap() {
-        return cookies;
-    }
+    public abstract SortedMap<String,Cookie> getCookiesMap();
 
 
     public void saveCookiesMap(Map<String, Cookie> map) {
-        saveCookies(saveCookiesToFile, map);
+        innerSaveCookiesMap(map);
+        if (!saveCookiesToFile.isEmpty()) {
+            saveCookies(saveCookiesToFile.toFile().getAbsolutePath(), map);
+        }
     }
 
+    
+    protected abstract void innerSaveCookiesMap(Map<String,Cookie> map);
 
     public void close() throws IOException {
     }
