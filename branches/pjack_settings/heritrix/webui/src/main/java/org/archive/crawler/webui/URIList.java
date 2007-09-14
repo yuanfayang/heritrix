@@ -21,7 +21,7 @@ public class URIList {
     
     private boolean verbose = false;
     private int num = 1000;
-    private String regex = ".";
+    private String regex = "^.*?$";
     private String marker = null;
     private Collection<String> uriList;
 

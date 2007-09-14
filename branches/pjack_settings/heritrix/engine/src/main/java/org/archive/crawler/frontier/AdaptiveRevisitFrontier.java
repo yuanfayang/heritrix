@@ -990,7 +990,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#deleteURIs(java.lang.String)
      */
-    public synchronized long deleteURIs(String match) {
+    public synchronized long deleteURIs(String queueRegex, String match) {
         // TODO Auto-generated method stub
         return 0;
     }

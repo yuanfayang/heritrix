@@ -438,7 +438,15 @@ public interface Frontier extends Module, Reporter {
      *              deleted.
      * @return The number of URIs deleted
      */
-    public long deleteURIs(String match);
+    @Operation(desc="Delete any discovered/pending URI that matches " +
+    		"the given uriRegex, but only from queues that match the " +
+    		"queueRegex.")
+    public long deleteURIs(
+            @Parameter(name="queueRegex", desc="The regex used to determine which queues to remove URis from.")
+            String queueRegex,
+            
+            @Parameter(name="uriRegex", desc="The regex used to determine which URIs to delete.")
+            String match);
 
     /**
      * Notify Frontier that a CrawlURI has been deleted outside of the

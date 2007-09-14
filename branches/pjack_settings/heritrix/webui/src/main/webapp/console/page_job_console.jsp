@@ -200,11 +200,14 @@ if (status.equals(CrawlController.State.PREPARED.toString())) {
                             if (job.getCrawlStatus().equals("PAUSED")) {
             %>
             		<b>Paused Operations</b>
+                    <div class='indent'>
+                        <a href='<%= request.getContextPath() %>/console/do_show_uri_list.jsp?<%=qs%>'>Frontier View/Edit</a>
+                    </div>
             		<div class='indent'>
 	                	<a href='<%= request.getContextPath() %>/console/do_show_frontier_import.jsp?<%=qs%>'>Frontier Add/Import URIs</a>
 	                </div>
                     <div class='indent'>
-                        <a href='<%= request.getContextPath() %>/console/do_show_uri_list.jsp?<%=qs%>'>Frontier View/Edit</a>
+                        <a href='<%= request.getContextPath() %>/console/do_show_delete_uris.jsp?<%=qs%>'>Frontier Delete URIs</a>
                     </div>
 	        <%
             	}
