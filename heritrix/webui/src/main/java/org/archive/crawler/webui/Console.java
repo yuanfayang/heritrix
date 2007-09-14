@@ -29,8 +29,6 @@ package org.archive.crawler.webui;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -212,7 +210,8 @@ public class Console {
         try {
             
             // just package it all for the other side
-            HashMap<String,String> params = new HashMap<String,String>(); 
+            HashMap<String,String> params = new HashMap<String,String>();
+            @SuppressWarnings("unchecked")
             Enumeration<String> paramEnum = request.getParameterNames();
             while(paramEnum.hasMoreElements()) {
                 String key = paramEnum.nextElement();
@@ -281,11 +280,43 @@ public class Console {
 
         Misc.forward(request, response, "page_uri_list.jsp");
     }
+    
+    
+    public static void showDeleteURIs(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<Frontier> remote = getFrontier(request);
+        request.setAttribute("regex", "");
+        remote.close();
+        Misc.forward(request, response, "page_delete_uris.jsp");
+    }
+
+    
+    public static void deleteURIs(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Remote<Frontier> remote = getFrontier(request);
+        long num;
+        try {
+            String queueRegex = request.getParameter("queueRegex");
+            String uriRegex = request.getParameter("uriRegex");
+            num = remote.getObject().deleteURIs(queueRegex, uriRegex);
+        } finally {
+            remote.close();
+        }
+
+        Flash f = new Flash("Deleted " + num + " URIs from the Frontier.");
+        f.addToSession(request);
+        showJobConsole(sc, request, response);
+    }
 
 
     static URIList getURIList(HttpServletRequest request) {
         CrawlJob job = (CrawlJob)request.getAttribute("job");
         HttpSession session = request.getSession(true);
+        @SuppressWarnings("unchecked")
         Map<CrawlJob,URIList> map = (Map)session.getAttribute("uriLists");
         if (map == null) {
             map = new HashMap<CrawlJob,URIList>();

@@ -46,6 +46,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
@@ -867,14 +868,16 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
      * @param match String to  match.
      * @return Number of items deleted.
      */
-    public long deleteURIs(String match) {
+    public long deleteURIs(String queueRegex, String uriRegex) {
         long count = 0;
         // TODO: DANGER/ values() may not work right from CachedBdbMap
-        Iterator iter = allQueues.keySet().iterator(); 
-        while(iter.hasNext()) {
-            WorkQueue wq = getQueueFor(((String)iter.next()));
-            wq.unpeek();
-            count += wq.deleteMatching(this, match);
+        Pattern queuePat = Pattern.compile(queueRegex);
+        for (String qname: allQueues.keySet()) {
+            if (queuePat.matcher(qname).matches()) {
+                WorkQueue wq = getQueueFor(qname);
+                wq.unpeek();
+                count += wq.deleteMatching(this, uriRegex);
+            }
         }
         decrementQueuedCount(count);
         return count;
