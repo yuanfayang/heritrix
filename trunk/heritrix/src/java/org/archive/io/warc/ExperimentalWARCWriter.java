@@ -204,9 +204,7 @@ implements WARCConstants {
             }
         }
 
-        // TODO: Is MIME Version needed.
-        sb.append(MIME_VERSION).append(CRLF);
-        sb.append(CONTENT_ID).append(COLON_SPACE).append('<').
+        sb.append(HEADER_KEY_ID).append(COLON_SPACE).append('<').
             append(recordId.toString()).append('>').append(CRLF);
         if (contentLength > 0) {
             sb.append(CONTENT_TYPE).append(COLON_SPACE).append(
