@@ -146,7 +146,11 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
 			}
 
 			public String getDigest() {
-				return (String)this.headers.get(HEADER_KEY_CHECKSUM);
+                return null;
+                // TODO: perhaps return block-digest? 
+                // superclass def implies this is calculated ("only after
+                // read in totality"), not pulled from header
+//				return (String)this.headers.get(HEADER_KEY_CHECKSUM);
 			}
 
 			public String getReaderIdentifier() {
