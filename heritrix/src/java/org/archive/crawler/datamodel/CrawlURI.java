@@ -44,6 +44,7 @@ import org.archive.crawler.framework.ProcessorChain;
 import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.HttpRecorder;
 
@@ -1401,6 +1402,16 @@ implements FetchStatusCodes {
         @SuppressWarnings("unchecked")
         HashSet<Object> ol = (HashSet<Object>) stream.readObject();
         outLinks = (ol == null) ? new HashSet<Object>() : ol;
+    }
+
+    public long getFetchDuration() {
+        if(! containsKey(A_FETCH_COMPLETED_TIME)) {
+            return -1;
+        }
+        
+        long completedTime = getLong(A_FETCH_COMPLETED_TIME);
+        long beganTime = getLong(A_FETCH_BEGAN_TIME);
+        return completedTime - beganTime;
     }
 
 
