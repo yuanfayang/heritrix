@@ -54,6 +54,8 @@ String the_sheet = (String)request.getAttribute("sheet");
     <% if (the_job.getCrawlStatus() != null) { %>
     <span class='status <%=the_job.getCrawlStatus()%>'><%=the_job.getCrawlStatus()%></span>
     <% } %>
+    
+    
 	<% if (the_job.hasReports()) { %>
         <a title="View and control the current status for this job."
            href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=the_jqs%>">Console</a>
@@ -70,6 +72,14 @@ String the_sheet = (String)request.getAttribute("sheet");
     <a class="rowLink" href="<%=request.getContextPath()%>/sheets/do_show_sheets.jsp?<%=the_jqs%>">sheets</a>
     <a class="rowLink" href="<%=request.getContextPath()%>/seeds/do_show_seeds.jsp?<%=the_jqs%>">seeds</a>
    <% } %>
+    <% if (the_job.getAlertCount() > 0) { %>
+    <br>
+    <a class="alert" href="<%=request.getContextPath()%>/logs/do_show_log.jsp?<%=the_jqs%>&log=ALERTS&mode=TAIL&linesToShow=50&time=-1">
+    (!) <%=the_job.getAlertCount()%> New Alerts
+    </a>
+    <a href="<%=request.getContextPath()%>/console/do_reset_alerts.jsp?<%=the_jqs%>">(reset)</a>
+    <% } %>
+   
    <br/>
 <% } %>
 
@@ -103,7 +113,7 @@ String the_sheet = (String)request.getAttribute("sheet");
 <hr/>
 
 <% 
-out.flush();
+//out.flush();
 Flash.writeAllFromSession(request,response);
 } // end of local variable scope 
 

@@ -36,6 +36,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.io.LocalErrorFormatter;
@@ -48,6 +49,7 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
@@ -61,8 +63,8 @@ import org.archive.state.StateProvider;
  * @author pjack
  *
  */
-public class CrawlerLoggerModule 
-implements UriErrorLoggerModule, Initializable, Checkpointable {
+public class CrawlerLoggerModule extends Bean  
+implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
 
 
     private static final long serialVersionUID = 1L;
@@ -93,6 +95,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
     private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
     private static final String LOGNAME_CRAWL = "crawl";
+    private static final String LOGNAME_ALERTS = "alerts";
 
     /** suffix to use on active logs */
     public static final String CURRENT_LOG_SUFFIX = ".log";
@@ -152,14 +155,18 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
 
     
     private StringBuffer manifest = new StringBuffer();
+    
+    private transient AlertThreadGroup atg;
 
     public CrawlerLoggerModule() {
+        super(AlertTracker.class);
     }
 
     
     public void initialTasks(StateProvider provider) {
         dir = provider.get(this, DIR);
         dir.toFile().mkdirs();
+        this.atg = AlertThreadGroup.current();
         try {
             setupLogs();
         } catch (IOException e) {
@@ -199,6 +206,7 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
             logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
             new StatisticsLogFormatter(), true);
 
+        setupAlertLog(logsPath);
     }
 
     private void setupLogFile(Logger logger, String filename, Formatter f,
@@ -211,6 +219,25 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
         logger.setUseParentHandlers(false);
         this.fileHandlers.put(logger, fh);
         this.loggers.put(logger.getName(), logger);
+    }
+    
+    
+    private void setupAlertLog(String logsPath) throws IOException {
+        Logger logger = Logger.getLogger(LOGNAME_ALERTS + "." + logsPath);
+        String filename = logsPath + LOGNAME_ALERTS + CURRENT_LOG_SUFFIX;
+        GenerationFileHandler fh = new GenerationFileHandler(filename, true, 
+                true);
+        fh.setFormatter(new SimpleFormatter());
+        AlertThreadGroup.setCurrentHandler(fh);
+        AlertHandler ah = new AlertHandler();
+        ah.setLevel(Level.WARNING);
+        ah.setFormatter(new SimpleFormatter());
+        logger.addHandler(ah);
+        addToManifest(filename, MANIFEST_LOG_FILE, true);
+        logger.setUseParentHandlers(false);
+        this.fileHandlers.put(logger, fh);
+        this.loggers.put(logger.getName(), logger);
+        
     }
 
     
@@ -320,6 +347,21 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
         return uriProcessing;
     }
 
+    
+    public int getAlertCount() {
+        if (atg != null) {
+            return atg.getAlertCount();
+        } else {
+            return -1;
+        }
+    }
+    
+    
+    public void resetAlertCount() {
+        if (atg != null) {
+            atg.resetAlertCount();
+        }
+    }
 
 
     /**
@@ -344,7 +386,8 @@ implements UriErrorLoggerModule, Initializable, Checkpointable {
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         loggers = new HashMap<String,Logger>();
-        dir.toFile().mkdirs();        
+        dir.toFile().mkdirs();
+        this.atg = AlertThreadGroup.current();
         this.setupLogs();
     }
 

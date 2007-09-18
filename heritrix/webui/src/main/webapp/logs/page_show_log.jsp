@@ -6,8 +6,8 @@
 <%@ page import="org.archive.crawler.util.Logs"%>
 
 <%
-	Log log = (Log)request.getAttribute("log"); 
-	Crawler crawler = (Crawler)request.getAttribute("crawler");
+	Log log = (Log)Text.get(request, "log"); 
+	Crawler crawler = (Crawler)Text.get(request, "crawler");
 	
 	int refreshInterval = log.getRefreshInterval();
 	Logs currentLog = log.getCurrentLog();     

@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.archive.crawler.framework.AlertTracker;
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.CrawlJobManagerImpl;
 import org.archive.crawler.framework.Frontier;
@@ -280,6 +281,24 @@ public class Console {
 
         Misc.forward(request, response, "page_uri_list.jsp");
     }
+
+    
+    public static void resetAlerts(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Crawler c = Home.getCrawler(request);
+        JMXConnector jmxc = c.connect();
+        try {
+            CrawlJob cj = CrawlJob.fromRequest(request, jmxc);
+            AlertTracker at = Misc.find(jmxc, cj.getName(), AlertTracker.class);
+            at.resetAlertCount();
+        } finally {
+            Misc.close(jmxc);
+        }
+        showJobConsole(sc, request, response);
+    }
+
     
     
     public static void showDeleteURIs(

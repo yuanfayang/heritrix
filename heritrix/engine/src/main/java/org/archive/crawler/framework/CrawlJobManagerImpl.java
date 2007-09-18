@@ -344,34 +344,13 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         }
     }
 
-    public synchronized void launchJob(String j) throws IOException {
-        if (!j.startsWith(READY.getPrefix())) {
-            throw new IllegalArgumentException("Can't launch " + j);
+    public void launchJob(final String j) throws Exception {
+        JobLauncher jl = new JobLauncher(j);
+        jl.start();
+        jl.join();
+        if (jl.exception != null) {
+            throw jl.exception;
         }
-        
-        closeSheetManagerStub(j);
-
-        final String job = changeState(j, ACTIVE);
-        File dest = new File(getJobsDir(), job);
-        File bootstrap = new File(dest, BOOTSTRAP);
-        FileSheetManager fsm;
-        final String name = getJobName(job);
-        final JMXModuleListener jmxListener = new JMXModuleListener(DOMAIN, name, server);
-        try {
-            List<ModuleListener> list = new ArrayList<ModuleListener>();
-            list.add(jmxListener);
-            list.add(ListModuleListener.make(CrawlStatusListener.class));
-            fsm = new FileSheetManager(bootstrap, name, true, list);
-        } catch (DatabaseException e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
-        }
-
-        
-        final ObjectName smName = createJMXSheetManager(name, fsm);
-        final ObjectName ccName = findCrawlController(name);
-        addFinishedCallback(job, ccName, smName, jmxListener);
     }
 
     
@@ -468,61 +447,21 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             String checkpointName,
             String[] oldPaths, 
             String[] newPaths) {
-        validateJobName(oldJob);
-        validateJobName(newJob);
-        File src = new File(getJobsDir(), oldJob);
-        if (!src.exists()) {
-            throw new IllegalArgumentException("No such job: " + oldJob);
-        }
-
-        if (!newJob.startsWith(JobStage.ACTIVE.getPrefix())) {
-            throw  new IllegalArgumentException(
-                    "Must specify active-name for recovered job.");
-        }
-
-        String newName = JobStage.getJobName(newJob);
-        verifyUnique(JobStage.getJobName(newName));
-
-        File dest = new File(getJobsDir(), newJob);
-        dest.mkdir();
-        
-        String cpPath = getFilePath(oldJob, CHECKPOINT_DIR_PATH);
-        File checkpointDir = new File(new File(cpPath), checkpointName);
-        if (!checkpointDir.isDirectory()) {
-            throw new IllegalArgumentException("Not a dir: " + cpPath);
-        }
-
-        if (oldPaths.length != newPaths.length) {
-            throw new IllegalArgumentException(
-                    "oldPaths and newPaths must be parallel.");
-        }
-
-        // Old job was "active" when it was checkpointed, so we need to 
-        // translate its old "active" path to the new job's directory.
-        String oldActive = JobStage.encode(JobStage.ACTIVE, 
-                JobStage.getJobName(oldJob));
-        
-        DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery();
-        cr.getFileTranslations().put(new File(getJobsDir(), oldActive).getAbsolutePath(), 
-                dest.getAbsolutePath());
-        for (int i = 0; i < oldPaths.length; i++) {
-            cr.getFileTranslations().put(oldPaths[i], newPaths[i]);
-            new File(newPaths[i]).mkdirs();
-        }
-
-        SheetManager mgr;
+        CheckpointLauncher cl = new CheckpointLauncher(
+                oldJob,
+                newJob,
+                checkpointName,
+                oldPaths,
+                newPaths);
+        cl.start();
         try {
-            mgr = org.archive.settings.Checkpointer.recover(checkpointDir, cr);
-        } catch (IOException e) {
+            cl.join();
+        } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
-        JMXModuleListener jml = JMXModuleListener.get(mgr);
-        jml.setServer(server, JobStage.getJobName(newJob));
-
-        ObjectName smName = createJMXSheetManager(newName, mgr);
-        ObjectName ccName = findCrawlController(newName);
-        addFinishedCallback(newJob, ccName, smName, jml);
-        
+        if (cl.exception != null) {
+            throw cl.exception;
+        }
     }
 
     public synchronized void close() {
@@ -710,5 +649,153 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     public synchronized long getFileSize(String job, String settingsPath) {
         String filePath = getFilePath(job, settingsPath);
         return new File(filePath).length();
+    }
+
+
+    class JobLauncher extends Thread {
+        
+        
+        final private String j;
+        public Exception exception;
+        
+        public JobLauncher(String j) {
+            super(new AlertThreadGroup(j), j);
+            this.j = j;
+        }
+    
+    
+        private void doLaunch() throws Exception {
+            if (!j.startsWith(READY.getPrefix())) {
+                throw new IllegalArgumentException("Can't launch " + j);
+            }
+            
+            closeSheetManagerStub(j);
+    
+            final String job = changeState(j, ACTIVE);
+            File dest = new File(getJobsDir(), job);
+            File bootstrap = new File(dest, CrawlJobManagerImpl.BOOTSTRAP);
+            FileSheetManager fsm;
+            final String name = getJobName(job);
+            final JMXModuleListener jmxListener = new JMXModuleListener(
+                    CrawlJobManagerImpl.DOMAIN, name, server);
+
+            List<ModuleListener> list = new ArrayList<ModuleListener>();
+            list.add(jmxListener);
+            list.add(ListModuleListener.make(CrawlStatusListener.class));
+            fsm = new FileSheetManager(bootstrap, name, true, list);
+
+            final ObjectName smName = createJMXSheetManager(name, fsm);
+            final ObjectName ccName = findCrawlController(name);
+            addFinishedCallback(job, ccName, smName, jmxListener);           
+        }
+
+
+        public void run() {
+            synchronized (CrawlJobManagerImpl.this) {
+                try {
+                    doLaunch();
+                } catch (Exception e) {
+                    this.exception = e;
+                }
+            }
+        }
+    
+    }
+
+    
+    class CheckpointLauncher extends Thread {
+        
+        
+        private String oldJob;
+        private String newJob;
+        private String[] oldPaths;
+        private String[] newPaths;
+        private String checkpointName;
+        public RuntimeException exception;
+        
+        
+        public CheckpointLauncher(
+                String oldJob,
+                String newJob,
+                String checkpointName,
+                String[] oldPaths, 
+                String[] newPaths) {
+            super(new AlertThreadGroup(newJob), newJob);
+            this.oldJob = oldJob;
+            this.newJob = newJob;
+            this.checkpointName = checkpointName;
+            this.oldPaths = oldPaths;
+            this.newPaths = newPaths;
+        }
+
+
+        private void doCheckpointRecover() {
+            validateJobName(oldJob);
+            validateJobName(newJob);
+            File src = new File(getJobsDir(), oldJob);
+            if (!src.exists()) {
+                throw new IllegalArgumentException("No such job: " + oldJob);
+            }
+
+            if (!newJob.startsWith(JobStage.ACTIVE.getPrefix())) {
+                throw  new IllegalArgumentException(
+                        "Must specify active-name for recovered job.");
+            }
+
+            String newName = JobStage.getJobName(newJob);
+            verifyUnique(JobStage.getJobName(newName));
+
+            File dest = new File(getJobsDir(), newJob);
+            dest.mkdir();
+            
+            String cpPath = getFilePath(oldJob, CHECKPOINT_DIR_PATH);
+            File checkpointDir = new File(new File(cpPath), checkpointName);
+            if (!checkpointDir.isDirectory()) {
+                throw new IllegalArgumentException("Not a dir: " + cpPath);
+            }
+
+            if (oldPaths.length != newPaths.length) {
+                throw new IllegalArgumentException(
+                        "oldPaths and newPaths must be parallel.");
+            }
+
+            // Old job was "active" when it was checkpointed, so we need to 
+            // translate its old "active" path to the new job's directory.
+            String oldActive = JobStage.encode(JobStage.ACTIVE, 
+                    JobStage.getJobName(oldJob));
+            
+            DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery();
+            cr.getFileTranslations().put(new File(getJobsDir(), oldActive).getAbsolutePath(), 
+                    dest.getAbsolutePath());
+            for (int i = 0; i < oldPaths.length; i++) {
+                cr.getFileTranslations().put(oldPaths[i], newPaths[i]);
+                new File(newPaths[i]).mkdirs();
+            }
+
+            SheetManager mgr;
+            try {
+                mgr = org.archive.settings.Checkpointer.recover(checkpointDir, cr);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+            JMXModuleListener jml = JMXModuleListener.get(mgr);
+            jml.setServer(server, JobStage.getJobName(newJob));
+
+            ObjectName smName = createJMXSheetManager(newName, mgr);
+            ObjectName ccName = findCrawlController(newName);
+            addFinishedCallback(newJob, ccName, smName, jml);
+        }
+
+        
+        public void run() {
+            synchronized (CrawlJobManagerImpl.this) {
+                try {
+                    doCheckpointRecover();
+                } catch (RuntimeException e) {
+                    this.exception = e;
+                }
+            }
+        }
+        
     }
 }

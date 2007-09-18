@@ -62,7 +62,7 @@ public interface CrawlJobManager extends Closeable {
     public void launchJob(
             
             @Parameter(name="job", desc="The stage-name of the job to launch.")
-            String profile) throws IOException;
+            String profile) throws Exception;
 
     
     @Operation(desc="Loads a SheetManager for editing.  If a SheetManager " +

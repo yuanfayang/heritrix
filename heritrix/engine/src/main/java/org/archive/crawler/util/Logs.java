@@ -37,7 +37,8 @@ public enum Logs{
 	LOCAL_ERRORS ("local-errors.log"),
 	PROGRESS_STATISTICS ("progress-statistics.log"),
 	RUNTIME_ERRORS ("runtime-errors.log"),
-	URI_ERRORS ("uri-errors.log");
+	URI_ERRORS ("uri-errors.log"),
+	ALERTS ("alerts.log");
 	
 	String filename;
 	
