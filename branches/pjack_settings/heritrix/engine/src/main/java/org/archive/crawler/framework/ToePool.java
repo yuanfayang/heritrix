@@ -55,7 +55,7 @@ public class ToePool extends ThreadGroup implements Reporter {
      * @param c A reference to the CrawlController for the current crawl.
      */
     public ToePool(CrawlController c) {
-        super("ToeThreads");        
+        super(c.alertThreadGroup, "ToeThreads");        
         this.controller = c;
         setDaemon(true);
     }

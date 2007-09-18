@@ -217,7 +217,10 @@ public class CrawlController extends Bean implements
     private static final int RESERVE_BLOCKS = 1;
     private static final int RESERVE_BLOCK_SIZE = 6*2^20; // 6MB
 
+    transient ThreadGroup alertThreadGroup;
+    
     // crawl state: as requested or actual
+
     
     /**
      * Crawl exit status.
@@ -310,6 +313,10 @@ public class CrawlController extends Bean implements
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
 
+        // Can't call setupToePool yet due to circular dependency with Frontier
+        // So, remember current ThreadGroup so we can create the ToePool in 
+        // it later.
+        alertThreadGroup = Thread.currentThread().getThreadGroup();
     }
 
     /**

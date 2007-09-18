@@ -3,6 +3,7 @@ package org.archive.crawler.webui;
 import javax.management.remote.JMXConnector;
 import javax.servlet.http.HttpServletRequest;
 
+import org.archive.crawler.framework.AlertTracker;
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.JobStage;
@@ -19,12 +20,18 @@ public class CrawlJob {
     String name;
     JobStage stage;
     String crawlstatus;
+    int alerts = -1;
     // TODO: Completed jobs also have more specific crawl state (i.e. how they ended).
     
     public CrawlJob(String name, JobStage stage, String crawlStatus) {
+        this(name, stage, crawlStatus, 0);
+    }
+
+    public CrawlJob(String name, JobStage stage, String crawlStatus, int alerts) {
         this.name = name;
         this.stage = stage;
         this.crawlstatus = crawlStatus;
+        this.alerts = alerts;
     }
 
     
@@ -52,6 +59,10 @@ public class CrawlJob {
         return crawlstatus;
     }
     
+    public int getAlertCount() {
+        return alerts;
+    }
+    
     
     public String encode() {
         return JobStage.encode(stage, name);
@@ -63,6 +74,7 @@ public class CrawlJob {
             String name, 
             JobStage stage) {
         String crawlstatus;
+        int alerts;
         if (stage == JobStage.ACTIVE) {
             try {
                 JobController jc = Misc.find(jmxc, name, JobController.class);
@@ -70,10 +82,18 @@ public class CrawlJob {
             } catch (RuntimeException e) {
                 crawlstatus = "UNKNOWN";
             }
+            
+            try {
+                AlertTracker at = Misc.find(jmxc, name, AlertTracker.class);
+                alerts = at.getAlertCount();
+            } catch (RuntimeException e) {
+                alerts = -1;
+            }
         } else {
             crawlstatus = null;
+            alerts = -1;
         }
-        CrawlJob result = new CrawlJob(name, stage, crawlstatus);
+        CrawlJob result = new CrawlJob(name, stage, crawlstatus, alerts);
         return result;
     }
     
