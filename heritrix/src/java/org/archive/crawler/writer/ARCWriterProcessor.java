@@ -117,7 +117,7 @@ WriterPoolSettings, FetchStatusCodes {
         }
         
         // If no recorded content at all, don't write record.
-        long recordLength = curi.getContentSize();
+        long recordLength = curi.getHttpRecorder().getRecordedInput().getSize();
         if (recordLength <= 0) {
         	// getContentSize() should be > 0 if any material (even just
             // HTTP headers with zero-length body) is available. 

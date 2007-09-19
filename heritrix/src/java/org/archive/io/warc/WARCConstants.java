@@ -101,14 +101,9 @@ public interface WARCConstants extends ArchiveFileConstants {
      * Specify an encoding rather than leave it to chance: i.e whatever the
      * JVMs encoding.  Use an encoding that gets the stream as bytes, not chars.
      * 
-     * <p>TODO: ARC uses ISO-8859-1.  In general, we should use UTF-8 but we
-     * probably need a single byte encoding if we're out for preserving the
-     * binary data as received over the net (We probably don't want to transform
-     * the supra-ASCII characters to UTF-8 before storing in ARC).  For now,
-     * till we figure it, DEFAULT_ENCODING is single-byte charset -- same as
-     * ARCs.
+     * ARC uses ISO-8859-1. By specification, WARC uses UTF-8. 
      */
-    public static final String DEFAULT_ENCODING = "ISO-8859-1";
+    public static final String DEFAULT_ENCODING = "UTF-8";
     public static final String HEADER_LINE_ENCODING = DEFAULT_ENCODING;
     
     // TODO: Revisit. 8859 isn't correct, especially if we settle on RFC822
@@ -190,7 +185,7 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String NAMED_FIELD_FILEDESC = "ARC-FileDesc";
     public static final String NAMED_FIELD_TRUNCATED = "Truncated";
     public static final String NAMED_FIELD_TRUNCATED_VALUE_TIME = "time";
-    public static final String NAMED_FIELD_TRUNCATED_VALUE_LEN = "length";
+    public static final String NAMED_FIELD_TRUNCATED_VALUE_LENGTH = "length";
     public static final String NAMED_FIELD_TRUNCATED_VALUE_HEAD =
         "long-headers";
     public static final String NAMED_FIELD_TRUNCATED_VALUE_UNSPECIFIED = null;
@@ -213,11 +208,9 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String HEADER_KEY_LAST_MODIFIED = "WARC-Last-Modified";
     
     public static final String PROFILE_REVISIT_IDENTICAL_DIGEST = 
-    	"http://netpreserve.org/warc/0.12/revisit/identical-content-digest";
+    	"http://netpreserve.org/warc/0.17/revisit/identical-payload-digest";
     public static final String PROFILE_REVISIT_NOT_MODIFIED = 
-    	"http://netpreserve.org/warc/0.12/revisit/server-not-modified";
-    public static final String PROFILE_CONVERSION_SOFTWARE_COMMAND = 
-    	"http://netpreserve.org/warc/0.12/conversion/software-command";
+    	"http://netpreserve.org/warc/0.17/revisit/server-not-modified";
     
     public static final String CONTENT_LENGTH = "Content-Length";
     public static final String CONTENT_TYPE = "Content-Type";

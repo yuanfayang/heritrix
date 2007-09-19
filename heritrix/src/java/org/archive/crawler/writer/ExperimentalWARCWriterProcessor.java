@@ -113,7 +113,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
      * @param name Name of this writer.
      */
     public ExperimentalWARCWriterProcessor(final String name) {
-        super(name, "Experimental WARCWriter processor (Version 0.12)");
+        super(name, "Experimental WARCWriter processor (Version 0.17)");
         Type e = addElementToDefinition(
                 new SimpleType(ATTR_WRITE_REQUESTS,
                 "Whether to write 'request' type records. " +
@@ -239,7 +239,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                         String value = curi.isTimeTruncatedFetch()?
                             NAMED_FIELD_TRUNCATED_VALUE_TIME:
                             curi.isLengthTruncatedFetch()?
-                                NAMED_FIELD_TRUNCATED_VALUE_LEN:
+                                NAMED_FIELD_TRUNCATED_VALUE_LENGTH:
                                 curi.isHeaderTruncatedFetch()?
                                     NAMED_FIELD_TRUNCATED_VALUE_HEAD:
                             // TODO: Add this to spec.
@@ -330,6 +330,25 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return baseid;
     }
     
+    protected URI writeResource(final ExperimentalWARCWriter w,
+            final String timestamp, final String mimetype,
+            final URI baseid, final CrawlURI curi,
+            final ANVLRecord namedFields) 
+    throws IOException {
+        ReplayInputStream ris =
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
+        try {
+            w.writeResourceRecord(curi.toString(), timestamp, mimetype, baseid,
+                namedFields, ris,
+                curi.getHttpRecorder().getRecordedInput().getSize());
+        } finally {
+            if (ris != null) {
+                ris.close();
+            }
+        }
+        return baseid;
+    }
+    
     protected URI writeRevisitDigest(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
@@ -342,7 +361,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         namedFields.addLabelValue(
         		HEADER_KEY_PROFILE, PROFILE_REVISIT_IDENTICAL_DIGEST);
         namedFields.addLabelValue(
-        		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
+        		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LENGTH);
         ReplayInputStream ris =
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
         try {
@@ -373,7 +392,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         }
         // truncate to zero-length (all necessary info is above)
         namedFields.addLabelValue(HEADER_KEY_TRUNCATED,
-            NAMED_FIELD_TRUNCATED_VALUE_LEN);
+            NAMED_FIELD_TRUNCATED_VALUE_LENGTH);
         ReplayInputStream ris =
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
         try {
