@@ -624,9 +624,6 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     }
     
     protected synchronized List<String> cacheMetadata() {
-        if (this.cachedMetadata != null) {
-            return this.cachedMetadata;
-        }
         
         // If no stylesheet, return empty metadata.
         if (getFirstrecordStylesheet() == null ||

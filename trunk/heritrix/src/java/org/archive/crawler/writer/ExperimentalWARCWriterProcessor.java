@@ -23,10 +23,15 @@
 package org.archive.crawler.writer;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.text.ParseException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,6 +41,8 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.lang.StringUtils;
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -53,14 +60,14 @@ import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.XmlUtils;
 import org.archive.util.anvl.ANVLRecord;
+import org.w3c.dom.Document;
 
 /**
  * Experimental WARCWriterProcessor.
- * Goes against the pending release of 0.12 of the WARC specification, the
- * "Marcel Marceau" release. See <a href="https://archive-access.svn.sourceforge.net/svnroot/archive-access/branches/gjm_warc_0_12/warc/warc_file_format.html">latest revision</a>
- * for current state.  The 0.10 WARC implemenation has been moved to
- * {@link ExperimentalV10WARCWriterProcessor}.
+ * Goes against the 0.17 version of the WARC specification. 
+ * See http://crawler.archive.org/warc/0.17/WARC0.17ISO.doc .
  * 
  * <p>TODO: Remove ANVLRecord. Rename NameValue or use RFC822
  * (commons-httpclient?) or find something else.
@@ -500,5 +507,73 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     @Override
     protected String getFirstrecordStylesheet() {
         return "/warcinfobody.xsl";
+    }
+
+    /**
+     * Return relevant values as header-like fields (here ANVLRecord, but 
+     * spec-defined "application/warc-fields" type when written). Field
+     * names from from DCMI Terms and the WARC/0.17 specification.
+     * 
+     * @see org.archive.crawler.framework.WriterPoolProcessor#getFirstrecordBody(java.io.File)
+     */
+    @Override
+    protected String getFirstrecordBody(File orderFile) {
+        ANVLRecord record = new ANVLRecord(7);
+        record.addLabelValue("software", "Heritrix/" +
+                Heritrix.getVersion() + " http://crawler.archive.org");
+        try {
+            InetAddress host = InetAddress.getLocalHost();
+            record.addLabelValue("ip", host.getHostAddress());
+            record.addLabelValue("hostname", host.getHostName());
+        } catch (UnknownHostException e) {
+            logger.log(Level.WARNING,"unable top obtain local crawl engine host",e);
+        }
+        record.addLabelValue("format","WARC File Format 0.17");
+        record.addLabelValue("conformsTo","http://crawler.archive.org/warc/0.17/WARC0.17ISO.doc");
+        // Get other values from order.xml 
+        try {
+            Document doc = XmlUtils.getDocument(orderFile);
+            addIfNonNull(record,"operator",
+                    XmlUtils.xpathOrNull(doc,"//meta/operator"));
+            addIfNonNull(record,"publisher",
+                    XmlUtils.xpathOrNull(doc,"//meta/organization"));
+            addIfNonNull(record,"audience",
+                    XmlUtils.xpathOrNull(doc,"//meta/audience"));
+            addIfNonNull(record,"isPartOf",
+                    XmlUtils.xpathOrNull(doc,"//meta/name"));
+            String rawDate = XmlUtils.xpathOrNull(doc,"//meta/date");
+            if(StringUtils.isNotBlank(rawDate)) {
+                Date date;
+                try {
+                    date = ArchiveUtils.parse14DigitDate(rawDate);
+                    addIfNonNull(record,"created",ArchiveUtils.getLog14Date(date));
+                } catch (ParseException e) {
+                    logger.log(Level.WARNING,"obtaining warc created date",e);
+                }
+            }
+            addIfNonNull(record,"description",
+                    XmlUtils.xpathOrNull(doc,"//meta/description"));
+            addIfNonNull(record,"robots",
+                    XmlUtils.xpathOrNull(doc, 
+                            "//newObject[@name='robots-honoring-policy']/string[@name='type']"));
+            addIfNonNull(record,"http-header-user-agent",
+                    XmlUtils.xpathOrNull(doc, 
+                            "//map[@name='http-headers']/string[@name='user-agent']"));
+            addIfNonNull(record,"http-header-from",
+                    XmlUtils.xpathOrNull(doc, 
+                            "//map[@name='http-headers']/string[@name='from']"));
+        } catch (IOException e) {
+            logger.log(Level.WARNING,"obtaining warcinfo",e);
+        } 
+        // really ugly to return as string, when it may just be merged with 
+        // a couple other fields at write time, but changing would require 
+        // larger refactoring
+        return record.toString();
+    }
+
+    protected void addIfNonNull(ANVLRecord record, String label, String value) {
+        if(StringUtils.isNotBlank(value)) {
+            record.addLabelValue(label, value);
+        }
     }
 }
