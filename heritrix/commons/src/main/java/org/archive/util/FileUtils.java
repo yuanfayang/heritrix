@@ -279,12 +279,12 @@ public class FileUtils {
             String message = "Copying " + src.getAbsolutePath() + " to " +
                 dest.getAbsolutePath() + " with extent " + extent +
                 " got IOE: " + e.getMessage();
-            if (e.getMessage().equals("Invalid argument")) {
+            if ((e.getMessage()!=null)&&e.getMessage().equals("Invalid argument")) {
                 LOGGER.severe("Failed copy, trying workaround: " + message);
                 workaroundCopyFile(src, dest);
             } else {
                 IOException newE = new IOException(message);
-                newE.setStackTrace(e.getStackTrace());
+                newE.initCause(e);
                 throw newE;
             }
         } finally {
