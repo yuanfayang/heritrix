@@ -307,8 +307,13 @@ implements WARCConstants {
         // Ugh, hate doing this but barring larger refactoring per-WARC
         // 'metadata' is coming back as List<String> (?!?)
         String blockfields = "";
-        for (String s :  (List<String>) fileMetadata) {
-            blockfields += s;
+        if (this.fileMetadata == null) {
+            // only encountered in unit tests?
+            blockfields = "dummy: value";
+        } else {
+            for (String s :  (List<String>) fileMetadata) {
+                blockfields += s;
+            }
         }
         byte[] warcinfoBody;
         if (description != null && description.length() > 0) {
