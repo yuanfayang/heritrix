@@ -41,22 +41,30 @@ import junit.framework.TestCase;
 public class DocTest extends TestCase {
 
     
-    final private static File TEST_DIR = 
-        new File("src/test/java/org/archive/util/ms");
+    final private static File TEST_DIR;
+    static {
+        // handle case when unit test is run in either 'commons' or in 
+        // enclosing project
+        File f = new File("src/test/java/org/archive/util/ms");
+        TEST_DIR = f.exists() 
+            ? f 
+            : new File("commons/src/test/java/org/archive/util/ms");
+    }
 
-    
     // Rename to testAgainstPOI to actually run the test.
     public void testAgainstPOI() throws IOException {
         int errors = 0;
         long start = System.currentTimeMillis();
-        for (File f: TEST_DIR.listFiles()) try {
-            start = System.currentTimeMillis();
-            if (f.getName().endsWith(".doc")) {
-                errors += runDoc(f);
+        for (File f : TEST_DIR.listFiles()) {
+            try {
+                start = System.currentTimeMillis();
+                if (f.getName().endsWith(".doc")) {
+                    errors += runDoc(f);
+                }
+            } finally {
+                long duration = System.currentTimeMillis() - start;
+                System.out.println("Duration in milliseconds: " + duration);
             }
-        } finally {
-            long duration = System.currentTimeMillis() - start;
-            System.out.println("Duration in milliseconds: " + duration);
         }
         if (errors > 0) {
             throw new IOException(errors + " errors, see stdout.");
