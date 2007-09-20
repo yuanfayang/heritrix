@@ -37,5 +37,5 @@ public interface WriterPoolSettings {
     public String getSuffix(); 
     public List<File> getOutputDirs();
     public boolean isCompressed();
-    public List getMetadata();
+    public List<String> getMetadata();
 }

@@ -75,7 +75,6 @@ implements WARCConstants {
     
     /**
      * Metadata.
-     * TODO: Exploit writing warcinfo record.  Currently unused.
      */
     private final List fileMetadata;
     
@@ -301,28 +300,29 @@ implements WARCConstants {
         	filename = filename.substring(0,
         		filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
         }
-        ANVLRecord record = new ANVLRecord(2);
-        record.addLabelValue(HEADER_KEY_FILENAME, filename);
+        
+        ANVLRecord headerrecord = new ANVLRecord(1);
+        headerrecord.addLabelValue(HEADER_KEY_FILENAME, filename);
+        
+        // Ugh, hate doing this but barring larger refactoring per-WARC
+        // 'metadata' is coming back as List<String> (?!?)
+        String blockfields = "";
+        for (String s :  (List<String>) fileMetadata) {
+            blockfields += s;
+        }
+        byte[] warcinfoBody;
         if (description != null && description.length() > 0) {
-        	record.addLabelValue(CONTENT_DESCRIPTION, description);
-        }
-        // Add warcinfo body.
-        byte [] warcinfoBody = null;
-        if (this.fileMetadata == null) {
-        	// TODO: What to write into a warcinfo?  What to associate?
-        	warcinfoBody = "TODO: Unimplemented".getBytes();
+            // reconstitute and add new description
+            ANVLRecord blockrecord = ANVLRecord.load(blockfields);
+            blockrecord.addLabelValue(CONTENT_DESCRIPTION, description);
+            warcinfoBody = blockrecord.toString().getBytes("UTF-8");
         } else {
-        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        	for (final Iterator i = this.fileMetadata.iterator();
-        			i.hasNext();) {
-        		baos.write(i.next().toString().getBytes(UTF8Bytes.UTF8));
-        	}
-        	warcinfoBody = baos.toByteArray();
+            // just use in already rendered form
+            warcinfoBody = blockfields.getBytes("UTF-8");
         }
-        URI uri = writeWarcinfoRecord("text/xml", record,
+
+        URI uri = writeWarcinfoRecord("application/warc-fields", headerrecord,
             new ByteArrayInputStream(warcinfoBody), warcinfoBody.length);
-        // TODO: If at start of file, and we're writing compressed,
-        // write out our distinctive GZIP extensions.
         return uri;
     }
     
