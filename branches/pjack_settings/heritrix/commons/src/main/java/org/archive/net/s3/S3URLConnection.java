@@ -52,7 +52,8 @@ public class S3URLConnection extends URLConnection {
 
       object = service.getObject(bucket, url.getPath().substring(1));
     } catch (S3ServiceException s3e) {
-      throw new IOException("Error accessing S3: " + s3e.getStackTrace());
+      s3e.printStackTrace();
+      throw new IOException("Error connecting to S3: " + s3e.getStackTrace());
     }
   }
   
@@ -80,7 +81,8 @@ public class S3URLConnection extends URLConnection {
       return object.getDataInputStream();
     }
     catch (S3ServiceException s3e) {
-      throw new IOException("Error accessing S3: " + s3e.getStackTrace());
+      s3e.printStackTrace();
+      throw new IOException("Error reading from S3: " + s3e.getStackTrace());
     }
   }
 }
