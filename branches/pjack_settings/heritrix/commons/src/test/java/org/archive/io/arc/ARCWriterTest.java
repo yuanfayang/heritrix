@@ -59,6 +59,30 @@ import org.archive.util.TmpDirTestCase;
 public class ARCWriterTest
 extends TmpDirTestCase implements ARCConstants {
     /**
+     * Utility class for writing bad ARCs (with trailing junk)
+     */
+    public class CorruptibleARCWriter extends ARCWriter {
+        byte[] endJunk = null;
+
+        public CorruptibleARCWriter(AtomicInteger serial_no, List<File> name,
+                String name2, boolean compress, long default_max_arc_file_size) {
+            super(serial_no, name, name2, compress, default_max_arc_file_size);
+        }
+
+        @Override
+        protected void postWriteRecordTasks() throws IOException {
+            if (endJunk != null) {
+                this.write(endJunk);
+            }
+            super.postWriteRecordTasks();
+        }
+
+        public void setEndJunk(byte[] b) throws IOException {
+            this.endJunk = b;
+        }
+    }
+
+    /**
      * Prefix to use for ARC files made by JUNIT.
      */
     private static final String SUFFIX =
@@ -253,9 +277,9 @@ extends TmpDirTestCase implements ARCConstants {
         }
     }
     
-    protected ARCWriter createARCWriter(String NAME, boolean compress) {
+    protected CorruptibleARCWriter createARCWriter(String NAME, boolean compress) {
         File [] files = {getTmpDir()};
-        return new ARCWriter(SERIAL_NO, Arrays.asList(files), NAME,
+        return new CorruptibleARCWriter(SERIAL_NO, Arrays.asList(files), NAME,
             compress, DEFAULT_MAX_ARC_FILE_SIZE);
     }
     
@@ -290,10 +314,10 @@ extends TmpDirTestCase implements ARCConstants {
         return count;
     }
     
-    protected ARCWriter createArcWithOneRecord(String name,
+    protected CorruptibleARCWriter createArcWithOneRecord(String name,
         boolean compressed)
     throws IOException {
-    	ARCWriter writer = createARCWriter(name, compressed);
+    	CorruptibleARCWriter writer = createARCWriter(name, compressed);
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html",
             content.length(), getBais(content));
@@ -357,12 +381,13 @@ extends TmpDirTestCase implements ARCConstants {
      
     protected void lengthTooShort(String name, boolean compress, boolean strict)
     throws IOException {
-    	ARCWriter writer = createArcWithOneRecord(name, compress);
+    	CorruptibleARCWriter writer = createArcWithOneRecord(name, compress);
         // Add some bytes on the end to mess up the record.
         String content = getContent();
         ByteArrayInputStream bais = getBais(content+"SOME TRAILING BYTES");
         writeRecord(writer, SOME_URL, "text/html",
             content.length(), bais);
+        writer.setEndJunk("SOME TRAILING BYTES".getBytes());
         writeRecord(writer, SOME_URL, "text/html",
             content.length(), getBais(content));
         writer.close();

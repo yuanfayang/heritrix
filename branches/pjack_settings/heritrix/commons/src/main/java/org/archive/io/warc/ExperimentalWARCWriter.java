@@ -56,10 +56,6 @@ import org.archive.util.anvl.ANVLRecord;
  */
 public class ExperimentalWARCWriter extends WriterPoolMember
 implements WARCConstants {
-    /**
-     * Buffer to reuse writing streams.
-     */
-    private final byte [] readbuffer = new byte[16 * 1024];
     
     /**
      * NEWLINE as bytes.
@@ -204,9 +200,7 @@ implements WARCConstants {
             }
         }
 
-        // TODO: Is MIME Version needed.
-        sb.append(MIME_VERSION).append(CRLF);
-        sb.append(CONTENT_ID).append(COLON_SPACE).append('<').
+        sb.append(HEADER_KEY_ID).append(COLON_SPACE).append('<').
             append(recordId.toString()).append('>').append(CRLF);
         if (contentLength > 0) {
             sb.append(CONTENT_TYPE).append(COLON_SPACE).append(
@@ -218,10 +212,22 @@ implements WARCConstants {
     	return sb.toString();
     }
 
+    /**
+     * @deprecated Use {@link #writeRecord(String,String,String,String,URI,ANVLRecord,InputStream,long,boolean)} instead
+     */
     protected void writeRecord(final String type, final String url,
     		final String create14DigitDate, final String mimetype,
     		final URI recordId, ANVLRecord xtraHeaders,
             final InputStream contentStream, final long contentLength)
+    throws IOException {
+        writeRecord(type, url, create14DigitDate, mimetype, recordId, xtraHeaders, contentStream, contentLength, true);
+    }
+
+    protected void writeRecord(final String type, final String url,
+    		final String create14DigitDate, final String mimetype,
+    		final URI recordId, ANVLRecord xtraHeaders,
+            final InputStream contentStream, final long contentLength, 
+            boolean enforceLength)
     throws IOException {
     	if (!TYPES_LIST.contains(type)) {
     		throw new IllegalArgumentException("Unknown record type: " + type);
@@ -243,11 +249,10 @@ implements WARCConstants {
             if (contentStream != null && contentLength > 0) {
                 // Write out the header/body separator.
                 write(CRLF_BYTES); // TODO: should this be written even for zero-length?
-            	copyFrom(contentStream, contentLength, true);
+            	copyFrom(contentStream, contentLength, enforceLength);
             }
             
             // Write out the two blank lines at end of all records.
-            // TODO: Why? Messes up skipping through file. Also not in grammar.
             write(CRLF_BYTES);
             write(CRLF_BYTES);
         } finally {
@@ -356,7 +361,7 @@ implements WARCConstants {
     	final InputStream fileMetadata, final long fileMetadataLength)
     throws IOException {
     	writeRecord(WARCINFO, null, create14DigitDate, mimetype,
-        	recordId, namedFields, fileMetadata, fileMetadataLength);
+        	recordId, namedFields, fileMetadata, fileMetadataLength, true);
     }
     
     public void writeRequestRecord(final String url,
@@ -367,7 +372,7 @@ implements WARCConstants {
     throws IOException {
         writeRecord(REQUEST, url, create14DigitDate,
             mimetype, recordId, namedFields, request,
-            requestLength);
+            requestLength, true);
     }
     
     public void writeResourceRecord(final String url,
@@ -387,7 +392,7 @@ implements WARCConstants {
     throws IOException {
         writeRecord(RESOURCE, url, create14DigitDate,
             mimetype, recordId, namedFields, response,
-            responseLength);
+            responseLength, true);
     }
 
     public void writeResponseRecord(final String url,
@@ -398,7 +403,7 @@ implements WARCConstants {
     throws IOException {
         writeRecord(RESPONSE, url, create14DigitDate,
             mimetype, recordId, namedFields, response,
-            responseLength);
+            responseLength, true);
     }
     
     public void writeRevisitRecord(final String url,
@@ -409,7 +414,7 @@ implements WARCConstants {
     throws IOException {
         writeRecord(REVISIT, url, create14DigitDate,
             mimetype, recordId, namedFields, response,
-            responseLength);
+            responseLength, false);
     }
     
     public void writeMetadataRecord(final String url,
@@ -420,7 +425,7 @@ implements WARCConstants {
     throws IOException {
         writeRecord(METADATA, url, create14DigitDate,
             mimetype, recordId, namedFields, metadata,
-            metadataLength);
+            metadataLength, true);
     }
     
     /**
