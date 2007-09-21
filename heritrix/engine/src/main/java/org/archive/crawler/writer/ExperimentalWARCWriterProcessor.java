@@ -68,10 +68,8 @@ import org.archive.util.anvl.ANVLRecord;
 
 /**
  * Experimental WARCWriterProcessor.
- * Goes against the pending release of 0.12 of the WARC specification, the
- * "Marcel Marceau" release. See <a href="https://archive-access.svn.sourceforge.net/svnroot/archive-access/branches/gjm_warc_0_12/warc/warc_file_format.html">latest revision</a>
- * for current state.  The 0.10 WARC implemenation has been moved to
- * {@link ExperimentalV10WARCWriterProcessor}.
+ * Goes against the 0.17 WARC specification.
+ * 
  * 
  * <p>TODO: Remove ANVLRecord. Rename NameValue or use RFC822
  * (commons-httpclient?) or find something else.
@@ -219,8 +217,8 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
                 // use RFC822 (commons-httpclient?).
                 ANVLRecord headers = new ANVLRecord(5);
                 if (curi.getContentDigest() != null) {
-                    headers.addLabelValue(HEADER_KEY_CHECKSUM,
-                        curi.getContentDigestSchemeString());
+                    headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
+                            curi.getContentDigestSchemeString());
                 }
                 headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
                 URI rid;
@@ -240,7 +238,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
                     if (anno.contains(TIMER_TRUNC)) {
                         value = NAMED_FIELD_TRUNCATED_VALUE_TIME;
                     } else if (anno.contains(LENGTH_TRUNC)) {
-                        value = NAMED_FIELD_TRUNCATED_VALUE_LEN;
+                        value = NAMED_FIELD_TRUNCATED_VALUE_LENGTH;
                     } else if (anno.contains(HEADER_TRUNC)) {
                         value = NAMED_FIELD_TRUNCATED_VALUE_HEAD;
                     }
@@ -332,6 +330,26 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return baseid;
     }
     
+    protected URI writeResource(final ExperimentalWARCWriter w,
+            final String timestamp, final String mimetype,
+            final URI baseid, final CrawlURI curi,
+            final ANVLRecord namedFields) 
+    throws IOException {
+        ReplayInputStream ris =
+            curi.getRecorder().getRecordedInput().getReplayInputStream();
+        try {
+            w.writeResourceRecord(curi.toString(), timestamp, mimetype, baseid,
+                namedFields, ris,
+                curi.getRecorder().getRecordedInput().getSize());
+        } finally {
+            if (ris != null) {
+                ris.close();
+            }
+        }
+        return baseid;
+    }
+
+    
     protected URI writeRevisitDigest(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
@@ -344,7 +362,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         namedFields.addLabelValue(
         		HEADER_KEY_PROFILE, PROFILE_REVISIT_IDENTICAL_DIGEST);
         namedFields.addLabelValue(
-        		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LEN);
+        		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LENGTH);
         ReplayInputStream ris =
             curi.getRecorder().getRecordedInput().getReplayInputStream();
         try {
@@ -375,7 +393,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         }
         // truncate to zero-length (all necessary info is above)
         namedFields.addLabelValue(HEADER_KEY_TRUNCATED,
-            NAMED_FIELD_TRUNCATED_VALUE_LEN);
+            NAMED_FIELD_TRUNCATED_VALUE_LENGTH);
         ReplayInputStream ris =
             curi.getRecorder().getRecordedInput().getReplayInputStream();
         try {
@@ -422,10 +440,14 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         		r.addLabel("force-fetch");
         	}
             r.addLabelValue("via", curi.flattenVia());
-            r.addLabelValue("pathFromSeed", curi.getPathFromSeed());
+            r.addLabelValue("hopsFromSeed", curi.getPathFromSeed());
             if (curi.containsDataKey(A_SOURCE_TAG)) {
                 r.addLabelValue("sourceTag", curi.getSourceTag());
             }
+        }
+        long duration = curi.getFetchDuration();
+        if (duration > -1) {
+            r.addLabelValue("fetchTimeMs", Long.toString(duration));
         }
         
         // Add outlinks though they are effectively useless without anchor text.

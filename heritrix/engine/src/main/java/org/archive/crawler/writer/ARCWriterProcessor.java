@@ -132,7 +132,7 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
     protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         
-        long recordLength = curi.getContentSize();
+        long recordLength = curi.getRecordedSize();
         
         ReplayInputStream ris = null;
         try {

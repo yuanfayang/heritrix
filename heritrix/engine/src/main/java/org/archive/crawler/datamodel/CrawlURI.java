@@ -1284,6 +1284,16 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         }
     }
 
+    public long getFetchDuration() {
+        if (!containsDataKey(A_FETCH_COMPLETED_TIME)) {
+            return -1;
+        }
+
+        long completedTime = getFetchCompletedTime();
+        long beganTime = getFetchBeginTime();
+        return completedTime - beganTime;
+    }
+    
     public FetchType getFetchType() {
         return fetchType;
     }

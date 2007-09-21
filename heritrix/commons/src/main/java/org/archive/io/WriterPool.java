@@ -154,8 +154,8 @@ public abstract class WriterPool {
                 }
             } catch (Exception e) {
                 // Convert.
-                logger.severe(e.getMessage() + ": E Pool State: " +
-                    getPoolState(waitStart));
+                logger.log(Level.SEVERE,"E Pool State: " +
+                    getPoolState(waitStart), e);
                 throw new IOException("Failed getting writer from pool: " +
                     e.getMessage());
             }

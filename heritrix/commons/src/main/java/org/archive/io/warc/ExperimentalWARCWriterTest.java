@@ -150,7 +150,7 @@ extends TmpDirTestCase implements WARCConstants {
     		writer.writeRecord(METADATA, "http://www.archive.org/",
     			ArchiveUtils.get14DigitDate(), "no/type",
     			rid, headerFields, new ByteArrayInputStream(bodyBytes),
-    			(long)bodyBytes.length);
+    			(long)bodyBytes.length, true);
     	}
     }
 
