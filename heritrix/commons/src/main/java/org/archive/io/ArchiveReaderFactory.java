@@ -48,11 +48,22 @@ import org.archive.util.IoUtils;
  * @version $Date$ $Revision$
  */
 public class ArchiveReaderFactory implements ArchiveFileConstants {
+  // Static block to enable S3 URLs
+  static {
+    if (System.getProperty("java.protocol.handler.pkgs") != null) {
+      System.setProperty("java.protocol.handler.pkgs",
+        System.getProperty("java.protocol.handler.pkgs")
+        + "|" + "org.archive.net");
+    } else {
+      System.setProperty("java.protocol.handler.pkgs", "org.archive.net");
+    }
+  }
+  
 	/**
 	 * Offset value for when we want to stream all.
 	 */
 	private final static int STREAM_ALL = -1;
-	
+
 	private static final ArchiveReaderFactory factory =
 		new ArchiveReaderFactory();
 	
@@ -193,10 +204,9 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     throws IOException {
         // Get URL connection.
         URLConnection connection = f.openConnection();
-        if (!(connection instanceof HttpURLConnection)) {
-            throw new IOException("This method only handles HTTP connections.");
+        if (connection instanceof HttpURLConnection) {
+          addUserAgent((HttpURLConnection)connection);
         }
-        addUserAgent((HttpURLConnection)connection);
         if (offset != STREAM_ALL) {
         	// Use a Range request (Assumes HTTP 1.1 on other end). If
         	// length >= 0, add open-ended range header to the request.  Else,
