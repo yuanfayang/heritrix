@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -78,6 +79,11 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
         Logger.getLogger(ARCWriterProcessor.class.getName());
 
     /**
+     * Default path list.
+     */
+    private static final String [] DEFAULT_PATH = {"arcs"};
+
+    /**
      * Where to save files. Supply absolute or relative path. If relative, files
      * will be written relative to the order.disk-path setting. If more than one
      * path specified, we'll round-robin dropping files to each. This setting is
@@ -91,13 +97,6 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
     static {
         KeyManager.addKeys(ARCWriterProcessor.class);
     }
-        
-        
-    /**
-     * Default path list.
-     */
-    private static final String [] DEFAULT_PATH = {"arcs"};
-
 
     private transient List<String> cachedMetadata;
 
@@ -209,7 +208,7 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
 
     private static Key<List<String>> makePath() {
         KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
-        km.def = Collections.singletonList("arcs");
+        km.def = Arrays.asList(DEFAULT_PATH);
         return km.toKey();
     }
 
@@ -233,7 +232,9 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
             meta = replace(meta, "${JOB_NAME}", provider.getJobName());
             meta = replace(meta, "${DESCRIPTION}", provider.getJobDescription());
             meta = replace(meta, "${OPERATOR}", provider.getJobOperator());
-            meta = replace(meta, "${DATE}", GMT());
+            // TODO: fix this to match job-start-date (from UI or operator setting)
+            // in the meantime, don't include a slightly-off date
+            // meta = replace(meta, "${DATE}", GMT());
             meta = replace(meta, "${USER_AGENT}", provider.getUserAgent());
             meta = replace(meta, "${FROM}", provider.getFrom());
             meta = replace(meta, "${ROBOTS}", provider.getRobotsPolicy());

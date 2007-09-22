@@ -35,6 +35,6 @@ public interface MetadataProvider {
     String getUserAgent();
     String getFrom();
     String getRobotsPolicy();
-
-    
+    String getAudience();
+    String getOrganization();
 }

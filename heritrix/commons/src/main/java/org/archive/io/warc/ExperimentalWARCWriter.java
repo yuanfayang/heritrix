@@ -316,7 +316,7 @@ implements WARCConstants {
         	}
         	warcinfoBody = baos.toByteArray();
         }
-        URI uri = writeWarcinfoRecord("text/xml", record,
+        URI uri = writeWarcinfoRecord("application/warc-fields", record,
             new ByteArrayInputStream(warcinfoBody), warcinfoBody.length);
         // TODO: If at start of file, and we're writing compressed,
         // write out our distinctive GZIP extensions.

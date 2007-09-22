@@ -6,7 +6,6 @@
 <dcterms:isPartOf>${JOB_NAME}</dcterms:isPartOf>
 <dc:description>${DESCRIPTION}</dc:description>
 <arc:operator>${OPERATOR}</arc:operator>
-<ns0:date xmlns:ns0="http://purl.org/dc/elements/1.1/" xsi:type="dcterms:W3CDTF">${DATE}</ns0:date>
 <arc:http-header-user-agent>${USER_AGENT}</arc:http-header-user-agent>
 <arc:http-header-from>${FROM}</arc:http-header-from>
 <arc:robots>${ROBOTS}</arc:robots>
