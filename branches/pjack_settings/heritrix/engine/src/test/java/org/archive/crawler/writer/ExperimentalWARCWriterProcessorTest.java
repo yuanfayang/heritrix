@@ -42,8 +42,41 @@ import org.archive.util.TmpDirTestCase;
  * @author pjack
  */
 public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBase {
+    public class DummyMetadataProvider implements MetadataProvider {
+        public String getAudience() {
+            return null;
+        }
 
-    
+        public String getFrom() {
+            return null;
+        }
+
+        public String getJobDescription() {
+            return null;
+        }
+
+        public String getJobName() {
+            return null;
+        }
+
+        public String getJobOperator() {
+            return null;
+        }
+
+        public String getOrganization() {
+            return null;
+        }
+
+        public String getRobotsPolicy() {
+            return null;
+        }
+
+        public String getUserAgent() {
+            return null;
+        }
+    }
+
+
     @Override
     protected Class<?> getModuleClass() {
         return ExperimentalWARCWriterProcessor.class;
@@ -62,6 +95,7 @@ public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBas
         ExperimentalWARCWriterProcessor result = new ExperimentalWARCWriterProcessor();
         sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
         sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
+        sp.set(result, WriterPoolProcessor.METADATA_PROVIDER, new DummyMetadataProvider());
         result.initialTasks(sp);
         return result;
     }

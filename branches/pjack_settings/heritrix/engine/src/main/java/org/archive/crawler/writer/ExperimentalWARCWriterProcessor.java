@@ -22,10 +22,39 @@
  */
 package org.archive.crawler.writer;
 
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_DNS_SERVER_IP_LABEL;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_HTTP_TRANSACTION;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_SOURCE_TAG;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.HEADER_TRUNC;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.LENGTH_TRUNC;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.TIMER_TRUNC;
+import static org.archive.io.warc.WARCConstants.HEADER_KEY_CONCURRENT_TO;
+import static org.archive.io.warc.WARCConstants.HEADER_KEY_ETAG;
+import static org.archive.io.warc.WARCConstants.HEADER_KEY_IP;
+import static org.archive.io.warc.WARCConstants.HEADER_KEY_LAST_MODIFIED;
+import static org.archive.io.warc.WARCConstants.HEADER_KEY_PAYLOAD_DIGEST;
+import static org.archive.io.warc.WARCConstants.HEADER_KEY_PROFILE;
+import static org.archive.io.warc.WARCConstants.HEADER_KEY_TRUNCATED;
+import static org.archive.io.warc.WARCConstants.HTTP_REQUEST_MIMETYPE;
+import static org.archive.io.warc.WARCConstants.HTTP_RESPONSE_MIMETYPE;
+import static org.archive.io.warc.WARCConstants.METADATA;
+import static org.archive.io.warc.WARCConstants.NAMED_FIELD_TRUNCATED_VALUE_HEAD;
+import static org.archive.io.warc.WARCConstants.NAMED_FIELD_TRUNCATED_VALUE_LENGTH;
+import static org.archive.io.warc.WARCConstants.NAMED_FIELD_TRUNCATED_VALUE_TIME;
+import static org.archive.io.warc.WARCConstants.PROFILE_REVISIT_IDENTICAL_DIGEST;
+import static org.archive.io.warc.WARCConstants.PROFILE_REVISIT_NOT_MODIFIED;
+import static org.archive.io.warc.WARCConstants.REQUEST;
+import static org.archive.io.warc.WARCConstants.TYPE;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_ETAG_HEADER;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_LAST_MODIFIED_HEADER;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,24 +67,19 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-
+import org.apache.commons.lang.StringUtils;
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
-
-
-import org.archive.modules.ProcessResult;
-import org.archive.modules.ProcessorURI;
-import org.archive.modules.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.ExperimentalWARCWriter;
-import static org.archive.io.warc.WARCConstants.*;
-import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
-
 import org.archive.io.warc.WARCWriterPool;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.extractor.Link;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Key;
@@ -115,6 +139,10 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     final public static Key<Boolean> WRITE_REVISIT_FOR_NOT_MODIFIED =
         Key.make(true);
 
+    /**
+     * Default path list.
+     */
+    private static final String [] DEFAULT_PATH = {"warcs"};
     
     /**
      * Where to save files. Supply absolute or relative path. If relative, files
@@ -130,13 +158,8 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     static {
         KeyManager.addKeys(ExperimentalWARCWriterProcessor.class);
     }
-    
-    
-    /**
-     * Default path list.
-     */
-    private static final String [] DEFAULT_PATH = {"warcs"};
 
+    private transient List<String> cachedMetadata;
 
     protected String [] getDefaultPath() {
         return DEFAULT_PATH;
@@ -507,15 +530,66 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
 
     private static Key<List<String>> makePath() {
         KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
-        km.def = Collections.singletonList("arcs");
+        km.def = Arrays.asList(DEFAULT_PATH);
         return km.toKey();
     }
 
     
-    public List<String> getMetadata(StateProvider context) {
-        return null; // FIXME
+    public List<String> getMetadata(StateProvider global) {
+        if (cachedMetadata != null) {
+            return cachedMetadata;
+        }
+        ANVLRecord record = new ANVLRecord(7);
+        record.addLabelValue("software", "Heritrix/" +
+                Heritrix.getVersion() + " http://crawler.archive.org");
+        try {
+            InetAddress host = InetAddress.getLocalHost();
+            record.addLabelValue("ip", host.getHostAddress());
+            record.addLabelValue("hostname", host.getHostName());
+        } catch (UnknownHostException e) {
+            logger.log(Level.WARNING,"unable top obtain local crawl engine host",e);
+        }
+        record.addLabelValue("format","WARC File Format 0.17");
+        record.addLabelValue("conformsTo","http://crawler.archive.org/warc/0.17/WARC0.17ISO.doc");
+        // Get other values from metadata provider
+
+        MetadataProvider provider = global.get(this, METADATA_PROVIDER);
+
+        addIfNotBlank(record,"operator", provider.getJobOperator());
+        addIfNotBlank(record,"publisher", provider.getOrganization());
+        addIfNotBlank(record,"audience", provider.getAudience());
+        addIfNotBlank(record,"isPartOf", provider.getJobName());
+        // TODO: make date match 'job creation date' as in Heritrix 1.x
+        // until then, leave out (plenty of dates already in WARC 
+        // records
+//            String rawDate = provider.getBeginDate();
+//            if(StringUtils.isNotBlank(rawDate)) {
+//                Date date;
+//                try {
+//                    date = ArchiveUtils.parse14DigitDate(rawDate);
+//                    addIfNotBlank(record,"created",ArchiveUtils.getLog14Date(date));
+//                } catch (ParseException e) {
+//                    logger.log(Level.WARNING,"obtaining warc created date",e);
+//                }
+//            }
+        addIfNotBlank(record,"description", provider.getJobDescription());
+        addIfNotBlank(record,"robots", provider.getRobotsPolicy());
+
+        addIfNotBlank(record,"http-header-user-agent",
+                provider.getUserAgent());
+        addIfNotBlank(record,"http-header-from",
+                provider.getFrom());
+
+        // really ugly to return as List<String>, but changing would require 
+        // larger refactoring
+        return Collections.singletonList(record.toString());
     }
     
+    protected void addIfNotBlank(ANVLRecord record, String label, String value) {
+        if(StringUtils.isNotBlank(value)) {
+            record.addLabelValue(label, value);
+        }
+    }
     // good to keep at end of source: must run after all per-Key 
     // initialization values are set.
     static {
