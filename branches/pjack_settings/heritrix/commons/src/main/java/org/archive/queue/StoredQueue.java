@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.AbstractQueue;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
 import org.archive.settings.file.BdbModule;
 
@@ -47,8 +48,9 @@ import com.sleepycat.je.DatabaseException;
  * @param <E>
  */
 public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  implements Serializable {
-
     private static final long serialVersionUID = 3L;
+    private static final Logger logger =
+        Logger.getLogger(StoredQueue.class.getName());
 
     transient StoredSortedMap queueMap; // Long -> E
     transient Database queueDb; // Database
@@ -116,7 +118,19 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  imple
     @SuppressWarnings("unchecked")
     public E peek() {
         synchronized (headIndex) {
-            return (E) queueMap.get(headIndex.get());
+            E head = null;
+            while(head == null && headIndex.get() < tailIndex.get()) {
+                head = (E) queueMap.get(headIndex.get());
+                if(head != null) {
+                    return head;
+                }
+                // ERROR; should never be null with headIndex < tailIndex
+                logger.severe("unexpected empty index of StoredQueue: "
+                        + headIndex.get() + " (tailIndex: " 
+                        + tailIndex.get());
+                headIndex.incrementAndGet();
+            }
+            return head;
         }
     }
 
