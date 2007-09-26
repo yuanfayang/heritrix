@@ -32,13 +32,10 @@
    <fileSet>
      <directory>src/main/conf</directory>
      <outputDirectory>/conf</outputDirectory>
-     <excludes>
-       <exclude>profiles</exclude>
-     </excludes>
    </fileSet>
    <fileSet>
-     <directory>src/main/conf/profiles</directory>
-     <outputDirectory>/profiles</outputDirectory>
+     <directory>src/main/conf/jobs</directory>
+     <outputDirectory>/jobs</outputDirectory>
    </fileSet>
 
   </fileSets>

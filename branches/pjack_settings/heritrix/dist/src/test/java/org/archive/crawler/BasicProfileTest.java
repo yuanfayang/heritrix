@@ -19,9 +19,9 @@ public class BasicProfileTest extends TmpDirTestCase {
      * Tests the default profile that gets put in the heritrix tarball.
      */
     public void testDefaultProfile() throws Exception {
-        File srcDir = new File("src/main/conf/profiles");
+        File srcDir = new File("src/main/conf/jobs");
         if (!srcDir.exists()) {
-            srcDir = new File("dist/src/main/conf/profiles");
+            srcDir = new File("dist/src/main/conf/jobs");
         }
         if (!srcDir.exists()) {
             throw new IllegalStateException("Couldn't find default profile.");
