@@ -313,6 +313,26 @@ implements CoreAttributeConstants {
                 links[0].getDestination().toString().equals("http://www.example.com/"));
     }
     
+    /**
+     * Test only extract FORM ACTIONS with METHOD GET 
+     * 
+     * [HER-1280] do not by default GET form action URLs declared as POST, 
+     * because it can cause problems/complaints 
+     * http://webteam.archive.org/jira/browse/HER-1280
+     */
+    public void testOnlyExtractFormGets() throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory
+                .getInstance("http://www.example.com"));
+        CharSequence cs = 
+            "<form method=\"get\" action=\"http://www.example.com/ok1\"> "+
+            "<form action=\"http://www.example.com/ok2\" method=\"get\"> "+
+            "<form method=\"post\" action=\"http://www.example.com/notok\"> "+
+            "<form action=\"http://www.example.com/ok3\"> ";
+        this.extractor.extract(curi, cs);
+        Link[] links = curi.getOutLinks().toArray(new Link[0]);
+        assertTrue("incorrect number of links found",links.length==3);
+    }
+    
     public static void main(String[] args) throws Exception {
         if (args.length != 1 && args.length != 2) {
             System.err.println("Usage: " + ExtractorHTMLTest.class.getName() +

@@ -123,11 +123,12 @@ implements CoreAttributeConstants {
      +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)" // ...
      +"|(?:usemap)|(?:profile)|(?:datasrc))" // 5
      +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)" // 6, 7, 8, 9
-     +"|(value)|(style)|([-\\w]{1,"+MAX_ATTR_NAME_LENGTH+"}))" // 10, 11, 12
+     +"|(value)|(style)|(method)" // 10, 11, 12
+     +"|([-\\w]{1,"+MAX_ATTR_NAME_LENGTH+"}))" // 13
      +"\\s*=\\s*"
-     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:\"|$))" // 13
-     +"|(?:'(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:'|$))" // 14
-     +"|(\\S{1,"+MAX_ATTR_VAL_LENGTH+"}))"; // 15
+     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:\"|$))" // 14
+     +"|(?:'(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:'|$))" // 15
+     +"|(\\S{1,"+MAX_ATTR_VAL_LENGTH+"}))"; // 16
     // groups:
     // 1: attribute name
     // 2: HREF - single URI relative to doc base, or occasionally javascript:
@@ -143,10 +144,11 @@ implements CoreAttributeConstants {
     // 9: CODE - a single URI relative to the CODEBASE (is specified).
     // 10: VALUE - often includes a uri path on forms
     // 11: STYLE - inline attribute style info
-    // 12: any other attribute
-    // 13: double-quote delimited attr value
-    // 14: single-quote delimited attr value
-    // 15: space-delimited attr value
+    // 12: METHOD - form GET/POST
+    // 13: any other attribute
+    // 14: double-quote delimited attr value
+    // 15: single-quote delimited attr value
+    // 16: space-delimited attr value
 
 
     // much like the javascript likely-URI extractor, but
@@ -168,7 +170,10 @@ implements CoreAttributeConstants {
     
     public static final String ATTR_IGNORE_FORM_ACTION_URLS =
         "ignore-form-action-urls";
-    
+
+    public static final String ATTR_EXTRACT_ONLY_FORM_GETS =
+        "extract-only-form-gets";
+
     /** whether to try finding links in Javscript; default true */
     public static final String ATTR_EXTRACT_JAVASCRIPT =
         "extract-javascript";
@@ -210,6 +215,12 @@ implements CoreAttributeConstants {
             "HTML FORMs are ignored. Default is false.", Boolean.FALSE));
         t.setExpertSetting(true);
         t = addElementToDefinition(
+                new SimpleType(ATTR_EXTRACT_ONLY_FORM_GETS,
+                "If true, only HTML FORM ACTIONs associated with the GET "+ 
+                "method are extracted. (Form ACTIONs with method POST "+
+                "will be ignored. Default is true", Boolean.TRUE));
+        t.setExpertSetting(true);
+        t = addElementToDefinition(
             new SimpleType(ATTR_OVERLY_EAGER_LINK_DETECTION,
             "If true, strings that look like URIs found in unusual " +
             "places (such as form VALUE attributes) will be extracted. " +
@@ -236,6 +247,11 @@ implements CoreAttributeConstants {
         String codebase = null;
         ArrayList<String> resources = null;
         
+        // Just in case it's a FORM
+        CharSequence action = null;
+        CharSequence actionContext = null;
+        CharSequence method = null; 
+        
         final boolean framesAsEmbeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_TREAT_FRAMES_AS_EMBED_LINKS)).booleanValue();
 
@@ -249,7 +265,7 @@ implements CoreAttributeConstants {
 
         while (attr.find()) {
             int valueGroup =
-                (attr.start(13) > -1) ? 13 : (attr.start(14) > -1) ? 14 : 15;
+                (attr.start(14) > -1) ? 14 : (attr.start(15) > -1) ? 15 : 16;
             int start = attr.start(valueGroup);
             int end = attr.end(valueGroup);
             assert start >= 0: "Start is: " + start + ", " + curi;
@@ -286,9 +302,10 @@ implements CoreAttributeConstants {
             } else if (attr.start(3) > -1) {
                 // ACTION
                 if (!ignoreFormActions) {
-                    CharSequence context = Link.elementContext(element,
+                    action = value; 
+                    actionContext = Link.elementContext(element,
                         attr.group(3));
-                    processLink(curi, value, context);
+                    // handling finished only at end (after METHOD also collected)
                 }
             } else if (attr.start(4) > -1) {
                 // ON____
@@ -360,6 +377,10 @@ implements CoreAttributeConstants {
                     curi, value, getController());
                 
             } else if (attr.start(12) > -1) {
+                // METHOD
+                method = value;
+                // form processing finished at end (after ACTION also collected)
+            } else if (attr.start(13) > -1) {
                 // any other attribute
                 // ignore for now
                 // could probe for path- or script-looking strings, but
@@ -369,33 +390,41 @@ implements CoreAttributeConstants {
         }
         TextUtils.recycleMatcher(attr);
 
-        // handle codebase/resources
-        if (resources == null) {
-            return;
-        }
-        Iterator iter = resources.iterator();
-        UURI codebaseURI = null;
-        String res = null;
-        try {
-            if (codebase != null) {
-                // TODO: Pass in the charset.
-                codebaseURI = UURIFactory.
-                    getInstance(curi.getUURI(), codebase);
-            }
-            while(iter.hasNext()) {
-                res = iter.next().toString();
-                res = (String) TextUtils.unescapeHtml(res);
-                if (codebaseURI != null) {
-                    res = codebaseURI.resolve(res).toString();
+        // finish handling codebase/resources now that all available
+        if (resources != null) {
+            Iterator iter = resources.iterator();
+            UURI codebaseURI = null;
+            String res = null;
+            try {
+                if (codebase != null) {
+                    // TODO: Pass in the charset.
+                    codebaseURI = UURIFactory.
+                        getInstance(curi.getUURI(), codebase);
                 }
-                processEmbed(curi, res, element); // TODO: include attribute too
+                while(iter.hasNext()) {
+                    res = iter.next().toString();
+                    res = (String) TextUtils.unescapeHtml(res);
+                    if (codebaseURI != null) {
+                        res = codebaseURI.resolve(res).toString();
+                    }
+                    processEmbed(curi, res, element); // TODO: include attribute too
+                }
+            } catch (URIException e) {
+                curi.addLocalizedError(getName(), e, "BAD CODEBASE " + codebase);
+            } catch (IllegalArgumentException e) {
+                DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
+                    "codebase=" + codebase + " res=" + res + "\n" +
+                    DevUtils.extraInfo(), e);
             }
-        } catch (URIException e) {
-            curi.addLocalizedError(getName(), e, "BAD CODEBASE " + codebase);
-        } catch (IllegalArgumentException e) {
-            DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
-                "codebase=" + codebase + " res=" + res + "\n" +
-                DevUtils.extraInfo(), e);
+        }
+        
+        // finish handling form action, now method is available
+        if(action != null) {
+            if(method == null || "GET".equalsIgnoreCase(method.toString()) 
+                    || ! ((Boolean)getUncheckedAttribute(curi,
+                            ATTR_EXTRACT_ONLY_FORM_GETS)).booleanValue()) {
+                processLink(curi, action, actionContext);
+            }
         }
     }
 
@@ -668,7 +697,7 @@ implements CoreAttributeConstants {
         String content = null;
         while (attr.find()) {
             int valueGroup =
-                (attr.start(13) > -1) ? 13 : (attr.start(14) > -1) ? 14 : 15;
+                (attr.start(14) > -1) ? 14 : (attr.start(15) > -1) ? 15 : 16;
             CharSequence value =
                 cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
             if (attr.group(1).equalsIgnoreCase("name")) {
