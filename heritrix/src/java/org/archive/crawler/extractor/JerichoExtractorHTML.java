@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.RobotsHonoringPolicy;
@@ -357,8 +358,18 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
         final boolean ignoreFormActions = ((Boolean) getUncheckedAttribute(
                 curi, ATTR_IGNORE_FORM_ACTION_URLS)).booleanValue();
 
-        if (ignoreFormActions)
+        if (ignoreFormActions) {
             return;
+        }
+        
+        // method-sensitive extraction
+        String method = StringUtils.defaultIfEmpty(
+                element.getAttributeValue("method"), "GET");
+        if(((Boolean)getUncheckedAttribute(curi,
+                 ATTR_EXTRACT_ONLY_FORM_GETS)).booleanValue() 
+                 && ! "GET".equalsIgnoreCase(method)) {
+             return;
+        }
 
         numberOfFormsProcessed++;
 
