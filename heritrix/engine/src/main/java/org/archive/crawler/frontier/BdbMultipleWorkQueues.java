@@ -264,6 +264,14 @@ public class BdbMultipleWorkQueues {
        
         try {
             retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
+        } catch (ClassCastException cce) {
+            Object obj = crawlUriBinding.entryToObject(result);
+            LOGGER.log(Level.SEVERE,
+                    "see [#HER-1283]: deserialized " + obj.getClass() 
+                    + " has ClassLoader " 
+                    + obj.getClass().getClassLoader().getClass(),
+                    cce);
+            return null; 
         } catch (RuntimeExceptionWrapper rw) {
             LOGGER.log(
                 Level.SEVERE,
