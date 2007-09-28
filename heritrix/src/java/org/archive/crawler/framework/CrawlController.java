@@ -422,9 +422,13 @@ public class CrawlController implements Serializable, Reporter {
         // file in the target same as one we'd copy from the checkpoint dir.
         File bdbSubDir = CheckpointUtils.
             getBdbSubDirectory(this.checkpointRecover.getDirectory());
+        List<IOException> errs = new ArrayList<IOException>();
         FileUtils.copyFiles(bdbSubDir, CheckpointUtils.getJeLogsFilter(),
-            getStateDisk(), true,
-            false);
+            getStateDisk(), true, false, errs);
+        for (IOException ioe : errs) {
+            LOGGER.log(Level.SEVERE, "Problem copying checkpoint files: "
+                    +"checkpoint may be corrupt",ioe);
+        }
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.info("Finished recovery setup for checkpoint named " +
                 this.checkpointRecover.getDisplayName() + " in " +

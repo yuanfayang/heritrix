@@ -96,7 +96,7 @@ public class FileUtils {
      */
     public static void copyFiles(File src, File dest)
     throws IOException {
-        copyFiles(src, null, dest, false, true);
+        copyFiles(src, null, dest, false, true, null);
     }
     
     /**
@@ -143,6 +143,29 @@ public class FileUtils {
     public static void copyFiles(final File src, final FilenameFilter filter,
         final File dest, final boolean inSortedOrder, final boolean overwrite)
     throws IOException {
+        copyFiles(src, filter, dest, inSortedOrder, overwrite, null);
+    }
+
+    /**
+     * Recursively copy all files from one directory to another.
+     * 
+     * @param src File or directory to copy from.
+     * @param filter Filename filter to apply to src. May be null if no
+     * filtering wanted.
+     * @param dest File or directory to copy to.
+     * @param inSortedOrder Copy in order of natural sort.
+     * @param overwrite If target file already exits, and this parameter is
+     * true, overwrite target file (We do this by first deleting the target
+     * file before we begin the copy).
+     * @param exceptions if non-null, add any individual-file IOExceptions
+     * to this List rather than throwing, and proceed with the deep copy
+     * @return TODO
+     * @throws IOException
+     */
+    public static void copyFiles(final File src, final FilenameFilter filter,
+        final File dest, final boolean inSortedOrder, final boolean overwrite, 
+        List<IOException> exceptions)
+    throws IOException {
         // TODO: handle failures at any step
         if (!src.exists()) {
             if (LOGGER.isLoggable(Level.FINE)) {
@@ -166,10 +189,19 @@ public class FileUtils {
             }
             for (int i = 0; i < list.length; i++) {
                 copyFiles(new File(src, list[i]), filter,
-                    new File(dest, list[i]), inSortedOrder, overwrite);
+                    new File(dest, list[i]), inSortedOrder, overwrite, exceptions);
             }
         } else {
-            copyFile(src, dest, overwrite);
+            try {
+                copyFile(src, dest, overwrite);
+            } catch (IOException ioe) {
+                if (exceptions != null) {
+                    exceptions.add(ioe);
+                } else {
+                    // rethrow
+                    throw ioe;
+                }
+            }
         }
     }
 
@@ -283,9 +315,9 @@ public class FileUtils {
                 LOGGER.severe("Failed copy, trying workaround: " + message);
                 workaroundCopyFile(src, dest);
             } else {
-                IOException newE = new IOException(message);
-                newE.setStackTrace(e.getStackTrace());
-                throw newE;
+                LOGGER.log(Level.SEVERE,message,e);
+                // rethrow
+                throw e;
             }
         } finally {
             // finish up
