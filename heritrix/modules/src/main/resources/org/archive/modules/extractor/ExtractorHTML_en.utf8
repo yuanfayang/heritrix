@@ -13,6 +13,11 @@ If true, URIs appearing as the ACTION attribute in HTML FORMs are
 ignored. Default is false.
 
 
+extract-only-form-gets-description:
+If true, only ACTION URIs with a METHOD of GET (explicit or implied)
+are extracted. Default is true.
+
+
 overly-eager-link-detection-description:
 If true, strings that look like URIs found in unusual places (such as
 form VALUE attributes) will be extracted. This typically finds both

@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.net.UURI;
@@ -342,9 +343,17 @@ public class JerichoExtractorHTML extends ExtractorHTML {
 
         final boolean ignoreFormActions = curi.get(this, IGNORE_FORM_ACTION_URLS);
 
-        if (ignoreFormActions)
+        if (ignoreFormActions) {
             return;
+        }
 
+        // method-sensitive extraction
+        String method = StringUtils.defaultIfEmpty(
+                element.getAttributeValue("method"), "GET");
+        if(curi.get(this, EXTRACT_ONLY_FORM_GETS) 
+                 && ! "GET".equalsIgnoreCase(method)) {
+             return;
+        }
         numberOfFormsProcessed++;
 
         // get all form fields
