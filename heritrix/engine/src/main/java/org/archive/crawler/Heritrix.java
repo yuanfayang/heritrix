@@ -24,6 +24,7 @@
  */
 package org.archive.crawler;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -251,7 +252,9 @@ public class Heritrix {
             out = System.out;
         } else {
             File startLog = new File(getHeritrixHome(), STARTLOG);
-            out = new PrintStream(new FileOutputStream(startLog));
+            out = new PrintStream(
+                    new BufferedOutputStream(
+                            new FileOutputStream(startLog),16384));
         }
         
         // Set timezone here.  Would be problematic doing it if we're running
