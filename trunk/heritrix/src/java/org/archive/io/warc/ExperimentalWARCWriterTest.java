@@ -257,7 +257,7 @@ extends TmpDirTestCase implements WARCConstants {
             ArchiveRecordHeader h = (ArchiveRecordHeader)headers.get(i);
             ArchiveRecord r = reader.get(h.getOffset());
             String mimeType = r.getHeader().getMimetype();
-            assertTrue("Record is bogus",
+            assertTrue("Record is bogus, bad mimetype "+mimeType,
                 mimeType != null && mimeType.length() > 0);
         }
         reader.close();

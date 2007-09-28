@@ -533,33 +533,33 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         // Get other values from order.xml 
         try {
             Document doc = XmlUtils.getDocument(orderFile);
-            addIfNonNull(record,"operator",
+            addIfNotBlank(record,"operator",
                     XmlUtils.xpathOrNull(doc,"//meta/operator"));
-            addIfNonNull(record,"publisher",
+            addIfNotBlank(record,"publisher",
                     XmlUtils.xpathOrNull(doc,"//meta/organization"));
-            addIfNonNull(record,"audience",
+            addIfNotBlank(record,"audience",
                     XmlUtils.xpathOrNull(doc,"//meta/audience"));
-            addIfNonNull(record,"isPartOf",
+            addIfNotBlank(record,"isPartOf",
                     XmlUtils.xpathOrNull(doc,"//meta/name"));
             String rawDate = XmlUtils.xpathOrNull(doc,"//meta/date");
             if(StringUtils.isNotBlank(rawDate)) {
                 Date date;
                 try {
                     date = ArchiveUtils.parse14DigitDate(rawDate);
-                    addIfNonNull(record,"created",ArchiveUtils.getLog14Date(date));
+                    addIfNotBlank(record,"created",ArchiveUtils.getLog14Date(date));
                 } catch (ParseException e) {
                     logger.log(Level.WARNING,"obtaining warc created date",e);
                 }
             }
-            addIfNonNull(record,"description",
+            addIfNotBlank(record,"description",
                     XmlUtils.xpathOrNull(doc,"//meta/description"));
-            addIfNonNull(record,"robots",
+            addIfNotBlank(record,"robots",
                     XmlUtils.xpathOrNull(doc, 
                             "//newObject[@name='robots-honoring-policy']/string[@name='type']"));
-            addIfNonNull(record,"http-header-user-agent",
+            addIfNotBlank(record,"http-header-user-agent",
                     XmlUtils.xpathOrNull(doc, 
                             "//map[@name='http-headers']/string[@name='user-agent']"));
-            addIfNonNull(record,"http-header-from",
+            addIfNotBlank(record,"http-header-from",
                     XmlUtils.xpathOrNull(doc, 
                             "//map[@name='http-headers']/string[@name='from']"));
         } catch (IOException e) {
@@ -571,7 +571,8 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return record.toString();
     }
 
-    protected void addIfNonNull(ANVLRecord record, String label, String value) {
+
+    protected void addIfNotBlank(ANVLRecord record, String label, String value) {
         if(StringUtils.isNotBlank(value)) {
             record.addLabelValue(label, value);
         }
