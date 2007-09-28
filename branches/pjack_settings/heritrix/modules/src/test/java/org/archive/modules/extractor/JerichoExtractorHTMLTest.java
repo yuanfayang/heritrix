@@ -28,9 +28,6 @@ import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.DefaultProcessorURI;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.extractor.Extractor;
-import org.archive.modules.extractor.JerichoExtractorHTML;
-import org.archive.modules.extractor.Link;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.ExampleStateProvider;
@@ -57,15 +54,15 @@ public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
     
     
     /**
-     * Test a forms link extraction
+     * Test a GET FORM ACTION extraction
      * 
      * @throws URIException
      */
-    public void testFormsLink() throws URIException {
+    public void testFormsLinkGet() throws URIException {
         UURI uuri = UURIFactory.getInstance("http://www.example.org");
         ProcessorURI curi = new DefaultProcessorURI(uuri, null);
         CharSequence cs = 
-        	"<form name=\"testform\" method=\"POST\" action=\"redirect_me?form=true\"> " +
+        	"<form name=\"testform\" method=\"GET\" action=\"redirect_me?form=true\"> " +
         	"  <INPUT TYPE=CHECKBOX NAME=\"checked[]\" VALUE=\"1\" CHECKED> "+
         	"  <INPUT TYPE=CHECKBOX NAME=\"unchecked[]\" VALUE=\"1\"> " +
         	"  <select name=\"selectBox\">" +
@@ -85,5 +82,62 @@ public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
         }));
     }
     
+    /**
+     * Test a POST FORM ACTION being properly ignored 
+     * 
+     * @throws URIException
+     */
+    public void testFormsLinkIgnorePost() throws URIException {
+        UURI uuri = UURIFactory.getInstance("http://www.example.org");
+        ProcessorURI curi = new DefaultProcessorURI(uuri, null);
+        CharSequence cs = 
+            "<form name=\"testform\" method=\"POST\" action=\"redirect_me?form=true\"> " +
+            "  <INPUT TYPE=CHECKBOX NAME=\"checked[]\" VALUE=\"1\" CHECKED> "+
+            "  <INPUT TYPE=CHECKBOX NAME=\"unchecked[]\" VALUE=\"1\"> " +
+            "  <select name=\"selectBox\">" +
+            "    <option value=\"selectedOption\" selected>option1</option>" +
+            "    <option value=\"nonselectedOption\">option2</option>" +
+            "  </select>" +
+            "  <input type=\"submit\" name=\"test\" value=\"Go\">" +
+            "</form>";   
+        JerichoExtractorHTML ex = (JerichoExtractorHTML)makeExtractor();
+        ex.extract(curi, cs);
+        curi.getOutLinks();
+        assertTrue(!CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object).getDestination().toString().indexOf(
+                        "/redirect_me?form=true&checked[]=1&unchecked[]=&selectBox=selectedOption&test=Go")>=0;
+            }
+        }));
+    }
     
+    /**
+     * Test a POST FORM ACTION being found with non-default setting
+     * 
+     * @throws URIException
+     */
+    public void testFormsLinkFindPost() throws URIException {
+        UURI uuri = UURIFactory.getInstance("http://www.example.org");
+        DefaultProcessorURI curi = new DefaultProcessorURI(uuri, null);
+        CharSequence cs = 
+            "<form name=\"testform\" method=\"POST\" action=\"redirect_me?form=true\"> " +
+            "  <INPUT TYPE=CHECKBOX NAME=\"checked[]\" VALUE=\"1\" CHECKED> "+
+            "  <INPUT TYPE=CHECKBOX NAME=\"unchecked[]\" VALUE=\"1\"> " +
+            "  <select name=\"selectBox\">" +
+            "    <option value=\"selectedOption\" selected>option1</option>" +
+            "    <option value=\"nonselectedOption\">option2</option>" +
+            "  </select>" +
+            "  <input type=\"submit\" name=\"test\" value=\"Go\">" +
+            "</form>";   
+        JerichoExtractorHTML ex = (JerichoExtractorHTML)makeExtractor();
+        curi.set(ex, ExtractorHTML.EXTRACT_ONLY_FORM_GETS, Boolean.FALSE);
+        ex.extract(curi, cs);
+        curi.getOutLinks();
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object).getDestination().toString().indexOf(
+                        "/redirect_me?form=true&checked[]=1&unchecked[]=&selectBox=selectedOption&test=Go")>=0;
+            }
+        }));
+    }
 }

@@ -137,11 +137,12 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)" // ...
      +"|(?:usemap)|(?:profile)|(?:datasrc))" // 5
      +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)" // 6, 7, 8, 9
-     +"|(value)|(style)|([-\\w]{1,"+MAX_ATTR_NAME_REPLACE+"}))" // 10, 11, 12
+     +"|(value)|(style)|(method)" // 10, 11, 12
+     +"|([-\\w]{1,"+MAX_ATTR_NAME_REPLACE+"}))" // 13
      +"\\s*=\\s*"
-     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_REPLACE+"}?)(?:\"|$))" // 13
-     +"|(?:'(.{0,"+MAX_ATTR_VAL_REPLACE+"}?)(?:'|$))" // 14
-     +"|(\\S{1,"+MAX_ATTR_VAL_REPLACE+"}))"; // 15
+     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_REPLACE+"}?)(?:\"|$))" // 14
+     +"|(?:'(.{0,"+MAX_ATTR_VAL_REPLACE+"}?)(?:'|$))" // 15
+     +"|(\\S{1,"+MAX_ATTR_VAL_REPLACE+"}))"; // 16
     // groups:
     // 1: attribute name
     // 2: HREF - single URI relative to doc base, or occasionally javascript:
@@ -157,10 +158,11 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
     // 9: CODE - a single URI relative to the CODEBASE (is specified).
     // 10: VALUE - often includes a uri path on forms
     // 11: STYLE - inline attribute style info
-    // 12: any other attribute
-    // 13: double-quote delimited attr value
-    // 14: single-quote delimited attr value
-    // 15: space-delimited attr value
+    // 12: METHOD - form GET/POST
+    // 13: any other attribute
+    // 14: double-quote delimited attr value
+    // 15: single-quote delimited attr value
+    // 16: space-delimited attr value
 
 
     // much like the javascript likely-URI extractor, but
@@ -197,6 +199,14 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         Key.make(false);
 
 
+    /**
+     * If true, only ACTION URIs with a METHOD of GET (explicit or implied)
+     * are extracted. Default is true.
+     */
+    @Expert
+    public static final Key<Boolean> EXTRACT_ONLY_FORM_GETS =
+        Key.make(true);
+    
     /**
      * If true, in-page Javascript is scanned for strings that
      * appear likely to be URIs. This typically finds both valid
@@ -283,6 +293,11 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         String codebase = null;
         ArrayList<String> resources = null;
         
+        // Just in case it's a FORM
+        CharSequence action = null;
+        CharSequence actionContext = null;
+        CharSequence method = null; 
+        
         final boolean framesAsEmbeds = 
             curi.get(this, TREAT_FRAMES_AS_EMBED_LINKS);
 
@@ -296,7 +311,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 
         while (attr.find()) {
             int valueGroup =
-                (attr.start(13) > -1) ? 13 : (attr.start(14) > -1) ? 14 : 15;
+                (attr.start(14) > -1) ? 14 : (attr.start(15) > -1) ? 15 : 16;
             int start = attr.start(valueGroup);
             int end = attr.end(valueGroup);
             assert start >= 0: "Start is: " + start + ", " + curi;
@@ -324,9 +339,9 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
             } else if (attr.start(3) > -1) {
                 // ACTION
                 if (!ignoreFormActions) {
-                    CharSequence context = elementContext(element,
-                        attr.group(3));
-                    processLink(curi, value, context);
+                    action = value; 
+                    actionContext = elementContext(element, attr.group(3));
+                    // handling finished only at end (after METHOD also collected)
                 }
             } else if (attr.start(4) > -1) {
                 // ON____
@@ -397,6 +412,10 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
                         uriErrors, curi, value);
                 
             } else if (attr.start(12) > -1) {
+                // METHOD
+                method = value;
+                // form processing finished at end (after ACTION also collected)
+            } else if (attr.start(13) > -1) {
                 // any other attribute
                 // ignore for now
                 // could probe for path- or script-looking strings, but
@@ -407,32 +426,39 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         TextUtils.recycleMatcher(attr);
 
         // handle codebase/resources
-        if (resources == null) {
-            return;
-        }
-        Iterator iter = resources.iterator();
-        UURI codebaseURI = null;
-        String res = null;
-        try {
-            if (codebase != null) {
-                // TODO: Pass in the charset.
-                codebaseURI = UURIFactory.
-                    getInstance(curi.getUURI(), codebase);
-            }
-            while(iter.hasNext()) {
-                res = iter.next().toString();
-                res = (String) TextUtils.unescapeHtml(res);
-                if (codebaseURI != null) {
-                    res = codebaseURI.resolve(res).toString();
+        if (resources != null) {
+            Iterator iter = resources.iterator();
+            UURI codebaseURI = null;
+            String res = null;
+            try {
+                if (codebase != null) {
+                    // TODO: Pass in the charset.
+                    codebaseURI = UURIFactory.
+                        getInstance(curi.getUURI(), codebase);
                 }
-                processEmbed(curi, res, element); // TODO: include attribute too
+                while(iter.hasNext()) {
+                    res = iter.next().toString();
+                    res = (String) TextUtils.unescapeHtml(res);
+                    if (codebaseURI != null) {
+                        res = codebaseURI.resolve(res).toString();
+                    }
+                    processEmbed(curi, res, element); // TODO: include attribute too
+                }
+            } catch (URIException e) {
+                curi.getNonFatalFailures().add(e);
+            } catch (IllegalArgumentException e) {
+                DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
+                    "codebase=" + codebase + " res=" + res + "\n" +
+                    DevUtils.extraInfo(), e);
             }
-        } catch (URIException e) {
-            curi.getNonFatalFailures().add(e);
-        } catch (IllegalArgumentException e) {
-            DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
-                "codebase=" + codebase + " res=" + res + "\n" +
-                DevUtils.extraInfo(), e);
+        }
+        
+        // finish handling form action, now method is available
+        if(action != null) {
+            if(method == null || "GET".equalsIgnoreCase(method.toString()) 
+                        || ! curi.get(this, EXTRACT_ONLY_FORM_GETS)) {
+                processLink(curi, action, actionContext);
+            }
         }
     }
 
@@ -703,7 +729,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         String content = null;
         while (attr.find()) {
             int valueGroup =
-                (attr.start(13) > -1) ? 13 : (attr.start(14) > -1) ? 14 : 15;
+                (attr.start(14) > -1) ? 14 : (attr.start(15) > -1) ? 15 : 16;
             CharSequence value =
                 cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
             if (attr.group(1).equalsIgnoreCase("name")) {

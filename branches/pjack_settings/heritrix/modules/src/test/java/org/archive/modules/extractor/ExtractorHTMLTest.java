@@ -147,4 +147,26 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
         assertTrue("expected link not found", 
                 links[0].getDestination().toString().equals(expected));
     }
+    
+    /**
+     * Test only extract FORM ACTIONS with METHOD GET 
+     * 
+     * [HER-1280] do not by default GET form action URLs declared as POST, 
+     * because it can cause problems/complaints 
+     * http://webteam.archive.org/jira/browse/HER-1280
+     */
+    public void testOnlyExtractFormGets() throws URIException {
+        DefaultProcessorURI puri = new DefaultProcessorURI(UURIFactory
+                .getInstance("http://www.example.com"),null);
+        CharSequence cs = 
+            "<form method=\"get\" action=\"http://www.example.com/ok1\"> "+
+            "<form action=\"http://www.example.com/ok2\" method=\"get\"> "+
+            "<form method=\"post\" action=\"http://www.example.com/notok\"> "+
+            "<form action=\"http://www.example.com/ok3\"> ";
+        ExtractorHTML extractor = (ExtractorHTML)makeExtractor();
+        extractor.extract(puri, cs);
+        Link[] links = puri.getOutLinks().toArray(new Link[0]);
+        // find exactly 3 (not the POST) action URIs
+        assertTrue("incorrect number of links found",links.length==3);
+    }
 }
