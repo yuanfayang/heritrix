@@ -42,6 +42,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.io.CrawlerJournal;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 
@@ -302,6 +303,7 @@ implements FrontierJournal {
         BufferedInputStream is;
         // create MutableString of good starting size (will grow if necessary)
         MutableString read = new MutableString(UURI.MAX_URL_LENGTH);
+        SettingsHandler.setThreadContextSettingsHandler(controller.getSettingsHandler());
         Frontier frontier = controller.getFrontier();
         boolean checkScope = (Boolean) controller.getOrder()
         .getUncheckedAttribute(null,
