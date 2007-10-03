@@ -42,6 +42,8 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.framework.Checkpointer;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
@@ -550,5 +552,30 @@ public abstract class SettingsHandler {
      */
     public void clearPerHostSettingsCache() {
         settingsCache.clear();
+    }
+
+    static ThreadLocal<SettingsHandler> threadContextSettingsHandler = 
+        new ThreadLocal<SettingsHandler>();
+    public static void setThreadContextSettingsHandler(SettingsHandler settingsHandler) {
+        threadContextSettingsHandler.set(settingsHandler);
+    }
+    public static SettingsHandler getThreadContextSettingsHandler() {
+        Thread t = Thread.currentThread();
+        if (t instanceof Checkpointer.CheckpointingThread) {
+            return ((Checkpointer.CheckpointingThread)t)
+                .getController().getSettingsHandler();
+        } 
+        if (t instanceof ToeThread) {
+            return ((ToeThread) Thread.currentThread())
+                .getController().getSettingsHandler();
+        } 
+        if(threadContextSettingsHandler.get()!=null) {
+            return threadContextSettingsHandler.get();
+        }
+        
+        // TODO: log differently? (if no throw here
+        // NPE is inevitable)
+        throw new RuntimeException(
+                "No threadContextSettingsHandler available.");
     }
 }

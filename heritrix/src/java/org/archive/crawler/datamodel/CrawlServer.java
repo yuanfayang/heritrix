@@ -232,19 +232,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        Thread t = Thread.currentThread();
-        if (t instanceof Checkpointer.CheckpointingThread) {
-            settingsHandler = ((Checkpointer.CheckpointingThread)t)
-        		.getController().getSettingsHandler();
-        } else if (t instanceof ToeThread) {
-            settingsHandler = ((ToeThread) Thread.currentThread())
-                .getController().getSettingsHandler();
-        } else {
-            // TODO: log differently? (if no throw here
-            // NPE is inevitable)
-            throw new RuntimeException("CrawlServer must deserialize " +
-                    "in a ToeThread or CheckpointingThread");
-        }
+        settingsHandler = SettingsHandler.getThreadContextSettingsHandler();
         postDeserialize();
     }
     
