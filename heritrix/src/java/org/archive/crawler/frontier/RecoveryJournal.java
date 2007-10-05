@@ -303,7 +303,7 @@ implements FrontierJournal {
         BufferedInputStream is;
         // create MutableString of good starting size (will grow if necessary)
         MutableString read = new MutableString(UURI.MAX_URL_LENGTH);
-        SettingsHandler.setThreadContextSettingsHandler(controller.getSettingsHandler());
+        controller.installThreadContextSettingsHandler();
         Frontier frontier = controller.getFrontier();
         boolean checkScope = (Boolean) controller.getOrder()
         .getUncheckedAttribute(null,

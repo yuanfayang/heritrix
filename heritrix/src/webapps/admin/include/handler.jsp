@@ -1,4 +1,8 @@
-<%@ page import="org.archive.crawler.admin.CrawlJobHandler, org.archive.crawler.Heritrix" %><%
+<%@ page import="org.archive.crawler.admin.CrawlJobHandler"%>
+<%@ page import="org.archive.crawler.admin.CrawlJob"%>
+<%@ page import="org.archive.crawler.Heritrix"%>
+<%@ page import="org.archive.crawler.framework.CrawlController"%>
+<%
     /**
      * This include page ensures that the handler exists and is ready to be
      * accessed.
@@ -23,6 +27,18 @@
             // Otherwise, there is no Heritrix instance.  Thats a problem.
             throw new RuntimeException("No heritrix instance (or multiple " +
                     "to choose from and we haven't implemented this yet)");
+        }
+    }
+    
+    // ensure controller's settingsHandler is always thread-installed 
+    // in web ui threads
+    if(handler != null) {
+        CrawlJob job = handler.getCurrentJob();
+        if(job != null) {
+            CrawlController controller = job.getController();
+            if (controller != null) {
+                controller.installThreadContextSettingsHandler();
+            }
         }
     }
 %>

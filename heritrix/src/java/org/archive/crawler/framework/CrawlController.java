@@ -321,7 +321,7 @@ public class CrawlController implements Serializable, Reporter {
  
         this.singleThreadLock = new ReentrantLock();
         this.settingsHandler = sH;
-        SettingsHandler.setThreadContextSettingsHandler(sH);
+        installThreadContextSettingsHandler();
         this.order = settingsHandler.getOrder();
         this.order.setController(this);
         this.bigmaps = new Hashtable<String,CachedBdbMap<?,?>>();
@@ -396,6 +396,17 @@ public class CrawlController implements Serializable, Reporter {
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
+    }
+
+    /**
+     * Utility method to install this crawl's SettingsHandler into the 
+     * 'global' (for this thread) holder, so that any subsequent 
+     * deserialization operations in this thread can find it. 
+     * 
+     * @param sH
+     */
+    public void installThreadContextSettingsHandler() {
+        SettingsHandler.setThreadContextSettingsHandler(settingsHandler);
     }
     
     /**
@@ -1617,7 +1628,7 @@ public class CrawlController implements Serializable, Reporter {
      */
     public void kickUpdate() {
         
-        SettingsHandler.setThreadContextSettingsHandler(settingsHandler);
+        installThreadContextSettingsHandler();
  
         toePool.setSize(order.getMaxToes());
         

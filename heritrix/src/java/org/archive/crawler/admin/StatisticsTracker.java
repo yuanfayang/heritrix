@@ -1130,6 +1130,7 @@ implements CrawlURIDispositionListener, Serializable {
         // Add all files mentioned in the crawl order to the
         // manifest set.
         controller.addOrderToManifest();
+        controller.installThreadContextSettingsHandler();
         writeReportFile("hosts","hosts-report.txt");
         writeReportFile("mime types","mimetype-report.txt");
         writeReportFile("response codes","responsecode-report.txt");
