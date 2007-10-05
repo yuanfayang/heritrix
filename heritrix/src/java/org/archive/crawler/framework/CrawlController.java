@@ -318,9 +318,10 @@ public class CrawlController implements Serializable, Reporter {
     public void initialize(SettingsHandler sH)
     throws InitializationException {
         sendCrawlStateChangeEvent(PREPARING, CrawlJob.STATUS_PREPARING);
-
+ 
         this.singleThreadLock = new ReentrantLock();
         this.settingsHandler = sH;
+        SettingsHandler.setThreadContextSettingsHandler(sH);
         this.order = settingsHandler.getOrder();
         this.order.setController(this);
         this.bigmaps = new Hashtable<String,CachedBdbMap<?,?>>();
@@ -1615,6 +1616,9 @@ public class CrawlController implements Serializable, Reporter {
      * settings. This includes, number of toe threads and seeds.
      */
     public void kickUpdate() {
+        
+        SettingsHandler.setThreadContextSettingsHandler(settingsHandler);
+ 
         toePool.setSize(order.getMaxToes());
         
         this.scope.kickUpdate();
