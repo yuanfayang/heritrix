@@ -1213,8 +1213,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             output = RegexpLineIterator.ENTRY;
         }
         
-        SettingsHandler.setThreadContextSettingsHandler(
-                controller.getSettingsHandler());
+        controller.installThreadContextSettingsHandler();
         
         // Read the input stream.
         BufferedReader br = null;
@@ -1831,6 +1830,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 new IllegalArgumentException("Operation name cannot be null"),
                 "Cannot call invoke with null operation name");
         }
+        
+        controller.installThreadContextSettingsHandler();
         
         if (this.bdbjeOperationsNameList.contains(operationName)) {
             try {
