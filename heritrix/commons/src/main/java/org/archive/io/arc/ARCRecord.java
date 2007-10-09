@@ -181,7 +181,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         byte [] statusBytes = HttpParser.readRawLine(getIn());
         int eolCharCount = getEolCharsCount(statusBytes);
         if (eolCharCount <= 0) {
-            throw new IOException("Failed to read http status where one " +
+            throw new RecoverableIOException("Failed to read http status where one " +
                 " was expected: " + new String(statusBytes));
         }
         String statusLine = EncodingUtil.getString(statusBytes, 0,
@@ -199,7 +199,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
                 // exception.
                 throw new DeletedARCRecordIOException(statusLine);
             } else {
-                throw new IOException("Failed parse of http status line.");
+                throw new RecoverableIOException("Failed parse of http status line.");
             }
         }
         this.httpStatus = new StatusLine(statusLine);
