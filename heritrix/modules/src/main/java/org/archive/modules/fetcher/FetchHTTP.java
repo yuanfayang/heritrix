@@ -782,9 +782,14 @@ public class FetchHTTP extends Processor implements Initializable {
         if (curi.get(this, setting)) {
             try {
                 Map[] history = (Map[])curi.getData().get(A_FETCH_HISTORY);
-                String previous = (String) history[0].get(sourceHeader);
-                if(previous!=null) {
-                    method.setRequestHeader(targetHeader, previous);
+                int previousStatus = (Integer) history[0].get(A_STATUS);
+                if(previousStatus<=0) {
+                    // do not reuse headers from any broken fetch
+                    return; 
+                }
+                String previousValue = (String) history[0].get(sourceHeader);
+                if(previousValue!=null) {
+                    method.setRequestHeader(targetHeader, previousValue);
                 }
             } catch (RuntimeException e) {
                 // for absent key, bad index, etc. just do nothing
