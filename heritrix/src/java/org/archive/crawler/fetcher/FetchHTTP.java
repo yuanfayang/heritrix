@@ -829,10 +829,16 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             String setting, String sourceHeader, String targetHeader) {
         if(((Boolean)getUncheckedAttribute(curi,setting))) {
             try {
-                String previous = curi.getAList().getAListArray(
+                int previousStatus = curi.getAList().getAListArray(
+                        A_FETCH_HISTORY)[0].getInt(A_STATUS);
+                if(previousStatus<=0) {
+                    // do not reuse headers from any broken fetch
+                    return; 
+                }
+                String previousValue = curi.getAList().getAListArray(
                         A_FETCH_HISTORY)[0].getString(sourceHeader);
-                if(previous!=null) {
-                    method.setRequestHeader(targetHeader, previous);
+                if(previousValue!=null) {
+                    method.setRequestHeader(targetHeader, previousValue);
                 }
             } catch (RuntimeException e) {
                 // for absent key, bad index, etc. just do nothing
