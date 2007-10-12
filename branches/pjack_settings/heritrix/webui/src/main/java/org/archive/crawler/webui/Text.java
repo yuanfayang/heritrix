@@ -155,7 +155,7 @@ public class Text {
         r.append(c.getQueryString());
 
         r.append("&stage=").append(job.getJobStage());
-        r.append("&job=").append(job.getName());
+        r.append("&job=").append(query(job.getName()));
         
         return r.toString();
     }
