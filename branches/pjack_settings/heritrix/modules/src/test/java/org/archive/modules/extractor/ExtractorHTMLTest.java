@@ -169,4 +169,23 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
         // find exactly 3 (not the POST) action URIs
         assertTrue("incorrect number of links found",links.length==3);
     }
+    
+    /**
+     * Test detection, respect of meta robots nofollow directive
+     */
+    public void testMetaRobots() throws URIException {
+        DefaultProcessorURI puri = new DefaultProcessorURI(UURIFactory
+                .getInstance("http://www.example.com"),null);
+        CharSequence cs = 
+            "Blah Blah "+
+            "<meta name='robots' content='index,nofollow'>"+
+            "<a href='blahblah'>blah</a> "+
+            "blahblah";
+        ExtractorHTML extractor = (ExtractorHTML)makeExtractor();
+        extractor.extract(puri, cs);
+        assertEquals("meta robots content not extracted","index,nofollow",
+                puri.getData().get(ExtractorHTML.A_META_ROBOTS));
+        Link[] links = puri.getOutLinks().toArray(new Link[0]);
+        assertTrue("link extracted despite meta robots",links.length==0);
+    }
 }
