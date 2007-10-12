@@ -61,20 +61,31 @@ public class Flash {
      * @param message
      */
     public Flash(String message) {
-        this(Kind.ACK, DEFAULT_PATH, message);
+        this(Kind.ACK, message, DEFAULT_PATH);
     }
     
     /**
-     * Create a Flash of the given kind, styling, and message.
+     * Create a Flash of the given kind, message with default styling.
      * 
      * @param kind
-     * @param path
      * @param message
+     * @param path
      */
-    public Flash(Kind kind, String path, String message) {
+    public Flash(Kind kind, String message) {
+        this(kind, message, DEFAULT_PATH);
+    }
+    
+    /**
+     * Create a Flash of the given kind, message, and styling.
+     * 
+     * @param kind
+     * @param message
+     * @param path
+     */
+    public Flash(Kind kind, String message, String path) {
         this.kind = kind;
-        this.path = path;
         this.message = message; 
+        this.path = path;
     }
     
     /**

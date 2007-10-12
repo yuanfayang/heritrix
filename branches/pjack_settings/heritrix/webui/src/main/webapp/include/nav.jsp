@@ -113,7 +113,7 @@ String the_sheet = (String)request.getAttribute("sheet");
 <hr/>
 
 <% 
-//out.flush();
+out.flush();
 Flash.writeAllFromSession(request,response);
 } // end of local variable scope 
 
