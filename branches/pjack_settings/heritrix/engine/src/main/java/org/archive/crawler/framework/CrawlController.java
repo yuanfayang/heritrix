@@ -153,7 +153,6 @@ public class CrawlController extends Bean implements
     /**
      * Maximum number of threads processing URIs at the same time.
      */
-    @Immutable
     final public static Key<Integer> MAX_TOE_THREADS = Key.make(25);
 
 
