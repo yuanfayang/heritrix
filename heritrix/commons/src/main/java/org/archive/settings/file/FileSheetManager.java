@@ -904,6 +904,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         if (sheet instanceof SingleSheet) {
             saveSingleSheet((SingleSheet)sheet);
         }
+        announceChanges(sheet);
         // FIXME: Save sheet bundles too.
     }
 

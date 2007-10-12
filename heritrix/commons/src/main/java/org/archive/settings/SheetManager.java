@@ -391,6 +391,9 @@ implements PathContext, StateProvider, Serializable {
     
     protected void clearCloneFlag(Sheet sheet) {
         sheet.setClone(false);
+    }
+    
+    protected void announceChanges(Sheet sheet) {
         if (sheet instanceof SingleSheet) {
             SingleSheet ss = (SingleSheet)sheet;
             List<KeyChangeEvent> list = ss.clearKeyChangeEvents();
@@ -406,7 +409,6 @@ implements PathContext, StateProvider, Serializable {
         }
     }
 
-    
     public abstract void commit(Sheet sheet);
     
     
