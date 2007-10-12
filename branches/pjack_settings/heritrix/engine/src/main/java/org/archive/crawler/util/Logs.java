@@ -34,11 +34,11 @@ package org.archive.crawler.util;
 public enum Logs{
 	// TODO: This enum belongs in the heritrix sub project
 	CRAWL ("crawl.log"),
-	LOCAL_ERRORS ("local-errors.log"),
+    ALERTS ("alerts.log"),
 	PROGRESS_STATISTICS ("progress-statistics.log"),
 	RUNTIME_ERRORS ("runtime-errors.log"),
-	URI_ERRORS ("uri-errors.log"),
-	ALERTS ("alerts.log");
+    NONFATAL_ERRORS ("nonfatal-errors.log"),
+	URI_ERRORS ("uri-errors.log");
 	
 	String filename;
 	

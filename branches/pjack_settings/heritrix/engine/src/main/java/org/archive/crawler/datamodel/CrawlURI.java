@@ -1297,14 +1297,13 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     public FetchType getFetchType() {
         return fetchType;
     }
-
-
+    
     public Collection<Throwable> getNonFatalFailures() {
     	@SuppressWarnings("unchecked")
-    	List<Throwable> list = (List)getData().get(A_LOCALIZED_ERRORS);
+    	List<Throwable> list = (List)getData().get(A_NONFATAL_ERRORS);
     	if (list == null) {
     		list = new ArrayList<Throwable>();
-    		getData().put(A_LOCALIZED_ERRORS, list);
+    		getData().put(A_NONFATAL_ERRORS, list);
     	}
     	
     	// FIXME: Previous code automatically added annotation when "localized error"
