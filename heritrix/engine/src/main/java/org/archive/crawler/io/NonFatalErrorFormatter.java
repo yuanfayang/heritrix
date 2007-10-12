@@ -28,13 +28,12 @@ import java.io.StringWriter;
 import java.util.logging.LogRecord;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.LocalizedError;
 
 /**
  * @author gojomo
  *
  */
-public class LocalErrorFormatter extends UriProcessingFormatter implements CoreAttributeConstants {
+public class NonFatalErrorFormatter extends UriProcessingFormatter implements CoreAttributeConstants {
 
     /* (non-Javadoc)
      * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)

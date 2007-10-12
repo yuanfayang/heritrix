@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.io.LocalErrorFormatter;
+import org.archive.crawler.io.NonFatalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
@@ -93,7 +93,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
         "progress-statistics";
     private static final String LOGNAME_URI_ERRORS = "uri-errors";
     private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
-    private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
+    private static final String LOGNAME_NONFATAL_ERRORS = "nonfatal-errors";
     private static final String LOGNAME_CRAWL = "crawl";
     private static final String LOGNAME_ALERTS = "alerts";
 
@@ -116,12 +116,13 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     private transient Logger runtimeErrors;
 
     /**
-     * This logger is for job-scoped logging, specifically errors which
-     * happen and are handled within a particular processor.
+     * This logger is for job-scoped logging, specifically recoverable 
+     * errors which happen and are handled within a particular processor.
      *
-     * Examples would be socket timeouts, exceptions thrown by extractors, etc.
+     * Examples would be socket timeouts, exceptions thrown by 
+     * extractors, etc.
      */
-    private transient Logger localErrors;
+    private transient Logger nonfatalErrors;
 
     /**
      * Special log for URI format problems, wherever they may occur.
@@ -180,7 +181,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
         uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
         runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
             logsPath);
-        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
+        nonfatalErrors = Logger.getLogger(LOGNAME_NONFATAL_ERRORS + "." + logsPath);
         uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
         progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." +
             logsPath);
@@ -194,9 +195,9 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
             logsPath + LOGNAME_RUNTIME_ERRORS + CURRENT_LOG_SUFFIX,
             new RuntimeErrorFormatter(), true);
 
-        setupLogFile(localErrors,
-            logsPath + LOGNAME_LOCAL_ERRORS + CURRENT_LOG_SUFFIX,
-            new LocalErrorFormatter(), true);
+        setupLogFile(nonfatalErrors,
+            logsPath + LOGNAME_NONFATAL_ERRORS + CURRENT_LOG_SUFFIX,
+            new NonFatalErrorFormatter(), true);
 
         setupLogFile(uriErrors,
             logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
@@ -318,8 +319,8 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     }
 
 
-    public Logger getLocalErrors() {
-        return localErrors;
+    public Logger getNonfatalErrors() {
+        return nonfatalErrors;
     }
 
 

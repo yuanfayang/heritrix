@@ -26,7 +26,7 @@ package org.archive.crawler.frontier;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_BEGAN_TIME;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_COMPLETED_TIME;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.A_LOCALIZED_ERRORS;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_NONFATAL_ERRORS;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_CUSTOM_PROCESSOR;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_USER;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_FAILED;
@@ -829,16 +829,16 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * @param curi
      *  
      */
-    protected void logLocalizedErrors(CrawlURI curi) {
-        if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
+    protected void logNonfatalErrors(CrawlURI curi) {
+        if (curi.containsDataKey(A_NONFATAL_ERRORS)) {
             Collection<Throwable> x = curi.getNonFatalFailures();
-            Logger le = loggerModule.getLocalErrors();
+            Logger le = loggerModule.getNonfatalErrors();
             for (Throwable e : x) {
                 le.log(Level.WARNING, curi.toString(), 
                         new Object[] { curi, e });
             }
             // once logged, discard
-            curi.getData().remove(A_LOCALIZED_ERRORS);
+            curi.getData().remove(A_NONFATAL_ERRORS);
         }
     }
 

@@ -61,7 +61,7 @@ public interface CoreAttributeConstants {
     public static String A_HTTP_TRANSACTION = "http-transaction";
 
     public static String A_RUNTIME_EXCEPTION = "runtime-exception";
-    public static String A_LOCALIZED_ERRORS = "localized-errors";
+    public static String A_NONFATAL_ERRORS = "nonfatal-errors";
 
     /** shorthand string tokens indicating notable occurences,
      * separated by commas */

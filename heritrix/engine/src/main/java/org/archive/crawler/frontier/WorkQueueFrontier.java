@@ -719,7 +719,7 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
         long now = System.currentTimeMillis();
 
         curi.incrementFetchAttempts();
-        logLocalizedErrors(curi);
+        logNonfatalErrors(curi);
         WorkQueue wq = (WorkQueue) curi.getHolder();
         assert (wq.peek(this) == curi) : "unexpected peek " + wq;
         inProcessQueues.remove(wq, 1);

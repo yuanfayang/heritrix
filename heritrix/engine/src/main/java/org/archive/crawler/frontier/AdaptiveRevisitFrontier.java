@@ -520,7 +520,7 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         logger.fine(curi.toString()+ " " + 
                 CrawlURI.fetchStatusCodesToString(curi.getFetchStatus()));
         curi.incrementFetchAttempts();
-        logLocalizedErrors(curi);
+        logNonfatalErrors(curi);
 
         innerFinished(curi);
     }
@@ -571,15 +571,15 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
      * been entered into the CrawlURI.
      * @param curi CrawlURI with errors.
      */
-    private void logLocalizedErrors(CrawlURI curi) {
-        if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
+    private void logNonfatalErrors(CrawlURI curi) {
+        if (curi.containsDataKey(A_NONFATAL_ERRORS)) {
         	Collection<Throwable> x = curi.getNonFatalFailures();
         	for (Throwable e: x) {
-                    loggerModule.getLocalErrors()
+                    loggerModule.getNonfatalErrors()
                      .log(Level.WARNING, curi.toString(), e);
         	}
             // once logged, discard
-            curi.getData().remove(A_LOCALIZED_ERRORS);
+            curi.getData().remove(A_NONFATAL_ERRORS);
         }
     }
     
