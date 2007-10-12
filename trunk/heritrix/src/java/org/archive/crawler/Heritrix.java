@@ -1034,7 +1034,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         Heritrix h = new Heritrix("Selftest", true, cjh);
         CrawlJob job = createCrawlJob(cjh, crawlOrderFile, "Template");
         job = h.getJobHandler().newJob(job, null, SELFTEST,
-            "Integration self test", selfTestUrl, CrawlJob.PRIORITY_CRITICAL);
+            "Integration self test", selfTestUrl, CrawlJob.PRIORITY_AVERAGE);
         h.getJobHandler().addJob(job);
         // Before we start, need to change some items in the settings file.
         CredentialStore cs = (CredentialStore)job.getSettingsHandler().
@@ -2221,6 +2221,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 new IllegalArgumentException("Operation name cannot be null"),
                 "Cannot call invoke with null operation name");
         }
+        // INFO logging of JMX invokes: [#HER-907]
+        if (logger.isLoggable(Level.INFO)) {
+            String paramsString = "";
+            for (Object o : params) {
+                paramsString.concat("[" + o.toString() + "]");
+            }
+            logger.info("JMX invoke: " + operationName + " [" + paramsString
+                    + "]");
+        } 
         // The pattern in the below is to match an operation and when found
         // do a return out of if clause.  Doing it this way, I can fall
         // on to the MethodNotFoundException for case where we've an
