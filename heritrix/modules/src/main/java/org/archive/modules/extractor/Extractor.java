@@ -62,12 +62,14 @@ public abstract class Extractor extends Processor implements Initializable {
     
     public void initialTasks(StateProvider global) {
         this.uriErrors = global.get(this, URI_ERROR_LOGGER_MODULE);    
+        System.out.println(uriErrors);
     }
 
     /**
      * Processes the given URI.  This method just delegates to 
      * {@link #extract(ExtractorURI)}, catching runtime exceptions and
-     * errors to highlight them in the log and so on.  
+     * errors that are usually non-fatal, to highlight them in the 
+     * relevant log(s). 
      * 
      * <p>Notably, StackOverflowError is caught here, as that seems to 
      * happen a lot when dealing with document parsing APIs.
@@ -93,8 +95,9 @@ public abstract class Extractor extends Processor implements Initializable {
         // both annotate (to highlight in crawl log) & add as local-error
         uri.getAnnotations().add("err=" + t.getClass().getName());
         uri.getNonFatalFailures().add(t);
-        // also log as warning
-        logger.log(Level.WARNING, "Exception", t);        
+        // also log as INFO
+        // TODO: remove as redundant, given nonfatal logging?
+        logger.log(Level.INFO, "Exception", t);        
     }
 
 

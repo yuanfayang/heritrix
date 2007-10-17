@@ -54,6 +54,7 @@ extends SWFActionsImpl {
         assert (curi != null) : "CrawlURI should not be null";
         this.curi = curi;
         this.linkCount = 0;
+        this.uriErrors = uriErrors;
     }
 
     /**
