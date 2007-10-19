@@ -50,16 +50,16 @@ String the_sheet = (String)request.getAttribute("sheet");
 
 <% if (the_job != null) { %>
     <b><%=Text.html(the_job.getJobStage().getLabel())%>:</b>
+    <a title="View and control the current status for this job."
+           href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=the_jqs%>">
     <%=Text.html(the_job.getName())%>
+    </a>
     <% if (the_job.getCrawlStatus() != null) { %>
     <span class='status <%=the_job.getCrawlStatus()%>'><%=the_job.getCrawlStatus()%></span>
     <% } %>
     
     
 	<% if (the_job.hasReports()) { %>
-        <a title="View and control the current status for this job."
-           href="<%=request.getContextPath()%>/console/do_show_job_console.jsp?<%=the_jqs%>">Console</a>
-        |
         <a title="View reports for this job."
            href="<%=request.getContextPath()%>/reports/do_show_reports.jsp?<%=the_jqs%>">Reports</a>
         | 
