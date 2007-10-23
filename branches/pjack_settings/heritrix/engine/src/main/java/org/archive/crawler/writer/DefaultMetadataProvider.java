@@ -27,8 +27,10 @@
 package org.archive.crawler.writer;
 
 import java.io.Serializable;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.archive.crawler.Heritrix;
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.settings.SheetManager;
@@ -132,7 +134,10 @@ public class DefaultMetadataProvider implements
     public String getUserAgent(StateProvider context) {
         String userAgent = context.get(this, HTTP_USER_AGENT);
         String contactURL = context.get(this, OPERATOR_CONTACT_URL);
-        return userAgent.replaceFirst("@OPERATOR_CONTACT_URL@", contactURL);
+        userAgent = userAgent.replaceFirst("@OPERATOR_CONTACT_URL@", contactURL);
+        userAgent = userAgent.replaceFirst("@VERSION@",
+                Matcher.quoteReplacement(Heritrix.getVersion()));
+        return userAgent;
     }
     
     public String getUserAgent() {
