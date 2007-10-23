@@ -47,7 +47,8 @@ public class UserAgentSelfTest extends SelfTestBase {
 
     
     final private static String EXPECTED_UA = 
-        "Mozilla/5.0 (compatible; heritrix/"+Heritrix.getVersion()+" +http://example.com/CrawlInfoPage)";
+        "Mozilla/5.0 (compatible; heritrix/" + Heritrix.getVersion() 
+        + " +http://example.com/CrawlInfoPage)";
     
     final private static String EXPECTED_FROM = 
         "dummy@example.com";
