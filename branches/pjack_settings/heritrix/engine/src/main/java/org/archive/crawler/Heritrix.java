@@ -395,13 +395,42 @@ public class Heritrix {
             return "UNKNOWN";
         }
         BufferedReader br = null;
+        String version;
         try {
             br = new BufferedReader(new InputStreamReader(input));
-            return br.readLine();
+            version = br.readLine();
+            br.readLine();
         } catch (IOException e) {
             return e.getMessage();
         } finally {
             IoUtils.close(br);
         }
+        
+        version = version.trim();
+        if (!version.endsWith("SNAPSHOT")) {
+            return version;
+        }
+        
+        input = Heritrix.class.getResourceAsStream("/org/archive/crawler/timestamp.txt");
+        if (input == null) {
+            return version;
+        }
+        
+        br = null;
+        String timestamp;
+        try {
+            br = new BufferedReader(new InputStreamReader(input));
+            timestamp = br.readLine();
+        } catch (IOException e) {
+            return version;
+        } finally {
+            IoUtils.close(br);
+        }
+        
+        if (timestamp.startsWith("timestamp=")) {
+            timestamp = timestamp.substring(10);
+        }
+        
+        return version.trim() + "-" + timestamp.trim();
     }
 }

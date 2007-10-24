@@ -106,6 +106,31 @@
       </resource>
     </resources>
     <plugins>
+    
+    <plugin>
+      <artifactId>maven-antrun-plugin</artifactId>
+      <executions>
+        <execution>
+          <id>generate-timestamp-properties-file</id>
+          <phase>initialize</phase>
+          <goals><goal>run</goal></goals>
+          <configuration>
+            <tasks>
+              <tstamp>
+                <format property="timestamp"
+                        pattern="yyyyMMdd.HHmmss"/>
+              </tstamp>
+              <delete
+                file="target/classes/org/archive/crawler/timestamp.txt"
+                failonerror="false"/>
+              <echo message="timestamp=${timestamp}"
+                file="target/classes/org/archive/crawler/timestamp.txt"/>
+            </tasks>
+          </configuration>
+         </execution>
+        </executions>
+      </plugin>
+    
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
