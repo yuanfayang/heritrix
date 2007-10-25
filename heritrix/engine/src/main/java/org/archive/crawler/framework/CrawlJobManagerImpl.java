@@ -637,6 +637,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         validateJobName(job);
         File f = new File(this.jobsDir, job);
         if (f.exists()) {
+            closeSheetManagerStub(job);
             if (!FileUtils.deleteDir(f)) {
                 throw new IllegalStateException("Could not delete job.");
             }
