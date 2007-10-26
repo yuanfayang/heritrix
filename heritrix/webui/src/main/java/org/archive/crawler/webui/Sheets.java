@@ -185,51 +185,7 @@ public class Sheets {
             remote.close();
         }
     }
-            
 
-    
-    public static void removePath(
-            ServletContext sc,
-            HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
-        Remote<JMXSheetManager> remote = getSheetManager(request);
-        JMXSheetManager sheetManager = remote.getObject();
-        String sheet = request.getParameter("sheet");
-        request.setAttribute("sheet", sheet);
-        
-        String path = request.getParameter("path");
-        try {
-            sheetManager.remove(sheet, path);
-        } finally {
-            remote.close();
-        }
-        
-        showSheetEditor(sc, request, response);
-    }
-    
-    
-    public static void overridePath(
-            ServletContext sc,
-            HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
-        Remote<JMXSheetManager> remote = getSheetManager(request);
-        JMXSheetManager sheetManager = remote.getObject();
-        String sheet = request.getParameter("sheet");
-        request.setAttribute("sheet", sheet);
-        
-        String path = request.getParameter("path");
-        String type = request.getParameter("type");
-        String value = request.getParameter("value");
-        try {
-            sheetManager.set(sheet, path, type, value);
-        } finally {
-            remote.close();
-        }
-        
-        showSheetEditor(sc, request, response);
-    }
-    
-    
     
     public static void showAddSheetBundle(
             ServletContext sc,
@@ -305,6 +261,33 @@ public class Sheets {
     }
 
     
+    private static String getValue(HttpServletRequest request, String path) {
+        String type = request.getParameter(TYPE_PREFIX + path);
+        String value = request.getParameter(VALUE_PREFIX + path);
+        if (value == null) {
+            return null;
+        }
+        if (PathChanger.isObjectTag(type)) {
+            int p = value.indexOf(',');
+            value = value.substring(p + 2);
+        }
+        return value;
+    }
+    
+    
+    private static String getType(HttpServletRequest request, String path) {
+        String type = request.getParameter(TYPE_PREFIX + path);
+        String value = request.getParameter(VALUE_PREFIX + path);
+        if (value == null) {
+            return type;
+        }
+        if (PathChanger.isObjectTag(type)) {
+            int p = value.indexOf(',');
+            type = value.substring(0, p);
+        }
+        return type;
+    }
+    
     public static void saveSingleSheet(
             ServletContext sc,
             HttpServletRequest request,
@@ -313,19 +296,15 @@ public class Sheets {
         JMXSheetManager sheetManager = remote.getObject();
         String sheet = request.getParameter("sheet");
         request.setAttribute("sheet", sheet);
+        String anchor = "";
         try {
             List<CompositeData> changes = new ArrayList<CompositeData>();
             for (int i = 1; request.getParameter(Integer.toString(i)) != null; i++) {
                 String path = request.getParameter(Integer.toString(i));
 
-                String type = request.getParameter(TYPE_PREFIX + path);
-                String value = request.getParameter(VALUE_PREFIX + path);
+                String type = getType(request, path);
+                String value = getValue(request, path);
                 if (value != null) {
-                    if (PathChanger.isObjectTag(type)) {
-                        int p = value.indexOf(',');
-                        type = value.substring(0, p);
-                        value = value.substring(p + 2);
-                    }
                     CompositeData cd = new CompositeDataSupport(
                             Types.SET_DATA, 
                             new String[] { "path", "type", "value" },
@@ -336,10 +315,30 @@ public class Sheets {
             }
             CompositeData[] arr = changes.toArray(new CompositeData[0]);
             sheetManager.setMany(sheet, arr);
-            showSheetEditor(sc, request, response);
+            if (request.getParameter("remove") != null) {
+                String path = request.getParameter("remove");
+                anchor = "#" + path;
+                sheetManager.remove(sheet, path);
+            }
+            if (request.getParameter("add") != null) {
+                String input = request.getParameter("add");
+                int p = input.indexOf('`');
+                String path = input.substring(0, p);
+                input = input.substring(p + 1);
+                p = input.indexOf('`');
+                String type = input.substring(0, p);
+                String value = input.substring(p + 1);
+                sheetManager.set(sheet, path, type, value);
+                anchor = "#" + path;
+            }
         } finally {
             remote.close();
         }
+        String url = request.getContextPath() + 
+            "/sheets/do_show_sheet_editor.jsp?" +
+            Text.sheetQueryString(request) + anchor;
+        response.sendRedirect(url);
+//        showSheetEditor(sc, request, response);
     }
     
     

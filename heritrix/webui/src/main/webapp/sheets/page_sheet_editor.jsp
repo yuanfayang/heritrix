@@ -25,12 +25,28 @@ int count = 0;
 
 <%@include file="/include/nav.jsp"%>
 
+<form id="the_form" action="do_save_single_sheet.jsp" method="post">
+
+
+<table width="100%">
+<tr>
+<td>
 <h3>Settings for sheet "<%=editedSheet%>":</h3>
+</td>
+<td>
+<input type="submit" value="Submit Changes">
+</td>
+</tr>
+</table>
 
 <div class="indent">
-<form action="do_save_single_sheet.jsp" method="post">
 
 <% Text.printSheetFormFields(request, out); %>
+
+<input type="hidden" name="otherAction" value="">
+<input type="hidden" id="otherActionPath" name="otherActionPath" value="">
+<input type="hidden" id="otherActionType" name="otherActionType" value="">
+<input type="hidden" id="otherActionValue" name="otherActionValue" value="">
 
 <% 
 String previousPath = "";
@@ -86,13 +102,19 @@ for (Setting setting: settings.getSettings()) {
  <input type="hidden" name="<%=count%>" value="<%=Text.attr(path)%>">
  <% settings.printFormField(out, setting); %>
   <% if (settings.canOverride(setting)) { %>
-  <% if (sheets[0].equals(editedSheet)) { %>
-    <a class="rowLink" href="do_remove_path.jsp?<%=qs%>#<%=Text.attr(path)%>"
-       title="Remove setting from current sheet.">remove</a>
-  <% } else { %>
-    <a class="rowLink" href="do_override_path.jsp?<%=qs%>#<%=Text.attr(path)%>"
-       title="Add a value for this setting to the current sheet.">add</a>  
-  <% } %>
+    <% if (sheets[0].equals(editedSheet)) { %>
+      <button 
+         class="rowLink" 
+         type="submit" 
+         name="remove" 
+         value="<%=Text.attr(path)%>">remove</button>
+    <% } else { %>
+      <button 
+         class="rowLink" 
+         type="submit" 
+         name="add" 
+         value="<%=Text.attr(path +"`" + type + "`" + value)%>">add</button>
+    <% } %>
   <% } %>
   <a 
     class="rowLink"
