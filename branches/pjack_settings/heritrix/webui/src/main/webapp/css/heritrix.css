@@ -268,6 +268,17 @@ hr {
  content:'\bb '
 }
 
+button.rowLink {
+  color: blue;
+  border: none;
+  font-size: medium;
+  background: none;
+}
+
+button.rowLink:hover {
+  text-decoration: underline;
+}
+
 .settingPath {
     font-weight:bold;
 }
