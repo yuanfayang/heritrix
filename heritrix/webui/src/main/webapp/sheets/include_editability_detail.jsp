@@ -46,6 +46,13 @@ switch (the_settings.getEditability(the_setting)) {
         hasn't been added to the sheet yet.
         <%
         break;
+    case PATH_INVALID:
+        %>
+        <span class="alert">(!)</span> You cannot edit this setting because its
+        path (<%=Text.html(the_setting.getPath())%>) is invalid.  This might
+        have been a typo from a hand-edited sheet file.
+        <%
+        break;
     case COMPLETED:
         %>
         <span class="alert">(!)</span> You cannot edit this setting because it

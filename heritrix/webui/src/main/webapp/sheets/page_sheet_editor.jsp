@@ -97,7 +97,13 @@ for (Setting setting: settings.getSettings()) {
     
  <% if (error != null) { %>
    <br/>
-   <span class="alert">Problem: <%=Text.html(error)%></span>
+   <span class="alert">Problem: <%=Text.html(error)%>
+   <% if (setting.isPathInvalid()) { %>
+      <br>This invalid setting will be automatically removed when you modify this
+      sheet.
+   <% } %>
+   
+   </span>
  <% } %><br/>
  <input type="hidden" name="<%=count%>" value="<%=Text.attr(path)%>">
  <% settings.printFormField(out, setting); %>

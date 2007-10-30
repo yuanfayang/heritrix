@@ -314,7 +314,7 @@ public class Sheets {
                 }
             }
             CompositeData[] arr = changes.toArray(new CompositeData[0]);
-            sheetManager.setMany(sheet, arr);
+            sheetManager.setMany(sheet, true, arr);
             if (request.getParameter("remove") != null) {
                 String path = request.getParameter("remove");
                 anchor = "#" + path;
@@ -719,6 +719,7 @@ public class Sheets {
                 setting.setPath("!" + path);
                 setting.setType(type);
                 setting.setSheets(new String[] { sheet } );
+                setting.setPathInvalid(true);
                 result.put(setting.getPath(), setting);                
             }
             setting.setValue(value);
