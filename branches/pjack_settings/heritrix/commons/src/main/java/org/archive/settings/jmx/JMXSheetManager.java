@@ -52,6 +52,11 @@ public interface JMXSheetManager {
             @Parameter(name = "sheetName", desc = "The name of the single sheet "
                     + "whose settings to change.")
             String sheetName,
+            
+            @Parameter(name = "clearErrors", desc = "If true, the manager's list of errors for the " +
+            		"sheet will be cleared before making the changes.  Only set to true if you're " +
+                        "modifying the entire sheet.")
+            boolean clearErrors,
 
             @Parameter(name = "setData", desc = "An array of path/values to set.", type = "org.archive.settings.jmx.Types.SET_DATA_ARRAY")
             CompositeData[] setData);
@@ -234,4 +239,6 @@ public interface JMXSheetManager {
     String getFilePath(
             @Parameter(name="setting", desc="The settings path to the FileModule.")
             String setting);
+
+
 }

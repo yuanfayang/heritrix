@@ -62,7 +62,9 @@ input.textbox { width: 400px; }
 }
 %>
 
+<% if (settings.getEditability(setting) == Settings.Editability.EDITABLE) { %>
 <input type="submit" value="Submit">
+<% } %>
 </form>
 
 <% if (desc != null) { %>

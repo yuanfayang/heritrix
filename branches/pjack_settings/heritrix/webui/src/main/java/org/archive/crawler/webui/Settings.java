@@ -90,7 +90,13 @@ public class Settings {
         /**
          * The job is completed, and the settings are for historical reference.
          */
-        COMPLETED
+        COMPLETED,
+        
+        /**
+         * The path for the setting isn't valid; perhaps a typo from a 
+         * hand-modified sheet file.
+         */
+        PATH_INVALID
     }
     
     
@@ -626,6 +632,9 @@ public class Settings {
     public Editability getEditability(Setting setting) {
         if (completed) {
             return Editability.COMPLETED;
+        }
+        if (setting.isPathInvalid()) {
+            return Editability.PATH_INVALID;
         }
         if (!setting.getPath().startsWith(StringUtils.defaultString(
                 SheetManager.ROOT.getFieldName()))) {

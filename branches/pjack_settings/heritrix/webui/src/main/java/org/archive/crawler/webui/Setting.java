@@ -45,6 +45,7 @@ public class Setting {
     private String errorMessage;
     private String[] sheets;
     private Object key;
+    private boolean pathInvalid;
     
     public Setting() {
     }
@@ -63,6 +64,14 @@ public class Setting {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public void setPathInvalid(boolean flag) {
+        this.pathInvalid = flag;
+    }
+
+    public boolean isPathInvalid() {
+        return this.pathInvalid;
     }
 
     public String getType() {

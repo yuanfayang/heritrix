@@ -23,7 +23,6 @@
  */
 package org.archive.settings.jmx;
 
-import java.io.File;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -57,9 +56,11 @@ import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.FilePathListConsumer;
+import org.archive.settings.path.ConstraintChecker;
 import org.archive.settings.path.PathChange;
 import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
+import org.archive.settings.path.PathListConsumer;
 import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.KeyTypes;
@@ -90,8 +91,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
     final private SheetManager manager;
 
-    final private Map<String,Sheet> checkedOut 
-        = new HashMap<String,Sheet>();
+    final private Map<String,SheetAndProblems> checkedOut 
+        = new HashMap<String,SheetAndProblems>();
     
 
 //    final private Map<String,List<PathChangeException>> problems;
@@ -132,9 +133,9 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     private Sheet getSheet(String sheetName) {
-        Sheet result = checkedOut.get(sheetName);
+        SheetAndProblems result = checkedOut.get(sheetName);
         if (result != null) {
-            return result;
+            return result.sheet;
         }
         
         return manager.getSheet(sheetName);
@@ -197,14 +198,19 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
 
-    public synchronized void setMany(String sheetName, CompositeData[] setData) {
+    public synchronized void setMany(String sheetName, boolean clearProblems,
+            CompositeData[] setData) {
         stamp();
-        Sheet sh = checkedOut.get(sheetName);
+        
+        SheetAndProblems sh = checkedOut.get(sheetName);
         if (sh == null) {
             throw new IllegalArgumentException(sheetName + 
                     " must be checked out before it can be edited.");
         }
-        SingleSheet sheet = (SingleSheet)sh;
+        if (clearProblems) {
+            sh.problems = new HashMap<String,PathChangeException>();
+        }
+        SingleSheet sheet = sh.sheet;
         Transformer<CompositeData,PathChange> transformer
          = new Transformer<CompositeData,PathChange>() {
             public PathChange transform(CompositeData cd) {
@@ -219,10 +225,10 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
          = new Transform<CompositeData,PathChange>(c, transformer);
         PathChanger pc = new PathChanger();
 
-        Map<String,PathChangeException> sheetProblems = 
-            problems.get(sheetName);
+        Map<String,PathChangeException> sheetProblems = sh.problems;
         if (sheetProblems == null) {
             sheetProblems = new HashMap<String,PathChangeException>();
+            sh.problems = sheetProblems;
         }
 
         for (PathChange change: changes) {
@@ -233,22 +239,27 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
                 sheetProblems.put(change.getPath(), e);
             }
         }
+        pc.finish(sheet);
+
+        List<PathChangeException> list = pc.getProblems();
+        PathListConsumer plc = new ConstraintChecker(list, sheet);
+        PathLister.resolveAll(sheet, plc, true);
 
         for (PathChangeException e: pc.getProblems()) {
             sheetProblems.put(e.getPathChange().getPath(), e);
         }
-        
-        if (sheetProblems.isEmpty()) {
-            problems.remove(sheetName);
-        } else {
-            problems.put(sheetName, sheetProblems);
+        for (PathChangeException e: list) {
+            sheetProblems.put(e.getPathChange().getPath(), e);
         }
-
     }
 
     
     private void moveElement(String sheetName, String path, boolean up) {
-        SingleSheet ss = (SingleSheet)checkedOut.get(sheetName);
+        SheetAndProblems sh = checkedOut.get(sheetName);
+        if (sh == null) {
+            throw new IllegalArgumentException("Sheet must be checked out.");
+        }
+        SingleSheet ss = sh.sheet;
         int p = path.lastIndexOf(PathValidator.DELIMITER);
         if (p < 0) {
             throw new IllegalArgumentException(
@@ -320,8 +331,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
                     new Object[] { path, type, value });
         } catch (OpenDataException e) {
             
-        } 
-        setMany(sheet, cd);
+        }
+        setMany(sheet, false, cd);
     }
 
     
@@ -386,14 +397,28 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
     public synchronized void checkout(String sheetName) {
         stamp();
-        Sheet sheet = manager.checkout(sheetName);
-        checkedOut.put(sheetName, sheet);
+        SheetAndProblems sh = new SheetAndProblems();
+        sh.sheet = (SingleSheet)manager.checkout(sheetName);
+        sh.problems = this.problems.get(sheetName);
+        if (sh.problems == null) {
+            sh.problems = new HashMap<String,PathChangeException>();
+        }
+        checkedOut.put(sheetName, sh);
     }
 
     
     public synchronized void commit(String sheetName) {
         stamp();
-        Sheet sheet = checkedOut.remove(sheetName);
+        SheetAndProblems sh = checkedOut.remove(sheetName);
+        if (sh == null) {
+            throw new IllegalArgumentException("Sheet not checked out.");
+        }
+        Sheet sheet = sh.sheet;
+        if (sh.problems.isEmpty()) {
+            problems.remove(sheetName);
+        } else {
+            problems.put(sheetName, sh.problems);
+        }
         manager.commit(sheet);
     }
     
@@ -419,8 +444,14 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
     public synchronized CompositeData[] getSingleSheetProblems(String sheet) {
         stamp();
+        SheetAndProblems sh = checkedOut.get(sheet);
+        Map<String,PathChangeException> sheetProblems;
+        if (sh == null) {
+            sheetProblems = problems.get(sheet);
+        } else {
+            sheetProblems = sh.problems;
+        }
         List<CompositeData> result = new ArrayList<CompositeData>();
-        Map<String,PathChangeException> sheetProblems = problems.get(sheet);
         if (sheetProblems == null) {
             return new CompositeData[0];
         }
@@ -492,11 +523,12 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
             String move, 
             int index) {
         stamp();
-        Sheet sheet = checkedOut.get(bundleName);
-        if (sheet == null) {
+        SheetAndProblems sh = checkedOut.get(bundleName);
+        if (sh == null) {
             throw new IllegalArgumentException(bundleName + 
                     " is not checked out.");
         }
+        Sheet sheet = sh.sheet;
         if (!(sheet instanceof SheetBundle)) {
             throw new IllegalArgumentException(bundleName + " is not a bundle.");
         }
@@ -574,6 +606,11 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
+    public synchronized void clearErrors(String sheetName) {
+        problems.remove(sheetName);
+    }
+    
+    
 
     private class ReapTask extends TimerTask {
         
@@ -603,6 +640,12 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
                 }
             }
         }
+    }
+    
+    
+    private static class SheetAndProblems {
+        public SingleSheet sheet;
+        public Map<String,PathChangeException> problems;
     }
 
 }
