@@ -69,7 +69,7 @@ public enum CrawlStatus {
     
 
     /** Prepared. */
-    PREPARED("Prepared");
+    PREPARING("Preparing");
 
     
     

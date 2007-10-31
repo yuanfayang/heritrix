@@ -235,7 +235,7 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
             throw new IllegalStateException(e);
         }
         
-        loadSeeds();
+//        loadSeeds();
     }
     
 

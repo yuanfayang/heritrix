@@ -212,6 +212,7 @@ public class Heritrix {
             out = new PrintStream(
                     new BufferedOutputStream(
                             new FileOutputStream(startLog),16384));
+            out = System.out;
         }
 
 
@@ -230,7 +231,7 @@ public class Heritrix {
                     + "must specify the system property "
                     + "com.sun.management.jmxremote.port if you disable "
                     + "the web UI with -n.");
-            System.exit(1);
+            // System.exit(1);
         }
 
         
@@ -304,14 +305,6 @@ public class Heritrix {
             // Start WebUI, if desired.
             if (cl.hasOption('n')) {
                 out.println("Not running web UI.");
-                if (System.getProperty(
-                        "com.sun.management.jmxremote.port") == null) {
-                    out.println("The crawl engine is inaccessible.  You " +
-                    	"must specify the system property " +
-                    	"com.sun.management.jmxremote.port if you disable " +
-                    	"the web UI.");
-                    System.exit(1);
-                }
             } else {
                 new WebUI(webConfig).start();
                 out.println("Web UI listening on " 

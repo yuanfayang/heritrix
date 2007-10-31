@@ -201,7 +201,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     protected void startHeritrix(String path) throws Exception {
         // Launch heritrix in its own thread.
         // By interrupting the thread, we can gracefully clean up the test.
-        String[] args = { "-j", path + "/jobs" };
+        String[] args = { "-j", path + "/jobs", "-n" };
         heritrixThread = new HeritrixThread(args);
         heritrixThread.start();
 
@@ -232,7 +232,16 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
 
     protected void waitForCrawlFinish() throws Exception {
-        invokeAndWait("requestCrawlStart", CrawlStatus.FINISHED);
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        
+        // Above invocation should have created a new SheetManager and a new
+        // CrawlController for the job.  Find the CrawlController.
+        ObjectName crawlController = getCrawlController();
+        waitFor(crawlController);
+        
+        // Set up utility to wait for signal from crawler.
+        JmxWaiter waiter = new JmxWaiter(server, crawlController, "FINISHED");
+        waiter.waitUntilNotification(0L);
     }
     
     protected File getSrcHtdocs() {
@@ -427,7 +436,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         File logs = new File(getCompletedJobDir(), "logs");
         File statsFile = new File(logs, "progress-statistics.log");
         String stats = IoUtils.readFullyAsString(new FileInputStream(statsFile));
-        if (!stats.contains("CRAWL RESUMED - Prepared")) {
+        if (!stats.contains("CRAWL RESUMED - Preparing")) {
             fail("progress-statistics.log has no Prepared line.");
         }
         if (!stats.contains("CRAWL RESUMED - Running")) {

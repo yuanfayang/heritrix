@@ -230,7 +230,7 @@ public class CrawlController extends Bean implements
     // FIXME: Make this an outer class.
     public static enum State {
         NASCENT, RUNNING, PAUSED, PAUSING, CHECKPOINTING, 
-        STOPPING, FINISHED, STARTED, PREPARED 
+        STOPPING, FINISHED, STARTED, PREPARING 
     }
 
     transient private State state = State.NASCENT;
@@ -293,7 +293,6 @@ public class CrawlController extends Bean implements
         this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
         this.checkpointer = new Checkpointer(this, this.checkpointsDir.toFile());
         this.frontier = provider.get(this, FRONTIER);
-        sendCrawlStateChangeEvent(State.PREPARED, CrawlStatus.PREPARED);
 
         this.singleThreadLock = new ReentrantLock();
         sExit = null;
@@ -517,7 +516,7 @@ public class CrawlController extends Bean implements
                 case FINISHED:
                     l.crawlEnded(status.getDescription());
                     break;
-                case PREPARED:
+                case PREPARING:
                     l.crawlResuming(status.getDescription());
                     break;
                 default:
@@ -539,6 +538,9 @@ public class CrawlController extends Bean implements
      * Operator requested crawl begin
      */
     public void requestCrawlStart() {
+        sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
+        frontier.loadSeeds();
+        
         setupToePool();
         runProcessorInitialTasks();
 
