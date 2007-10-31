@@ -254,15 +254,15 @@ implements CrawlURIDispositionListener, Serializable {
         this.serverCache = p.get(this, SERVER_CACHE);
         try {
             this.sourceHostDistribution = bdb.getBigMap("sourceHostDistribution",
-            	    String.class, HashMap.class);
+            	    false, String.class, HashMap.class);
             this.hostsDistribution = bdb.getBigMap("hostsDistribution",
-                String.class, LongWrapper.class);
-            this.hostsBytes = bdb.getBigMap("hostsBytes", String.class,
+                false, String.class, LongWrapper.class);
+            this.hostsBytes = bdb.getBigMap("hostsBytes", false, String.class,
                 LongWrapper.class);
             this.hostsLastFinished = bdb.getBigMap("hostsLastFinished",
-                String.class, Long.class);
+                false, String.class, Long.class);
             this.processedSeedsRecords = bdb.getBigMap("processedSeedsRecords",
-                    String.class, SeedRecord.class);
+                    false, String.class, SeedRecord.class);
             
             this.hostsDistributionTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));
             this.hostsBytesTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));

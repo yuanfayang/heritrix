@@ -222,7 +222,7 @@ implements Serializable, Checkpointable {
     
     @Override
     protected void initAllQueues() throws DatabaseException {
-        this.allQueues = bdb.getBigMap("allqueues",
+        this.allQueues = bdb.getBigMap("allqueues", false,
                 String.class, WorkQueue.class);
         if (logger.isLoggable(Level.FINE)) {
             Iterator<String> i = this.allQueues.keySet().iterator();

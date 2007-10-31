@@ -36,8 +36,8 @@ implements Initializable {
     public void initialTasks(StateProvider provider) {
         BdbModule bdb = provider.get(this, BDB);
         try {
-            this.servers = bdb.getBigMap("servers", String.class, CrawlServer.class);
-            this.hosts = bdb.getBigMap("hosts", String.class, CrawlHost.class);
+            this.servers = bdb.getBigMap("servers", false, String.class, CrawlServer.class);
+            this.hosts = bdb.getBigMap("hosts", false, String.class, CrawlHost.class);
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }

@@ -324,7 +324,7 @@ Serializable, Closeable {
     }
 
 
-    public <K,V> Map<K,V> getBigMap(String dbName, 
+    public <K,V> Map<K,V> getBigMap(String dbName, boolean recycle,
             Class<? super K> key, Class<? super V> value) 
     throws DatabaseException {
         @SuppressWarnings("unchecked")
@@ -332,6 +332,15 @@ Serializable, Closeable {
         if (r != null) {
             return r;
         }
+        
+        if (!recycle) {
+            try {
+                bdbEnvironment.truncateDatabase(null, dbName, false);
+            } catch (DatabaseNotFoundException e) {
+                // ignored
+            }
+        }
+        
         r = new CachedBdbMap<K,V>(dbName);
         
         r.initialize(bdbEnvironment, key, value, classCatalog);
