@@ -55,6 +55,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.archive.crawler.framework.CrawlJobManagerConfig;
 import org.archive.crawler.framework.CrawlJobManagerImpl;
+import org.archive.crawler.framework.JobStage;
 import org.archive.util.IoUtils;
 import org.archive.util.JndiUtils;
 
@@ -138,11 +139,17 @@ public class Heritrix {
         options.addOption("p", "webui-port", true, "The port the webui " +
                 "should listen on.  Ignored if -r is not specified.");
         options.addOption("w", "webui-war-path", true, "The path to the " +
-                "Heritrix webui WAR.  Ignored if -r is not specified.");
-        options.addOption("r", "run-webui", false,  "If set, launches " +
-        		 "a local web server and crawler webui. If not set, " +
-        		 "the launched crawl engine will need to be controlled " +
-        		 "via JMX (and possibly a remote webui).");
+                "Heritrix webui WAR.  Ignored if -n is specified.");
+        options.addOption("n", "no-web-ui", false, "Do not run the admin web " +
+                "user interface; only run the crawl engine.  If set, the " +
+        	"crawl engine will need to be controlled via JMX or a remote " +
+        	"web UI.");
+        options.addOption("u", "no-engine", false, "Do not run the crawl " +
+        	"engine; only run the admin web UI."); 
+        options.addOption("r", "run-job", true,  "Specify a ready job or a " +
+        	"profile name to launch at launch.  If you specify a profile " +
+        	"name, the profile will first be copied to a new ready job, " +
+        	"and that ready job will be launched.");
         options.addOption("a", "webui-admin", true,  "Specifies the " +
         		"authorization password which must be supplied to " +
         		"access the webui. Required if launching the webui.");
@@ -197,18 +204,46 @@ public class Heritrix {
             System.setProperty(maxFormSize, "52428800");
         }
         
-        CrawlJobManagerConfig config = new CrawlJobManagerConfig();
-        WebUIConfig webConfig = new WebUIConfig();
-        File properties = getDefaultPropertiesFile();
-        
+        PrintStream out;
+        if (isDevelopment()) {
+            out = System.out;
+        } else {
+            File startLog = new File(getHeritrixHome(), STARTLOG);
+            out = new PrintStream(
+                    new BufferedOutputStream(
+                            new FileOutputStream(startLog),16384));
+        }
+
+
         CommandLine cl = getCommandLine(args);
         if (cl == null) return;
 
-        if (cl.hasOption('r')) {
+        if (cl.hasOption('n') && cl.hasOption('u')) {
+            out.println("Only one of -n or -u may be specified.");
+            System.exit(1);
+        }
+        
+        if (cl.hasOption('n')
+                && (System.getProperty(
+                        "com.sun.management.jmxremote.port") == null)) {
+            out.println("The crawl engine is inaccessible.  You "
+                    + "must specify the system property "
+                    + "com.sun.management.jmxremote.port if you disable "
+                    + "the web UI with -n.");
+            System.exit(1);
+        }
+
+        
+        CrawlJobManagerConfig config = new CrawlJobManagerConfig();
+        WebUIConfig webConfig = new WebUIConfig();
+        File properties = getDefaultPropertiesFile();
+
+        if (!cl.hasOption('n')) {
             if (cl.hasOption('a')) {
                 webConfig.setUiPassword(cl.getOptionValue('a'));
             } else {
-                System.err.println("If -r is specified, -a must be specified too.");
+                System.err.println("Unless -n is specified, you must specify " +
+                	"an admin password for the web UI using -a.");
                 System.exit(1);
             }
         }
@@ -247,15 +282,6 @@ public class Heritrix {
             LogManager.getLogManager().readConfiguration(finp);
         }
         
-        PrintStream out;
-        if (isDevelopment()) {
-            out = System.out;
-        } else {
-            File startLog = new File(getHeritrixHome(), STARTLOG);
-            out = new PrintStream(
-                    new BufferedOutputStream(
-                            new FileOutputStream(startLog),16384));
-        }
         
         // Set timezone here.  Would be problematic doing it if we're running
         // inside in a container.
@@ -263,12 +289,30 @@ public class Heritrix {
 
         // Start Heritrix.
         try {
-            CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(config);
-            registerJndi(cjm.getObjectName(), out);
-            out.println("CrawlJobManager registered at " + cjm.getObjectName());
+            if (cl.hasOption('u')) {
+                out.println("Not running crawl engine.");
+            } else {
+                CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(config);
+                registerJndi(cjm.getObjectName(), out);
+                out.println("CrawlJobManager registered at " 
+                        + cjm.getObjectName());
+                if (cl.hasOption('r')) {
+                    launch(cjm, cl.getOptionValue('r'));
+                }
+            }
             
             // Start WebUI, if desired.
-            if (cl.hasOption('r')) {
+            if (cl.hasOption('n')) {
+                out.println("Not running web UI.");
+                if (System.getProperty(
+                        "com.sun.management.jmxremote.port") == null) {
+                    out.println("The crawl engine is inaccessible.  You " +
+                    	"must specify the system property " +
+                    	"com.sun.management.jmxremote.port if you disable " +
+                    	"the web UI.");
+                    System.exit(1);
+                }
+            } else {
                 new WebUI(webConfig).start();
                 out.println("Web UI listening on " 
                         + webConfig.hostAndPort() + ".");
@@ -293,7 +337,6 @@ public class Heritrix {
                 }
             }
         }
-        
         
         try {
             Object eternity = new Object();
@@ -433,4 +476,24 @@ public class Heritrix {
         
         return version.trim() + "-" + timestamp.trim();
     }
+    
+    
+    private static void launch(CrawlJobManagerImpl cjm, String job) 
+    throws Exception {
+        for (String s: cjm.listJobs()) {
+            if (s.equals(JobStage.PROFILE.getPrefix() + job)) {
+                String newName = CrawlJobManagerImpl.getCopyDefaultName(job);
+                newName = JobStage.READY.getPrefix() + newName;
+                cjm.copy(s, newName);
+                cjm.launchJob(newName);
+                return;
+            } else if (s.equals(JobStage.READY.getPrefix() + job)) {
+                cjm.launchJob(s);
+                return;
+            }
+        }
+        throw new IllegalStateException("No such job: " + job);
+    }
+
+
 }

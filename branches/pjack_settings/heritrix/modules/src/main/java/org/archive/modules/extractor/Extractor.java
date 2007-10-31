@@ -62,7 +62,6 @@ public abstract class Extractor extends Processor implements Initializable {
     
     public void initialTasks(StateProvider global) {
         this.uriErrors = global.get(this, URI_ERROR_LOGGER_MODULE);    
-        System.out.println(uriErrors);
     }
 
     /**
