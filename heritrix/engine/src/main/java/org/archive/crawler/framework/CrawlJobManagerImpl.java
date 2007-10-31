@@ -466,13 +466,15 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
 
     public synchronized void close() {
+        unregister(oname);
         String query = DOMAIN + ":*,type=" + JobController.class.getName();
         Set<ObjectName> jobs = JmxUtils.find(server, query);
-        if (!jobs.isEmpty()) {
-            throw new IllegalStateException("Cannot close CrawlJobManager " + 
-                    "when jobs are still active.");
+        for (ObjectName job: jobs) try {
+            server.invoke(job, "requestCrawlStop", new Object[0], new String[0]);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Could not stop job", e);
         }
-        unregister(oname);
+
         // Clean up LogRemoteAccessors that may have been opened
         for(String key : logRemoteAccess.keySet()){
             LogRemoteAccessImpl lra = logRemoteAccess.get(key);

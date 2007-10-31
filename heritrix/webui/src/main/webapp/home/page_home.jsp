@@ -62,7 +62,7 @@ This web console knows of the following crawl engines:
         <% } %>
           <a class="rowLink" href="<%=request.getContextPath()%>/crawler_area/do_show_about_crawler.jsp?<%=crawler.getQueryString()%>">About</a>
         <% if (crawler.getError() == null) { %>
-          <a class="rowLink" href="javascript:alert('not yet implemented');">Stop</a>
+          <a class="rowLink" href="do_show_stop_crawler.jsp?<%=crawler.getQueryString()%>">Stop</a>
         <% } %>
         <% if (crawler.getSource() == Crawler.Source.MANUAL && crawler.getPort() != -1) { %>
             <a class="rowLink" href="do_remove_crawler.jsp?<%=crawler.getQueryString()%>">Remove from UI</a>
@@ -74,7 +74,9 @@ This web console knows of the following crawl engines:
        <div class="placeholder">(none)</div>
     <% } %>
 
-<a href="do_show_add_crawler.jsp">Add a remote crawl engine...</a>
+<a href="do_show_add_crawler.jsp">Add a remote crawl engine...</a><br/>
+<a href="do_show_stop_webui.jsp">Terminate the Web UI...</a>
+
 
 <% if (jndiWarning) { %>
    <p>Note: No directory server (JNDI) was configured as a source of
