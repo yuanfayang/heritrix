@@ -50,6 +50,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.JobStage;
 import org.archive.util.JmxUtils;
@@ -213,6 +214,10 @@ public class Home {
         
         // Discover all crawlers.
         Collection<Crawler> all = crawler.testConnection();
+        if (all.size() == 1 && all.iterator().next().getError() != null) {
+            // There's no local crawler, so don't add it.
+            all = Collections.emptySet();
+        }
         
         // Add the discovered crawlers.
         manualCrawlers.addAll(all);
@@ -244,6 +249,64 @@ public class Home {
             }
         }
         throw new IllegalArgumentException("No such crawler.");
+    }
+    
+    
+    public static void showStopCrawler(
+            ServletContext sc, 
+            HttpServletRequest request, 
+            HttpServletResponse response) {
+        getCrawler(request);
+        Misc.forward(request, response, "page_stop_crawler.jsp");
+    }
+    
+    
+    public static void stopCrawler(
+            ServletContext sc, 
+            HttpServletRequest request, 
+            HttpServletResponse response) throws Exception {
+        String kind = request.getParameter("kind");
+        Crawler crawler = getCrawler(request);
+        if (kind.equals("klutz") && crawler.getPort() == -1) {
+            stopWebUI(sc, request, response);
+            return;
+        }
+        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        try {
+            if (kind.equals("klutz")) {
+                remote.getObject().systemExit();
+            } else {
+                remote.getObject().close();
+            }
+        } finally {
+            remote.close();
+        }
+        allCrawlers.remove(crawler);
+        
+        new Flash("Successfully stopped " + crawler.getLegend() + ".")
+            .addToSession(request);
+        showHome(sc, request, response);
+    }
+
+    
+    public static void showStopWebUI(
+            ServletContext sc, 
+            HttpServletRequest request, 
+            HttpServletResponse response) throws Exception {
+        Misc.forward(request, response, "page_stop_webui.jsp");
+    }
+
+    
+
+    public static void stopWebUI(
+            ServletContext sc, 
+            HttpServletRequest request, 
+            HttpServletResponse response) throws Exception {
+        response.setContentType("text/plain");
+        response.getWriter().println("The web UI has shut down.  " +
+        		"Thanks for using Heritrix!");
+        response.getWriter().flush();
+        System.exit(0);
     }
 
     
