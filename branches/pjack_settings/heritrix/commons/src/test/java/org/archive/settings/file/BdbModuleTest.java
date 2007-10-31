@@ -61,7 +61,7 @@ public class BdbModuleTest extends TmpDirTestCase {
                 second.getAbsolutePath());
         SheetManager mgr2 = Checkpointer.recover(checkpointDir, cr);
         BdbModule bdb2 = (BdbModule)mgr2.getRoot().get("module");
-        Map<String,String> testData2 = bdb2.getBigMap("testData",
+        Map<String,String> testData2 = bdb2.getBigMap("testData", false,
                 String.class, String.class);
         Map<String,String> map1 = new HashMap<String,String>();
         for (int i = 0; i < 1000; i++) {
@@ -89,7 +89,7 @@ public class BdbModuleTest extends TmpDirTestCase {
         config.setAllowCreate(true);
         bdb.openDatabase("testOpen", config, false);
         
-        Map<String,String> testData = bdb.getBigMap("testData", 
+        Map<String,String> testData = bdb.getBigMap("testData", false, 
                 String.class, String.class);
         for (int i = 0; i < 1000; i++) {
             testData.put(String.valueOf(i), String.valueOf(i * 2));
