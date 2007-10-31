@@ -93,18 +93,12 @@ String qs = Text.jobQueryString(request);
                <span class='status <%=job.getCrawlStatus()%>'>
                <%=job.getCrawlStatus()%></span>
                </b> 
-<a>
+
 <%
 String status = job.getCrawlStatus();
 %>
 <%
-if (status.equals(CrawlController.State.PREPARED.toString())) {
-%>
-    <a 
-    title="Start the crawl."
-    href="<%=request.getContextPath()%>/console/do_start.jsp?<%=qs%>">Start</a>
-<%
-} else if (status.equals("PAUSED") || status.equals("PAUSING")) {
+if (status.equals("PAUSED") || status.equals("PAUSING")) {
 %> 
     <a 
     title="Resume the crawl."
@@ -114,7 +108,7 @@ if (status.equals(CrawlController.State.PREPARED.toString())) {
     title="Checkpoint the crawl."
     href="<%=request.getContextPath()%>/console/do_checkpoint.jsp?<%=qs%>">Checkpoint</a>
 <%
-} else if (!status.equals("CHECKPOINTING")) {
+} else if (!status.equals("CHECKPOINTING") && !status.equals("PREPARING")) {
 %>
     <a 
     title="Pause the crawl."
@@ -122,11 +116,13 @@ if (status.equals(CrawlController.State.PREPARED.toString())) {
 <%
 }
 %>
+
+<% if (!status.equals("PREPARING")) { %>
 |
     <a 
     title="Terminates the crawl."
     href="<%=request.getContextPath()%>/console/do_stop.jsp?<%=qs%>">Terminate</a>
-
+<% } %>
 </legend>
 
                 <%

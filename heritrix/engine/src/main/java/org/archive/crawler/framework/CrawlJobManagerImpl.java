@@ -54,7 +54,6 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
 import static org.archive.crawler.framework.JobStage.*;
 import org.archive.crawler.util.LogRemoteAccessImpl;
-import org.archive.crawler.webui.Text;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.BeanProxy;
@@ -67,6 +66,7 @@ import org.archive.settings.jmx.LoggingDynamicMBean;
 import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
@@ -690,7 +690,17 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
             final ObjectName smName = createJMXSheetManager(name, fsm);
             final ObjectName ccName = findCrawlController(name);
-            addFinishedCallback(job, ccName, smName, jmxListener);           
+            addFinishedCallback(job, ccName, smName, jmxListener);
+            new Thread() {
+                public void run() {
+                    try {
+                        server.invoke(ccName, "requestCrawlStart", 
+                                new Object[0], new String[0]);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Could not start " + job, e);
+                    }
+                }
+            }.start();
         }
 
 
@@ -710,9 +720,9 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     public static String getCopyDefaultName(String name) {
         if (endsWith14Digits(name)) {
             return name.substring(0, name.length() - 14) 
-                + Text.jobTimestamp();
+                + ArchiveUtils.get14DigitDate();
         } else {
-            return name + "-" + Text.jobTimestamp();
+            return name + "-" + ArchiveUtils.get14DigitDate();
         }
     }
 
