@@ -54,6 +54,7 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
 import static org.archive.crawler.framework.JobStage.*;
 import org.archive.crawler.util.LogRemoteAccessImpl;
+import org.archive.crawler.webui.Text;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.BeanProxy;
@@ -703,6 +704,29 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             }
         }
     
+    }
+
+    
+    public static String getCopyDefaultName(String name) {
+        if (endsWith14Digits(name)) {
+            return name.substring(0, name.length() - 14) 
+                + Text.jobTimestamp();
+        } else {
+            return name + "-" + Text.jobTimestamp();
+        }
+    }
+
+
+    private static boolean endsWith14Digits(String s) {
+        if (s.length() < 14) {
+            return false;
+        }
+        for (int i = s.length() - 14; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     

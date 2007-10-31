@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.CrawlJobManagerImpl;
 import org.archive.crawler.framework.JobStage;
 import org.archive.settings.jmx.JMXSheetManager;
 
@@ -240,28 +241,10 @@ public class CrawlerArea {
     
     private static String getCopyDefaultName(CrawlJob cj) {
         String name = cj.getName();
-        if (endsWith14Digits(name)) {
-            return name.substring(0, name.length() - 14) 
-                + Text.jobTimestamp();
-        } else {
-            return name + "-" + Text.jobTimestamp();
-        }
-    }
-    
-    
-    private static boolean endsWith14Digits(String s) {
-        if (s.length() < 14) {
-            return false;
-        }
-        for (int i = s.length() - 14; i < s.length(); i++) {
-            if (!Character.isDigit(s.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
+        return CrawlJobManagerImpl.getCopyDefaultName(name);
     }
 
-    
+
     public static void copy(
             ServletContext sc,
             HttpServletRequest request,
