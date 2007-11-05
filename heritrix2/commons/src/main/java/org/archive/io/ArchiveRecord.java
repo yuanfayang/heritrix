@@ -37,6 +37,15 @@ import org.archive.util.Base32;
  * @version $Date$ $Version$
  */
 public abstract class ArchiveRecord extends InputStream {
+
+    /**
+     * Minimal http response or request header length.
+     * 
+     * I've seen in arcs content length of 1 with no header.
+     */
+    protected static final long MIN_HTTP_HEADER_LENGTH =
+        Math.min("HTTP/1.1 200 OK\r\n".length(), "GET / HTTP/1.0\n\r".length());
+
     ArchiveRecordHeader header = null;
 
     /**
@@ -81,10 +90,7 @@ public abstract class ArchiveRecord extends InputStream {
 
     boolean strict = false;
     
-    private ArchiveRecord() {
-        super();
-    }
-    
+
     /**
      * Constructor.
      *
@@ -152,9 +158,9 @@ public abstract class ArchiveRecord extends InputStream {
         return this.header;
     }
     
-	protected void setHeader(ArchiveRecordHeader header) {
-		this.header = header;
-	}
+        protected void setHeader(ArchiveRecordHeader header) {
+                this.header = header;
+        }
 
     /**
      * Calling close on a record skips us past this record to the next record
@@ -170,59 +176,59 @@ public abstract class ArchiveRecord extends InputStream {
             skip();
             this.in = null;
             if (this.digest != null) {
-            	this.digestStr = Base32.encode(this.digest.digest());
+                this.digestStr = Base32.encode(this.digest.digest());
             }
         }
     }
 
     /**
-	 * @return Next character in this Record content else -1 if at EOR.
-	 * @throws IOException
-	 */
-	public int read() throws IOException {
-		int c = -1;
-		if (available() > 0) {
-			c = this.in.read();
-			if (c == -1) {
-				throw new IOException("Premature EOF before end-of-record.");
-			}
-			if (this.digest != null) {
-				this.digest.update((byte) c);
-			}
-		}
-		incrementPosition();
-		return c;
-	}
+         * @return Next character in this Record content else -1 if at EOR.
+         * @throws IOException
+         */
+        public int read() throws IOException {
+                int c = -1;
+                if (available() > 0) {
+                        c = this.in.read();
+                        if (c == -1) {
+                                throw new IOException("Premature EOF before end-of-record.");
+                        }
+                        if (this.digest != null) {
+                                this.digest.update((byte) c);
+                        }
+                }
+                incrementPosition();
+                return c;
+        }
 
     public int read(byte[] b, int offset, int length) throws IOException {
-		int read = Math.min(length, available());
-		if (read == -1 || read == 0) {
-			read = -1;
-		} else {
-			read = this.in.read(b, offset, read);
-			if (read == -1) {
-				String msg = "Premature EOF before end-of-record: "
-					+ getHeader().getHeaderFields();
-				if (isStrict()) {
-					throw new IOException(msg);
-				}
-				setEor(true);
-				System.err.println(Level.WARNING.toString() + " " + msg);
-			}
-			if (this.digest != null && read >= 0) {
-				this.digest.update(b, offset, read);
-			}
-		}
-		incrementPosition(read);
-		return read;
-	}
+                int read = Math.min(length, available());
+                if (read == -1 || read == 0) {
+                        read = -1;
+                } else {
+                        read = this.in.read(b, offset, read);
+                        if (read == -1) {
+                                String msg = "Premature EOF before end-of-record: "
+                                        + getHeader().getHeaderFields();
+                                if (isStrict()) {
+                                        throw new IOException(msg);
+                                }
+                                setEor(true);
+                                System.err.println(Level.WARNING.toString() + " " + msg);
+                        }
+                        if (this.digest != null && read >= 0) {
+                                this.digest.update(b, offset, read);
+                        }
+                }
+                incrementPosition(read);
+                return read;
+        }
 
     /**
-	 * This available is not the stream's available. Its an available based on
-	 * what the stated Archive record length is minus what we've read to date.
-	 * 
-	 * @return True if bytes remaining in record content.
-	 */
+         * This available is not the stream's available. Its an available based on
+         * what the stated Archive record length is minus what we've read to date.
+         * 
+         * @return True if bytes remaining in record content.
+         */
     public int available() {
         long amount = getHeader().getLength() - getPosition();
         return (amount > Integer.MAX_VALUE? Integer.MAX_VALUE: (int)amount);
@@ -241,8 +247,10 @@ public abstract class ArchiveRecord extends InputStream {
         // Read to the end of the body of the record.  Exhaust the stream.
         // Can't skip direct to end because underlying stream may be compressed
         // and we're calculating the digest for the record.
-        while (available() > 0 && !this.eor) {
-            skip(available());
+        int r = available();
+        while (r > 0 && !this.eor) {
+            skip(r);
+            r = available();
         }
     }
     
@@ -279,45 +287,45 @@ public abstract class ArchiveRecord extends InputStream {
         this.strict = strict;
     }
 
-	protected InputStream getIn() {
-		return this.in;
-	}
+        protected InputStream getIn() {
+                return this.in;
+        }
 
-	public String getDigestStr() {
-		return this.digestStr;
-	}
-	
-	protected void incrementPosition() {
-		this.position++;
-	}
-	
-	protected void incrementPosition(final long incr) {
-		this.position += incr;
-	}
-	
-	protected long getPosition() {
-		return this.position;
-	}
+        public String getDigestStr() {
+                return this.digestStr;
+        }
+        
+        protected void incrementPosition() {
+                this.position++;
+        }
+        
+        protected void incrementPosition(final long incr) {
+                this.position += incr;
+        }
+        
+        protected long getPosition() {
+                return this.position;
+        }
 
-	protected boolean isEor() {
-		return eor;
-	}
+        protected boolean isEor() {
+                return eor;
+        }
 
-	protected void setEor(boolean eor) {
-		this.eor = eor;
-	}
-	
-	protected String getStatusCode4Cdx(final ArchiveRecordHeader h) {
-		return "-";
-	}
-	
-	protected String getIp4Cdx(final ArchiveRecordHeader h) {
-		return "-";
-	}
-	
-	protected String getDigest4Cdx(final ArchiveRecordHeader h) {
-		return getDigestStr() == null? "-": getDigestStr();
-	}
+        protected void setEor(boolean eor) {
+                this.eor = eor;
+        }
+        
+        protected String getStatusCode4Cdx(final ArchiveRecordHeader h) {
+                return "-";
+        }
+        
+        protected String getIp4Cdx(final ArchiveRecordHeader h) {
+                return "-";
+        }
+        
+        protected String getDigest4Cdx(final ArchiveRecordHeader h) {
+                return getDigestStr() == null? "-": getDigestStr();
+        }
     
     protected String getMimetype4Cdx(final ArchiveRecordHeader h) {
         return h.getMimetype();
@@ -326,11 +334,11 @@ public abstract class ArchiveRecord extends InputStream {
     protected String outputCdx(final String strippedFileName)
     throws IOException {
         // Read the whole record so we get out a hash. Should be safe calling
-    	// close on already closed Record.
+        // close on already closed Record.
         close();
         ArchiveRecordHeader h = getHeader();
         StringBuilder buffer =
-        	new StringBuilder(ArchiveFileConstants.CDX_LINE_BUFFER_SIZE);
+                new StringBuilder(ArchiveFileConstants.CDX_LINE_BUFFER_SIZE);
         buffer.append(h.getDate());
         buffer.append(ArchiveFileConstants.SINGLE_SPACE);
         buffer.append(getIp4Cdx(h));
@@ -357,7 +365,7 @@ public abstract class ArchiveRecord extends InputStream {
      */
     public void dump()
     throws IOException {
-    	dump(System.out);
+        dump(System.out);
     }
     
     /**
@@ -366,11 +374,40 @@ public abstract class ArchiveRecord extends InputStream {
      */
     public void dump(final OutputStream os)
     throws IOException {
-    	final byte [] outputBuffer = new byte [16*1024];
+        final byte [] outputBuffer = new byte [16*1024];
         int read = outputBuffer.length;
         while ((read = read(outputBuffer, 0, outputBuffer.length)) != -1) {
             os.write(outputBuffer, 0, read);
         }
         os.flush();
+    }
+    
+    /**
+     * Is it likely that this record contains headers?
+     * This method will return true if the body is a http response that includes
+     * http response headers or the body is a http request that includes request
+     * headers, etc. Be aware that headers in content are distinct from
+     * {@link ArchiveRecordHeader} 'headers'.
+     * @return True if this Record's content has headers: 
+     */
+    public boolean hasContentHeaders() {
+        final String url = getHeader().getUrl();
+        if (url == null) {
+            return false;
+        }
+        
+        if (!url.toLowerCase().startsWith("http")) {
+            return false;
+        }
+        
+        if (getHeader().getLength() <= MIN_HTTP_HEADER_LENGTH) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    protected void setBodyOffset(int bodyOffset) {
+        this.position = bodyOffset;
     }
 }
