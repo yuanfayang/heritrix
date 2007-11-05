@@ -1,0 +1,11 @@
+max-size-bytes-description:
+Maximum file size for - longer files will be ignored. -1 = unlimited 
+
+
+strip-reg-expr-description:
+A regular expression that matches those portions of downloaded documents 
+that need to be ignored when calculating the content digest. Segments 
+matching this expression will be rewritten with the blank character for 
+the content digest. 
+
+
