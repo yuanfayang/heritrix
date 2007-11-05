@@ -178,12 +178,22 @@ public interface ARCConstants extends ArchiveFileConstants {
      * an index.
      */
     public static final String TOKENIZED_PREFIX = "tokenized_";
-    
+
+    /**
+     * Assumed maximum size of a record meta header line.
+     *
+     * This 100k which seems massive but its the same as the LINE_LENGTH from
+     * <code>alexa/include/a_arcio.h</code>:
+     * <pre>
+     * #define LINE_LENGTH     (100*1024)
+     * </pre>
+     */
+    public static final int MAX_HEADER_LINE_LENGTH = 1024 * 100;
 
     /**
      * Version 1 required metadata fields.
      */
-    public static List REQUIRED_VERSION_1_HEADER_FIELDS = Arrays
+    public static List<String> REQUIRED_VERSION_1_HEADER_FIELDS = Arrays
             .asList(new String[] { URL_FIELD_KEY, IP_HEADER_FIELD_KEY,
                     DATE_FIELD_KEY, MIMETYPE_FIELD_KEY,
                     LENGTH_FIELD_KEY, VERSION_FIELD_KEY,
@@ -213,5 +223,5 @@ public interface ARCConstants extends ArchiveFileConstants {
      * See RFC1952 for explaination of value of 10.
      */
     public static final int DEFAULT_GZIP_HEADER_LENGTH =
-    	GzipHeader.MINIMAL_GZIP_HEADER_LENGTH;
+        GzipHeader.MINIMAL_GZIP_HEADER_LENGTH;
 }
