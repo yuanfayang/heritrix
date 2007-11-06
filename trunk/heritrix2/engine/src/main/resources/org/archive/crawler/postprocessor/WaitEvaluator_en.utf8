@@ -1,3 +1,8 @@
+description:
+Evaluates how long to wait before fetching a URI again. Typically, this 
+processor should be in the post processing chain. It will pass if another wait 
+evaluator has already processed the CrawlURI.
+
 changed-factor-description:
 The factor by which a URIs wait time is decreased when a revisit reveals 
 a changed document. A value of 1 will leave it unchanged, a value of two 

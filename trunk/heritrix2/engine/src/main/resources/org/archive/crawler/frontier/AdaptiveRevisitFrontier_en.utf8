@@ -1,3 +1,10 @@
+description:
+AdaptiveRevisitFrontier. EXPERIMENTAL Frontier that will repeatedly visit all 
+encountered URIs. Wait time between visits is configurable and is determined 
+by seperate Processor(s). See WaitEvaluators. See documentation for ARFrontier 
+limitations.
+
+
 bdb-description:
 The bdb module to use for the frontier.
 

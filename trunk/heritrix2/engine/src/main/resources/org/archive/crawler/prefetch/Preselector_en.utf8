@@ -1,3 +1,7 @@
+description:
+Preselector. Does one last bit of checking to make sure that the current URI 
+should be fetched.
+
 allow-by-regexp-description:
 Allow only URIs matching the regular expression to be processed. 
 

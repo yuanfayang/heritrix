@@ -1,3 +1,16 @@
+description:
+A processor that halts further progress once a fixed 
+amount of time has elapsed since the start of a crawl. 
+It is possible to configure this processor per host, but 
+it should be noted that Heritrix does not track runtime 
+per host seperately. Especially when using facilities 
+like the BdbFrontier's hold-queues, the actual amount of 
+time spent crawling a host may have little relevance to 
+total elapsed time. Note however that using overrides 
+and/or refinements only makes sense when using the 
+'Block URIs' end operation. The pause and terminate 
+operations have global impact once encountered.
+
 end-operation-description:
 The action that the processor takes once the runtime has elapsed. 
 <p> 

@@ -1,3 +1,7 @@
+description:
+LowDiskPause processor.
+
+
 monitor-mounts-description:
 List of filessystem mounts whose 'available' space should be monitored 
 via 'df' (if available). 
