@@ -14,3 +14,9 @@ meaning each threads gets its own isolated context.
 
 script-file-description:
 BeanShell script file.
+
+
+manager-description:
+The SheetManager used to configure this crawl.  Can be used to look up any 
+other module based on its settings path.  The value you specify here will be
+made available to the BeanShell script as the variable "manager".
