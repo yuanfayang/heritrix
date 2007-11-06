@@ -7,7 +7,7 @@
 
 Settings the_settings = (Settings)request.getAttribute("settings");
 String the_path = (String)Text.get(request, "path");
-Setting the_setting = the_settings.getSetting(the_path);
+Setting the_setting = the_settings.getElementPrototype(the_path);
 
 // Figure out what's checked and what's not.
 Collection<Setting> reuseOptions = the_settings.getReuseOptions(the_setting);
