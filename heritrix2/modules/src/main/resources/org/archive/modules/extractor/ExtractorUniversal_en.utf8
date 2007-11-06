@@ -1,3 +1,9 @@
+description:
+Link extraction on unknown file types. A best effort extractor that looks at 
+the raw byte code of any file that has not been handled by another extractor 
+and tries to find URIs. Will only match absolute URIs.
+
+
 max-depth-bytes-description:
 How deep to look into files for URI strings, in bytes. 
 
