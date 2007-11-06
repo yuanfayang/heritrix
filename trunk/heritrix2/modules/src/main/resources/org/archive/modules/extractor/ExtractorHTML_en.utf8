@@ -1,3 +1,7 @@
+description:
+HTML extractor. Extracts links from HTML documents.
+
+
 robots-honoring-policy-description:
 The robots honoring policy to use when considering a robots META tag.
 
