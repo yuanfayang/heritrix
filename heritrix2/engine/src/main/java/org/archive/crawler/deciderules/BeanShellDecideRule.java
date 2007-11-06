@@ -32,12 +32,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.framework.CrawlController;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
+import org.archive.settings.SheetManager;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
@@ -75,8 +75,8 @@ implements Initializable, KeyChangeListener {
     @Immutable
     final public static Key<Path> SCRIPT_FILE = Key.make(new Path(""));
 
-    final public static Key<CrawlController> CONTROLLER =
-        Key.makeAuto(CrawlController.class);
+    final public static Key<SheetManager> MANAGER =
+        Key.makeAuto(SheetManager.class);
 
     /**
      * Whether each ToeThread should get its own independent script context, or
@@ -95,7 +95,8 @@ implements Initializable, KeyChangeListener {
     protected boolean initialized = false; 
 
     private Path scriptFile;
-    private CrawlController controller;
+    private SheetManager manager;
+
 
     static {
         KeyManager.addKeys(BeanShellDecideRule.class);
@@ -107,7 +108,7 @@ implements Initializable, KeyChangeListener {
     
     public void initialTasks(StateProvider context) {
         this.scriptFile = context.get(this, SCRIPT_FILE);
-        this.controller = context.get(this, CONTROLLER);
+        this.manager = context.get(this, MANAGER);
     }
 
     
@@ -163,7 +164,7 @@ implements Initializable, KeyChangeListener {
         Interpreter interpreter = new Interpreter(); 
         try {
             interpreter.set("self", this);
-            interpreter.set("controller", controller);
+            interpreter.set("manager", manager);
             
             File file = scriptFile.toFile();
             try {

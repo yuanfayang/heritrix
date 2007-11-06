@@ -31,11 +31,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 //import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlerProcessor;
+import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -61,7 +62,7 @@ import bsh.Interpreter;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class BeanShellProcessor extends CrawlerProcessor 
+public class BeanShellProcessor extends Processor 
 implements KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
@@ -86,13 +87,19 @@ implements KeyChangeListener {
      */
     @Immutable
     final public static Key<Boolean> ISOLATE_THREADS = Key.make(true);
+    
+
+    @Immutable
+    final public static Key<SheetManager> MANAGER = 
+        Key.makeAuto(SheetManager.class);
 
 
     protected ThreadLocal<Interpreter> threadInterpreter;
     protected Interpreter sharedInterpreter;
     public Map<Object,Object> sharedMap = Collections.synchronizedMap(
             new HashMap<Object,Object>());
-    
+
+    private SheetManager manager;
     
     /**
      * Constructor.
@@ -151,7 +158,7 @@ implements KeyChangeListener {
         Interpreter interpreter = new Interpreter(); 
         try {
             interpreter.set("self", this);
-            interpreter.set("controller", controller);
+            interpreter.set("manager", manager);
 
             File file = get(SCRIPT_FILE).toFile();
             try {
@@ -169,6 +176,7 @@ implements KeyChangeListener {
 
     public void initialTasks(StateProvider context) {
         super.initialTasks(context);
+        this.manager = context.get(this, MANAGER);
         isolate(context.get(this, ISOLATE_THREADS));
     }
 
@@ -197,7 +205,7 @@ implements KeyChangeListener {
     
     
     private <T> T get(Key<T> key) {
-        Sheet def = controller.getSheetManager().getGlobalSheet();
+        Sheet def = manager.getGlobalSheet();
         return def.get(this, key);
     }
     
