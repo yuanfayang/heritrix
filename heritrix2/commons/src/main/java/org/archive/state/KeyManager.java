@@ -27,9 +27,12 @@ package org.archive.state;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.archive.i18n.LocaleCache;
 
 
 /**
@@ -221,4 +224,7 @@ final public class KeyManager {
     }
 
 
+    public static String getModuleDescription(Class<?> cls, Locale locale) {
+        return LocaleCache.load(cls, locale).get("description");
+    }
 }

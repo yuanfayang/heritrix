@@ -179,14 +179,18 @@ public abstract class ModuleTestBase extends TestCase {
      * descriptions in English.
      */
     public void testDefaultLocale() {
-        Map<String,Key<Object>> keys = KeyManager.getKeys(getModuleClass());
+        Class<?> c = getModuleClass();
+        Map<String,Key<Object>> keys = KeyManager.getKeys(c);
         List<String> problems = new ArrayList<String>();
-        for (Key k: keys.values()) {
+        for (Key<?> k: keys.values()) {
             String name = k.getName(Locale.ENGLISH);
             String desc = k.getDescription(Locale.ENGLISH);
             if (name == null || desc == null) {
                 problems.add(k.getFieldName());
             }
+        }
+        if (KeyManager.getModuleDescription(c, Locale.ENGLISH) == null) {
+            problems.add("description");
         }
         TestCase.assertTrue(problems.toString(), problems.isEmpty());
     }
