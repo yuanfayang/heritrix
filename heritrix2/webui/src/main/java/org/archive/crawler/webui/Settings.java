@@ -156,6 +156,44 @@ public class Settings {
     public Setting getSetting(String path) {
         return settings.get(path);
     }
+    
+    
+    /**
+     * If the given path resolves to a list or a map, return a setting that
+     * could be an element of that list or map.
+     * 
+     * @param path
+     * @return
+     */
+    public Setting getElementPrototype(String path) {
+        Setting setting = getSetting(path);
+        if (setting.getType() != PathChanger.MAP_TAG 
+                && setting.getType() != PathChanger.LIST_TAG) {
+            return setting;
+        }
+        
+        String parentPath = setting.getPath();
+        Class<?> elementType = forName(setting.getValue());
+
+        setting = new Setting();
+        setting.setPath(parentPath);
+        setting.setValue("");
+        setting.setActualType(elementType);
+        setting.setSheets(new String[] { sheet } );
+        if (KeyTypes.isSimple(elementType)) {
+            setting.setType(KeyTypes.getSimpleTypeTag(elementType));
+        } else {
+            Set<String> options = getSubclasses(elementType);
+            setting.setType(PathChanger.OBJECT_TAG);
+            if (options.isEmpty()) {
+                setting.setValue("");
+            } else {
+                setting.setValue(options.iterator().next());
+            }
+        }
+        
+        return setting;
+    }
 
 
     public void printFormField(JspWriter out, Setting setting) 
@@ -480,7 +518,7 @@ public class Settings {
         Class elementType = forName(container.getValue());
 
         Setting setting = new Setting();
-        setting.setPath(parentPath);
+        setting.setPath(parentPath + ".new");
         setting.setValue("");
         setting.setSheets(new String[] { sheet } );
         if (KeyTypes.isSimple(elementType)) {
