@@ -1,3 +1,8 @@
+description:
+MirrorWriter processor. A writer that writes each URL to a file on disk named 
+for a derivative of the URL.
+
+
 character-map-description:
 This list is grouped in pairs. The first string in each pair must have a 
 length of one. If it occurs in a URI path, it is replaced by the second 
