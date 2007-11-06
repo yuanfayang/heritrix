@@ -1,3 +1,7 @@
+description:
+FTP Fetcher.
+
+
 extract-from-dirs-description:
 Set to true to extract further URIs from FTP directories. Default is 
 true. 
