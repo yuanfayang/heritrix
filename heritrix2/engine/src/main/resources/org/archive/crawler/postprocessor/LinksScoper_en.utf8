@@ -1,4 +1,5 @@
-
+description:
+LinksScoper. Rules on which extracted links are within configured scope.
 
 preference-depth-hops-description:
 Number of hops (of any sort) from a seed up to which a URI has higher 

@@ -1,3 +1,7 @@
+description:
+The CrawlController.  Used to stop, start, pause, resume and checkpoint crawls.
+
+
 logger-module-description:
 The logger module to use for the crawl.
 

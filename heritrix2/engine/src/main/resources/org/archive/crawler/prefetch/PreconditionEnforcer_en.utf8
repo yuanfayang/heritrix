@@ -1,3 +1,6 @@
+description:
+Precondition enforcer.
+
 user-agent-provider-description:
 Provides the user-agent string used to check if a remote site's robots.txt
 allows us to crawl.

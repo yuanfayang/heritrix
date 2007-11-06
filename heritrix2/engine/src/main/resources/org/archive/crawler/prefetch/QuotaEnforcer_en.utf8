@@ -1,3 +1,6 @@
+description:
+QuotaEnforcer.
+
 force-retire-description:
 Whether an over-quota situation should result in the containing queue 
 being force-retired (if the Frontier supports this). Note that if your 
