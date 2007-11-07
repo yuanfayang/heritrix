@@ -576,6 +576,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             IoUtils.close(br);
             IoUtils.close(bw);
         }
+        f.delete();
         tempFile.renameTo(f);
     }
     
