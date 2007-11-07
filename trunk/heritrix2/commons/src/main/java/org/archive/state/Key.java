@@ -154,6 +154,13 @@ final public class Key<Value> implements Serializable {
      * value specified by {@link def} be used.
      */
     final private boolean autoDetect;
+
+    
+    private boolean initialized;
+    
+    
+    private String guessedOwner;
+    
     
     /**
      * Constructs a new key.
@@ -165,6 +172,7 @@ final public class Key<Value> implements Serializable {
      */
     public Key(KeyMaker<Value> maker) {
         maker.validate();
+        this.guessedOwner = guessDeclaringClass();
         this.type = maker.type;
         this.elementType = maker.elementType;
         this.def = maker.def;
@@ -175,6 +183,20 @@ final public class Key<Value> implements Serializable {
         maker.reset();
     }
 
+    
+    private void checkInit() {
+        if (initialized) {
+            return;
+        }
+        
+        if (guessedOwner == null) {
+            throw new UnregisteredKeyException("Unregistered key");
+        }
+        
+        throw new UnregisteredKeyException("Unregistered key in class " + 
+                guessedOwner + "; you must invoke KeyManager.addKeys(" + 
+                guessedOwner + ".class); in its static initializer.");
+    }
 
     /**
      * Invoked by the KeyManager when it registers a new key.
@@ -183,6 +205,7 @@ final public class Key<Value> implements Serializable {
      * @param field   the Key's field
      */
     void setMetadata(Class<?> owner, Field field) {
+        this.initialized = true;
         this.fieldName = field.getName().toLowerCase().replace('_', '-');
         this.owner = owner;
         if (field.getAnnotation(Nullable.class) == null) {
@@ -227,6 +250,7 @@ final public class Key<Value> implements Serializable {
      * @return  the element type of a List or Map key, or null if 
      */
     public Class<?> getElementType() {
+        checkInit();
         return elementType;
     }
     
@@ -238,6 +262,7 @@ final public class Key<Value> implements Serializable {
      * @return  true if this property is expert.
      */
     public boolean isExpert() {
+        checkInit();
         return expert;
     }
 
@@ -250,6 +275,7 @@ final public class Key<Value> implements Serializable {
      * @return  false if this propery can be overridden
      */
     public boolean isGlobal() {
+        checkInit();
         return global;
     }
     
@@ -264,11 +290,13 @@ final public class Key<Value> implements Serializable {
      * @see Initializable 
      */
     public boolean isImmutable() {
+        checkInit();
         return immutable;
     }
 
 
     public boolean isAutoDetected() {
+        checkInit();
         return autoDetect;
     }
     
@@ -279,6 +307,7 @@ final public class Key<Value> implements Serializable {
      * @return  the field name of this key
      */
     public String getFieldName() {
+        checkInit();
         return fieldName;
     }
 
@@ -290,6 +319,7 @@ final public class Key<Value> implements Serializable {
      * @return  the name of this key in that locale
      */
     public String getName(Locale locale) {
+        checkInit();
         String result = LocaleCache.load(owner, locale).get(fieldName + "-name");
         return (result == null) ? fieldName.replace('_', '-') : result;
     }
@@ -302,6 +332,7 @@ final public class Key<Value> implements Serializable {
      * @return  the description of this key in that locale
      */
     public String getDescription(Locale locale) {
+        checkInit();
         return LocaleCache.load(owner, locale).get(fieldName + "-description");
     }
 
@@ -312,6 +343,7 @@ final public class Key<Value> implements Serializable {
      * @return  the class who declared this key
      */
     public Class<?> getOwner() {
+        checkInit();
         return owner;
     }
 
@@ -322,6 +354,7 @@ final public class Key<Value> implements Serializable {
      * @return  the type of this key's values
      */
     public Class<Value> getType() {
+        checkInit();
         return type;
     }
 
@@ -332,6 +365,7 @@ final public class Key<Value> implements Serializable {
      * @return  the constraints for this key
      */
     public Set<Constraint<Value>> getConstraints() {
+        checkInit();
         return constraints;
     }
 
@@ -342,6 +376,7 @@ final public class Key<Value> implements Serializable {
      * @return  the default value for this key
      */
     public Value getDefaultValue() {
+        checkInit();
         return def;
     }
 
@@ -455,6 +490,7 @@ final public class Key<Value> implements Serializable {
      * @return   the offline default for this key
      */
     public Object getOfflineDefault() {
+        checkInit();
         return offlineDef;
     }
     
@@ -551,4 +587,39 @@ final public class Key<Value> implements Serializable {
         return r;
     }
 
+
+    /**
+     * Guess the name of the class that's creating a key.  This method assumes
+     * that the Key was declared as a final public static field.  If the key
+     * wasn't declared as such, or if the current JVM doesn't supply detailed
+     * stack traces, then this method may not report the correct class name.
+     * The intent of this method is to provide a useful error message for a
+     * common mistake: A developer declared Key fields correctly, but forgot
+     * to invoke KeyManager.addKeys in a class's static initializer.
+     * 
+     * This method tries to return null if the class name can't be guessed,
+     * but again, depending on circumstances it might report something 
+     * incorrect.
+     * 
+     * @return  the guessed declaring class name
+     */
+    private static String guessDeclaringClass() {
+        try {
+            StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+            for (StackTraceElement element: stack) {
+                if (element.getMethodName().equals("<clinit>")) {
+                    return element.getClassName();
+                }
+//                String cname = element.getClassName();
+//                if (!cname.equals(Key.class.getName()) 
+//                        && !cname.equals(KeyMaker.class.getName())) {
+//                    return cname;
+//                }
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

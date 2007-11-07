@@ -131,4 +131,18 @@ public class KeyManagerTest extends TestCase {
         }
     }
 
+    
+    /**
+     * Tests that ExampleInvalidProcessor5's keys raise IllegalStateException
+     * 
+     */
+    public void testUnregisteredKey() {
+        try {
+            String s = ExampleInvalidProcessor5.EXAMPLE.getFieldName();
+            fail("ExampleInvalidProcessor5.EXAMPLE is an unregistered key.");
+        } catch (UnregisteredKeyException e) {
+            System.err.println(e.getMessage());
+            // Expected; KeyManager.addKeys was never called for this class.
+        }
+    }
 }
