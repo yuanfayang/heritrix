@@ -61,6 +61,10 @@ public class Setting {
     public String getPath() {
         return path;
     }
+    
+    public String getLastPath() {
+        return Text.lastPath(path);
+    }
 
     public void setPath(String path) {
         this.path = path;

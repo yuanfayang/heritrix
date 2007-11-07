@@ -11,6 +11,8 @@ String path = (String)Text.get(request, "path");
 String sheet = (String)Text.get(request, "sheet");
 Setting setting = settings.getSetting(path);
 String desc = settings.getDescription(setting);
+String moduleDesc = settings.getModuleDescription(setting);
+String owner = settings.getOwnerBaseName(setting);
 int row = 1;
 
 %>
@@ -71,6 +73,20 @@ input.textbox { width: 400px; }
 <h3>Description for <%=Text.html(path)%></h3>
 <%=Text.html(desc)%>
 <% } %>
+
+<% if (moduleDesc != null) { %>
+<h3>Description for Module <%=Text.html(owner)%></h3>
+<%=Text.html(moduleDesc)%>
+<% } %>
+
+<% if (owner != null) { %>
+<p>
+
+More information on this setting is available on the 
+<a href="http://webteam.archive.org/confluence/display/Heritrix/<%=owner%>+<%=setting.getLastPath()%>">
+Official Heritrix Wiki</a>.
+<% } %>
+
 
 </body>
 </html>

@@ -635,6 +635,24 @@ public class Settings {
     }
 
     
+    public String getModuleDescription(Setting setting) {
+        Key<?> key = getKey(setting);
+        if (key == null) {
+            return null;
+        }
+        Class<?> owner = key.getOwner();
+        return KeyManager.getModuleDescription(owner, Locale.ENGLISH);
+    }
+    
+    public String getOwnerBaseName(Setting setting) {
+        Key<?> key = getKey(setting);
+        if (key == null) {
+            return null;
+        }
+        Class<?> owner = key.getOwner();
+        return Text.baseName(owner.getName());
+    }
+    
     public Key getKey(Setting setting) {
         if (setting.isKeySet()) {
             return setting.getKey();
