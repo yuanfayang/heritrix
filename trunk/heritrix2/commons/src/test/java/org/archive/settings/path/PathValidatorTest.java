@@ -25,273 +25,223 @@ package org.archive.settings.path;
 
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
-import org.archive.settings.SettingsList;
+import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
+import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
- * Unit test for PathValidator.  The test works by constructing an in-memory
- * chain of three root processors (ExtractorHTML, ExtractorCSS, and ExtractorJS,
- * in that order).  The default sheet is then modified so that the processors
- * have DecideRuleSequences.
- * 
- * <p>A new sheet named "override1" is then created.  It overrides the 
- * DecideRuleSequence associated with the ExtractorCSS.
- * 
- * <p>A second sheet named "override2" overrides various simple properties.
- * 
- * <p>And a final sheet bundled named "bundle" bundles override2 and 
- * override1 in that order.
- * 
- * <p>The test keeps references to every object in every configuration, and
- * then tests each valid path of each of the four sheets to make sure it
- * resolves to the correct object.
+ * Unit test for PathValidator.  The test works by validating the path for 
+ * every object in every sheet created by {@link PathTestBase#setUp}, 
+ * ensuring that the paths resolve to the correct object references.
  * 
  * @author pjack
  */
 public class PathValidatorTest extends PathTestBase {
 
-/*
+
+    /**
+     * Validate every path in every sheet in both stub and live mode.
+     */
     public void testValidate() {
-        validateDefaults();
+        validateGlobal();
         validateOverride1();
-        validateOverride2();
-        validateBundle();
-
-        validateOfflineDefaults();
-        validateOfflineOverride1();
-        validateOfflineOverride2();
-        validateOfflineBundle();
+        validateStubGlobal();
+        validateStubOverride1();
     }
 
-    private void validateDefaults() {
-        SingleSheet sheet = manager.getDefault();
-        assertTrue(html == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(htmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-        
-        assertTrue(css == PathValidator.validate(sheet, "root.css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(cssRules.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules")));
-        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(cssRule1_list.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules")));
-        assertTrue(cssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
+    
+    /**
+     * Validate the given path in the given sheet, then assert that the 
+     * validation results in the expected object reference.
+     * 
+     * @param sheet      the sheet containing the path to validate
+     * @param expected   the expected result of validation
+     * @param path       the path in that sheet to validate
+     */
+    private void ref(Sheet sheet, Object expected, String path) {
+        Object result = PathValidator.validate(sheet, path);
+        assertTrue(path + " returned " + result, expected == result);
+    }
 
-        assertTrue(js == PathValidator.validate(sheet, "root.js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(jsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));
+
+    /**
+     * Validate the given path in the given sheet, then assert that the 
+     * validation results in the expected object.  This uses an equality
+     * test and not a reference test.  It's useful for comparing lists and maps,
+     * since sheet resolution may or may not return the original list or map.
+     * (For instance, a map setting resolved in an override sheet will return
+     * a "combo" map that combines the override map elements with the global
+     * map elements).
+     * 
+     * @param sheet       the sheet containing the path to validate
+     * @param expected    the expected result of validation
+     * @param path        the path in that sheet to validate
+     */
+    private void eq(Sheet sheet, Object expected, String path) {
+        Object result = PathValidator.validate(sheet, path);
+        assertEquals(path, expected, result);
+    }
+    
+
+    /**
+     * Validate the given path in the given sheet, then assert that the 
+     * validation results in the expected object reference.  Furthermore, 
+     * assert that the sheet contains the default value for every Key field
+     * of the returned object.  Keys whose names are in the given exclusions
+     * list are ignored.
+     * 
+     * @param sheet       the sheet containing the path to validate
+     * @param expected    the expected result of validation
+     * @param path        the path in that sheet to validate
+     * @param exclusions  a list of keys to ignore
+     */
+    private void refCheck(Sheet sheet, Object expected, String path, 
+            String... exclusions) {
+        ref(sheet, expected, path);
+        checkDefaults(sheet, path, exclusions);
+    }
+    
+
+    /**
+     * Asserts that the sheet contains the default value for every Key field
+     * of the module at the given path.  Keys whose names are in the given
+     * exclusions list are ignored. 
+     * 
+     * @param sheet       the sheet containing the path to validate
+     * @param path        the path in that sheet to validate
+     * @param exclusions  a list of keys to ignore
+     */
+    private void checkDefaults(Sheet sheet, String path, String... exclusions) {
+        List<String> ex = Arrays.asList(exclusions);
+        Object module = PathValidator.validate(sheet, path);
+        Class<?> mclass = Offline.getType(module);
+        Collection<Key<Object>> keys = KeyManager.getKeys(mclass).values();
+        for (Key<Object> k: keys) {            
+            if (!ex.contains(k.getFieldName())) {
+                eq(sheet, k.getDefaultValue(), path + ":" + k.getFieldName());
+            }
+        }
+    }
+
+    
+    /**
+     * Validate every path in the global sheet in live mode.
+     */
+    private void validateGlobal() {
+        SingleSheet global = manager.getGlobalSheet();
+        refCheck(global, first, "root:first");
+        refCheck(global, primary, "root:primary");
+        refCheck(global, second, "root:second");
+        ref(global, bar, "root:bar");
+        refCheck(global, bar_foo, "root:bar:foo");
+        refCheck(global, primary, "root:bar:foo-auto");
+        eq(global, bar_list, "root:bar:list");
+        refCheck(global, bar_list_0, "root:bar:list:0");
+        refCheck(global, bar_list_1, "root:bar:list:1");
+        refCheck(global, bar_list_2, "root:bar:list:2");
+        eq(global, bar_map, "root:bar:map");
+        refCheck(global, bar_map_a, "root:bar:map:a");
+        refCheck(global, bar_map_b, "root:bar:map:b", "five");
+        eq(global, 50000, "root:bar:map:b:five");
+        refCheck(global, bar_map_c, "root:bar:map:c");
+        eq(global, bar_slist, "root:bar:slist");
+        ref(global, bar_slist_0, "root:bar:slist:0");
+        ref(global, bar_slist_1, "root:bar:slist:1");
+        ref(global, bar_slist_2, "root:bar:slist:2");
+        eq(global, bar_smap, "root:bar:smap");
+        ref(global, bar_smap_a, "root:bar:smap:a");
+        ref(global, bar_smap_b, "root:bar:smap:b");
+        ref(global, bar_smap_c, "root:bar:smap:c");
     }
     
     
+    /**
+     * Validate every path in the override1 sheet in live mode. 
+     */
     private void validateOverride1() {
-        SingleSheet sheet = (SingleSheet)manager.getSheet("override1");
-        assertTrue(html == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(htmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-        
-        assertTrue(css == PathValidator.validate(sheet, "root.css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(o1cssRules.equals(PathValidator.check(sheet, "root.css.decide-rules.rules")));
-        
-        // Lists are merged, so override1's elements should appear after 
-        // default's elements.
-        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
-        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
-        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
+        SingleSheet o1 = (SingleSheet)manager.getSheet("o1");
+        refCheck(o1, first, "root:first", "ten");
+        eq(o1, o1_first_ten, "root:first:ten");
+        refCheck(o1, primary, "root:primary");
+        refCheck(o1, o1_second, "root:second");
+        ref(o1, bar, "root:bar");
+        refCheck(o1, bar_foo, "root:bar:foo");
+        refCheck(o1, primary, "root:bar:foo-auto");
+        // eq(o1, bar_list, "root:bar:list");
+        refCheck(o1, bar_list_0, "root:bar:list:0");
+        refCheck(o1, bar_list_1, "root:bar:list:1");
+        refCheck(o1, bar_list_2, "root:bar:list:2");
+        refCheck(o1, o1_bar_list_3, "root:bar:list:3");
+        refCheck(o1, o1_bar_list_4, "root:bar:list:4");
+        // eq(o1, bar_map, "root:bar:map");
+        refCheck(o1, bar_map_a, "root:bar:map:a");
+        refCheck(o1, o1_bar_map_b, "root:bar:map:b");
+        refCheck(o1, bar_map_c, "root:bar:map:c");
+        refCheck(o1, o1_bar_map_d, "root:bar:map:d");
+    }
 
-        assertTrue(js == PathValidator.validate(sheet, "root.js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(jsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));
+
+    /**
+     * Validate every path in the global sheet in stub mode.
+     */
+    private void validateStubGlobal() {
+        SingleSheet global = stub_manager.getGlobalSheet();
+        
+        refCheck(global, stub_first, "root:first");
+        refCheck(global, stub_primary, "root:primary");
+        refCheck(global, stub_second, "root:second");
+        ref(global, stub_bar, "root:bar");
+        refCheck(global, stub_bar_foo, "root:bar:foo");
+        refCheck(global, stub_primary, "root:bar:foo-auto");
+        eq(global, stub_bar_list, "root:bar:list");
+        refCheck(global, stub_bar_list_0, "root:bar:list:0");
+        refCheck(global, stub_bar_list_1, "root:bar:list:1");
+        refCheck(global, stub_bar_list_2, "root:bar:list:2");
+        eq(global, stub_bar_map, "root:bar:map");
+        refCheck(global, stub_bar_map_a, "root:bar:map:a");
+        refCheck(global, stub_bar_map_b, "root:bar:map:b", "five");
+        eq(global, 50000, "root:bar:map:b:five");
+        ref(global, stub_bar_map_c, "root:bar:map:c");
+        eq(global, stub_bar_slist, "root:bar:slist");
+        ref(global, stub_bar_slist_0, "root:bar:slist:0");
+        ref(global, stub_bar_slist_1, "root:bar:slist:1");
+        ref(global, stub_bar_slist_2, "root:bar:slist:2");
+        eq(global, stub_bar_smap, "root:bar:smap");
+        ref(global, stub_bar_smap_a, "root:bar:smap:a");
+        ref(global, stub_bar_smap_b, "root:bar:smap:b");
+        ref(global, stub_bar_smap_c, "root:bar:smap:c");
     }
 
     
-    private void validateOverride2() {
-        Sheet sheet = manager.getSheet("override2");
-        assertTrue(html == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(htmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-        
-        assertTrue(css == PathValidator.validate(sheet, "root.css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(cssRules.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules")));
-
-        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(cssRule1_list.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules")));
-        assertTrue(cssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
-
-        assertTrue(js == PathValidator.validate(sheet, "root.js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(jsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));
+    /**
+     * Validate every path in the global sheet in stub mode.
+     */
+    private void validateStubOverride1() {
+        SingleSheet o1 = (SingleSheet)stub_manager.getSheet("o1");
+        refCheck(o1, stub_first, "root:first", "ten");
+        eq(o1, stub_o1_first_ten, "root:first:ten");
+        refCheck(o1, stub_primary, "root:primary");
+        refCheck(o1, stub_o1_second, "root:second");
+        ref(o1, stub_bar, "root:bar");
+        refCheck(o1, stub_bar_foo, "root:bar:foo");
+        refCheck(o1, stub_primary, "root:bar:foo-auto");
+        // eq(o1, bar_list, "root:bar:list");
+        refCheck(o1, stub_bar_list_0, "root:bar:list:0");
+        refCheck(o1, stub_bar_list_1, "root:bar:list:1");
+        refCheck(o1, stub_bar_list_2, "root:bar:list:2");
+        refCheck(o1, stub_o1_bar_list_3, "root:bar:list:3");
+        refCheck(o1, stub_o1_bar_list_4, "root:bar:list:4");
+        // eq(o1, bar_map, "root:bar:map");
+        refCheck(o1, stub_bar_map_a, "root:bar:map:a");
+        refCheck(o1, stub_o1_bar_map_b, "root:bar:map:b");
+        refCheck(o1, stub_bar_map_c, "root:bar:map:c");
+        refCheck(o1, stub_o1_bar_map_d, "root:bar:map:d");
     }
 
-
-    private void validateBundle() {
-        Sheet sheet = manager.getSheet("bundle");
-        assertTrue(html == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(htmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-        
-        
-        assertTrue(css == PathValidator.validate(sheet, "root.css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        List list = Arrays.asList(new Object[] { 
-                cssRule0, 
-                cssRule1, 
-                o1cssRule0, 
-                o1cssRule1, 
-                o1cssRule2 });
-        assertTrue(list.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules")));
-        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
-        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
-        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
-
-        assertTrue(js == PathValidator.validate(sheet, "root.js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(jsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));        
-    }
-
-
-    private void validateOfflineDefaults() {
-        SingleSheet sheet = offlineManager.getDefault();
-        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(offlineHtmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-        
-        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
-        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(offlineCssRules.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules")));
-        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(offlineCssRule1_list.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules")));
-        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
-
-        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
-        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(offlineJsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));
-    }
-
-
-    private void validateOfflineOverride1() {
-        SingleSheet sheet = (SingleSheet)offlineManager.getSheet("override1");
-        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(offlineHtmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-        
-        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
-        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));        
-        List list = Arrays.asList(new Object[] { 
-                offlineCssRule0, 
-                offlineCssRule1, 
-                offlineO1cssRule0, 
-                offlineO1cssRule1, 
-                offlineO1cssRule2 });
-        assertTrue(list.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules")));
-
-        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(offlineCssRule1_list.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules")));
-        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
-        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
-        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
-        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
-
-        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
-        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(offlineJsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));
-    }
-
-
-    private void validateOfflineOverride2() {
-        Sheet sheet = offlineManager.getSheet("override2");
-        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        
-        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(offlineHtmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-        
-        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
-        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-        assertTrue(offlineCssRules.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules")));
-        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertTrue(offlineCssRule1_list.equals(PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules")));
-        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
-
-        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
-        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(offlineJsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));
-    }
-
-    
-    private void validateOfflineBundle() {
-        Sheet sheet = offlineManager.getSheet("bundle");
-        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
-        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
-        assertTrue(offlineHtmlRules.equals(PathValidator.validate(sheet, "root.html.decide-rules.rules")));
-        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
-
-        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
-        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
-
-        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
-        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
-        assertFalse(offlineCssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
-        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
-        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
-        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.3"));
-        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.4"));
-
-        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
-        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
-        assertTrue(offlineJsRules.equals(PathValidator.validate(sheet, "root.js.decide-rules.rules")));        
-    }
-*/
 }

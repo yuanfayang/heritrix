@@ -226,7 +226,7 @@ public class SingleSheet extends Sheet {
                 : (TypedMap)this.check(module, key);
 
         TypedMap<Object> result;
-        Sheet sheet;
+        List<Sheet> sheets;
         if ((defMap == null) && (myMap == null)) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
             return un.resolve(module, key);
@@ -236,16 +236,17 @@ public class SingleSheet extends Sheet {
             maps.add(myMap);  // First check this sheet's map
             maps.add(defMap); // Then check default sheet's map.
             result = new MultiTypedMap<Object>(maps, null);
-            sheet = def; // default sheet originally defined value for this key
+            sheets = new ArrayList<Sheet>(2);
+            sheets.add(this);
+            sheets.add(def);
         } else if (myMap != null) {
             result = myMap;
-            sheet = this;
+            sheets = Collections.singletonList((Sheet)this);
         } else { // defMap != null
             result = defMap;
-            sheet = def;
+            sheets = Collections.singletonList((Sheet)def);
         }
 
-        List<Sheet> sheets = Collections.singletonList(sheet);
         return Resolved.makeMap(module, key, result, sheets);
     }
     
@@ -259,7 +260,7 @@ public class SingleSheet extends Sheet {
                 :  (TypedList)this.check(module, key);
         
         TypedList<Object> result;
-        Sheet sheet;
+        List<Sheet> sheets;
         if ((defList == null) && (myList == null)) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
             return un.resolve(module, key);
@@ -271,16 +272,17 @@ public class SingleSheet extends Sheet {
             lists.add(defList);
             lists.add(myList);
             result = new MultiTypedList<Object>(lists, null);
-            sheet = def;
+            sheets = new ArrayList<Sheet>(2);
+            sheets.add(this);
+            sheets.add(def);
         } else if (defList != null) {
             result = defList;
-            sheet = def;
+            sheets = Collections.singletonList((Sheet)def);
         } else { // myList != null
             result = myList;
-            sheet = this;
+            sheets = Collections.singletonList((Sheet)this);
         }
-        
-        List<Sheet> sheets = Collections.singletonList(sheet);
+
         return Resolved.makeList(module, key, result, sheets);
     }
     
@@ -435,20 +437,20 @@ public class SingleSheet extends Sheet {
     }
 
     
-    public Map resolveEditableMap(Object o, Key<Map> k) {
-        Map result = check(o, k);
-        if ((result == null) && !global) {
-            result = getSheetManager().getGlobalSheet().check(o, k);
-        }
+    public <T> Map<String,T> resolveEditableMap(Object o, Key<Map<String,T>> k) {
+        Map<String,T> result = check(o, k);
+//        if ((result == null) && !global) {
+//            result = getSheetManager().getGlobalSheet().check(o, k);
+//        }
         return result;
     }
 
     
     public List resolveEditableList(Object o, Key<List> k) {
         List result = check(o, k);
-        if ((result == null) && !global) {
-            result = getSheetManager().getGlobalSheet().check(o, k);
-        }
+//        if ((result == null) && !global) {
+//            result = getSheetManager().getGlobalSheet().check(o, k);
+//        }
         return result;
     }
 

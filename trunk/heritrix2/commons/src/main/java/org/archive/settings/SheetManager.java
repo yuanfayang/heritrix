@@ -145,7 +145,9 @@ implements PathContext, StateProvider, Serializable {
      * 
      * @return   the default sheet
      */
-    public abstract SingleSheet getGlobalSheet();
+    public SingleSheet getGlobalSheet() {
+        return (SingleSheet)getSheet(GLOBAL_SHEET_NAME);
+    }
     
     
     /**
@@ -154,7 +156,9 @@ implements PathContext, StateProvider, Serializable {
      * @return  the root module
      */
     public Map<String,Object> getRoot() {
-        return getGlobalSheet().get(getManagerModule(), ROOT);
+        return getGlobalSheet().resolveEditableMap(
+                getManagerModule(),
+                ROOT);
     }
 
 

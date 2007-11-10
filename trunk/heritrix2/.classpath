@@ -9,6 +9,7 @@
 	<classpathentry kind="src" path="commons/src/main/java"/>
 	<classpathentry kind="src" path="commons/src/main/resources"/>
 	<classpathentry kind="src" path="commons/src/test/java"/>
+	<classpathentry kind="src" path="commons/src/test/resources"/>
 	<classpathentry kind="src" path="webui/src/main/java"/>
 	<classpathentry kind="src" path="webui/src/main/resources"/>
 	<classpathentry kind="src" path="webui/src/test/java"/>

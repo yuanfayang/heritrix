@@ -29,87 +29,122 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 
+import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.FilePathListConsumer;
 
 
+/**
+ * Unit test for {@link PathLister}.  The test loads text representations of the 
+ * sheets defined by {@link PathTestBase}, then generates a new text 
+ * representation for the sheets using PathLister and a 
+ * {@link FilePathListConsumer}.  The generated text is compared against the
+ * loaded text.
+ * 
+ * <p>Each sheet has two resource files used by this test.  One has a 
+ * <code>.resolved.txt</code> suffix, and contains the expected result of 
+ * {@link PathLister#resolveAll(Sheet, PathListConsumer, boolean)} for the
+ * sheet.  The second resource has a <code>.get.txt</code> suffix, and contains
+ * the expected result of 
+ * {@link PathLister#getAll(SingleSheet, PathListConsumer, boolean)}.
+ * 
+ * <p>Each sheet is tested four times:
+ * 
+ * <ol>
+ * <li>Using the live-mode sheet manager and the resolveAll operation;
+ * <li>Using the live-mode sheet manager and the getAll operation;
+ * <li>Using the stub-mode sheet manager and the resolveAll operation;
+ * <li>Using the stub-mode sheet manager and the getAll operation.
+ * </ol>
+ * 
+ * @author pjack
+ */
 public class PathListerTest extends PathTestBase {
 
 
-/*
-    public void ntestQ() throws Exception {
-//        String expected = load(sheetName + ".resolved.txt");
+    /**
+     * Rename to <code>testPrint</code> if you'd like to generate expected
+     * output.  Just be sure to visually inspect the results before pasting
+     * it into a resource file.
+     */
+    public void ntestPrint() {
+        SingleSheet ss = (SingleSheet)manager.getSheet("o1");
+        StringWriter sw = new StringWriter();
+        FilePathListConsumer consumer = new FilePathListConsumer(sw);
+        consumer.setSheetsDelim('|');
+        consumer.setIncludeSheets(true);
+        PathLister.resolveAll(ss, consumer, false);
+        System.out.println(sw.toString());
+    }
+
+
+    /**
+     * Runs the test.
+     */
+    public void testPathLister() throws Exception {
+        runSheet("global");
+        runSheet("o1");
+    }
+
+
+    /**
+     * Runs four tests on one sheet.
+     *
+     * <ol>
+     * <li>Using the live-mode sheet manager and the resolveAll operation;
+     * <li>Using the live-mode sheet manager and the getAll operation;
+     * <li>Using the stub-mode sheet manager and the resolveAll operation;
+     * <li>Using the stub-mode sheet manager and the getAll operation.
+     * </ol>
+     * 
+     * @param sheetName  the name of the sheet to test
+     */
+    private void runSheet(String sheetName) throws Exception {
+        run(manager, sheetName, true);
+        run(manager, sheetName, false);
+        run(stub_manager, sheetName, true);
+        run(stub_manager, sheetName, false);
+    }
+
+
+    /**
+     * Load the resource containing expected output for the given sheet,
+     * then run the specified PathLister operation and compare the results
+     * against the expected output.
+     * 
+     * <p>This is package-protected since PathChangerTest also uses it.
+     * 
+     * @param manager     the sheet manager containing the sheet
+     * @param sheetName   the name of the sheet to test
+     * @param resolve     true to test the resolveAll operation, false to test
+     *                     the getAll operation.
+     */
+    static void run(SheetManager manager, String sheetName, boolean resolve) 
+    throws Exception {
+        String suffix = resolve ? ".resolved.txt" : ".get.txt";
+        String expected = load(sheetName + suffix);
         StringWriter sw = new StringWriter();
         FilePathListConsumer consumer = new FilePathListConsumer(sw);
         consumer.setIncludeSheets(true);
-        PathLister.getAll((SingleSheet)
-                offlineManager.getSheet("override2"), consumer);
-        String result = sw.toString();
-        System.out.println(result);
-        
-        
-  //      System.out.println("SHEET: " + sheetName);
-  //      System.out.println(expected + "\n\n\n");
-  //      System.out.println(result);
-  //      assertEquals(expected, result);
-        
-    }
-    
-    
-    public void testResolveAll() throws Exception {
-        runResolve("default");
-        runResolve("override1");
-        runResolve("override2");
-        runResolve("bundle");
-    }
-    
-    
-    public void testGetAll() throws Exception {
-        runGet("default");
-        runGet("override1");
-        runGet("override2");
-    }
-
-    
-    private void runResolve(String sheetName) throws IOException {
-        String expected = load(sheetName + ".resolved.txt");
-        StringWriter sw = new StringWriter();
-        FilePathListConsumer consumer = new FilePathListConsumer(sw);
-        consumer.setIncludeSheets(true);
-        
-        PathLister.resolveAll(offlineManager.getSheet(sheetName), consumer);
-        String result = sw.toString();
-        System.out.println("OFFLINE SHEET: " + sheetName);
-        System.out.println(expected + "\n\n\n");
-        System.out.println(result);
-        assertEquals(expected, result);
-
-        sw = new StringWriter();
-        consumer = new FilePathListConsumer(sw);
-        consumer.setIncludeSheets(true);
-        
-        PathLister.resolveAll(manager.getSheet(sheetName), consumer);
-        result = sw.toString();
-        System.out.println("ONLINE SHEET: " + sheetName);
-        System.out.println(expected + "\n\n\n");
-        System.out.println(result);
-        assertEquals(expected, result);
-
-    }
-
-    
-    private void runGet(String sheetName) throws IOException {
-        String expected = load(sheetName + ".get.txt");
-        StringWriter sw = new StringWriter();
-        FilePathListConsumer consumer = new FilePathListConsumer(sw);
-        consumer.setIncludeSheets(true);
+        consumer.setSheetsDelim('|');
         SingleSheet ss = (SingleSheet)manager.getSheet(sheetName);
-        PathLister.getAll(ss, consumer);
+        if (resolve) {
+            PathLister.resolveAll(ss, consumer, true);
+        } else {
+            PathLister.getAll(ss, consumer, true);
+        }
         String result = sw.toString();
-        assertEquals(expected, result);
+        assertEquals(expected, result);        
     }
 
-    
+
+    /**
+     * Loads the resource with the given name.
+     * 
+     * @param name   the name of the resource to load
+     * @return      the resource as text
+     */
     private static String load(String name) throws IOException {
         InputStream inp = PathListerTest.class.getResourceAsStream(name);
         BufferedReader br = new BufferedReader(new InputStreamReader(inp));
@@ -119,6 +154,6 @@ public class PathListerTest extends PathTestBase {
         }
         return sb.toString();
     }
-*/
+
 
 }

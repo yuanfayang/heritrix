@@ -28,6 +28,8 @@ package org.archive.settings;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,10 +85,12 @@ class MultiTypedMap<T> extends AbstractMap<String,T> implements TypedMap<T> {
             return maps.get(0).entrySet();
         }
         if (this.entrySet == null) {
-            this.entrySet = new LinkedHashSet<Map.Entry<String,T>>();
-            for (TypedMap<T> map: maps) {
-                entrySet.addAll(map.entrySet());
+            LinkedHashMap<String,T> entries = new LinkedHashMap<String,T>();
+            for (int i = maps.size() - 1; i >= 0; i--) {
+                Map<String,T> map = maps.get(i);
+                entries.putAll(map);
             }
+            this.entrySet = Collections.unmodifiableSet(entries.entrySet());
         }
         return entrySet;
     }

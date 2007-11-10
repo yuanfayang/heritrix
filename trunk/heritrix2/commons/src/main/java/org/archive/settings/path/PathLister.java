@@ -255,8 +255,8 @@ public class PathLister {
             Object value,
             Class type) {
         String seen = alreadySeen.get(value);
-        Sheet last = list.get(list.size() - 1);
-        if (resolve || (last == startSheet)) {
+        Sheet first = list.get(0);
+        if (resolve || (first == startSheet)) {
             consumer.consume(path, list, value, type, seen);
         }
     }

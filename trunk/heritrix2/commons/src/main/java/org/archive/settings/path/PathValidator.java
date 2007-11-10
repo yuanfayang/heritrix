@@ -160,7 +160,7 @@ public class PathValidator {
      * @return   a new InvalidPathException
      */
     private RuntimeException ex(String msg) {
-        String e = path + ": "+ msg + subPath;
+        String e = path + " " + msg + subPath;
         return new InvalidPathException(e);
     }
     
@@ -215,7 +215,8 @@ public class PathValidator {
         }
         Key<Object> key = KeyManager.getKeys(c).get(keyName);
         if (key == null) {
-            throw ex(" has invalid key field name at ");
+            throw new InvalidPathException(path + " is invalid because " + 
+                    c.getName() + " does not define a key named " + keyName);
         }
         return resolve(current, key);
     }
@@ -240,10 +241,12 @@ public class PathValidator {
 
     private Object resolve(Object current, Key<Object> key) {
         if ((checkLast) && (tokens.size() <= 1)) {
-            Class type = key.getType();
+            Class<?> type = key.getType();
             if (Map.class.isAssignableFrom(type)) {
                 SingleSheet ss = (SingleSheet)sheet;
-                Object r = ss.resolveEditableMap(current, key.cast(Map.class));
+                @SuppressWarnings("unchecked")
+                Key<Map<String,Object>> k = (Key)key;
+                Object r = ss.resolveEditableMap(current, k);
                 if (r == null) {
                     throw ex(" alters a key for a nonexistent map at ");
                 }
