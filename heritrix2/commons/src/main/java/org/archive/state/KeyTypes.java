@@ -112,7 +112,7 @@ public class KeyTypes {
         types.put(String.class, "string");
         types.put(Pattern.class, "pattern");
         types.put(BigInteger.class, "biginteger");
-        types.put(BigInteger.class, "bigdecimal");
+        types.put(BigDecimal.class, "bigdecimal");
         types.put(Enum.class, ENUM_TAG);
         types.put(Path.class, "file"); 
         TYPES = Collections.unmodifiableMap(types);

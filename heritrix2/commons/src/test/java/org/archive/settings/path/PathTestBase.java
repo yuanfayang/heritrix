@@ -23,213 +23,308 @@
  */
 package org.archive.settings.path;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-/*
-import org.archive.processors.deciderules.AcceptDecideRule;
-import org.archive.processors.deciderules.DecideRule;
-import org.archive.processors.deciderules.DecideRuleSequence;
-import org.archive.processors.deciderules.RejectDecideRule;
-import org.archive.processors.extractor.ExtractorCSS;
-import org.archive.processors.extractor.ExtractorHTML;
-import org.archive.processors.extractor.ExtractorJS;*/
+
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.Offline;
-import org.archive.settings.Sheet;
+import org.archive.settings.SettingsList;
+import org.archive.settings.SettingsMap;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
-import org.archive.state.ExampleConcreteProcessor;
 
 import junit.framework.TestCase;
 
-public class PathTestBase extends TestCase {
-/*
+
+/**
+ * Base class for path testing code.  This class sets up two 
+ * {@link MemorySheetManager} instances, one in stub mode and one in live 
+ * mode.  {@link Foo} and {@link Bar} modules are then added to each 
+ * manager.  Both managers get the same configuration.  The stub-mode and
+ * live-mode managers form the test data set used by subclasses to perform
+ * tests on path-related operations.
+ * 
+ * Things not yet tested:
+ * 
+ * 1. Maps/Lists when two sheets with same override are bundled
+ * 2. Bundled sheet does what we expect
+ * 3. Modifying a checked-out sheet doesn't modify original.
+ * 4. It's impossible to modify a sheet that isn't checked out.
+ * 5. Impossible to modify an IMMUTABLE setting in a non-stub manager.
+ * 6. Impossible to modify a GLOBAL setting in a non-global sheet.
+ * 7. Primary change in an override sheet?
+ * 
+ * @author pjack
+ */
+public abstract class PathTestBase extends TestCase {
+
     SheetManager manager;
-
-    // Objects in the default sheet
-    ExtractorHTML html;
-    DecideRuleSequence htmlSeq;
-    List<DecideRule> htmlRules;
-    AcceptDecideRule htmlRule0;
     
-    ExtractorCSS css;
-    DecideRuleSequence cssSeq;
-    List<DecideRule> cssRules;
-    RejectDecideRule cssRule0;
-    DecideRuleSequence cssRule1;
-    List<DecideRule> cssRule1_list;
-    AcceptDecideRule cssRule1_0;
+    // Objects in the global sheet for normal-mode tests
+    Foo first;                // root:first
+    Foo primary;              // root:primary
+    Foo second;               // root:second
+    Bar bar;                  // root:bar
+    Foo bar_foo;              // root:bar:foo
+    List<Foo> bar_list;       // root:bar:list
+    Foo bar_list_0;           // root:bar:list:0
+    Foo bar_list_1;           // root:bar:list:1
+    Foo bar_list_2;           // root:bar:list:2
+    Map<String,Foo> bar_map;  // root:bar:map
+    Foo bar_map_a;            // root:bar:map:a
+    Foo bar_map_b;            // root:bar:map:b
+    Foo bar_map_b_five;       // root:bar:map:b:five (override default)
+    Foo bar_map_c;            // root:bar:map:c
+    List<String> bar_slist;   // root:bar:slist
+    String bar_slist_0;       // root:bar:slist:0
+    String bar_slist_1;       // root:bar:slist:1
+    String bar_slist_2;       // root:bar:slist:2
+    Map<String,String> bar_smap;
+    String bar_smap_a;
+    String bar_smap_b;
+    String bar_smap_c;
     
-    ExtractorJS js;
-    DecideRuleSequence jsSeq;
-    List<DecideRule> jsRules;
-
-    ExampleConcreteProcessor concrete;
-
     
-    // Objects in sheet override1
-    List<DecideRule> o1cssRules;
-    AcceptDecideRule o1cssRule0;
-    AcceptDecideRule o1cssRule1;
-    AcceptDecideRule o1cssRule2;
-
+    // Objects in the first override sheet.
+    String o1_first_ten;        // root:first:ten (override)
+    Foo o1_second;              // root:second (override)
+    List<Foo> o1_bar_list;      // root:bar:list (override/append)
+    Foo o1_bar_list_3;          // root:bar:list:3 (new element)
+    Foo o1_bar_list_4;          // root:bar:list:4 (new element)
+    Map<String,Foo> o1_bar_map; // root:bar:map (override/merge)
+    Baz o1_bar_map_b;           // root:bar:map:b  (replace element)
+    Foo o1_bar_map_d;           // root:bar:map:d  (new element)
+    List<String> o1_bar_slist;
+    String o1_bar_slist_3;
+    String o1_bar_slist_4;
+    Map<String,String> o1_bar_smap;
+    String o1_bar_smap_b;
+    String o1_bar_smap_d;
     
-
-    // For offline tests
-    SheetManager offlineManager;
     
-    Offline<ExtractorHTML> offlineHtml;
-    Offline<DecideRuleSequence> offlineHtmlSeq;
-    List<Offline> offlineHtmlRules;
-    Offline<AcceptDecideRule> offlineHtmlRule0;
+    SheetManager stub_manager;
 
-    Offline<ExtractorCSS> offlineCss;
-    Offline<DecideRuleSequence> offlineCssSeq;
-    List<Offline> offlineCssRules;
-    Offline<RejectDecideRule> offlineCssRule0;
-    Offline<DecideRuleSequence> offlineCssRule1;
-    List<Offline> offlineCssRule1_list;
-    Offline<AcceptDecideRule> offlineCssRule1_0;
+    // Objects in global sheet for stub-mode tests
+    Offline<Foo> stub_first;
+    Offline<Foo> stub_primary;
+    Offline<Foo> stub_second;
+    Offline<Bar> stub_bar;
+    Offline<Foo> stub_bar_foo;
+    List<Object> stub_bar_list;
+    Offline<Foo> stub_bar_list_0;
+    Offline<Foo> stub_bar_list_1;
+    Offline<Foo> stub_bar_list_2;
+    Map<String,Object> stub_bar_map;
+    Offline<Foo> stub_bar_map_a;
+    Offline<Foo> stub_bar_map_b;
+    Offline<Foo> stub_bar_map_c;
+    List<String> stub_bar_slist;   
+    String stub_bar_slist_0;
+    String stub_bar_slist_1;
+    String stub_bar_slist_2;
+    Map<String,String> stub_bar_smap;
+    String stub_bar_smap_a;
+    String stub_bar_smap_b;
+    String stub_bar_smap_c;
 
-    Offline<ExtractorJS> offlineJs;
-    Offline<DecideRuleSequence> offlineJsSeq;
-    List<Offline> offlineJsRules;
-
-    Offline<ExampleConcreteProcessor> offlineConcrete;
-    
-    List<Offline> offlineO1cssRules;
-    Offline<AcceptDecideRule> offlineO1cssRule0;
-    Offline<AcceptDecideRule> offlineO1cssRule1;
-    Offline<AcceptDecideRule> offlineO1cssRule2;
-    
+    // Objects in the first override sheet.
+    String stub_o1_first_ten;        // root:first:ten (override)
+    Foo stub_o1_second;              // root:second (override)
+    List<Foo> stub_o1_bar_list;      // root:bar:list (override/append)
+    Foo stub_o1_bar_list_3;          // root:bar:list:3 (new element)
+    Foo stub_o1_bar_list_4;          // root:bar:list:4 (new element)
+    Map<String,Foo> stub_o1_bar_map; // root:bar:map (override/merge)
+    Baz stub_o1_bar_map_b;           // root:bar:map:b  (replace element)
+    Foo stub_o1_bar_map_d;           // root:bar:map:d  (new element)
+    List<String> stub_o1_bar_slist;  // root:bar:slist  (override/append)
+    String stub_o1_bar_slist_3;         
+    String stub_o1_bar_slist_4;
+    Map<String,String> stub_o1_bar_smap; 
+    String stub_o1_bar_smap_b;
+    String stub_o1_bar_smap_d;
     
     public void setUp() {
-        setUpOnline();
-        setUpOffline();
+        setUpNormal();
+        setUpStub();
     }
     
     
-    private void setUpOnline() {
-        Map<String,Object> map = new LinkedHashMap<String,Object>();
-        manager = new MemorySheetManager(map);
-        SingleSheet defaults = manager.getDefault();
-
-        html = new ExtractorHTML();
-        map.put("html", html);
-        htmlSeq = new DecideRuleSequence();
-        htmlRules = new ArrayList<DecideRule>();
-        htmlRule0 = new AcceptDecideRule();
-        htmlRules.add(htmlRule0);
-        defaults.set(html, ExtractorHTML.IGNORE_UNEXPECTED_HTML, false);
-        defaults.set(html, ExtractorHTML.DECIDE_RULES, htmlSeq);
-        defaults.set(htmlSeq, DecideRuleSequence.RULES, htmlRules);
-
-        css = new ExtractorCSS();
-        map.put("css", css);
-        cssSeq = new DecideRuleSequence();
-        cssRules = new ArrayList<DecideRule>();
-        cssRule0 = new RejectDecideRule();
-        cssRule1 = new DecideRuleSequence();
-        cssRule1_list = new ArrayList<DecideRule>();
-        cssRule1_0 = new AcceptDecideRule();
-        cssRules.add(cssRule0);
-        cssRules.add(cssRule1);
-        cssRule1_list.add(cssRule1_0);
-        defaults.set(css, ExtractorCSS.DECIDE_RULES, cssSeq);
-        defaults.set(cssSeq, DecideRuleSequence.RULES, cssRules);
-        defaults.set(cssRule1, DecideRuleSequence.RULES, cssRule1_list);
+    @SuppressWarnings("unchecked")
+    private void setUpStub() {        
+        // ===== Global sheet. =====
+        this.stub_manager = new MemorySheetManager(false);
+        SingleSheet global = (SingleSheet)stub_manager.checkout("global");
+        Map<String,Object> root = global.resolveEditableMap(
+                stub_manager.getManagerModule(), 
+                SheetManager.ROOT);
         
+        this.stub_first = Offline.make(Foo.class);
+        root.put("first", stub_first);
+        this.stub_primary = Offline.make(Foo.class);
+        root.put("primary", stub_primary);
+        global.addPrimary(stub_primary);
+        this.stub_second = Offline.make(Foo.class);
+        root.put("second", stub_second);
         
-        js = new ExtractorJS();
-        map.put("js", js);
-        jsSeq = new DecideRuleSequence();
-        jsRules = new ArrayList<DecideRule>();
-        defaults.set(js, ExtractorJS.DECIDE_RULES, jsSeq);
-        defaults.set(jsSeq, DecideRuleSequence.RULES, jsRules);
+        this.stub_bar = Offline.make(Bar.class);
+        this.stub_bar_foo = Offline.make(Foo.class);
+        global.setOffline(stub_bar, Bar.FOO, stub_bar_foo);
+        
+        this.stub_bar_list = new SettingsList(global, Foo.class);
+        global.setOffline(stub_bar, Bar.LIST, stub_bar_list);
+        this.stub_bar_list_0 = Offline.make(Foo.class);
+        stub_bar_list.add(stub_bar_list_0);
+        this.stub_bar_list_1 = Offline.make(Foo.class);
+        stub_bar_list.add(stub_bar_list_1);
+        this.stub_bar_list_2 = Offline.make(Foo.class);
+        stub_bar_list.add(stub_bar_list_2);
+        
+        this.stub_bar_map = new SettingsMap(global, Foo.class);
+        global.setOffline(stub_bar, Bar.MAP, stub_bar_map);
+        this.stub_bar_map_a = Offline.make(Foo.class);
+        stub_bar_map.put("a", stub_bar_map_a);
+        this.stub_bar_map_b = Offline.make(Foo.class);
+        global.set(stub_bar_map_b, Foo.FIVE, 50000);
+        stub_bar_map.put("b", stub_bar_map_b);        
+        this.stub_bar_map_c = Offline.make(Foo.class);
+        stub_bar_map.put("c", stub_bar_map_c);
 
-        concrete = new ExampleConcreteProcessor();
-        map.put("concrete", concrete);
-        
-        SingleSheet override1 = manager.addSingleSheet("override1");
-        o1cssRules = new ArrayList<DecideRule>();
-        o1cssRule0 = new AcceptDecideRule();
-        o1cssRule1 = new AcceptDecideRule();
-        o1cssRule2 = new AcceptDecideRule();
-        o1cssRules.add(o1cssRule0);
-        o1cssRules.add(o1cssRule1);
-        o1cssRules.add(o1cssRule2);
-        override1.set(cssSeq, DecideRuleSequence.RULES, o1cssRules);
-        
-        SingleSheet override2 = manager.addSingleSheet("override2");
-        override2.set(html, ExtractorHTML.IGNORE_UNEXPECTED_HTML, true);
+        this.stub_bar_slist = new SettingsList<String>(global, String.class);
+        global.setOffline(stub_bar, Bar.SLIST, stub_bar_slist);
+        this.stub_bar_slist_0 = "zero";        
+        stub_bar_slist.add(stub_bar_slist_0);
+        this.stub_bar_slist_1 = "one";
+        stub_bar_slist.add(stub_bar_slist_1);
+        this.stub_bar_slist_2 = "two";
+        stub_bar_slist.add(stub_bar_slist_2);
 
-        manager.addSheetBundle("bundle", Arrays.asList(new Sheet[] { override2, override1 }));
+        this.stub_bar_smap = new SettingsMap<String>(global, String.class);
+        global.setOffline(stub_bar, Bar.SMAP, stub_bar_smap);
+        this.stub_bar_smap_a = "65";
+        stub_bar_smap.put("a", stub_bar_smap_a);
+        this.stub_bar_smap_b = "66";
+        stub_bar_smap.put("b", stub_bar_smap_b);        
+        this.stub_bar_smap_c = "67";
+        stub_bar_smap.put("c", stub_bar_smap_c);
+        
+        root.put("bar", stub_bar);
+        stub_manager.commit(global);
+        
+        // ===== o1 sheet =====
+        stub_manager.addSingleSheet("o1");
+        SingleSheet o1 = (SingleSheet)stub_manager.checkout("o1");
+        Map<String,Object> o1_root = new SettingsMap<Object>(o1, Object.class);
+        o1.set(stub_manager.getManagerModule(), SheetManager.ROOT, o1_root);
+        
+        this.stub_o1_first_ten = "three plus seven";
+        o1.set(this.stub_first, Foo.TEN, this.stub_o1_first_ten);        
+        this.stub_o1_second = new Foo("o1_second");
+        o1_root.put("second", stub_o1_second);
+        
+        this.stub_o1_bar_list = new SettingsList<Foo>(o1, Foo.class);
+        o1.set(this.stub_bar, Bar.LIST, this.stub_o1_bar_list);
+        this.stub_o1_bar_list_3 = new Foo("o1_bar_list_3");
+        stub_o1_bar_list.add(stub_o1_bar_list_3);
+        this.stub_o1_bar_list_4 = new Foo("o1_bar_list_4");
+        stub_o1_bar_list.add(stub_o1_bar_list_4);
+        
+        this.stub_o1_bar_map = new SettingsMap<Foo>(o1, Foo.class);
+        o1.set(this.stub_bar, Bar.MAP, this.stub_o1_bar_map);
+        this.stub_o1_bar_map_b = new Baz("o1_bar_map_b");
+        stub_o1_bar_map.put("b", stub_o1_bar_map_b);
+        this.stub_o1_bar_map_d = new Foo("o1_bar_map_d");
+        stub_o1_bar_map.put("d", stub_o1_bar_map_d);
+
+        stub_manager.commit(o1);        
     }
-
-
-    private void setUpOffline() {
-        Map<String,Object> map = new LinkedHashMap<String,Object>();
-        offlineManager = new MemorySheetManager(map, false);
-        SingleSheet defaults = offlineManager.getDefault();
-
-        offlineHtml = Offline.make(ExtractorHTML.class);
-        map.put("html", offlineHtml);
-        offlineHtmlSeq = Offline.make(DecideRuleSequence.class);
-        offlineHtmlRules = new ArrayList<Offline>();
-        offlineHtmlRule0 = Offline.make(AcceptDecideRule.class);
-        offlineHtmlRules.add(offlineHtmlRule0);
-        defaults.setOffline(offlineHtml, ExtractorHTML.IGNORE_UNEXPECTED_HTML, false);
-        defaults.setOffline(offlineHtml, ExtractorHTML.DECIDE_RULES, offlineHtmlSeq);
-        defaults.setOffline(offlineHtmlSeq, DecideRuleSequence.RULES, offlineHtmlRules);
-
-        offlineCss = Offline.make(ExtractorCSS.class);
-        map.put("css", offlineCss);
-        offlineCssSeq = Offline.make(DecideRuleSequence.class);
-        offlineCssRules = new ArrayList<Offline>();
-        offlineCssRule0 = Offline.make(RejectDecideRule.class);
-        offlineCssRule1 = Offline.make(DecideRuleSequence.class);
-        offlineCssRule1_list = new ArrayList<Offline>();
-        offlineCssRule1_0 = Offline.make(AcceptDecideRule.class);
-        offlineCssRules.add(offlineCssRule0);
-        offlineCssRules.add(offlineCssRule1);
-        offlineCssRule1_list.add(offlineCssRule1_0);
-        defaults.setOffline(offlineCss, ExtractorCSS.DECIDE_RULES, offlineCssSeq);
-        defaults.setOffline(offlineCssSeq, DecideRuleSequence.RULES, offlineCssRules);
-        defaults.setOffline(offlineCssRule1, DecideRuleSequence.RULES, offlineCssRule1_list);
+    
+    
+    private void setUpNormal() {
+        // ===== Global sheet. =====
+        this.manager = new MemorySheetManager();
+        SingleSheet global = (SingleSheet)manager.checkout("global");
+        Map<String,Object> root = global.resolveEditableMap(manager, 
+                SheetManager.ROOT);
         
-        offlineJs = Offline.make(ExtractorJS.class);
-        map.put("js", offlineJs);
-        offlineJsSeq = Offline.make(DecideRuleSequence.class);
-        offlineJsRules = new ArrayList<Offline>();
-        defaults.setOffline(offlineJs, ExtractorJS.DECIDE_RULES, offlineJsSeq);
-        defaults.setOffline(offlineJsSeq, DecideRuleSequence.RULES, offlineJsRules);
+        this.first = new Foo("first");
+        root.put("first", first);
+        this.primary = new Foo("primary");
+        root.put("primary", primary);
+        global.addPrimary(primary);
+        this.second = new Foo("second");
+        root.put("second", second);
+        
+        this.bar = new Bar();
+        this.bar_foo = new Foo("bar_foo");
+        global.set(bar, Bar.FOO, bar_foo);
+        
+        this.bar_list = new SettingsList<Foo>(global, Foo.class);
+        global.set(bar, Bar.LIST, bar_list);
+        this.bar_list_0 = new Foo("bar_list_0");
+        bar_list.add(bar_list_0);
+        this.bar_list_1 = new Foo("bar_list_1");
+        bar_list.add(bar_list_1);
+        this.bar_list_2 = new Foo("bar_list_2");
+        bar_list.add(bar_list_2);
+        
+        this.bar_map = new SettingsMap<Foo>(global, Foo.class);
+        global.set(bar, Bar.MAP, bar_map);
+        this.bar_map_a = new Foo("bar_map_a");
+        bar_map.put("a", bar_map_a);
+        this.bar_map_b = new Foo("bar_map_b");
+        global.set(bar_map_b, Foo.FIVE, 50000);
+        bar_map.put("b", bar_map_b);
+        this.bar_map_c = new Foo("bar_map_c");
+        bar_map.put("c", bar_map_c);
+        
+        this.bar_slist = new SettingsList<String>(global, String.class);
+        global.set(bar, Bar.SLIST, bar_slist);
+        this.bar_slist_0 = "zero";
+        bar_slist.add(bar_slist_0);
+        this.bar_slist_1 = "one";
+        bar_slist.add(bar_slist_1);
+        this.bar_slist_2 = "two";
+        bar_slist.add(bar_slist_2);
 
-        offlineConcrete = Offline.make(ExampleConcreteProcessor.class);
-        map.put("concrete", concrete);
+        this.bar_smap = new SettingsMap<String>(global, String.class);
+        global.set(bar, Bar.SMAP, bar_smap);
+        this.bar_smap_a = "65";
+        bar_smap.put("a", bar_smap_a);
+        this.bar_smap_b = "66";
+        bar_smap.put("b", bar_smap_b);
+        this.bar_smap_c = "67";
+        bar_smap.put("c", bar_smap_c);
         
-        SingleSheet override1 = offlineManager.addSingleSheet("override1");
-        offlineO1cssRules = new ArrayList<Offline>();
-        offlineO1cssRule0 = Offline.make(AcceptDecideRule.class);
-        offlineO1cssRule1 = Offline.make(AcceptDecideRule.class);
-        offlineO1cssRule2 = Offline.make(AcceptDecideRule.class);
-        offlineO1cssRules.add(offlineO1cssRule0);
-        offlineO1cssRules.add(offlineO1cssRule1);
-        offlineO1cssRules.add(offlineO1cssRule2);
-        override1.setOffline(offlineCssSeq, DecideRuleSequence.RULES, offlineO1cssRules);
+        root.put("bar", bar);
+        manager.commit(global);
         
-        SingleSheet override2 = offlineManager.addSingleSheet("override2");
-        override2.setOffline(offlineHtml, ExtractorHTML.IGNORE_UNEXPECTED_HTML, true);
+        // ===== o1 sheet =====
+        manager.addSingleSheet("o1");
+        SingleSheet o1 = (SingleSheet)manager.checkout("o1");
+        Map<String,Object> o1_root = new SettingsMap<Object>(o1, Object.class);
+        o1.set(manager, SheetManager.ROOT, o1_root);
         
-        offlineManager.addSheetBundle("bundle", Arrays.asList(new Sheet[] { override2, override1 }));        
+        this.o1_first_ten = "three plus seven";
+        o1.set(this.first, Foo.TEN, this.o1_first_ten);        
+        this.o1_second = new Foo("o1_second");
+        o1_root.put("second", o1_second);
+        
+        this.o1_bar_list = new SettingsList<Foo>(o1, Foo.class);
+        o1.set(this.bar, Bar.LIST, this.o1_bar_list);
+        this.o1_bar_list_3 = new Foo("o1_bar_list_3");
+        o1_bar_list.add(o1_bar_list_3);
+        this.o1_bar_list_4 = new Foo("o1_bar_list_4");
+        o1_bar_list.add(o1_bar_list_4);
+        
+        this.o1_bar_map = new SettingsMap<Foo>(o1, Foo.class);
+        o1.set(this.bar, Bar.MAP, this.o1_bar_map);
+        this.o1_bar_map_b = new Baz("o1_bar_map_b");
+        o1_bar_map.put("b", o1_bar_map_b);
+        this.o1_bar_map_d = new Foo("o1_bar_map_d");
+        o1_bar_map.put("d", o1_bar_map_d);
+
+        manager.commit(o1);        
     }
+    
 
-*/
- 
-    // Shut up, junit.
-    public void testNothing() {
-        
-    }
 }

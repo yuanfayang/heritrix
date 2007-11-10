@@ -39,6 +39,7 @@ import java.util.TreeMap;
 
 import org.archive.settings.file.PrefixFinder;
 import org.archive.settings.path.PathChangeException;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -54,11 +55,9 @@ public class MemorySheetManager extends SheetManager {
      */
     private static final long serialVersionUID = 1L;
 
-    
-    /**
-     * The default sheet.
-     */
-    private SingleSheet globals;
+    static {
+        KeyManager.addKeys(MemorySheetManager.class);
+    }
 
 
     /**
@@ -76,12 +75,6 @@ public class MemorySheetManager extends SheetManager {
 
 
 
-    /**
-     * The root map.
-     */
-    private Map<String,Object> root;
-
-
     public MemorySheetManager() {
         this(true);
     }
@@ -94,22 +87,24 @@ public class MemorySheetManager extends SheetManager {
         super("unkownn", online);
         sheets = new HashMap<String,Sheet>();
         associations = new TreeMap<String,Set<Sheet>>();
-        globals = addSingleSheet(GLOBAL_SHEET_NAME);
-        globals.set(getManagerModule(), MANAGER, this);
-        this.root = new SettingsMap<Object>(globals, Object.class);
+        SingleSheet globals = addSingleSheet(GLOBAL_SHEET_NAME);
+        if (online) {
+            globals.set(this, MANAGER, this);
+        } else {
+            Offline stub = (Offline)getManagerModule();
+            globals.setOffline(stub, MANAGER, stub);
+        }
+        globals.set(getManagerModule(), ROOT, 
+                new SettingsMap<Object>(globals, Object.class));
+//        this.root = new SettingsMap<Object>(globals, Object.class);
     }
 
 
-    @Override
-    public Map<String,Object> getRoot() {
-        return root;
-    }
+//    @Override
+//    public Map<String,Object> getRoot() {
+//        return root;
+//    }
 
-
-    @Override
-    public SingleSheet getGlobalSheet() {
-        return globals;
-    }
 
 
     @Override
@@ -237,8 +232,9 @@ public class MemorySheetManager extends SheetManager {
         if (sheet.isClone() == false) {
             throw new IllegalArgumentException();
         }
-        sheet.setClone(false);
+        clearCloneFlag(sheet);
         this.sheets.put(sheet.getName(), sheet);
+        announceChanges(sheet);
     }
 
     

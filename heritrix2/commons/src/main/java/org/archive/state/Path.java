@@ -128,4 +128,18 @@ public class Path implements Serializable {
         input.defaultReadObject();
         setFromContext(path);
     }
+    
+    
+    public boolean equals(Object o) {
+        if (!(o instanceof Path)) {
+            return false;
+        }
+        Path p = (Path)o;
+        return p.path.equals(path);
+    }
+    
+    
+    public int hashCode() {
+        return path.hashCode();
+    }
 }

@@ -23,67 +23,64 @@
  */
 package org.archive.settings.path;
 
-import java.util.ArrayList;
-import java.util.List;
 
-//import org.archive.processors.deciderules.DecideRule;
-//import org.archive.processors.deciderules.DecideRuleSequence;
-//import org.archive.processors.extractor.ExtractorHTML;
+import org.archive.settings.MemorySheetManager;
+import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 
+
+/**
+ * Unit test for {@link PathChanger}.  The test uses PathLister and PathChanger
+ * to clone the sheets set up by {@link PathTestBase}. 
+ * 
+ * @author pjack
+ */
 public class PathChangerTest extends PathTestBase {
 
-/*
-    public void testOnlineChange() {
-        SingleSheet defaults = manager.getDefault();
-        List<PathChange> list = new ArrayList<PathChange>();
-        list.add(new PathChange("root.html.enabled", "boolean", "false"));
-        new PathChanger().change(defaults, list);
-        Boolean b = defaults.get(html, ExtractorHTML.ENABLED);
-        assertEquals(Boolean.FALSE, b);
-        
-        list.clear();
-        list.add(new PathChange("root.html.decide-rules.rules.1", "object",
-                "org.archive.processors.deciderules.MatchesRegExpDecideRule"));
-        list.add(new PathChange("root.html.decide-rules.rules.1.regexp",
-                "pattern", ".*?"));
-        new PathChanger().change(defaults, list);
-        assertEquals(2, this.htmlRules.size());
-        
-        list.clear();
-        list.add(new PathChange("root.html.decide-rules.rules", "object",
-                "java.util.LinkedList"));
-        new PathChanger().change(defaults, list);
-        List<DecideRule> r = defaults.get(htmlSeq, DecideRuleSequence.RULES);
-        assertFalse(r == htmlRules);
-        assertEquals(0, r.size());
-    }
-    
-    
-    public void testOfflineChange() {
-        SingleSheet defaults = offlineManager.getDefault();
-        List<PathChange> list = new ArrayList<PathChange>();
-        list.add(new PathChange("root.html.enabled", "boolean", "false"));
-        new PathChanger().change(defaults, list);
-        Boolean b = defaults.get(offlineHtml, ExtractorHTML.ENABLED);
-        assertEquals(Boolean.FALSE, b);
-        
-        list.clear();
-        list.add(new PathChange("root.html.decide-rules.rules.1", "object",
-                "org.archive.processors.deciderules.MatchesRegExpDecideRule"));
-        list.add(new PathChange("root.html.decide-rules.rules.1.regexp",
-                "pattern", ".*?"));
-        new PathChanger().change(defaults, list);
-        assertEquals(2, this.offlineHtmlRules.size());
-        
-        list.clear();
-        list.add(new PathChange("root.html.decide-rules.rules", "object",
-                "java.util.LinkedList"));
-        new PathChanger().change(defaults, list);
-        List r = (List)defaults.resolve(offlineHtmlSeq, DecideRuleSequence.RULES).getValue();
-        assertFalse(r == offlineHtmlRules);
-        assertEquals(0, r.size());
 
+    /**
+     * Run the test.
+     */
+    public void testPathChanger() throws Exception {
+        SheetManager live = new MemorySheetManager();        
+        live.addSingleSheet("o1");
+        testSheet(live, "global");
+        testSheet(live, "o1");
+        
+        SheetManager stub = new MemorySheetManager(false);
+        stub.addSingleSheet("o1");
+        testSheet(stub, "global");
+        testSheet(stub, "o1");
     }
-*/
+    
+
+    /**
+     * List the contents of the given sheet using the {@link stub_manager},
+     * piping the results to a PathChanger that modifies the sheet with 
+     * the same name in the given mgr.
+     * 
+     * @param mgr          the destination sheet manager for the cloned sheets
+     * @param sheetName    the name of the sheet to clone
+     */
+    private void testSheet(SheetManager mgr, final String sheetName) 
+    throws Exception {
+        final PathChanger pc = new PathChanger();
+        final SingleSheet src = (SingleSheet)stub_manager.getSheet(sheetName);
+        final SingleSheet dest = (SingleSheet)mgr.getSheet(sheetName);
+        PathListConsumer consumer = new StringPathListConsumer() {
+
+            @Override
+            protected void consume(String path, String[] sheets, String value,
+                    String type) {
+                System.out.println(sheetName + "|" + path + "=" + type + ", " + value);
+                PathChange pce = new PathChange(path, type, value);
+                pc.change(dest, pce);
+            }
+        };
+        PathLister.getAll(src, consumer, true);
+        pc.finish(dest);
+        
+        PathListerTest.run(mgr, sheetName, true);
+    }
+
 }

@@ -371,7 +371,7 @@ public class PathChanger {
         } else {
             previousPath = path.substring(0, p);
             lastToken = path.substring(p + 1);
-            previous = PathValidator.check(sheet, previousPath);
+            previous = PathValidator.validate(sheet, previousPath);
         }
         
         if (previous instanceof List) {
@@ -385,14 +385,24 @@ public class PathChanger {
                 throw new PathChangeException(e);
             }
             @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>)previous;
-            if (index < list.size()) {
-                list.set(index, value);
-            } else if (index == list.size()) {
-                list.add(value);
+            List<Object> mergedList = (List<Object>)previous; 
+            
+            previous = PathValidator.check(sheet, previousPath);
+            @SuppressWarnings("unchecked")
+            List<Object> editableList = (List<Object>)previous;
+            
+            int adjustedIndex = index - mergedList.size() + editableList.size();
+
+            if (adjustedIndex < 0) {
+                throw new PathChangeException("Index of " + index 
+                        + " modifies global sheet, not " + sheet); 
+            } else if (adjustedIndex < editableList.size()) {
+                editableList.set(adjustedIndex, value);
+            } else if (adjustedIndex == editableList.size()) {
+                editableList.add(value);
             } else {
                 throw new PathChangeException("Incorrect index: " 
-                        + path + " (expected " + list.size() + ")");
+                        + path + " (expected " + mergedList.size() + ")");
             }
             return;
         }
@@ -401,6 +411,7 @@ public class PathChanger {
             if (value == AUTO) {
                 throw new PathChangeException("Can't autowire map elements.");
             }
+            previous = PathValidator.check(sheet, previousPath);
             @SuppressWarnings("unchecked")
             Map<String,Object> map = (Map<String,Object>)previous;
             map.put(lastToken, value);

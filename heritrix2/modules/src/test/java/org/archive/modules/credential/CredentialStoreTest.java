@@ -89,11 +89,8 @@ public class CredentialStoreTest extends ModuleTestBase {
         checkContextNames(store, domain, types.size() * 2); // should be global + domain
         checkContextNames(store, host, types.size() * 3); // should be global + domain + host
 
-        Key k = CredentialStore.CREDENTIALS;
-        @SuppressWarnings("unchecked")
-        Key<Map> k2 = (Key<Map>)k;
-        @SuppressWarnings("unchecked")
-        Map<String,Credential> defMap = global.resolveEditableMap(store, k2);
+        Key<Map<String,Credential>> k = CredentialStore.CREDENTIALS;
+        Map<String,Credential> defMap = global.resolveEditableMap(store, k);
         for (String name: globalNames) {
             defMap.remove(name);
         }
