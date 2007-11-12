@@ -212,7 +212,6 @@ public class Heritrix {
             out = new PrintStream(
                     new BufferedOutputStream(
                             new FileOutputStream(startLog),16384));
-            out = System.out;
         }
 
 
@@ -320,6 +319,7 @@ public class Heritrix {
             // development, the output is probably a console.
             if (!isDevelopment()) {
                 if (out != null) {
+                    out.flush();
                     out.close();
                 }
                 System.out.println("Heritrix version: " +
