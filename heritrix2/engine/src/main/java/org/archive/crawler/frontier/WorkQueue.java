@@ -3,6 +3,8 @@ package org.archive.crawler.frontier;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,8 +21,8 @@ import org.archive.util.Reporter;
  * @author gojomo
  * @author Christian Kohlschuetter 
  */
-public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
-        Serializable, Reporter {
+public abstract class WorkQueue implements Frontier.FrontierGroup,
+        Serializable, Reporter, Delayed {
     private static final Logger logger =
         Logger.getLogger(WorkQueue.class.getName());
     
@@ -317,7 +319,16 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
         peekItem = null;
     }
 
-    public final int compareTo(Object obj) {
+    /* (non-Javadoc)
+     * @see java.util.concurrent.Delayed#getDelay(java.util.concurrent.TimeUnit)
+     */
+    public long getDelay(TimeUnit unit) {
+        return unit.convert(
+                getWakeTime()-System.currentTimeMillis(),
+                TimeUnit.MILLISECONDS);
+    }
+
+    public final int compareTo(Delayed obj) {
         if(this == obj) {
             return 0; // for exact identity only
         }

@@ -36,18 +36,17 @@ maximum per-host bandwidth usage
 max-retries-description:
 maximum times to emit a CrawlURI without final disposition 
 
+outbound-queue-capacity-description:
+Capacity of the outbound queue carrying eligible URIs from the frontier
+thread to the worker ToeThreads.
+
+inbound-queue-multiple-description:
+Capacity of the inbound queue carrying updates to the frontier thread from
+other threads, as a multiple of the outbound queue capacity. 
 
 min-delay-ms-description:
 always wait this long after one completion before recontacting same 
 server, regardless of multiple 
-
-
-pause-at-finish-description:
-whether pause, rather than finish, when crawl appears done 
-
-
-pause-at-start-description:
-whether to pause at crawl start 
 
 
 preference-embed-hops-description:

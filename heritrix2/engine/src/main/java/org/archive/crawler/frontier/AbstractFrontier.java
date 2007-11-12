@@ -56,7 +56,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,8 +71,6 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
-import org.archive.crawler.framework.ToeThread;
-import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.scope.SeedModule;
 import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.crawler.url.CanonicalizationRule;
@@ -116,15 +117,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     /** ordinal numbers to assign to created CrawlURIs */
     protected AtomicLong nextOrdinal = new AtomicLong(1);
 
-    /** should the frontier hold any threads asking for URIs? */
-    protected boolean shouldPause = false;
-
-    /**
-     * should the frontier send an EndedException to any threads asking for
-     * URIs?
-     */
-    protected transient boolean shouldTerminate = false;
-
     @Immutable
     final public static Key<DecideRule> SCOPE =
         Key.make(DecideRule.class, null);
@@ -133,12 +125,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     final public static Key<Path> SCRATCH_DIR = 
         Key.make(new Path("scratch"));
     
-
     @Immutable
     final public static Key<Path> RECOVERY_DIR =
         Key.make(new Path("logs"));
-    
-    
     
     /**
      * How many multiples of last fetch elapsed time to wait before recontacting
@@ -182,6 +171,18 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     final public static Key<Integer> MAX_RETRIES = Key.make(30);
 
 
+    /** size of the 'outbound' mediation queue between manager thread 
+     * and toethreads */
+    @Immutable @Expert
+    final public static Key<Integer> OUTBOUND_QUEUE_CAPACITY = 
+        Key.make(50);
+    
+    /** size of the inbound queue as multiple of the outbound queue */
+    @Immutable @Expert
+    final public static Key<Integer> INBOUND_QUEUE_MULTIPLE = 
+        Key.make(3);
+    
+
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
     @Immutable @Expert
     final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
@@ -189,17 +190,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
 
     // word chars, dash, period, comma, colon
     protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.,:]*";
-
-    
-    /** whether pause, rather than finish, when crawl appears done */
-    @Immutable
-    final public static Key<Boolean> PAUSE_AT_FINISH = Key.make(false);
-    
-    
-    /** whether to pause at crawl start */
-    @Immutable
-    final public static Key<Boolean> PAUSE_AT_START = Key.make(false);
-
 
     /**
      * Whether to tag seeds with their own URI as a heritable 'source' String,
@@ -288,7 +278,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         Key.makeAuto(SheetManager.class);
 
     
-    private Path scratchDir;
+//    private Path scratchDir;
     private Path recoveryDir;
 
 
@@ -310,9 +300,40 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         super(Frontier.class);
     }
 
+    /** reusable no-op inbound event, to force reeval of state/eligible URIs */
+    protected InEvent NOOP = new InEvent() { public void process() {} };
+    
+    /** inbound updates: URIs to be scheduled, finished; requested state changes */
+    protected ArrayBlockingQueue<InEvent> inbound;
+    /** outbound URIs */ 
+    protected ArrayBlockingQueue<CrawlURI> outbound;
+    
+    /** 
+     * lock to allow holding all worker ToeThreads from taking URIs already
+     * on the outbound queue; they acquire read permission before take()ing;
+     * frontier can acquire write permission to hold threads */
+    protected ReentrantReadWriteLock outboundLock = 
+        new ReentrantReadWriteLock(true);
+    
+    
+    /**
+     * Distinguished frontier manager thread which handles all juggling
+     * of URI queues and queues/maps of queues for proper ordering/delay of
+     * URI processing. 
+     */
+    Thread managerThread = new Thread(this+".managerThread") {
+        public void run() {
+            AbstractFrontier.this.managementTasks();
+        }
+    };
+    
+    /** last Frontier.State reached; used to suppress duplicate notifications */
+    State lastReachedState = null;
+    /** Frontier.state that manager thread should seek to reach */
+    State targetState = State.PAUSE;
     
     public void initialTasks(StateProvider provider) {
-        this.scratchDir = provider.get(this, SCRATCH_DIR);
+//        this.scratchDir = provider.get(this, SCRATCH_DIR);
         this.recoveryDir = provider.get(this, RECOVERY_DIR);
         this.controller = provider.get(this, CONTROLLER);
         this.loggerModule = provider.get(this, LOGGER_MODULE);
@@ -326,7 +347,200 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+        
+        int outcap = provider.get(this,OUTBOUND_QUEUE_CAPACITY);
+        outbound = new ArrayBlockingQueue<CrawlURI>(outcap,true);
+        inbound = new ArrayBlockingQueue<InEvent>(
+                outcap * provider.get(this,INBOUND_QUEUE_MULTIPLE),true);
         pause();
+        managerThread.start();
+    }
+    
+    /**
+     * Main loop of frontier's managerThread. Only exits when State.FINISH 
+     * is requested (perhaps automatically at URI exhaustion) and reached. 
+     * 
+     * General strategy is to try to fill outbound queue, then process an
+     * item from inbound queue, and repeat. A HOLD (to be implemented) or 
+     * PAUSE puts frontier into a stable state that won't be changed
+     * asynchronously by worker thread activity. 
+     */
+    protected void managementTasks() {
+        assert Thread.currentThread() == managerThread;
+        try {
+            loop: while (true) {
+                switch (targetState) {
+                case RUN:
+                    reachedState(State.RUN);
+                    // fill to-do 'on-deck' queue
+                    while (outbound.remainingCapacity() > 0) {
+                        CrawlURI crawlable = findEligibleURI();
+                        if (crawlable != null) {
+                            outbound.put(crawlable);
+                        } else {
+                            break;
+                        }
+                    }
+                    // process discovered and finished URIs
+                    InEvent toProcess = inbound.poll(getMaxInWait(),
+                            TimeUnit.MILLISECONDS);
+                    if (toProcess != null) {
+                        toProcess.process();
+                    }
+                    if(isEmpty()) {
+                        // pause when frontier exhausted; controller will
+                        // determine if this means to finish or not
+                        targetState = State.PAUSE;
+                    }
+                    break;
+                case HOLD:
+                    // TODO; for now treat same as PAUSE
+                case PAUSE:
+                    // pausing
+                    // prevent all outbound takes
+                    outboundLock.writeLock().lock();
+                    // process all inbound
+                    while (targetState == State.PAUSE) {
+                        if (outbound.size() == getInProcessCount()) {
+                            reachedState(State.PAUSE);
+                        }
+                        // continue to process discovered and finished URIs
+                        inbound.take().process();
+                    }
+                    outboundLock.writeLock().unlock();
+                    break;
+                case FINISH:
+                    // TODO: cleanup/end
+                    reachedState(State.FINISH);
+                    break loop;
+                }
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } 
+        logger.log(Level.FINE,"ending frontier mgr thread");
+    }
+
+    /**
+     * The given state has been reached; if it is a new state, generate
+     * a notification to the CrawlController. 
+     * 
+     * TODO: evaluate making this a generic notification others can sign up for
+     */
+    protected void reachedState(State justReached) {
+        if(justReached != lastReachedState) {
+            controller.noteFrontierState(justReached);
+            lastReachedState = justReached;
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#next()
+     */
+    public CrawlURI next() throws InterruptedException {
+        // perhaps hold without taking ready outbound items
+        outboundLock.readLock().lock();
+        outboundLock.readLock().unlock();
+        
+        
+        CrawlURI retval = outbound.take();
+//      // TODO: consider if following necessary for maintaining throughput
+//        if(outbound.size()<=1) {
+//            doOrEnqueue(NOOP);
+//        }
+        return retval;
+    }
+
+    /**
+     * Find a CrawlURI eligible to be put on the outbound queue for 
+     * processing. If none, return null. 
+     * @return the eligible URI, or null
+     */
+    abstract protected CrawlURI findEligibleURI();
+    
+    
+    /**
+     * Schedule the given CrawlURI regardless of its already-seen status. Only
+     * to be called inside the managerThread, as by an InEvent. 
+     * 
+     * @param caUri CrawlURI to schedule
+     */
+    abstract protected void processScheduleAlways(CrawlURI caUri);
+    
+    /**
+     * Schedule the given CrawlURI if not already-seen. Only
+     * to be called inside the managerThread, as by an InEvent. 
+     * 
+     * @param caUri CrawlURI to schedule
+     */
+    abstract protected void processScheduleIfUnique(CrawlURI caUri);
+    
+    /**
+     * Handle the given CrawlURI as having finished a worker ToeThread 
+     * processing attempt. May result in the URI being rescheduled or
+     * logged as successful or failed. Only to be called inside the 
+     * managerThread, as by an InEvent. 
+     * 
+     * @param caUri CrawlURI to finish
+     */
+    abstract protected void processFinish(CrawlURI caUri);
+    
+    /**
+     * The number of CrawlURIs 'in process' (passed to the outbound
+     * queue and not yet finished by returning through the inbound
+     * queue.)
+     * 
+     * @return number of in-process CrawlURIs
+     */
+    abstract protected int getInProcessCount();
+    
+    
+    /**
+     * Maximum amount of time to wait for an inbound update event before 
+     * giving up and rechecking on the ability to further fill the outbound
+     * queue. If any queues are waiting out politeness/retry delays ('snoozed'),
+     * the maximum wait should be no longer than the shortest sch delay. 
+     * @return maximum time to wait, in milliseconds
+     */
+    abstract protected long getMaxInWait();
+    
+    /**
+     * Arrange for the given CrawlURI to be visited, if it is not
+     * already scheduled/completed.
+     *
+     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public void schedule(CrawlURI caUri) {
+        enqueueOrDo(new ScheduleIfUnique(caUri));
+    }
+
+    /**
+     * Accept the given CrawlURI for scheduling, as it has
+     * passed the alreadyIncluded filter. 
+     * 
+     * Choose a per-classKey queue and enqueue it. If this
+     * item has made an unready queue ready, place that 
+     * queue on the readyClassQueues queue. 
+     * @param caUri CrawlURI.
+     */
+    public void receive(CrawlURI caUri) {
+        // prefer doing asap if already in manager thread
+        doOrEnqueue(new ScheduleAlways(caUri));
+    }
+    
+    /**
+     * Note that the previously emitted CrawlURI has completed
+     * its processing (for now).
+     *
+     * The CrawlURI may be scheduled to retry, if appropriate,
+     * and other related URIs may become eligible for release
+     * via the next next() call, as a result of finished().
+     *
+     *  (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public void finished(CrawlURI curi) {
+        enqueueOrDo(new Finish(curi));
     }
     
     private void initJournal(String logsDisk) throws IOException {
@@ -337,38 +551,46 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         }
     }
     
-    
     public <T> T get(Key<T> key) {
         return manager.getGlobalSheet().get(this, key);
     }
 
     public void start() {
-        if (get(PAUSE_AT_START)) {
-            // trigger crawl-wide pause
-            controller.requestCrawlPause();
-        } else {
-            // simply begin
-            unpause(); 
-        }
+        requestState(State.RUN);
     }
     
-    synchronized public void pause() {
-        shouldPause = true;
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#requestState(org.archive.crawler.framework.Frontier.State)
+     */
+    public void requestState(State target) {
+        enqueueOrDo(new SetTargetState(target));
+    }
+    
+    /**
+     * Actually set a new target Frontier.State. Should only be called in
+     * managerThread, as by an InEvent. 
+     */
+    protected void processSetTargetState(State target) {
+        assert Thread.currentThread() == managerThread;
+        targetState = target;
+    }
+    
+    public void pause() {
+        requestState(State.PAUSE);
     }
 
-    synchronized public void unpause() {
-        shouldPause = false;
-        notifyAll();
+    public void unpause() {
+        requestState(State.RUN);
     }
 
 
     synchronized public void terminate() {
-        shouldTerminate = true;
+        requestState(State.FINISH);
+        // TODO: move this recover-cleanup to manager thread?
         if (this.recover != null) {
             this.recover.close();
             this.recover = null;
         }
-        unpause();
     }
     
     /**
@@ -616,47 +838,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     }
 
     /**
-     * @param now
-     * @throws InterruptedException
-     * @throws EndedException
-     */
-    protected synchronized void preNext(long now) throws InterruptedException,
-            EndedException {
-        if (this.controller == null) {
-            return;
-        }
-        
-        // Check completion conditions
-        if (this.controller.atFinish()) {
-            if (get(PAUSE_AT_FINISH)) {
-                this.controller.requestCrawlPause();
-            } else {
-                this.controller.beginCrawlStop();
-            }
-        }
-
-        // enforce operator pause
-        if (shouldPause) {
-            while (shouldPause) {
-                this.controller.toePaused();
-                wait();
-            }
-            // exitted pause; possibly finish regardless of pause-at-finish
-            if (controller != null && controller.atFinish()) {
-                this.controller.beginCrawlStop();
-            }
-        }
-
-        // enforce operator terminate or thread retirement
-        if (shouldTerminate
-                || ((ToeThread)Thread.currentThread()).shouldRetire()) {
-            throw new EndedException("terminated");
-        }
-
-        enforceBandwidthThrottle(now);
-    }
-
-    /**
      * Perform any special handling of the CrawlURI, such as promoting its URI
      * to seed-status, or preferencing it because it is an embed.
      * 
@@ -840,29 +1021,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             // once logged, discard
             curi.getData().remove(A_NONFATAL_ERRORS);
         }
-    }
-
-    /**
-     * Utility method to return a scratch dir for the given key's temp files.
-     * Every key gets its own subdir. To avoid having any one directory with
-     * thousands of files, there are also two levels of enclosing directory
-     * named by the least-significant hex digits of the key string's java
-     * hashcode.
-     * 
-     * @param key
-     * @return File representing scratch directory
-     */
-    protected File scratchDirFor(String key) {
-        String hex = Integer.toHexString(key.hashCode());
-        while (hex.length() < 4) {
-            hex = "0" + hex;
-        }
-        int len = hex.length();
-        return new File(scratchDir.toFile(), hex.substring(len - 2,
-                len)
-                + File.separator
-                + hex.substring(len - 4, len - 2)
-                + File.separator + key);
     }
 
     protected boolean overMaxRetries(CrawlURI curi) {
@@ -1167,7 +1325,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             }
             initJournal(path);
         }
-        shouldPause = true;
+        targetState = State.PAUSE;
     }
     
     
@@ -1178,6 +1336,111 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         }
     }
     
+    /**
+     * Arrange for the given InEvent to be done by the managerThread, via
+     * enqueueing with other events if possible, but directly if not possible
+     * and this is the managerThread. 
+     * @param ev InEvent to be done
+     */
+    protected void enqueueOrDo(InEvent ev) {
+        if(!inbound.offer(ev)) {
+            // if can't defer, 
+            if(Thread.currentThread()==managerThread) {
+                // if can't enqueue, ok to just do
+                ev.process();
+                return; 
+            } else {
+                try {
+                    inbound.put(ev);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
     
+    /**
+     * Arrange for the given InEvent to be done by the managerThread, 
+     * immediately if this is the managerThread, of via enqueueing with
+     * other inbound events otherwise.  
+     * @param ev InEvent to be done
+     */
+    protected void doOrEnqueue(InEvent ev) {
+        if (Thread.currentThread() == managerThread) {
+            // if can't enqueue, ok to just do
+            ev.process();
+            return;
+        } else {
+            try {
+                inbound.put(ev);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
     
+    /**
+     * An event/update for the managerThread to process from the inbound queue.
+     */
+    public abstract class InEvent {
+        abstract public void process();
+    }
+    
+    /**
+     * A CrawlURI to be scheduled by the managerThread without regard to 
+     * whether the CrawlURI was already-seen. 
+     */
+    public class ScheduleAlways extends InEvent {
+        CrawlURI caUri;
+        public ScheduleAlways(CrawlURI c) {
+            this.caUri = c;
+        }
+        public void process() {
+            processScheduleAlways(caUri);
+        } 
+    }
+    
+    /**
+     * A CrawlURI to be scheduled by the managerThread if it has not been
+     * already-seen. (That is, if it passes the UriUniqFilter.)
+     */
+    public class ScheduleIfUnique extends InEvent {
+        CrawlURI caUri;
+        public ScheduleIfUnique(CrawlURI c) {
+            this.caUri = c;
+        }
+        public void process() {
+            processScheduleIfUnique(caUri);
+        }   
+    }
+    
+    /**
+     * A CrawlURI, previously issued via the outbound queue,  that has finished 
+     * its processing chain with update implications for the frontier state.
+     */
+    public class Finish extends InEvent {
+        CrawlURI caUri;
+        public Finish(CrawlURI c) {
+            this.caUri = c;
+        }
+        public void process() {
+            processFinish(caUri);
+        }   
+    }
+    
+    /**
+     * An request that the frontier enter a new Frontier.State. 
+     */
+    public class SetTargetState extends InEvent {
+        State target;
+        public SetTargetState(State target) {
+            this.target = target;
+        }
+        @Override
+        public void process() {
+            processSetTargetState(target);
+            // TODO: perhaps null reachedState, because until new state is 
+            // reached it's misleading?
+        }
+    }
 }

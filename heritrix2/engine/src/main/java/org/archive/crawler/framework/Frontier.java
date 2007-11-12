@@ -25,8 +25,6 @@
 package org.archive.crawler.framework;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
 
 import javax.management.openmbean.CompositeData;
 
@@ -530,4 +528,24 @@ public interface Frontier extends Module, Reporter {
     public interface FrontierGroup extends FetchStats.HasFetchStats {
 
     }
+    
+    /**
+     * Request the Frontier reach the given state as soon as possible. (Only
+     * when a later notification is given the CrawlController has the state
+     * actually been reached.)
+     * 
+     * @param target Frontier.State to pursue
+     */
+    public void requestState(State target);
+    
+    /**
+     * Enumeration of possible target states. 
+     */
+    public enum State { 
+        RUN,  // juggle/prioritize/emit; usual state
+        HOLD, // enter a consistent, stable, checkpointable state ASAP
+        PAUSE, // enter a stable state where no URIs are in-progress; unlike
+               // HOLD requires all in-process URIs to complete
+        FINISH }; // end and cleanup; may not return to any other state after
+                  // this state is requested/reached
 }

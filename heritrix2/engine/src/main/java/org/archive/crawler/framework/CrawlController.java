@@ -155,6 +155,11 @@ public class CrawlController extends Bean implements
      */
     final public static Key<Integer> MAX_TOE_THREADS = Key.make(25);
 
+    /** whether to pause, rather than finish, when crawl appears done */
+    final public static Key<Boolean> PAUSE_AT_FINISH = Key.make(false);
+    
+    /** whether to pause at crawl start */
+    final public static Key<Boolean> PAUSE_AT_START = Key.make(false);
 
     /**
      * Size in bytes of in-memory buffer to record outbound traffic. One such 
@@ -556,7 +561,11 @@ public class CrawlController extends Bean implements
         statLogger.setName("StatLogger");
         statLogger.start();
         
-        getFrontier().start();
+        if (get(this,PAUSE_AT_START)) {
+            requestCrawlPause();
+        } else {
+            getFrontier().start();
+        }
     }
 
     /**
@@ -694,7 +703,6 @@ public class CrawlController extends Bean implements
         Frontier frontier = getFrontier();
         if (frontier != null) {
             frontier.terminate();
-            frontier.unpause();
         }
         LOGGER.fine("Finished."); 
     }
@@ -751,9 +759,6 @@ public class CrawlController extends Bean implements
         multiThreadMode();
         Frontier f = getFrontier();
         f.unpause();
-        LOGGER.info("Crawl resumed.");
-        sendCrawlStateChangeEvent(State.RUNNING, CrawlStatus.RUNNING);
-
     }
 
     /**
@@ -977,25 +982,12 @@ public class CrawlController extends Bean implements
             System.gc();
         }
     }
-
-    /**
-     * Note that a ToeThread reached paused condition, possibly
-     * completing the crawl-pause. 
-     */
-    public synchronized void toePaused() {
-        releaseContinuePermission();
-        if (state == State.PAUSING && toePool.getActiveToeCount() == 0) {
-            completePause();
-        }
-    }
     
     /**
-     * Note that a ToeThread ended, possibly completing the crawl-stop. 
+     * Note that a ToeThread ended 
      */
     public synchronized void toeEnded() {
-        if (state == State.STOPPING && toePool.getActiveToeCount() == 0) {
-            completeStop();
-        }
+
     }
 
     /**
@@ -1177,6 +1169,42 @@ public class CrawlController extends Bean implements
         StringWriter sw = new StringWriter();
         this.reportTo(CrawlController.PROCESSORS_REPORT,new PrintWriter(sw));
         return sw.toString();
+    }
+
+    /**
+     * Receive notification from the frontier, in the frontier's own 
+     * manager thread, that the frontier has reached a new state. 
+     * 
+     * @param reachedState the state the frontier has reached
+     */
+    public void noteFrontierState(Frontier.State reachedState) {
+        switch (reachedState) {
+        case RUN: 
+            LOGGER.info("Crawl resumed.");
+            sendCrawlStateChangeEvent(State.RUNNING, CrawlStatus.RUNNING);
+        case PAUSE:
+            if (state == State.PAUSING) {
+                completePause();
+                break;
+            }
+            if(atFinish()) { // really, "just reached finish"
+                if (get(this,PAUSE_AT_FINISH)) {
+                    requestCrawlPause();
+                } else {
+                    beginCrawlStop();
+                }
+                break;
+            }
+            if(state == State.STOPPING || state == State.FINISHED) {
+                frontier.requestState(Frontier.State.FINISH);
+            }
+            break;
+        case FINISH:
+            completeStop();
+            break;
+        default:
+            // do nothing
+        }
     }
 
 }

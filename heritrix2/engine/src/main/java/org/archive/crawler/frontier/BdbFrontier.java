@@ -29,10 +29,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TreeSet;
+import java.util.concurrent.DelayQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -254,8 +253,7 @@ implements Serializable, Checkpointable {
         // small risk of OutOfMemoryError: in large crawls with many 
         // unresponsive queues, an unbounded number of snoozed queues 
         // may exist
-        snoozedClassQueues = Collections
-                .synchronizedSortedSet(new TreeSet<WorkQueue>());
+        snoozedClassQueues = new DelayQueue<WorkQueue>();
     }
 
     

@@ -86,6 +86,15 @@ the crawler will stop. A value of zero means no upper limit.
 max-toe-threads-description:
 Maximum number of threads processing URIs at the same time.
 
+pause-at-finish-description:
+If true, then pause, rather than end the crawl, when the crawl appears 
+finished (having exhausted all eligible URIs or reached other configured
+limits).  Default is false. 
+
+pause-at-start-description:
+If true, then pause at the start of the crawl, before processing any URIs. 
+Default is false. 
+
 recorder-out-buffer-bytes-description:
 Size in bytes of in-memory buffer to record outbound traffic. One such buffer 
 is reserved for every ToeThread.
