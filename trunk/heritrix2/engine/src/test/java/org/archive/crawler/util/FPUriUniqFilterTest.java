@@ -45,7 +45,7 @@ import org.archive.util.fingerprint.MemLongFPSet;
  * @author stack
  */
 public class FPUriUniqFilterTest extends TestCase
-implements UriUniqFilter.HasUriReceiver {
+implements UriUniqFilter.CrawlUriReceiver {
     private Logger logger =
         Logger.getLogger(FPUriUniqFilterTest.class.getName());
 
