@@ -72,7 +72,7 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
     private static Logger LOGGER =
         Logger.getLogger(FPMergeUriUniqFilter.class.getName());
 
-    protected HasUriReceiver receiver;
+    protected CrawlUriReceiver receiver;
     protected PrintWriter profileLog;
     
     // statistics
@@ -124,7 +124,7 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
         return pendingSet.size();
     }
 
-    public void setDestination(HasUriReceiver receiver) {
+    public void setDestination(CrawlUriReceiver receiver) {
         this.receiver = receiver;
     }
 

@@ -49,7 +49,7 @@ import com.sleepycat.je.DatabaseException;
  * @author stack
  */
 public class BdbUriUniqFilterTest extends TmpDirTestCase
-implements UriUniqFilter.HasUriReceiver {
+implements UriUniqFilter.CrawlUriReceiver {
     private Logger logger =
         Logger.getLogger(BdbUriUniqFilterTest.class.getName());
     

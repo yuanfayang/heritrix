@@ -46,7 +46,7 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializab
     private static Logger LOGGER =
         Logger.getLogger(SetBasedUriUniqFilter.class.getName());
 
-    protected HasUriReceiver receiver;
+    protected CrawlUriReceiver receiver;
     protected PrintWriter profileLog;
     protected long duplicateCount = 0;
     protected long duplicatesAtLastSample = 0;
@@ -77,7 +77,7 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializab
         return 0;
     }
 
-    public void setDestination(HasUriReceiver receiver) {
+    public void setDestination(CrawlUriReceiver receiver) {
         this.receiver = receiver;
     }
 

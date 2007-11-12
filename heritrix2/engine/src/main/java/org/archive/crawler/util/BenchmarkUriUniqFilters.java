@@ -40,7 +40,7 @@ import org.archive.util.fingerprint.MemLongFPSet;
  * 
  * @author gojomo
  */
-public class BenchmarkUriUniqFilters implements UriUniqFilter.HasUriReceiver {
+public class BenchmarkUriUniqFilters implements UriUniqFilter.CrawlUriReceiver {
 //    private Logger LOGGER =
 //        Logger.getLogger(BenchmarkUriUniqFilters.class.getName());
     

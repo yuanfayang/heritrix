@@ -44,7 +44,7 @@ import org.archive.net.UURIFactory;
  * @author gojomo
  */
 public class BloomUriUniqFilterTest extends TestCase
-implements UriUniqFilter.HasUriReceiver {
+implements UriUniqFilter.CrawlUriReceiver {
     private Logger logger =
         Logger.getLogger(BloomUriUniqFilterTest.class.getName());
 

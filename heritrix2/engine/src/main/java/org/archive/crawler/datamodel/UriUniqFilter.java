@@ -61,7 +61,7 @@ public interface UriUniqFilter {
      * @param receiver Object that will be passed items. Must implement
      * HasUriReceiver interface.
      */
-    public void setDestination(HasUriReceiver receiver);
+    public void setDestination(CrawlUriReceiver receiver);
     
     /**
      * Add given uri, if not already present.
@@ -135,14 +135,13 @@ public interface UriUniqFilter {
     public void setProfileLog(File logfile);
     
     /**
-     * URIs that have not been seen before 'visit' this 'Visitor'.
+     * URIs that pass the filter (are new / unique / not already-seen) 
+     * are passed to this object, typically a frontier. 
      * 
-     * Usually implementations of Frontier implement this interface.
-     * @author gojomo
      */
-    public interface HasUriReceiver {
+    public interface CrawlUriReceiver {
         /**
-         * @param item Candidate uri tem that is 'visiting'.
+         * @param item CrawlURI that passed uniqueness testing
          */
         public void receive(CrawlURI item);
     }
