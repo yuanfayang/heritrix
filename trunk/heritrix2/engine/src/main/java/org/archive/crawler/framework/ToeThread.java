@@ -166,8 +166,12 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
                     break; // from while(true)
                 }
             }
+        } catch (InterruptedException e) {
+            // thread interrupted, ok to end
+            logger.log(Level.FINE,this.getName()+ " ended with Interruption");
         } catch (EndedException e) {
             // crawl ended (or thread was retired), so allow thread to end
+            logger.log(Level.FINE,this.getName()+ " ended with EndedException");
         } catch (Exception e) {
             // everything else (including interruption)
             logger.log(Level.SEVERE,"Fatal exception in "+getName(),e);

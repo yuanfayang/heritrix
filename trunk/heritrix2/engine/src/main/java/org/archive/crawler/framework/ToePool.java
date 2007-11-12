@@ -61,6 +61,13 @@ public class ToePool extends ThreadGroup implements Reporter {
     }
     
     public void cleanup() {
+    	// force all Toes waiting on queues, etc to proceed
+        Thread[] toes = getToes();
+        for(Thread toe : toes) {
+            if(toe!=null) {
+                toe.interrupt();
+            }
+        }
         this.controller = null;
     }
 

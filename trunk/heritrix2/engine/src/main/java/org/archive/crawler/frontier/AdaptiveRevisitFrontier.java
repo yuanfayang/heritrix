@@ -47,7 +47,7 @@ import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
+import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerLoggerModule;
@@ -87,7 +87,7 @@ import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
  * @author Kristinn Sigurdsson
  */
 public class AdaptiveRevisitFrontier  
-implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
+implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
 
     private static final long serialVersionUID = -3L;
 
@@ -437,7 +437,8 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
         controller.checkFinish();
         
         while(shouldPause){
-            controller.toePaused();
+//            controller.toePaused();
+            // TODO: update to use noteFrontierState
             wait();
         }
         
@@ -1200,5 +1201,20 @@ implements Frontier, Serializable, CrawlStatusListener, HasUriReceiver {
     // initialization values are set.
     static {
         KeyManager.addKeys(AdaptiveRevisitFrontier.class);
+    }
+
+    public void requestState(State target) {
+        switch(target) {
+        case HOLD:
+        case PAUSE:
+            pause();
+            return;
+        case RUN:
+            unpause();
+            return;
+        case FINISH:
+            terminate();
+            return;
+        }
     }
 }

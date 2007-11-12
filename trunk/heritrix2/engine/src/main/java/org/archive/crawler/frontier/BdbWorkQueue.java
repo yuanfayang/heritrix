@@ -41,7 +41,7 @@ import com.sleepycat.je.DatabaseException;
  * @author gojomo
  */
 public class BdbWorkQueue extends WorkQueue
-implements Comparable, Serializable {
+implements Serializable {
     private static Logger LOGGER =
         Logger.getLogger(BdbWorkQueue.class.getName());
     

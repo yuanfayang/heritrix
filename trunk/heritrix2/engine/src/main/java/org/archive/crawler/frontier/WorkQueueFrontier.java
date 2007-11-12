@@ -28,8 +28,6 @@ import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,10 +37,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
-import java.util.SortedSet;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,8 +50,7 @@ import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
-import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
@@ -77,21 +73,8 @@ import com.sleepycat.je.DatabaseException;
  * @author Christian Kohlschuetter
  */
 public abstract class WorkQueueFrontier extends AbstractFrontier
-implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
-	private static final long serialVersionUID = 570384305871965843L;
-	
-    public class WakeTask extends TimerTask {
-        @Override
-        public void run() {
-            synchronized(snoozedClassQueues) {
-                if(this!=nextWake) {
-                    // an intervening waketask was made
-                    return;
-                }
-                wakeQueues();
-            }
-        }
-    }
+implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
+    private static final long serialVersionUID = 570384305871965843L;
 
     /** truncate reporting of queues at some large but not unbounded number */
     private static final int REPORT_MAX_QUEUES = 2000;
@@ -182,26 +165,14 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
     /**
      * All per-class queues held in snoozed state, sorted by wake time.
      */
-    protected SortedSet<WorkQueue> snoozedClassQueues;
-    
-    /** Timer for tasks which wake head item of snoozedClassQueues */
-    protected transient Timer wakeTimer;
-    
-    /** Task for next wake */ 
-    protected transient WakeTask nextWake; 
+    protected DelayQueue<WorkQueue> snoozedClassQueues;
     
     protected WorkQueue longestActiveQueue = null;
-    
-    /** how long to wait for a ready queue when there's nothing snoozed */
-    private static final long DEFAULT_WAIT = 1000; // 1 second
-    
-
     
     public <T> T get(Key<T> key) {
         return manager.getGlobalSheet().get(this, key);
     }
 
-    
     /**
      * The UriUniqFilter to use.
      */
@@ -209,14 +180,12 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
     public final static Key<UriUniqFilter> URI_UNIQ_FILTER =
         Key.makeAuto(UriUniqFilter.class);
     
-    
     /**
      * Constructor.
      */
     public WorkQueueFrontier() {
         super();
     }
-    
     
     public void initialTasks(StateProvider provider) {
         super.initialTasks(provider);
@@ -227,7 +196,6 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
         if (this.targetSizeForReadyQueues < 1) {
             this.targetSizeForReadyQueues = 1;
         }
-        this.wakeTimer = new Timer("waker for " + controller.toString());
         
         try {
             initAllQueues(false);
@@ -237,7 +205,6 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
         
 //        loadSeeds();
     }
-    
 
     /**
      * Initializes all queues.  May decide to keep all queues in memory based on
@@ -265,7 +232,6 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
         initQueue(recycle);
         
     }
-
     
     protected abstract void initAllQueues() throws DatabaseException;
 
@@ -288,44 +254,10 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
             // FIXME exception handling
             e.printStackTrace();
         }
-        this.wakeTimer.cancel();
         
         this.allQueues.clear();
-        
-        
-//        this.allQueues = null;
-//        this.inProcessQueues = null;
-//        this.readyClassQueues = null;
-//        this.snoozedClassQueues = null;
-//        this.inactiveQueues = null;
-//        this.retiredQueues = null;
-//        
-//        this.costAssignmentPolicy = null;
-        
-        // Clearing controller is a problem. We get NPEs in #preNext.
-//        super.crawlEnded(sExitMessage);
-        //this.controller = null;
     }
-
-
-    /**
-     * Arrange for the given CrawlURI to be visited, if it is not
-     * already scheduled/completed.
-     *
-     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CrawlURI)
-     */
-    public void schedule(CrawlURI caUri) {
-        // Canonicalization may set forceFetch flag.  See
-        // #canonicalization(CrawlURI) javadoc for circumstance.
-        caUri.setStateProvider(manager);
-        String canon = canonicalize(caUri);
-        if (caUri.forceFetch()) {
-            alreadyIncluded.addForce(canon, caUri);
-        } else {
-            alreadyIncluded.add(canon, caUri);
-        }
-    }
-
+    
     /**
      * Accept the given CrawlURI for scheduling, as it has
      * passed the alreadyIncluded filter. 
@@ -335,12 +267,34 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
      * queue on the readyClassQueues queue. 
      * @param caUri CrawlURI.
      */
-    public void receive(CrawlURI caUri) {
+    protected void processScheduleAlways(CrawlURI caUri) {
+        assert Thread.currentThread() == managerThread;
+        
         CrawlURI curi = asCrawlUri(caUri);
         applySpecialHandling(curi);
         sendToQueue(curi);
         // Update recovery log.
         doJournalAdded(curi);
+    }
+    
+    /**
+     * Arrange for the given CrawlURI to be visited, if it is not
+     * already scheduled/completed.
+     *
+     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CrawlURI)
+     */
+    protected void processScheduleIfUnique(CrawlURI caUri) {
+        assert Thread.currentThread() == managerThread;
+        
+        // Canonicalization may set forceFetch flag.  See
+        // #canonicalization(CrawlURI) javadoc for circumstance.
+        caUri.setStateProvider(manager);
+        String canon = canonicalize(caUri);
+        if (caUri.forceFetch()) {
+            alreadyIncluded.addForce(canon, caUri);
+        } else {
+            alreadyIncluded.add(canon, caUri);
+        }
     }
 
 	/* (non-Javadoc)
@@ -488,26 +442,21 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
     protected abstract WorkQueue getQueueFor(String classKey);
     
     /**
-     * Return the next CrawlURI to be processed (and presumably
+     * Return the next CrawlURI eligible to be processed (and presumably
      * visited/fetched) by a a worker thread.
      *
      * Relies on the readyClassQueues having been loaded with
      * any work queues that are eligible to provide a URI. 
      *
-     * @return next CrawlURI to be processed. Or null if none is available.
+     * @return next CrawlURI eligible to be processed, or null if none available
      *
      * @see org.archive.crawler.framework.Frontier#next()
      */
-    public CrawlURI next()
-    throws InterruptedException, EndedException {
-        while (true) { // loop left only by explicit return or exception
-            long now = System.currentTimeMillis();
-
-            //this.reportTo(new java.io.PrintWriter(new java.io.OutputStreamWriter(System.out)));
-            
-            // Do common checks for pause, terminate, bandwidth-hold
-            preNext(now);
-            
+    protected CrawlURI findEligibleURI() {
+            assert Thread.currentThread() == managerThread;
+            // wake any snoozed queues
+            wakeQueues();
+            // activate enough inactive queues to reach ready-queues target
             synchronized(readyClassQueues) {
                 int activationsNeeded = targetSizeForReadyQueues() - readyClassQueues.size();
                 while(activationsNeeded > 0 && !inactiveQueues.isEmpty()) {
@@ -517,7 +466,7 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
             }
                    
             WorkQueue readyQ = null;
-            Object key = readyClassQueues.poll(DEFAULT_WAIT,TimeUnit.MILLISECONDS);
+            Object key = readyClassQueues.poll();
             if (key != null) {
                 readyQ = (WorkQueue)this.allQueues.get(key);
             }
@@ -566,18 +515,16 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
                         " in readyClassQueues but not allQueues");
                 }
             }
-
-            if(shouldTerminate) {
-                // skip subsequent steps if already on last legs
-                throw new EndedException("shouldTerminate is true");
-            }
                 
             if(inProcessQueues.size()==0) {
                 // Nothing was ready or in progress or imminent to wake; ensure 
                 // any piled-up pending-scheduled URIs are considered
-                this.alreadyIncluded.requestFlush();
-            }    
-        }
+                if(this.alreadyIncluded.requestFlush()>0) {
+                    return findEligibleURI();
+                }
+            }
+            // nothing eligible
+            return null; 
     }
 
     private int targetSizeForReadyQueues() {
@@ -676,34 +623,25 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
         }
     }
     
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.AbstractFrontier#getMaxInWait()
+     */
+    @Override
+    protected long getMaxInWait() {
+        Delayed next = snoozedClassQueues.peek();
+        return next == null ? 60000 : next.getDelay(TimeUnit.MILLISECONDS);
+    }
+
     /**
      * Wake any queues sitting in the snoozed queue whose time has come.
      */
-    void wakeQueues() {
-        synchronized (snoozedClassQueues) {
-            long now = System.currentTimeMillis();
-            long nextWakeDelay = 0;
-            int wokenQueuesCount = 0;
-            while (true) {
-                if (snoozedClassQueues.isEmpty()) {
-                    return;
-                }
-                WorkQueue peek = (WorkQueue) snoozedClassQueues.first();
-                nextWakeDelay = peek.getWakeTime() - now;
-                if (nextWakeDelay <= 0) {
-                    snoozedClassQueues.remove(peek);
-                    peek.setWakeTime(0);
-                    reenqueueQueue(peek);
-                    wokenQueuesCount++;
-                } else {
-                    break;
-                }
-            }
-            this.nextWake = new WakeTask();
-            this.wakeTimer.schedule(nextWake,nextWakeDelay);
+    protected void wakeQueues() {
+        WorkQueue waked; 
+        while((waked = snoozedClassQueues.poll())!=null) {
+            reenqueueQueue(waked);
         }
     }
-
+    
     /**
      * Note that the previously emitted CrawlURI has completed
      * its processing (for now).
@@ -715,7 +653,8 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
      *  (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
-    public void finished(CrawlURI curi) {
+    protected void processFinish(CrawlURI curi) {
+        assert Thread.currentThread() == managerThread;
         long now = System.currentTimeMillis();
 
         curi.incrementFetchAttempts();
@@ -835,13 +774,7 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
         if (delay_ms > snoozeToInactiveDelayMs && !inactiveQueues.isEmpty()) {
             deactivateQueue(wq);
         } else {
-            synchronized(snoozedClassQueues) {
-                snoozedClassQueues.add(wq);
-                if(wq == snoozedClassQueues.first()) {
-                    this.nextWake = new WakeTask();
-                    this.wakeTimer.schedule(nextWake, delay_ms);
-                }
-            }
+            snoozedClassQueues.add(wq);
         }
     }
 
@@ -1249,27 +1182,21 @@ implements Closeable, HasUriReceiver, Serializable, KeyChangeListener {
         return longestActiveQueue==null ? -1 : longestActiveQueue.getCount();
     }
     
-    
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#isEmpty()
      */
     public synchronized boolean isEmpty() {
-        return queuedUriCount.get() == 0 && alreadyIncluded.pending() == 0;
+        return queuedUriCount.get() == 0 
+            && alreadyIncluded.pending() == 0 
+            && inbound.isEmpty();
     }
 
-    
-    
-    private void readObject(ObjectInputStream inp)
-    throws IOException, ClassNotFoundException {
-        inp.defaultReadObject();
-        this.wakeTimer = new Timer("waker for " + controller.toString());
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.AbstractFrontier#getInProcessCount()
+     */
+    @Override
+    protected int getInProcessCount() {
+        return inProcessQueues.size();
     }
-
-
-    private void writeObject(ObjectOutputStream out) 
-    throws IOException {
-        out.defaultWriteObject();
-    }
-
 }
 
