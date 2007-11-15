@@ -280,6 +280,7 @@ public class Heritrix {
         if (properties.exists()) {
             FileInputStream finp = new FileInputStream(properties);
             LogManager.getLogManager().readConfiguration(finp);
+            finp.close();
         }
         
         
