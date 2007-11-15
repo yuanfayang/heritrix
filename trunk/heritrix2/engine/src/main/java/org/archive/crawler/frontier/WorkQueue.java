@@ -108,7 +108,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
      * @param frontier Work queues manager.
      * @param curi CrawlURI to insert.
      */
-    public synchronized void enqueue(final WorkQueueFrontier frontier,
+    protected void enqueue(final WorkQueueFrontier frontier,
         CrawlURI curi) {
         try {
             insert(frontier, curi, false);
@@ -153,7 +153,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
      * 
      * @param frontier  Work queues manager.
      */
-    public synchronized void dequeue(final WorkQueueFrontier frontier) {
+    protected void dequeue(final WorkQueueFrontier frontier) {
         try {
             deleteItem(frontier, peekItem);
         } catch (IOException e) {
@@ -362,9 +362,12 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     }
 
     /**
+     * Count of URIs in this queue. Only precise if called within frontier's
+     * manager thread. 
+     * 
      * @return Returns the count.
      */
-    public synchronized long getCount() {
+    public long getCount() {
         return this.count;
     }
 
