@@ -373,20 +373,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                 case RUN:
                     reachedState(State.RUN);
                     // fill to-do 'on-deck' queue
-                    while (outbound.remainingCapacity() > 0) {
-                        CrawlURI crawlable = findEligibleURI();
-                        if (crawlable != null) {
-                            outbound.put(crawlable);
-                        } else {
-                            break;
-                        }
-                    }
+                    fillOutbound();
                     // process discovered and finished URIs
-                    InEvent toProcess = inbound.poll(getMaxInWait(),
-                            TimeUnit.MILLISECONDS);
-                    if (toProcess != null) {
-                        toProcess.process();
-                    }
+                    drainInbound();
                     if(isEmpty()) {
                         // pause when frontier exhausted; controller will
                         // determine if this means to finish or not
@@ -402,6 +391,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                     // process all inbound
                     while (targetState == State.PAUSE) {
                         if (outbound.size() == getInProcessCount()) {
+                            // if all 'in-process' URIs are actually 
+                            // waiting in outbound, we are at PAUSE
                             reachedState(State.PAUSE);
                         }
                         // continue to process discovered and finished URIs
@@ -419,6 +410,45 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             throw new RuntimeException(e);
         } 
         logger.log(Level.FINE,"ending frontier mgr thread");
+    }
+
+
+    /**
+     * Fill the outbound queue with eligible CrawlURIs, to capacity
+     * or as much as possible. 
+     * 
+     * @throws InterruptedException
+     */
+    protected void fillOutbound() throws InterruptedException {
+        while (outbound.remainingCapacity() > 0) {
+            CrawlURI crawlable = findEligibleURI();
+            if (crawlable != null) {
+                outbound.put(crawlable);
+            } else {
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Drain the inbound queue of update events, or at the very least
+     * wait until some additional delayed-queue URI becomes available. 
+     * 
+     * @throws InterruptedException
+     */
+    protected void drainInbound() throws InterruptedException {
+        int batch = inbound.size();
+        for(int i = 0; i < batch; i++) {
+            inbound.take().process();
+        }
+        if(batch==0) {
+            // always do at least one timed try
+            InEvent toProcess = inbound.poll(getMaxInWait(),
+                    TimeUnit.MILLISECONDS);
+            if (toProcess != null) {
+                toProcess.process();
+            }
+        }
     }
 
     /**
