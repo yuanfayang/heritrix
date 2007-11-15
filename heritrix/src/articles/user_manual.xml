@@ -4425,7 +4425,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <programlisting>  R - Redirect
   E - Embed
   X - Speculative embed (aggressive/Javascript link extraction)
-  L - Link</programlisting>
+  L - Link
+  P - Prerequisite (as for DNS or robots.txt before another URI)</programlisting>
 
           <para>The discovery path of seeds is an empty string.</para>
         </glossdef>
