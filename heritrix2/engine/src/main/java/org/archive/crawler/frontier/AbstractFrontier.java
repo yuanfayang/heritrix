@@ -301,12 +301,12 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     }
 
     /** reusable no-op inbound event, to force reeval of state/eligible URIs */
-    protected InEvent NOOP = new InEvent() { public void process() {} };
+    transient protected InEvent NOOP = new InEvent() { public void process() {} };
     
     /** inbound updates: URIs to be scheduled, finished; requested state changes */
-    protected ArrayBlockingQueue<InEvent> inbound;
+    transient protected ArrayBlockingQueue<InEvent> inbound;
     /** outbound URIs */ 
-    protected ArrayBlockingQueue<CrawlURI> outbound;
+    transient protected ArrayBlockingQueue<CrawlURI> outbound;
     
     /** 
      * lock to allow holding all worker ToeThreads from taking URIs already
@@ -321,7 +321,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * of URI queues and queues/maps of queues for proper ordering/delay of
      * URI processing. 
      */
-    Thread managerThread = new Thread(this+".managerThread") {
+    transient Thread managerThread = new Thread(this+".managerThread") {
         public void run() {
             AbstractFrontier.this.managementTasks();
         }
@@ -401,7 +401,14 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                     outboundLock.writeLock().unlock();
                     break;
                 case FINISH:
-                    // TODO: cleanup/end
+                    // prevent all outbound takes
+                    outboundLock.writeLock().lock();
+                    // process all inbound
+                    while (outbound.size() != getInProcessCount()) {
+                        // continue to process discovered and finished URIs
+                        inbound.take().process();
+                    }
+                    // TODO: more cleanup?
                     reachedState(State.FINISH);
                     break loop;
                 }
@@ -469,7 +476,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      */
     public CrawlURI next() throws InterruptedException {
         // perhaps hold without taking ready outbound items
-        outboundLock.readLock().lock();
+        outboundLock.readLock().lockInterruptibly();
         outboundLock.readLock().unlock();
         
         
