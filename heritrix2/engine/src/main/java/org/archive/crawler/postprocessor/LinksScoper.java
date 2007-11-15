@@ -34,6 +34,7 @@ import static org.archive.crawler.datamodel.SchedulingConstants.*;
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.crawler.framework.Scoper;
+import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRuleSequence;
@@ -58,7 +59,7 @@ import org.archive.state.KeyManager;
  * @author gojomo
  * @author stack
  */
-public class LinksScoper extends Scoper {
+public class LinksScoper extends Scoper implements PostProcessor {
 
     private static final long serialVersionUID = -3L;
 
