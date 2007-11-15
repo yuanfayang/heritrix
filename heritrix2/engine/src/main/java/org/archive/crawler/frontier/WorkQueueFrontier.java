@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +48,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.bag.HashBag;
+import org.apache.commons.lang.ArrayUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
@@ -157,9 +160,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     /**
      * All per-class queues held in snoozed state, sorted by wake time.
      */
-    protected DelayQueue<WorkQueue> snoozedClassQueues;
+    transient protected DelayQueue<WorkQueue> snoozedClassQueues;
     
-    protected WorkQueue longestActiveQueue = null;
+    transient protected WorkQueue longestActiveQueue = null;
     
     public <T> T get(Key<T> key) {
         return manager.getGlobalSheet().get(this, key);
@@ -1193,6 +1196,40 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     @Override
     protected int getInProcessCount() {
         return inProcessQueues.size();
+    }
+    
+    /**
+     * Custom deserialization: bring in snoozed queues as array of
+     * their names (aka 'classKeys').
+     * @param stream
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void readObject(java.io.ObjectInputStream stream)
+    throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        String[] snoozedNames = (String[]) stream.readObject();
+        for(int i = 0; i < snoozedNames.length; i++) {
+            snoozedClassQueues.add(getQueueFor(snoozedNames[i]));
+        }
+    }
+    
+    /**
+     * Custom serialization: write snoozed queues as array of their
+     * names (aka 'classKeys').
+     * 
+     * @param stream
+     * @throws IOException
+     */
+    private void writeObject(java.io.ObjectOutputStream stream)
+    throws IOException {
+        stream.defaultWriteObject();
+        WorkQueue[] snoozed = snoozedClassQueues.toArray(new WorkQueue[0]);
+        String[] snoozedNames = new String[snoozed.length];
+        for(int i = 0;i<snoozed.length;i++) {
+            snoozedNames[i] = snoozed[i].getClassKey();
+        }
+        stream.writeObject(snoozedNames);
     }
 }
 
