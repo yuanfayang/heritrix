@@ -122,11 +122,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     @Expert @Global
     final public static Key<CostAssignmentPolicy> COST_POLICY = 
         Key.make(CostAssignmentPolicy.class, new UnitCostAssignmentPolicy());
-
-    /** target size of ready queues backlog */
-    @Immutable @Expert
-    final public static Key<Integer> TARGET_READY_BACKLOG = 
-        Key.make(50);
     
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
@@ -142,9 +137,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * Linked-list of keys for the queues.
      */
     protected BlockingQueue<String> readyClassQueues;
-    
-    /** Target (minimum) size to keep readyClassQueues */
-    protected int targetSizeForReadyQueues;
     
     /** 
      * All 'inactive' queues, not yet in active rotation.
@@ -191,11 +183,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         super.initialTasks(provider);
         this.alreadyIncluded = provider.get(this, URI_UNIQ_FILTER);
         alreadyIncluded.setDestination(this);
-        
-        this.targetSizeForReadyQueues = provider.get(this, TARGET_READY_BACKLOG);
-        if (this.targetSizeForReadyQueues < 1) {
-            this.targetSizeForReadyQueues = 1;
-        }
         
         try {
             initAllQueues(false);
@@ -313,15 +300,17 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param curi
      */
     protected void sendToQueue(CrawlURI curi) {
+        assert Thread.currentThread() == managerThread;
+        
         WorkQueue wq = getQueueFor(curi);
-        synchronized (wq) {
+
             wq.enqueue(this, curi);
             if(!wq.isRetired()) {
                 incrementQueuedUriCount();
             }
             if(!wq.isHeld()) {
                 wq.setHeld();
-                if(holdQueues() && readyClassQueues.size()>=targetSizeForReadyQueues()) {
+                if(holdQueues()) {
                     deactivateQueue(wq);
                 } else {
                     replenishSessionBalance(wq);
@@ -332,7 +321,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             if(!wq.isRetired()&&((laq==null) || wq.getCount() > laq.getCount())) {
                 longestActiveQueue = wq; 
             }
-        }
+
     }
 
     /**
@@ -376,6 +365,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param wq
      */
     private void retireQueue(WorkQueue wq) {
+        assert Thread.currentThread() == managerThread;
+
         retiredQueues.add(wq.getClassKey());
         decrementQueuedCount(wq.getCount());
         wq.setRetired(true);
@@ -386,13 +377,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * Accomodate any changes in settings.
      */
     public void keyChanged(KeyChangeEvent event) {
-        if (event.getKey() == TARGET_READY_BACKLOG) {
-            int target = (Integer)event.getNewValue();
-            if (target < 1) {
-                target = 1;
-            }
-            this.targetSizeForReadyQueues = target;             
-        }
 
         // The rules for a 'retired' queue may have changed; so,
         // unretire all queues to 'inactive'. If they still qualify
@@ -417,6 +401,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param q
      */
     private void unretireQueue(WorkQueue q) {
+        assert Thread.currentThread() == managerThread;
+
         deactivateQueue(q);
         q.setRetired(false); 
         incrementQueuedUriCount(q.getCount());
@@ -456,13 +442,14 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             assert Thread.currentThread() == managerThread;
             // wake any snoozed queues
             wakeQueues();
-            // activate enough inactive queues to reach ready-queues target
-            synchronized(readyClassQueues) {
-                int activationsNeeded = targetSizeForReadyQueues() - readyClassQueues.size();
-                while(activationsNeeded > 0 && !inactiveQueues.isEmpty()) {
-                    activateInactiveQueue();
-                    activationsNeeded--;
-                }
+            // activate enough inactive queues to fill outbound
+            int activationsNeeded = 
+                outbound.remainingCapacity() - readyClassQueues.size();
+            while(activationsNeeded > 0 && !inactiveQueues.isEmpty()) {
+                // TODO: fix wasteful spinning when all inactive queues 
+                // are in long-snooze, thus just cycling here
+                activateInactiveQueue();
+                activationsNeeded--;
             }
                    
             WorkQueue readyQ = null;
@@ -473,35 +460,33 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             if (readyQ != null) {
                 while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
-                    synchronized(readyQ) {
-                        curi = readyQ.peek(this);                     
-                        if (curi != null) {
-                            curi.setStateProvider(manager);
-                            
-                            // check if curi belongs in different queue
-                            String currentQueueKey = getClassKey(curi);
-                            if (currentQueueKey.equals(curi.getClassKey())) {
-                                // curi was in right queue, emit
-                                noteAboutToEmit(curi, readyQ);
-                                inProcessQueues.add(readyQ);
-                                return curi;
-                            }
-                            // URI's assigned queue has changed since it
-                            // was queued (eg because its IP has become
-                            // known). Requeue to new queue.
-                            curi.setClassKey(currentQueueKey);
-                            readyQ.dequeue(this);
-                            decrementQueuedCount(1);
-                            curi.setHolderKey(null);
-                            // curi will be requeued to true queue after lock
-                            //  on readyQ is released, to prevent deadlock
-                        } else {
-                            // readyQ is empty and ready: it's exhausted
-                            // release held status, allowing any subsequent 
-                            // enqueues to again put queue in ready
-                            readyQ.clearHeld();
-                            break;
+                    curi = readyQ.peek(this);                     
+                    if (curi != null) {
+                        curi.setStateProvider(manager);
+                        
+                        // check if curi belongs in different queue
+                        String currentQueueKey = getClassKey(curi);
+                        if (currentQueueKey.equals(curi.getClassKey())) {
+                            // curi was in right queue, emit
+                            noteAboutToEmit(curi, readyQ);
+                            inProcessQueues.add(readyQ);
+                            return curi;
                         }
+                        // URI's assigned queue has changed since it
+                        // was queued (eg because its IP has become
+                        // known). Requeue to new queue.
+                        curi.setClassKey(currentQueueKey);
+                        readyQ.dequeue(this);
+                        decrementQueuedCount(1);
+                        curi.setHolderKey(null);
+                        // curi will be requeued to true queue after lock
+                        //  on readyQ is released, to prevent deadlock
+                    } else {
+                        // readyQ is empty and ready: it's exhausted
+                        // release held status, allowing any subsequent 
+                        // enqueues to again put queue in ready
+                        readyQ.clearHeld();
+                        break;
                     }
                     if(curi!=null) {
                         // complete the requeuing begun earlier
@@ -527,10 +512,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             return null; 
     }
 
-    private int targetSizeForReadyQueues() {
-        return targetSizeForReadyQueues;
-    }
-
     /**
      * Return the 'cost' of a CrawlURI (how much of its associated
      * queue's budget it depletes upon attempted processing)
@@ -551,13 +532,14 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * Activate an inactive queue, if any are available. 
      */
     private void activateInactiveQueue() {
+        assert Thread.currentThread() == managerThread;
+
         Object key = this.inactiveQueues.poll();
         if (key == null) {
             return;
         }
         WorkQueue candidateQ = (WorkQueue)this.allQueues.get(key);
         if(candidateQ != null) {
-            synchronized(candidateQ) {
                 replenishSessionBalance(candidateQ);
                 if(candidateQ.isOverBudget()){
                     // if still over-budget after an activation & replenishing,
@@ -579,7 +561,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                         candidateQ.getClassKey());
                    
                 }
-            }
         }
     }
 
@@ -591,6 +572,13 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private void replenishSessionBalance(WorkQueue queue) {
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(this); 
+        if(contextUri == null) {
+            // use globals TODO: fix problems this will cause if 
+            // global total budget < override on empty queue
+            queue.setSessionBalance(get(BALANCE_REPLENISH_AMOUNT));
+            queue.setTotalBudget(get(QUEUE_TOTAL_BUDGET));
+            return;
+        }
         // TODO: consider confusing cross-effects of this and IP-based politeness
         StateProvider p = contextUri.getStateProvider();
         if (p == null) {
@@ -655,6 +643,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     protected void processFinish(CrawlURI curi) {
         assert Thread.currentThread() == managerThread;
+        
         long now = System.currentTimeMillis();
 
         curi.incrementFetchAttempts();
@@ -679,7 +668,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             }
             long delay_sec = retryDelayFor(curi);
             curi.processingCleanup(); // lose state that shouldn't burden retry
-            synchronized(wq) {
+
                 wq.unpeek();
                 // TODO: consider if this should happen automatically inside unpeek()
                 wq.update(this, curi); // rewrite any changes
@@ -689,7 +678,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                 } else {
                     reenqueueQueue(wq);
                 }
-            }
+
             // Let everyone interested know that it will be retried.
             controller.fireCrawledURINeedRetryEvent(curi);
             doJournalRescheduled(curi);
@@ -741,13 +730,13 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         }
 
         long delay_ms = politenessDelayFor(curi);
-        synchronized(wq) {
+
             if (delay_ms > 0) {
                 snoozeQueue(wq,now,delay_ms);
             } else {
                 reenqueueQueue(wq);
             }
-        }
+
 
         curi.stripToMinimal();
         curi.processingCleanup();
@@ -845,8 +834,11 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int retiredCount = retiredQueues.size();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
+        int inCount = inbound.size();
+        int outCount = outbound.size();
+        State last = lastReachedState;
         w.print(allCount);
-        w.print(" queues: ");
+        w.print(" URI queues: ");
         w.print(activeCount);
         w.print(" active (");
         w.print(inProcessCount);
@@ -861,6 +853,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print(" retired; ");
         w.print(exhaustedCount);
         w.print(" exhausted");
+        w.print(" ["+last+ ": "+inCount+" in, "+outCount+" out]");        
         w.flush();
     }
     
@@ -1123,7 +1116,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * 
      * @see org.archive.crawler.framework.Frontier#deleted(org.archive.crawler.datamodel.CrawlURI)
      */
-    public synchronized void deleted(CrawlURI curi) {
+    public void deleted(CrawlURI curi) {
         //treat as disregarded
         controller.fireCrawledURIDisregardEvent(curi);
         log(curi);
@@ -1182,10 +1175,13 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         return longestActiveQueue==null ? -1 : longestActiveQueue.getCount();
     }
     
-    /* (non-Javadoc)
+    /** 
+     * Return whether frontier is exhausted: all crawlable URIs done (none
+     * waiting or pending). Only gives precise answer inside managerThread.
+     * 
      * @see org.archive.crawler.framework.Frontier#isEmpty()
      */
-    public synchronized boolean isEmpty() {
+    public boolean isEmpty() {
         return queuedUriCount.get() == 0 
             && alreadyIncluded.pending() == 0 
             && inbound.isEmpty();
