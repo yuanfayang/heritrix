@@ -31,8 +31,10 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,8 +63,6 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
-import org.archive.queue.MemQueue;
-import org.archive.queue.Queue;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
@@ -395,7 +395,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
     }
 
     protected void batchSchedule(CrawlURI caUri) {
-        threadWaiting.getQueue().enqueue(caUri);
+        threadWaiting.getQueue().add(caUri);
     }
 
     protected void batchFlush() {
@@ -405,7 +405,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
     private void innerBatchFlush() {
         Queue<CrawlURI> q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
-            CrawlURI caUri = (CrawlURI)q.dequeue();
+            CrawlURI caUri = (CrawlURI)q.remove();
             if(alreadyIncluded != null){
                 String cannon = canonicalize(caUri);
                 System.out.println("Cannon of " + caUri + " is " + cannon);
@@ -1044,7 +1044,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         private static final long serialVersionUID = 8268977225156462059L;
 
         protected Queue<CrawlURI> initialValue() {
-            return new MemQueue<CrawlURI>();
+            return new LinkedList<CrawlURI>();
         }
 
         /**
