@@ -199,9 +199,21 @@ public class MultiByteReplayCharSequence implements ReplayCharSequence {
                 new InputStreamReader(inStream,encoding));
         
         this.decodedFile = new File(backingFilename + "." + WRITE_ENCODING);
+        FileOutputStream fos;
+        try {
+            fos = new FileOutputStream(this.decodedFile);
+        } catch (FileNotFoundException e) {
+            // Windows workaround attempt
+            System.gc();
+            System.runFinalization();
+            logger.info("Windows 'file with a user-mapped section open' "+
+                    "workaround gc-finalization performed.");
+            // try again 
+            fos = new FileOutputStream(this.decodedFile);
+        }
         BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(
-                        new FileOutputStream(this.decodedFile), 
+                        fos, 
                         WRITE_ENCODING)); 
 
         int c;
