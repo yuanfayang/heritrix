@@ -36,19 +36,20 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Notification;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.openmbeans.annotations.Bean;
-import org.archive.openmbeans.annotations.Emitter;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.modules.Processor;
 import org.archive.modules.net.ServerCache;
+import org.archive.openmbeans.annotations.Bean;
+import org.archive.openmbeans.annotations.Emitter;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.ListModuleListener;
@@ -66,8 +67,6 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -759,6 +758,7 @@ public class CrawlController extends Bean implements
         multiThreadMode();
         Frontier f = getFrontier();
         f.unpause();
+        sendCrawlStateChangeEvent(State.RUNNING, CrawlStatus.RUNNING);
     }
 
     /**
