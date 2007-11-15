@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
@@ -46,7 +47,7 @@ import org.archive.util.IoUtils;
  * disk space and pause the crawl if free space on  monitored 
  * filesystems falls below certain thresholds.
  */
-public class LowDiskPauseProcessor extends Processor {
+public class LowDiskPauseProcessor extends Processor implements PostProcessor {
 
     private static final long serialVersionUID = 3L;
 

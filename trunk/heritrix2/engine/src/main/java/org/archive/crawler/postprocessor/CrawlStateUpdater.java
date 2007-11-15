@@ -30,6 +30,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
+import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlServer;
@@ -52,7 +53,9 @@ import org.archive.state.StateProvider;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class CrawlStateUpdater extends Processor implements Initializable {
+public class CrawlStateUpdater extends Processor implements 
+    Initializable,
+    PostProcessor {
 
     private static final long serialVersionUID = -1072728147960180091L;
 

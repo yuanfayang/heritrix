@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
+import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.Key;
@@ -43,7 +44,7 @@ import org.archive.state.KeyManager;
  * @author Kristinn Sigurdsson
  */
 public class WaitEvaluator extends Processor
-implements AdaptiveRevisitAttributeConstants {
+implements AdaptiveRevisitAttributeConstants, PostProcessor {
     
     private static final long serialVersionUID = 3L;
 

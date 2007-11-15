@@ -31,6 +31,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.crawler.framework.Frontier;
+import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.Immutable;
@@ -47,7 +48,7 @@ import org.archive.state.StateProvider;
  * are in-scope get scheduled.
  * @author stack
  */
-public class FrontierScheduler extends Processor {
+public class FrontierScheduler extends Processor implements PostProcessor {
 
     private static final long serialVersionUID = -3L;
 
