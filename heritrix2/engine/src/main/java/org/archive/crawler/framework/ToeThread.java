@@ -25,7 +25,9 @@ package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +37,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.modules.PostProcessor;
+import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.fetcher.HostResolver;
 import org.archive.io.SinkHandlerLogThread;
@@ -86,7 +90,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
     
  //   private HashMap<String,Processor> localProcessors
  //    = new HashMap<String,Processor>();
-    private String currentProcessorName = "-";
+    private String currentProcessorName = "";
 
     private String coreName;
     private CrawlURI currentCuri;
@@ -213,8 +217,8 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         atStepSince = System.currentTimeMillis();
     }
 
-	private void seriousError(Error err) {
-	    // try to prevent timeslicing until we have a chance to deal with OOM
+        private void seriousError(Error err) {
+            // try to prevent timeslicing until we have a chance to deal with OOM
         // TODO: recognize that new JVM priority indifference may make this
         // priority-jumbling pointless
         setPriority(DEFAULT_PRIORITY+1);  
@@ -248,20 +252,20 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
 //        DevUtils.sigquitSelf();
         
         String context = "unknown";
-		if(currentCuri!=null) {
+                if(currentCuri!=null) {
             // update fetch-status, saving original as annotation
             currentCuri.getAnnotations().add("err="+err.getClass().getName());
             currentCuri.getAnnotations().add("os"+currentCuri.getFetchStatus());
-			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
+                        currentCuri.setFetchStatus(S_SERIOUS_ERROR);
             context = currentCuri.singleLineReport() + " in " + currentProcessorName;
-		}
+                }
         String message = "Serious error occured trying " +
             "to process '" + context + "'\n" + extraInfo;
         logger.log(Level.SEVERE, message.toString(), err);
         setPriority(DEFAULT_PRIORITY);
-	}
+        }
 
-	/**
+        /**
      * Perform checks as to whether normal execution should proceed.
      * 
      * If an external interrupt is detected, throw an interrupted exception.
@@ -294,14 +298,33 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         currentCuri.setStateProvider(controller.getSheetManager());
         currentCuri.setRecorder(httpRecorder);
         try {
-            for (Map.Entry<String,Processor> me: localProcessors.entrySet()) {
+            Set<Map.Entry<String,Processor>> procs = localProcessors.entrySet();
+            Iterator<Map.Entry<String,Processor>> iter = procs.iterator();
+            Map.Entry<String,Processor> curProc = 
+                iter.hasNext() ? iter.next() : null;
+            while (curProc != null) {
                 setStep(STEP_ABOUT_TO_BEGIN_PROCESSOR);
-                currentProcessorName = me.getKey();
+                currentProcessorName = curProc.getKey();
                 continueCheck();
-                me.getValue().process(currentCuri);
+                ProcessResult pr = curProc.getValue().process(currentCuri);
+                switch (pr.getProcessStatus()) {
+                    case PROCEED:
+                        curProc = iter.hasNext() ? iter.next() : null;
+                        break;
+                    case STUCK:
+                        controller.requestCrawlPause();
+                        curProc = null;
+                        break;
+                    case FINISH:
+                        curProc = advanceToPostProcessing(iter);
+                        break;
+                    case JUMP:
+                        curProc = advanceToNamed(iter, pr.getJumpTarget());
+                        break;
+                }
             }
             setStep(STEP_DONE_WITH_PROCESSORS);
-            currentProcessorName = "-";
+            currentProcessorName = "";
         } catch (RuntimeExceptionWrapper e) {
             // Workaround to get cause from BDB
             if(e.getCause() == null) {
@@ -322,7 +345,31 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         }
     }
 
+    
+    private Map.Entry<String,Processor> advanceToNamed(
+            Iterator<Map.Entry<String,Processor>> iter, String name) {
+        while (iter.hasNext()) {
+            Map.Entry<String,Processor> me = iter.next();
+            if (me.getKey().equals(name)) {
+                return me;
+            }
+        }
+        return null;
+    }
 
+    
+    private Map.Entry<String,Processor> advanceToPostProcessing(
+            Iterator<Map.Entry<String,Processor>> iter) {
+        while (iter.hasNext()) {
+            Map.Entry<String,Processor> me = iter.next();
+            if (me.getValue() instanceof PostProcessor) {
+                return me;
+            }
+        }
+        return null;
+    }
+
+    
     /**
      * Handling for exceptions and errors that are possibly recoverable.
      * 
@@ -395,13 +442,13 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         }
     }
 
-	/**
-	 * @return Current step (For debugging/reporting, give abstract step
+        /**
+         * @return Current step (For debugging/reporting, give abstract step
      * where this thread is).
-	 */
-	public Object getStep() {
-		return step;
-	}
+         */
+        public Object getStep() {
+                return step;
+        }
 
     /**
      * Is this thread validly processing a URI, not paused, waiting for 
