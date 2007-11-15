@@ -264,7 +264,8 @@ public class ToePool extends ThreadGroup implements Reporter {
     }
 
     public void singleLineReportTo(PrintWriter w) {
-        Histotable<Object> ht = new Histotable<Object>();
+        Histotable<Object> steps = new Histotable<Object>();
+        Histotable<Object> processors = new Histotable<Object>();
         Thread[] toes = getToes();
         for (int i = 0; i < toes.length; i++) {
 
@@ -273,21 +274,33 @@ public class ToePool extends ThreadGroup implements Reporter {
             }
             ToeThread tt = (ToeThread)toes[i];
             if(tt!=null) {
-                ht.tally(tt.getStep());
+                steps.tally(tt.getStep());
+                processors.tally(tt.getCurrentProcessorName());
             }
         }
-        TreeSet sorted = ht.getSortedByCounts();
+        TreeSet sortedSteps = steps.getSortedByCounts();
         w.print(getToeCount());
         w.print(" threads: ");        
-        w.print(Histotable.entryString(sorted.first()));
-        if(sorted.size()>1) {
-            Iterator iter = sorted.iterator();
+        w.print(Histotable.entryString(sortedSteps.first()));
+        if(sortedSteps.size()>1) {
+            Iterator iter = sortedSteps.iterator();
             iter.next();
-            w.print("; ");
+            w.print(", ");
             w.print(Histotable.entryString(iter.next()));
         }
-        if(sorted.size()>2) {
-            w.print("; etc...");
+        if(sortedSteps.size()>2) {
+            w.print(", etc...");
+        }
+        w.print("; ");
+        TreeSet sortedProcessors = processors.getSortedByCounts();
+        w.print(Histotable.entryString(sortedProcessors.first()));
+        if(sortedProcessors.size()>1) {
+            Iterator iter = sortedProcessors.iterator();
+            iter.next();
+            while(iter.hasNext()) {
+                w.print(", ");
+                w.print(Histotable.entryString(iter.next()));
+            }
         }
     }
 

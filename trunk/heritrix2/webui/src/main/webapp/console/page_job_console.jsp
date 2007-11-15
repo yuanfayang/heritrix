@@ -12,6 +12,7 @@ Crawler crawler = (Crawler)Text.get(request, "crawler");
 StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
 CompositeData memory = (CompositeData)Text.get(request, "memory"); 
 CrawlJob job = (CrawlJob)Text.get(request, "job"); 
+JobController controller = (JobController)Text.get(request, "controller");
 
 String qs = Text.jobQueryString(request);
 
@@ -72,8 +73,6 @@ String qs = Text.jobQueryString(request);
                                 end = 1;
             	            }
                             
-                            if (true) //handler.getCurrentJob() != null)
-                            {
                                 final long timeElapsed, timeRemain;
                                 if(stats == null) {
                                     timeElapsed= 0;
@@ -169,10 +168,6 @@ if (status.equals("PAUSED") || status.equals("PAUSING")) {
 					</div>
                     <b>Totals</b>
                 	<%
-                	                }
-                	                }
-                	                if(stats != null)
-                	                {
                 		                int ratio = (int) (100 * begin / end);
                 	%>
                             <center>
@@ -191,6 +186,15 @@ if (status.equals("PAUSED") || status.equals("PAUSING")) {
                             <%=end%> total downloaded and queued<br>      
                     		<%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%> uncompressed data received
                             </center>
+                    <b>Frontier</b>
+                    <div class='indent'>
+	                    <%=controller.getFrontierReportShort()%>
+					</div>
+					
+					<b>Threads</b>
+                    <div class='indent'>
+	                    <%=controller.getToeThreadReportShort()%>
+					</div>
             <%
                             }
                             if (job.getCrawlStatus().equals("PAUSED")) {

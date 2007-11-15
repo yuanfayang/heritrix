@@ -86,7 +86,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
     
  //   private HashMap<String,Processor> localProcessors
  //    = new HashMap<String,Processor>();
-    private String currentProcessorName = "";
+    private String currentProcessorName = "-";
 
     private String coreName;
     private CrawlURI currentCuri;
@@ -301,7 +301,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
                 me.getValue().process(currentCuri);
             }
             setStep(STEP_DONE_WITH_PROCESSORS);
-            currentProcessorName = "";
+            currentProcessorName = "-";
         } catch (RuntimeExceptionWrapper e) {
             // Workaround to get cause from BDB
             if(e.getCause() == null) {
