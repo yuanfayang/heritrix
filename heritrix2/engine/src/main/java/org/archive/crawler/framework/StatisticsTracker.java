@@ -494,11 +494,18 @@ implements CrawlURIDispositionListener, Serializable {
         if (key == null) {
             key = "unknown";
         }
-        LongWrapper lw = (LongWrapper)map.get(key);
-        if(lw == null) {
+        Object o = map.get(key);
+        if (o == null) {
+            // Considered normal
             map.put(key, new LongWrapper(increment));
-        } else {
+        } else if (o instanceof LongWrapper) {
+            LongWrapper lw = (LongWrapper)o;
             lw.longValue += increment;
+        } else {
+            // Abnormal
+            logger.severe("Resetting " + key + ": Expected LongWrapper but got " 
+                    + o.getClass().getName());
+            map.put(key, new LongWrapper(increment));
         }
     }
 
@@ -587,7 +594,7 @@ implements CrawlURIDispositionListener, Serializable {
      */
     public long getBytesPerHost(String host){
         synchronized(hostsBytes){
-            return ((LongWrapper)hostsBytes.get(host)).longValue;
+            return getReportValue(hostsBytes, host);
         }
     }
 
@@ -597,7 +604,7 @@ implements CrawlURIDispositionListener, Serializable {
      * @return the accumulated number of bytes from files of a given mime type
      */
     public long getBytesPerFileType(String filetype){
-        return ((LongWrapper)mimeTypeBytes.get(filetype)).longValue;
+        return getReportValue(mimeTypeBytes, filetype);
     }
 
     /**
@@ -845,13 +852,12 @@ implements CrawlURIDispositionListener, Serializable {
         synchronized(hostsDistribution){
             incrementMapCount(hostsDistribution, hostname);
             hostsDistributionTop.update(
-                    hostname, 
-                    hostsDistribution.get(hostname).longValue);
+                    hostname, getReportValue(hostsDistribution, hostname)); 
         }
         synchronized(hostsBytes){
             incrementMapCount(hostsBytes, hostname, size);
             hostsBytesTop.update(hostname, 
-                    hostsBytes.get(hostname).longValue);
+                    getReportValue(hostsBytes, hostname));
         }
         synchronized(hostsLastFinished){
             long time = new Long(System.currentTimeMillis());
@@ -1261,21 +1267,38 @@ implements CrawlURIDispositionListener, Serializable {
         return null;
     }
 
+    
+    private long getReportValue(Map<String,LongWrapper> map, String key) {
+        if (key == null) {
+            return -1;
+        }
+        Object o = map.get(key);
+        if (o == null) {
+            return -2;
+        }
+        if (!(o instanceof LongWrapper)) {
+            throw new IllegalStateException("Expected LongWrapper but got " 
+                    + o.getClass() + " for " + key);
+        }
+        return ((LongWrapper)o).longValue;
+    }
+    
+    
     public long getReportValue(String report, String key) {
         Reports rep = Reports.valueOf(report);
         switch(rep){
         case FILETYPE_BYTES : 
-            return mimeTypeBytes.get(key).longValue;
+            return getReportValue(mimeTypeBytes, key);
         case FILETYPE_URIS : 
-            return mimeTypeDistribution.get(key).longValue;
+            return getReportValue(mimeTypeDistribution, key);
         case HOST_BYTES :
-            return hostsBytes.get(key).longValue;
+            return getReportValue(hostsBytes, key);
         case HOST_LAST_ACTIVE :
             return hostsLastFinished.get(key);
         case HOST_URIS :
-            return hostsDistribution.get(key).longValue;
+            return getReportValue(hostsDistribution, key);
         case STATUSCODE :
-            return statusCodeDistribution.get(key).longValue;
+            return getReportValue(statusCodeDistribution, key);
         }
         return -1;
     }
