@@ -1,4 +1,5 @@
 <%@ page import="java.util.Collection" %>
+<%@ page import="java.util.TreeSet" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.Misc"%>
@@ -11,6 +12,11 @@ Collection<CrawlJob> active = (Collection)Text.get(request, "active");
 Collection<CrawlJob> ready = (Collection)Text.get(request, "ready");
 Collection<CrawlJob> profiles = (Collection)Text.get(request, "profiles");
 Collection<CrawlJob> completed = (Collection)Text.get(request, "completed");
+
+active = new TreeSet<CrawlJob>(active);
+ready = new TreeSet<CrawlJob>(ready);
+profiles = new TreeSet<CrawlJob>(profiles);
+completed = new TreeSet<CrawlJob>(completed);
 
 String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
 String deleteUrl = request.getContextPath() + "/crawler_area/do_show_delete.jsp";

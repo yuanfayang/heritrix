@@ -14,7 +14,7 @@ import org.archive.crawler.framework.JobStage;
  * 
  * @author Kristinn
  */
-public class CrawlJob {
+public class CrawlJob implements Comparable<CrawlJob> {
 
     
     String name;
@@ -34,6 +34,10 @@ public class CrawlJob {
         this.alerts = alerts;
     }
 
+    
+    public int compareTo(CrawlJob other) {
+        return name.compareTo(other.name);
+    }
     
     public int hashCode() {
         return name.hashCode();
