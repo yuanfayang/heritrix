@@ -1209,6 +1209,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         String[] snoozedNames = (String[]) stream.readObject();
+        snoozedClassQueues = new DelayQueue<WorkQueue>();
         for(int i = 0; i < snoozedNames.length; i++) {
             snoozedClassQueues.add(getQueueFor(snoozedNames[i]));
         }

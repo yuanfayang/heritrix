@@ -151,20 +151,26 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
 
     public void testSomething() throws Exception {
-        boolean fail = false;
         try {
-            open();
-            verifyCommon();
-            verify();
-        } finally {
+            boolean fail = false;
             try {
-                close();
-            } catch (Exception e) {
-                e.printStackTrace();
-                fail = true;
+                open();
+                verifyCommon();
+                verify();
+            } finally {
+                try {
+                    close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    fail = true;
+                }
             }
+            assertFalse(fail);
+        } catch (Exception e) {
+            // I hate maven.
+            e.printStackTrace();
+            throw e;
         }
-        assertFalse(fail);
     }
     
     
@@ -236,7 +242,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         
         // Above invocation should have created a new SheetManager and a new
         // CrawlController for the job.  Find the CrawlController.
-        ObjectName crawlController = getCrawlController();
+        ObjectName crawlController = getCrawlController("basic");
         waitFor(crawlController);
         
         // Set up utility to wait for signal from crawler.
@@ -345,13 +351,13 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
-    protected static ObjectName getCrawlController() throws Exception {
+    protected static ObjectName getCrawlController(String job) throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         @SuppressWarnings("unchecked")
         Set<ObjectName> set = server.queryNames(null, null);
         for (ObjectName name: set) {
             if (name.getDomain().equals("org.archive.crawler")
-                    && name.getKeyProperty("name").equals("basic")
+                    && name.getKeyProperty("name").equals(job)
                     && name.getKeyProperty("type").equals("org.archive.crawler.framework.JobController")) {
                 return name;
             }
@@ -371,13 +377,13 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
-    protected static void invokeAndWait(String operation, CrawlStatus status) 
+    protected static void invokeAndWait(String job, String operation, CrawlStatus status) 
     throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         
         // Above invocation should have created a new SheetManager and a new
         // CrawlController for the job.  Find the CrawlController.
-        ObjectName crawlController = getCrawlController();
+        ObjectName crawlController = getCrawlController(job);
         waitFor(crawlController);
         
         // Set up utility to wait for signal from crawler.
@@ -391,7 +397,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
                 new Object[0],
                 new String[0]             
                 );
-        
+        System.out.println("waiting for " + status);
         // Wait for the FINISHED signal for up to 30 seconds.
         waiter.waitUntilNotification(0);
     }

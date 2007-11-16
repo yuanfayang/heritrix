@@ -44,8 +44,11 @@ import org.archive.crawler.scope.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
+import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
+import org.archive.settings.RecoverAction;
+import org.archive.settings.file.Checkpointable;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -55,6 +58,7 @@ import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
+import org.archive.util.FileUtils;
 
 /**
  * Module that maintains a list of seeds.
@@ -62,8 +66,12 @@ import org.archive.util.DevUtils;
  * @author gojomo
  *
  */
-public class SeedModule extends Bean 
-implements SeedModuleInterface, Initializable, Serializable, KeyChangeListener {
+public class SeedModule extends Bean implements 
+    SeedModuleInterface, 
+    Initializable, 
+    Serializable, 
+    KeyChangeListener,
+    Checkpointable {
 
     private static final long serialVersionUID = 3L;
 
@@ -282,4 +290,35 @@ implements SeedModuleInterface, Initializable, Serializable, KeyChangeListener {
     public void addSeedRefreshListener(SeedRefreshListener srl) {
         seedRefreshListeners.add(srl);
     }
+
+
+    public void checkpoint(File dir, List<RecoverAction> actions)
+            throws IOException {
+        int id = System.identityHashCode(this);
+        String backup = "seeds" + id + " .txt";
+        FileUtils.copyFile(getSeedfile(), new File(dir, backup));
+        actions.add(new SeedModuleRecoverAction(backup, getSeedfile()));
+    }
+
+    
+    private static class SeedModuleRecoverAction implements RecoverAction {
+
+        private static final long serialVersionUID = 1L;
+
+        private File target;
+        private String backup;
+        
+        public SeedModuleRecoverAction(String backup, File target) {
+            this.target = target;
+            this.backup = backup;
+        }
+        
+        public void recoverFrom(File checkpointDir, CheckpointRecovery cr)
+                throws Exception {
+            target = new File(cr.translatePath(target.getAbsolutePath()));
+            FileUtils.copyFile(new File(checkpointDir, backup), target); 
+        }
+        
+    }
+
 }

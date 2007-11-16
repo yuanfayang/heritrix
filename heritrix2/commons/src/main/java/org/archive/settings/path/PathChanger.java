@@ -183,7 +183,7 @@ public class PathChanger {
     
     private Object makeSimple(SingleSheet sheet, String typeTag, String value) {
         if (typeTag.equals("file")) {
-            return new Path(sheet.getSheetManager(), value);
+            return new Path(sheet.getSheetManager().getPathContext(), value);
         }
         Class type = KeyTypes.getSimpleType(typeTag);
         try {
