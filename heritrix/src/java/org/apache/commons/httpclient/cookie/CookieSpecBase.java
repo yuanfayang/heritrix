@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/cookie/CookieSpecBase.java,v 1.28 2004/11/06 19:15:42 mbecke Exp $
  * $Revision$
  * $Date$
  *
@@ -31,10 +31,10 @@ package org.apache.commons.httpclient.cookie;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.Iterator; // <- IA/HERITRIX CHANGE
 import java.util.LinkedList;
 import java.util.List;
-import java.util.SortedMap;
+import java.util.SortedMap; // <- IA/HERITRIX CHANGE
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
@@ -45,7 +45,7 @@ import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.sleepycat.collections.StoredIterator;
+import com.sleepycat.collections.StoredIterator; // <- IA/HERITRIX CHANGE
 
 /**
  * 
@@ -64,7 +64,7 @@ import com.sleepycat.collections.StoredIterator;
  * 
  * @since 2.0 
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked") // <- IA/HERITRIX CHANGE
 public class CookieSpecBase implements CookieSpec {
     
     /** Log object */
@@ -546,9 +546,9 @@ public class CookieSpecBase implements CookieSpec {
      * @param cookies an array of <tt>Cookie</tt>s to be matched
      * @return an array of <tt>Cookie</tt>s matching the criterium
      * 
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
      * @deprecated use match(String, int, String, boolean, SortedMap)
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
      */
 
     public Cookie[] match(String host, int port, String path, 
@@ -569,7 +569,7 @@ public class CookieSpecBase implements CookieSpec {
         return (Cookie[]) matching.toArray(new Cookie[matching.size()]);
     }
 
-//  BEGIN IA CHANGES
+//  BEGIN IA/HERITRIX CHANGES
     /**
      * Return an array of {@link Cookie}s that should be submitted with a
      * request with given attributes, <tt>false</tt> otherwise. 
@@ -617,7 +617,7 @@ public class CookieSpecBase implements CookieSpec {
 
         return (Cookie[]) matching.toArray(new Cookie[matching.size()]); 
     }
-//  END IA CHANGES
+//  END IA/HERITRIX CHANGES
     
     /**
      * Adds the given cookie into the given list in descending path order. That

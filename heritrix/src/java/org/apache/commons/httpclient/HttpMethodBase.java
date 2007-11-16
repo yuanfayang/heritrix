@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/HttpMethodBase.java,v 1.222 2005/01/14 21:16:40 olegk Exp $
  * $Revision$
  * $Date$
  *
@@ -94,7 +94,7 @@ import org.apache.commons.logging.LogFactory;
  *
  * @version $Revision$ $Date$
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings("deprecation") // <- // IA/HERITRIX change
 public abstract class HttpMethodBase implements HttpMethod {
 
     // -------------------------------------------------------------- Constants
@@ -215,10 +215,10 @@ public abstract class HttpMethodBase implements HttpMethod {
             if (uri == null || uri.equals("")) {
                 uri = "/";
             }
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
 //        setURI(new URI(uri, true));
           setURI(new org.archive.net.LaxURI(uri, true));
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
         } catch (URIException e) {
             throw new IllegalArgumentException("Invalid uri '" 
                 + uri + "': " + e.getMessage() 
@@ -262,10 +262,10 @@ public abstract class HttpMethodBase implements HttpMethod {
             buffer.append('?');
             buffer.append(this.queryString);
         }
-//      BEGIN IA CHANGES
+//      BEGIN IA/HERITRIX CHANGES
 //      return new URI(buffer.toString(), true);
         return new org.archive.net.LaxURI(buffer.toString(), true);
-//      END IA CHANGES
+//      END IA/HERITRIX CHANGES
     }
 
     /**
@@ -681,7 +681,7 @@ public abstract class HttpMethodBase implements HttpMethod {
                 int limit = getParams().getIntParameter(HttpMethodParams.BUFFER_WARN_TRIGGER_LIMIT, 1024*1024);
                 if ((contentLength == -1) || (contentLength > limit)) {
                     LOG.warn("Going to buffer response body of large or unknown size. "
-                            +"Using getResponseAsStream instead is recommended.");
+                            +"Using getResponseBodyAsStream instead is recommended.");
                 }
                 LOG.debug("Buffering response body");
                 ByteArrayOutputStream outstream = new ByteArrayOutputStream(
@@ -1078,19 +1078,15 @@ public abstract class HttpMethodBase implements HttpMethod {
      * @since 2.0
      */
     public void releaseConnection() {
-
-        if (responseStream != null) {
-            try {
-                // FYI - this may indirectly invoke responseBodyConsumed.
-                responseStream.close();
-            } catch (IOException e) {
-                // the connection may not have been released, let's make sure
-                ensureConnectionRelease();
+        try {
+            if (this.responseStream != null) {
+                try {
+                    // FYI - this may indirectly invoke responseBodyConsumed.
+                    this.responseStream.close();
+                } catch (IOException ignore) {
+                }
             }
-        } else {
-            // Make sure the connection has been released. If the response 
-            // stream has not been set, this is the only way to release the 
-            // connection. 
+        } finally {
             ensureConnectionRelease();
         }
     }
@@ -1183,25 +1179,14 @@ public abstract class HttpMethodBase implements HttpMethod {
         }
 
         CookieSpec matcher = getCookieSpec(state);
-// BEGIN IA CHANGES
-//      PRIOR IMPL & COMPARISON HARNESS LEFT COMMENTED OUT FOR TEMPORARY REFERENCE
-//        Cookie[] arrayListAnswer;
-        Cookie[] cookies;
-        synchronized(state) {
-//            arrayListAnswer = matcher.match(conn.getHost(), conn.getPort(),
-//                getPath(), conn.isSecure(), state.getCookies());
-            cookies = matcher.match(conn.getHost(), conn.getPort(),
-                    getPath(), conn.isSecure(), state.getCookiesMap());
-
-//            if(! (new HashSet(Arrays.asList(arrayListAnswer)).equals(new HashSet(Arrays.asList(cookies))))) {
-//                System.out.println("discrepancy");
-//                arrayListAnswer = matcher.match(conn.getHost(), conn.getPort(),
-//                        getPath(), conn.isSecure(), state.getCookies());
-//                cookies = matcher.match(conn.getHost(), conn.getPort(),
-//                            getPath(), conn.isSecure(), state.getCookiesMap());
-//            }
-// END IA CHANGES
+        String host = this.params.getVirtualHost();
+        if (host == null) {
+            host = conn.getHost();
         }
+        // BEGIN IA/HERITRIX CHANGES
+        Cookie[] cookies = matcher.match(host, conn.getPort(),
+            getPath(), conn.isSecure(), state.getCookiesMap());
+        // END IA/HERITRIX CHANGES
         if ((cookies != null) && (cookies.length > 0)) {
             if (getParams().isParameterTrue(HttpMethodParams.SINGLE_COOKIE_HEADER)) {
                 // In strict mode put all cookies on the same header
@@ -1286,7 +1271,9 @@ public abstract class HttpMethodBase implements HttpMethod {
         LOG.trace("enter HttpMethodBase.addProxyConnectionHeader("
                   + "HttpState, HttpConnection)");
         if (!conn.isTransparent()) {
-            setRequestHeader("Proxy-Connection", "Keep-Alive");
+            if (getRequestHeader("Proxy-Connection") == null) {
+                addRequestHeader("Proxy-Connection", "Keep-Alive");
+            }
         }
     }
 
@@ -1697,6 +1684,7 @@ public abstract class HttpMethodBase implements HttpMethod {
         if (Wire.CONTENT_WIRE.enabled()) {
             is = new WireLogInputStream(is, Wire.CONTENT_WIRE);
         }
+        boolean canHaveBody = canResponseHaveBody(statusLine.getStatusCode());
         InputStream result = null;
         Header transferEncodingHeader = responseHeaders.getFirstHeader("Transfer-Encoding");
         // We use Transfer-Encoding if present and ignore Content-Length.
@@ -1735,15 +1723,16 @@ public abstract class HttpMethodBase implements HttpMethod {
         } else {
             long expectedLength = getResponseContentLength();
             if (expectedLength == -1) {
-                Header connectionHeader = responseHeaders.getFirstHeader("Connection");
-                String connectionDirective = null;
-                if (connectionHeader != null) {
-                    connectionDirective = connectionHeader.getValue();
-                }
-                if (this.effectiveVersion.greaterEquals(HttpVersion.HTTP_1_1) && 
-                    !"close".equalsIgnoreCase(connectionDirective)) {
-                    LOG.info("Response content length is not known");
-                    setConnectionCloseForced(true);
+                if (canHaveBody && this.effectiveVersion.greaterEquals(HttpVersion.HTTP_1_1)) {
+                    Header connectionHeader = responseHeaders.getFirstHeader("Connection");
+                    String connectionDirective = null;
+                    if (connectionHeader != null) {
+                        connectionDirective = connectionHeader.getValue();
+                    }
+                    if (!"close".equalsIgnoreCase(connectionDirective)) {
+                        LOG.info("Response content length is not known");
+                        setConnectionCloseForced(true);
+                    }
                 }
                 result = is;            
             } else {
@@ -1752,7 +1741,7 @@ public abstract class HttpMethodBase implements HttpMethod {
         } 
 
         // See if the response is supposed to have a response body
-        if (!canResponseHaveBody(statusLine.getStatusCode())) {
+        if (!canHaveBody) {
             result = null;
         }
         // if there is a result - ALWAYS wrap it in an observer which will
