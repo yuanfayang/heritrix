@@ -277,7 +277,7 @@ implements Serializable, Checkpointable {
             io.initCause(e);
             throw io;
         }
-
+        startManagerThread();
     }
     
     /**

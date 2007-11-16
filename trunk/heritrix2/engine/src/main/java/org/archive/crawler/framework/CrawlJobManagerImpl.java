@@ -442,7 +442,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
     
     
-    public synchronized void recoverCheckpoint(
+    public void recoverCheckpoint(
             String oldJob,
             String newJob,
             String checkpointName,
@@ -783,7 +783,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             }
 
             String newName = JobStage.getJobName(newJob);
-            verifyUnique(JobStage.getJobName(newName));
+            verifyUnique(newJob);
 
             File dest = new File(getJobsDir(), newJob);
             dest.mkdir();

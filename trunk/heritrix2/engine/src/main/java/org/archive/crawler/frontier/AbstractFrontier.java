@@ -308,6 +308,12 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     /** outbound URIs */ 
     transient protected ArrayBlockingQueue<CrawlURI> outbound;
     
+    /** Capacity of the inbound queue. */
+    private int inboundCapacity;
+    
+    /** Capacity of the outbound queue. */
+    private int outboundCapacity;
+    
     /** 
      * lock to allow holding all worker ToeThreads from taking URIs already
      * on the outbound queue; they acquire read permission before take()ing;
@@ -321,16 +327,26 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * of URI queues and queues/maps of queues for proper ordering/delay of
      * URI processing. 
      */
-    transient Thread managerThread = new Thread(this+".managerThread") {
-        public void run() {
-            AbstractFrontier.this.managementTasks();
-        }
-    };
+    transient Thread managerThread;
     
     /** last Frontier.State reached; used to suppress duplicate notifications */
     State lastReachedState = null;
     /** Frontier.state that manager thread should seek to reach */
     State targetState = State.PAUSE;
+
+    /**
+     * Start the manager thread.  Subclasses should invoke this in a custom
+     * readObject() method so that the manager thread begins after checkpoint
+     * recovery.
+     */
+    protected void startManagerThread() {
+        managerThread = new Thread(this+".managerThread") {
+            public void run() {
+                AbstractFrontier.this.managementTasks();
+            }
+        };
+        managerThread.start();
+    }
     
     public void initialTasks(StateProvider provider) {
 //        this.scratchDir = provider.get(this, SCRATCH_DIR);
@@ -348,12 +364,13 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             throw new IllegalStateException(e);
         }
         
-        int outcap = provider.get(this,OUTBOUND_QUEUE_CAPACITY);
-        outbound = new ArrayBlockingQueue<CrawlURI>(outcap,true);
-        inbound = new ArrayBlockingQueue<InEvent>(
-                outcap * provider.get(this,INBOUND_QUEUE_MULTIPLE),true);
+        this.outboundCapacity = provider.get(this,OUTBOUND_QUEUE_CAPACITY);
+        this.inboundCapacity = outboundCapacity * 
+            provider.get(this, INBOUND_QUEUE_MULTIPLE);
+        outbound = new ArrayBlockingQueue<CrawlURI>(outboundCapacity, true);
+        inbound = new ArrayBlockingQueue<InEvent>(inboundCapacity, true);
         pause();
-        managerThread.start();
+        startManagerThread();
     }
     
     /**
@@ -1363,6 +1380,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             initJournal(path);
         }
         targetState = State.PAUSE;
+        outbound = new ArrayBlockingQueue<CrawlURI>(outboundCapacity, true);
+        inbound = new ArrayBlockingQueue<InEvent>(inboundCapacity, true);
     }
     
     

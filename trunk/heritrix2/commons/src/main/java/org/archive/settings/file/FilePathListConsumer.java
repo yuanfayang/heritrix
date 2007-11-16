@@ -1,6 +1,10 @@
 package org.archive.settings.file;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
 import org.archive.settings.path.StringPathListConsumer;
@@ -15,7 +19,17 @@ public class FilePathListConsumer extends StringPathListConsumer {
     private String typeDelim = ", ";
     private boolean includeSheets = false;
     
-    public FilePathListConsumer(Writer writer) {
+    
+    public FilePathListConsumer(OutputStream output) {
+        try {
+            this.writer = new OutputStreamWriter(output, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError();
+        }
+    }
+    
+    
+    public FilePathListConsumer(StringWriter writer) {
         this.writer = writer;
     }
     

@@ -26,11 +26,13 @@ package org.archive.settings.file;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,11 +61,13 @@ import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathListConsumer;
 import org.archive.settings.path.PathLister;
+import org.archive.state.DefaultPathContext;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.Path;
+import org.archive.state.PathContext;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 
@@ -81,27 +85,26 @@ import com.sleepycat.je.DatabaseException;
  * Simple sheet manager that stores settings in a directory hierarchy.
  * 
  * <p>
- * A "main" directory is specified in the constructor. Root objects, sheets and
- * associations are all stored under that main directory.
+ * A configuration file is specified at construction time. Although this
+ * configuration file may be empty, its existence is still important, as
+ * FileSheetManager will use that file's directory as its main working
+ * directory.
  * 
  * <p>
- * Root objects are listed in a file named <code>roots.txt</code> in the main
- * directory itself. The roots.txt file contains name/value pairs; the named
- * specifies the name of the root object, and the value is the fully-qualified
- * class name for the root object. Root objects must define a public no-argument
- * constructor; this is used to construct the roots during initialization.
+ * By default, sheets are stored in a subdirectory named <code>sheets</code>
+ * of the main directory. Each sheet is stored in its own file. For
+ * SingleSheets, the filename is the name of the sheet plus a
+ * <code>.sheet</code> extension. Similarly, SheetBundles are stored in a
+ * file with a <code>.bundle</code> extension.
  * 
  * <p>
- * Sheets are stored in a subdirectory named <code>sheets</code> of the main
- * directory. Each sheet is stored in its own file. For SingleSheets, the
- * filename is the name of the sheet plus a <code>.single</code> extension.
- * Similarly, SheetBundles are stored in a file with a <code>.bundle</code>
- * extension.
- * 
- * <p>
- * A <code>.sheet</code> file is a list of key/value pairs, where the key is
- * a path and the value is the stringified value for that path. See the
+ * A <code>.sheet</code> file is a list of key/value pairs, where the key is a
+ * path and the value is the stringified value for that path. See the
  * {@link org.archive.settings.path} package for more information.
+ * 
+ * <pre>
+ * root:controller:
+ * </pre>
  * 
  * <p>
  * A <code>.bundle</code> file is simply a list of sheet names contained in
@@ -109,43 +112,16 @@ import com.sleepycat.je.DatabaseException;
  * 
  * <p>
  * And finally, associations are stored in a BDB database stored in the
- * <code>assoc</code> subdirectory of the main directory.
+ * <code>state</code> subdirectory of the main directory.
  * 
  * <p>
  * A sample directory hierarchy used by this class:
  * 
  * <pre>
- *  main/roots.txt    
+ *  main/config.txt    
  *  main/sheets/X.sheet
  *  main/sheets/Y.bundle
- *  main/assoc
- * </pre>
- * 
- * <p>
- * A sample <code>roots.txt</code> file:
- * 
- * <pre>
- *  html=org.archive.crawler.extractor.ExtractorHTML
- *  js=org.archive.crawler.extractor.ExtractorJS
- *  css=org.archive.crawler.extractor.ExtractorCSS
- * </pre>
- * 
- * <p>
- * A sample <code>.sheet</code> file:
- * 
- * <pre>
- *  html.ENABLED=true
- *  html.DECIDE_RULES.RULES._impl=java.util.ArrayList
- *  html.DECIDE_RULES.RULES.0._impl=org.archive.crawler.deciderules.AcceptDecideRule
- * </pre>
- * 
- * <p>
- * A sample <code>.bundle</code> file:
- * 
- * <pre>
- *  X
- *  Y
- *  Z
+ *  main/state
  * </pre>
  * 
  * @author pjack
@@ -157,10 +133,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      */
     private static final long serialVersionUID = 1L;
 
-    
-    
-    
-    
     /** The BDB environment. */
     @Immutable
     final public static Key<BdbModule> BDB = 
@@ -196,7 +168,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private File sheetsDir;
 
     /** The main configuration file. */
-    private File mainConfig;
+    private transient File mainConfig;
     
     /** Sheets that are currently in memory. */
     private Map<String, Sheet> sheets;
@@ -207,7 +179,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     /** The database of associations. Maps string context to sheet names. */
     private transient StoredSortedMap surtToSheets;
 
-  
+    /** PathContext for Path settings. */
+    private PathContext pathContext;
     
     /** The default sheet. */
     private SingleSheet defaultSheet;
@@ -249,6 +222,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     throws IOException, DatabaseException {
         super(name, listeners, online);
         this.mainConfig = main;
+        
+        this.pathContext = new DefaultPathContext(mainConfig.getParentFile());
 
         Properties p = load(main);
         
@@ -639,7 +614,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
                 setManagerDefaults(r);
             }
             sheets.put(name, r);
-            SheetFileReader sfr = new SheetFileReader(new FileReader(f));
+            SheetFileReader sfr = new SheetFileReader(new FileInputStream(f));
             PathChanger pc = new PathChanger();
             pc.change(r, sfr);
             
@@ -707,7 +682,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     /**
      * Saves a single sheet to disk. This method first saves the sheet to a
      * temporary file, then renames the temporary file to the
-     * <code>.single</code> file for the sheet. If a problem occurs, the
+     * <code>.sheet</code> file for the sheet. If a problem occurs, the
      * problem is logged but no exception is raised.
      * 
      * @param ss
@@ -715,16 +690,16 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      */
     private void saveSingleSheet(SingleSheet ss) {
         File temp = new File(sheetsDir, ss.getName() + SINGLE_EXT + ".temp");
-        FileWriter fw = null;
+        FileOutputStream fout = null;
         try {
-            fw = new FileWriter(temp);
-            FilePathListConsumer c = new FilePathListConsumer(fw);
+            fout = new FileOutputStream(temp);
+            FilePathListConsumer c = new FilePathListConsumer(fout);
             PathLister.getAll(ss, c, true);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Can't save " + ss.getName(), e);
             return;
         } finally {
-            IoUtils.close(fw);
+            IoUtils.close(fout);
         }
 
         File saved = new File(sheetsDir, ss.getName() + SINGLE_EXT);
@@ -840,17 +815,22 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
 
     private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeObject(mainConfig);
         out.defaultWriteObject();
     }
     
     
     private void readObject(ObjectInputStream inp) 
     throws IOException, ClassNotFoundException {
-        inp.defaultReadObject();
+        mainConfig = (File)inp.readObject();
         if (inp instanceof CheckpointRecovery) {
             CheckpointRecovery cr = (CheckpointRecovery)inp;
             mainConfig = 
                 new File(cr.translatePath(mainConfig.getAbsolutePath()));
+        }
+        inp.defaultReadObject();
+        if (inp instanceof CheckpointRecovery) {
+            CheckpointRecovery cr = (CheckpointRecovery)inp;
             sheetsDir =
                 new File(cr.translatePath(sheetsDir.getAbsolutePath()));
             bdbDir = 
@@ -950,14 +930,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         bdb.close();
     }
 
-
-    public File getBaseDir() {
-        return mainConfig.getParentFile();
-    }
     
-    
-    public Map<String,String> getPathVariables() {
-        return Collections.emptyMap();
+    public PathContext getPathContext() {
+        return pathContext;
     }
 
 }

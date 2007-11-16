@@ -39,7 +39,9 @@ import java.util.TreeMap;
 
 import org.archive.settings.file.PrefixFinder;
 import org.archive.settings.path.PathChangeException;
+import org.archive.state.DefaultPathContext;
 import org.archive.state.KeyManager;
+import org.archive.state.PathContext;
 
 
 /**
@@ -73,6 +75,8 @@ public class MemorySheetManager extends SheetManager {
      */
     final private SortedMap<String,Set<Sheet>> associations;
 
+    
+    final private PathContext pathContext;
 
 
     public MemorySheetManager() {
@@ -85,6 +89,7 @@ public class MemorySheetManager extends SheetManager {
      */
     public MemorySheetManager(boolean online) {
         super("unkownn", online);
+        this.pathContext = new DefaultPathContext(new File("."));
         sheets = new HashMap<String,Sheet>();
         associations = new TreeMap<String,Set<Sheet>>();
         SingleSheet globals = addSingleSheet(GLOBAL_SHEET_NAME);
@@ -311,13 +316,9 @@ public class MemorySheetManager extends SheetManager {
         
     }
 
-
-    public File getBaseDir() {
-        return new File("."); // FIXME
-    }
-
     
-    public Map<String,String> getPathVariables() {
-        return Collections.emptyMap();
+    public PathContext getPathContext() {
+        return pathContext;
     }
+
 }

@@ -101,7 +101,7 @@ class UnspecifiedSheet extends Sheet {
         Class<T> type = key.getType();
         if (Path.class.isAssignableFrom(type)) {
             Path p = (Path)key.getDefaultValue();
-            return new Path(getSheetManager(), p.toString());
+            return new Path(getSheetManager().getPathContext(), p.toString());
         }
         if (key.isAutoDetected()) {
             return getSheetManager().getGlobalSheet().findPrimary(type);

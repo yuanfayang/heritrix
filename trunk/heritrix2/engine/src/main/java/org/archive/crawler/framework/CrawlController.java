@@ -920,7 +920,8 @@ public class CrawlController extends Bean implements
         stream.defaultReadObject();
 
         // Ensure no holdover singleThreadMode
-        singleThreadMode = false; 
+        singleThreadMode = false;
+        alertThreadGroup = Thread.currentThread().getThreadGroup();
     }
 
 
@@ -1147,7 +1148,7 @@ public class CrawlController extends Bean implements
     }
 
     public String getToeThreadReportShort() {
-        return toePool.singleLineReport();
+        return (toePool == null) ? "" : toePool.singleLineReport();
     }
 
     public String getFrontierReport() {

@@ -52,8 +52,7 @@ import org.archive.state.StateProvider;
  * 
  * @author pjack
  */
-public abstract class SheetManager 
-implements PathContext, StateProvider, Serializable {
+public abstract class SheetManager implements StateProvider, Serializable {
 
     final public static Logger LOGGER = 
         Logger.getLogger(SheetManager.class.getName());
@@ -462,5 +461,7 @@ implements PathContext, StateProvider, Serializable {
         finishables = (ListModuleListener)in.readObject();
     }
 
+    
+    public abstract PathContext getPathContext();
 
 }
