@@ -32,7 +32,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -695,6 +694,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             fout = new FileOutputStream(temp);
             FilePathListConsumer c = new FilePathListConsumer(fout);
             PathLister.getAll(ss, c, true);
+            fout.flush();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Can't save " + ss.getName(), e);
             return;

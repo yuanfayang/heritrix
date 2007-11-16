@@ -24,7 +24,7 @@ public class FilePathListConsumer extends StringPathListConsumer {
         try {
             this.writer = new OutputStreamWriter(output, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            throw new AssertionError();
+            throw new IllegalStateException();
         }
     }
     
@@ -85,6 +85,7 @@ public class FilePathListConsumer extends StringPathListConsumer {
         sb.append(value); // FIXME: Escape special characters
         sb.append('\n');
         writer.write(sb.toString());
+        writer.flush();
     }
 
 }
