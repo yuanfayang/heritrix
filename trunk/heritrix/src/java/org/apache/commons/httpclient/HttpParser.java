@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/HttpParser.java,v 1.13 2005/01/11 13:57:06 oglueck Exp $
  * $Revision$
  * $Date$
  *
@@ -47,7 +47,7 @@ import org.apache.commons.logging.LogFactory;
  * 
  * @since 2.0beta1
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked") // <- IA/HERITRIX CHANGE
 public class HttpParser {
 
     /** Log object for this class. */
@@ -189,7 +189,7 @@ public class HttpParser {
                 // Parse the header name and value
                 int colon = line.indexOf(":");
                 
-                // START HERITRIX Change
+                // START IA/HERITRIX change
                 // Don't throw an exception if can't parse.  We want to keep
                 // going even though header is bad. Rather, create
                 // pseudo-header.
@@ -200,11 +200,10 @@ public class HttpParser {
                     value = new StringBuffer(line);
 
                 } else {
-                    name = line.substring(0, colon).trim();
-                    value = new StringBuffer(line.substring(colon + 1).trim());
+                name = line.substring(0, colon).trim();
+                value = new StringBuffer(line.substring(colon + 1).trim());
                 }
-                // END HERITRIX change.
-                
+                // END IA/HERITRIX change
             }
 
         }

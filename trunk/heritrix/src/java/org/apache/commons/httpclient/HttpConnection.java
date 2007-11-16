@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/HttpConnection.java,v 1.107 2005/01/14 21:30:59 olegk Exp $
  * $Revision$
  * $Date$
  *
@@ -41,7 +41,6 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import org.apache.commons.httpclient.params.HttpConnectionParams;
-import org.apache.commons.httpclient.protocol.DefaultProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
@@ -50,8 +49,7 @@ import org.apache.commons.httpclient.util.ExceptionUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-// HERITRIX import.
-import org.archive.util.HttpRecorder;
+import org.archive.util.HttpRecorder; // <- // IA/HERITRIX import
 
 /**
  * An abstraction of an HTTP {@link InputStream} and {@link OutputStream}
@@ -700,10 +698,13 @@ public class HttpConnection {
                 usingSecureSocket = isSecure() && !isProxied();
                 // use the protocol's socket factory unless this is a secure
                 // proxied connection
-                final ProtocolSocketFactory socketFactory =
-                    (isSecure() && isProxied()
-                            ? new DefaultProtocolSocketFactory()
-                            : protocolInUse.getSocketFactory());
+                ProtocolSocketFactory socketFactory = null;
+                if (isSecure() && isProxied()) {
+                    Protocol defaultprotocol = Protocol.getProtocol("http");
+                    socketFactory = defaultprotocol.getSocketFactory();
+                } else {
+                    socketFactory = this.protocolInUse.getSocketFactory();
+                }
                 this.socket = socketFactory.createSocket(
                             host, port, 
                             localAddress, 0,
@@ -743,7 +744,7 @@ public class HttpConnection {
                 inbuffersize = 2048;
             }
             
-            // START HERITRIX Change
+            // START IA/HERITRIX change
             HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
             if (httpRecorder == null || (isSecure() && isProxied())) {
                 // no recorder, OR defer recording for pre-tunnel leg
@@ -759,7 +760,7 @@ public class HttpConnection {
                         (new BufferedOutputStream(socket.getOutputStream(), 
                         outbuffersize)));
             }
-            // END HERITRIX change.
+            // END IA/HERITRIX change
 
             isOpen = true;
         } catch (IOException e) {
@@ -818,11 +819,11 @@ public class HttpConnection {
             inbuffersize = 2048;
         }
 
-        // START HERITRIX Change
+        // START IA/HERITRIX change
         HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
         if (httpRecorder == null) {
-            inputStream = new BufferedInputStream(socket.getInputStream(), inbuffersize);
-            outputStream = new BufferedOutputStream(socket.getOutputStream(), outbuffersize);
+        inputStream = new BufferedInputStream(socket.getInputStream(), inbuffersize);
+        outputStream = new BufferedOutputStream(socket.getOutputStream(), outbuffersize);
         } else {
             inputStream = httpRecorder.inputWrap((InputStream)
                     (new BufferedInputStream(socket.getInputStream(),
@@ -831,7 +832,7 @@ public class HttpConnection {
                 (new BufferedOutputStream(socket.getOutputStream(), 
                 outbuffersize)));
         }
-        // END HERITRIX change.
+        // END IA/HERITRIX change
 
         usingSecureSocket = true;
         tunnelEstablished = true;
@@ -903,8 +904,11 @@ public class HttpConnection {
     public boolean isResponseAvailable() 
         throws IOException {
         LOG.trace("enter HttpConnection.isResponseAvailable()");
-        assertOpen();
-        return this.inputStream.available() > 0;
+        if (this.isOpen) {
+            return this.inputStream.available() > 0;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -1242,6 +1246,8 @@ public class HttpConnection {
     protected void closeSocketAndStreams() {
         LOG.trace("enter HttpConnection.closeSockedAndStreams()");
 
+        isOpen = false;
+        
         // no longer care about previous responses...
         lastResponseInputStream = null;
 
@@ -1277,7 +1283,7 @@ public class HttpConnection {
                 // ignored
             }
         }
-        isOpen = false;
+        
         tunnelEstablished = false;
         usingSecureSocket = false;
     }

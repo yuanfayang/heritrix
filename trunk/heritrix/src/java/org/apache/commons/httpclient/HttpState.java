@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/HttpState.java,v 1.38 2004/12/20 11:50:54 olegk Exp $
  * $Revision$
  * $Date$
  *
@@ -30,13 +30,14 @@
 package org.apache.commons.httpclient;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collection; // <- IA/HERITRIX CHANGE
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Iterator;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.SortedMap; // <- IA/HERITRIX CHANGE
+import java.util.TreeMap;   // <- IA/HERITRIX CHANGE
 
 import org.apache.commons.httpclient.cookie.CookieSpec;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
@@ -44,7 +45,7 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.sleepycat.collections.StoredIterator;
+import com.sleepycat.collections.StoredIterator; // <- IA/HERITRIX CHANGE
 
 /**
  * <p>
@@ -65,7 +66,7 @@ import com.sleepycat.collections.StoredIterator;
  * @version $Revision$ $Date$
  * 
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked") // <- IA/HERITRIX CHANGE
 public class HttpState {
 
     // ----------------------------------------------------- Instance Variables
@@ -82,7 +83,7 @@ public class HttpState {
      */
     private HashMap proxyCred = new HashMap();
 
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
 //    /**
 //     * Array of {@link Cookie cookies} that this HTTP state contains.
 //     */
@@ -91,8 +92,8 @@ public class HttpState {
      * SortedMap of {@link Cookie cookies} that this HTTP state contains.
      */
     private SortedMap cookiesMap = new TreeMap();
-// END IA CHANGES
-    
+// END IA/HERITRIX CHANGES
+
     private boolean preemptive = false;
 
     private int cookiePolicy = -1;
@@ -135,7 +136,7 @@ public class HttpState {
     public synchronized void addCookie(Cookie cookie) {
         LOG.trace("enter HttpState.addCookie(Cookie)");
 
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
 // PRIOR IMPL & COMPARISON HARNESS LEFT COMMENTED OUT FOR TEMPORARY REFERENCE
 //        Cookie removed1 = null;
 //        Cookie removed2 = null;
@@ -159,7 +160,7 @@ public class HttpState {
 //        if(removed1!=null && !removed1.equals(removed2)) {
 //            System.out.println("addCookie discrepancy");
 //        }
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
     }
 
     /**
@@ -191,29 +192,30 @@ public class HttpState {
      * 
      * @see #getCookies(String, int, String, boolean)
      * 
-     * @deprecated use getCookiesMap()
+     * @deprecated use getCookiesMap() // <- IA/HERITRIX CHANGE
      */
     public synchronized Cookie[] getCookies() {
         LOG.trace("enter HttpState.getCookies()");
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
 //      PRIOR IMPL & COMPARISON HARNESS LEFT COMMENTED OUT FOR TEMPORARY REFERENCE
 //        Cookie[] arrayListAnswer = (Cookie[]) (cookiesArrayList.toArray(new Cookie[cookiesArrayList.size()]));
         ArrayList arrayableCookies = new ArrayList();
         Iterator iter = cookiesMap.values().iterator();
         while(iter.hasNext()) {
             arrayableCookies.add(iter.next());
-        }
+    }
         StoredIterator.close(iter);
         Cookie[] mapAnswer = 
             (Cookie[]) arrayableCookies.toArray(new Cookie[arrayableCookies.size()]);
-        
+
 //        if(cookiesArrayList.size()!=arrayableCookies.size()) {
 //            System.out.println("discrepancy");
 //        }
         return mapAnswer;
-// END IA CHANGES    
+// END IA/HERITRIX CHANGES    
     }
 
+// START IA/HERITRIX ADDITIONS
     /**
      * Returns a sorted map of {@link Cookie cookies} that this HTTP
      * state currently contains.
@@ -236,7 +238,8 @@ public class HttpState {
     public synchronized void setCookiesMap(SortedMap map) {
         this.cookiesMap = map;
     }
-    
+// END IA/HERITRIX ADDITIONS
+
     /**
      * Returns an array of {@link Cookie cookies} in this HTTP 
      * state that match the given request parameters.
@@ -261,7 +264,7 @@ public class HttpState {
         LOG.trace("enter HttpState.getCookies(String, int, String, boolean)");
 
         CookieSpec matcher = CookiePolicy.getDefaultSpec();
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
 //      PRIOR IMPL & COMPARISON HARNESS LEFT COMMENTED OUT FOR TEMPORARY REFERENCE
 //        ArrayList list = new ArrayList(cookiesArrayList.size());
 //        for (int i = 0, m = cookiesArrayList.size(); i < m; i++) {
@@ -277,7 +280,7 @@ public class HttpState {
 //            System.out.println("discrepancy");
 //        }
         return mapAnswer;
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
     }
 
     /**
@@ -306,7 +309,7 @@ public class HttpState {
      */
     public synchronized boolean purgeExpiredCookies(Date date) {
         LOG.trace("enter HttpState.purgeExpiredCookies(Date)");
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
 //      PRIOR IMPL & COMPARISON HARNESS LEFT COMMENTED OUT FOR TEMPORARY REFERENCE
 //        boolean arrayRemoved = false;
 //        Iterator ita = cookiesArrayList.iterator();
@@ -326,7 +329,7 @@ public class HttpState {
         }
         StoredIterator.close(it);
 //        assert removed == arrayRemoved : "discrepancy"     
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
         return removed;
     }
 
@@ -632,7 +635,7 @@ public class HttpState {
         sbResult.append(" | ");
         sbResult.append(getCredentialsStringRepresentation(credMap));
         sbResult.append(" | ");
-        sbResult.append(getCookiesStringRepresentation(cookiesMap.values()));
+        sbResult.append(getCookiesStringRepresentation(cookiesMap.values())); // <- IA/HERITRIX CHANGE
         sbResult.append("]");
 
         String strResult = sbResult.toString();
@@ -666,7 +669,7 @@ public class HttpState {
      * @param cookies The cookies
      * @return The string representation.
      */
-    private static String getCookiesStringRepresentation(final Collection cookies) {
+    private static String getCookiesStringRepresentation(final Collection cookies) { // <- IA/HERITRIX CHANGE
         StringBuffer sbResult = new StringBuffer();
         Iterator iter = cookies.iterator();
         while (iter.hasNext()) {
@@ -697,10 +700,10 @@ public class HttpState {
      * Clears all cookies.
      */
     public void clearCookies() {
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
 //        this.cookiesArrayList.clear();
         this.cookiesMap.clear();
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
     }
     
     /**
