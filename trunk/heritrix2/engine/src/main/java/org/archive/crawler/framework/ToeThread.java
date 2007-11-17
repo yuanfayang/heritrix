@@ -128,8 +128,6 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         httpRecorder = new Recorder(controller.getScratchDir(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
-        // do not inherit parent (eg webapp) classloader
-        this.setContextClassLoader(null); 
     }
 
     /** (non-Javadoc)
