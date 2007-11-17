@@ -140,14 +140,37 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             throw new IllegalStateException("MBeans lived on after test: " + set);
         }
         // verify ToeThreads all dead
+        boolean pass = true;
         ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
         for(long id : tmxb.getAllThreadIds()) {
             ThreadInfo tinfo = tmxb.getThreadInfo(id);
-            if(tinfo!=null && tinfo.getThreadName().contains("ToeThread")) {
-                throw new IllegalStateException(
-                        "ToeThreads lived on after test: " + set);
+            if (isUndeadToeThread(tinfo)) {
+                System.out.println("TOE THREAD LIVED ON AFTER TEST: " + tinfo);
+                for (StackTraceElement e: tinfo.getStackTrace()) {
+                    System.out.println(e);
+                }
+                pass = false;
             }
         }
+        assertTrue("Undead ToeThreads, see stdout.", pass);
+    }
+    
+    
+    private boolean isUndeadToeThread(ThreadInfo tinfo) {
+        if (tinfo == null) {
+            return false;
+        }
+        if (!tinfo.getThreadName().contains("ToeThread")) {
+            return false;
+        }
+        if (tinfo.getThreadState() == Thread.State.TERMINATED) {
+            // The thread isn't running, so it's fine (probably just needs
+            // to be garbage collected)
+            return false;
+        }
+        // Running selftests under maven2 had toe threads that were marked
+        // as WAITING, but had no stack trace elements.
+        return tinfo.getStackTrace().length > 0;
     }
 
     
