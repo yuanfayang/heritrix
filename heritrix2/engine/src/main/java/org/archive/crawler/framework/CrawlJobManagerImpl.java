@@ -666,8 +666,6 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         public JobLauncher(String j) {
             super(new AlertThreadGroup(j), j);
             this.j = j;
-            // do not inherit parent (eg webapp) classloader
-            this.setContextClassLoader(null); 
         }
     
     

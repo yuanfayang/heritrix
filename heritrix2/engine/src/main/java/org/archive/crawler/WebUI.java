@@ -96,8 +96,11 @@ public class WebUI {
         }
 
         WebAppContext webapp = new WebAppContext(pathToWAR, "/");
-//        webapp.setClassLoader(ClassLoader.getSystemClassLoader());
         webapp.setAttribute("uiPassword",uiPassword);
+
+        // Make sure classes on the system classpath take precedence over 
+        // classes in the webapp classpath.
+        webapp.setParentLoaderPriority(true);
         
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[] { 
