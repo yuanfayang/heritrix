@@ -36,7 +36,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -64,6 +67,8 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.commons.httpclient.protocol.Protocol;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 
 import static org.archive.modules.ProcessorURI.FetchType.HTTP_POST;
 import static org.archive.modules.fetcher.FetchErrors.*;
@@ -334,16 +339,23 @@ public class FetchHTTP extends Processor implements Initializable {
         Key.makeAuto(ServerCache.class);
 //        Key.make(ServerCache.class, null);
 
-    /*
-     * FIXME: This needs to live somewhere else static {
-     * Protocol.registerProtocol("http", new Protocol("http", new
-     * HeritrixProtocolSocketFactory(), 80)); try {
-     * Protocol.registerProtocol("https", new Protocol("https",
-     * ((ProtocolSocketFactory) new HeritrixSSLProtocolSocketFactory()), 443)); }
-     * catch (KeyManagementException e) { e.printStackTrace(); } catch
-     * (KeyStoreException e) { e.printStackTrace(); } catch
-     * (NoSuchAlgorithmException e) { e.printStackTrace(); } }
-     */
+
+    static {
+        Protocol.registerProtocol("http", new Protocol("http",
+                new HeritrixProtocolSocketFactory(), 80));
+        try {
+            ProtocolSocketFactory psf = new HeritrixSSLProtocolSocketFactory();
+            Protocol p = new Protocol("https", psf, 443); 
+            Protocol.registerProtocol("https", p);
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+     
 
     // static final String SERVER_CACHE_KEY = "heritrix.server.cache";
     static final String SSL_FACTORY_KEY = "heritrix.ssl.factory";
