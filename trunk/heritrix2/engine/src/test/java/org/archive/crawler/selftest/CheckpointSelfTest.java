@@ -31,6 +31,8 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import junit.framework.TestResult;
+
 import org.archive.crawler.framework.CrawlStatus;
 import org.archive.util.FileUtils;
 import org.mortbay.jetty.Server;
@@ -116,7 +118,11 @@ public class CheckpointSelfTest extends SelfTestBase {
         
         // Start the crawl; wait for two seconds; pause the crawl so we
         // can checkpoint; checkpoint; and abort the crawl.
-        invokeAndWait("basic", "requestCrawlStart", CrawlStatus.RUNNING);
+        
+        // superclass startHeritrix()'s launchJob already did a requestCrawlStart
+        // this second invocation was causing two sets of ToeThreads to be 
+        // launched, one set of which lingered
+        // invokeAndWait("basic", "requestCrawlStart", CrawlStatus.RUNNING);
         Thread.sleep(2000);
         invokeAndWait("basic", "requestCrawlPause", CrawlStatus.PAUSED);
         invokeAndWait("basic", "requestCrawlCheckpoint", CrawlStatus.PAUSED);
@@ -186,7 +192,20 @@ public class CheckpointSelfTest extends SelfTestBase {
         // FIXME: Complete test.
     }
 
-
+    /**
+     * Repeat core testSomething 100 times. Rename to JUNit convention
+     * to enable. 
+     */
+    public void xestSomething100() {
+        for(int i = 0; i < 100; i++) {
+            try {
+                testSomething();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } 
+        }
+    }
 //    @Override
 //    public void testSomething() throws Exception {
 //

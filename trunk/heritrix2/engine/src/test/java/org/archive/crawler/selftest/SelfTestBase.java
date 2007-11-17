@@ -31,6 +31,8 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -136,6 +138,15 @@ public abstract class SelfTestBase extends TmpDirTestCase {
                 server.unregisterMBean(name);
             }
             throw new IllegalStateException("MBeans lived on after test: " + set);
+        }
+        // verify ToeThreads all dead
+        ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
+        for(long id : tmxb.getAllThreadIds()) {
+            ThreadInfo tinfo = tmxb.getThreadInfo(id);
+            if(tinfo!=null && tinfo.getThreadName().contains("ToeThread")) {
+                throw new IllegalStateException(
+                        "ToeThreads lived on after test: " + set);
+            }
         }
     }
 
