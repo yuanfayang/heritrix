@@ -114,11 +114,26 @@ public class Crawler implements Comparable {
     
 
     /**
+     * True if the crawler is the local crawler (running in the same JVM as
+     * the web UI).  Bypasses password authorization.
+     */
+    private boolean local;
+
+    /**
      * Constructor.
      */
     public Crawler() {
     }
 
+    
+    public boolean isLocal() {
+        return local;
+    }
+    
+    
+    public void setLocal(boolean local) {
+        this.local = local;
+    }
 
 
     public String getError() {
@@ -253,18 +268,19 @@ public class Crawler implements Comparable {
             this.error = "Unauthenticated: No username and/or password.";
             return Collections.singleton(this);
         }
-        
+
+        // If we have an objectName, then we were either discovered
+        // via JNDI, or a manual connection successfully queried
+        // the remote MBeanServer.
+        if (this.objectName != null) {
+            return Collections.singleton(this);
+        }
+
         JMXConnector jmxc = null;
         try {
             jmxc = Misc.connect(host, port, username, password);
             this.error = null;
 
-            // If we have an objectName, then we were either discovered
-            // via JNDI, or a manual connection successfully queried
-            // the remote MBeanServer.
-            if (this.objectName != null) {
-                return Collections.singleton(this);
-            }
             
             // Otherwise, this is a newly minted manual connection from the
             // operator.  We need to connect to the remote MBeanServer and
@@ -286,6 +302,7 @@ public class Crawler implements Comparable {
                 c.setSource(Source.MANUAL);
                 c.setUsername(username);
                 c.setPassword(password);
+                c.setLocal(isLocal());
                 result.add(c);
             }
             
@@ -384,6 +401,9 @@ public class Crawler implements Comparable {
 
 
     public JMXConnector connect() {
+        if (isLocal()) {
+            return new LocalJMXConnector();
+        }
         try {
             return Misc.connect(host, port, username, password);
         } catch (IOException e) {

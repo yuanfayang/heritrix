@@ -211,6 +211,7 @@ public class Home {
         crawler.setPort(-1); // special flag value for 'local' 
         crawler.setUsername("ignored");
         crawler.setPassword("ignored");
+        crawler.setLocal(true);
         
         // Discover all crawlers.
         Collection<Crawler> all = crawler.testConnection();
