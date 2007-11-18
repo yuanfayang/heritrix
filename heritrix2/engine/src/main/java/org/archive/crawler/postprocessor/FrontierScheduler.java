@@ -85,10 +85,8 @@ public class FrontierScheduler extends Processor implements PostProcessor {
             return;
         }
 
-        synchronized(this) {
-            for (CrawlURI cauri: curi.getOutCandidates()) {
-                schedule(cauri);
-            }
+        for (CrawlURI cauri: curi.getOutCandidates()) {
+            schedule(cauri);
         }
     }
 

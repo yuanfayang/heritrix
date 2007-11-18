@@ -24,6 +24,9 @@
 package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
 import java.util.Iterator;
 import java.util.Map;
@@ -530,6 +533,22 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         }
         pw.print(ArchiveUtils.formatMillisecondsToConventional(time));
         pw.println();
+        
+        ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
+        ThreadInfo info = tmxb.getThreadInfo(this.getId());
+        pw.print("Java Thread State: ");
+        pw.println(info.getThreadState());
+        pw.print("Blocked/Waiting On: ");
+        if (info.getLockOwnerId() >= 0) {
+            pw.print(info.getLockName());
+            pw.print(" which is owned by ");
+            pw.print(info.getLockOwnerName());
+            pw.print("(");
+            pw.print(info.getLockOwnerId());
+            pw.println(")");
+        } else {
+            pw.println("NONE");
+        }
 
         pw.print("    ");
         pw.print("step: ");
