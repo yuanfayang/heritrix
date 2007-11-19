@@ -550,16 +550,18 @@ public class Sheets {
         boolean add = request.getParameter("add").equals("Y");
         String sheet = request.getParameter("sheet");
         String surts = request.getParameter("surts");
+        boolean convertImplied = "on".equals(
+                request.getParameter("convertImplied"));
         BufferedReader br = new BufferedReader(new StringReader(surts));
         int count = 0;
         try {
             for (String s = br.readLine(); s != null; s = br.readLine()) {
                 if (!s.startsWith("#") && s.trim().length() > 0) {
-                    String surt = Misc.toSURTPrefix(s);
+                    String prefix = convertImplied ? Misc.toSURTPrefix(s) : s;
                     if (add) {
-                        sheetManager.associate(sheet, surt);
+                        sheetManager.associate(sheet, prefix);
                     } else {
-                        sheetManager.disassociate(sheet, surt);
+                        sheetManager.disassociate(sheet, prefix);
                     }
                 }
             }
