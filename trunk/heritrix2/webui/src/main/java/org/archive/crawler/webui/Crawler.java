@@ -46,7 +46,7 @@ import org.archive.util.JmxUtils;
  * @author pjack
  *
  */
-public class Crawler implements Comparable {
+public class Crawler implements Comparable<Crawler> {
 
     
     /**
@@ -59,7 +59,18 @@ public class Crawler implements Comparable {
      * How the crawler was discovered: Either via JNDI, or via manual entry.
      */
     public static enum Source {
-        JNDI, MANUAL
+        
+        /** The crawler was listed in a JNDI service. */
+        JNDI, 
+        
+        /** The crawler was manually added via the web UI. */
+        MANUAL, 
+        
+        /** 
+         * The crawler is running in the same JVM as the web UI, so the web UI
+         * found it automatically. 
+         */
+        LOCAL
     }
     
     
@@ -111,13 +122,7 @@ public class Crawler implements Comparable {
      * The password to use when connecting via JMX.
      */
     private String password;
-    
 
-    /**
-     * True if the crawler is the local crawler (running in the same JVM as
-     * the web UI).  Bypasses password authorization.
-     */
-    private boolean local;
 
     /**
      * Constructor.
@@ -127,12 +132,7 @@ public class Crawler implements Comparable {
 
     
     public boolean isLocal() {
-        return local;
-    }
-    
-    
-    public void setLocal(boolean local) {
-        this.local = local;
+        return source == Source.LOCAL;
     }
 
 
@@ -299,10 +299,9 @@ public class Crawler implements Comparable {
             Collection<Crawler> result = new ArrayList<Crawler>();
             for (ObjectName oname: set) {
                 Crawler c = fromObjectName(oname);
-                c.setSource(Source.MANUAL);
+                c.setSource(source); // Either MANUAL or LOCAL
                 c.setUsername(username);
                 c.setPassword(password);
-                c.setLocal(isLocal());
                 result.add(c);
             }
             
@@ -361,11 +360,7 @@ public class Crawler implements Comparable {
      * @throws IllegalArgumentException if the given object is null or not a
      *    Crawler
      */
-    public int compareTo(Object o) {
-        if (!(o instanceof Crawler)) {
-            throw new IllegalArgumentException();
-        }
-        Crawler c = (Crawler)o;
+    public int compareTo(Crawler c) {
         int r = getHost().compareTo(c.getHost());
         if (r != 0) {
             return r;

@@ -82,7 +82,7 @@ public class Home {
             HttpServletRequest request, 
             HttpServletResponse response) {
         if(allCrawlers.isEmpty()) {
-            tryLocal(sc);
+            populateCrawlers(sc);
         }
         request.setAttribute("crawlers", allCrawlers);
         
@@ -211,7 +211,7 @@ public class Home {
         crawler.setPort(-1); // special flag value for 'local' 
         crawler.setUsername("ignored");
         crawler.setPassword("ignored");
-        crawler.setLocal(true);
+        crawler.setSource(Crawler.Source.LOCAL);
         
         // Discover all crawlers.
         Collection<Crawler> all = crawler.testConnection();
@@ -221,9 +221,9 @@ public class Home {
         }
         
         // Add the discovered crawlers.
-        manualCrawlers.addAll(all);
+        allCrawlers.addAll(all);
 
-        populateCrawlers(sc);
+//        populateCrawlers(sc);
     }
 
     public static void removeCrawler(
@@ -343,8 +343,11 @@ public class Home {
                 result.add(crawler);
             }
         }
-
+        
         allCrawlers = new TreeSet<Crawler>(result);
+        
+        // Finally try the local crawler.
+        tryLocal(sc);
     }
 
 
