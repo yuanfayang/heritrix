@@ -26,18 +26,20 @@ import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIR
 import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
 
+import it.unimi.dsi.fastutil.Maps;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
+import java.util.SortedMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
@@ -50,7 +52,6 @@ import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.bag.HashBag;
-import org.apache.commons.lang.ArrayUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
@@ -58,7 +59,6 @@ import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.state.Expert;
-import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -109,12 +109,12 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     final public static Key<Boolean> HOLD_QUEUES = Key.make(true);
 
     /** amount to replenish budget on each activation (duty cycle) */
-    @Immutable @Expert
+    @Expert
     final public static Key<Integer> BALANCE_REPLENISH_AMOUNT = 
         Key.make(3000);
     
     /** whether to hold queues INACTIVE until needed for throughput */
-    @Immutable @Expert
+    @Expert
     final public static Key<Integer> ERROR_PENALTY_AMOUNT = 
         Key.make(100);
 
@@ -122,9 +122,19 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     final public static Key<Long> QUEUE_TOTAL_BUDGET = Key.make(-1L);
 
     /** cost assignment policy to use. */
-    @Expert @Global
+    @Expert
     final public static Key<CostAssignmentPolicy> COST_POLICY = 
         Key.make(CostAssignmentPolicy.class, new UnitCostAssignmentPolicy());
+    
+    /** precedence assignment policy to use. */
+    @Expert
+    final public static Key<QueuePrecedencePolicy> QUEUE_PRECEDENCE_POLICY = 
+        Key.make(QueuePrecedencePolicy.class, new SimpleQueuePrecedencePolicy());
+
+    /** precedence rank at or below which queues are not crawled */
+    @Expert
+    final public static Key<Integer> PRECEDENCE_FLOOR = 
+        Key.make(255);
     
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
@@ -141,18 +151,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     protected BlockingQueue<String> readyClassQueues;
     
-    /** 
-     * All 'inactive' queues, not yet in active rotation.
-     * Linked-list of keys for the queues.
-     */
-    protected Queue<String> inactiveQueues;
-
-    /**
-     * 'retired' queues, no longer considered for activation.
-     * Linked-list of keys for queues.
-     */
-    protected Queue<String> retiredQueues;
-    
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
         BagUtils.synchronizedBag(new HashBag()); // of ClassKeyQueue
@@ -163,6 +161,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     transient protected DelayQueue<WorkQueue> snoozedClassQueues;
     
     transient protected WorkQueue longestActiveQueue = null;
+
+    protected int highestPrecedenceWaiting = Integer.MAX_VALUE;
     
     public <T> T get(Key<T> key) {
         return manager.getGlobalSheet().get(this, key);
@@ -342,6 +342,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param wq
      */
     private void readyQueue(WorkQueue wq) {
+        assert Thread.currentThread() == managerThread;
+
         try {
             wq.setActive(this, true);
             readyClassQueues.put(wq.getClassKey());
@@ -358,11 +360,47 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param wq
      */
     private void deactivateQueue(WorkQueue wq) {
+        assert Thread.currentThread() == managerThread;
+        
         wq.setSessionBalance(0); // zero out session balance
+        Queue<String> inactiveQueues = getInactiveQueuesForPrecedence(wq.getPrecedence());
         inactiveQueues.add(wq.getClassKey());
+        if(wq.getPrecedence() < highestPrecedenceWaiting ) {
+            highestPrecedenceWaiting = wq.getPrecedence();
+        }
         wq.setActive(this, false);
     }
     
+    /**
+     * Get the queue of inactive uri-queue names at the given precedence. 
+     * 
+     * @param precedence
+     * @return queue of inacti
+     */
+    protected Queue<String> getInactiveQueuesForPrecedence(int precedence) {
+        Map<Integer,Queue<String>> inactiveQueuesByPrecedence = 
+            getInactiveQueuesByPrecedence();
+        Queue<String> candidate = inactiveQueuesByPrecedence.get(precedence);
+        if(candidate==null) {
+            candidate = createInactiveQueueForPrecedence(precedence);
+            inactiveQueuesByPrecedence.put(precedence,candidate);
+        }
+        return candidate;
+    }
+
+    /**
+     * Return a sorted map of all inactive queues, keyed by precedence
+     * @return SortedMap<Integer, Queue<String>> of inactiveQueues
+     */
+    abstract SortedMap<Integer, Queue<String>> getInactiveQueuesByPrecedence();
+
+    /**
+     * Create an inactiveQueue to hold queue names at the given precedence
+     * @param precedence
+     * @return Queue<String> for names of inactive queues
+     */
+    abstract Queue<String> createInactiveQueueForPrecedence(int precedence);
+
     /**
      * Put the given queue on the retiredQueues queue
      * @param wq
@@ -370,12 +408,19 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private void retireQueue(WorkQueue wq) {
         assert Thread.currentThread() == managerThread;
 
-        retiredQueues.add(wq.getClassKey());
+        getRetiredQueues().add(wq.getClassKey());
         decrementQueuedCount(wq.getCount());
         wq.setRetired(true);
         wq.setActive(this, false);
     }
     
+    /**
+     * Return queue of all retired queue names.
+     * 
+     * @return Queue<String> of retired queue names
+     */
+    abstract Queue<String> getRetiredQueues();
+
     /** 
      * Accomodate any changes in settings.
      */
@@ -389,13 +434,13 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         
         // TODO: Only do this when necessary.
         
-        Object key = this.retiredQueues.poll();
+        Object key = getRetiredQueues().poll();
         while (key != null) {
             WorkQueue q = (WorkQueue)this.allQueues.get(key);
             if(q != null) {
                 unretireQueue(q);
             }
-            key = this.retiredQueues.poll();
+            key = getRetiredQueues().poll();
         }
     }
     /**
@@ -446,19 +491,19 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             // wake any snoozed queues
             wakeQueues();
             // activate enough inactive queues to fill outbound
-            int activationsNeeded = 
+            int activationsWanted = 
                 outbound.remainingCapacity() - readyClassQueues.size();
-            while(activationsNeeded > 0 && !inactiveQueues.isEmpty()) {
-                // TODO: fix wasteful spinning when all inactive queues 
-                // are in long-snooze, thus just cycling here
+            while(activationsWanted > 0 
+                    && !getInactiveQueuesByPrecedence().isEmpty() 
+                    && highestPrecedenceWaiting < get(PRECEDENCE_FLOOR)) {
                 activateInactiveQueue();
-                activationsNeeded--;
+                activationsWanted--;
             }
                    
             WorkQueue readyQ = null;
-            Object key = readyClassQueues.poll();
+            String key = readyClassQueues.poll();
             if (key != null) {
-                readyQ = (WorkQueue)this.allQueues.get(key);
+                readyQ = getQueueFor(key);
             }
             if (readyQ != null) {
                 while(true) { // loop left by explicit return or break on empty
@@ -537,34 +582,61 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private void activateInactiveQueue() {
         assert Thread.currentThread() == managerThread;
 
-        Object key = this.inactiveQueues.poll();
-        if (key == null) {
+        SortedMap<Integer,Queue<String>> inactiveQueuesByPrecedence = 
+            getInactiveQueuesByPrecedence();
+        
+        Queue<String> inactiveQueues = inactiveQueuesByPrecedence.get(
+                highestPrecedenceWaiting);
+
+        Object key = inactiveQueues.poll();
+        assert key != null : "empty precedence queue in map";
+        
+        if(inactiveQueues.isEmpty()) {
+            updateHighestWaiting(highestPrecedenceWaiting+1);
+        }
+        
+        WorkQueue candidateQ = (WorkQueue) this.allQueues.get(key);
+        
+        assert candidateQ != null : "missing uri work queue";
+        
+        replenishSessionBalance(candidateQ);
+        if (candidateQ.isOverBudget()) {
+            // if still over-budget after an activation & replenishing,
+            // retire
+            retireQueue(candidateQ);
             return;
         }
-        WorkQueue candidateQ = (WorkQueue)this.allQueues.get(key);
-        if(candidateQ != null) {
-                replenishSessionBalance(candidateQ);
-                if(candidateQ.isOverBudget()){
-                    // if still over-budget after an activation & replenishing,
-                    // retire
-                    retireQueue(candidateQ);
-                    return;
-                } 
-                long now = System.currentTimeMillis();
-                long delay_ms = candidateQ.getWakeTime() - now;
-                if(delay_ms>0) {
-                    // queue still due for snoozing
-                    snoozeQueue(candidateQ,now,delay_ms);
-                    return;
-                }
-                candidateQ.setWakeTime(0); // clear obsolete wake time, if any
-                readyQueue(candidateQ);
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("ACTIVATED queue: " +
-                        candidateQ.getClassKey());
-                   
-                }
+//        long now = System.currentTimeMillis();
+//        long delay_ms = candidateQ.getWakeTime() - now;
+//        if (delay_ms > 0) {
+//            // queue still due for snoozing
+//            snoozeQueue(candidateQ, now, delay_ms);
+//            return;
+//        }
+        candidateQ.setWakeTime(0); // clear obsolete wake time, if any
+        readyQueue(candidateQ);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("ACTIVATED queue: " + candidateQ.getClassKey());
+
         }
+    }
+
+    /**
+     * Recalculate the value of thehighest-precedence queue waiting
+     * among inactive queues. 
+     * 
+     * @param startFrom start looking at this precedence value
+     */
+    protected void updateHighestWaiting(int startFrom) {
+        // probe for new highestWaiting
+        for(int precedenceKey : getInactiveQueuesByPrecedence().tailMap(startFrom).keySet()) {
+            if(!getInactiveQueuesByPrecedence().get(precedenceKey).isEmpty()) {
+                highestPrecedenceWaiting = precedenceKey;
+                return;
+            }
+        }
+        // nothing waiting
+        highestPrecedenceWaiting = Integer.MAX_VALUE;
     }
 
     /**
@@ -601,8 +673,11 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * 
      * @param wq
      */
-    private void reenqueueQueue(WorkQueue wq) {
-        if(wq.isOverBudget()) {
+    private void reenqueueQueue(WorkQueue wq) { 
+        wq.get(this,QUEUE_PRECEDENCE_POLICY).queueReevaluate(wq);
+        if(highestPrecedenceWaiting < wq.getPrecedence() 
+            || (wq.isOverBudget() && highestPrecedenceWaiting <= wq.getPrecedence())
+            || wq.getPrecedence() >= get(PRECEDENCE_FLOOR)) {
             // if still over budget, deactivate
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("DEACTIVATED queue: " +
@@ -762,12 +837,12 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private void snoozeQueue(WorkQueue wq, long now, long delay_ms) {
         long nextTime = now + delay_ms;
         wq.setWakeTime(nextTime);
-        long snoozeToInactiveDelayMs = get(SNOOZE_DEACTIVATE_MS);
-        if (delay_ms > snoozeToInactiveDelayMs && !inactiveQueues.isEmpty()) {
-            deactivateQueue(wq);
-        } else {
+//        long snoozeToInactiveDelayMs = get(SNOOZE_DEACTIVATE_MS);
+//        if (delay_ms > snoozeToInactiveDelayMs && !inactiveQueues.isEmpty()) {
+//            deactivateQueue(wq);
+//        } else {
             snoozedClassQueues.add(wq);
-        }
+//        }
     }
 
     /**
@@ -833,8 +908,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.size();
-        int retiredCount = retiredQueues.size();
+        int inactiveCount = getTotalInactiveQueues();
+        int retiredCount = getRetiredQueues().size();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
         int inCount = inbound.size();
@@ -858,6 +933,18 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print(" exhausted");
         w.print(" ["+last+ ": "+inCount+" in, "+outCount+" out]");        
         w.flush();
+    }
+
+    /**
+     * Total of all inactive queues at all precedences
+     * @return int total 
+     */
+    protected int getTotalInactiveQueues() {
+        int inactiveCount = 0; 
+        for(Queue<String> q : getInactiveQueuesByPrecedence().values()) {
+            inactiveCount += q.size();
+        }
+        return inactiveCount;
     }
     
     /* (non-Javadoc)
@@ -911,10 +998,12 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         queueSingleLinesTo(writer, this.snoozedClassQueues.iterator());
         
         writer.print("\n -----===== INACTIVE QUEUES =====-----\n");
-        queueSingleLinesTo(writer, this.inactiveQueues.iterator());
+        for(Queue<String> inactiveQueues : getInactiveQueuesByPrecedence().values()) {
+            queueSingleLinesTo(writer, inactiveQueues.iterator());
+        }
         
         writer.print("\n -----===== RETIRED QUEUES =====-----\n");
-        queueSingleLinesTo(writer, this.retiredQueues.iterator());
+        queueSingleLinesTo(writer, getRetiredQueues().iterator());
     }
 
     /** Compact report of all nonempty queues (one queue per line)
@@ -964,8 +1053,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.size();
-        int retiredCount = retiredQueues.size();
+        int inactiveCount = getTotalInactiveQueues();
+        int retiredCount = getRetiredQueues().size();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
 
@@ -1018,7 +1107,20 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print("\n");
         w.print("           Inactive queues: ");
         w.print(inactiveCount);
-        w.print("\n");
+        w.print(" (");
+        Map<Integer,Queue<String>> inactives = getInactiveQueuesByPrecedence();
+        boolean betwixt = false; 
+        for(Integer k : inactives.keySet()) {
+            if(betwixt) {
+                w.print("; ");
+            }
+            w.print("p");
+            w.print(k);
+            w.print(": ");
+            w.print(inactives.get(k).size());
+            betwixt = true; 
+        }
+        w.print(")\n");
         w.print("            Retired queues: ");
         w.print(retiredCount);
         w.print("\n");
@@ -1047,12 +1149,14 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         }
 
         w.print("\n -----===== INACTIVE QUEUES =====-----\n");
-        appendQueueReports(w, this.inactiveQueues.iterator(),
-            this.inactiveQueues.size(), REPORT_MAX_QUEUES);
+        for(Queue<String> inactiveQueues : getInactiveQueuesByPrecedence().values()) {
+            appendQueueReports(w, inactiveQueues.iterator(),
+                    inactiveQueues.size(), REPORT_MAX_QUEUES);
+        }
         
         w.print("\n -----===== RETIRED QUEUES =====-----\n");
-        appendQueueReports(w, this.retiredQueues.iterator(),
-            this.retiredQueues.size(), REPORT_MAX_QUEUES);
+        appendQueueReports(w, getRetiredQueues().iterator(),
+            getRetiredQueues().size(), REPORT_MAX_QUEUES);
 
         w.flush();
     }
@@ -1162,7 +1266,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.size();
+        int inactiveCount = getTotalInactiveQueues();
         int totalQueueCount = (activeCount+inactiveCount);
         return (totalQueueCount == 0) ? 0 : queuedUriCount.get() / totalQueueCount;
     }
@@ -1171,7 +1275,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.size();
+        int inactiveCount = getTotalInactiveQueues();
         return (float)(activeCount + inactiveCount) / (inProcessCount + snoozedCount);
     }
     public long deepestUri() {

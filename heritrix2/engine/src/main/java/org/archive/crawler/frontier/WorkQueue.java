@@ -11,6 +11,9 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
 import org.archive.modules.fetcher.FetchStats;
+import org.archive.settings.SheetManager;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -43,6 +46,9 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     /** Time to wake, if snoozed */
     private long wakeTime = 0;
 
+    /** assigned precedence */
+    private int precedence = -1; 
+    
     /** Running 'budget' indicating whether queue should stay active */
     private int sessionBalance = 0;
 
@@ -78,6 +84,8 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     protected FetchStats substats = new FetchStats();
 
     private boolean retired;
+
+    transient protected StateProvider provider;
     
     public WorkQueue(final String pClassKey) {
         this.classKey = pClassKey;
@@ -487,6 +495,9 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
         // queue name
         writer.print(classKey);
         writer.print(" ");
+        // precedence
+        writer.print(getPrecedence());
+        writer.print(" ");
         // count of items
         writer.print(Long.toString(count));
         writer.print(" ");
@@ -531,8 +542,8 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
      * @see org.archive.util.Reporter#singleLineLegend()
      */
     public String singleLineLegend() {
-        return "queue currentSize totalEnqueues sessionBalance lastCost " +
-                "(averageCost) lastDequeueTime wakeTime " +
+        return "queue precedence currentSize totalEnqueues sessionBalance " +
+                "lastCost (averageCost) lastDequeueTime wakeTime " +
                 "totalSpend/totalBudget errorCount lastPeekUri lastQueuedUri";
     }
     
@@ -551,7 +562,9 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
         // name is ignored: only one kind of report for now
         writer.print("Queue ");
         writer.print(classKey);
-        writer.print("\n");
+        writer.print(" (p");
+        writer.print(getPrecedence());
+        writer.print(")\n");
         writer.print("  ");
         writer.print(Long.toString(count));
         writer.print(" items");
@@ -575,7 +588,11 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
         writer.print("(");
         writer.print(ArchiveUtils.doubleToString(
                     ((double) totalExpenditure / costCount), 1));
-        writer.print(")\n\n");
+        writer.print(")\n   ");
+        writer.print(getSubstats().singleLineLegend());
+        writer.print("\n   ");
+        writer.print(getSubstats().singleLineReport());
+        writer.print("\n\n");
     }
     
     public FetchStats getSubstats() {
@@ -593,5 +610,34 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     
     public boolean isRetired() {
         return retired;
+    }
+
+    /**
+     * @return the precedence
+     */
+    public int getPrecedence() {
+        return precedence;
+    }
+
+    /**
+     * @param precedence the precedence to set
+     */
+    public void setPrecedence(int precedence) {
+        this.precedence = precedence;
+    }
+    
+    public void setStateProvider(SheetManager manager) {
+        if(provider!=null) {
+            // no need to reset
+            return; 
+        }
+        this.provider = manager.findConfig(getClassKey());
+    }
+
+    public <T> T get(Object module, Key<T> key) {
+        if (provider == null) {
+            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
+        }
+        return provider.get(module, key);
     }
 }
