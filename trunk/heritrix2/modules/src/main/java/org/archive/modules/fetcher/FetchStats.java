@@ -24,10 +24,12 @@
 */ 
 package org.archive.modules.fetcher;
 
+import java.io.PrintWriter;
 import java.io.Serializable;
 
-import org.apache.commons.httpclient.HttpStatus;
 import org.archive.modules.ProcessorURI;
+import org.archive.util.ArchiveUtils;
+import org.archive.util.Reporter;
 
 /**
  * Collector of statististics for a 'subset' of a crawl,
@@ -36,7 +38,7 @@ import org.archive.modules.ProcessorURI;
  * 
  * @author gojomo
  */
-public class FetchStats implements Serializable, FetchStatusCodes {
+public class FetchStats implements Serializable, FetchStatusCodes, Reporter {
     private static final long serialVersionUID = 8624425657056569036L;
 
     public enum Stage {SCHEDULED, SUCCEEDED, RETRIED, DISREGARDED, FAILED};
@@ -121,5 +123,56 @@ public class FetchStats implements Serializable, FetchStatusCodes {
     }
     public long getRecordedFinishes() {
         return fetchSuccesses + fetchFailures;
+    }
+
+    public String[] getReports() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.lang.String, java.io.PrintWriter)
+     */
+    public void reportTo(String name, PrintWriter writer) {
+        // name ignored, only one report
+        writer.println(singleLineLegend());
+        singleLineReportTo(writer);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.PrintWriter)
+     */
+    public void reportTo(PrintWriter writer) {
+        reportTo(null,writer);
+    }
+
+    public String singleLineLegend() {
+        return "totalScheduled fetchSuccesses fetchFailures fetchDisregards " +
+                "fetchResponses robotsDenials successBytes totalBytes " +
+                "fetchNonResponses";
+    }
+
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+
+    public void singleLineReportTo(PrintWriter writer) {
+        writer.print(totalScheduled);
+        writer.print(" ");
+        writer.print(fetchSuccesses);
+        writer.print(" ");
+        writer.print(fetchFailures);
+        writer.print(" "); 
+        writer.print(fetchDisregards);
+        writer.print(" "); 
+        writer.print(fetchResponses);
+        writer.print(" "); 
+        writer.print(robotsDenials);
+        writer.print(" "); 
+        writer.print(successBytes);
+        writer.print(" "); 
+        writer.print(totalBytes);
+        writer.print(" "); 
+        writer.print(fetchNonResponses);
     }
 }
