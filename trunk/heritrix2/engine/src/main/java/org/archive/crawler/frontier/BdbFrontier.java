@@ -31,6 +31,9 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -70,6 +73,18 @@ implements Serializable, Checkpointable {
     private static final Logger logger =
         Logger.getLogger(BdbFrontier.class.getName());
 
+    /** 
+     * All 'inactive' queues, not yet in active rotation.
+     * Linked-list of keys for the queues.
+     */
+    protected SortedMap<Integer,Queue<String>> inactiveQueuesByPrecedence;
+
+    /**
+     * 'retired' queues, no longer considered for activation.
+     * Linked-list of keys for queues.
+     */
+    protected StoredQueue<String> retiredQueues;
+    
     /** all URIs scheduled to be crawled */
     protected transient BdbMultipleWorkQueues pendingUris;
 
@@ -82,6 +97,21 @@ implements Serializable, Checkpointable {
 
     private BdbModule bdb;
     
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.WorkQueueFrontier#getInactiveQueuesByPrecedence()
+     */
+    @Override
+    SortedMap<Integer, Queue<String>> getInactiveQueuesByPrecedence() {
+        return inactiveQueuesByPrecedence;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.WorkQueueFrontier#getRetiredQueues()
+     */
+    @Override
+    Queue<String> getRetiredQueues() {
+        return retiredQueues;
+    }
     
     /**
      * Create the single object (within which is one BDB database)
@@ -122,6 +152,8 @@ implements Serializable, Checkpointable {
             if (wq == null) {
                 wq = new BdbWorkQueue(classKey, this);
                 wq.setTotalBudget(curi.get(this, QUEUE_TOTAL_BUDGET));
+                wq.setStateProvider(manager);
+                wq.get(this, QUEUE_PRECEDENCE_POLICY).queueCreated(wq);
                 allQueues.put(classKey, wq);
             }
         }
@@ -136,9 +168,11 @@ implements Serializable, Checkpointable {
      * @return the found WorkQueue
      */
     protected WorkQueue getQueueFor(String classKey) {
-        WorkQueue wq; 
-        synchronized (allQueues) {
-            wq = (WorkQueue)allQueues.get(classKey);
+        assert Thread.currentThread() == managerThread; 
+        
+        WorkQueue wq = (WorkQueue)allQueues.get(classKey);
+        if(wq!=null) {
+            wq.setStateProvider(manager);
         }
         return wq;
     }
@@ -238,15 +272,11 @@ implements Serializable, Checkpointable {
         // readyClassQueues may grow in size without bound
         readyClassQueues = new LinkedBlockingQueue<String>();
 
+        inactiveQueuesByPrecedence = new TreeMap<Integer,Queue<String>>();
+        
         Database retiredQueuesDb;
-        Database inactiveQueuesDb;
-        inactiveQueuesDb = bdb.openDatabase("inactiveQueues",
-                StoredQueue.databaseConfig(), false);
         retiredQueuesDb = bdb.openDatabase("retiredQueues", 
                 StoredQueue.databaseConfig(), false);
-
-        inactiveQueues = new StoredQueue<String>(inactiveQueuesDb,
-                String.class, null);
         retiredQueues = new StoredQueue<String>(retiredQueuesDb,
                 String.class, null);
 
@@ -256,19 +286,39 @@ implements Serializable, Checkpointable {
         snoozedClassQueues = new DelayQueue<WorkQueue>();
     }
 
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.WorkQueueFrontier#createInactiveQueueForPrecedence(int)
+     */
+    @Override
+    Queue<String> createInactiveQueueForPrecedence(int precedence) {
+        Database inactiveQueuesDb;
+        try {
+            inactiveQueuesDb = bdb.openDatabase("inactiveQueues-"+precedence,
+                    StoredQueue.databaseConfig(), false);
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        }
+        return new StoredQueue<String>(inactiveQueuesDb,
+                String.class, null);
+    }
     
     private void readObject(ObjectInputStream in) 
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        Database retiredQueuesDb;
-        Database inactiveQueuesDb;
-        retiredQueuesDb = bdb.getDatabase("retiredQueues");
-        inactiveQueuesDb = bdb.getDatabase("inactiveQueues");
-        inactiveQueues = new StoredQueue<String>(inactiveQueuesDb,
-                String.class, null);
-        retiredQueues = new StoredQueue<String>(retiredQueuesDb,
-                String.class, null);
+
+        // rehook StoredQueues to their databases
+        for(int precedenceKey : inactiveQueuesByPrecedence.keySet()) {
+            Database inactiveQueuesDb = 
+                bdb.getDatabase("inactiveQueues-"+precedenceKey);
+            ((StoredQueue)inactiveQueuesByPrecedence.get(precedenceKey))
+                .hookupDatabase(inactiveQueuesDb, String.class, null);
+        }
         
+        // rehook retiredQueues to its database
+        Database retiredQueuesDb = bdb.getDatabase("retiredQueues");
+        retiredQueues.hookupDatabase(retiredQueuesDb, String.class, null);
+
         try {
             this.pendingUris = new BdbMultipleWorkQueues(bdb.getDatabase("pending"), 
                     bdb.getClassCatalog());
