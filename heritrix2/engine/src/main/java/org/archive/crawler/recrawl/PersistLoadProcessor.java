@@ -27,7 +27,7 @@ import java.util.Map;
 import org.archive.modules.ProcessorURI;
 
 /**
- * Store CrawlURI attributes from latest fetch to persistent storage for
+ * Loads CrawlURI attributes from previous fetch from persistent storage for
  * consultation by a later recrawl. 
  * 
  * @author gojomo
