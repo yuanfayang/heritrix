@@ -35,14 +35,13 @@ import org.archive.state.ModuleTestBase;
 public class SimpleQueuePrecedencePolicyTest extends ModuleTestBase {
 
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return SimpleQueuePrecedencePolicy.class;
     }
 
     @Override
     protected Object makeModule() throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return new SimpleQueuePrecedencePolicy();
     }
 
     

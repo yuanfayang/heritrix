@@ -129,7 +129,7 @@ public abstract class ModuleTestBase extends TestCase {
             return new File("modules/" + path);
         }
         if (cname.startsWith("org.archive.crawler")) {
-            return new File("heritrix/" + path);
+            return new File("engine/" + path);
         }
         return null;
     }
@@ -140,7 +140,7 @@ public abstract class ModuleTestBase extends TestCase {
      * 
      * @return   the class of the module to test
      */
-    protected abstract Class getModuleClass();
+    protected abstract Class<?> getModuleClass();
     
     
     /**
@@ -190,7 +190,7 @@ public abstract class ModuleTestBase extends TestCase {
             }
         }
         if (KeyManager.getModuleDescription(c, Locale.ENGLISH) == null) {
-            problems.add("description");
+            problems.add("class description");
         }
         TestCase.assertTrue(problems.toString(), problems.isEmpty());
     }
