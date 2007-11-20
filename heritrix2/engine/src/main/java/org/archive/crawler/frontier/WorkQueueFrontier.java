@@ -30,9 +30,12 @@ import it.unimi.dsi.fastutil.Maps;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1309,14 +1312,11 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private void readObject(java.io.ObjectInputStream stream)
+    private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        String[] snoozedNames = (String[]) stream.readObject();
-        snoozedClassQueues = new DelayQueue<WorkQueue>();
-        for(int i = 0; i < snoozedNames.length; i++) {
-            snoozedClassQueues.add(getQueueFor(snoozedNames[i]));
-        }
+        WorkQueue[] queues = (WorkQueue[])stream.readObject();
+        snoozedClassQueues = new DelayQueue<WorkQueue>(Arrays.asList(queues));
     }
     
     /**
@@ -1326,10 +1326,11 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param stream
      * @throws IOException
      */
-    private void writeObject(java.io.ObjectOutputStream stream)
+    private void writeObject(ObjectOutputStream stream)
     throws IOException {
         stream.defaultWriteObject();
         WorkQueue[] snoozed = snoozedClassQueues.toArray(new WorkQueue[0]);
+        stream.writeObject(snoozed);
         String[] snoozedNames = new String[snoozed.length];
         for(int i = 0;i<snoozed.length;i++) {
             snoozedNames[i] = snoozed[i].getClassKey();
