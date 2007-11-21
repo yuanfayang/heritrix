@@ -58,9 +58,18 @@ public class PrefixFinder {
      *            used for unit testing
      */
     public static int find(SortedSet<String> set, String input, List<String> result) {
-        set = set.headSet(input + '\0');
+        // OK, the docs for SortedSet.headSet say that the str + '\0' idiom is best
+        // for including the target string in the returned set.  But, using \0
+        // causes StoredSortedSet to return the wrong thing -- the returned set will
+        // not just include the parameter string, but whatever element is next AFTER
+        // that string too.  :(  This appears to be because internal sleepycat code
+        // uses a \0 to delineate records, maybe?  I dunno, but using ASCII code 1
+        // instead of 0 makes the algorithm work as expected.
+        set = set.headSet(input + '\u0001');
         int opCount = 0;
         for (String last = last(set); last != null; last = last(set)) {
+            System.out.println(new java.util.TreeSet<String>(set));
+            System.out.println(last);
             opCount++;
             if (input.startsWith(last)) {
                 result.add(last);
@@ -70,7 +79,8 @@ public class PrefixFinder {
                 if (p <= 0) {
                     return opCount;
                 }
-                last = input.substring(0, p) + '\0';
+                // Can't use a \0 to terminate, as that freaks out bdb
+                last = input.substring(0, p) + '\u0001';
             }
             try {
                 set = set.headSet(last);
