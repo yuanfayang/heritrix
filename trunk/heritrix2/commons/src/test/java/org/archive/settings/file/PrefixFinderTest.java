@@ -26,12 +26,23 @@
 
 package org.archive.settings.file;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.archive.util.TmpDirTestCase;
+
+import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.bind.tuple.StringBinding;
+import com.sleepycat.collections.StoredSortedMap;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseConfig;
+import com.sleepycat.je.Environment;
+import com.sleepycat.je.EnvironmentConfig;
 
 import junit.framework.TestCase;
 
@@ -40,10 +51,10 @@ import junit.framework.TestCase;
  * 
  * @author pjack
  */
-public class PrefixFinderTest extends TestCase {
+public class PrefixFinderTest extends TmpDirTestCase {
 
 
-    public void testFind() {
+    public void xtestFind() {
         for (int i = 0; i < 100; i++) {
             doTest();
         }
@@ -57,6 +68,38 @@ public class PrefixFinderTest extends TestCase {
         int count = PrefixFinder.find(testData, "baz", result);
         assertTrue(result.isEmpty());
         assertEquals(count, 0);
+    }
+    
+    
+    public void testStrangeCase() throws Exception {
+        EnvironmentConfig config = new EnvironmentConfig();
+        config.setAllowCreate(true);
+        config.setLockTimeout(5000000);        
+        config.setCachePercent(5);
+        
+        File f = new File(getTmpDir(), "PrefixFinderText");
+        f.mkdirs();
+        Environment bdbEnvironment = new Environment(f, config);
+        
+//        // Open the class catalog database. Create it if it does not
+//        // already exist. 
+//        DatabaseConfig dbConfig = new DatabaseConfig();
+//        dbConfig.setAllowCreate(true);
+//        Database classCatalogDB = bdbEnvironment.openDatabase(null, "classes", dbConfig);
+//        StoredClassCatalog classCatalog = new StoredClassCatalog(classCatalogDB);
+        
+        DatabaseConfig dbConfig = new DatabaseConfig();
+        dbConfig.setAllowCreate(true);
+        dbConfig.setDeferredWrite(true);
+        Database db = bdbEnvironment.openDatabase(null, "test", dbConfig);
+        
+        StoredSortedMap ssm = new StoredSortedMap(db, new StringBinding(), new StringBinding(), true);        
+        ssm.put("http://(com,ilovepauljack,www,", "foo");
+        for (int i = 0; i < 10; i++) {
+            ssm.put("http://" + Math.random(), "foo");
+        }
+        List<String> results = new ArrayList<String>();
+        PrefixFinder.find((SortedSet)ssm.keySet(), "http://", results);        
     }
 
 
