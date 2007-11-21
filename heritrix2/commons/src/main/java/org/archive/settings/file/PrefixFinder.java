@@ -68,8 +68,6 @@ public class PrefixFinder {
         set = set.headSet(input + '\u0001');
         int opCount = 0;
         for (String last = last(set); last != null; last = last(set)) {
-            System.out.println(new java.util.TreeSet<String>(set));
-            System.out.println(last);
             opCount++;
             if (input.startsWith(last)) {
                 result.add(last);
