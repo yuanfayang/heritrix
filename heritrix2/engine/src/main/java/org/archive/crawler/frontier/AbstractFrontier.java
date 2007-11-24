@@ -667,7 +667,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             host.getSubstats().tally(curi, stage);
         }
         FrontierGroup group = getGroup(curi);
-        group.getSubstats().tally(curi, stage);
+        group.tally(curi, stage);
     }
 
     protected ServerCache getServerCache() {
@@ -686,6 +686,14 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         tally(c,Stage.SCHEDULED);
         if (this.recover != null) {
             this.recover.added(c);
+        }
+    }
+    
+    protected void doJournalRelocated(CrawlURI c) {
+        tally(c,Stage.RELOCATED);
+        if (this.recover != null) {
+            // TODO: log dequeue from original location somehow
+            // this.recover.relocated(c);
         }
     }
 

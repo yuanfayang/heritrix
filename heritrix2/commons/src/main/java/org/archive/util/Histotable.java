@@ -28,19 +28,20 @@
 package org.archive.util;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 
 /**
  * Collect and report frequency information. 
  * 
- * Assumes external synchornization.
+ * Assumes external synchronization.
  * 
  * @author gojomo
  */
-public class Histotable<K> extends HashMap<K,Long> {    
+public class Histotable<K> extends TreeMap<K,Long> {    
     private static final long serialVersionUID = 310306238032568623L;
     
     /**
@@ -58,11 +59,12 @@ public class Histotable<K> extends HashMap<K,Long> {
      * @param key Object key.
      */
     public void tally(K key,long count) {
-        if (containsKey(key)) {
-            put(key,get(key) + count);
+        long tally = containsKey(key) ? get(key) : 0; 
+        tally += count; 
+        if(tally!=0) {
+            put(key,tally);
         } else {
-            // if we didn't find this key add it
-            put(key, count);
+            remove(key);
         }
     }
     
@@ -94,21 +96,8 @@ public class Histotable<K> extends HashMap<K,Long> {
     /**
      * @return Return an up-to-date sorted version of the totalled info.
      */
-    public TreeSet getSortedByKeys() {
-        TreeSet<Map.Entry<K,Long>> sorted = 
-          new TreeSet<Map.Entry<K,Long>>(
-           new Comparator<Map.Entry<K,Long>>() {
-            @SuppressWarnings("unchecked")
-            public int compare(Map.Entry<K,Long> e1, 
-                    Map.Entry<K,Long> e2) {
-                K firstKey = e1.getKey();
-                K secondKey = e2.getKey();
-                // If the values are the same, sort by keys.
-                return ((Comparable<K>)firstKey).compareTo(secondKey);
-            }
-        });   
-        sorted.addAll(entrySet());
-        return sorted;
+    public Set<Map.Entry<K,Long>> getSortedByKeys() {
+        return entrySet();
     }
     
     /**

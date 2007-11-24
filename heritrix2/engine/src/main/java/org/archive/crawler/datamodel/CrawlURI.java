@@ -131,16 +131,14 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      */
     private String classKey;
 
+    /** assigned precedence */
+    private int precedence;
     
     // Processing progress
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
     transient private int threadNumber;
-
-    // dynamic context
-    private int linkHopCount = UNCALCULATED; // from seeds
-    private int embedHopCount = UNCALCULATED; // from a sure link; reset upon any link traversal
 
     // User agent to masquerade as when crawling this URI. If null, globals should be used
     private String userAgent = null;
@@ -688,7 +686,14 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      * @return the embeded hop count.
      */
     public int getEmbedHopCount() {
-        return embedHopCount;
+        int embedHops = 0;
+        for(int i = pathFromSeed.length()-1; i>=0; i--) {
+            if(pathFromSeed.charAt(i)==Hop.NAVLINK.getHopChar()) {
+                break;
+            }
+            embedHops++;
+        }
+        return embedHops;
     }
 
     /**
@@ -697,16 +702,13 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      * @return the link hop count.
      */
     public int getLinkHopCount() {
-        return linkHopCount;
-    }
-
-    /**
-     * Mark this uri as being a seed.
-     *
-     */
-    public void markAsSeed() {
-        linkHopCount = 0;
-        embedHopCount = 0;
+        int linkHops = 0;
+        for(int i = pathFromSeed.length()-1; i>=0; i--) {
+            if(pathFromSeed.charAt(i)==Hop.NAVLINK.getHopChar()) {
+                linkHops++;
+            }
+        }
+        return linkHops;
     }
 
     /**
@@ -1773,5 +1775,19 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     
     public void incrementDiscardedOutLinks() {
         discardedOutlinks++;
+    }
+
+    /**
+     * @return the precedence
+     */
+    public int getPrecedence() {
+        return precedence;
+    }
+
+    /**
+     * @param precedence the precedence to set
+     */
+    public void setPrecedence(int precedence) {
+        this.precedence = precedence;
     }
 }

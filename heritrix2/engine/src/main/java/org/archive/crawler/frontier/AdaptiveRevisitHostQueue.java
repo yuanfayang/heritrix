@@ -29,7 +29,9 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
+import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats;
+import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.settings.file.BdbModule;
 import org.archive.util.ArchiveUtils;
 
@@ -1169,5 +1171,11 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
         return substats;
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.modules.fetcher.FetchStats.CollectsFetchStats#tally(org.archive.modules.ProcessorURI, org.archive.modules.fetcher.FetchStats.Stage)
+     */
+    public void tally(ProcessorURI curi, Stage stage) {
+        substats.tally(curi, stage);
+    }
 }
  
