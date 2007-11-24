@@ -41,10 +41,14 @@ import org.archive.util.Reporter;
 public class FetchStats implements Serializable, FetchStatusCodes, Reporter {
     private static final long serialVersionUID = 8624425657056569036L;
 
-    public enum Stage {SCHEDULED, SUCCEEDED, RETRIED, DISREGARDED, FAILED};
+    public enum Stage {SCHEDULED, RELOCATED, RETRIED, 
+        SUCCEEDED, DISREGARDED, FAILED};
     
     public interface HasFetchStats {
         public FetchStats getSubstats();
+    }
+    public interface CollectsFetchStats {
+        public void tally(ProcessorURI curi, Stage stage); 
     }
     
     long totalScheduled;   // anything initially scheduled

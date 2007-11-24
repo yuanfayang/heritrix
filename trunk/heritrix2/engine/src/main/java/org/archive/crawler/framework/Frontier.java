@@ -525,8 +525,8 @@ public interface Frontier extends Module, Reporter {
      * of a Frontier's URIs -- usually queues. Currently only 
      * offers the HasCrawlSubstats interface. 
      */
-    public interface FrontierGroup extends FetchStats.HasFetchStats {
-
+    public interface FrontierGroup 
+    extends FetchStats.HasFetchStats, FetchStats.CollectsFetchStats {
     }
     
     /**
