@@ -13,6 +13,10 @@ precedence-floor-description:
 URI queues with a precedence value equal or greater than this number
 will not be consulted for URIs to crawl 
 
+uri-precedence-policy-description:
+URI precedence assignment policy to use (assigns integer precedence values
+to individual URIs; lower numbers are higher precedence)
+
 error-penalty-amount-description:
 whether to hold queues INACTIVE until needed for throughput 
 
