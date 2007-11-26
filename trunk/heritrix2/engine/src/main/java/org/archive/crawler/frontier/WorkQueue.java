@@ -3,6 +3,8 @@ package org.archive.crawler.frontier;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -10,7 +12,11 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.frontier.precedence.PrecedenceProvider;
+import org.archive.crawler.frontier.precedence.SimplePrecedenceProvider;
+import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats;
+import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.settings.SheetManager;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -32,6 +38,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     /** The classKey */
     protected final String classKey;
 
+    /** whether queue is active (ready/in-process/snoozed) or on a waiting queue */
     private boolean active = true;
 
     /** Total number of stored items */
@@ -47,7 +54,10 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     private long wakeTime = 0;
 
     /** assigned precedence */
-    private int precedence = -1; 
+    private PrecedenceProvider precedenceProvider = new SimplePrecedenceProvider(1);
+        
+    /** set of by-precedence inactive-queues on which WorkQueue is waiting */
+    private Set<Integer> onInactiveQueues = new HashSet<Integer>();
     
     /** Running 'budget' indicating whether queue should stay active */
     private int sessionBalance = 0;
@@ -592,6 +602,10 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
         writer.print(getSubstats().singleLineLegend());
         writer.print("\n   ");
         writer.print(getSubstats().singleLineReport());
+        writer.print("\n   ");
+        writer.print(getPrecedenceProvider().singleLineLegend());
+        writer.print("\n   ");
+        writer.print(getPrecedenceProvider().singleLineReport());
         writer.print("\n\n");
     }
     
@@ -613,17 +627,24 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     }
 
     /**
-     * @return the precedence
+     * @return the precedenceProvider
      */
-    public int getPrecedence() {
-        return precedence;
+    public PrecedenceProvider getPrecedenceProvider() {
+        return precedenceProvider;
     }
 
     /**
-     * @param precedence the precedence to set
+     * @param precedenceProvider the precedenceProvider to set
      */
-    public void setPrecedence(int precedence) {
-        this.precedence = precedence;
+    public void setPrecedenceProvider(PrecedenceProvider precedenceProvider) {
+        this.precedenceProvider = precedenceProvider;
+    }
+    
+    /**
+     * @return the precedence
+     */
+    public int getPrecedence() {
+        return precedenceProvider.getPrecedence();
     }
     
     public void setStateProvider(SheetManager manager) {
@@ -639,5 +660,24 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
             throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
         }
         return provider.get(module, key);
+    }
+
+    /**
+     * @return the onInactiveQueues
+     */
+    public Set<Integer> getOnInactiveQueues() {
+        return onInactiveQueues;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.modules.fetcher.FetchStats.HasFetchStats#tally(org.archive.modules.ProcessorURI, org.archive.modules.fetcher.FetchStats.Stage)
+     */
+    public void tally(ProcessorURI curi, Stage stage) {
+        substats.tally(curi, stage);
+        precedenceProvider.tally(curi, stage);
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }

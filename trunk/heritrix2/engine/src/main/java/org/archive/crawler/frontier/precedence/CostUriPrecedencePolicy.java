@@ -1,8 +1,8 @@
-/* PrecedencePolicy
+/* CostUriPrecedencePolicy
 *
 * $Id: CostAssignmentPolicy.java 4981 2007-03-12 07:06:01Z paul_jack $
 *
-* Created on Nov 17, 2007
+* Created on Nov 20, 2007
 *
 * Copyright (C) 2007 Internet Archive.
 *
@@ -21,30 +21,24 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
-package org.archive.crawler.frontier;
+*/
+package org.archive.crawler.frontier.precedence;
 
-import org.archive.state.Module;
+import org.archive.crawler.datamodel.CrawlURI;
 
 /**
- * Superclass for QueuePrecedencePolicies, which set a integer precedence value 
- * on uri-queues inside the frontier when the uri-queue is first created, and 
- * before the uri-queue is placed on a new internal queue-of-queues. 
+ * UriPrecedencePolicy which sets a URI's precedence to its 'cost' -- which
+ * simulates the in-queue sorting order in Heritrix 1.x, where cost 
+ * contributed the same bits to the queue-insert-key that precedence now does.
  */
-abstract public class QueuePrecedencePolicy implements Module {
-    
-    /**
-     * Set an appropriate initial precedence value on the given
-     * newly-created WorkQueue.
-     * 
-     * @param wq WorkQueue to modify
-     */
-    abstract public void queueCreated(WorkQueue wq);
+public class CostUriPrecedencePolicy extends UriPrecedencePolicy {
+    private static final long serialVersionUID = -8164425278358540710L;
 
-    /**
-     * Update an appropriate initial precedence value on the given
-     * already-existing WorkQueue.
-     * @param wq WorkQueue to modify
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.precedence.UriPrecedencePolicy#uriScheduled(org.archive.crawler.datamodel.CrawlURI)
      */
-    abstract public void queueReevaluate(WorkQueue wq);
+    @Override
+    public void uriScheduled(CrawlURI curi) {
+        curi.setPrecedence(curi.getHolderCost()); 
+    }
 }

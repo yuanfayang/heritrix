@@ -1,4 +1,4 @@
-/* PrecedencePolicy
+/* BaseQueuePrecedencePolicy
 *
 * $Id: CostAssignmentPolicy.java 4981 2007-03-12 07:06:01Z paul_jack $
 *
@@ -22,8 +22,9 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.frontier;
+package org.archive.crawler.frontier.precedence;
 
+import org.archive.crawler.frontier.WorkQueue;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 
@@ -34,11 +35,11 @@ import org.archive.state.KeyManager;
  * on when such changes are noted in a uri-queues lifecycle). 
  * 
  */
-public class SimpleQueuePrecedencePolicy extends QueuePrecedencePolicy {
+public class BaseQueuePrecedencePolicy extends QueuePrecedencePolicy {
     private static final long serialVersionUID = 8312032856661175869L;
     
     /** constant precedence to assign; default is 1 */
-    final public static Key<Integer> PRECEDENCE = 
+    final public static Key<Integer> BASE_PRECEDENCE = 
         Key.make(1);
     
     /* (non-Javadoc)
@@ -46,7 +47,29 @@ public class SimpleQueuePrecedencePolicy extends QueuePrecedencePolicy {
      */
     @Override
     public void queueCreated(WorkQueue wq) {
-        wq.setPrecedence(wq.get(this,PRECEDENCE));
+        installProvider(wq);
+    }
+
+    /**
+     * Install the appropriate provider helper object into the WorkQueue,
+     * if necessary. 
+     * 
+     * @param wq target WorkQueue this policy will operate on
+     */
+    protected void installProvider(WorkQueue wq) {
+        SimplePrecedenceProvider precedenceProvider = 
+            new SimplePrecedenceProvider(calculatePrecedence(wq));
+        wq.setPrecedenceProvider(precedenceProvider);
+    }
+
+    /**
+     * Calculate the precedence value for the given queue. 
+     * 
+     * @param wq WorkQueue
+     * @return int precedence value
+     */
+    protected int calculatePrecedence(WorkQueue wq) {
+        return wq.get(this,BASE_PRECEDENCE);
     }
 
     /* (non-Javadoc)
@@ -54,12 +77,23 @@ public class SimpleQueuePrecedencePolicy extends QueuePrecedencePolicy {
      */
     @Override
     public void queueReevaluate(WorkQueue wq) {
-        wq.setPrecedence(wq.get(this,PRECEDENCE));
+        PrecedenceProvider precedenceProvider =
+            wq.getPrecedenceProvider();
+        // TODO: consider if this fails to replace provider that is 
+        // a subclass of Simple when necessary
+        if(precedenceProvider instanceof SimplePrecedenceProvider) {
+            // reset inside provider
+            ((SimplePrecedenceProvider)precedenceProvider).setPrecedence(
+                    calculatePrecedence(wq));
+        } else {
+            // replace provider
+            installProvider(wq);
+        }
     }
 
     // good to keep at end of source: must run after all per-Key
     // initialization values are set.
     static {
-        KeyManager.addKeys(SimpleQueuePrecedencePolicy.class);
+        KeyManager.addKeys(BaseQueuePrecedencePolicy.class);
     }
 }
