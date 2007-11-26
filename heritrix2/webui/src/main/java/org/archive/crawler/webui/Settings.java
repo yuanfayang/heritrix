@@ -518,7 +518,7 @@ public class Settings {
         Class elementType = forName(container.getValue());
 
         Setting setting = new Setting();
-        setting.setPath(parentPath + ".new");
+        setting.setPath(parentPath);
         setting.setValue("");
         setting.setSheets(new String[] { sheet } );
         if (KeyTypes.isSimple(elementType)) {
