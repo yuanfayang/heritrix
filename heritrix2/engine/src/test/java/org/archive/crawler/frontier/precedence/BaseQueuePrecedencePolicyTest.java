@@ -24,24 +24,25 @@
  * $Id:$
  */
 
-package org.archive.crawler.frontier;
+package org.archive.crawler.frontier.precedence;
 
+import org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy;
 import org.archive.state.ModuleTestBase;
 
 
 /**
- * Tests for SimpleQueuePrecedencePolicy
+ * Tests for BaseQueuePrecedencePolicy
  */
-public class SimpleQueuePrecedencePolicyTest extends ModuleTestBase {
+public class BaseQueuePrecedencePolicyTest extends ModuleTestBase {
 
     @Override
     protected Class<?> getModuleClass() {
-        return SimpleQueuePrecedencePolicy.class;
+        return BaseQueuePrecedencePolicy.class;
     }
 
     @Override
     protected Object makeModule() throws Exception {
-        return new SimpleQueuePrecedencePolicy();
+        return new BaseQueuePrecedencePolicy();
     }
 
     

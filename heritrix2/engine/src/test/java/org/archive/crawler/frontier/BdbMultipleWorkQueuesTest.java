@@ -72,14 +72,14 @@ public class BdbMultipleWorkQueuesTest extends TestCase {
                 new CrawlURI(UURIFactory.getInstance("http://archive.org/zle"));
             CrawlURI curi4 = new CrawlURI(cauri4, ordinalOrigin + 3);
             curi4.setClassKey("foo");
-            curi4.setHolderCost(2);
+            curi4.setPrecedence(2);
             byte[] key4 = 
                 BdbMultipleWorkQueues.calculateInsertKey(curi4).getData();
             CrawlURI cauri5 = 
                 new CrawlURI(UURIFactory.getInstance("http://archive.org/gru"));
             CrawlURI curi5 = new CrawlURI(cauri5, ordinalOrigin + 4);
             curi5.setClassKey("foo");
-            curi5.setHolderCost(1);
+            curi5.setPrecedence(1);
             byte[] key5 = 
                 BdbMultipleWorkQueues.calculateInsertKey(curi5).getData();
             // ensure that key1 (with lower ordinal) sorts before key2 (higher
