@@ -17,33 +17,35 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * SuccessCountsQueuePrecedencePolicyTest.java
+ * SimpleQueuePrecedencePolicyTest.java
  *
  * Created on Nov 17, 2007
  *
  * $Id:$
  */
 
-package org.archive.crawler.frontier;
+package org.archive.crawler.frontier.precedence;
 
 import org.archive.state.ModuleTestBase;
 
 
 /**
- * Tests for SuccessCountsQueuePrecedencePolicy
+ * Tests for HopsUriPrecedencePolicy
  */
-public class SuccessCountsQueuePrecedencePolicyTest extends ModuleTestBase {
+public class HopsUriPrecedencePolicyTest extends ModuleTestBase {
 
     @Override
-    protected Class getModuleClass() {
-        return SuccessCountsQueuePrecedencePolicy.class;
+    protected Class<?> getModuleClass() {
+        return HopsUriPrecedencePolicy.class;
     }
 
     @Override
     protected Object makeModule() throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return new HopsUriPrecedencePolicy();
     }
+
+    
+
 
 }
 
