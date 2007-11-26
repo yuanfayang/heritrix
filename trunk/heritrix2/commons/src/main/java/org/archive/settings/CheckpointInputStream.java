@@ -53,6 +53,10 @@ implements CheckpointRecovery {
         this.recovery = recovery;
     }
 
+    
+    public String getRecoveredJobName() {
+        return recovery.getRecoveredJobName();
+    }
 
     public <T> void setState(Object module, Key<T> key, T value) {
         recovery.setState(module, key, value);

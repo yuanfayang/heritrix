@@ -802,7 +802,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             String oldActive = JobStage.encode(JobStage.ACTIVE, 
                     JobStage.getJobName(oldJob));
             
-            DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery();
+            DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery(
+                    newName);
             cr.getFileTranslations().put(new File(getJobsDir(), oldActive).getAbsolutePath(), 
                     dest.getAbsolutePath());
             for (int i = 0; i < oldPaths.length; i++) {

@@ -50,16 +50,20 @@ public class DefaultCheckpointRecovery implements CheckpointRecovery {
     final private Map<String,String> fileTranslations = 
         new HashMap<String,String>();
 
+    final private String name;
     
-    public DefaultCheckpointRecovery() {
+    public DefaultCheckpointRecovery(String name) {
+        this.name = name;
     }
 
-    
+    public String getRecoveredJobName() {
+        return name;
+    }
+
     public Map<String,String> getFileTranslations() {
         return fileTranslations;
     }
-    
-    
+
     public Map<URI,URI> getURITranslations() {
         return uriTranslations;
     }

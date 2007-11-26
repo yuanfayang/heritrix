@@ -56,7 +56,7 @@ public class BdbModuleTest extends TmpDirTestCase {
         File second = new File(getTmpDir(), "second");
         FileUtils.deleteDir(second);
         
-        DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery();
+        DefaultCheckpointRecovery cr = new DefaultCheckpointRecovery("job");
         cr.getFileTranslations().put(first.getAbsolutePath(), 
                 second.getAbsolutePath());
         SheetManager mgr2 = Checkpointer.recover(checkpointDir, cr);

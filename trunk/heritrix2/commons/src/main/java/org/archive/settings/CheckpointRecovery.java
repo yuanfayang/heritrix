@@ -37,6 +37,7 @@ import org.archive.state.Key;
  */
 public interface CheckpointRecovery {
 
+    String getRecoveredJobName();
     
     String translatePath(String path);
     
