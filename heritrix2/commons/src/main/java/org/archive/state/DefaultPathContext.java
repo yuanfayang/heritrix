@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 import org.archive.settings.CheckpointRecovery;
@@ -23,10 +23,15 @@ public class DefaultPathContext implements PathContext, Serializable {
 
     private File baseDir;
     private Map<String,String> variables;
-    
-    public DefaultPathContext(File baseDir) {
+
+    public DefaultPathContext(File baseDir, Map<String,String> vars) {
         this.baseDir = baseDir;
-        this.variables = new HashMap<String,String>();
+        this.variables = Collections.unmodifiableMap(vars);        
+    }
+    
+    @SuppressWarnings("unchecked")
+    public DefaultPathContext(File baseDir) {
+        this(baseDir, (Map)Collections.emptyMap());
     }
 
     public File getBaseDir() {

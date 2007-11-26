@@ -220,9 +220,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             Collection<ModuleListener> listeners) 
     throws IOException, DatabaseException {
         super(name, listeners, online);
-        this.mainConfig = main;
-        
-        this.pathContext = new DefaultPathContext(mainConfig.getParentFile());
+        this.mainConfig = main;        
+        this.pathContext = new FSMPathContext(mainConfig.getParentFile(), name);
 
         Properties p = load(main);
         
@@ -934,5 +933,4 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     public PathContext getPathContext() {
         return pathContext;
     }
-
 }
