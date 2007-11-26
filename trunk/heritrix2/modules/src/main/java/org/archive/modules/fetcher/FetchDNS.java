@@ -172,7 +172,7 @@ public class FetchDNS extends Processor implements Initializable {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Failed find of recordset for " + dnsName);
             }
-            if (curi.get(this, ACCEPT_NON_DNS_RESOLVES)) {
+            if (curi.get(this, ACCEPT_NON_DNS_RESOLVES)||"localhost".equals(dnsName)) {
                 // Do lookup that bypasses javadns.
                 InetAddress address = null;
                 try {
