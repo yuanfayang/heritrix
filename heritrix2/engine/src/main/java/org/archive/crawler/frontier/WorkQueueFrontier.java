@@ -30,12 +30,9 @@ import it.unimi.dsi.fastutil.Maps;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,6 +55,11 @@ import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
+import org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy;
+import org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy;
+import org.archive.crawler.frontier.precedence.CostUriPrecedencePolicy;
+import org.archive.crawler.frontier.precedence.QueuePrecedencePolicy;
+import org.archive.crawler.frontier.precedence.UriPrecedencePolicy;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
@@ -129,16 +131,21 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     final public static Key<CostAssignmentPolicy> COST_POLICY = 
         Key.make(CostAssignmentPolicy.class, new UnitCostAssignmentPolicy());
     
-    /** precedence assignment policy to use. */
+    /** queue precedence assignment policy to use. */
     @Expert
     final public static Key<QueuePrecedencePolicy> QUEUE_PRECEDENCE_POLICY = 
-        Key.make(QueuePrecedencePolicy.class, new SimpleQueuePrecedencePolicy());
+        Key.make(QueuePrecedencePolicy.class, new BaseQueuePrecedencePolicy());
 
     /** precedence rank at or below which queues are not crawled */
     @Expert
     final public static Key<Integer> PRECEDENCE_FLOOR = 
         Key.make(255);
     
+    /** URI precedence assignment policy to use. */
+    @Expert
+    final public static Key<UriPrecedencePolicy> URI_PRECEDENCE_POLICY = 
+        Key.make(UriPrecedencePolicy.class, new CostUriPrecedencePolicy());
+
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
     protected UriUniqFilter alreadyIncluded;
@@ -266,8 +273,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         CrawlURI curi = asCrawlUri(caUri);
         applySpecialHandling(curi);
         sendToQueue(curi);
-        // Update recovery log.
-        doJournalAdded(curi);
+
     }
     
     /**
@@ -297,6 +303,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
 		CrawlURI curi = super.asCrawlUri(caUri);
 		// force cost to be calculated, pre-insert
 		getCost(curi);
+        // set
+        curi.get(this,URI_PRECEDENCE_POLICY)
+            .uriScheduled(curi);
 		return curi;
 	}
 	
@@ -309,24 +318,49 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         assert Thread.currentThread() == managerThread;
         
         WorkQueue wq = getQueueFor(curi);
-
-            wq.enqueue(this, curi);
-            if(!wq.isRetired()) {
-                incrementQueuedUriCount();
-            }
-            if(!wq.isHeld()) {
-                wq.setHeld();
-                if(holdQueues()) {
+        int originalPrecedence = wq.getPrecedence();
+        
+        wq.enqueue(this, curi);
+        // Update recovery log.
+        doJournalAdded(curi);
+        
+        if(wq.isRetired()) {
+            return; 
+        }
+        incrementQueuedUriCount();
+        if(wq.isHeld()) {
+            if(wq.isActive()) {
+                // queue active -- promote will be handled ok by normal cycling
+                // do nothing
+            } else {
+                // queue is already in a waiting inactive queue; update
+                int currentPrecedence = wq.getPrecedence();
+                if(currentPrecedence < originalPrecedence ) {
+                    // queue bumped up; adjust ordering
                     deactivateQueue(wq);
+                    // this intentionally places queue in duplicate inactiveQueue\
+                    // only when it comes off the right queue will it activate;
+                    // otherwise it reenqueues to right inactive queue, if not
+                    // already there (see activateInactiveQueue())
                 } else {
-                    replenishSessionBalance(wq);
-                    readyQueue(wq);
+                    // queue bumped down or stayed same; 
+                    // do nothing until it comes up
                 }
+            } 
+        } else {
+            // begin juggling queue between internal ordering structures
+            wq.setHeld();
+            if(holdQueues()) {
+                deactivateQueue(wq);
+            } else {
+                replenishSessionBalance(wq);
+                readyQueue(wq);
             }
-            WorkQueue laq = longestActiveQueue;
-            if(!wq.isRetired()&&((laq==null) || wq.getCount() > laq.getCount())) {
-                longestActiveQueue = wq; 
-            }
+        }
+        WorkQueue laq = longestActiveQueue;
+        if(((laq==null) || wq.getCount() > laq.getCount())) {
+            longestActiveQueue = wq; 
+        }
 
     }
 
@@ -366,10 +400,15 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         assert Thread.currentThread() == managerThread;
         
         wq.setSessionBalance(0); // zero out session balance
-        Queue<String> inactiveQueues = getInactiveQueuesForPrecedence(wq.getPrecedence());
-        inactiveQueues.add(wq.getClassKey());
-        if(wq.getPrecedence() < highestPrecedenceWaiting ) {
-            highestPrecedenceWaiting = wq.getPrecedence();
+        int precedence = wq.getPrecedence();
+        if(!wq.getOnInactiveQueues().contains(precedence)) {
+            // not already on target, add
+            Queue<String> inactiveQueues = getInactiveQueuesForPrecedence(precedence);
+            inactiveQueues.add(wq.getClassKey());
+            wq.getOnInactiveQueues().add(precedence);
+            if(wq.getPrecedence() < highestPrecedenceWaiting ) {
+                highestPrecedenceWaiting = wq.getPrecedence();
+            }
         }
         wq.setActive(this, false);
     }
@@ -526,8 +565,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                         // URI's assigned queue has changed since it
                         // was queued (eg because its IP has become
                         // known). Requeue to new queue.
-                        curi.setClassKey(currentQueueKey);
                         readyQ.dequeue(this);
+                        doJournalRelocated(curi);
+                        curi.setClassKey(currentQueueKey);
                         decrementQueuedCount(1);
                         curi.setHolderKey(null);
                         // curi will be requeued to true queue after lock
@@ -588,20 +628,34 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         SortedMap<Integer,Queue<String>> inactiveQueuesByPrecedence = 
             getInactiveQueuesByPrecedence();
         
+        int targetPrecedence = highestPrecedenceWaiting;
         Queue<String> inactiveQueues = inactiveQueuesByPrecedence.get(
-                highestPrecedenceWaiting);
+                targetPrecedence);
 
         Object key = inactiveQueues.poll();
         assert key != null : "empty precedence queue in map";
         
         if(inactiveQueues.isEmpty()) {
-            updateHighestWaiting(highestPrecedenceWaiting+1);
+            updateHighestWaiting(targetPrecedence+1);
         }
         
         WorkQueue candidateQ = (WorkQueue) this.allQueues.get(key);
         
         assert candidateQ != null : "missing uri work queue";
         
+        boolean was = candidateQ.getOnInactiveQueues().remove(targetPrecedence);
+        
+        assert was : "queue didn't know it was in "+targetPrecedence+" inactives";
+        
+        if(candidateQ.getPrecedence() < targetPrecedence) {
+            // queue moved up; do nothing (already handled)
+            return; 
+        }
+        if(candidateQ.getPrecedence() > targetPrecedence) {
+            // queue moved down; deactivate to new level
+            deactivateQueue(candidateQ);
+            return; 
+        }
         replenishSessionBalance(candidateQ);
         if (candidateQ.isOverBudget()) {
             // if still over-budget after an activation & replenishing,
@@ -707,6 +761,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     protected void wakeQueues() {
         WorkQueue waked; 
         while((waked = snoozedClassQueues.poll())!=null) {
+            waked.setWakeTime(0);
             reenqueueQueue(waked);
         }
     }
@@ -1312,11 +1367,14 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private void readObject(ObjectInputStream stream)
+    private void readObject(java.io.ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        WorkQueue[] queues = (WorkQueue[])stream.readObject();
-        snoozedClassQueues = new DelayQueue<WorkQueue>(Arrays.asList(queues));
+        String[] snoozedNames = (String[]) stream.readObject();
+        snoozedClassQueues = new DelayQueue<WorkQueue>();
+        for(int i = 0; i < snoozedNames.length; i++) {
+            snoozedClassQueues.add(getQueueFor(snoozedNames[i]));
+        }
     }
     
     /**
@@ -1326,11 +1384,10 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param stream
      * @throws IOException
      */
-    private void writeObject(ObjectOutputStream stream)
+    private void writeObject(java.io.ObjectOutputStream stream)
     throws IOException {
         stream.defaultWriteObject();
         WorkQueue[] snoozed = snoozedClassQueues.toArray(new WorkQueue[0]);
-        stream.writeObject(snoozed);
         String[] snoozedNames = new String[snoozed.length];
         for(int i = 0;i<snoozed.length;i++) {
             snoozedNames[i] = snoozed[i].getClassKey();

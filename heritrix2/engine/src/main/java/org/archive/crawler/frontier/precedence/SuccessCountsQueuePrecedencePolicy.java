@@ -22,14 +22,16 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.frontier;
+package org.archive.crawler.frontier.precedence;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
+import org.archive.crawler.frontier.WorkQueue;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 
@@ -44,31 +46,44 @@ import org.archive.state.KeyManager;
  * continue to drop one precedence rank for each 1000 URIs successfully 
  * fetched.
  */
-public class SuccessCountsQueuePrecedencePolicy extends QueuePrecedencePolicy {
+public class SuccessCountsQueuePrecedencePolicy extends BaseQueuePrecedencePolicy {
     private static final long serialVersionUID = -4469760728466350850L;
-    
-    /** base precedence to assign */
-    final public static Key<Integer> BASE_PRECEDENCE = 
-        Key.make(1);
-    
+
+// TODO: determine why this doesn't work
+//
+//    /** comma-separated list of success-counts at which precedence is bumped*/
+//    final public static Key<List<Integer>> INCREMENT_COUNTS = 
+//        Key.make((List<Integer>)Arrays.asList(new Integer[] {100}));
+//
+//    /**
+//     * @param wq
+//     * @return
+//     */
+//    protected int calculatePrecedence(WorkQueue wq) {
+//        // FIXME: it's inefficient to do this every time; optimizing 
+//        // should be possible via more sophisticated custom PrecedenceProvider
+//        int precedence = wq.get(this,BASE_PRECEDENCE) - 1;
+//        Iterator<Integer> iter = wq.get(this,INCREMENT_COUNTS).iterator();
+//        int increment = iter.next(); 
+//        long successes = wq.getSubstats().getFetchSuccesses();
+//        while(successes>0) {
+//            successes -= increment;
+//            precedence++;
+//            increment = iter.hasNext() ? iter.next() : increment; 
+//        }
+//        return precedence;
+//    }
+
     /** comma-separated list of success-counts at which precedence is bumped*/
     final public static Key<String> INCREMENT_COUNTS = 
         Key.make("100,1000");
-    
-    /* (non-Javadoc)
-     * @see org.archive.crawler.frontier.QueuePrecedencePolicy#queueCreated(org.archive.crawler.frontier.WorkQueue)
-     */
-    @Override
-    public void queueCreated(WorkQueue wq) {
-        wq.setPrecedence(wq.get(this,BASE_PRECEDENCE));
-    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.QueuePrecedencePolicy#queueReevaluate(org.archive.crawler.frontier.WorkQueue)
      */
     @SuppressWarnings("unchecked")
     @Override
-    public void queueReevaluate(WorkQueue wq) {
+    protected int calculatePrecedence(WorkQueue wq) {
         // FIXME: it's ridiculously inefficient to do this every time, 
         // and optimizing will probably require inserting stateful policy 
         // helper object into WorkQueue -- expected when URI-precedence is
@@ -83,14 +98,15 @@ public class SuccessCountsQueuePrecedencePolicy extends QueuePrecedencePolicy {
         Iterator<Integer> iter = increments.iterator();
         int increment = iter.next(); 
         long successes = wq.getSubstats().getFetchSuccesses();
-        while(successes>0) {
+        while(successes>=0) {
             successes -= increment;
             precedence++;
             increment = iter.hasNext() ? iter.next() : increment; 
         }
-        wq.setPrecedence(precedence);
+        return precedence;
     }
 
+    
     // good to keep at end of source: must run after all per-Key
     // initialization values are set.
     static {

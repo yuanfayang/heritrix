@@ -402,12 +402,12 @@ public class BdbMultipleWorkQueues {
      * byte. Then 8 bytes of data ensuring desired ordering 
      * within that 'queue' are used. The first byte of these 8 is
      * priority -- allowing 'immediate' and 'soon' items to 
-     * sort above regular. Next 1 byte is 'cost'. Last 6 bytes 
+     * sort above regular. Next 1 byte is 'precedence'. Last 6 bytes 
      * are ordinal serial number, ensuring earlier-discovered 
      * URIs sort before later. 
      * 
      * NOTE: Dangers here are:
-     * (1) priorities or costs over 2^7 (signed byte comparison)
+     * (1) priorities or precedences over 2^7 (signed byte comparison)
      * (2) ordinals over 2^48
      * 
      * Package access & static for testing purposes. 
@@ -431,8 +431,9 @@ public class BdbMultipleWorkQueues {
         long ordinalPlus = curi.getOrdinal() & 0x0000FFFFFFFFFFFFL;
         ordinalPlus = 
         	((long)curi.getSchedulingDirective() << 56) | ordinalPlus;
+        long precedence = Math.min(curi.getPrecedence(), 127);
         ordinalPlus = 
-        	((((long)curi.getHolderCost()) & 0xFFL) << 48) | ordinalPlus;
+        	(((precedence) & 0xFFL) << 48) | ordinalPlus;
         ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, len+1);
         return new DatabaseEntry(keyData);
     }
