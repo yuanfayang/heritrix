@@ -34,6 +34,9 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,6 +100,9 @@ public class WebUIJUnit extends TmpDirTestCase {
     private String host;
     private String urlSheets;
     
+    // Cookie used for authentication.
+    private String jSessionId;
+    
     /**
      * Starts Jetty, starts Heritrix.
      */
@@ -119,6 +125,12 @@ public class WebUIJUnit extends TmpDirTestCase {
         config.setJobsDirectory(getJobsDir().getAbsolutePath());
         this.manager = new CrawlJobManagerImpl(config);
         this.managerId = System.identityHashCode(manager);
+        
+        // Authenticate a session.
+        doGet("/");
+        doGet("/auth.jsp?enteredPassword=x");        
+        doGet("/home/do_show_home.jsp");
+
     }
     
 
@@ -149,26 +161,83 @@ public class WebUIJUnit extends TmpDirTestCase {
     }
     
     
+    
+    
+    
     /**
      * Tests the webui.
      */
     public void testWebui() throws Exception  {
-/*        doGet("/heritrix");
-        doGet("/heritrix/home/do_show_add_crawler.jsp");
         
-        doPost("/heritrix/home/do_add_crawler.jsp",
-                "host", "localhost",
-                "port", "-1",
-                "username", "local",
-                "password", "local");
-
         String url = findHref("do_show_crawler.jsp", managerId);
         this.host = extract(url, "host");
         doGet(url);
-        
+
+        // Starting with basic profile, override operator-from and 
+        // operator-contact-url in the global sheet.        
         this.urlSheets = findHref("do_show_sheets.jsp", managerId, "basic");
         doGet(urlSheets);
         
+        String editorUrl = findHref("do_show_sheet_editor.jsp", managerId, "global");
+        
+        overrideGlobal(editorUrl, "root:metadata:operator-contact-url", 
+                "string", "http://crawler.archive.org");
+        overrideGlobal(editorUrl, "root:metadata:operator-from", 
+                "string", "info@archive.org");
+
+        url = findHref("do_commit_sheet.jsp", managerId, "global");
+        doGet(url);
+        
+        // Add seeds to the basic profile        
+        url = findHref("do_show_seeds.jsp", managerId, "basic");
+        doGet(url);
+
+        doAutoPost("do_save_seeds.jsp", 
+                "seeds",
+                "http://crawler.archive.org");
+        
+        // Copy basic profile to new ready job and launch
+        url = findHref("do_show_crawler.jsp", managerId);
+        doGet(url);
+        
+        url = findHref("do_show_copy.jsp", managerId, "basic");
+        doGet(url);
+
+        doAutoPost("do_copy.jsp", 
+                "newStage", "READY",
+                "newName", "job1"
+                );
+        
+        url = findHref("do_launch.jsp", managerId, "job1");
+        doGet(url);
+        
+        final URL consoleUrl = toURL(findHref("do_show_job_console.jsp", 
+                managerId, "job1"));
+        
+        Thread[] threads = new Thread[20];
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = new Thread() {
+                public void run() {
+                    while (true) try {
+                        HttpURLConnection conn = (HttpURLConnection)
+                            (consoleUrl.openConnection());
+                        setCookie(conn);
+                        InputStream input = null;
+                        try {
+                            input = conn.getInputStream();
+                            parseCookie(conn);
+                        } finally {
+                            IoUtils.close(input);
+                        }
+                    } catch (Exception e) {
+                        return;
+                    }
+                }
+            };
+            threads[i].start();
+        }
+        
+        /*
         addSingleAndOverride(
                 "foo", 
                 "root:controller:processors:HTTP:sotimeout-ms", 
@@ -200,6 +269,26 @@ public class WebUIJUnit extends TmpDirTestCase {
         }
     }
 
+    
+    private void overrideGlobal(String editorUrl, String path, String type, 
+            String newValue) 
+    throws Exception {
+        doGet(editorUrl);
+
+        String add = find("value=\\\"(" + path + "\\`.*?)\\\"");
+        doAutoPost("do_save_single_sheet.jsp", "add", add);
+        
+        // Previous post actually results in a 302 redirect...
+        doGet(editorUrl);
+        
+        doAutoPost("do_save_single_sheet.jsp", 
+                "1", path,
+                "type-" + path, type,
+                "value-" + path, newValue);
+        
+        doGet(editorUrl);
+    }
+    
     
     /**
      * Creates a new single sheet, overrides a setting on that sheet, commits
@@ -331,29 +420,66 @@ public class WebUIJUnit extends TmpDirTestCase {
     }
     
     
+    private void setCookie(HttpURLConnection conn) {
+        System.out.println("Setting request cookie to " + jSessionId);
+        if (jSessionId != null) {
+            conn.setRequestProperty("Cookie", jSessionId);
+        }
+    }
+    
+    
     private void doGet(String urlString) throws Exception {
+        System.out.println("-----");
+        System.out.println("doGet: " + urlString);
         URL url = toURL(urlString);
+        System.out.println("full url: " + url);
         HttpURLConnection conn = (HttpURLConnection)(url.openConnection());
+        setCookie(conn);
         InputStream input = null;
         try {
             input = conn.getInputStream();
+            parseCookie(conn);
             lastUrl = url;
             lastFetched = IoUtils.readFullyAsString(conn.getInputStream());
-            System.out.println("Fetched: " + urlString);
+            System.out.println("New request cookie to : " + jSessionId);
         } finally {
             IoUtils.close(input);
         }
     }
     
     
+    private void doAutoPost(String urlString, String... pairs) throws Exception {
+        List<String> pairList = new ArrayList<String>();
+        pairList.addAll(Arrays.asList(pairs));
+        for (String s: new String[] { "host", "port", "id", "stage", "job", "sheet" }) {
+            String regex = "<input type=\"hidden\" name=\"" + s + "\" value=\"(.*?)\"";
+            try {
+                String value = find(regex);
+                pairList.add(s);
+                pairList.add(value);
+            } catch (IllegalStateException e) {
+                // Ignore; just means pattern wasn't matched.
+            }
+        }
+        doPost(urlString, pairList.toArray(new String[pairList.size()]));
+    }
 
     private void doPost(String urlString, String... pairs) throws Exception {
+        System.out.println("-----");
+        System.out.println("doPost: " + urlString);
+
         if (pairs.length % 2 != 0) {
             throw new IllegalArgumentException("Pairs must come in pairs.");
         }
         URL url = toURL(urlString);
+        System.out.println("full URL: " + url);
+        for (int i = 0; i < pairs.length; i += 2) {
+            System.out.println(pairs[i] + "=" + pairs[i + 1]);
+        }
         HttpURLConnection conn = (HttpURLConnection)(url.openConnection());
         conn.setDoOutput(true);
+        conn.setInstanceFollowRedirects(false);
+        setCookie(conn);
         OutputStreamWriter wr = null;
         try {
             wr = new OutputStreamWriter(conn.getOutputStream());
@@ -378,8 +504,31 @@ public class WebUIJUnit extends TmpDirTestCase {
             input = conn.getInputStream();
             lastUrl = url;
             lastFetched = IoUtils.readFullyAsString(conn.getInputStream());
+            parseCookie(conn);
+            System.out.println("Response: " + conn.getResponseCode());
+            System.out.println("Request Cookie is now: " + jSessionId);
+            System.out.println(lastFetched);
         } finally {
             IoUtils.close(input);
+        }
+    }
+    
+    
+    private void parseCookie(HttpURLConnection conn) {
+        String cookie = conn.getHeaderField("Set-Cookie");
+        System.out.println("Parse cookie: " + cookie);
+        if (cookie == null) {
+            return;
+        }
+        int p1 = cookie.indexOf("JSESSIONID=");
+        if (p1 < 0) {
+            return;
+        }
+        int p2 = cookie.indexOf(";", p1);
+        if (p2 < 0) {
+            jSessionId = cookie.substring(p1);
+        } else {
+            jSessionId = cookie.substring(p1, p2);
         }
     }
 
@@ -459,3 +608,4 @@ public class WebUIJUnit extends TmpDirTestCase {
     }
 
 }
+
