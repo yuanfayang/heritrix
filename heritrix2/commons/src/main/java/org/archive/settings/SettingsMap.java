@@ -160,8 +160,26 @@ Serializable, TypeSubstitution {
         return new KeySet<T>(delegate.entrySet());
     }
 
-
+    
+    private void validate(String key, Object value) {
+        if (key.indexOf(':') >= 0) {
+            throw new IllegalArgumentException(
+               "Keys cannot contain a colon.");
+        }
+        if ((key.indexOf('\n') >= 0) || (key.indexOf('\r') >= 0)) {
+            throw new IllegalArgumentException("Keys cannot contain a newline.");
+        }
+        if (value instanceof String) {
+            String s = (String)value;
+            if ((s.indexOf('\n') >= 0) || (s.indexOf('\r') >= 0)) {
+                throw new IllegalArgumentException(
+                        "Values cannot contain a newline.");
+            }
+        }
+    }
+    
     public T put(String key, T value) {
+        validate(key, value);
         T old = delegate.put(key, value);
         manager.fireModuleChanged(old, value);
         return old;
@@ -172,6 +190,7 @@ Serializable, TypeSubstitution {
         for (Map.Entry<? extends String, ? extends T> me: t.entrySet()) {
             String key = me.getKey();
             T value = me.getValue();
+            validate(key, value);
             T old = delegate.put(key, value);
             manager.fireModuleChanged(old, value);
         }

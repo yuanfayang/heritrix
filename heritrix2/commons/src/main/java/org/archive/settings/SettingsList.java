@@ -114,14 +114,26 @@ implements TypedList<T>, TypeSubstitution, Serializable {
         return delegate;
     }
 
+    
+    private void validate(T element) {
+        if (element instanceof String) {
+            String s = (String)element;
+            if ((s.indexOf('\n') >= 0) || (s.indexOf('\r') >= 0)) {
+                throw new IllegalArgumentException("List elements cannot contain a newline.");
+            }
+        }
+    }
+    
 
     public void add(int index, T element) {
+        validate(element);
         delegate.add(index, element);
         manager.fireModuleChanged(null, element);
     }
 
 
     public boolean add(T o) {
+        validate(o);
         manager.fireModuleChanged(null, o);
         return delegate.add(o);
     }
@@ -129,6 +141,7 @@ implements TypedList<T>, TypeSubstitution, Serializable {
     
     public boolean addAll(Collection<? extends T> c) {
         for (T t: c) {
+            validate(t);
             manager.fireModuleChanged(null, t);
         }
         return delegate.addAll(c);
@@ -137,6 +150,7 @@ implements TypedList<T>, TypeSubstitution, Serializable {
     
     public boolean addAll(int index, Collection<? extends T> c) {
         for (T t: c) {
+            validate(t);
             manager.fireModuleChanged(null, t);
         }
         return delegate.addAll(index, c);
@@ -237,6 +251,7 @@ implements TypedList<T>, TypeSubstitution, Serializable {
 
     
     public T set(int index, T element) {
+        validate(element);
         T old = delegate.set(index, element);
         manager.fireModuleChanged(old, element);
         return old;

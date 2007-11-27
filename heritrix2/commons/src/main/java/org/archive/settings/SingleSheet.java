@@ -339,6 +339,14 @@ public class SingleSheet extends Sheet {
             }
         }
         
+        if (v instanceof String) {
+            String s = (String)v;
+            if ((s.indexOf('\n') >= 0) || (s.indexOf('\r') >= 0)) {
+                throw new IllegalArgumentException(
+                        "String values must not contain new lines.");
+            }
+        }
+        
         // Module and value are of the correct type, and value is valid.
         set2(module, key, value);
     }
