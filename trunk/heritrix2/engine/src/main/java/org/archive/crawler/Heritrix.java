@@ -207,13 +207,12 @@ public class Heritrix {
         PrintStream out;
         if (isDevelopment()) {
             out = System.out;
-            out.println("development output");
+            out.println("heritrix.development mode");
         } else {
             File startLog = new File(getHeritrixHome(), STARTLOG);
             out = new PrintStream(
                     new BufferedOutputStream(
                             new FileOutputStream(startLog),16384));
-            out.println(STARTLOG+" output");
         }
 
 
