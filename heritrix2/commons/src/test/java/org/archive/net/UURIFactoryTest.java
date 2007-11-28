@@ -610,6 +610,77 @@ public class UURIFactoryTest extends TestCase {
 		
 	}
 	
+    public final void testRFC3986RelativeChange() throws URIException {
+         UURI base = UURIFactory.getInstance("http://a/b/c/d;p?q");
+         tryRelative(base, "?y", "http://a/b/c/d;p?y");
+    }
+	        
+    /**
+     * Tests from rfc3986
+     *
+     * <pre>
+     *       "g:h"           =  "g:h"
+     *       "g"             =  "http://a/b/c/g"
+     *       "./g"           =  "http://a/b/c/g"
+     *       "g/"            =  "http://a/b/c/g/"
+     *       "/g"            =  "http://a/g"
+     *       "//g"           =  "http://g"
+     *       "?y"            =  "http://a/b/c/d;p?y"
+     *       "g?y"           =  "http://a/b/c/g?y"
+     *       "#s"            =  "http://a/b/c/d;p?q#s"
+     *       "g#s"           =  "http://a/b/c/g#s"
+     *       "g?y#s"         =  "http://a/b/c/g?y#s"
+     *       ";x"            =  "http://a/b/c/;x"
+     *       "g;x"           =  "http://a/b/c/g;x"
+     *       "g;x?y#s"       =  "http://a/b/c/g;x?y#s"
+     *       ""              =  "http://a/b/c/d;p?q"
+     *       "."             =  "http://a/b/c/"
+     *       "./"            =  "http://a/b/c/"
+     *       ".."            =  "http://a/b/"
+     *       "../"           =  "http://a/b/"
+     *       "../g"          =  "http://a/b/g"
+     *       "../.."         =  "http://a/"
+     *       "../../"        =  "http://a/"
+     *       "../../g"       =  "http://a/g"
+     * </pre>
+     *
+     * @throws URIException
+     */
+    public final void testRFC3986Relative() throws URIException {
+        UURI base = UURIFactory.getInstance("http://a/b/c/d;p?q");
+        tryRelative(base, "g:h",    "g:h");
+        tryRelative(base, "g",      "http://a/b/c/g");
+        tryRelative(base, "./g",    "http://a/b/c/g");
+        tryRelative(base, "g/",     "http://a/b/c/g/");
+        tryRelative(base, "/g",     "http://a/g");
+        tryRelative(base, "//g",    "http://g");
+        tryRelative(base, "?y",     "http://a/b/c/d;p?y");
+        tryRelative(base, "g?y",    "http://a/b/c/g?y");
+        tryRelative(base, "#s",     "http://a/b/c/d;p?q#s");
+        tryRelative(base, "g#s",    "http://a/b/c/g#s");
+        tryRelative(base, "g?y#s",  "http://a/b/c/g?y#s");
+        tryRelative(base, ";x",     "http://a/b/c/;x");
+        tryRelative(base, "g;x",    "http://a/b/c/g;x");
+        tryRelative(base, "g;x?y#s","http://a/b/c/g;x?y#s");
+        tryRelative(base, "",       "http://a/b/c/d;p?q");
+        tryRelative(base, ".",      "http://a/b/c/");
+        tryRelative(base, "./",     "http://a/b/c/");
+        tryRelative(base, "..",     "http://a/b/");
+        tryRelative(base, "../",    "http://a/b/");
+        tryRelative(base, "../g",   "http://a/b/g");
+        tryRelative(base, "../..",  "http://a/");
+        tryRelative(base, "../../", "http://a/");
+        tryRelative(base, "../../g","http://a/g");
+    }
+	    
+    protected void tryRelative(UURI base, String relative, String expected) 
+    throws URIException {
+        UURI uuri = UURIFactory.getInstance(base, relative);
+        assertEquals("Derelativized " + relative + " gave " 
+              + uuri + " not " + expected,
+	                uuri,UURIFactory.getInstance(expected));
+    }
+	
 	/**
 	 * Tests from rfc2396 with amendments to accomodate differences
 	 * intentionally added to make our URI handling like IEs.
@@ -663,7 +734,8 @@ public class UURIFactoryTest extends TestCase {
 		m.put("g/", "http://a/b/c/g/");
 		m.put("/g", "http://a/g");
 		m.put("//g", "http://g");
-		m.put("?y", "http://a/b/c/?y");
+	   // CHANGED BY RFC3986
+                // m.put("?y", "http://a/b/c/?y");
 		m.put("g?y", "http://a/b/c/g?y");
 		// EXTRAS beyond the RFC set.
 		// TODO: That these resolve to a path of /a/g might be wrong.  Perhaps

@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/Cookie.java,v 1.44 2004/06/05 16:49:20 olegk Exp $
  * $Revision$
  * $Date$
  *
@@ -61,11 +61,10 @@ import org.apache.commons.logging.LogFactory;
  * 
  * @version $Revision$ $Date$
  */
-@SuppressWarnings("serial")
+@SuppressWarnings("serial") // <- HERITRIX CHANGE
 public class Cookie extends NameValuePair implements Serializable, Comparator {
 
     // ----------------------------------------------------------- Constructors
-
 
     /**
      * Default constructor. Creates a blank cookie 
@@ -498,7 +497,7 @@ public class Cookie extends NameValuePair implements Serializable, Comparator {
         return toExternalForm();
     }
 
-// BEGIN IA ADDITION
+// BEGIN IA/HERITRIX ADDITION
     /**
      * Create a 'sort key' for this Cookie that will cause it to sort 
      * alongside other Cookies of the same domain (with or without leading
@@ -517,7 +516,7 @@ public class Cookie extends NameValuePair implements Serializable, Comparator {
             ? domain.substring(1) + "\1.\1" + getPath() + "\1" + getName() 
             : domain + "\1\1" + getPath() + "\1" + getName();
     }
-//  END IA ADDITION   
+//  END IA/HERITRIX ADDITION   
     
    // ----------------------------------------------------- Instance Variables
 
@@ -564,13 +563,13 @@ public class Cookie extends NameValuePair implements Serializable, Comparator {
    /** Log object for this class */
    private static final Log LOG = LogFactory.getLog(Cookie.class);
 
-// BEGIN IA ADDITION
+// BEGIN IA/HERITRIX ADDITION
    /**
     * Character which, if appended to end of a domain, will give a 
     * boundary key that sorts past all Cookie sortKeys for the same
     * domain. 
     */
    public static final char DOMAIN_OVERBOUNDS = '\2';
-// END IA ADDITION
+// END IA/HERITRIX ADDITION
 }
 

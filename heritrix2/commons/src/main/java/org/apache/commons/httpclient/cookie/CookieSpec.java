@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/cookie/CookieSpec.java,v 1.11 2004/09/14 20:11:31 olegk Exp $
  * $Revision$
  * $Date$
  *
@@ -30,7 +30,7 @@
 package org.apache.commons.httpclient.cookie;
 
 import java.util.Collection;
-import java.util.SortedMap;
+import java.util.SortedMap; // <- IA/HERITRIX CHANGE
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.NameValuePair;
@@ -61,6 +61,11 @@ public interface CookieSpec {
 
     /**
       * Parse the <tt>"Set-Cookie"</tt> header value into Cookie array.
+      * 
+      * <p>This method will not perform the validation of the resultant
+      * {@link Cookie}s</p> 
+      *
+      * @see #validate(String, int, String, boolean, Cookie)
       *
       * @param host the host which sent the <tt>Set-Cookie</tt> header
       * @param port the port which sent the <tt>Set-Cookie</tt> header
@@ -78,6 +83,11 @@ public interface CookieSpec {
 
     /**
       * Parse the <tt>"Set-Cookie"</tt> Header into an array of Cookies.
+      *
+      * <p>This method will not perform the validation of the resultant
+      * {@link Cookie}s</p> 
+      *
+      * @see #validate(String, int, String, boolean, Cookie)
       *
       * @param host the host which sent the <tt>Set-Cookie</tt> header
       * @param port the port which sent the <tt>Set-Cookie</tt> header
@@ -167,14 +177,14 @@ public interface CookieSpec {
      * @return <tt>true</tt> if the cookie should be submitted with a request 
      *  with given attributes, <tt>false</tt> otherwise.
      *  
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
      * @deprecated use match(String, int, String, boolean, SortedMap)
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
      */
     Cookie[] match(String host, int port, String path, boolean secure, 
         final Cookie cookies[]);
 
-// BEGIN IA CHANGES
+// BEGIN IA/HERITRIX CHANGES
     /**
      * Determines which of an array of Cookies matches a location.
      *
@@ -193,7 +203,7 @@ public interface CookieSpec {
      *  with given attributes, <tt>false</tt> otherwise.
      */
     Cookie[] match(String domain, int port, String path, boolean secure, SortedMap cookiesMap);
-// END IA CHANGES
+// END IA/HERITRIX CHANGES
 
     /**
      * Performs domain-match as defined by the cookie specification.
