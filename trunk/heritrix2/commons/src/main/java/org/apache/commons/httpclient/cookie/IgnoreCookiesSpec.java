@@ -1,5 +1,5 @@
 /*
- * $Header$
+ * $Header: /home/jerenkrantz/tmp/commons/commons-convert/cvs/home/cvs/jakarta-commons//httpclient/src/java/org/apache/commons/httpclient/cookie/IgnoreCookiesSpec.java,v 1.6 2004/09/14 20:11:31 olegk Exp $
  * $Revision$
  * $Date$
  *
@@ -25,12 +25,12 @@
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  *
- */
+ */ 
 
 package org.apache.commons.httpclient.cookie;
 
 import java.util.Collection;
-import java.util.SortedMap;
+import java.util.SortedMap; // <- IA/HERITRIX CHANGE
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
@@ -43,8 +43,7 @@ import org.apache.commons.httpclient.NameValuePair;
  * @since 3.0
  */
 public class IgnoreCookiesSpec implements CookieSpec {
-    private static final Cookie[] NO_COOKIES = new Cookie[0];
-    
+
     /**
      * 
      */
@@ -55,9 +54,9 @@ public class IgnoreCookiesSpec implements CookieSpec {
     /**
      * Returns an empty {@link Cookie cookie} array.  All parameters are ignored.
      */
-    public Cookie[] parse(String host, int port, String path, boolean secure,
-        String header) throws MalformedCookieException {
-        return NO_COOKIES;
+    public Cookie[] parse(String host, int port, String path, boolean secure, String header)
+        throws MalformedCookieException {
+        return new Cookie[0];
     }
 
     /**
@@ -66,13 +65,13 @@ public class IgnoreCookiesSpec implements CookieSpec {
     public Collection getValidDateFormats() {
         return null;
     }
-
+    
     /**
      * Does nothing.
      */
     public void setValidDateFormats(Collection datepatterns) {
     }
-
+    
     /**
      * @return <code>null</code>
      */
@@ -83,50 +82,44 @@ public class IgnoreCookiesSpec implements CookieSpec {
     /**
      * @return <code>null</code>
      */
-    public Header formatCookieHeader(Cookie cookie)
-        throws IllegalArgumentException {
+    public Header formatCookieHeader(Cookie cookie) throws IllegalArgumentException {
         return null;
     }
 
     /**
      * @return <code>null</code>
      */
-    public Header formatCookieHeader(Cookie[] cookies)
-        throws IllegalArgumentException {
+    public Header formatCookieHeader(Cookie[] cookies) throws IllegalArgumentException {
         return null;
     }
 
     /**
      * @return <code>null</code>
      */
-    public String formatCookies(Cookie[] cookies)
-        throws IllegalArgumentException {
+    public String formatCookies(Cookie[] cookies) throws IllegalArgumentException {
         return null;
     }
 
     /**
      * @return <code>false</code>
      */
-    public boolean match(String host, int port, String path, boolean secure,
-        Cookie cookie) {
+    public boolean match(String host, int port, String path, boolean secure, Cookie cookie) {
         return false;
     }
 
     /**
      * Returns an empty {@link Cookie cookie} array.  All parameters are ignored.
      */
-    public Cookie[] match(String host, int port, String path, boolean secure,
-        Cookie[] cookies) {
-        return NO_COOKIES;
+    public Cookie[] match(String host, int port, String path, boolean secure, Cookie[] cookies) {
+        return new Cookie[0];
     }
 
     /**
      * Returns an empty {@link Cookie cookie} array.  All parameters are ignored.
      */
-    public Cookie[] parse(String host, int port, String path, boolean secure,
-        Header header) throws MalformedCookieException,
-        IllegalArgumentException {
-        return NO_COOKIES;
+    public Cookie[] parse(String host, int port, String path, boolean secure, Header header)
+        throws MalformedCookieException, IllegalArgumentException {
+        return new Cookie[0];
     }
 
     /**
@@ -139,9 +132,8 @@ public class IgnoreCookiesSpec implements CookieSpec {
     /**
      * Does nothing.
      */
-    public void validate(String host, int port, String path, boolean secure,
-        Cookie cookie) throws MalformedCookieException,
-        IllegalArgumentException {
+    public void validate(String host, int port, String path, boolean secure, Cookie cookie)
+        throws MalformedCookieException, IllegalArgumentException {
     }
 
     /**
@@ -158,8 +150,10 @@ public class IgnoreCookiesSpec implements CookieSpec {
         return false;
     }
 
+// BEGIN IA/HERITRIX ADDITION
     public Cookie[] match(String domain, int port, String path, boolean secure,
         SortedMap cookiesMap) {
-        return NO_COOKIES;
+        return new Cookie[0];
     }
+// END IA/HERITRIX CHANGE
 }
