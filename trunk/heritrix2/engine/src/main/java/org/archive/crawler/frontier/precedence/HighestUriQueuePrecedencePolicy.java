@@ -122,6 +122,7 @@ public class HighestUriQueuePrecedencePolicy extends BaseQueuePrecedencePolicy {
             for(Long count : enqueuedCounts.values()) {
                 if(betwixt) writer.print(" ");
                 writer.print(count);
+                betwixt = true;
             }
         }
 
