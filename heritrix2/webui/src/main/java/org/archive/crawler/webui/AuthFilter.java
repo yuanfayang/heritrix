@@ -27,6 +27,7 @@ import java.io.IOException;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -39,6 +40,8 @@ import javax.servlet.http.HttpServletResponse;
 public class AuthFilter implements Filter {
     public static final String CONTINUE_URL = "continueUrl";
     public static final String IS_AUTHORIZED = "isAuthorized";
+    
+    private static String uiPassword;
     
     private FilterConfig filterConfig = null;
 
@@ -70,5 +73,30 @@ public class AuthFilter implements Filter {
 
     public void destroy() {
         this.filterConfig = null;
+    }
+    
+    /**
+     * Returns the current web ui password.  If any value was set using 
+     * {@link #setUIPassword(String)}, that password is returned.  Otherwise
+     * the given context must contain an attribute named <code>uiPassword</code>,
+     * and that attribute value is returned.
+     * 
+     * @param sc  The servlet context containing the initial configuration
+     * @return   the current UI password
+     */
+    public static String getUIPassword(ServletContext sc) {
+        if (uiPassword == null) {
+            uiPassword = (String)sc.getAttribute("uiPassword");
+        }
+        return uiPassword;
+    }
+    
+    /**
+     * Sets the current password.
+     * 
+     * @param password   the new password
+     */
+    public static void setUIPassword(String password) {
+        uiPassword = password;
     }
 } 

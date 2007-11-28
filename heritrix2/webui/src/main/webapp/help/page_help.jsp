@@ -30,8 +30,7 @@
         href="<%=request.getContextPath()%>/docs/articles/releasenotes/index.html">Release Notes</a></b><br>
 </p>
 <p>
-    <b><a href="<%=request.getContextPath()%>/help/do_show_webui-prefs.jsp">Web UI Preferences</a></b><br />
-    Adjust web UI behavior, including the administrative login and 'favicon' (tab icon). 
+    <b><a href="<%=request.getContextPath()%>/help/do_show_webui-prefs.jsp">Change the Web UI Password</a></b>
 </p>
 <p>
 	<b><a href="http://crawler.archive.org/issue-tracking.html" target="_blank">Issue Tracking</a></b><br />
