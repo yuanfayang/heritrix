@@ -6,8 +6,9 @@
    * sessions to here. 
    */
   String password = request.getParameter("enteredPassword");
-  if(password!=null && password.equals(request.getSession(true).getServletContext().getAttribute("uiPassword"))) {
+  if(password!=null && password.equals(AuthFilter.getUIPassword(application))) {
     // auth successful
+    
     request.getSession(true).setAttribute(AuthFilter.IS_AUTHORIZED,true);
     // send to continueUrl or servlet root
     String continueUrl = (String)request.getSession(true).getAttribute(AuthFilter.CONTINUE_URL);
@@ -21,7 +22,6 @@
     <head>
         <title>Auth</title>
     </head>
-
     <body onLoad="document.passwordForm.enteredPassword.focus()">
 
     <form name="passwordForm">
