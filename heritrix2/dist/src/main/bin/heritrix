@@ -166,6 +166,7 @@ else
         -Djava.protocol.handler.pkgs=org.archive.net \
         -Dheritrix.out=${HERITRIX_OUT} ${JAVA_OPTS} ${JMX_OPTS} \
         $CLASS_MAIN $@ >> ${stdouterrlog} 2>&1 &
+    HERITRIX_PID=$!
 
     # Wait for content in the heritrix_dmesg.log file.
     echo -n "`date` Starting heritrix"
@@ -177,6 +178,18 @@ else
             echo
             cat $startMessage
             rm -f $startMessage
+            break
+        fi
+        X=`ps -www -p $HERITRIX_PID | grep Heritrix`
+        if [ -z "$X" ]
+        then
+            echo
+            echo "ERROR: JVM terminated without running Heritrix."
+            echo "This could be due to invalid JAVA_OPTS or JMX_PORT, etc."
+            echo "See heritrix_out.log for more details."
+            echo "Here are its last three lines: "
+            echo
+            tail -3 $stdouterrlog
             break
         fi
         echo -n '.'

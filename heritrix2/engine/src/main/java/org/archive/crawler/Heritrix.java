@@ -118,7 +118,7 @@ public class Heritrix {
     private static final String STARTLOG = "heritrix_dmesg.log";
 
     
-    private static void usage() {
+    private static void usage(PrintStream out) {
         HelpFormatter hf = new HelpFormatter();
         hf.printHelp("Heritrix", options());
     }
@@ -164,18 +164,18 @@ public class Heritrix {
     }
     
     
-    private static CommandLine getCommandLine(String[] args) {
+    private static CommandLine getCommandLine(PrintStream out, String[] args) {
         CommandLineParser clp = new GnuParser();
         CommandLine cl;
         try {
             cl = clp.parse(options(), args);
         } catch (ParseException e) {
-            usage();
+            usage(out);
             return null;
         }
         
         if (cl.getArgList().size() != 0) {
-            usage();
+            usage(out);
             return null;
         }
 
@@ -217,11 +217,12 @@ public class Heritrix {
         }
 
 
-        CommandLine cl = getCommandLine(args);
+        CommandLine cl = getCommandLine(out, args);
         if (cl == null) return;
 
         if (cl.hasOption('n') && cl.hasOption('u')) {
             out.println("Only one of -n or -u may be specified.");
+            usage(out);
             System.exit(1);
         }
         
@@ -232,10 +233,9 @@ public class Heritrix {
                     + "must specify the system property "
                     + "com.sun.management.jmxremote.port if you disable "
                     + "the web UI with -n.");
-            // System.exit(1);
+            System.exit(1);
         }
 
-        
         CrawlJobManagerConfig config = new CrawlJobManagerConfig();
         WebUIConfig webConfig = new WebUIConfig();
         File properties = getDefaultPropertiesFile();
@@ -291,6 +291,7 @@ public class Heritrix {
         TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
 
         // Start Heritrix.
+        WebUI webui = null;
         try {
             if (cl.hasOption('u')) {
                 out.println("Not running crawl engine.");
@@ -308,13 +309,17 @@ public class Heritrix {
             if (cl.hasOption('n')) {
                 out.println("Not running web UI.");
             } else {
-                new WebUI(webConfig).start();
+                webui = new WebUI(webConfig);
+                webui.start();
                 out.println("Web UI listening on " 
                         + webConfig.hostAndPort() + ".");
             }
         } catch (Exception e) {
             // Show any exceptions in STARTLOG.
             e.printStackTrace(out);
+            if (webui != null) {
+                webui.stop();
+            }
             throw e;
         } finally {
             // If not development, close the file that signals the wrapper

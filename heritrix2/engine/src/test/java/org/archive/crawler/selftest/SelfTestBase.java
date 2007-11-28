@@ -185,6 +185,14 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
 
     public void testSomething() throws Exception {
+        // Heritrix usually checks that either (a) a webui is run in the JVM
+        // or (b) JMX is enabled in the JVM.  Otherwise the engine is 
+        // inaccessible.
+        //
+        // Except selftests require neither (a) or (b).  Since Heritrix.main's
+        // JMX test is naive, we can just set this system property to trick
+        // main() into thinking we've enabled remote JMX.
+        System.setProperty("com.sun.management.jmxremote.port", "none");
         try {
             boolean fail = false;
             try {
