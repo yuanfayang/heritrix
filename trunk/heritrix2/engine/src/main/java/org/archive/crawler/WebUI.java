@@ -48,7 +48,7 @@ public class WebUI {
     private int port;
     private String pathToWAR;
     private String uiPassword; 
-    
+    private Server server;
     
     public WebUI(WebUIConfig config) {
         this.hosts = new HashSet<String>(config.getHosts());
@@ -79,7 +79,7 @@ public class WebUI {
     }
 
     public void start() throws Exception {
-        Server server = new Server();
+        this.server = new Server();
         
         for (String host: hosts) {
             SocketConnector sc = new SocketConnector();
@@ -109,6 +109,15 @@ public class WebUI {
         server.setHandler(handlers);
         
         server.start();
+    }
+    
+    
+    public void stop() {
+        try {
+            this.server.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
