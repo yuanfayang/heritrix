@@ -98,14 +98,12 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private static final int MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY = 3000;
 
     /**
-     * When a snooze target for a queue is longer than this amount, and 
-     * there are already ready queues, deactivate rather than snooze 
-     * the current queue -- so other more responsive sites get a chance
-     * in active rotation. (As a result, queue's next try may be much
-     * further in the future than the snooze target delay.)
+     * When a snooze target for a queue is longer than this amount, the queue
+     * will be "long snoozed" instead of "short snoozed".  A "long snoozed"
+     * queue may be swapped to disk because it's not needed soon.  
      */
     @Immutable @Expert
-    final public static Key<Long> SNOOZE_DEACTIVATE_MS = 
+    final public static Key<Long> SNOOZE_LONG_MS = 
         Key.make(5L*60L*1000L);
     
     
@@ -1445,9 +1443,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
          * <li>null, if this DelayedWorkQueue instance was recently 
          *   deserialized;
          * <li>A SoftReference&lt;WorkQueue&gt;, if the WorkQueue's waitTime
-         *   exceeded SNOOZE_DEACTIVATE_MS 
+         *   exceeded SNOOZE_LONG_MS 
          * <li>A hard WorkQueue reference, if the WorkQueue's waitTime did not
-         *   exceed SNOOZE_DEACTIVATE_MS.  Idea here is that we thought we 
+         *   exceed SNOOZE_LONG_MS.  Idea here is that we thought we 
          *   needed the WorkQueue soon and didn't want to risk losing the 
          *   instance.
          * </ol>
@@ -1467,7 +1465,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         private void setWorkQueue(WorkQueue queue) {
             long wakeTime = queue.getWakeTime();
             long delay = wakeTime - System.currentTimeMillis();
-            if (delay > get(SNOOZE_DEACTIVATE_MS)) {
+            if (delay > get(SNOOZE_LONG_MS)) {
                 this.workQueue = new SoftReference<WorkQueue>(queue);
             } else {
                 this.workQueue = queue;
@@ -1486,10 +1484,11 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                 @SuppressWarnings("unchecked")
                 SoftReference<WorkQueue> ref = (SoftReference)workQueue;
                 WorkQueue result = ref.get();
-                setWorkQueue(result);
                 if (result == null) {
-                    return getQueueFor(classKey);
+                    result = getQueueFor(classKey);
                 }
+                setWorkQueue(result);
+                return result;
             }
             return (WorkQueue)workQueue;
         }
@@ -1526,19 +1525,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             // at this point, the ordering is arbitrary, but still
             // must be consistent/stable over time
             return this.classKey.compareTo(other.getClassKey());        
-        }
-        
-        private void writeObject(ObjectOutputStream out) throws IOException {
-            out.defaultWriteObject();
-            // Write the delay, not actual time
-            out.writeLong(wakeTime - System.currentTimeMillis());
-        }
-        
-        private void readObject(ObjectInputStream inp)
-        throws IOException, ClassNotFoundException {
-            inp.defaultReadObject();
-            // Convert stored delay to actual time
-            this.wakeTime = System.currentTimeMillis() + inp.readLong();
         }
         
     }
