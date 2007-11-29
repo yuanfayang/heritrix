@@ -58,9 +58,11 @@ public class ServerCacheUtil {
                 cs = cache.getServerFor(key);
             }
         } catch (URIException e) {
-            logger.log(Level.SEVERE, uuri.toString(), e);
+            logger.log(
+                Level.FINE, "No server key obtainable: "+uuri.toString(), e);
         } catch (NullPointerException npe) {
-            logger.log(Level.SEVERE, uuri.toString(), npe);
+            logger.log(
+                Level.FINE, "No server key obtainable: "+uuri.toString(), npe);
         }
         return cs;
     }
