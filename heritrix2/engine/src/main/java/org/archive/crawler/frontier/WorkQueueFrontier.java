@@ -28,9 +28,13 @@ import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,6 +68,8 @@ import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Transform;
+import org.archive.util.Transformer;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -164,7 +170,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     /**
      * All per-class queues held in snoozed state, sorted by wake time.
      */
-    transient protected DelayQueue<WorkQueue> snoozedClassQueues;
+    transient protected DelayQueue<DelayedWorkQueue> snoozedClassQueues;
     
     transient protected WorkQueue longestActiveQueue = null;
 
@@ -755,10 +761,11 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * Wake any queues sitting in the snoozed queue whose time has come.
      */
     protected void wakeQueues() {
-        WorkQueue waked; 
+        DelayedWorkQueue waked; 
         while((waked = snoozedClassQueues.poll())!=null) {
+            WorkQueue queue = waked.getWorkQueue();
             waked.setWakeTime(0);
-            reenqueueQueue(waked);
+            reenqueueQueue(queue);
         }
     }
     
@@ -895,7 +902,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
 //        if (delay_ms > snoozeToInactiveDelayMs && !inactiveQueues.isEmpty()) {
 //            deactivateQueue(wq);
 //        } else {
-            snoozedClassQueues.add(wq);
+            snoozedClassQueues.add(new DelayedWorkQueue(wq));
 //        }
     }
 
@@ -1222,7 +1229,15 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             this.readyClassQueues.size(), REPORT_MAX_QUEUES);
 
         w.print("\n -----===== SNOOZED QUEUES =====-----\n");
-        copy = extractSome(snoozedClassQueues, REPORT_MAX_QUEUES);
+        Transformer<DelayedWorkQueue,WorkQueue> ter = 
+            new Transformer<DelayedWorkQueue, WorkQueue>() {
+                public WorkQueue transform(DelayedWorkQueue dwq) {
+                    return dwq.getWorkQueue();
+                }
+            };
+        Transform<DelayedWorkQueue, WorkQueue> t = 
+            new Transform<DelayedWorkQueue,WorkQueue>(snoozedClassQueues, ter);
+        copy = extractSome(t, REPORT_MAX_QUEUES);
         appendQueueReports(w, copy.iterator(), copy.size(), REPORT_MAX_QUEUES);
         
         WorkQueue longest = longestActiveQueue;
@@ -1395,11 +1410,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private void readObject(java.io.ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        String[] snoozedNames = (String[]) stream.readObject();
-        snoozedClassQueues = new DelayQueue<WorkQueue>();
-        for(int i = 0; i < snoozedNames.length; i++) {
-            snoozedClassQueues.add(getQueueFor(snoozedNames[i]));
-        }
+        DelayedWorkQueue[] snoozed = (DelayedWorkQueue[])stream.readObject();
+        snoozedClassQueues = new DelayQueue<DelayedWorkQueue>(
+                Arrays.asList(snoozed));
     }
     
     /**
@@ -1412,12 +1425,123 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private void writeObject(java.io.ObjectOutputStream stream)
     throws IOException {
         stream.defaultWriteObject();
-        WorkQueue[] snoozed = snoozedClassQueues.toArray(new WorkQueue[0]);
-        String[] snoozedNames = new String[snoozed.length];
-        for(int i = 0;i<snoozed.length;i++) {
-            snoozedNames[i] = snoozed[i].getClassKey();
-        }
-        stream.writeObject(snoozedNames);
+        DelayedWorkQueue[] snoozed = snoozedClassQueues.toArray(
+                new DelayedWorkQueue[0]);
+        stream.writeObject(snoozed);
     }
+
+
+    class DelayedWorkQueue implements Delayed, Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        public String classKey;
+        public long wakeTime;
+        
+        /**
+         * Something can become a WorkQueue instance.  This can be three things:
+         * 
+         * <ol>
+         * <li>null, if this DelayedWorkQueue instance was recently 
+         *   deserialized;
+         * <li>A SoftReference&lt;WorkQueue&gt;, if the WorkQueue's waitTime
+         *   exceeded SNOOZE_DEACTIVATE_MS 
+         * <li>A hard WorkQueue reference, if the WorkQueue's waitTime did not
+         *   exceed SNOOZE_DEACTIVATE_MS.  Idea here is that we thought we 
+         *   needed the WorkQueue soon and didn't want to risk losing the 
+         *   instance.
+         * </ol>
+         * 
+         * The {@link #getWorkQueue()} method figures out what to return in
+         * all three of the above cases.
+         */
+        private transient Object workQueue;
+        
+        public DelayedWorkQueue(WorkQueue queue) {
+            this.classKey = queue.getClassKey();
+            this.wakeTime = queue.getWakeTime();
+            
+            this.workQueue = queue;
+        }
+        
+        private void setWorkQueue(WorkQueue queue) {
+            long wakeTime = queue.getWakeTime();
+            long delay = wakeTime - System.currentTimeMillis();
+            if (delay > get(SNOOZE_DEACTIVATE_MS)) {
+                this.workQueue = new SoftReference<WorkQueue>(queue);
+            } else {
+                this.workQueue = queue;
+            }
+        }
+        
+        
+        public WorkQueue getWorkQueue() {
+            if (workQueue == null) {
+                // This is a recently deserialized DelayedWorkQueue instance
+                WorkQueue result = getQueueFor(classKey);
+                setWorkQueue(result);
+                return result;
+            }
+            if (workQueue instanceof SoftReference) {
+                @SuppressWarnings("unchecked")
+                SoftReference<WorkQueue> ref = (SoftReference)workQueue;
+                WorkQueue result = ref.get();
+                setWorkQueue(result);
+                if (result == null) {
+                    return getQueueFor(classKey);
+                }
+            }
+            return (WorkQueue)workQueue;
+        }
+
+        public long getDelay(TimeUnit unit) {
+            return unit.convert(
+                    wakeTime - System.currentTimeMillis(),
+                    TimeUnit.MILLISECONDS);
+        }
+        
+        public String getClassKey() {
+            return classKey;
+        }
+        
+        public long getWakeTime() {
+            return wakeTime;
+        }
+        
+        public void setWakeTime(long time) {
+            this.wakeTime = time;
+        }
+        
+        public int compareTo(Delayed obj) {
+            if (this == obj) {
+                return 0; // for exact identity only
+            }
+            DelayedWorkQueue other = (DelayedWorkQueue) obj;
+            if (wakeTime > other.getWakeTime()) {
+                return 1;
+            }
+            if (wakeTime < other.getWakeTime()) {
+                return -1;
+            }
+            // at this point, the ordering is arbitrary, but still
+            // must be consistent/stable over time
+            return this.classKey.compareTo(other.getClassKey());        
+        }
+        
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+            // Write the delay, not actual time
+            out.writeLong(wakeTime - System.currentTimeMillis());
+        }
+        
+        private void readObject(ObjectInputStream inp)
+        throws IOException, ClassNotFoundException {
+            inp.defaultReadObject();
+            // Convert stored delay to actual time
+            this.wakeTime = System.currentTimeMillis() + inp.readLong();
+        }
+        
+    }
+
 }
 

@@ -283,7 +283,7 @@ implements Serializable, Checkpointable {
         // small risk of OutOfMemoryError: in large crawls with many 
         // unresponsive queues, an unbounded number of snoozed queues 
         // may exist
-        snoozedClassQueues = new DelayQueue<WorkQueue>();
+        snoozedClassQueues = new DelayQueue<DelayedWorkQueue>();
     }
 
 
