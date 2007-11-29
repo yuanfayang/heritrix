@@ -180,8 +180,8 @@ else
             rm -f $startMessage
             break
         fi
-        X=`ps -www -p $HERITRIX_PID | grep Heritrix`
-        if [ -z "$X" ]
+        kill -0 $HERITRIX_PID
+        if [ $? ne 0 ]
         then
             echo
             echo "ERROR: JVM terminated without running Heritrix."
