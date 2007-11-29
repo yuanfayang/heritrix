@@ -26,6 +26,8 @@
 package org.archive.crawler.postprocessor;
 
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.archive.crawler.datamodel.CrawlURI;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
@@ -55,6 +57,7 @@ public class FrontierScheduler extends Processor implements PostProcessor {
     
     Frontier frontier;
 
+    ReentrantLock lock = new ReentrantLock(true);
     
     /**
      * The frontier to use.
@@ -85,8 +88,13 @@ public class FrontierScheduler extends Processor implements PostProcessor {
             return;
         }
 
-        for (CrawlURI cauri: curi.getOutCandidates()) {
-            schedule(cauri);
+        try {
+            lock.lock();
+            for (CrawlURI cauri: curi.getOutCandidates()) {
+                schedule(cauri);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
