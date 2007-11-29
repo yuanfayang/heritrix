@@ -26,8 +26,6 @@ import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIR
 import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
 
-import it.unimi.dsi.fastutil.Maps;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -50,13 +48,11 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
 import org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy;
-import org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy;
 import org.archive.crawler.frontier.precedence.CostUriPrecedencePolicy;
 import org.archive.crawler.frontier.precedence.QueuePrecedencePolicy;
 import org.archive.crawler.frontier.precedence.UriPrecedencePolicy;
@@ -137,7 +133,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         Key.make(QueuePrecedencePolicy.class, new BaseQueuePrecedencePolicy());
 
     /** precedence rank at or below which queues are not crawled */
-    @Expert
+    @Expert @Immutable
     final public static Key<Integer> PRECEDENCE_FLOOR = 
         Key.make(255);
     
@@ -966,7 +962,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = getTotalInactiveQueues();
+        int inactiveCount = getTotalEligibleInactiveQueues();
+        int ineligibleCount = getTotalIneligibleInactiveQueues();
         int retiredCount = getRetiredQueues().size();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
@@ -985,6 +982,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print(" snoozed); ");
         w.print(inactiveCount);
         w.print(" inactive; ");
+        w.print(ineligibleCount);
+        w.print(" ineligible; ");
         w.print(retiredCount);
         w.print(" retired; ");
         w.print(exhaustedCount);
@@ -994,12 +993,38 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     }
 
     /**
-     * Total of all inactive queues at all precedences
+     * Total of all URIs in inactive queues at all precedences
      * @return int total 
      */
     protected int getTotalInactiveQueues() {
+        return tallyInactiveTotals(getInactiveQueuesByPrecedence());
+    }
+    
+    /**
+     * Total of all URIs in inactive queues at precedences above the floor
+     * @return int total 
+     */
+    protected int getTotalEligibleInactiveQueues() {
+        return tallyInactiveTotals(
+                getInactiveQueuesByPrecedence().headMap(get(PRECEDENCE_FLOOR)));
+    }
+    
+    /**
+     * Total of all URIs in inactive queues at precedences at or below the floor
+     * @return int total 
+     */
+    protected int getTotalIneligibleInactiveQueues() {
+        return tallyInactiveTotals(
+                getInactiveQueuesByPrecedence().tailMap(get(PRECEDENCE_FLOOR)));
+    }
+
+    /**
+     * @param iqueue 
+     * @return
+     */
+    private int tallyInactiveTotals(SortedMap<Integer,Queue<String>> iqueues) {
         int inactiveCount = 0; 
-        for(Queue<String> q : getInactiveQueuesByPrecedence().values()) {
+        for(Queue<String> q : iqueues.values()) {
             inactiveCount += q.size();
         }
         return inactiveCount;
@@ -1333,8 +1358,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = getTotalInactiveQueues();
-        return (float)(activeCount + inactiveCount) / (inProcessCount + snoozedCount);
+        int eligibleInactiveCount = getTotalEligibleInactiveQueues();
+        return (float)(activeCount + eligibleInactiveCount) / (inProcessCount + snoozedCount);
     }
     public long deepestUri() {
         return longestActiveQueue==null ? -1 : longestActiveQueue.getCount();
