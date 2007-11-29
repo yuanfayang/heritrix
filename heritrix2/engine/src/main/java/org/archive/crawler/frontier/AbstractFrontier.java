@@ -388,6 +388,10 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             loop: while (true) {
                 switch (targetState) {
                 case RUN:
+                    // enable outbound takes if previously locked
+                    while(outboundLock.isWriteLockedByCurrentThread()) {
+                        outboundLock.writeLock().unlock();
+                    }
                     reachedState(State.RUN);
                     // fill to-do 'on-deck' queue
                     fillOutbound();
@@ -415,7 +419,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                         // continue to process discovered and finished URIs
                         inbound.take().process();
                     }
-                    outboundLock.writeLock().unlock();
                     break;
                 case FINISH:
                     // prevent all outbound takes
