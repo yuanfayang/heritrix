@@ -29,12 +29,10 @@ queue-total-budget-description:
 total expenditure to allow a queue before 'retiring' it 
 
 
-snooze-deactivate-ms-description:
-When a snooze target for a queue is longer than this amount, and 
-there are already ready queues, deactivate rather than snooze 
-the current queue -- so other more responsive sites get a chance 
-in active rotation. (As a result, queue's next try may be much 
-further in the future than the snooze target delay.) 
+snooze-long-ms-description:
+When a snooze target for a queue is longer than this amount, the queue
+will be "long snoozed" instead of "short snoozed".  A "long snoozed"
+queue may be swapped to disk because it's not needed soon.  
 
 
 target-ready-backlog-description:
