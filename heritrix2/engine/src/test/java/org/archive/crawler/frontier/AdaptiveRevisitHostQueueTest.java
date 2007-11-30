@@ -354,7 +354,6 @@ implements AdaptiveRevisitAttributeConstants {
          * Close the ARHostQueue and the Environment
          */
         hq.close();
-        catalog.close();
         bdb.close();
         cleanUpOldFiles("AR");
     }
