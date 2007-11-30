@@ -91,23 +91,6 @@ public class BdbCookieStorage extends AbstractCookieStorage {
         super.initialTasks(provider);
     }
 
-    
-
-    /* (non-Javadoc)
-     * @see org.archive.modules.fetcher.AbstractCookieStorage#finalTasks(org.archive.state.StateProvider)
-     */
-    @Override
-    public void finalTasks(StateProvider defaults) {
-        super.finalTasks(defaults);
-        try {
-            cookieDb.sync();
-            cookieDb.close();
-        } catch (DatabaseException e) {
-            LOGGER.log(Level.WARNING,"problem closing cookiesDb",e);
-        }
-    }
-
-
     protected SortedMap<String,Cookie> prepareMap(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
         try {
