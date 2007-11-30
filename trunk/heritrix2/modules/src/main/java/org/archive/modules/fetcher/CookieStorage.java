@@ -28,11 +28,16 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import org.apache.commons.httpclient.Cookie;
+import org.archive.state.StateProvider;
 
 public interface CookieStorage {
 
     SortedMap<String,Cookie> getCookiesMap();
 
     void saveCookiesMap(Map<String,Cookie> map);
+
+    void initialTasks(StateProvider defaults);
+
+    void finalTasks(StateProvider defaults);
 
 }
