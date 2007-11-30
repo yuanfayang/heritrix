@@ -32,6 +32,7 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
@@ -47,13 +48,13 @@ import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseException;
+import com.sun.org.apache.bcel.internal.generic.LLOAD;
 
 /**
  * @author pjack
  *
  */
 public class BdbCookieStorage extends AbstractCookieStorage {
-
     private static final long serialVersionUID = 1L;
 
     final private static Logger LOGGER = 
@@ -62,9 +63,7 @@ public class BdbCookieStorage extends AbstractCookieStorage {
     @Immutable
     final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
     
-    @Immutable
-    final public static Key<String> COOKIEDB_NAME = Key.make("http_cookies");
-    
+    public static String COOKIEDB_NAME = "http_cookies";
     
     static {
         KeyManager.addKeys(BdbCookieStorage.class);
@@ -79,15 +78,44 @@ public class BdbCookieStorage extends AbstractCookieStorage {
     }
 
 
+    /* (non-Javadoc)
+     * @see org.archive.modules.fetcher.AbstractCookieStorage#initialTasks(org.archive.state.StateProvider)
+     */
+    @Override
+    public void initialTasks(StateProvider provider) {
+        if(cookies!=null) {
+            // already initialTasked; don't repeat
+            return;
+            // TODO: fix double-invokcation of initialTasks; see HER-????
+        }
+        super.initialTasks(provider);
+    }
+
+    
+
+    /* (non-Javadoc)
+     * @see org.archive.modules.fetcher.AbstractCookieStorage#finalTasks(org.archive.state.StateProvider)
+     */
+    @Override
+    public void finalTasks(StateProvider defaults) {
+        super.finalTasks(defaults);
+        try {
+            cookieDb.sync();
+            cookieDb.close();
+        } catch (DatabaseException e) {
+            LOGGER.log(Level.WARNING,"problem closing cookiesDb",e);
+        }
+    }
+
+
     protected SortedMap<String,Cookie> prepareMap(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
-        String dbName = provider.get(this, COOKIEDB_NAME);
         try {
             StoredClassCatalog classCatalog = bdb.getClassCatalog();
             BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
             dbConfig.setTransactional(false);
             dbConfig.setAllowCreate(true);
-            cookieDb = bdb.openDatabase(dbName, dbConfig, true);
+            cookieDb = bdb.openDatabase(COOKIEDB_NAME, dbConfig, true);
             cookies = new StoredSortedMap(cookieDb,
                     new StringBinding(), new SerialBinding(classCatalog,
                             Cookie.class), true);
@@ -95,15 +123,14 @@ public class BdbCookieStorage extends AbstractCookieStorage {
             SortedMap<String,Cookie> result = cookies;
             return result;
         } catch (DatabaseException e) {
-            LOGGER.severe(e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return new TreeMap<String,Cookie>();
     }
 
 
     @SuppressWarnings("unchecked")
     public SortedMap<String, Cookie> getCookiesMap() {
+        assert cookies != null : "cookie map not set up";
         return cookies;
     }
 

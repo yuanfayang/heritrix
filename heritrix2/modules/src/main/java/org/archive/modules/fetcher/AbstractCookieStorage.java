@@ -83,6 +83,13 @@ implements CookieStorage, Initializable, Closeable, Serializable {
         this.saveCookiesToFile = provider.get(this, SAVE_COOKIES_TO_FILE);
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.modules.fetcher.CookieStorage#finalTasks(org.archive.state.StateProvider)
+     */
+    public void finalTasks(StateProvider defaults) {
+        // subclasses may do something        
+    }
+
     protected abstract SortedMap<String,Cookie> prepareMap(StateProvider provider);
     
     /**

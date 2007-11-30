@@ -308,7 +308,7 @@ public class FetchHTTP extends Processor implements Initializable {
      */
     @Immutable @Nullable
     final public static Key<CookieStorage> COOKIE_STORAGE = 
-        Key.make(CookieStorage.class, null);
+        Key.make(CookieStorage.class, new BdbCookieStorage());
 
     /**
      * Disable cookie handling.
@@ -1131,6 +1131,7 @@ public class FetchHTTP extends Processor implements Initializable {
 
         CookieStorage cm = defaults.get(this, COOKIE_STORAGE);
         if (cm != null) {        
+            cm.initialTasks(defaults);
             http.getState().setCookiesMap(cm.getCookiesMap());
         }
 
@@ -1164,6 +1165,7 @@ public class FetchHTTP extends Processor implements Initializable {
             @SuppressWarnings("unchecked")
             Map<String, Cookie> map = http.getState().getCookiesMap();
             cs.saveCookiesMap(map);
+            cs.finalTasks(defaults);
         }
         cleanupHttp();
         super.finalTasks(defaults);
