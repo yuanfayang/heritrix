@@ -1118,9 +1118,19 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             if (obj ==  null) {
                 continue;
             }
-            q = (obj instanceof WorkQueue)?
-                (WorkQueue)obj:
-                (WorkQueue)this.allQueues.get(obj);
+            if(obj instanceof WorkQueue) {
+                q = (WorkQueue)obj;
+            } else if (obj instanceof DelayedWorkQueue) {
+                q = ((DelayedWorkQueue)obj).getWorkQueue();
+            } else {
+                try {
+                    q = (WorkQueue)this.allQueues.get(obj);
+                } catch (ClassCastException cce) {
+                    logger.log(Level.SEVERE,"not convertible to workqueue:"+obj,cce);
+                    q = null; 
+                }
+            }
+                
             if(q == null) {
                 writer.print(" ERROR: "+obj);
             }
