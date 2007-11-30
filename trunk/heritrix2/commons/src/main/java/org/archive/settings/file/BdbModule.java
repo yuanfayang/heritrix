@@ -56,6 +56,7 @@ import org.archive.state.Module;
 import org.archive.state.StateProvider;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
+import org.archive.util.bdbje.EnhancedEnvironment;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
@@ -64,7 +65,6 @@ import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.DbInternal;
-import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
@@ -206,7 +206,7 @@ Serializable, Closeable {
     
     private int cachePercent;
     
-    private transient Environment bdbEnvironment;
+    private transient EnhancedEnvironment bdbEnvironment;
     
     private transient Database classCatalogDB;
     
@@ -246,15 +246,9 @@ Serializable, Closeable {
         
         File f = new File(path);
         f.mkdirs();
-        this.bdbEnvironment = new Environment(f, config);
+        this.bdbEnvironment = new EnhancedEnvironment(f, config);
         
-        // Open the class catalog database. Create it if it does not
-        // already exist. 
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(create);
-        this.classCatalogDB = this.bdbEnvironment.
-            openDatabase(null, "classes", dbConfig);
-        this.classCatalog = new StoredClassCatalog(classCatalogDB);
+        this.classCatalog = this.bdbEnvironment.getClassCatalog();
     }
 
 
@@ -566,13 +560,6 @@ Serializable, Closeable {
             closeDatabase(dbName);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error closing db " + dbName, e);
-        }
-
-        try {
-            this.classCatalog.close();
-            this.classCatalog = null;
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Exception closing StoredClassCatalog", e);
         }
 
         try {
