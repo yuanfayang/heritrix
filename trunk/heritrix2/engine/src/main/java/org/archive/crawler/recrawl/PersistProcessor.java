@@ -66,7 +66,7 @@ public abstract class PersistProcessor extends Processor {
     /**
      * @return DatabaseConfig for history Database
      */
-    protected static BdbModule.BdbConfig historyDatabaseConfig() {
+    public static BdbModule.BdbConfig historyDatabaseConfig() {
         BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();
         dbConfig.setTransactional(false);
         dbConfig.setAllowCreate(true);
@@ -83,9 +83,13 @@ public abstract class PersistProcessor extends Processor {
      * @param curi CrawlURI
      * @return String key
      */
-    public String persistKeyFor(ProcessorURI curi) {
+    public static String persistKeyFor(ProcessorURI curi) {
+        return persistKeyFor(curi.getUURI().toString());
+    }
+
+    public static String persistKeyFor(String uri) {
         // use a case-sensitive SURT for uniqueness and sorting benefits
-        return SURT.fromURI(curi.getUURI().toString(),true);
+        return SURT.fromURI(uri,true);
     }
 
     /**
@@ -249,7 +253,8 @@ public abstract class PersistProcessor extends Processor {
             Iterator iter = sourceHistoryMap.entrySet().iterator();
             while(iter.hasNext()) {
                 Entry item = (Entry) iter.next(); 
-                Map alist = (Map)item.getValue();
+//                Map alist = (Map)item.getValue();
+                Map alist = (Map) sourceHistoryMap.get(item.getKey());
                 System.out.println(item.getKey() + " " + ArchiveUtils.prettyString(alist));
                 count++;
             }
@@ -261,7 +266,7 @@ public abstract class PersistProcessor extends Processor {
         System.out.println(count+" records dumped from "+source);
     }
     
-    private static EnhancedEnvironment setupEnvironment(File env) throws DatabaseException {
+    public static EnhancedEnvironment setupEnvironment(File env) throws DatabaseException {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
         return new EnhancedEnvironment(env, envConfig);

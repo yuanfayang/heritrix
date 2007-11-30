@@ -96,6 +96,9 @@ public interface CoreAttributeConstants {
     /** flag indicating the containing queue should be retired */ 
     public static final String A_FORCE_RETIRE = "force-retire";
     
+    /** key to atribute containing precalculated precedence */
+    public static final String A_PRECALC_PRECEDENCE = "precalc-precedence";
+    
     /** local override of proxy host */ 
     public static final String A_HTTP_PROXY_HOST = "http-proxy-host";
     /** local override of proxy port */ 
