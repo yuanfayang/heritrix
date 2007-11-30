@@ -286,7 +286,8 @@ button.rowLink:hover {
 .editSetting {
  padding:5px; 
 }
-.editSetting input {
+
+input[type=text] {
  width:30em;
 }
 
