@@ -50,7 +50,7 @@ The first 32K of the seeds file appears below.
   <% } %>
 <% } %>
 
-<form action="do_save_seeds.jsp">
+<form method="post" action="do_save_seeds.jsp">
 <% Text.printJobFormFields(request, out); %>
 
 <textarea rows="25" cols="75" name="seeds">
