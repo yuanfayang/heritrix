@@ -64,7 +64,7 @@ public class PrecedenceLoader {
      * Utility main for importing a text file (first argument) with lines of 
      * the form:
      * 
-     *  URI [sp] precedence 
+     *  URI [whitespace] precedence 
      *  
      * into a BDB-JE environment (second argument, created if necessary). 
      * 
@@ -126,8 +126,12 @@ public class PrecedenceLoader {
             Iterator iter = new LineReadingIterator(br);
             while(iter.hasNext()) {
                 String line = (String) iter.next(); 
-                String[] splits = line.split(" ");
+                String[] splits = line.split("\\s");
                 String uri = splits[0];
+                if(!uri.matches("\\w+:.*")) {
+                    // prepend "http://"
+                    uri = "http://"+uri;
+                }
                 String key = PersistProcessor.persistKeyFor(uri);
                 int precedence = Integer.parseInt(splits[1]);
                 Map<String,Object> map = (Map<String,Object>)historyMap.get(key);
