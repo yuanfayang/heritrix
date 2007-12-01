@@ -25,6 +25,7 @@ package org.archive.settings.path;
 
 
 import org.archive.settings.MemorySheetManager;
+import org.archive.settings.Offline;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 
@@ -83,4 +84,27 @@ public class PathChangerTest extends PathTestBase {
         PathListerTest.run(mgr, sheetName, true);
     }
 
+    
+    public void testPrimaryChange() throws Exception {
+        Object root1 = stub_manager.getRoot();
+        SingleSheet global = (SingleSheet)stub_manager.checkout("global");
+        PathChange pce = new PathChange(
+                "root:primary", 
+                "primary", 
+                "org.archive.settings.path.Baz");
+        PathChanger pc = new PathChanger();
+        pc.change(global, pce);
+        pc.finish(global);
+        stub_manager.commit(global);
+        Object root2 = stub_manager.getRoot();
+        assertFalse("Root map didn't change after commit", root1 == root2);
+        global = stub_manager.getGlobalSheet();
+        Object o = stub_manager.getRoot().get("primary");
+        assertFalse("root:primary didn't change.", o == stub_primary);
+        assertTrue("root:primary didn't change to a Baz.", Offline.getType(o) == Baz.class);
+
+        // FIXME: Make this work
+        //Object o2 = global.findPrimary(Foo.class);
+        //assertTrue("Global sheet returned wrong primary", o2 == o);
+    }
 }
