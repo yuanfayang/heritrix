@@ -38,6 +38,7 @@ root:controller:processors:Preprocessor=object, org.archive.crawler.prefetch.Pre
 root:controller:processors:DNS=object, org.archive.modules.fetcher.FetchDNS
 root:controller:processors:HTTP=object, org.archive.modules.fetcher.FetchHTTP
 root:controller:processors:HTTP:accept-headers=list, java.lang.String
+root:controller:processors:HTTP:cookie-storage=object, org.archive.modules.fetcher.BdbCookieStorage
 root:controller:processors:HTTP:midfetch-rules=object, org.archive.modules.deciderules.DecideRuleSequence
 root:controller:processors:ExtractorHTTP=object, org.archive.modules.extractor.ExtractorHTTP
 root:controller:processors:ExtractorHTML=object, org.archive.modules.extractor.ExtractorHTML

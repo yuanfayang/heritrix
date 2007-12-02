@@ -308,7 +308,7 @@ public class FetchHTTP extends Processor implements Initializable {
      */
     @Immutable @Nullable
     final public static Key<CookieStorage> COOKIE_STORAGE = 
-        Key.make(CookieStorage.class, new BdbCookieStorage());
+        Key.make(CookieStorage.class, new SimpleCookieStorage());
 
     /**
      * Disable cookie handling.
