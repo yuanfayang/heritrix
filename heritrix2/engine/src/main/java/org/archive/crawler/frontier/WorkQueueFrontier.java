@@ -647,6 +647,12 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         
         assert was : "queue didn't know it was in "+targetPrecedence+" inactives";
         
+        if(inProcessQueues.contains(candidateQ)) {
+            // queue had been multiply-scheduled due to changing precedence
+            // already in-process, so ignore this activation
+            return; 
+        }
+        
         if(candidateQ.getPrecedence() < targetPrecedence) {
             // queue moved up; do nothing (already handled)
             return; 
@@ -762,7 +768,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         DelayedWorkQueue waked; 
         while((waked = snoozedClassQueues.poll())!=null) {
             WorkQueue queue = waked.getWorkQueue();
-            waked.setWakeTime(0);
+            queue.setWakeTime(0);
             reenqueueQueue(queue);
         }
     }
