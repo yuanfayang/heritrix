@@ -386,51 +386,59 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         assert Thread.currentThread() == managerThread;
         try {
             loop: while (true) {
-                switch (targetState) {
-                case RUN:
-                    // enable outbound takes if previously locked
-                    while(outboundLock.isWriteLockedByCurrentThread()) {
-                        outboundLock.writeLock().unlock();
-                    }
-                    reachedState(State.RUN);
-                    // fill to-do 'on-deck' queue
-                    fillOutbound();
-                    // process discovered and finished URIs
-                    drainInbound();
-                    if(isEmpty()) {
-                        // pause when frontier exhausted; controller will
-                        // determine if this means to finish or not
-                        targetState = State.PAUSE;
-                    }
-                    break;
-                case HOLD:
-                    // TODO; for now treat same as PAUSE
-                case PAUSE:
-                    // pausing
-                    // prevent all outbound takes
-                    outboundLock.writeLock().lock();
-                    // process all inbound
-                    while (targetState == State.PAUSE) {
-                        if (outbound.size() == getInProcessCount()) {
-                            // if all 'in-process' URIs are actually 
-                            // waiting in outbound, we are at PAUSE
-                            reachedState(State.PAUSE);
+                try {
+                    switch (targetState) {
+                    case RUN:
+                        // enable outbound takes if previously locked
+                        while(outboundLock.isWriteLockedByCurrentThread()) {
+                            outboundLock.writeLock().unlock();
                         }
-                        // continue to process discovered and finished URIs
-                        inbound.take().process();
+                        reachedState(State.RUN);
+                        // fill to-do 'on-deck' queue
+                        fillOutbound();
+                        // process discovered and finished URIs
+                        drainInbound();
+                        if(isEmpty()) {
+                            // pause when frontier exhausted; controller will
+                            // determine if this means to finish or not
+                            targetState = State.PAUSE;
+                        }
+                        break;
+                    case HOLD:
+                        // TODO; for now treat same as PAUSE
+                    case PAUSE:
+                        // pausing
+                        // prevent all outbound takes
+                        outboundLock.writeLock().lock();
+                        // process all inbound
+                        while (targetState == State.PAUSE) {
+                            if (outbound.size() == getInProcessCount()) {
+                                // if all 'in-process' URIs are actually 
+                                // waiting in outbound, we are at PAUSE
+                                reachedState(State.PAUSE);
+                            }
+                            // continue to process discovered and finished URIs
+                            inbound.take().process();
+                        }
+                        break;
+                    case FINISH:
+                        // prevent all outbound takes
+                        outboundLock.writeLock().lock();
+                        // process all inbound
+                        while (outbound.size() != getInProcessCount()) {
+                            // continue to process discovered and finished URIs
+                            inbound.take().process();
+                        }
+                        // TODO: more cleanup?
+                        reachedState(State.FINISH);
+                        break loop;
                     }
-                    break;
-                case FINISH:
-                    // prevent all outbound takes
-                    outboundLock.writeLock().lock();
-                    // process all inbound
-                    while (outbound.size() != getInProcessCount()) {
-                        // continue to process discovered and finished URIs
-                        inbound.take().process();
+                } catch (RuntimeException e) {
+                    // log, try to pause, continue
+                    logger.log(Level.SEVERE,"",e);
+                    if(targetState!=State.PAUSE) {
+                        requestState(State.PAUSE);
                     }
-                    // TODO: more cleanup?
-                    reachedState(State.FINISH);
-                    break loop;
                 }
             }
         } catch (InterruptedException e) {
