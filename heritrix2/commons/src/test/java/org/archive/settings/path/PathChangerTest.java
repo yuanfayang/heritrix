@@ -24,6 +24,9 @@
 package org.archive.settings.path;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.Offline;
 import org.archive.settings.SheetManager;
@@ -73,18 +76,39 @@ public class PathChangerTest extends PathTestBase {
             @Override
             protected void consume(String path, String[] sheets, String value,
                     String type) {
-                System.out.println(sheetName + "|" + path + "=" + type + ", " + value);
                 PathChange pce = new PathChange(path, type, value);
                 pc.change(dest, pce);
             }
         };
         PathLister.getAll(src, consumer, true);
         pc.finish(dest);
-        
         PathListerTest.run(mgr, sheetName, true);
+        
+        changeExistingSheet(mgr, sheetName);
     }
 
     
+    private void changeExistingSheet(SheetManager mgr, final String sheetName) 
+    throws Exception {
+        SingleSheet dest = (SingleSheet)mgr.getSheet(sheetName);
+        // Simulate a user pressing "Submit Changes" in the sheet editor in
+        // the web ui.
+        final List<PathChange> list = new ArrayList<PathChange>();
+        PathListConsumer plc = new StringPathListConsumer() {
+            @Override
+            protected void consume(String path, String[] sheets, String value,
+                    String type) {
+                PathChange pce = new PathChange(path, type, value);
+                list.add(pce);
+            }
+        };
+        PathLister.getAll(dest, plc, true);
+        PathChanger pc = new PathChanger();
+        pc.change(dest, list);
+        PathListerTest.run(mgr, sheetName, true);
+    }
+    
+
     public void testPrimaryChange() throws Exception {
         Object root1 = stub_manager.getRoot();
         SingleSheet global = (SingleSheet)stub_manager.checkout("global");
@@ -103,8 +127,12 @@ public class PathChangerTest extends PathTestBase {
         assertFalse("root:primary didn't change.", o == stub_primary);
         assertTrue("root:primary didn't change to a Baz.", Offline.getType(o) == Baz.class);
 
-        // FIXME: Make this work
-        //Object o2 = global.findPrimary(Foo.class);
-        //assertTrue("Global sheet returned wrong primary", o2 == o);
+        Object o2 = global.findPrimary(Foo.class);
+        assertTrue("Global sheet returned wrong primary", o2 == o);
+        
+        Object o3 = global.resolve(stub_bar, Bar.FOO_AUTO).getOfflineProxy();
+        assertTrue("Prior auto references didn't update to new primary", o3 == o);
     }
+
+
 }

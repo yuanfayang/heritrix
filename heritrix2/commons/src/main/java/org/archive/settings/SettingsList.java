@@ -35,7 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.util.SubList;
-import org.archive.util.TypeSubstitution;
+
 
 /**
  * A list whose elements are configured by a SheetManager.  Modifications
@@ -45,13 +45,14 @@ import org.archive.util.TypeSubstitution;
  *
  */
 public class SettingsList<T> extends AbstractList<T> 
-implements TypedList<T>, TypeSubstitution, Serializable {
+implements TypedList<T>, Serializable {
 
 
     private static final long serialVersionUID = 1L;
 
     
-    final private List<T> delegate;
+    final private List<Object> delegate;
+    final private SingleSheet sheet;
     final private List<Sheet> sheets;
     final private SheetManager manager;
     final private Class<T> elementType;
@@ -65,35 +66,35 @@ implements TypedList<T>, TypeSubstitution, Serializable {
     }
     
     
-    public SettingsList(Sheet sheet, List<T> list, Class<T> c) {
-        this.delegate = list;
+    public SettingsList(SingleSheet sheet, List<T> list, Class<T> c) {
+        List l = list;
+        this.delegate = l;
+        this.sheet = sheet;
         this.sheets = Collections.singletonList((Sheet)sheet);
         this.manager = sheet.getSheetManager();
         this.elementType = c;
     }
     
     
-    // Used by duplicate
-    private SettingsList(List<T> delegate, 
-            List<Sheet> sheets, 
-            SheetManager manager, 
-            Class<T> elementType) {
-        this.delegate = delegate;
-        this.sheets = sheets;
-        this.manager = manager;
-        this.elementType = elementType;
-    }
+//    // Used by duplicate
+//    private SettingsList(List<T> delegate, 
+//            List<Sheet> sheets, 
+//            SheetManager manager, 
+//            Class<T> elementType) {
+//        this.delegate = delegate;
+//        this.sheets = sheets;
+//        this.manager = manager;
+//        this.elementType = elementType;
+//    }
     
     
     @SuppressWarnings("unchecked")
     public Object duplicate(Duplicator d) {        
-        List<Sheet> newSheets = d.duplicateSheets(sheets);
-        
         List newElements = new ArrayList<T>();
-        for (T e: delegate) {
+        for (Object e: delegate) {
             newElements.add(d.duplicate(e));
         }
-        return new SettingsList(newElements, newSheets, manager, elementType);
+        return new SettingsList(d.getNewSheet(), newElements, elementType);
     }
     
     public List<Sheet> getSheets(int index) {
@@ -104,17 +105,8 @@ implements TypedList<T>, TypeSubstitution, Serializable {
     public Class<T> getElementType() {
         return elementType;
     }
-    
-    public Class getActualClass() {
-        return delegate.getClass();
-    }
-    
-    
-    public List<T> getDelegate() {
-        return delegate;
-    }
 
-    
+
     private void validate(T element) {
         if (element instanceof String) {
             String s = (String)element;
@@ -127,38 +119,44 @@ implements TypedList<T>, TypeSubstitution, Serializable {
 
     public void add(int index, T element) {
         validate(element);
-        delegate.add(index, element);
-        manager.fireModuleChanged(null, element);
+        if (!SingleSheet.isModuleType(elementType)) {
+            delegate.add(index, element);
+        } else {
+            setModuleValue(index, element);
+        }
     }
 
 
     public boolean add(T o) {
         validate(o);
-        manager.fireModuleChanged(null, o);
-        return delegate.add(o);
+        if (!SingleSheet.isModuleType(elementType)) {
+            delegate.add(o);
+        } else {
+            setModuleValue(size(), o);
+        }
+        return true;
     }
 
     
     public boolean addAll(Collection<? extends T> c) {
         for (T t: c) {
-            validate(t);
-            manager.fireModuleChanged(null, t);
+            add(t);
         }
-        return delegate.addAll(c);
+        return true;
     }
 
     
     public boolean addAll(int index, Collection<? extends T> c) {
         for (T t: c) {
-            validate(t);
-            manager.fireModuleChanged(null, t);
+            add(index, t);
+            index++;
         }
-        return delegate.addAll(index, c);
+        return true;
     }
 
 
     public void clear() {
-        for (T t: delegate) {
+        for (Object t: delegate) {
             manager.fireModuleChanged(t, null);
         }
         delegate.clear();
@@ -176,17 +174,49 @@ implements TypedList<T>, TypeSubstitution, Serializable {
 
 
     public boolean equals(Object o) {
-        return delegate.equals(o);
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof List)) {
+            return false;
+        }
+        @SuppressWarnings("unchecked")
+        List<Object> list = (List<Object>)o;
+        if (list.size() != size()) {
+            return false;
+        }
+        for (int i = 0; i < size(); i++) {
+            Object o1 = get(i);
+            Object o2 = list.get(i);
+            if (o1 == null && o2 != null) {
+                return false;
+            }
+            if (!o1.equals(o2)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     
+    private T toActualObject(Object in) {
+        if (in instanceof ModuleInfo) {
+            in = ((ModuleInfo)in).holder.module;
+        }
+        return (T)in;
+    }
+    
     public T get(int index) {
-        return delegate.get(index);
+        return toActualObject(delegate.get(index));
     }
 
     
     public int hashCode() {
-        return delegate.hashCode();
+        int hashCode = 1;
+        for (Object element: this) {
+            hashCode = 31 * hashCode + (element == null ? 0 : element.hashCode());
+        }
+        return hashCode;
     }
 
 
@@ -206,26 +236,31 @@ implements TypedList<T>, TypeSubstitution, Serializable {
 
 
     public T remove(int index) {
-        T result = delegate.remove(index);
+        T result = toActualObject(delegate.remove(index));
         manager.fireModuleChanged(result, null);
         return result;
     }
 
 
     public boolean remove(Object o) {
-        if (delegate.remove(o)) {
-            manager.fireModuleChanged(o, null);
+        for (int i = 0; i < size(); i++) {
+            Object element = get(i);
+            if (element.equals(o)) {
+                remove(i);
+                manager.fireModuleChanged(o, null);
+                return true;
+            }
         }
-        return delegate.remove(o);
+        return false;
     }
 
 
     public boolean removeAll(Collection<?> c) {
-        Iterator<T> iter = delegate.iterator();
+        Iterator<Object> iter = delegate.iterator();
         boolean r = false;
         while (iter.hasNext()) {
             Object o = iter.next();
-            if (c.contains(o)) {
+            if (c.contains(toActualObject(o))) {
                 iter.remove();
                 manager.fireModuleChanged(o, null);
                 r = true;
@@ -236,11 +271,11 @@ implements TypedList<T>, TypeSubstitution, Serializable {
 
     
     public boolean retainAll(Collection<?> c) {
-        Iterator<T> iter = delegate.iterator();
+        Iterator<Object> iter = delegate.iterator();
         boolean r = false;
         while (iter.hasNext()) {
             Object o = iter.next();
-            if (!c.contains(o)) {
+            if (!c.contains(toActualObject(o))) {
                 iter.remove();
                 manager.fireModuleChanged(o, null);
                 r = true;
@@ -252,8 +287,20 @@ implements TypedList<T>, TypeSubstitution, Serializable {
     
     public T set(int index, T element) {
         validate(element);
-        T old = delegate.set(index, element);
-        manager.fireModuleChanged(old, element);
+        Object old;
+        if (!SingleSheet.isModuleType(elementType)) {
+            old = delegate.set(index, element);
+        } else {
+            old = setModuleValue(index, element);
+        }
+        return (T)old;
+    }
+    
+    
+    private Object setModuleValue(int i, Object value) {
+        Container c = new ListContainer(delegate);
+        Object old = sheet.setModuleValue(c, i, value);
+        manager.fireModuleChanged(old, value);
         return old;
     }
 

@@ -129,13 +129,13 @@ public abstract class PathTestBase extends TestCase {
 
     // Objects in the first override sheet.
     String stub_o1_first_ten;        // root:first:ten (override)
-    Foo stub_o1_second;              // root:second (override)
+    Offline<Foo> stub_o1_second;              // root:second (override)
     List<Foo> stub_o1_bar_list;      // root:bar:list (override/append)
-    Foo stub_o1_bar_list_3;          // root:bar:list:3 (new element)
-    Foo stub_o1_bar_list_4;          // root:bar:list:4 (new element)
+    Offline<Foo> stub_o1_bar_list_3;          // root:bar:list:3 (new element)
+    Offline<Foo> stub_o1_bar_list_4;          // root:bar:list:4 (new element)
     Map<String,Foo> stub_o1_bar_map; // root:bar:map (override/merge)
-    Baz stub_o1_bar_map_b;           // root:bar:map:b  (replace element)
-    Foo stub_o1_bar_map_d;           // root:bar:map:d  (new element)
+    Offline<Baz> stub_o1_bar_map_b;           // root:bar:map:b  (replace element)
+    Offline<Foo> stub_o1_bar_map_d;           // root:bar:map:d  (new element)
     List<String> stub_o1_bar_slist;  // root:bar:slist  (override/append)
     String stub_o1_bar_slist_3;         
     String stub_o1_bar_slist_4;
@@ -218,22 +218,24 @@ public abstract class PathTestBase extends TestCase {
         
         this.stub_o1_first_ten = "three plus seven";
         o1.set(this.stub_first, Foo.TEN, this.stub_o1_first_ten);        
-        this.stub_o1_second = new Foo("o1_second");
+        this.stub_o1_second = Offline.make(Foo.class);
         o1_root.put("second", stub_o1_second);
         
-        this.stub_o1_bar_list = new SettingsList<Foo>(o1, Foo.class);
+        List l1 = new SettingsList(o1, Bar.class);
+        this.stub_o1_bar_list = l1;
         o1.set(this.stub_bar, Bar.LIST, this.stub_o1_bar_list);
-        this.stub_o1_bar_list_3 = new Foo("o1_bar_list_3");
-        stub_o1_bar_list.add(stub_o1_bar_list_3);
-        this.stub_o1_bar_list_4 = new Foo("o1_bar_list_4");
-        stub_o1_bar_list.add(stub_o1_bar_list_4);
+        this.stub_o1_bar_list_3 = Offline.make(Foo.class);
+        l1.add(stub_o1_bar_list_3);
+        this.stub_o1_bar_list_4 = Offline.make(Foo.class);
+        l1.add(stub_o1_bar_list_4);
         
-        this.stub_o1_bar_map = new SettingsMap<Foo>(o1, Foo.class);
+        Map m1 = new SettingsMap(o1, Foo.class);
+        this.stub_o1_bar_map = m1;
         o1.set(this.stub_bar, Bar.MAP, this.stub_o1_bar_map);
-        this.stub_o1_bar_map_b = new Baz("o1_bar_map_b");
-        stub_o1_bar_map.put("b", stub_o1_bar_map_b);
-        this.stub_o1_bar_map_d = new Foo("o1_bar_map_d");
-        stub_o1_bar_map.put("d", stub_o1_bar_map_d);
+        this.stub_o1_bar_map_b = Offline.make(Baz.class);
+        m1.put("b", stub_o1_bar_map_b);
+        this.stub_o1_bar_map_d = Offline.make(Foo.class);
+        m1.put("d", stub_o1_bar_map_d);
 
         stub_manager.commit(o1);        
     }

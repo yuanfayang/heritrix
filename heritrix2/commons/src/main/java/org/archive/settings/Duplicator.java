@@ -40,22 +40,22 @@ class Duplicator {
     final private IdentityHashMap<Object,Object> changes = 
         new IdentityHashMap<Object,Object>();
     
-    final private Sheet oldSheet;
-    final private Sheet newSheet;
+    final private SingleSheet oldSheet;
+    final private SingleSheet newSheet;
 
 
-    public Duplicator(Sheet oldSheet, Sheet newSheet) {
+    public Duplicator(SingleSheet oldSheet, SingleSheet newSheet) {
         this.oldSheet = oldSheet;
         this.newSheet = newSheet;
     }
 
     
-    public Sheet getOldSheet() {
+    public SingleSheet getOldSheet() {
         return oldSheet;
     }
     
     
-    public Sheet getNewSheet() {
+    public SingleSheet getNewSheet() {
         return newSheet;
     }
     
@@ -84,6 +84,12 @@ class Duplicator {
         } else if (o instanceof SettingsMap) {
             result = ((SettingsMap)o).duplicate(this);
             changes.put(o, result);
+        } else if (o instanceof ModuleInfo) {
+            ModuleInfo oldInfo = (ModuleInfo)o;
+            ModuleInfo newInfo = new ModuleInfo();
+            newInfo.first = oldInfo.first;
+            newInfo.holder = newSheet.holders.get(oldInfo.holder.module);
+            result = newInfo;
         } else {
             result = o;
         }
