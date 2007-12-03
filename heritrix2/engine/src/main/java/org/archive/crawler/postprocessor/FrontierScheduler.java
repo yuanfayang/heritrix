@@ -37,6 +37,7 @@ import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
@@ -50,7 +51,8 @@ import org.archive.state.StateProvider;
  * are in-scope get scheduled.
  * @author stack
  */
-public class FrontierScheduler extends Processor implements PostProcessor {
+public class FrontierScheduler extends Processor 
+implements PostProcessor, Initializable {
 
     private static final long serialVersionUID = -3L;
 

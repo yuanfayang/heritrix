@@ -78,19 +78,6 @@ public class BdbCookieStorage extends AbstractCookieStorage {
     }
 
 
-    /* (non-Javadoc)
-     * @see org.archive.modules.fetcher.AbstractCookieStorage#initialTasks(org.archive.state.StateProvider)
-     */
-    @Override
-    public void initialTasks(StateProvider provider) {
-        if(cookies!=null) {
-            // already initialTasked; don't repeat
-            return;
-            // TODO: fix double-invokcation of initialTasks; see HER-????
-        }
-        super.initialTasks(provider);
-    }
-
     protected SortedMap<String,Cookie> prepareMap(StateProvider provider) {
         this.bdb = provider.get(this, BDB);
         try {

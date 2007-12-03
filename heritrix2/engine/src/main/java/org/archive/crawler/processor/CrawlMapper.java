@@ -41,6 +41,7 @@ import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.deciderules.DecideRuleSequence;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
@@ -70,7 +71,7 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public abstract class CrawlMapper extends Processor {
+public abstract class CrawlMapper extends Processor implements Initializable {
 
     /**
      * PrintWriter which remembers the File to which it writes. 
@@ -311,7 +312,6 @@ public abstract class CrawlMapper extends Processor {
     }
 
     public void initialTasks(StateProvider context) {
-        super.initialTasks(context);
         localName = context.get(this, LOCAL_NAME);
         cache = new ArrayLongFPCache();
         diversionDir = context.get(this, DIVERSION_DIR);
