@@ -87,17 +87,17 @@ public class MemorySheetManager extends SheetManager {
     /**
      * Constructor.
      */
-    public MemorySheetManager(boolean online) {
-        super("unkownn", online);
+    public MemorySheetManager(boolean live) {
+        super("unkownn", live);
         this.pathContext = new DefaultPathContext(new File("."));
         sheets = new HashMap<String,Sheet>();
         associations = new TreeMap<String,Set<Sheet>>();
         SingleSheet globals = addSingleSheet(GLOBAL_SHEET_NAME);
-        if (online) {
+        if (live) {
             globals.set(this, MANAGER, this);
         } else {
-            Offline stub = (Offline)getManagerModule();
-            globals.setOffline(stub, MANAGER, stub);
+            Stub stub = (Stub)getManagerModule();
+            globals.setStub(stub, MANAGER, stub);
         }
         globals.set(getManagerModule(), ROOT, 
                 new SettingsMap<Object>(globals, Object.class));
@@ -312,7 +312,7 @@ public class MemorySheetManager extends SheetManager {
     }
     
     
-    public void offlineCleanup() {
+    public void stubCleanup() {
         
     }
 

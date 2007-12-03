@@ -209,8 +209,8 @@ public interface JMXSheetManager {
             @Parameter(name="index", desc="The index to move the sheet to.")
             int index);
 
-    @Attribute(desc="Returns true if the sheet manager is online.", def="false")
-    boolean isOnline();
+    @Attribute(desc="Returns true if the sheet manager is live.", def="false")
+    boolean isLive();
 
 
     @Operation(desc="Lists the context prefixes associated with a given sheet.")
@@ -222,8 +222,8 @@ public interface JMXSheetManager {
             @Parameter(name="start", desc="The number of contexts to skip before listing.")
             int start);
 
-    @Operation(desc="Cleans up an offline manager.")
-    void offlineCleanup();
+    @Operation(desc="Cleans up a stub manager.")
+    void stubCleanup();
 
 
     @Operation(desc="Removes a setting from a sheet.")

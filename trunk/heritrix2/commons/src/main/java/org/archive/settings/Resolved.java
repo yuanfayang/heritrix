@@ -49,14 +49,14 @@ public class Resolved<T> {
     }
 
     
-    public Offline getOfflineProxy() {
+    public Stub<?> getStubValue() {
         if (value == null) {
             return null;
         }
-        if (!(value instanceof Offline)) {
-            throw new IllegalStateException("Online or leaf sheet.");
+        if (!(value instanceof Stub)) {
+            throw new IllegalStateException("Live or leaf sheet.");
         }
-        return (Offline)value;
+        return (Stub)value;
     }
 
 
@@ -81,9 +81,9 @@ public class Resolved<T> {
         return sheets.get(sheets.size() - 1);
     }
 
-    public T getOnlineValue() {
-        if (value instanceof Offline) {
-            throw new IllegalStateException("Not an online/leaf sheet.");
+    public T getLiveValue() {
+        if (value instanceof Stub) {
+            throw new IllegalStateException("Not an live/leaf sheet.");
         }
         @SuppressWarnings("unchecked")
         T r = (T)value;
@@ -92,16 +92,16 @@ public class Resolved<T> {
     
     
     public Object getValue() {
-        if (getLastSheet().isOnline(key)) {
-            return getOnlineValue();
+        if (getLastSheet().isLive(key)) {
+            return getLiveValue();
         } else {
-            return getOfflineProxy();
+            return getStubValue();
         }
     }
 
 
-    // for both online AND Leaf 
-    public static <T> Resolved<T> makeOnline(
+    // for both live AND Leaf 
+    public static <T> Resolved<T> makeLive(
             Object module,
             Key<T> key, 
             T value,
@@ -122,7 +122,7 @@ public class Resolved<T> {
     }
     
     
-    public static <T> Resolved<T> makeOnline(
+    public static <T> Resolved<T> makeLive(
             Object module,
             Key<T> key,
             T value,
@@ -133,24 +133,24 @@ public class Resolved<T> {
     }
 
 
-    public static <T> Resolved<T> makeOffline(
+    public static <T> Resolved<T> makeStub(
             Object module,
             Key<T> key,
-            Offline offline,
+            Stub stub,
             List<Sheet> sheets) {
         List<Sheet> l = new ArrayList<Sheet>(sheets);
         l = Collections.unmodifiableList(l);
-        return make(module, key, offline, sheets);
+        return make(module, key, stub, sheets);
     }
 
     
-    public static <T> Resolved<T> makeOffline(
+    public static <T> Resolved<T> makeStub(
             Object module,
             Key<T> key,
-            Offline offline,
+            Stub stub,
             Sheet sheet) {
         List<Sheet> l = Collections.singletonList(sheet);
-        return makeOffline(module, key, offline, l);
+        return makeStub(module, key, stub, l);
     }
     
 

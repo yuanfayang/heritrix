@@ -337,7 +337,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
             try {
                 JMXSheetManager jsm = BeanProxy.proxy(server, oname, 
                         JMXSheetManager.class);
-                jsm.offlineCleanup();
+                jsm.stubCleanup();
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Error closing stub SheetManager", e);
             }

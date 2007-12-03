@@ -49,7 +49,7 @@ import java.util.logging.Logger;
 import org.archive.settings.Association;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.ModuleListener;
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
@@ -202,9 +202,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private boolean copyCheckpoint;
     
 
-    public FileSheetManager(File main, String name, boolean online) 
+    public FileSheetManager(File main, String name, boolean live) 
     throws IOException, DatabaseException {
-        this(main, name, online, emptyList());
+        this(main, name, live, emptyList());
     }
 
 
@@ -216,10 +216,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      * @param maxSheets
      *            the maximum number of sheets to keep in memory
      */
-    public FileSheetManager(File main, String name, boolean online, 
+    public FileSheetManager(File main, String name, boolean live, 
             Collection<ModuleListener> listeners) 
     throws IOException, DatabaseException {
-        super(name, listeners, online);
+        super(name, listeners, live);
         this.mainConfig = main;        
         this.pathContext = new FSMPathContext(mainConfig.getParentFile(), name);
 
@@ -233,7 +233,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
         
         this.bdbDir = f.getAbsolutePath();
-        if (online) {
+        if (live) {
             this.bdbCachePercent = Integer.parseInt(
                     getBdbProperty(p, BDB_CACHE_PERCENT));
         } else {
@@ -768,7 +768,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
 
     private void setManagerDefaults(SingleSheet ss) {
-        if (isOnline()) {
+        if (isLive()) {
             ss.set(this, MANAGER, this);
             ss.set(this, BDB, bdb);
             ss.set(this, DIR, dir);
@@ -779,11 +779,11 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.addPrimary(bdb);
         } else {
             @SuppressWarnings("unchecked")
-            Offline<SheetManager> manager = (Offline)getManagerModule();
-            Offline<BdbModule> bdb = Offline.make(BdbModule.class);
-            ss.setOffline(manager, MANAGER, manager);
-            ss.setOffline(manager, BDB, bdb);
-            ss.setOffline(manager, DIR, dir);
+            Stub<SheetManager> manager = (Stub)getManagerModule();
+            Stub<BdbModule> bdb = Stub.make(BdbModule.class);
+            ss.setStub(manager, MANAGER, manager);
+            ss.setStub(manager, BDB, bdb);
+            ss.setStub(manager, DIR, dir);
             ss.set(bdb, BdbModule.DIR, bdbDir);
             ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
             ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
@@ -925,7 +925,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     }
 
     
-    public void offlineCleanup() {
+    public void stubCleanup() {
         bdb.close();
     }
 

@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Key;
@@ -120,7 +120,7 @@ public class PathValidatorTest extends PathTestBase {
     private void checkDefaults(Sheet sheet, String path, String... exclusions) {
         List<String> ex = Arrays.asList(exclusions);
         Object module = PathValidator.validate(sheet, path);
-        Class<?> mclass = Offline.getType(module);
+        Class<?> mclass = Stub.getType(module);
         Collection<Key<Object>> keys = KeyManager.getKeys(mclass).values();
         for (Key<Object> k: keys) {            
             if (!ex.contains(k.getFieldName())) {

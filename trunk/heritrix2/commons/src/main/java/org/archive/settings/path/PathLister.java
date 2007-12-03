@@ -30,7 +30,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.Resolved;
 import org.archive.settings.SheetManager;
 import org.archive.settings.TypedList;
@@ -97,7 +97,7 @@ public class PathLister {
      */
     private void list() {
         Object start = startSheet.getSheetManager().getManagerModule();
-        Class type = Offline.getType(start);
+        Class type = Stub.getType(start);
         if (!rootOnly) {
             // Consume manager first thing.
             Sheet global = startSheet.getSheetManager().getGlobalSheet();
@@ -122,7 +122,7 @@ public class PathLister {
                 Object ref = k;
                 if (ref != SheetManager.ROOT) {
                     Object v;
-                    if (startSheet.getSheetManager().isOnline()) {
+                    if (startSheet.getSheetManager().isLive()) {
                         v = global.get(start, k);
                     } else {
                         v = global.resolve(start, k).getValue();
@@ -191,8 +191,8 @@ public class PathLister {
         
         // Get the keys for the module
         Class ptype;
-        if (module instanceof Offline) {
-            ptype = ((Offline)module).getType();
+        if (module instanceof Stub) {
+            ptype = ((Stub)module).getType();
         } else {
             ptype = module.getClass();
         }
@@ -328,7 +328,7 @@ public class PathLister {
         if (v == null) {
             return false;
         }
-        if (KeyTypes.isSimple(Offline.getType(v))) {
+        if (KeyTypes.isSimple(Stub.getType(v))) {
             return false;
         }
         if (alreadySeen.containsKey(v)) {

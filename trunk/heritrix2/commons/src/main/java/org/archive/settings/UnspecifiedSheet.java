@@ -96,11 +96,11 @@ class UnspecifiedSheet extends Sheet {
     }
 
     @Override
-    public <T> Offline checkOffline(Offline module, Key<T> key) {
+    public <T> Stub checkStub(Stub module, Key<T> key) {
         validateModuleType(module, key);
         SingleSheet global = getSheetManager().getGlobalSheet();
         Object def = getDefault(global, module, key);
-        return (Offline)def;
+        return (Stub)def;
     }
 
     
@@ -176,7 +176,7 @@ class UnspecifiedSheet extends Sheet {
         if (c == null) {
             return null;
         }
-        if (getSheetManager().isOnline()) {
+        if (getSheetManager().isLive()) {
             try {
                 Object o = c.newInstance();
                 if (o instanceof Initializable) {
@@ -187,7 +187,7 @@ class UnspecifiedSheet extends Sheet {
                 throw new IllegalStateException(e);
             }
         } else {
-            return Offline.make(c);
+            return Stub.make(c);
         }
     }
 

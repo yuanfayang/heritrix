@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Key;
@@ -208,8 +208,8 @@ public class PathValidator {
         }
         
         Class c;
-        if (current instanceof Offline) {
-            c = ((Offline)current).getType();
+        if (current instanceof Stub) {
+            c = ((Stub)current).getType();
         } else {
             c = current.getClass();
         }

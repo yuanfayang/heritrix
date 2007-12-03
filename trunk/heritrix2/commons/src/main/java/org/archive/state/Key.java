@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.archive.i18n.LocaleCache;
-import org.archive.settings.Offline;
 
 
 /**
@@ -88,7 +87,7 @@ import org.archive.settings.Offline;
  * <p>The three flavors behave somewhat differently depending on the state of
  * an application.  For instance, in the {@link org.archive.settings} system,
  * an application can either be online or offline.  When an application is 
- * offline, the settings system provides {@link Offline} proxy values for 
+ * offline, the settings system provides {@link Stub} proxy values for 
  * modules types, instead of actually constructing classes.  However, simple
  * types and container types are not replaced with Offline proxies.
  * 

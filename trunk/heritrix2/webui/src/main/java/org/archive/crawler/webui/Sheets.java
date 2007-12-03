@@ -731,7 +731,7 @@ public class Sheets {
         CrawlJob job = (CrawlJob)request.getAttribute("job");
         boolean completed = job.getJobStage() == JobStage.COMPLETED;
         
-        return new Settings(sheet, mgr.isOnline(), completed, result);
+        return new Settings(sheet, mgr.isLive(), completed, result);
     }
 
 
