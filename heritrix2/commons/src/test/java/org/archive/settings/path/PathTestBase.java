@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.archive.settings.MemorySheetManager;
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.SheetManager;
@@ -105,19 +105,19 @@ public abstract class PathTestBase extends TestCase {
     SheetManager stub_manager;
 
     // Objects in global sheet for stub-mode tests
-    Offline<Foo> stub_first;
-    Offline<Foo> stub_primary;
-    Offline<Foo> stub_second;
-    Offline<Bar> stub_bar;
-    Offline<Foo> stub_bar_foo;
+    Stub<Foo> stub_first;
+    Stub<Foo> stub_primary;
+    Stub<Foo> stub_second;
+    Stub<Bar> stub_bar;
+    Stub<Foo> stub_bar_foo;
     List<Object> stub_bar_list;
-    Offline<Foo> stub_bar_list_0;
-    Offline<Foo> stub_bar_list_1;
-    Offline<Foo> stub_bar_list_2;
+    Stub<Foo> stub_bar_list_0;
+    Stub<Foo> stub_bar_list_1;
+    Stub<Foo> stub_bar_list_2;
     Map<String,Object> stub_bar_map;
-    Offline<Foo> stub_bar_map_a;
-    Offline<Foo> stub_bar_map_b;
-    Offline<Foo> stub_bar_map_c;
+    Stub<Foo> stub_bar_map_a;
+    Stub<Foo> stub_bar_map_b;
+    Stub<Foo> stub_bar_map_c;
     List<String> stub_bar_slist;   
     String stub_bar_slist_0;
     String stub_bar_slist_1;
@@ -129,13 +129,13 @@ public abstract class PathTestBase extends TestCase {
 
     // Objects in the first override sheet.
     String stub_o1_first_ten;        // root:first:ten (override)
-    Offline<Foo> stub_o1_second;              // root:second (override)
+    Stub<Foo> stub_o1_second;              // root:second (override)
     List<Foo> stub_o1_bar_list;      // root:bar:list (override/append)
-    Offline<Foo> stub_o1_bar_list_3;          // root:bar:list:3 (new element)
-    Offline<Foo> stub_o1_bar_list_4;          // root:bar:list:4 (new element)
+    Stub<Foo> stub_o1_bar_list_3;          // root:bar:list:3 (new element)
+    Stub<Foo> stub_o1_bar_list_4;          // root:bar:list:4 (new element)
     Map<String,Foo> stub_o1_bar_map; // root:bar:map (override/merge)
-    Offline<Baz> stub_o1_bar_map_b;           // root:bar:map:b  (replace element)
-    Offline<Foo> stub_o1_bar_map_d;           // root:bar:map:d  (new element)
+    Stub<Baz> stub_o1_bar_map_b;           // root:bar:map:b  (replace element)
+    Stub<Foo> stub_o1_bar_map_d;           // root:bar:map:d  (new element)
     List<String> stub_o1_bar_slist;  // root:bar:slist  (override/append)
     String stub_o1_bar_slist_3;         
     String stub_o1_bar_slist_4;
@@ -158,39 +158,39 @@ public abstract class PathTestBase extends TestCase {
                 stub_manager.getManagerModule(), 
                 SheetManager.ROOT);
         
-        this.stub_first = Offline.make(Foo.class);
+        this.stub_first = Stub.make(Foo.class);
         root.put("first", stub_first);
-        this.stub_primary = Offline.make(Foo.class);
+        this.stub_primary = Stub.make(Foo.class);
         root.put("primary", stub_primary);
         global.addPrimary(stub_primary);
-        this.stub_second = Offline.make(Foo.class);
+        this.stub_second = Stub.make(Foo.class);
         root.put("second", stub_second);
         
-        this.stub_bar = Offline.make(Bar.class);
-        this.stub_bar_foo = Offline.make(Foo.class);
-        global.setOffline(stub_bar, Bar.FOO, stub_bar_foo);
+        this.stub_bar = Stub.make(Bar.class);
+        this.stub_bar_foo = Stub.make(Foo.class);
+        global.setStub(stub_bar, Bar.FOO, stub_bar_foo);
         
         this.stub_bar_list = new SettingsList(global, Foo.class);
-        global.setOffline(stub_bar, Bar.LIST, stub_bar_list);
-        this.stub_bar_list_0 = Offline.make(Foo.class);
+        global.setStub(stub_bar, Bar.LIST, stub_bar_list);
+        this.stub_bar_list_0 = Stub.make(Foo.class);
         stub_bar_list.add(stub_bar_list_0);
-        this.stub_bar_list_1 = Offline.make(Foo.class);
+        this.stub_bar_list_1 = Stub.make(Foo.class);
         stub_bar_list.add(stub_bar_list_1);
-        this.stub_bar_list_2 = Offline.make(Foo.class);
+        this.stub_bar_list_2 = Stub.make(Foo.class);
         stub_bar_list.add(stub_bar_list_2);
         
         this.stub_bar_map = new SettingsMap(global, Foo.class);
-        global.setOffline(stub_bar, Bar.MAP, stub_bar_map);
-        this.stub_bar_map_a = Offline.make(Foo.class);
+        global.setStub(stub_bar, Bar.MAP, stub_bar_map);
+        this.stub_bar_map_a = Stub.make(Foo.class);
         stub_bar_map.put("a", stub_bar_map_a);
-        this.stub_bar_map_b = Offline.make(Foo.class);
+        this.stub_bar_map_b = Stub.make(Foo.class);
         global.set(stub_bar_map_b, Foo.FIVE, 50000);
         stub_bar_map.put("b", stub_bar_map_b);        
-        this.stub_bar_map_c = Offline.make(Foo.class);
+        this.stub_bar_map_c = Stub.make(Foo.class);
         stub_bar_map.put("c", stub_bar_map_c);
 
         this.stub_bar_slist = new SettingsList<String>(global, String.class);
-        global.setOffline(stub_bar, Bar.SLIST, stub_bar_slist);
+        global.setStub(stub_bar, Bar.SLIST, stub_bar_slist);
         this.stub_bar_slist_0 = "zero";        
         stub_bar_slist.add(stub_bar_slist_0);
         this.stub_bar_slist_1 = "one";
@@ -199,7 +199,7 @@ public abstract class PathTestBase extends TestCase {
         stub_bar_slist.add(stub_bar_slist_2);
 
         this.stub_bar_smap = new SettingsMap<String>(global, String.class);
-        global.setOffline(stub_bar, Bar.SMAP, stub_bar_smap);
+        global.setStub(stub_bar, Bar.SMAP, stub_bar_smap);
         this.stub_bar_smap_a = "65";
         stub_bar_smap.put("a", stub_bar_smap_a);
         this.stub_bar_smap_b = "66";
@@ -218,23 +218,23 @@ public abstract class PathTestBase extends TestCase {
         
         this.stub_o1_first_ten = "three plus seven";
         o1.set(this.stub_first, Foo.TEN, this.stub_o1_first_ten);        
-        this.stub_o1_second = Offline.make(Foo.class);
+        this.stub_o1_second = Stub.make(Foo.class);
         o1_root.put("second", stub_o1_second);
         
         List l1 = new SettingsList(o1, Bar.class);
         this.stub_o1_bar_list = l1;
         o1.set(this.stub_bar, Bar.LIST, this.stub_o1_bar_list);
-        this.stub_o1_bar_list_3 = Offline.make(Foo.class);
+        this.stub_o1_bar_list_3 = Stub.make(Foo.class);
         l1.add(stub_o1_bar_list_3);
-        this.stub_o1_bar_list_4 = Offline.make(Foo.class);
+        this.stub_o1_bar_list_4 = Stub.make(Foo.class);
         l1.add(stub_o1_bar_list_4);
         
         Map m1 = new SettingsMap(o1, Foo.class);
         this.stub_o1_bar_map = m1;
         o1.set(this.stub_bar, Bar.MAP, this.stub_o1_bar_map);
-        this.stub_o1_bar_map_b = Offline.make(Baz.class);
+        this.stub_o1_bar_map_b = Stub.make(Baz.class);
         m1.put("b", stub_o1_bar_map_b);
-        this.stub_o1_bar_map_d = Offline.make(Foo.class);
+        this.stub_o1_bar_map_d = Stub.make(Foo.class);
         m1.put("d", stub_o1_bar_map_d);
 
         stub_manager.commit(o1);        

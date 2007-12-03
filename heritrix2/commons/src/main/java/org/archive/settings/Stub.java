@@ -25,13 +25,13 @@ package org.archive.settings;
 
 import org.archive.util.TypeSubstitution;
 
-final public class Offline<T> implements TypeSubstitution {
+final public class Stub<T> implements TypeSubstitution {
 
     
     private Class<T> type;
     
     
-    public Offline(Class<T> type) {
+    public Stub(Class<T> type) {
         this.type = type;
     }
     
@@ -46,8 +46,8 @@ final public class Offline<T> implements TypeSubstitution {
     }
     
 
-    public static <T> Offline<T> make(Class<T> cls) {
-        return new Offline<T>(cls);
+    public static <T> Stub<T> make(Class<T> cls) {
+        return new Stub<T>(cls);
     }
     
     

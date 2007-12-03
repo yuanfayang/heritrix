@@ -61,7 +61,7 @@ public abstract class SheetManager implements StateProvider, Serializable {
     
     final private UnspecifiedSheet unspecified;
     
-    final transient private Offline<?> offlineThis;
+    final transient private Stub<?> stubThis;
 
     private List<ModuleListener> moduleListeners = 
         new CopyOnWriteArrayList<ModuleListener>();
@@ -75,7 +75,7 @@ public abstract class SheetManager implements StateProvider, Serializable {
     private ListModuleListener<Closeable> closeables = 
         ListModuleListener.make(Closeable.class);
 
-    private boolean online;
+    private boolean live;
     
     @Immutable
     final public static Key<Map<String,Object>> ROOT = 
@@ -94,11 +94,11 @@ public abstract class SheetManager implements StateProvider, Serializable {
     /**
      * Constructor.
      */
-    public SheetManager(String jobName, boolean online) {
+    public SheetManager(String jobName, boolean live) {
         this.jobName = jobName;
-        this.online = online;
+        this.live = live;
         this.unspecified = new UnspecifiedSheet(this, "default");
-        offlineThis = Offline.make(getClass());
+        stubThis = Stub.make(getClass());
         moduleListeners.add(checkpointables);
         moduleListeners.add(closeables);
         moduleListeners.add(finishables);
@@ -118,8 +118,8 @@ public abstract class SheetManager implements StateProvider, Serializable {
         return finishables.getList();
     }
     
-    public SheetManager(String jobName, Collection<ModuleListener> listeners, boolean online) {
-        this(jobName, online);
+    public SheetManager(String jobName, Collection<ModuleListener> listeners, boolean live) {
+        this(jobName, live);
         moduleListeners.addAll(listeners);
     }
 
@@ -130,10 +130,10 @@ public abstract class SheetManager implements StateProvider, Serializable {
     
     
     public Object getManagerModule() {
-        if (isOnline()) {
+        if (isLive()) {
             return this;
         } else {
-            return offlineThis;
+            return stubThis;
         }
     }
     
@@ -300,8 +300,8 @@ public abstract class SheetManager implements StateProvider, Serializable {
     }
 
     
-    final public boolean isOnline() {
-        return online;
+    final public boolean isLive() {
+        return live;
     }
 
 
@@ -437,12 +437,12 @@ public abstract class SheetManager implements StateProvider, Serializable {
     public abstract Collection<String> listContexts(String sheetName, 
             int ofs, int len);
 
-    public abstract void offlineCleanup();
+    public abstract void stubCleanup();
 
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
-        out.writeBoolean(online);
+        out.writeBoolean(live);
         out.writeObject(moduleListeners);
         out.writeObject(checkpointables);
         out.writeObject(closeables);
@@ -454,7 +454,7 @@ public abstract class SheetManager implements StateProvider, Serializable {
     private void readObject(ObjectInputStream in) 
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        online = in.readBoolean();
+        live = in.readBoolean();
         moduleListeners = (List)in.readObject();
         checkpointables = (ListModuleListener)in.readObject();
         closeables = (ListModuleListener)in.readObject();

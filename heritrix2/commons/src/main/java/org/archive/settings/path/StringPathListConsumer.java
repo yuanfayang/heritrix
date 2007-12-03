@@ -29,7 +29,7 @@ package org.archive.settings.path;
 import java.util.List;
 import java.util.Map;
 
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.TypedList;
@@ -95,7 +95,7 @@ public abstract class StringPathListConsumer implements PathListConsumer {
             } else {
                 typeTag = OBJECT_TAG;
             }
-            v = (value == null) ? "null" : Offline.getType(value).getName();
+            v = (value == null) ? "null" : Stub.getType(value).getName();
         }
 
         consume(path, snames, v, typeTag);

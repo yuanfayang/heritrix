@@ -48,7 +48,7 @@ import org.archive.util.Transform;
 import org.archive.util.Transformer;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Association;
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
@@ -120,7 +120,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         this.oname = JMXModuleListener.nameOf(domain, job, this);
         LoggingDynamicMBean.register(server, this, oname);
         this.lastUse = System.currentTimeMillis();
-        if (manager.isOnline()) {
+        if (manager.isLive()) {
             this.reapTask = null;
         } else {
             this.reapTask = new ReapTask(server);
@@ -349,7 +349,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         if (KeyTypes.isSimple(v.getClass())) {
             return v.toString();
         }
-        return Offline.getType(v).getName();
+        return Stub.getType(v).getName();
     }
     
     
@@ -567,9 +567,9 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
     
     
-    public synchronized boolean isOnline() {
+    public synchronized boolean isLive() {
         stamp();
-        return manager.isOnline();
+        return manager.isLive();
     }
 
     
@@ -580,11 +580,11 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
 
-    public synchronized void offlineCleanup() {
+    public synchronized void stubCleanup() {
         if (reapTask != null) {
             reapTask.cancel();
         }
-        manager.offlineCleanup();
+        manager.stubCleanup();
     }
 
     
@@ -628,7 +628,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
                 }
                 if (now  - lastUse > TIMEOUT) {
                     try {
-                        offlineCleanup();
+                        stubCleanup();
                     } catch (Exception e) {
                         LOGGER.log(Level.WARNING, e.getMessage(), e);
                     }

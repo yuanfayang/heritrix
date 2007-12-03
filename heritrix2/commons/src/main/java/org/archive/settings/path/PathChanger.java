@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.SingleSheet;
@@ -108,7 +108,7 @@ public class PathChanger {
 
     
     public void change(SingleSheet sheet, PathChange pair) {
-        if (sheet.getSheetManager().isOnline()) {
+        if (sheet.getSheetManager().isLive()) {
             changeLoudly(sheet, pair);
         } else {
             changeQuietly(sheet, pair);
@@ -202,7 +202,7 @@ public class PathChanger {
                 return null;
             }
             
-                Class otype = Offline.getType(o);
+                Class otype = Stub.getType(o);
                 if (otype.getName().equals(pc.getValue())) {
                     return o;
                 }                            
@@ -285,8 +285,8 @@ public class PathChanger {
         try {
             Class<?> c = Class.forName(value);
             Object result;
-            if (!online(sheet, c)) {
-                result = Offline.make(c);
+            if (!isLive(sheet, c)) {
+                result = Stub.make(c);
             } else {
                 result = c.newInstance();
             }
@@ -347,14 +347,14 @@ public class PathChanger {
 
     
     
-    private boolean online(SingleSheet sheet, Class c) {
+    private boolean isLive(SingleSheet sheet, Class c) {
         if (Map.class.isAssignableFrom(c)) {
             return true;
         }
         if (List.class.isAssignableFrom(c)) {
             return true;
         }
-        return sheet.getSheetManager().isOnline();
+        return sheet.getSheetManager().isLive();
     }
     
 
@@ -424,7 +424,7 @@ public class PathChanger {
                     + previousPath + "' resolves to null.");
         }
         
-        Class prevType = Offline.getType(previous);
+        Class prevType = Stub.getType(previous);
         Map<String,Key<Object>> keys = KeyManager.getKeys(prevType);
         Key<Object> key = keys.get(lastToken);
         if (key == null) {
@@ -435,8 +435,8 @@ public class PathChanger {
             value = sheet.findPrimary(key.getType());
         }
         
-        if (value instanceof Offline) {
-            sheet.setOffline((Offline)previous, key, (Offline)value);
+        if (value instanceof Stub) {
+            sheet.setStub((Stub)previous, key, (Stub)value);
         } else {
             sheet.set(previous, key, value);
         }
@@ -460,7 +460,7 @@ public class PathChanger {
             return;
         }
         
-        Class type = Offline.getType(parent);
+        Class type = Stub.getType(parent);
         Map<String,Key<Object>> keys = KeyManager.getKeys(type);
         Key<Object> key = keys.get(lastToken);
         if (key == null) {

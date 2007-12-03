@@ -113,7 +113,7 @@ public abstract class Sheet implements StateProvider, Serializable {
     
     
     /**
-     * Looks up a value for a property.  TODO: Collapse checkOffline into 
+     * Looks up a value for a property.  TODO: Collapse checkStub into 
      * this for simplicity's sake.  There are two methods because they used
      * to be public and required different signatures for type safety.
      * 
@@ -127,61 +127,61 @@ public abstract class Sheet implements StateProvider, Serializable {
     abstract <T> T check(Object module, Key<T> key);
 
     
-    abstract <T> Offline checkOffline(Offline module, Key<T> key);
+    abstract <T> Stub checkStub(Stub module, Key<T> key);
     
     public abstract <T> Resolved<T> resolve(Object module, Key<T> key);
 
 
     <T> Resolved<T> resolveDefault(Object module, Key<T> key) {
-        if (isOnline(key)) {
-            return resolveDefaultOnline(module, key);
+        if (isLive(key)) {
+            return resolveDefaultLive(module, key);
         } else {
-            return resolveDefaultOffline(module, key);
+            return resolveDefaultStub(module, key);
         }
     }
     
     
-    private <T> Resolved<T> resolveDefaultOnline(Object module, Key<T> key) {
+    private <T> Resolved<T> resolveDefaultLive(Object module, Key<T> key) {
         SingleSheet defaults = getGlobalSheet();
         T result = defaults.check(module, key);
         if (result == null) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
             return un.resolve(module, key);
         }
-        return Resolved.makeOnline(module, key, result, defaults);
+        return Resolved.makeLive(module, key, result, defaults);
     }
     
     
-    private <T> Resolved<T> resolveDefaultOffline(Object module, Key<T> key) {
-        Offline offline = (Offline)module;
+    private <T> Resolved<T> resolveDefaultStub(Object module, Key<T> key) {
+        Stub stub = (Stub)module;
         SingleSheet defaults = getGlobalSheet();
-        Offline result = defaults.checkOffline(offline, key);
+        Stub result = defaults.checkStub(stub, key);
         if (result == null) {
             Sheet un = getSheetManager().getUnspecifiedSheet();
             return un.resolve(module, key);
         }
-        return Resolved.makeOffline(module, key, result, defaults);
+        return Resolved.makeStub(module, key, result, defaults);
     }
     
     
     public <T> T get(Object module, Key<T> key) {
-        return resolve(module, key).getOnlineValue();
+        return resolve(module, key).getLiveValue();
     }
 
 
 
     
     /**
-     * Returns true if the "online" method of lookup and storage should be
-     * used for the given key.  For offline sheets, only some kinds of 
-     * objects are actually proxied with Offline objects.  For instance,
+     * Returns true if the "live" method of lookup and storage should be
+     * used for the given key.  For stub sheets, only some kinds of 
+     * objects are actually proxied with Stub objects.  For instance,
      * Strings and other essentially primitive types are stored using the
-     * the actual object values instead of Offline proxies.
+     * the actual object values instead of Stub proxies.
      * 
      * <p>This will return true if:
      * 
      * <ol>
-     * <li>The SheetManager's isOnline() returns true.
+     * <li>The SheetManager's isLive() returns true.
      * <li>The given key's type is java.util.List.
      * <li>The given key's type is java.util.Map.
      * <li>The given key's isLeaf() method returns true.
@@ -190,13 +190,13 @@ public abstract class Sheet implements StateProvider, Serializable {
      * @param key
      * @return
      */
-    boolean isOnline(Key key) {
-        return isOnline(key.getType());
+    boolean isLive(Key key) {
+        return isLive(key.getType());
     }
     
     
-    boolean isOnline(Class type) {
-        if (getSheetManager().isOnline()) {
+    boolean isLive(Class type) {
+        if (getSheetManager().isLive()) {
             return true;
         }
         if (type == List.class) {
@@ -224,7 +224,7 @@ public abstract class Sheet implements StateProvider, Serializable {
     
     
     static <T> void validateModuleType(Object module, Key<T> key) {
-        Class mtype = Offline.getType(module);
+        Class mtype = Stub.getType(module);
         if (!key.getOwner().isAssignableFrom(mtype)) {
             throw new IllegalArgumentException("Illegal module type.  " +
                     "Key owner is " + key.getOwner().getName() + 

@@ -92,9 +92,9 @@ public class SheetBundle extends Sheet {
     }
 
     
-    <T> Offline checkOffline(Offline module, Key<T> key) {
+    <T> Stub checkStub(Stub module, Key<T> key) {
         for (Sheet sheet: sheets) {
-            Offline result = sheet.checkOffline(module, key);
+            Stub result = sheet.checkStub(module, key);
             if (result != null) {
                 return result;
             }
@@ -241,17 +241,17 @@ public class SheetBundle extends Sheet {
                 sheets.remove(sheets.size() - 1);
             } else {
                 SingleSheet ss = (SingleSheet)sheet;
-                if (isOnline(bundle, key.getType())) {
+                if (isLive(bundle, key.getType())) {
                     T value = ss.check(module, key);
                     if (value != null) {
                         sheets.add(ss);
-                        return Resolved.makeOnline(module, key, value, sheets);
+                        return Resolved.makeLive(module, key, value, sheets);
                     }
                 } else {
-                    Offline value = ss.checkOffline((Offline)module, key);
+                    Stub value = ss.checkStub((Stub)module, key);
                     if (value != null) {
                         sheets.add(ss);
-                        return Resolved.makeOffline(module, key, value, sheets);
+                        return Resolved.makeStub(module, key, value, sheets);
                     }
                 }
             }
@@ -260,8 +260,8 @@ public class SheetBundle extends Sheet {
     }
     
     
-    private static boolean isOnline(Sheet sheet, Class c) {
-        if (sheet.getSheetManager().isOnline()) {
+    private static boolean isLive(Sheet sheet, Class c) {
+        if (sheet.getSheetManager().isLive()) {
             return true;
         }
         if (KeyTypes.isSimple(c)) {

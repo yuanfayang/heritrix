@@ -159,17 +159,17 @@ public class SingleSheet extends Sheet {
     
     
     @Override
-    <T> Offline checkOffline(Offline module, Key<T> key) {
+    <T> Stub checkStub(Stub module, Key<T> key) {
         validateModuleType(module, key);
-        if (isOnline(key)) {
-            throw new IllegalStateException("Not an offline key.");
+        if (isLive(key)) {
+            throw new IllegalStateException("Not a stub key.");
         }
         Object r = checkUnsafe(module, key);
         if (r instanceof ModuleInfo) {
             ModuleInfo mi = (ModuleInfo)r;
             r = mi.holder.module;
         }
-        return (Offline)r;
+        return (Stub)r;
     }
 
     
@@ -193,15 +193,15 @@ public class SingleSheet extends Sheet {
         if (List.class.isAssignableFrom(key.getType())) {
             return resolveList(module, key);
         }
-        if (isOnline(key)) {
-            return resolveOnline(module, key);
+        if (isLive(key)) {
+            return resolveLive(module, key);
         } else {
-            return resolveOffline((Offline)module, key);
+            return resolveStub((Stub)module, key);
         }
     }
 
     
-    private <T> Resolved<T> resolveOnline(Object module, Key<T> key) {
+    private <T> Resolved<T> resolveLive(Object module, Key<T> key) {
         T result = check(module, key);
         if (result == null) {
             return resolveDefault(module, key);
@@ -213,11 +213,11 @@ public class SingleSheet extends Sheet {
             ModuleInfo minfo = (ModuleInfo)result;
             result = key.getType().cast(minfo.holder.module);
         }
-        return Resolved.makeOnline(module, key, result, this);
+        return Resolved.makeLive(module, key, result, this);
     }
 
     
-    private <T> Resolved<T> resolveOffline(Offline module, Key<T> key) {
+    private <T> Resolved<T> resolveStub(Stub module, Key<T> key) {
         Object result = checkUnsafe(module, key);
         if (result == null) {
             return resolveDefault(module, key);
@@ -229,8 +229,8 @@ public class SingleSheet extends Sheet {
             ModuleInfo minfo = (ModuleInfo)result;
             result = minfo.holder.module;
         }
-        Offline r = (Offline)result;
-        return Resolved.makeOffline(module, key, r, this);
+        Stub r = (Stub)result;
+        return Resolved.makeStub(module, key, r, this);
     }
     
     
@@ -347,8 +347,8 @@ public class SingleSheet extends Sheet {
         T v = key.getType().cast(value);
         for (Constraint<T> c: key.getConstraints()) {
             if (!c.allowed(v)) {
-                // if not online, complete change to invalid value anyway
-                if(!getSheetManager().isOnline()) {
+                // if not live, complete change to invalid value anyway
+                if(!getSheetManager().isLive()) {
                     set2(module, key, value);
                 }
                 throw new PathChangeException(
@@ -372,12 +372,12 @@ public class SingleSheet extends Sheet {
 
 
     
-    public <T> void setOffline(Offline module, Key<T> key, Object value) {
+    public <T> void setStub(Stub module, Key<T> key, Object value) {
         Class vtype;
         if (value == null) {
             vtype = null;
-        } else if (value instanceof Offline) {
-            vtype = ((Offline)value).getType();
+        } else if (value instanceof Stub) {
+            vtype = ((Stub)value).getType();
         } else {
             vtype = value.getClass();
         }
@@ -404,7 +404,7 @@ public class SingleSheet extends Sheet {
         }
         value = transform(value);
         Object old;
-        if (isModuleType(Offline.getType(value))) {
+        if (isModuleType(Stub.getType(value))) {
             old = setModuleValue(map, key, value);
             getSheetManager().fireModuleChanged(old, value);
         } else {
@@ -500,7 +500,7 @@ public class SingleSheet extends Sheet {
         if (o2 == null) {
             return false;
         }
-        if (KeyTypes.isSimple(Offline.getType(o1))) {
+        if (KeyTypes.isSimple(Stub.getType(o1))) {
             return o1.equals(o2);
         } else {
             return false;
@@ -591,7 +591,7 @@ public class SingleSheet extends Sheet {
     public Object findPrimary(Class<?> type) {
         Object result = null;
         for (Object o: primaries.keySet()) {
-            Class<?> otype = Offline.getType(o);
+            Class<?> otype = Stub.getType(o);
             if (type.isAssignableFrom(otype)) {
                 if (result != null) {
                     throw new IllegalStateException(

@@ -6,7 +6,7 @@ package org.archive.settings.path;
 import java.util.List;
 import java.util.Map;
 
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Constraint;
@@ -27,7 +27,7 @@ public final class ConstraintChecker extends StringPathListConsumer {
     @Override
     public void consume(String path, List<Sheet> sheet,
             Object value, Class type, String seenPath) {
-        if (value instanceof Offline) {
+        if (value instanceof Stub) {
             return;
         }
         int p = path.lastIndexOf(PathValidator.DELIMITER);
@@ -43,7 +43,7 @@ public final class ConstraintChecker extends StringPathListConsumer {
             return;
         }
         String keyName = path.substring(p + 1);
-        Key<Object> key = KeyManager.getKeys(Offline.getType(parent)).get(keyName);
+        Key<Object> key = KeyManager.getKeys(Stub.getType(parent)).get(keyName);
         for (Constraint<Object> c: key.getConstraints()) {
             if (!c.allowed(value)) {
                 faulty = c;

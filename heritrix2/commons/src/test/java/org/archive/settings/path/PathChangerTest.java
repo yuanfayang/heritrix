@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.archive.settings.MemorySheetManager;
-import org.archive.settings.Offline;
+import org.archive.settings.Stub;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 
@@ -135,12 +135,12 @@ public class PathChangerTest extends PathTestBase {
         global = stub_manager.getGlobalSheet();
         Object o = stub_manager.getRoot().get("primary");
         assertFalse("root:primary didn't change.", o == stub_primary);
-        assertTrue("root:primary didn't change to a Baz.", Offline.getType(o) == Baz.class);
+        assertTrue("root:primary didn't change to a Baz.", Stub.getType(o) == Baz.class);
 
         Object o2 = global.findPrimary(Foo.class);
         assertTrue("Global sheet returned wrong primary", o2 == o);
         
-        Object o3 = global.resolve(stub_bar, Bar.FOO_AUTO).getOfflineProxy();
+        Object o3 = global.resolve(stub_bar, Bar.FOO_AUTO).getStubValue();
         assertTrue("Prior auto references didn't update to new primary", o3 == o);
     }
 
