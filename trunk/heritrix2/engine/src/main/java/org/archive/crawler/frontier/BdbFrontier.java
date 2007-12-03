@@ -92,8 +92,7 @@ implements Serializable, Checkpointable {
     final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
 
     @Immutable
-    final public static Key<Boolean> DUMP_PENDING_AT_CLOSE = 
-        Key.make(Boolean.class,false);
+    final public static Key<Boolean> DUMP_PENDING_AT_CLOSE = Key.make(false);
 
     private BdbModule bdb;
     

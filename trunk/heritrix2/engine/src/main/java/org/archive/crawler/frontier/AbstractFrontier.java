@@ -290,7 +290,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      */
     final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
         Key.make(QueueAssignmentPolicy.class, 
-                new SurtAuthorityQueueAssignmentPolicy());
+                SurtAuthorityQueueAssignmentPolicy.class);
     
     /**
      * @param name Name of this frontier.

@@ -116,7 +116,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         Key.makeAuto(UriUniqFilter.class);
     
     @Immutable
-    final public static Key<Path> DIR = Key.make(Path.class, null);
+    final public static Key<Path> DIR = Key.make(Path.EMPTY);
     
     /** How many multiples of last fetch elapsed time to wait before recontacting
      * same server */

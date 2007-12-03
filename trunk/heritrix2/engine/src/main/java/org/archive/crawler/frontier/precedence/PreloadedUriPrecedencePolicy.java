@@ -55,7 +55,7 @@ implements Initializable {
     /** Backup URI precedence assignment policy to use. */
     @Expert
     final public static Key<UriPrecedencePolicy> DEFAULT_URI_PRECEDENCE_POLICY = 
-        Key.make(UriPrecedencePolicy.class, new BaseUriPrecedencePolicy());
+        Key.make(UriPrecedencePolicy.class, BaseUriPrecedencePolicy.class);
 
     // TODO: refactor to better share code with PersistOnlineProcessor
     @Immutable

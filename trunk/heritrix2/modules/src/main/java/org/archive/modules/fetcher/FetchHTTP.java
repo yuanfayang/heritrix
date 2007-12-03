@@ -232,7 +232,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * cannot be midfetch aborted.
      */
     final public static Key<DecideRuleSequence> MIDFETCH_RULES = Key
-            .make(new DecideRuleSequence());
+            .make(DecideRuleSequence.class, DecideRuleSequence.class);
 
     // see [ 1379040 ] regex for midfetch filter not being stored in crawl order
     // http://sourceforge.net/support/tracker.php?aid=1379040
@@ -309,7 +309,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      */
     @Immutable @Nullable
     final public static Key<CookieStorage> COOKIE_STORAGE = 
-        Key.make(CookieStorage.class, new SimpleCookieStorage());
+        Key.make(CookieStorage.class, BdbCookieStorage.class);
 
     /**
      * Disable cookie handling.

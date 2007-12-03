@@ -28,8 +28,6 @@ import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.lang.ref.SoftReference;
@@ -129,12 +127,12 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     /** cost assignment policy to use. */
     @Expert
     final public static Key<CostAssignmentPolicy> COST_POLICY = 
-        Key.make(CostAssignmentPolicy.class, new UnitCostAssignmentPolicy());
+        Key.make(CostAssignmentPolicy.class, UnitCostAssignmentPolicy.class);
     
     /** queue precedence assignment policy to use. */
     @Expert
     final public static Key<QueuePrecedencePolicy> QUEUE_PRECEDENCE_POLICY = 
-        Key.make(QueuePrecedencePolicy.class, new BaseQueuePrecedencePolicy());
+        Key.make(QueuePrecedencePolicy.class, BaseQueuePrecedencePolicy.class);
 
     /** precedence rank at or below which queues are not crawled */
     @Expert @Immutable
@@ -144,7 +142,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     /** URI precedence assignment policy to use. */
     @Expert
     final public static Key<UriPrecedencePolicy> URI_PRECEDENCE_POLICY = 
-        Key.make(UriPrecedencePolicy.class, new CostUriPrecedencePolicy());
+        Key.make(UriPrecedencePolicy.class, CostUriPrecedencePolicy.class);
 
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */

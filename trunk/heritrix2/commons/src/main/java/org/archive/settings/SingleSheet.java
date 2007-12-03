@@ -48,7 +48,7 @@ import org.archive.state.KeyTypes;
  */
 public class SingleSheet extends Sheet {
 
-    private static enum NULL { VALUE };
+    static enum NULL { VALUE };
 
     /**
      * 

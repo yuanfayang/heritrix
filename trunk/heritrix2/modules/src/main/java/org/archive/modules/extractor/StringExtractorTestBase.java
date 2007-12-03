@@ -42,9 +42,14 @@ public abstract class StringExtractorTestBase extends ContentExtractorTestBase {
      * @throws Exception   just in case
      */
     public void testExtraction() throws Exception {
-        String[] valid = getValidTestData();
-        for (int i = 0; i < valid.length; i += 2) {
-            testOne(valid[i], valid[i + 1]);
+        try {
+            String[] valid = getValidTestData();
+            for (int i = 0; i < valid.length; i += 2) {
+                testOne(valid[i], valid[i + 1]);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // I hate maven.
+            throw e;
         }
     }
     

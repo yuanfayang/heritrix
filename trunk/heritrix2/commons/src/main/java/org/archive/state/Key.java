@@ -26,14 +26,15 @@ package org.archive.state;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.archive.i18n.LocaleCache;
 import org.archive.settings.Offline;
@@ -78,7 +79,7 @@ import org.archive.settings.Offline;
  * types.</li>
  * <li>Container types.  There are only two container types understood by 
  * the KeyManager (and by {@link org.archive.settings}).  Those two types are
- * {@link java.util.List} and {@link java.util.Map}.
+ * {@link java.util.List} and {@link java.util.Map}.</li>
  * <li>Module types.  Any type that is not a simple type or a container type
  * is considered to be a module type.  See {@link Module} for how to define
  * an appropriate module type.</li>
@@ -126,11 +127,19 @@ final public class Key<Value> implements Serializable {
      */
     private Class<?> elementType;
         
-    /** The default value of the field. */
-    transient final private Value def;
-    
-    /** The default offline value of the field. This is needed because  */
-    transient final private Object offlineDef;
+    /** 
+     * The default value of the field.  If {@link type} is a simple type, or
+     * if it's list or map and {@link elementType} is a simple type, then this
+     * field contains the actual object that is the default value.
+     * 
+     * <p>If {@link type} is a module type, then this field contains the 
+     * Class that describes the default implementation for the module.
+     * 
+     * <p>If {@link type} is list or map, and {@link elementType} is a 
+     * module type, then this field contains a list/map of Class objects that
+     * describe the element implementations.
+     */
+    transient final private Object def;
     
     /** The constraints that determine valid values for the field. */
     transient private Set<Constraint<Value>> constraints;
@@ -177,7 +186,6 @@ final public class Key<Value> implements Serializable {
         this.elementType = maker.elementType;
         this.def = maker.def;
         this.autoDetect = maker.autoDetect;
-        this.offlineDef = makeOfflineDefault(maker.def);
         Set<Constraint<Value>> s = new HashSet<Constraint<Value>>(maker.constraints);
         this.constraints = Collections.unmodifiableSet(s);
         maker.reset();
@@ -371,13 +379,63 @@ final public class Key<Value> implements Serializable {
 
 
     /**
-     * Returns the default value for this key.
+     * Returns the default value if this Key has a simple type.  Or, if this
+     * Key has a Map/List type with a simple element type.  If this Key has
+     * a module type, or a module element type, then this method returns null.
      * 
      * @return  the default value for this key
      */
     public Value getDefaultValue() {
         checkInit();
-        return def;
+        if (KeyTypes.isSimple(type)) {
+            return type.cast(def);
+        }
+        if (elementType == null) {
+            return null;
+        }
+        if (KeyTypes.isSimple(elementType)) {
+            return type.cast(def);
+        }
+        return null;
+    }
+    
+
+    /**
+     * Returns the default implementation class for a Key with a module type.
+     * Or, null if this Key has a simple type, or a Map/List type.
+     * 
+     * @return  the default implementation class
+     */
+    @SuppressWarnings("unchecked")
+    public Class<? extends Value> getDefaultImplementation() {
+        if (KeyTypes.isSimple(type)) {
+            return null;
+        }
+        if (type == Map.class) {
+            return null;
+        }
+        if (type == List.class) {
+            return null;
+        }
+        return (Class)def;
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    public List<Class<?>> getDefaultListElementImplementations() {
+        if (type != List.class) {
+            return null;
+        }
+        return (List)def;
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    public Map<String,Class<?>> getDefaultMapElementImplementations() {
+        if (type != Map.class) {
+            return null;
+        }
+        return (Map)def;
     }
 
 
@@ -389,46 +447,191 @@ final public class Key<Value> implements Serializable {
 
 
     /**
-     * Creates a basic Key.  The returned Key has the given default value,
+     * Creates a basic string Key.  The returned Key has the given default value,
      * is non-expert, can be overridden, and has no constraints.
      * 
-     * @param <X>   the type of values for the key
      * @param def   the default value for the key
      * @return   the new Key
      */
-    public static <X> Key<X> make(X def) {
-        KeyMaker<X> result = new KeyMaker<X>();
-        @SuppressWarnings("unchecked")
-        Class<X> c = (Class<X>)def.getClass();
-        result.type = c;
-        result.def = def;
-        return new Key<X>(result);        
+    public static Key<String> make(String def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic boolean Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Boolean> make(boolean def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic byte Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Byte> make(byte def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic character Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Character> make(char def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic double Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Double> make(double def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic float Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Float> make(float def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    
+    /**
+     * Creates a basic int Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Integer> make(int def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic long Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Long> make(long def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic short Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Short> make(short def) {
+        return KeyMaker.make(def).toKey();
     }
 
 
     /**
-     * Creates a basic Key with the specified type and default value.  Use
-     * this if the Key has an interface type and you want to specify a 
-     * default value.
+     * Creates a basic path Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Path> make(Path def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic BigInteger Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<BigInteger> make(BigInteger def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic BigDecimal Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<BigDecimal> make(BigDecimal def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+    
+    /**
+     * Creates a basic Pattern Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static Key<Pattern> make(Pattern def) {
+        return KeyMaker.make(def).toKey();
+    }
+    
+    
+    /**
+     * Creates a basic Enum Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
+     * 
+     * @param def   the default value for the key
+     * @return   the new Key
+     */
+    public static <T extends Enum> Key<T> make(T def) {
+        return KeyMaker.make(def).toKey();
+    }
+
+
+    /**
+     * Creates a basic Key with the specified type and default implementation
+     * class.
      * 
      * @param <X>   the type of the key
      * @param type  the type of the key
      * @param def   the default value of the key
      * @return   the new Key
      */
-    public static <X> Key<X> make(Class<X> type, X def) {
-        KeyMaker<X> result = new KeyMaker<X>();
-        result.type = type;
-        result.def = def;
+    public static <X> Key<X> make(Class<X> type, Class<? extends X> def) {
+        KeyMaker<X> result = KeyMaker.make(type, def);
         return result.toKey();
     }
 
     
     public static <X> Key<X> makeAuto(Class<X> type) {
-        KeyMaker<X> result = new KeyMaker<X>();
-        result.type = type;
-        result.def = null;
-        result.autoDetect = true;
+        KeyMaker<X> result = KeyMaker.makeAuto(type);
         return result.toKey();
     }
     
@@ -444,6 +647,16 @@ final public class Key<Value> implements Serializable {
     public static <X> Key<List<X>> makeList(Class<X> element) {
         KeyMaker<List<X>> km = KeyMaker.makeList(element);
         return new Key<List<X>>(km);
+    }
+    
+    
+    public static <X> Key<List<X>> makeSimpleList(Class<X> element, X... def) {
+        return KeyMaker.makeSimpleList(element, def).toKey();
+    }
+    
+    
+    public static <X> Key<List<X>> makeModuleList(Class<X> element, Class<? extends X>... def) {
+        return KeyMaker.makeModuleList(element, def).toKey();
     }
     
     
@@ -472,91 +685,7 @@ final public class Key<Value> implements Serializable {
         return KeyMaker.makeNull(cls).toKey();
     }
 
-    
-    /**
-     * Returns the offline default value for this key.  For keys with simple
-     * types, this method always returns the same value as {@link #getType()}.
-     * 
-     * <p>If the key has a module type, then this method will return an
-     * {@link Offline} proxy for the default value.  Eg, if 
-     * {@link #getDefaultValue()} returns a {@link FileModule} instance, then
-     * this method will return a {@link Offline}&lt;FileModule&gt;.
-     * 
-     * <p>If the key has a list or map type, then this method will return the
-     * default value with any element modules replaced with {@link Offline}
-     * proxies.  Simple element values, or nested list and map element values,
-     * will be included unchanged.
-     * 
-     * @return   the offline default for this key
-     */
-    public Object getOfflineDefault() {
-        checkInit();
-        return offlineDef;
-    }
-    
 
-    /**
-     * Creates the offline default as described in {@link #getOfflineDefault}.
-     * 
-     * @param def   the default value
-     * @return     the offline default value
-     */
-    private static Object makeOfflineDefault(Object def) {
-        if (def == null) {
-            return null;
-        }
-        Class<?> type = def.getClass();
-        if (KeyTypes.isSimple(type)) {
-            return def;
-        }
-        if (List.class.isAssignableFrom(type)) {
-            return makeOfflineList(def);
-        }
-        if (Map.class.isAssignableFrom(type)) {
-            return makeOfflineMap(def);
-        }
-        return Offline.make(def.getClass());
-    }
-
-
-    /**
-     * Returns a new list with any module elements replaced by {@link Offline}
-     * proxies.
-     * 
-     * @param def   the list to convert
-     * @return      the list of offline values
-     */
-    private static List<Object> makeOfflineList(Object def) {
-        @SuppressWarnings("unchecked")
-        List<Object> list = (List)def;
-        ArrayList<Object> result = new ArrayList<Object>(list.size());
-        for (Object o: list) {
-            result.add(makeOfflineDefault(o));
-        }
-        return Collections.unmodifiableList(result);
-    }
-
-
-    /**
-     * Returns a new map with any module elements replaced by {@link Offline}
-     * proxies.
-     * 
-     * @param def   the map to convert
-     * @return      the map with offline values
-     */
-    private static Map<String,Object> makeOfflineMap(Object def) {
-        @SuppressWarnings("unchecked")
-        Map<String,Object> map = (Map)def;
-        
-        @SuppressWarnings("unchecked")
-        Map<String,Object> result = new HashMap(map.size());
-        for (Map.Entry<String,Object> me: map.entrySet()) {
-            result.put(me.getKey(), makeOfflineDefault(me.getValue()));
-        }
-        return Collections.unmodifiableMap(result);
-    }
-
-    
     /**
      * Custom serialization to preserve Key field singleton status.
      * 

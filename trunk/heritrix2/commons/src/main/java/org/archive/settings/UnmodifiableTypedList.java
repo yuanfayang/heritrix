@@ -26,6 +26,7 @@
 
 package org.archive.settings;
 
+import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
@@ -35,8 +36,10 @@ import java.util.List;
  *
  */
 class UnmodifiableTypedList<T> extends AbstractList<T> 
-implements TypedList<T> {
+implements TypedList<T>, Serializable {
 
+    final private static long serialVersionUID = 1L;
+    
     private List<T> delegate;
     private Class<T> elementType;
     private Sheet sheet;

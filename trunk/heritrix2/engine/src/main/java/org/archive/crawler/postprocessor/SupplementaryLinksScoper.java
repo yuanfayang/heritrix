@@ -69,7 +69,7 @@ public class SupplementaryLinksScoper extends Scoper implements PostProcessor {
      */
     @Expert
     final public static Key<DecideRuleSequence> LINK_RULES = 
-        Key.make(new DecideRuleSequence());
+        Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
     
     
     /**
