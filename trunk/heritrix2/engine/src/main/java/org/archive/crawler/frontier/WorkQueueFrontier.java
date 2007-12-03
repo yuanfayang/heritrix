@@ -62,6 +62,7 @@ import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.state.Expert;
+import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -135,7 +136,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         Key.make(QueuePrecedencePolicy.class, BaseQueuePrecedencePolicy.class);
 
     /** precedence rank at or below which queues are not crawled */
-    @Expert @Immutable
+    @Expert @Global
     final public static Key<Integer> PRECEDENCE_FLOOR = 
         Key.make(255);
     
@@ -340,6 +341,11 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                     // only when it comes off the right queue will it activate;
                     // otherwise it reenqueues to right inactive queue, if not
                     // already there (see activateInactiveQueue())
+                    if(logger.isLoggable(Level.FINE)) {
+                        logger.log(Level.FINE,
+                                "queue re-deactivated to p" +currentPrecedence 
+                                + ": " + wq.getClassKey());
+                    }
                 } else {
                     // queue bumped down or stayed same; 
                     // do nothing until it comes up
@@ -382,6 +388,10 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         try {
             wq.setActive(this, true);
             readyClassQueues.put(wq.getClassKey());
+            if(logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
+                        "queue readied: " + wq.getClassKey());
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.err.println("unable to ready queue "+wq);
@@ -401,11 +411,22 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         int precedence = wq.getPrecedence();
         if(!wq.getOnInactiveQueues().contains(precedence)) {
             // not already on target, add
-            Queue<String> inactiveQueues = getInactiveQueuesForPrecedence(precedence);
+            Queue<String> inactiveQueues = 
+                getInactiveQueuesForPrecedence(precedence);
             inactiveQueues.add(wq.getClassKey());
             wq.getOnInactiveQueues().add(precedence);
             if(wq.getPrecedence() < highestPrecedenceWaiting ) {
                 highestPrecedenceWaiting = wq.getPrecedence();
+            }
+            if(logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
+                        "queue deactivated to p" + precedence 
+                        + ": " + wq.getClassKey());
+            }
+        } else {
+            if(logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
+                        "queue already p" + precedence+": " + wq.getClassKey());
             }
         }
         wq.setActive(this, false);
@@ -451,6 +472,10 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         getRetiredQueues().add(wq.getClassKey());
         decrementQueuedCount(wq.getCount());
         wq.setRetired(true);
+        if(logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE,
+                    "queue retired: " + wq.getClassKey());
+        }
         wq.setActive(this, false);
     }
     
@@ -546,6 +571,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                 readyQ = getQueueFor(key);
             }
             if (readyQ != null) {
+                assert !inProcessQueues.contains(readyQ) : "double activation";
                 while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
                     curi = readyQ.peek(this);                     
@@ -563,7 +589,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                         // URI's assigned queue has changed since it
                         // was queued (eg because its IP has become
                         // known). Requeue to new queue.
-                        readyQ.dequeue(this);
+                        readyQ.dequeue(this,curi);
                         doJournalRelocated(curi);
                         curi.setClassKey(currentQueueKey);
                         decrementQueuedCount(1);
@@ -645,18 +671,35 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         
         assert was : "queue didn't know it was in "+targetPrecedence+" inactives";
         
-        if(inProcessQueues.contains(candidateQ)) {
+        if(candidateQ.isActive()) {
             // queue had been multiply-scheduled due to changing precedence
-            // already in-process, so ignore this activation
+            // already active, so ignore this activation
+            if(logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
+                        "queue activated+ignored/active from p" + targetPrecedence
+                        + ": " + candidateQ.getClassKey());
+            }
             return; 
         }
         
         if(candidateQ.getPrecedence() < targetPrecedence) {
             // queue moved up; do nothing (already handled)
+            if(logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
+                        "queue activated+ignored/higher from p" 
+                        + targetPrecedence 
+                        + ": " + candidateQ.getClassKey() 
+                        + " ("+candidateQ.getPrecedence() + ") ");
+            }
             return; 
         }
         if(candidateQ.getPrecedence() > targetPrecedence) {
             // queue moved down; deactivate to new level
+            if(logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
+                        "queue activated+deactivated from p" + targetPrecedence
+                        + ": " + candidateQ.getClassKey());
+            }
             deactivateQueue(candidateQ);
             return; 
         }
@@ -676,10 +719,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
 //        }
         candidateQ.setWakeTime(0); // clear obsolete wake time, if any
         readyQueue(candidateQ);
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("ACTIVATED queue: " + candidateQ.getClassKey());
-
-        }
     }
 
     /**
@@ -706,6 +745,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param queue queue to replenish
      */
     private void replenishSessionBalance(WorkQueue queue) {
+        assert queue.peekItem == null : "unexpected peekItem set";
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(this); 
         if(contextUri == null) {
@@ -725,7 +765,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         // TODO: is this the best way to be sensitive to potential mid-crawl changes
         long totalBudget = contextUri.get(this, QUEUE_TOTAL_BUDGET);
         queue.setTotalBudget(totalBudget);
-        queue.unpeek(); // don't insist on that URI being next released
+        queue.unpeek(contextUri); // don't insist on that URI being next released
     }
 
     /**
@@ -736,14 +776,14 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     private void reenqueueQueue(WorkQueue wq) { 
         wq.get(this,QUEUE_PRECEDENCE_POLICY).queueReevaluate(wq);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("queue reenqueued: " +
+                wq.getClassKey());
+        }
         if(highestPrecedenceWaiting < wq.getPrecedence() 
             || (wq.isOverBudget() && highestPrecedenceWaiting <= wq.getPrecedence())
             || wq.getPrecedence() >= get(PRECEDENCE_FLOOR)) {
             // if still over budget, deactivate
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("DEACTIVATED queue: " +
-                    wq.getClassKey());
-            }
             deactivateQueue(wq);
         } else {
             readyQueue(wq);
@@ -796,7 +836,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         if(includesRetireDirective(curi)) {
             // CrawlURI is marked to trigger retirement of its queue
             curi.processingCleanup();
-            wq.unpeek();
+            wq.unpeek(curi);
             wq.update(this, curi); // rewrite any changes
             retireQueue(wq);
             return;
@@ -810,7 +850,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             long delay_sec = retryDelayFor(curi);
             curi.processingCleanup(); // lose state that shouldn't burden retry
 
-                wq.unpeek();
+                wq.unpeek(curi);
                 // TODO: consider if this should happen automatically inside unpeek()
                 wq.update(this, curi); // rewrite any changes
                 if (delay_sec > 0) {
@@ -827,7 +867,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         }
 
         // Curi will definitely be disposed of without retry, so remove from queue
-        wq.dequeue(this);
+        wq.dequeue(this,curi);
         decrementQueuedCount(1);
         log(curi);
 
@@ -938,7 +978,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         for (String qname: allQueues.keySet()) {
             if (queuePat.matcher(qname).matches()) {
                 WorkQueue wq = getQueueFor(qname);
-                wq.unpeek();
+                wq.unpeek(null);
                 count += wq.deleteMatching(this, uriRegex);
             }
         }

@@ -76,7 +76,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     private long totalBudget = 0;
 
     /** The next item to be returned */
-    private CrawlURI peekItem = null;
+    protected CrawlURI peekItem = null;
 
     /** Last URI enqueued */
     private String lastQueued;
@@ -171,7 +171,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
      * 
      * @param frontier  Work queues manager.
      */
-    protected void dequeue(final WorkQueueFrontier frontier) {
+    protected void dequeue(final WorkQueueFrontier frontier, CrawlURI expected) {
         try {
             deleteItem(frontier, peekItem);
         } catch (IOException e) {
@@ -179,7 +179,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        unpeek();
+        unpeek(expected);
         count--;
         lastDequeueTime = System.currentTimeMillis();
     }
@@ -308,6 +308,10 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
      */
     public void clearHeld() {
         isHeld = false;
+        if(logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE,
+                    "queue unheld: " + getClassKey());
+        }
     }
 
     /**
@@ -326,6 +330,10 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
      */
     public void setHeld() {
         isHeld = true;
+        if(logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE,
+                    "queue held: " + getClassKey());
+        }
     }
 
     /**
@@ -333,7 +341,8 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
      * return a different item. 
      * 
      */
-    public void unpeek() {
+    public void unpeek(CrawlURI expected) {
+        assert expected == peekItem : "unexpected peekItem";
         peekItem = null;
     }
 
@@ -466,6 +475,11 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     public void setActive(final WorkQueueFrontier frontier, final boolean b) {
         if(active != b) {
             active = b;
+            if(logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE,
+                        (active ? "queue set active: " : "queue unset active: ") + 
+                        this.getClassKey());
+            }
             try {
                 if(active) {
                     resume(frontier);
