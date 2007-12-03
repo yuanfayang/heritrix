@@ -27,6 +27,7 @@
 package org.archive.settings;
 
 import java.util.AbstractList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,12 +37,19 @@ import java.util.List;
 class UnmodifiableTypedList<T> extends AbstractList<T> 
 implements TypedList<T> {
 
-    
-    private TypedList<T> delegate;
-    
+    private List<T> delegate;
+    private Class<T> elementType;
+    private Sheet sheet;
     
     public UnmodifiableTypedList(TypedList<T> delegate) {
         this.delegate = delegate;
+        this.elementType = delegate.getElementType();
+    }
+    
+    public UnmodifiableTypedList(Sheet sheet, List<T> delegate, Class<T> c) {
+        this.sheet = sheet;
+        this.delegate = delegate;
+        this.elementType = c;
     }
     
     
@@ -56,11 +64,15 @@ implements TypedList<T> {
     
 
     public Class<T> getElementType() {
-        return delegate.getElementType();
+        return elementType;
     }
 
     
     public List<Sheet> getSheets(int index) {
-        return delegate.getSheets(index);
+        if (delegate instanceof TypedList) {
+            TypedList<T> tl = (TypedList<T>)delegate;
+            return tl.getSheets(index);
+        }
+        return Collections.singletonList(sheet);
     }
 }

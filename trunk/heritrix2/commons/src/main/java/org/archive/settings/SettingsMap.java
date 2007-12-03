@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.archive.util.TypeSubstitution;
+import org.apache.commons.collections.keyvalue.DefaultMapEntry;
 
 
 /**
@@ -48,58 +48,52 @@ import org.archive.util.TypeSubstitution;
  * @author pjack
  *
  */
-public class SettingsMap<T> implements TypedMap<T>, 
-Serializable, TypeSubstitution {
+public class SettingsMap<T> implements TypedMap<T>, Serializable {
 
 
     private static final long serialVersionUID = 1L;
 
     
-    final private Map<String,T> delegate;
+    final private Map<String,Object> delegate;
     final private SheetManager manager;
     final private List<Sheet> sheets;
+    final private SingleSheet sheet;
     final private Class<T> elementType;
     
     
     public SettingsMap(SingleSheet sheet, Class<T> c) {
-        this(
-                sheet, 
-//                Collections.checkedMap(
-                        new LinkedHashMap<String,T>(), 
-//                        String.class, 
-//                        c),
-                c);
+        this(sheet, new LinkedHashMap<String,T>(), c);
     }
     
     
-    public SettingsMap(Sheet sheet, Map<String,T> map, Class<T> c) {
-        this.delegate = map;
+    public SettingsMap(SingleSheet sheet, Map<String,T> map, Class<T> c) {
+        this.delegate = cast(map);
+        this.sheet = sheet;
         this.sheets = Collections.singletonList((Sheet)sheet);
         this.manager = sheet.getSheetManager();
         this.elementType = c;        
     }
 
-    private SettingsMap(List<Sheet> sheets, Map<String,T> map, Class<T> c, 
-            SheetManager manager) {
-        this.delegate = map;
-        this.sheets = sheets;
-        this.manager = manager;
-        this.elementType = c;        
-    }
+
 
 
     @SuppressWarnings("unchecked")
     public SettingsMap<T> duplicate(Duplicator d) {
-        List<Sheet> newSheets = d.duplicateSheets(sheets);
-
         Map newDelegate = new LinkedHashMap<String,T>();
-        for (Map.Entry<String,T> me: delegate.entrySet()) {
+        for (Map.Entry<String,Object> me: delegate.entrySet()) {
             newDelegate.put(me.getKey(), d.duplicate(me.getValue()));
         }
-        
-        return new SettingsMap(newSheets, newDelegate, elementType, manager);
+        return new SettingsMap(d.getNewSheet(), newDelegate, elementType);
     }
+
     
+    private T toActualObject(Object x) {
+        if (x instanceof ModuleInfo) {
+            x = ((ModuleInfo)x).holder.module;
+        }
+        return (T)x;
+    }
+
     
     public List<Sheet> getSheets(String key) {
         return sheets;
@@ -111,9 +105,9 @@ Serializable, TypeSubstitution {
 
 
     public void clear() {
-        Iterator<T> iter = delegate.values().iterator();
+        Iterator<Object> iter = delegate.values().iterator();
         while (iter.hasNext()) {
-            T old = iter.next();
+            T old = toActualObject(iter.next());
             iter.remove();
             manager.fireModuleChanged(old, null);
         }
@@ -132,22 +126,30 @@ Serializable, TypeSubstitution {
 
 
     public Set<Entry<String, T>> entrySet() {
-        return new EntrySet<T>(delegate.entrySet());
+        return new EntrySet(delegate.entrySet());
     }
 
 
     public boolean equals(Object o) {
-        return delegate.equals(o);
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof Map)) {
+            return false;
+        }
+        @SuppressWarnings("unchecked")
+        Map<?,?> map = (Map)o;
+        return entrySet().equals(map.entrySet());
     }
 
 
     public T get(Object key) {
-        return delegate.get(key);
+        return toActualObject(delegate.get(key));
     }
 
 
     public int hashCode() {
-        return delegate.hashCode();
+        return entrySet().hashCode();
     }
 
 
@@ -157,7 +159,8 @@ Serializable, TypeSubstitution {
 
 
     public Set<String> keySet() {
-        return new KeySet<T>(delegate.entrySet());
+        Set<Map.Entry<String,Object>> set = delegate.entrySet();
+        return new KeySet(set);
     }
 
     
@@ -180,25 +183,30 @@ Serializable, TypeSubstitution {
     
     public T put(String key, T value) {
         validate(key, value);
-        T old = delegate.put(key, value);
+        
+        if (!SingleSheet.isModuleType(elementType)) {
+            Object oldObj = delegate.put(key, value);
+            T old = elementType.cast(oldObj);
+            manager.fireModuleChanged(old, value);
+            return old;
+        }
+        
+        Container container = new MapContainer(delegate);
+        Object old = sheet.setModuleValue(container, key, value);
         manager.fireModuleChanged(old, value);
-        return old;
+        return (T)old;
     }
 
 
     public void putAll(Map<? extends String, ? extends T> t) {
         for (Map.Entry<? extends String, ? extends T> me: t.entrySet()) {
-            String key = me.getKey();
-            T value = me.getValue();
-            validate(key, value);
-            T old = delegate.put(key, value);
-            manager.fireModuleChanged(old, value);
+            put(me.getKey(), me.getValue());
         }
     }
 
 
     public T remove(Object key) {
-        T old = delegate.remove(key);
+        T old = toActualObject(delegate.remove(key));
         manager.fireModuleChanged(old, null);
         return old;
     }
@@ -209,27 +217,19 @@ Serializable, TypeSubstitution {
     }
 
 
+
     public Collection<T> values() {
-        return new Values<T>(delegate.values());
+        Collection<Object> values = delegate.values();
+        return new Values(values);
     }
 
-    
-    public Class getActualClass() {
-        return delegate.getClass();
-    }
-    
-    
-    public Map<String,T> getDelegate() {
-        return delegate;
-    }
 
-    
     public void moveElement(String key, boolean up) {
-        ArrayList<Map.Entry<String,T>> arr = 
-            new ArrayList<Map.Entry<String,T>>(delegate.entrySet());
+        ArrayList<Map.Entry<String,Object>> arr = 
+            new ArrayList<Map.Entry<String,Object>>(delegate.entrySet());
         int index = -1;
         for (int i = 0; i < arr.size(); i++) {
-            Map.Entry<String,T> me = arr.get(i);
+            Map.Entry<String,Object> me = arr.get(i);
             if (me.getKey().equals(key)) {
                 index = i;
                 break;
@@ -243,17 +243,17 @@ Serializable, TypeSubstitution {
         
         Collections.swap(arr, index, index2);
         this.delegate.clear();
-        for (Map.Entry<String,T> me: arr) {
+        for (Map.Entry<String,Object> me: arr) {
             delegate.put(me.getKey(), me.getValue());
         }
     }
 
 
-    private class KeySet<X> extends AbstractSet<String> {
+    private class KeySet extends AbstractSet<String> {
         
-        private Set<Map.Entry<String,X>> set;
+        private Set<Map.Entry<String,Object>> set;
         
-        public KeySet(Set<Map.Entry<String,X>> set) {
+        public KeySet(Set<Map.Entry<String,Object>> set) {
             this.set = set;
         }
         
@@ -262,17 +262,17 @@ Serializable, TypeSubstitution {
         }
         
         public Iterator<String> iterator() {
-            return new KeyIterator<X>(set.iterator());
+            return new KeyIterator(set.iterator());
         }
         
     }
 
     
-    private class EntrySet<X> extends AbstractSet<Map.Entry<String,X>> {
+    private class EntrySet extends AbstractSet<Map.Entry<String,T>> {
         
-        private Set<Map.Entry<String,X>> set;
+        private Set<Map.Entry<String,Object>> set;
         
-        public EntrySet(Set<Map.Entry<String,X>> set) {
+        public EntrySet(Set<Map.Entry<String,Object>> set) {
             this.set = set;
         }
         
@@ -280,18 +280,18 @@ Serializable, TypeSubstitution {
             return set.size();
         }
         
-        public Iterator<Map.Entry<String,X>> iterator() {
-            return new EntryIterator<X>(set.iterator());
+        public Iterator<Map.Entry<String,T>> iterator() {
+            return new EntryIterator(set.iterator());
         }
         
     }
 
     
-    private class Values<X> extends AbstractCollection<X> {
+    private class Values extends AbstractCollection<T> {
         
-        private Collection<X> set;
+        private Collection<Object> set;
         
-        public Values(Collection<X> set) {
+        public Values(Collection<Object> set) {
             this.set = set;
         }
         
@@ -299,8 +299,8 @@ Serializable, TypeSubstitution {
             return set.size();
         }
         
-        public Iterator<X> iterator() {
-            return new ValueIterator<X>(set.iterator());
+        public Iterator<T> iterator() {
+            return new ValueIterator(set.iterator());
         }
         
     }
@@ -308,12 +308,12 @@ Serializable, TypeSubstitution {
     
     
     
-    private class KeyIterator<X> implements Iterator<String> {
+    private class KeyIterator implements Iterator<String> {
         
-        final Iterator<Map.Entry<String,X>> iter;
-        X last;
+        final Iterator<Map.Entry<String,Object>> iter;
+        T last;
         
-        public KeyIterator(Iterator<Map.Entry<String,X>> iter) {
+        public KeyIterator(Iterator<Map.Entry<String,Object>> iter) {
             this.iter = iter;
         }
         
@@ -322,10 +322,10 @@ Serializable, TypeSubstitution {
         }
 
         public String next() {
-            Map.Entry<String,X> me = iter.next();
-            last = me.getValue();
+            Map.Entry<String,Object> me = iter.next();
+            last = toActualObject(me.getValue());
             return me.getKey();
-        }        
+        }
         
         public void remove() {
             manager.fireModuleChanged(last, null);
@@ -334,12 +334,12 @@ Serializable, TypeSubstitution {
     }
 
 
-    private class EntryIterator<X> implements Iterator<Map.Entry<String,X>> {
+    private class EntryIterator implements Iterator<Map.Entry<String,T>> {
         
-        Iterator<Map.Entry<String,X>> iter;
-        X last;
+        Iterator<Map.Entry<String,Object>> iter;
+        T last;
         
-        public EntryIterator(Iterator<Map.Entry<String,X>> iter) {
+        public EntryIterator(Iterator<Map.Entry<String,Object>> iter) {
             this.iter = iter;
         }
 
@@ -347,11 +347,13 @@ Serializable, TypeSubstitution {
             return iter.hasNext();
         }
 
-        public Map.Entry<String,X> next() {
-            Map.Entry<String,X> me = iter.next();
-            last = me.getValue();
-            return me;
-        }        
+        public Map.Entry<String,T> next() {
+            Map.Entry<String,Object> me = iter.next();
+            last = toActualObject(me.getValue());
+            @SuppressWarnings("unchecked")
+            Map.Entry<String,T> result = new DefaultMapEntry(me.getKey(), last);
+            return result;
+        }
         
         public void remove() {
             manager.fireModuleChanged(last, null);
@@ -360,12 +362,12 @@ Serializable, TypeSubstitution {
     }
 
     
-    private class ValueIterator<X> implements Iterator<X> {
+    private class ValueIterator implements Iterator<T> {
         
-        final Iterator<X> iter;
-        X last;
+        final Iterator<Object> iter;
+        T last;
         
-        public ValueIterator(Iterator<X> iter) {
+        public ValueIterator(Iterator<Object> iter) {
             this.iter = iter;
         }
 
@@ -374,8 +376,8 @@ Serializable, TypeSubstitution {
             return iter.hasNext();
         }
 
-        public X next() {
-            last = iter.next();
+        public T next() {
+            last = toActualObject(iter.next());
             return last;
         }        
         
@@ -385,4 +387,10 @@ Serializable, TypeSubstitution {
         }
     }
 
+    
+    @SuppressWarnings("unchecked")
+    private static Map<String,Object> cast(Map<String,?> map) {
+        Map m = map;
+        return m;
+    }
 }

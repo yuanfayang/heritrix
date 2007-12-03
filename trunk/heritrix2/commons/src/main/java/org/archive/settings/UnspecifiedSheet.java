@@ -77,7 +77,7 @@ class UnspecifiedSheet extends Sheet {
             if (map == null) {
                 value = null;
             } else {
-                value = new SettingsMap(this, map, key.getElementType());
+                value = new UnmodifiableTypedMap(this, map, key.getElementType());
             }
         } else if (List.class.isAssignableFrom(key.getType())) {
             List list = (List)key.getDefaultValue();
@@ -87,7 +87,7 @@ class UnspecifiedSheet extends Sheet {
                 if (key.getElementType() == null) {
                     throw new AssertionError();
                 }
-                value = new SettingsList(this, list, key.getElementType());                
+                value = new UnmodifiableTypedList(this, list, key.getElementType());                
             }
         } else {
             value = getDefaultValue(module, key);

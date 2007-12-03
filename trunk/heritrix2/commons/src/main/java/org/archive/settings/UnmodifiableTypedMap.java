@@ -41,14 +41,23 @@ class UnmodifiableTypedMap<T> extends AbstractMap<String,T>
 implements TypedMap<T> {
 
     
-    private TypedMap<T> delegate;
-    
+    private Map<String,T> delegate;
+    private Class<T> elementType;
+    private Sheet sheet;
     
     public UnmodifiableTypedMap(TypedMap<T> delegate) {
         if (delegate == null) {
             throw new IllegalArgumentException();
         }
         this.delegate = delegate;
+        this.elementType = delegate.getElementType();
+    }
+    
+    
+    public UnmodifiableTypedMap(Sheet sheet, Map<String,T> map, Class<T> elementType) {
+        this.delegate = map;
+        this.sheet = sheet;
+        this.elementType = elementType;
     }
     
     
@@ -83,12 +92,16 @@ implements TypedMap<T> {
     
     
     public Class<T> getElementType() {
-        return delegate.getElementType();
+        return elementType;
     }
     
     
     public List<Sheet> getSheets(String key) {
-        return delegate.getSheets(key);
+        if (delegate instanceof TypedMap) {
+            TypedMap<T> tm = (TypedMap<T>)delegate;
+            return tm.getSheets(key);
+        }
+        return Collections.singletonList(sheet);
     }
 
 }
