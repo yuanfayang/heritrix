@@ -96,6 +96,7 @@ import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.io.RecorderTooMuchHeaderException;
+import org.archive.settings.Finishable;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
@@ -116,7 +117,7 @@ import org.archive.util.Recorder;
  * @author others
  * @version $Id$
  */
-public class FetchHTTP extends Processor implements Initializable {
+public class FetchHTTP extends Processor implements Initializable, Finishable {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(FetchHTTP.class, 1);
@@ -1122,8 +1123,7 @@ public class FetchHTTP extends Processor implements Initializable {
     }
 
     public void initialTasks(StateProvider defaults) {
-        super.initialTasks(defaults);
-        
+
         this.serverCache = defaults.get(this, SERVER_CACHE);
         this.credentialStore = defaults.get(this, CREDENTIAL_STORE);
 
@@ -1168,7 +1168,6 @@ public class FetchHTTP extends Processor implements Initializable {
             cs.finalTasks(defaults);
         }
         cleanupHttp();
-        super.finalTasks(defaults);
     }
 
     /**

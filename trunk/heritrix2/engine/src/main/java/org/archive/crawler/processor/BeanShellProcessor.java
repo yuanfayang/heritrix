@@ -38,6 +38,7 @@ import org.archive.settings.KeyChangeListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.Path;
@@ -63,7 +64,7 @@ import bsh.Interpreter;
  * @version $Date$, $Revision$
  */
 public class BeanShellProcessor extends Processor 
-implements KeyChangeListener {
+implements Initializable, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -175,7 +176,6 @@ implements KeyChangeListener {
     }
 
     public void initialTasks(StateProvider context) {
-        super.initialTasks(context);
         this.manager = context.get(this, MANAGER);
         isolate(context.get(this, ISOLATE_THREADS));
     }

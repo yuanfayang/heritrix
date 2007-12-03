@@ -24,8 +24,10 @@ package org.archive.crawler.recrawl;
 
 import java.util.Map;
 
+import org.archive.settings.Finishable;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -41,7 +43,9 @@ import com.sleepycat.je.DatabaseException;
  * to persistence (as opposed to logging for batch load later). 
  * @author gojomo
  */
-public abstract class PersistOnlineProcessor extends PersistProcessor {
+public abstract class PersistOnlineProcessor extends PersistProcessor 
+implements Initializable, Finishable {
+    
     private static final long serialVersionUID = -666479480942267268L;
     
     @Immutable
@@ -57,7 +61,7 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
     public PersistOnlineProcessor() {
     }
 
-    @Override
+
     public void initialTasks(StateProvider provider) {
         // TODO: share single store instance between Load and Store processors
         // (shared context? EnhancedEnvironment?)
@@ -79,7 +83,7 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
         store =  historyMap;
     }
 
-    @Override
+
     public void finalTasks(StateProvider defaults) {
     	// TODO leave this cleanup to BdbModule?
         try {

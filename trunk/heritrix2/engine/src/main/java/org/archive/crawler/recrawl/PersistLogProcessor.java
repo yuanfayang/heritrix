@@ -32,9 +32,11 @@ import org.apache.commons.lang.SerializationUtils;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.io.CrawlerJournal;
 import org.archive.modules.ProcessorURI;
+import org.archive.settings.Finishable;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.FileUtils;
@@ -49,7 +51,9 @@ import org.archive.util.FileUtils;
  * @author gojomo
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
-public class PersistLogProcessor extends PersistProcessor implements Checkpointable {
+public class PersistLogProcessor extends PersistProcessor 
+implements Checkpointable, Initializable, Finishable {
+
     private static final long serialVersionUID = 1678691994065439346L;
     
     protected CrawlerJournal log;
@@ -70,7 +74,7 @@ public class PersistLogProcessor extends PersistProcessor implements Checkpointa
     public PersistLogProcessor() {;
     }
 
-    @Override
+
     public void initialTasks(StateProvider provider) {
         try {
             File logFile = FileUtils.maybeRelative(
@@ -83,7 +87,7 @@ public class PersistLogProcessor extends PersistProcessor implements Checkpointa
         }
     }
     
-    @Override
+
     public void finalTasks(StateProvider provider) {
         log.close();
     }

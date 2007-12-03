@@ -32,6 +32,7 @@ import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -42,7 +43,7 @@ import org.archive.state.StateProvider;
  * @author stack
  * @version $Date$, $Revision$
  */
-public abstract class Scoper extends Processor {
+public abstract class Scoper extends Processor implements Initializable {
     private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
     
@@ -88,7 +89,6 @@ public abstract class Scoper extends Processor {
     }
 
 
-    @Override
     public void initialTasks(StateProvider defaults) {
         this.scope = defaults.get(this, SCOPE);
         this.loggerModule = defaults.get(this, LOGGER_MODULE);

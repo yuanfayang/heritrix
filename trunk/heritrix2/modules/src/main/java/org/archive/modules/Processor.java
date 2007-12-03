@@ -34,6 +34,7 @@ import org.archive.modules.credential.Rfc2617Credential;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRuleSequence;
 import org.archive.net.UURI;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.Module;
@@ -175,14 +176,6 @@ public abstract class Processor implements Module, Serializable {
      */
     protected void innerRejectProcess(ProcessorURI uri) 
     throws InterruptedException {        
-    }
-
-    
-    public void initialTasks(StateProvider defaults) {
-    }
-
-
-    public void finalTasks(StateProvider defaults) {
     }
 
 

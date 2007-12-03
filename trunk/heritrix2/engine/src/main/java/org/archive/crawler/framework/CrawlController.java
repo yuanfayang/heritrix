@@ -546,7 +546,6 @@ public class CrawlController extends Bean implements
         frontier.loadSeeds();
         
         setupToePool();
-        runProcessorInitialTasks();
 
         sendCrawlStateChangeEvent(State.STARTED, CrawlStatus.PENDING);
         CrawlStatus jobState = CrawlStatus.RUNNING;
@@ -572,9 +571,6 @@ public class CrawlController extends Bean implements
      */
     protected void completeStop() {
         LOGGER.fine("Entered complete stop.");
-
-        // Run processors' final tasks
-        runProcessorFinalTasks();
 
         sheetManager.closeModules();
         loggerModule.closeLogFiles();
@@ -841,27 +837,7 @@ public class CrawlController extends Bean implements
         return sheetManager;
     }
 
-    /**
-     * This method iterates through processor chains to run processors' initial
-     * tasks.
-     *
-     */
-    private void runProcessorInitialTasks(){
-        for (Processor p: get(this, PROCESSORS).values()) {
-            p.initialTasks(this);
-        }
-    }
 
-    /**
-     * This method iterates through processor chains to run processors' final
-     * tasks.
-     *
-     */
-    private void runProcessorFinalTasks(){
-        for (Processor p: get(this, PROCESSORS).values()) {
-            p.finalTasks(this);
-        }
-    }
 
     /**
      * Kills a thread. For details see

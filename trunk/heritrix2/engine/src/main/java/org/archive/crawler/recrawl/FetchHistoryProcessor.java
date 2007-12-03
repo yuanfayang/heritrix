@@ -26,15 +26,16 @@ import java.util.HashMap;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.Expert;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 
 /**
  * Maintain a history of fetch information inside the CrawlURI's attributes. 
@@ -42,8 +43,8 @@ import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
  * @author gojomo
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
-public class FetchHistoryProcessor extends Processor 
-implements CoreAttributeConstants {
+public class FetchHistoryProcessor extends Processor implements Initializable {
+
     private static final long serialVersionUID = 8476621038669163983L;
     
     /** Desired history array length. */
@@ -130,7 +131,7 @@ implements CoreAttributeConstants {
         }
     }
 
-    @Override
+
     public void initialTasks(StateProvider defaults) {
         // ensure history info persists across enqueues and recrawls
         CrawlURI.addDataPersistentMember(A_FETCH_HISTORY);

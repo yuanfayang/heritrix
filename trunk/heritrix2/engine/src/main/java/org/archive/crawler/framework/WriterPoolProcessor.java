@@ -58,6 +58,7 @@ import static org.archive.modules.fetcher.FetchStatusCodes.*;
 import org.archive.settings.RecoverAction;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
+import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
@@ -71,7 +72,7 @@ import org.archive.state.StateProvider;
  * @author stack
  */
 public abstract class WriterPoolProcessor extends Processor 
-implements Closeable {
+implements Initializable, Closeable {
     
     
     private static final Logger logger = 
@@ -207,7 +208,6 @@ implements Closeable {
     }
 
 
-    @Override
     public synchronized void initialTasks(StateProvider context) {
         this.serverCache = context.get(this, SERVER_CACHE);
         this.directory = context.get(this, DIRECTORY);
