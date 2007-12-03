@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.archive.io.SinkHandlerLogThread;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.net.DefaultTempDirProvider;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.Immutable;
@@ -70,7 +69,7 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
      */
     @Immutable
     final public static Key<TempDirProvider> TEMP_DIR_PROVIDER =
-        Key.make(TempDirProvider.class, new DefaultTempDirProvider());
+        Key.makeAuto(TempDirProvider.class);
     
     
 

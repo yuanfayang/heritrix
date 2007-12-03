@@ -106,7 +106,7 @@ public abstract class CrawlMapper extends Processor implements Initializable {
      * Decide rules to determine if an outlink is subject to mapping.
      */ 
     final public static Key<DecideRuleSequence> OUTLINK_DECIDE_RULES
-    = Key.make(new DecideRuleSequence());
+    = Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
 
 
     /**

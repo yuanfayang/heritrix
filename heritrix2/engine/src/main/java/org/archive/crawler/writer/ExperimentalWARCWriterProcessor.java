@@ -54,7 +54,6 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,7 +82,6 @@ import org.archive.modules.extractor.Link;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
@@ -152,7 +150,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
      * progresses).
      */
     @Global
-    final public static Key<List<String>> PATH = makePath();
+    final public static Key<List<String>> PATH = Key.makeSimpleList(String.class, "warcs");
 
 
     static {
@@ -527,12 +525,6 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return PATH;
     }
 
-
-    private static Key<List<String>> makePath() {
-        KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
-        km.def = Arrays.asList(DEFAULT_PATH);
-        return km.toKey();
-    }
 
     
     public List<String> getMetadata(StateProvider global) {

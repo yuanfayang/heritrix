@@ -26,6 +26,7 @@
 
 package org.archive.settings;
 
+import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,8 +39,9 @@ import java.util.Set;
  *
  */
 class UnmodifiableTypedMap<T> extends AbstractMap<String,T> 
-implements TypedMap<T> {
+implements TypedMap<T>, Serializable {
 
+    final private static long serialVersionUID = 1L;
     
     private Map<String,T> delegate;
     private Class<T> elementType;

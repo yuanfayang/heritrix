@@ -63,7 +63,7 @@ public abstract class Processor implements Module, Serializable {
      * not a particular URI is processed here.
      */
     final public static Key<DecideRuleSequence> DECIDE_RULES
-     = Key.make(new DecideRuleSequence());
+     = Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
 
 
     /**

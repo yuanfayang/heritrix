@@ -24,11 +24,17 @@
 package org.archive.settings;
 
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyTypes;
 import org.archive.state.Path;
 
 class UnspecifiedSheet extends Sheet {
@@ -40,12 +46,43 @@ class UnspecifiedSheet extends Sheet {
     private static final long serialVersionUID = 1L;
     
     
+    private static class ModuleKey implements Serializable {
+
+        final private static long serialVersionUID = 1L;
+        
+        private Object module;
+        private Key<?> key;
+        
+        public ModuleKey(Object module, Key<?> key) {
+            this.module = module;
+            this.key = key;
+        }
+        
+        public int hashCode() {
+            return module.hashCode() ^ key.hashCode();
+        }
+        
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+            if (!(other instanceof ModuleKey)) {
+                return false;
+            }
+            ModuleKey mk = (ModuleKey)other;
+            return module == mk.module && key == mk.key;
+        }
+    }
+    
+    
     final private List<Sheet> thisList;
+    private ConcurrentHashMap<ModuleKey,Object> defaults;
     
     
     public UnspecifiedSheet(SheetManager manager, String name) {
         super(manager, name);
         thisList = Collections.singletonList((Sheet)this);
+        this.defaults = new ConcurrentHashMap<ModuleKey,Object>();
     }
     
     @Override
@@ -55,61 +92,123 @@ class UnspecifiedSheet extends Sheet {
 
     @Override
     public <T> T check(Object module, Key<T> key) {
-        validateModuleType(Offline.getType(module), key);
-        Object def = getDefaultValue(module, key);
-        return key.getType().cast(def);
+        return get(module, key);
     }
 
     @Override
     public <T> Offline checkOffline(Offline module, Key<T> key) {
-        validateModuleType(module.getType(), key);
-        Object def = getDefaultValue(module, key);
+        validateModuleType(module, key);
+        SingleSheet global = getSheetManager().getGlobalSheet();
+        Object def = getDefault(global, module, key);
         return (Offline)def;
     }
 
+    
+    <T> Object getDefault(SingleSheet global, Object module, Key<T> k) {
+        Class<T> type = k.getType();
+        if (KeyTypes.isSimple(type)) {
+            if (Path.class.isAssignableFrom(type)) {
+                Path p = (Path)k.getDefaultValue();
+                p = new Path(getSheetManager().getPathContext(), p.toString());
+                return p;
+            } else {
+                return k.getDefaultValue();
+            }
+        }
+        
+        if (k.isAutoDetected()) {
+            return global.findPrimary(type);
+        }
+        
+        ModuleKey mk = new ModuleKey(module, k);
+        Object result = defaults.get(mk);
+        if (result != null) {
+            if (result == SingleSheet.NULL.VALUE) {
+                return null;
+            } else {
+                return result;
+            }
+        }
+        
+        if (type == List.class) {
+            List<Object> list;
+            if (KeyTypes.isSimple(k.getElementType())) {
+                list = (List)k.getDefaultValue();
+            } else {
+                List<Class<?>> orig = k.getDefaultListElementImplementations();
+                list = new ArrayList<Object>();
+                for (Class<?> c: orig) {
+                    list.add(create(c));
+                }
+            }
+            result = new UnmodifiableTypedList(this, list, k.getElementType()); 
+        } else if (type == Map.class) {
+            Map<String,Object> map;
+            if (KeyTypes.isSimple(k.getElementType())) {
+                map = (Map)k.getDefaultValue();
+            } else {
+                Map<String,Class<?>> orig = k.getDefaultMapElementImplementations();
+                map = new LinkedHashMap<String,Object>();
+                for (Map.Entry<String,Class<?>> me: orig.entrySet()) {
+                    map.put(me.getKey(), create(me.getValue()));
+                }
+            }
+            result = new UnmodifiableTypedMap(this, map, k.getElementType());
+        } else {
+            result = create(k.getDefaultImplementation());
+        }
+
+        if (result == null) {
+            result = SingleSheet.NULL.VALUE;
+        }
+        Object r = defaults.putIfAbsent(mk, result);
+        if (r != null) {
+            result = r;
+        }
+        if (result == SingleSheet.NULL.VALUE) {
+            return null;
+        }
+        return result;
+    }
+    
+    
+    private Object create(Class<?> c) {
+        if (c == null) {
+            return null;
+        }
+        if (getSheetManager().isOnline()) {
+            try {
+                Object o = c.newInstance();
+                if (o instanceof Initializable) {
+                    ((Initializable)o).initialTasks(this);
+                }
+                return o;
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return Offline.make(c);
+        }
+    }
+
+
+    @Override
+    public <T> T get(Object module, Key<T> k) {
+        validateModuleType(module, k);
+        SingleSheet global = getSheetManager().getGlobalSheet();
+        Object value = getDefault(global, module, k);
+        return k.getType().cast(value);
+    }
+    
+    
     @SuppressWarnings("unchecked")
     @Override
     public <T> Resolved<T> resolve(Object module, Key<T> k) {
-        Key<Object> key = (Key)k;
-        Object value;
-        if (Map.class.isAssignableFrom(key.getType())) {
-            Map map = (Map)key.getDefaultValue();
-            if (map == null) {
-                value = null;
-            } else {
-                value = new UnmodifiableTypedMap(this, map, key.getElementType());
-            }
-        } else if (List.class.isAssignableFrom(key.getType())) {
-            List list = (List)key.getDefaultValue();
-            if (list == null) {
-                value = null;
-            } else {
-                if (key.getElementType() == null) {
-                    throw new AssertionError();
-                }
-                value = new UnmodifiableTypedList(this, list, key.getElementType());                
-            }
-        } else {
-            value = getDefaultValue(module, key);
-        }
-
+        validateModuleType(module, k);
+        SingleSheet global = getSheetManager().getGlobalSheet();
+        Object value = getDefault(global, module, k);
         return Resolved.make(module, k, value, thisList);
     }
 
 
-    private <T> Object getDefaultValue(Object module, Key<T> key) {
-        Class<T> type = key.getType();
-        if (Path.class.isAssignableFrom(type)) {
-            Path p = (Path)key.getDefaultValue();
-            return new Path(getSheetManager().getPathContext(), p.toString());
-        }
-        if (key.isAutoDetected()) {
-            return getSheetManager().getGlobalSheet().findPrimary(type);
-        }
-        if (getSheetManager().isOnline()) {
-            return key.getDefaultValue();
-        } else {
-            return key.getOfflineDefault();
-        }
-    }
 }

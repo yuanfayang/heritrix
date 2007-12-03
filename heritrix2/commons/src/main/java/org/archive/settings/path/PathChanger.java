@@ -196,7 +196,7 @@ public class PathChanger {
     
     private Object getPreexistingObject(SingleSheet sheet, PathChange pc) {
         try {
-            Object o = PathValidator.validate(sheet, pc.getPath());
+            Object o = PathValidator.check(sheet, pc.getPath());
             if (o == null) {
                 // There was no preexisting object.
                 return null;

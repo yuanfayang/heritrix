@@ -32,7 +32,6 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -60,7 +59,6 @@ import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
@@ -424,12 +422,8 @@ implements Initializable, Closeable {
         result.setCompressed(context.get(this, COMPRESS));
         return result;
     }
-    
-    protected static Key<List<String>> makePath(String defaultPath) {
-        KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
-        km.def = Collections.singletonList(defaultPath);
-        return km.toKey();
-    }
+
+
 
     
     @Override

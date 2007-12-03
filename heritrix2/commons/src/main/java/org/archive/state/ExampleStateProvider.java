@@ -23,8 +23,11 @@
  */
 package org.archive.state;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -61,13 +64,55 @@ public class ExampleStateProvider implements StateProvider {
         if (map != null) {
             o = map.get(key);
         }
-        if (o == null) {
-            return key.getDefaultValue();
-        } else {
+        if (o != null) {
             return key.getType().cast(o);
+        }
+        
+        // Wasn't specified; use the default value.
+        Class<T> type = key.getType();
+        if (KeyTypes.isSimple(type)) {
+            return key.getDefaultValue();
+        } else if (type == List.class) {
+            if (KeyTypes.isSimple(key.getElementType())) {
+                return key.getDefaultValue();
+            }
+            List<Class<?>> clist = key.getDefaultListElementImplementations();
+            List<Object> list = new ArrayList<Object>();
+            for (Class<?> c: clist) {
+                list.add(create(c));
+            }
+            return type.cast(list);
+        } else if (type == Map.class) {
+            if (KeyTypes.isSimple(key.getElementType())) {
+                return key.getDefaultValue();
+            }
+            Map<String,Class<?>> cm = key.getDefaultMapElementImplementations();
+            Map<String,Object> m = new LinkedHashMap<String,Object>();
+            for (Map.Entry<String,Class<?>> me: cm.entrySet()) {
+                m.put(me.getKey(), create(me.getValue()));
+            }
+            return type.cast(m);
+        } else {
+            return type.cast(create(key.getDefaultImplementation()));
         }
     }
 
+    
+    private Object create(Class<?> c) {
+        if (c == null) {
+            return null;
+        }
+        try {
+            Object o = c.newInstance();
+            if (o instanceof Initializable) {
+                ((Initializable)o).initialTasks(this);
+            }
+            return o;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+    
     
     /**
      * Sets the value for the given key.

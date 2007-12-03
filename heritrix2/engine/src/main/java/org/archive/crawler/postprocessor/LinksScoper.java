@@ -82,7 +82,7 @@ public class LinksScoper extends Scoper implements PostProcessor {
      */
     @Expert
     final public static Key<DecideRuleSequence> REJECT_RULES = 
-        Key.make(new DecideRuleSequence());
+        Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
 
     
     /**

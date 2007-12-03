@@ -164,7 +164,7 @@ public abstract class Sheet implements StateProvider, Serializable {
     }
     
     
-    final public <T> T get(Object module, Key<T> key) {
+    public <T> T get(Object module, Key<T> key) {
         return resolve(module, key).getOnlineValue();
     }
 

@@ -24,8 +24,10 @@
 package org.archive.state;
 
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,14 +69,13 @@ import java.util.Set;
 public class KeyMaker<T> {
 
     /** Type of the property. */
-    public Class<T> type;
+    Class<T> type;
 
     /** Constraints for the property.  Defaults to new HashSet. */
-    public Set<Constraint<T>> constraints;
+    Set<Constraint<T>> constraints;
 
     /** Default value for the property.  Defaults to null. */
-    public T def;
-
+    Object def;
     
     /** 
      * The element type of a list or map.  Will be null unless this.type
@@ -83,7 +84,7 @@ public class KeyMaker<T> {
      * <p>For maps, the element type is the type of the map's values.  Maps
      * in the settings system always have String keys.
      */ 
-    public Class elementType;
+    Class<?> elementType;
 
     
     /**
@@ -91,7 +92,7 @@ public class KeyMaker<T> {
      * value for this setting.  Only if the autodetect attempt fails will the
      * value specified by {@link def} be used.
      */
-    public boolean autoDetect;
+    boolean autoDetect;
     
     /** Constructor. */
     public KeyMaker() {
@@ -119,11 +120,6 @@ public class KeyMaker<T> {
      *   are invalid
      */
     void validate() {
-        if (type == null) {
-            throw new IllegalArgumentException("type may not be null."); 
-        }
-        // allow null default values
-        // allow empty constraints        
     }
     
     /**
@@ -162,10 +158,36 @@ public class KeyMaker<T> {
     public static <T> KeyMaker<T> make(T def) {
         @SuppressWarnings("unchecked")
         Class<T> c = (Class<T>)def.getClass();
-
+        if (!KeyTypes.isSimple(c)) {
+            throw new IllegalArgumentException(
+                    "Supplied actual object default value for a non-simple " +
+                    "Key.  Supply the Class of an implementation of " 
+                    + c.getName() + " instead.");
+        }
         KeyMaker<T> result = new KeyMaker<T>();
         result.type = c;
         result.def = def;
+        return result;
+    }
+    
+    
+    /**
+     * Returns a KeyMaker for a Key with a module type.  
+     * 
+     * @param <T>       the type of the Key to make
+     * @param type      the type of the Key to make
+     * @param defClass  the class of the default implementation 
+     * @return   the KeyMaker that will make the Key
+     */
+    public static <T> KeyMaker<T> make(Class<T> type, Class<? extends T> defClass) {
+        if (KeyTypes.isSimple(type)) {
+            throw new IllegalArgumentException(
+                    "Supplied implementation class for a simple Key. " +
+                    "Supply the actual default object instead.");
+        }
+        KeyMaker<T> result = new KeyMaker<T>();
+        result.type = type;
+        result.def = defClass;
         return result;
     }
 
@@ -176,10 +198,10 @@ public class KeyMaker<T> {
      * 
      * @param <T>       the element type
      * @param element   the element type
-     * @return
+     * @return  the KeyMaker that will make the Key
      */
     public static <T> KeyMaker<List<T>> makeList(Class<T> element) {
-        Class c = List.class;
+        Class<?> c = List.class;
         @SuppressWarnings("unchecked")
         Class<List<T>> c2 = (Class<List<T>>)c;
 
@@ -195,6 +217,58 @@ public class KeyMaker<T> {
 
 
     /**
+     * Returns a KeyMaker for a List with the given simple element type.  
+     * The default value will be set to the given elements.
+     * 
+     * @param <T>       the element type of the list
+     * @param element   the element type of the list
+     * @param def       the elements in the default value of the list
+     * @return   the KeyMaker that will make the Key
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> KeyMaker<List<T>> makeSimpleList(Class<T> element, T... def) {
+        if (!KeyTypes.isSimple(element)) {
+            throw new IllegalArgumentException("Can't provide instances for " +
+            		"List with module element type.  Use makeModuleList " +
+            		"instead.");
+        }
+        KeyMaker<List<T>> r = new KeyMaker<List<T>>();
+        r.type = (Class)List.class;
+        r.elementType = element;
+        r.def = Arrays.asList(def);
+        return r;
+    }
+    
+    
+    /**
+     * Returns a KeyMaker for a List with the given module element type.
+     * The default value will be set to the given list of implementation
+     * classes.
+     * 
+     * @param <T>      the element type of the list
+     * @param element  the element type of the list
+     * @param def      the implementation classes of the default elements 
+     *                    of the list
+     * @return   the KeyMaker that will make the Key
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> KeyMaker<List<T>> makeModuleList(Class<T> element, 
+            Class<? extends T>... def) {
+        if (KeyTypes.isSimple(element)) {
+            throw new IllegalArgumentException("Can't provide implementation" +
+            		" classes for List with simple element type.  Use " +
+            		"makeSimpleList instead.");
+        }
+        KeyMaker<List<T>> r = new KeyMaker<List<T>>();
+        r.type = (Class)List.class;
+        r.elementType = element;
+        r.def = Arrays.asList(def);
+        return r;
+    }
+    
+    
+
+    /**
      * Returns a KeyMaker for a Map with the given value type.  The default
      * value will be set to an empty, unmodifiable map of that type.
      * 
@@ -203,7 +277,7 @@ public class KeyMaker<T> {
      * @return   a KeyMaker for a Map with that value type
      */
     public static <T> KeyMaker<Map<String,T>> makeMap(Class<T> value) {
-        Class c = Map.class;
+        Class<?> c = Map.class;
         @SuppressWarnings("unchecked")
         Class<Map<String,T>> c2 = (Class<Map<String,T>>)c;
 
@@ -217,6 +291,48 @@ public class KeyMaker<T> {
         
         return r;
     }
+    
+    
+    @SuppressWarnings("unchecked")
+    public static<T> KeyMaker<Map<String,T>> makeSimpleMap(Class<T> element, 
+            Object... pairs) {
+        if (pairs.length % 2 != 0) {
+            throw new IllegalArgumentException();
+        }
+        KeyMaker<Map<String,T>> r = new KeyMaker<Map<String,T>>();
+        r.type = (Class)Map.class;
+        r.elementType = element;
+        Map<String,T> def = new LinkedHashMap<String,T>();
+        for (int i = 0; i < pairs.length; i += 2) {
+            String k = (String)pairs[i];
+            T v = element.cast(pairs[i + 1]);
+            def.put(k, v);
+        }
+        r.def = Collections.unmodifiableMap(def);
+        return r;
+    }
+    
+
+    @SuppressWarnings("unchecked")
+    public static<T> KeyMaker<Map<String,T>> makeModuleMap(Class<T> element, 
+            Object... pairs) {
+        if (pairs.length % 2 != 0) {
+            throw new IllegalArgumentException();
+        }
+        KeyMaker<Map<String,T>> r = new KeyMaker<Map<String,T>>();
+        r.type = (Class)Map.class;
+        r.elementType = element;
+        Map<String,Class<? extends T>> def = 
+            new LinkedHashMap<String,Class<? extends T>>();
+        for (int i = 0; i < pairs.length; i += 2) {
+            String k = (String)pairs[i];
+            Class v = (Class)pairs[i + 1];
+            def.put(k, v);
+        }
+        r.def = Collections.unmodifiableMap(def);
+        return r;
+    }
+
 
     
     public static <T> KeyMaker<T> makeNull(Class<T> type) {
@@ -225,4 +341,16 @@ public class KeyMaker<T> {
         km.def = null;
         return km;
     }
+
+    
+
+    
+    public static <T> KeyMaker<T> makeAuto(Class<T> type) {
+        KeyMaker<T> km = new KeyMaker<T>();
+        km.autoDetect = true;
+        km.type = type;
+        km.def = null;
+        return km;
+    }
+
 }

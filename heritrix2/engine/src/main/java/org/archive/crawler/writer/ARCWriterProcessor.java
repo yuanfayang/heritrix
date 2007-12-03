@@ -30,7 +30,6 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -53,7 +52,6 @@ import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.Global;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.IoUtils;
@@ -91,7 +89,8 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
      * progresses).
      */
     @Global
-    final public static Key<List<String>> PATH = makePath();
+    final public static Key<List<String>> PATH = 
+        Key.makeSimpleList(String.class, "arcs");
 
     
     static {
@@ -206,11 +205,6 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
     }
 
 
-    private static Key<List<String>> makePath() {
-        KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
-        km.def = Arrays.asList(DEFAULT_PATH);
-        return km.toKey();
-    }
 
     protected List<String> getMetadata(StateProvider global) {
         if (TEMPLATE == null) {

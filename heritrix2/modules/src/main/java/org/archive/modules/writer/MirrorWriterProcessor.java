@@ -1660,7 +1660,7 @@ public class MirrorWriterProcessor extends Processor {
     
     private static Key<String> makePatterned(String def, Pattern pattern) {
         KeyMaker<String> km = KeyMaker.make(def);
-        km.constraints.add(new PatternConstraint(pattern));
+        km.addConstraint(new PatternConstraint(pattern));
         return km.toKey();
     }
     

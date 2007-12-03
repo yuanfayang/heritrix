@@ -76,8 +76,18 @@ public class PathChangerTest extends PathTestBase {
             @Override
             protected void consume(String path, String[] sheets, String value,
                     String type) {
+                if (path.equals("root:bar:foo")) {
+                    System.out.println("break");
+                }
                 PathChange pce = new PathChange(path, type, value);
+                System.out.println(pce);
                 pc.change(dest, pce);
+                if (!pc.getProblems().isEmpty()) {
+                    for (Exception e: pc.getProblems()) {
+                        e.printStackTrace();
+                    }
+                    fail("Problem(s) with " + pce);
+                }
             }
         };
         PathLister.getAll(src, consumer, true);

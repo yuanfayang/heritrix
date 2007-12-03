@@ -259,7 +259,8 @@ public abstract class PathTestBase extends TestCase {
         this.bar = new Bar();
         this.bar_foo = new Foo("bar_foo");
         global.set(bar, Bar.FOO, bar_foo);
-        
+        Foo test = global.get(bar, Bar.FOO);
+        assertTrue("WTF?", test == bar_foo);
         this.bar_list = new SettingsList<Foo>(global, Foo.class);
         global.set(bar, Bar.LIST, bar_list);
         this.bar_list_0 = new Foo("bar_list_0");
