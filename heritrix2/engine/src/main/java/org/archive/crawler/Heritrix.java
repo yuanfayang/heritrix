@@ -56,6 +56,7 @@ import org.apache.commons.cli.ParseException;
 import org.archive.crawler.framework.CrawlJobManagerConfig;
 import org.archive.crawler.framework.CrawlJobManagerImpl;
 import org.archive.crawler.framework.JobStage;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JndiUtils;
 
@@ -87,7 +88,6 @@ import org.archive.util.JndiUtils;
  */
 public class Heritrix {
 
-    final private static String VERSION = loadVersion();
     
     /**
      * Name of configuration directory.
@@ -330,7 +330,7 @@ public class Heritrix {
                     out.close();
                 }
                 System.out.println("Heritrix version: " +
-                        Heritrix.getVersion());
+                        ArchiveUtils.VERSION);
             } else {
                 if (out != null) {
                     out.flush();
@@ -415,69 +415,12 @@ public class Heritrix {
     	return c;
     }
 
-    
-    /**
-     * Get the heritrix version.
-     *
-     * @return The heritrix version.  May be null.
-     */
-    public static String getVersion() {
-        return VERSION;
-    }
 
-    
     protected static boolean isDevelopment() {
         return System.getProperty("heritrix.development") != null;
     }    
 
 
-    private static String loadVersion() {
-        InputStream input = Heritrix.class.getResourceAsStream(
-                "/org/archive/crawler/version.txt");
-        if (input == null) {
-            return "UNKNOWN";
-        }
-        BufferedReader br = null;
-        String version;
-        try {
-            br = new BufferedReader(new InputStreamReader(input));
-            version = br.readLine();
-            br.readLine();
-        } catch (IOException e) {
-            return e.getMessage();
-        } finally {
-            IoUtils.close(br);
-        }
-        
-        version = version.trim();
-        if (!version.endsWith("SNAPSHOT")) {
-            return version;
-        }
-        
-        input = Heritrix.class.getResourceAsStream("/org/archive/crawler/timestamp.txt");
-        if (input == null) {
-            return version;
-        }
-        
-        br = null;
-        String timestamp;
-        try {
-            br = new BufferedReader(new InputStreamReader(input));
-            timestamp = br.readLine();
-        } catch (IOException e) {
-            return version;
-        } finally {
-            IoUtils.close(br);
-        }
-        
-        if (timestamp.startsWith("timestamp=")) {
-            timestamp = timestamp.substring(10);
-        }
-        
-        return version.trim() + "-" + timestamp.trim();
-    }
-    
-    
     private static void launch(CrawlJobManagerImpl cjm, String job) 
     throws Exception {
         for (String s: cjm.listJobs()) {

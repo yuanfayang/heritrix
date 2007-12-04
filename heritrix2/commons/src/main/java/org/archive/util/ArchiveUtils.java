@@ -26,7 +26,10 @@
  */
 package org.archive.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.NumberFormat;
@@ -39,6 +42,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+
 /**
  * Miscellaneous useful methods.
  *
@@ -46,6 +50,9 @@ import java.util.TimeZone;
  */
 public class ArchiveUtils {
 
+    
+    final public static String VERSION = loadVersion();
+    
     /**
      * Arc-style date stamp in the format yyyyMMddHHmm and UTC time zone.
      */
@@ -798,5 +805,53 @@ public class ArchiveUtils {
         builder.append(" ]");
         return builder.toString();
     }
+    
+    
+    private static String loadVersion() {
+        InputStream input = ArchiveUtils.class.getResourceAsStream(
+                "/org/archive/util/version.txt");
+        if (input == null) {
+            return "UNKNOWN";
+        }
+        BufferedReader br = null;
+        String version;
+        try {
+            br = new BufferedReader(new InputStreamReader(input));
+            version = br.readLine();
+            br.readLine();
+        } catch (IOException e) {
+            return e.getMessage();
+        } finally {
+            IoUtils.close(br);
+        }
+        
+        version = version.trim();
+        if (!version.endsWith("SNAPSHOT")) {
+            return version;
+        }
+        
+        input = ArchiveUtils.class.getResourceAsStream("/org/archive/util/timestamp.txt");
+        if (input == null) {
+            return version;
+        }
+        
+        br = null;
+        String timestamp;
+        try {
+            br = new BufferedReader(new InputStreamReader(input));
+            timestamp = br.readLine();
+        } catch (IOException e) {
+            return version;
+        } finally {
+            IoUtils.close(br);
+        }
+        
+        if (timestamp.startsWith("timestamp=")) {
+            timestamp = timestamp.substring(10);
+        }
+        
+        return version.trim() + "-" + timestamp.trim();
+    }
+
 }
 

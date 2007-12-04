@@ -26,7 +26,7 @@
 
 package org.archive.crawler.selftest;
 
-import org.archive.crawler.Heritrix;
+import org.archive.util.ArchiveUtils;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.bio.SocketConnector;
@@ -47,7 +47,7 @@ public class UserAgentSelfTest extends SelfTestBase {
 
     
     final private static String EXPECTED_UA = 
-        "Mozilla/5.0 (compatible; heritrix/" + Heritrix.getVersion() 
+        "Mozilla/5.0 (compatible; heritrix/" + ArchiveUtils.VERSION 
         + " +http://example.com/CrawlInfoPage)";
     
     final private static String EXPECTED_FROM = 

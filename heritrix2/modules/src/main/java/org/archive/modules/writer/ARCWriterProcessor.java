@@ -23,7 +23,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.writer;
+package org.archive.modules.writer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,9 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.WriterPoolProcessor;
+import org.archive.modules.ProcessorURI;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
@@ -54,6 +52,7 @@ import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.IoUtils;
 
 
@@ -120,17 +119,17 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
 
 
     /**
-     * Writes a CrawlURI and its associated data to store file.
+     * Writes a ProcessorURI and its associated data to store file.
      *
      * Currently this method understands the following uri types: dns, http, 
      * and https.
      *
-     * @param curi CrawlURI to process.
+     * @param curi ProcessorURI to process.
      */
     protected ProcessResult innerProcessResult(ProcessorURI puri) {
-        CrawlURI curi = (CrawlURI)puri;
+        ProcessorURI curi = (ProcessorURI)puri;
         
-        long recordLength = curi.getRecordedSize();
+        long recordLength = getRecordedSize(curi);
         
         ReplayInputStream ris = null;
         try {
@@ -151,7 +150,7 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
         return ProcessResult.PROCEED;
     }
     
-    protected ProcessResult write(CrawlURI curi, long recordLength, 
+    protected ProcessResult write(ProcessorURI curi, long recordLength, 
             InputStream in, String ip)
     throws IOException {
         WriterPoolMember writer = getPool().borrowFile();
@@ -218,7 +217,7 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
         MetadataProvider provider = global.get(this, METADATA_PROVIDER);
         
         String meta = TEMPLATE;
-        meta = replace(meta, "${VERSION}", Heritrix.getVersion());
+        meta = replace(meta, "${VERSION}", ArchiveUtils.VERSION);
         meta = replace(meta, "${HOST}", getHostName());
         meta = replace(meta, "${IP}", getHostAddress());
         

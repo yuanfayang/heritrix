@@ -22,7 +22,7 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.recrawl;
+package org.archive.modules.recrawl;
 
 
 import java.util.Map;
@@ -60,6 +60,7 @@ public class IdenticalDigestDecideRule extends PredicatedRejectDecideRule {
         return hasIdenticalDigest(curi);
     }
 
+
     /**
      * Utility method for testing if a CrawlURI's last two history 
      * entiries (one being the most recent fetch) have identical 
@@ -82,4 +83,5 @@ public class IdenticalDigestDecideRule extends PredicatedRejectDecideRule {
             return false;
         }
     }
+
 }

@@ -135,4 +135,9 @@ public interface ProcessorURI extends StateProvider {
     boolean isSuccess();
 
     void incrementDiscardedOutLinks();
+
+    String getSourceTag();
+    
+    boolean forceFetch();
+
 }

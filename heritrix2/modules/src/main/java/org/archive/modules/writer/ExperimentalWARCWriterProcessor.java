@@ -20,14 +20,14 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.writer;
+package org.archive.modules.writer;
 
-import static org.archive.crawler.datamodel.CoreAttributeConstants.A_DNS_SERVER_IP_LABEL;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.A_HTTP_TRANSACTION;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.A_SOURCE_TAG;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.HEADER_TRUNC;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.LENGTH_TRUNC;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.TIMER_TRUNC;
+import static org.archive.modules.ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
+import static org.archive.modules.ModuleAttributeConstants.A_HTTP_TRANSACTION;
+import static org.archive.modules.ModuleAttributeConstants.A_SOURCE_TAG;
+import static org.archive.modules.ModuleAttributeConstants.HEADER_TRUNC;
+import static org.archive.modules.ModuleAttributeConstants.LENGTH_TRUNC;
+import static org.archive.modules.ModuleAttributeConstants.TIMER_TRUNC;
 import static org.archive.io.warc.WARCConstants.HEADER_KEY_CONCURRENT_TO;
 import static org.archive.io.warc.WARCConstants.HEADER_KEY_ETAG;
 import static org.archive.io.warc.WARCConstants.HEADER_KEY_IP;
@@ -67,10 +67,6 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.StringUtils;
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.WriterPoolProcessor;
-import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
@@ -79,6 +75,7 @@ import org.archive.io.warc.WARCWriterPool;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.Link;
+import org.archive.modules.recrawl.IdenticalDigestDecideRule;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Key;
@@ -179,17 +176,17 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
 
 
     /**
-     * Writes a CrawlURI and its associated data to store file.
+     * Writes a ProcessorURI and its associated data to store file.
      * 
      * Currently this method understands the following uri types: dns, http, and
      * https.
      * 
-     * @param curi CrawlURI to process.
+     * @param curi ProcessorURI to process.
      * 
      */
     @Override
     protected ProcessResult innerProcessResult(ProcessorURI puri) {
-        CrawlURI curi = (CrawlURI)puri;
+        ProcessorURI curi = (ProcessorURI)puri;
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
             if (shouldWrite(curi)) {
@@ -207,7 +204,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     }
     
     protected ProcessResult write(final String lowerCaseScheme, 
-            final CrawlURI curi)
+            final ProcessorURI curi)
     throws IOException {
         WriterPoolMember writer = getPool().borrowFile();
         long position = writer.getPosition();
@@ -314,7 +311,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     
     protected URI writeRequest(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
-            final URI baseid, final CrawlURI curi,
+            final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, REQUEST);
@@ -334,7 +331,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     
     protected URI writeResponse(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
-            final URI baseid, final CrawlURI curi,
+            final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         ReplayInputStream ris =
@@ -353,7 +350,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     
     protected URI writeResource(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
-            final URI baseid, final CrawlURI curi,
+            final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         ReplayInputStream ris =
@@ -373,7 +370,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     
     protected URI writeRevisitDigest(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
-            final URI baseid, final CrawlURI curi,
+            final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         long revisedLength = curi.getRecorder().getRecordedInput().getContentBegin();
@@ -399,7 +396,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     
     protected URI writeRevisitNotModified(final ExperimentalWARCWriter w,
             final String timestamp, 
-            final URI baseid, final CrawlURI curi,
+            final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         namedFields.addLabelValue(
@@ -445,7 +442,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
 
 	protected URI writeMetadata(final ExperimentalWARCWriter w,
             final String timestamp,
-            final URI baseid, final CrawlURI curi,
+            final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, METADATA);
@@ -460,13 +457,14 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         	if (curi.forceFetch()) {
         		r.addLabel("force-fetch");
         	}
-            r.addLabelValue("via", curi.flattenVia());
+            r.addLabelValue("via", flattenVia(curi));
             r.addLabelValue("hopsFromSeed", curi.getPathFromSeed());
             if (curi.containsDataKey(A_SOURCE_TAG)) {
-                r.addLabelValue("sourceTag", curi.getSourceTag());
+                r.addLabelValue("sourceTag", 
+                        (String)curi.getData().get(A_SOURCE_TAG));
             }
         }
-        long duration = curi.getFetchDuration();
+        long duration = curi.getFetchCompletedTime() - curi.getFetchBeginTime();
         if (duration > -1) {
             r.addLabelValue("fetchTimeMs", Long.toString(duration));
         }
@@ -533,7 +531,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         }
         ANVLRecord record = new ANVLRecord(7);
         record.addLabelValue("software", "Heritrix/" +
-                Heritrix.getVersion() + " http://crawler.archive.org");
+                ArchiveUtils.VERSION + " http://crawler.archive.org");
         try {
             InetAddress host = InetAddress.getLocalHost();
             record.addLabelValue("ip", host.getHostAddress());

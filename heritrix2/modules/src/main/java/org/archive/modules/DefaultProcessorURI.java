@@ -94,6 +94,7 @@ implements ProcessorURI {
     private boolean prereq;
     private boolean seed;
 
+    private boolean forceFetch;
     
     
     public DefaultProcessorURI(UURI uuri, LinkContext context) {
@@ -391,4 +392,16 @@ implements ProcessorURI {
         discardedOutLinks++;
     }
 
+    
+    public boolean forceFetch() {
+        return forceFetch;
+    }
+    
+    public void setForceFetch(boolean b) {
+        this.forceFetch = b;
+    }
+    
+    public String getSourceTag() {
+        return "";
+    }
 }

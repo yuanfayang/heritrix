@@ -1274,7 +1274,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
         if (containsDataKey(A_FETCH_BEGAN_TIME)) {
             return (Long)getData().get(A_FETCH_BEGAN_TIME);
         } else {
-            return 0L;
+            return 1L;
         }
     }
 

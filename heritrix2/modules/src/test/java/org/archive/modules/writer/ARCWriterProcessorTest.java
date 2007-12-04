@@ -17,69 +17,37 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ExperimentalWARCWriterProcessor.java
+ * ARCWriterProcessor.java
  *
  * Created on Jan 31, 2007
  *
  * $Id:$
  */
-package org.archive.crawler.writer;
+package org.archive.modules.writer;
 
 
 import java.io.File;
 
-import org.archive.crawler.framework.CrawlerProcessorTestBase;
-import org.archive.crawler.framework.WriterPoolProcessor;
-import org.archive.modules.fetcher.DefaultServerCache;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.Path;
+import org.archive.modules.ProcessorTestBase;
+import org.archive.modules.fetcher.DefaultServerCache;
+import org.archive.modules.writer.ARCWriterProcessor;
+import org.archive.modules.writer.WriterPoolProcessor;
+import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 
 
 /**
- * Unit test for {@link ExperimentalWARCWriterProcessor}.
+ * Unit test for {@link ARCWriterProcessor}.
  *
  * @author pjack
  */
-public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBase {
-    public class DummyMetadataProvider implements MetadataProvider {
-        public String getAudience() {
-            return null;
-        }
+public class ARCWriterProcessorTest extends ProcessorTestBase {
 
-        public String getFrom() {
-            return null;
-        }
-
-        public String getJobDescription() {
-            return null;
-        }
-
-        public String getJobName() {
-            return null;
-        }
-
-        public String getJobOperator() {
-            return null;
-        }
-
-        public String getOrganization() {
-            return null;
-        }
-
-        public String getRobotsPolicy() {
-            return null;
-        }
-
-        public String getUserAgent() {
-            return null;
-        }
-    }
-
-
+    
     @Override
     protected Class<?> getModuleClass() {
-        return ExperimentalWARCWriterProcessor.class;
+        return ARCWriterProcessor.class;
     }
     
     
@@ -90,17 +58,25 @@ public class ExperimentalWARCWriterProcessorTest extends CrawlerProcessorTestBas
         tmp.mkdirs();
 
         ExampleStateProvider sp = new ExampleStateProvider();
-        Path dir = new Path(tmp.getAbsolutePath());
-
-        ExperimentalWARCWriterProcessor result = new ExperimentalWARCWriterProcessor();
-        sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
+        Path path = new Path(tmp.getAbsolutePath());
+        
+        ARCWriterProcessor result = new ARCWriterProcessor();
+        sp.set(result, WriterPoolProcessor.DIRECTORY, path);
         sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
-        sp.set(result, WriterPoolProcessor.METADATA_PROVIDER, new DummyMetadataProvider());
         result.initialTasks(sp);
         return result;
     }
+
+
+    @Override
+    protected void verifySerialization(Object first, byte[] firstBytes, 
+            Object second, byte[] secondBytes) throws Exception {
+
+    }
+    
+    
     
     
     // TODO TESTME!
-    
+
 }

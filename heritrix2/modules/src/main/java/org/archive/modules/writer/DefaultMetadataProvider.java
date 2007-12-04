@@ -24,13 +24,12 @@
  * $Id:$
  */
 
-package org.archive.crawler.writer;
+package org.archive.modules.writer;
 
 import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.crawler.Heritrix;
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.settings.SheetManager;
@@ -42,6 +41,7 @@ import org.archive.state.KeyManager;
 import org.archive.state.Module;
 import org.archive.state.PatternConstraint;
 import org.archive.state.StateProvider;
+import org.archive.util.ArchiveUtils;
 
 /**
  * @author pjack
@@ -136,7 +136,7 @@ public class DefaultMetadataProvider implements
         String contactURL = context.get(this, OPERATOR_CONTACT_URL);
         userAgent = userAgent.replaceFirst("@OPERATOR_CONTACT_URL@", contactURL);
         userAgent = userAgent.replaceFirst("@VERSION@",
-                Matcher.quoteReplacement(Heritrix.getVersion()));
+                Matcher.quoteReplacement(ArchiveUtils.VERSION));
         return userAgent;
     }
     
