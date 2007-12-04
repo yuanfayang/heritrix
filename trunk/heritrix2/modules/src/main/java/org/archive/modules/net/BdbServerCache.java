@@ -11,7 +11,7 @@ import org.archive.state.StateProvider;
 import com.sleepycat.je.DatabaseException;
 
 
-public class CrawlerServerCache extends DefaultServerCache 
+public class BdbServerCache extends DefaultServerCache 
 implements Initializable {
 
     private static final long serialVersionUID = 1L;
@@ -23,11 +23,11 @@ implements Initializable {
     
     
     static {
-        KeyManager.addKeys(CrawlerServerCache.class);
+        KeyManager.addKeys(BdbServerCache.class);
     }
     
     
-    public CrawlerServerCache() {
+    public BdbServerCache() {
     }
     
 
