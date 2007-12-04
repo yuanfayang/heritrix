@@ -31,8 +31,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
@@ -48,11 +46,12 @@ import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseException;
-import com.sun.org.apache.bcel.internal.generic.LLOAD;
 
 /**
+ * CookieStorage using BDB, so that cookies accumulated in large crawls
+ * do not outgrow RAM. 
+ * 
  * @author pjack
- *
  */
 public class BdbCookieStorage extends AbstractCookieStorage {
     private static final long serialVersionUID = 1L;
