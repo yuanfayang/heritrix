@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobStage;
-import org.archive.crawler.scope.SeedModuleInterface;
+import org.archive.modules.seeds.SeedModuleInterface;
 import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.jmx.JMXSheetManager;
 

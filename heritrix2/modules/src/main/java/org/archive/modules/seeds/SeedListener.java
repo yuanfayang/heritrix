@@ -21,9 +21,9 @@
 *
 * $Header$
 */
-package org.archive.crawler.scope;
+package org.archive.modules.seeds;
 
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.modules.ProcessorURI;
 
 /**
  * Implemented by components which want notifications of 
@@ -32,5 +32,5 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author gojomo
  */
 public interface SeedListener {
-    void addedSeed(final CrawlURI uuri);
+    void addedSeed(final ProcessorURI uuri);
 }
