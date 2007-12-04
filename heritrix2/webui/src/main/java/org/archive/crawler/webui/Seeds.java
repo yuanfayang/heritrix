@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.CrawlJobManager;
 import org.archive.crawler.framework.JobStage;
-import org.archive.modules.seeds.SeedModuleInterface;
+import org.archive.modules.seeds.SeedModule;
 import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.jmx.JMXSheetManager;
 
@@ -96,7 +96,7 @@ public class Seeds {
         JMXConnector jmxc = crawler.connect();
         try {
             CrawlJob job = CrawlJob.fromRequest(request, jmxc);
-            SeedModuleInterface seedModule = getSeedModule(jmxc, job);
+            SeedModule seedModule = getSeedModule(jmxc, job);
             seedModule.refreshSeeds();
         } finally {
             Misc.close(jmxc);
@@ -129,7 +129,7 @@ public class Seeds {
                     LINES_PER_PAGE,
                     seeds);
             if (job.getJobStage() == JobStage.ACTIVE) {
-                SeedModuleInterface seedModule = getSeedModule(jmxc, job);
+                SeedModule seedModule = getSeedModule(jmxc, job);
                 seedModule.refreshSeeds();
             }
         } finally {
@@ -140,12 +140,12 @@ public class Seeds {
     }
 
 
-    private static SeedModuleInterface getSeedModule(JMXConnector jmxc, 
+    private static SeedModule getSeedModule(JMXConnector jmxc, 
             CrawlJob job) {
-        SeedModuleInterface seedModule = Misc.find(
+        SeedModule seedModule = Misc.find(
                 jmxc, 
                 job.getName(), 
-                SeedModuleInterface.class);
+                SeedModule.class);
         return seedModule;
     }
 }

@@ -67,7 +67,7 @@ import org.archive.util.FileUtils;
  *
  */
 public class SeedModuleImpl extends Bean implements 
-    SeedModuleInterface, 
+    SeedModule, 
     Initializable, 
     Serializable, 
     KeyChangeListener,
@@ -115,7 +115,7 @@ public class SeedModuleImpl extends Bean implements
      * Constructor.
      */
     public SeedModuleImpl() {
-        super(SeedModuleInterface.class);
+        super(SeedModule.class);
     }
 
 
