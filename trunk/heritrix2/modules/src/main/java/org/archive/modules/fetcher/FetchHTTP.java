@@ -1131,7 +1131,6 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
 
         CookieStorage cm = defaults.get(this, COOKIE_STORAGE);
         if (cm != null) {        
-            cm.initialTasks(defaults);
             http.getState().setCookiesMap(cm.getCookiesMap());
         }
 
@@ -1165,7 +1164,6 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
             @SuppressWarnings("unchecked")
             Map<String, Cookie> map = http.getState().getCookiesMap();
             cs.saveCookiesMap(map);
-            cs.finalTasks(defaults);
         }
         cleanupHttp();
     }
