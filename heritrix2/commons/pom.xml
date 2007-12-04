@@ -214,6 +214,7 @@
       </resource>
     </resources>
 
+    <plugins>
     <plugin>
       <artifactId>maven-antrun-plugin</artifactId>
       <executions>
@@ -228,17 +229,16 @@
                         pattern="yyyyMMdd.HHmmss"/>
               </tstamp>
               <delete
-                file="target/classes/org/archive/crawler/timestamp.txt"
+                file="target/classes/org/archive/util/timestamp.txt"
                 failonerror="false"/>
               <echo message="timestamp=${timestamp}"
-                file="target/classes/org/archive/crawler/timestamp.txt"/>
+                file="target/classes/org/archive/util/timestamp.txt"/>
             </tasks>
           </configuration>
          </execution>
         </executions>
       </plugin>
 
-    <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
