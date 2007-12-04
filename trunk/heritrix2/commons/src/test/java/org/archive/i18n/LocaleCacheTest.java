@@ -58,8 +58,7 @@ public class LocaleCacheTest extends TestCase {
         try {
             xtestSearchOrder2();
         } catch (Throwable e) {
-            // I hate maven.
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
     }
     
