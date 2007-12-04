@@ -32,7 +32,7 @@ import java.io.IOException;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.PredicatedAcceptDecideRule;
 import org.archive.modules.seeds.SeedListener;
-import org.archive.modules.seeds.SeedModule;
+import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
@@ -116,8 +116,8 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
 
 
     @Immutable 
-    final public static Key<SeedModule> SEEDS = 
-        Key.makeAuto(SeedModule.class);
+    final public static Key<SeedModuleImpl> SEEDS = 
+        Key.makeAuto(SeedModuleImpl.class);
     
     
     protected SurtPrefixSet surtPrefixes = null;
@@ -125,7 +125,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     
 //    private Path directory;
     
-    private SeedModule seeds;
+    private SeedModuleImpl seeds;
     
     //private CrawlController controller;
 

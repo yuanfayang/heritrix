@@ -55,7 +55,7 @@ import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.modules.seeds.SeedModule;
+import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.jmx.Types;
@@ -135,8 +135,8 @@ implements CrawlURIDispositionListener, Serializable {
 
     
     @Immutable
-    final public static Key<SeedModule> SEEDS =
-        Key.makeAuto(SeedModule.class);
+    final public static Key<SeedModuleImpl> SEEDS =
+        Key.makeAuto(SeedModuleImpl.class);
 
     @Immutable
     final public static Key<BdbModule> BDB =
@@ -153,7 +153,7 @@ implements CrawlURIDispositionListener, Serializable {
     @Immutable
     final public static Key<Integer> LIVE_HOST_REPORT_SIZE = Key.make(20);
     
-    private SeedModule seeds;
+    private SeedModuleImpl seeds;
     private ServerCache serverCache;
     private BdbModule bdb;
     private Path reportsDir;
