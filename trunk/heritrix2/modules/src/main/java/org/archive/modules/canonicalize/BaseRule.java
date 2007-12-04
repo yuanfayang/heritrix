@@ -20,12 +20,11 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.url.canonicalize;
+package org.archive.modules.canonicalize;
 
 import java.io.Serializable;
 import java.util.regex.Matcher;
 
-import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.state.Key;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;

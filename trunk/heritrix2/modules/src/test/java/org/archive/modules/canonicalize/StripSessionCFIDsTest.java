@@ -1,6 +1,7 @@
-package org.archive.crawler.url.canonicalize;
+package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.modules.canonicalize.StripSessionCFIDs;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
