@@ -1,6 +1,6 @@
-/* OnHostsDecideRule
+/* NotOnHostsDecideRule
 *
-* $Id$
+* $Id: NotOnHostsDecideRule.java 4649 2006-09-25 17:16:55Z paul_jack $
 *
 * Created on Apr 5, 2005
 *
@@ -22,46 +22,39 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.deciderules;
+package org.archive.modules.deciderules.surt;
 
-
-import org.archive.state.StateProvider;
-import org.archive.util.SurtPrefixSet;
+import org.archive.modules.ProcessorURI;
 
 
 /**
  * Rule applies configured decision to any URIs that
- * are on one of the hosts in the configured set of
+ * are *not* on one of the hosts in the configured set of
  * hosts, filled from the seed set. 
  *
  * @author gojomo
  */
-public class OnHostsDecideRule extends SurtPrefixedDecideRule {
+public class NotOnHostsDecideRule extends OnHostsDecideRule {
 
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 1512825197255050412L;
 
-    //private static final Logger logger =
-    //    Logger.getLogger(OnHostsDecideRule.class.getName());
+
     /**
      * Usual constructor. 
-     * @param name
      */
-    public OnHostsDecideRule() {
-        super();
+    public NotOnHostsDecideRule() {
     }
 
     /**
-     * Patch the SURT prefix set so that it only includes host-enforcing prefixes
+     * Evaluate whether given object's URI is NOT in the set of
+     * hosts -- simply reverse superclass's determination
      * 
-     * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#readPrefixes()
+     * @param object Object to evaluate
+     * @return true if URI not in set
      */
-    protected void readPrefixes(StateProvider context) {
-        buildSurtPrefixSet(context);
-        surtPrefixes.convertAllPrefixesToHosts();
-        dumpSurtPrefixSet(context);
+    @Override
+    protected boolean evaluate(ProcessorURI object) {
+        boolean superDecision = super.evaluate(object);
+        return !superDecision;
     }
-
-	protected String prefixFrom(String uri) {
-		return SurtPrefixSet.convertPrefixToHost(super.prefixFrom(uri));
-	}
 }
