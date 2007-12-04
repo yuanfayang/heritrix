@@ -61,7 +61,7 @@ import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.modules.seeds.SeedModule;
+import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Expert;
@@ -104,8 +104,8 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         Key.makeAuto(BdbModule.class);
     
     @Immutable
-    final public static Key<SeedModule> SEEDS =
-        Key.makeAuto(SeedModule.class);
+    final public static Key<SeedModuleImpl> SEEDS =
+        Key.makeAuto(SeedModuleImpl.class);
     
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE =
@@ -170,7 +170,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
 
     
     private CrawlController controller;
-    private SeedModule seeds;
+    private SeedModuleImpl seeds;
     private BdbModule bdb;
     private ServerCache serverCache;
     

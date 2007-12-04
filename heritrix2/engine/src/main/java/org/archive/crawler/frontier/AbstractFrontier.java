@@ -79,7 +79,7 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.modules.seeds.SeedModule;
+import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.modules.seeds.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
@@ -258,8 +258,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
 
     
     @Immutable
-    final public static Key<SeedModule> SEEDS = 
-        Key.makeAuto(SeedModule.class);
+    final public static Key<SeedModuleImpl> SEEDS = 
+        Key.makeAuto(SeedModuleImpl.class);
     
     @Immutable
     final public static Key<ServerCache> SERVER_CACHE = 
@@ -355,7 +355,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         this.loggerModule = provider.get(this, LOGGER_MODULE);
         this.manager = provider.get(this, MANAGER);
         
-        SeedModule seeds = provider.get(this, SEEDS);
+        SeedModuleImpl seeds = provider.get(this, SEEDS);
         seeds.addSeedRefreshListener(this);
         
         if (provider.get(this, RECOVERY_LOG_ENABLED)) try {

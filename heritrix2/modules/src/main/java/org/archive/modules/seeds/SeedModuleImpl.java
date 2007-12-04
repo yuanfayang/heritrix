@@ -66,7 +66,7 @@ import org.archive.util.FileUtils;
  * @author gojomo
  *
  */
-public class SeedModule extends Bean implements 
+public class SeedModuleImpl extends Bean implements 
     SeedModuleInterface, 
     Initializable, 
     Serializable, 
@@ -76,7 +76,7 @@ public class SeedModule extends Bean implements
     private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
-        Logger.getLogger(SeedModule.class.getName());
+        Logger.getLogger(SeedModuleImpl.class.getName());
 
 
     /**
@@ -107,14 +107,14 @@ public class SeedModule extends Bean implements
 
     
     static {
-        KeyManager.addKeys(SeedModule.class);
+        KeyManager.addKeys(SeedModuleImpl.class);
     }
     
 
     /** 
      * Constructor.
      */
-    public SeedModule() {
+    public SeedModuleImpl() {
         super(SeedModuleInterface.class);
     }
 
