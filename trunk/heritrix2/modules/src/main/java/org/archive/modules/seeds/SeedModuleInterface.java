@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.archive.crawler.scope;
+package org.archive.modules.seeds;
 
 import org.archive.openmbeans.annotations.Operation;
 

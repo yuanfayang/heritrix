@@ -29,11 +29,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.scope.SeedListener;
-import org.archive.crawler.scope.SeedModule;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.PredicatedAcceptDecideRule;
+import org.archive.modules.seeds.SeedListener;
+import org.archive.modules.seeds.SeedModule;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
@@ -286,7 +285,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
         return seeds.getSeedfile();
     }
 
-    public synchronized void addedSeed(final CrawlURI curi) {
+    public synchronized void addedSeed(final ProcessorURI curi) {
         SurtPrefixSet newSurtPrefixes = (SurtPrefixSet) surtPrefixes.clone();
         newSurtPrefixes.add(prefixFrom(curi.toString()));
         surtPrefixes = newSurtPrefixes;

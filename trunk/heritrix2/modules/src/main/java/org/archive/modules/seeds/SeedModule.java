@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.scope;
+package org.archive.modules.seeds;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,10 +37,10 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.scope.SeedFileIterator;
-import org.archive.crawler.scope.SeedListener;
-import org.archive.crawler.scope.SeedRefreshListener;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.seeds.SeedFileIterator;
+import org.archive.modules.seeds.SeedListener;
+import org.archive.modules.seeds.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
@@ -153,7 +153,7 @@ public class SeedModule extends Bean implements
      * @return true if URI is a seed.
      */
     protected boolean isSeed(Object o) {
-        return o instanceof CrawlURI && ((CrawlURI) o).isSeed();
+        return o instanceof ProcessorURI && ((ProcessorURI) o).isSeed();
     }
 
     /**
@@ -258,7 +258,7 @@ public class SeedModule extends Bean implements
      * @param curi CandidateUri to add
      * @return true if successful, false if add failed for any reason
      */
-    public boolean addSeed(final CrawlURI curi) {
+    public boolean addSeed(final ProcessorURI curi) {
         File f = getSeedfile();
         if (f != null) {
             try {

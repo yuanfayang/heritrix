@@ -24,7 +24,7 @@
  * $Id:$
  */
 
-package org.archive.crawler.scope;
+package org.archive.modules.seeds;
 
 
 /**
