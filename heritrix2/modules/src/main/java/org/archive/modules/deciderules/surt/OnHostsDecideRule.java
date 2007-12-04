@@ -1,4 +1,4 @@
-/* OnDomainsDecideRule
+/* OnHostsDecideRule
 *
 * $Id$
 *
@@ -22,7 +22,7 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.deciderules;
+package org.archive.modules.deciderules.surt;
 
 
 import org.archive.state.StateProvider;
@@ -31,35 +31,37 @@ import org.archive.util.SurtPrefixSet;
 
 /**
  * Rule applies configured decision to any URIs that
- * are on one of the domains in the configured set of
- * domains, filled from the seed set. 
+ * are on one of the hosts in the configured set of
+ * hosts, filled from the seed set. 
  *
  * @author gojomo
  */
-public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
+public class OnHostsDecideRule extends SurtPrefixedDecideRule {
 
     private static final long serialVersionUID = 3L;
+
     //private static final Logger logger =
-    //    Logger.getLogger(OnDomainsDecideRule.class.getName());
+    //    Logger.getLogger(OnHostsDecideRule.class.getName());
     /**
      * Usual constructor. 
+     * @param name
      */
-    public OnDomainsDecideRule() {
+    public OnHostsDecideRule() {
         super();
     }
 
     /**
      * Patch the SURT prefix set so that it only includes host-enforcing prefixes
      * 
-     * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#readPrefixes()
+     * @see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#readPrefixes()
      */
     protected void readPrefixes(StateProvider context) {
         buildSurtPrefixSet(context);
-        surtPrefixes.convertAllPrefixesToDomains();
+        surtPrefixes.convertAllPrefixesToHosts();
         dumpSurtPrefixSet(context);
     }
-    
+
 	protected String prefixFrom(String uri) {
-		return SurtPrefixSet.convertPrefixToDomain(super.prefixFrom(uri));
+		return SurtPrefixSet.convertPrefixToHost(super.prefixFrom(uri));
 	}
 }

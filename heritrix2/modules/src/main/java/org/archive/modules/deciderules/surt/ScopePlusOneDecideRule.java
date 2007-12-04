@@ -20,7 +20,7 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.deciderules;
+package org.archive.modules.deciderules.surt;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -111,7 +111,7 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * Synchronized get of prefix set to use
      * 
      * @return SurtPrefixSet to use for check
-     *@see org.archive.crawler.deciderules.SurtPrefixedDecideRule#getPrefixes()
+     *@see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#getPrefixes()
      */
     protected synchronized SurtPrefixSet getPrefixes() {
         return getPrefixes(null);
@@ -122,7 +122,7 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * @param o Context object.
      * 
      * @return SurtPrefixSet to use for check
-     * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#getPrefixes()
+     * @see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#getPrefixes()
      */
     protected synchronized SurtPrefixSet getPrefixes(StateProvider o) {
         if (surtPrefixes == null) {
@@ -135,7 +135,7 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * Patch the SURT prefix set so that it only includes the appropriate
      * prefixes.
      * @param o Context object.
-     * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#readPrefixes()
+     * @see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#readPrefixes()
      */
     @Override
     protected void readPrefixes(StateProvider context) {
