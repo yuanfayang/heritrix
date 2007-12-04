@@ -23,10 +23,10 @@
  *
  * $Id:$
  */
-package org.archive.crawler.processor;
+package org.archive.modules;
 
 
-import org.archive.crawler.framework.CrawlerProcessorTestBase;
+import org.archive.modules.BeanShellProcessor;
 
 
 /**
@@ -34,7 +34,7 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  *
  * @author pjack
  */
-public class BeanShellProcessorTest extends CrawlerProcessorTestBase {
+public class BeanShellProcessorTest extends ProcessorTestBase {
 
     
     @Override

@@ -22,7 +22,7 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.deciderules;
+package org.archive.modules.deciderules;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +33,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.deciderules.DecideResult;
-import org.archive.modules.deciderules.DecideRule;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.SheetManager;
