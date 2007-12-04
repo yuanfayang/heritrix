@@ -25,6 +25,8 @@
  */
 package org.archive.crawler.datamodel;
 
+import org.archive.modules.ModuleAttributeConstants;
+
 /**
  * CrawlURI attribute keys used by the core crawler
  * classes.
@@ -55,10 +57,10 @@ public interface CoreAttributeConstants {
 
     public static String A_RRECORD_SET_LABEL = "dns-records";
     public static String A_DNS_FETCH_TIME    = "dns-fetch-time";
-    public static String A_DNS_SERVER_IP_LABEL = "dns-server-ip";
+    public static String A_DNS_SERVER_IP_LABEL = ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
     public static String A_FETCH_BEGAN_TIME= "fetch-began-time";
     public static String A_FETCH_COMPLETED_TIME = "fetch-completed-time";
-    public static String A_HTTP_TRANSACTION = "http-transaction";
+    public static String A_HTTP_TRANSACTION = ModuleAttributeConstants.A_HTTP_TRANSACTION;
 
     public static String A_RUNTIME_EXCEPTION = "runtime-exception";
     public static String A_NONFATAL_ERRORS = "nonfatal-errors";
@@ -84,7 +86,7 @@ public interface CoreAttributeConstants {
         "credential-avatars";
     
     /** a 'source' (usu. URI) that's inherited by discovered URIs */
-    public static String A_SOURCE_TAG = "source";
+    public static String A_SOURCE_TAG = ModuleAttributeConstants.A_SOURCE_TAG;
     
     /**
      * Key to (optional) attribute specifying a list of keys that
@@ -111,13 +113,13 @@ public interface CoreAttributeConstants {
      * Make for-sure unique or redo truncation so definitive flag marked
      * against {@link CrawlURI}).
      */
-    public static final String TRUNC_SUFFIX = "Trunc";
+    public static final String TRUNC_SUFFIX = ModuleAttributeConstants.TRUNC_SUFFIX;
     // headerTrunc
-    public static final String HEADER_TRUNC = "header" + TRUNC_SUFFIX; 
+    public static final String HEADER_TRUNC = ModuleAttributeConstants.HEADER_TRUNC; 
     // timeTrunc
-    public static final String TIMER_TRUNC = "time" + TRUNC_SUFFIX;
+    public static final String TIMER_TRUNC = ModuleAttributeConstants.TIMER_TRUNC;
     // lenTrunc
-    public static final String LENGTH_TRUNC = "len" + TRUNC_SUFFIX;
+    public static final String LENGTH_TRUNC = ModuleAttributeConstants.LENGTH_TRUNC;
 
 
 }

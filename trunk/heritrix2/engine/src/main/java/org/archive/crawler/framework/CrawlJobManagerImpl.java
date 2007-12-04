@@ -581,7 +581,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     }
     
     public String getHeritrixVersion(){
-        return Heritrix.getVersion();
+        return ArchiveUtils.VERSION;
     }
 
 

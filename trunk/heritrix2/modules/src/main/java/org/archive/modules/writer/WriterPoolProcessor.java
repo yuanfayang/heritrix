@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.framework;
+package org.archive.modules.writer;
 
 import java.io.Closeable;
 import java.io.File;
@@ -36,21 +36,19 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
+import org.archive.modules.ProcessorURI;
+import static org.archive.modules.ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
 
-import org.archive.crawler.recrawl.IdenticalDigestDecideRule;
-import org.archive.crawler.writer.MetadataProvider;
 import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
-import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
+import org.archive.modules.recrawl.IdenticalDigestDecideRule;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
@@ -149,7 +147,7 @@ implements Initializable, Closeable {
 
 
     /**
-     * CrawlURI annotation indicating no record was written.
+     * ProcessorURI annotation indicating no record was written.
      */
     protected static final String ANNOTATION_UNWRITTEN = "unwritten";
 
@@ -240,13 +238,13 @@ implements Initializable, Closeable {
     }
     
     /**
-     * Whether the given CrawlURI should be written to archive files.
-     * Annotates CrawlURI with a reason for any negative answer.
+     * Whether the given ProcessorURI should be written to archive files.
+     * Annotates ProcessorURI with a reason for any negative answer.
      * 
-     * @param curi CrawlURI
+     * @param curi ProcessorURI
      * @return true if URI should be written; false otherwise
      */
-    protected boolean shouldWrite(CrawlURI curi) {
+    protected boolean shouldWrite(ProcessorURI curi) {
         if (curi.get(this, SKIP_IDENTICAL_DIGESTS)
             && IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
             curi.getAnnotations().add(ANNOTATION_UNWRITTEN 
@@ -256,11 +254,11 @@ implements Initializable, Closeable {
         
         boolean retVal;
         String scheme = curi.getUURI().getScheme().toLowerCase();
-        // TODO: possibly move this sort of isSuccess() test into CrawlURI
+        // TODO: possibly move this sort of isSuccess() test into ProcessorURI
         if (scheme.equals("dns")) {
             retVal = curi.getFetchStatus() == S_DNS_SUCCESS;
         } else if (scheme.equals("http") || scheme.equals("https")) {
-            retVal = curi.getFetchStatus() > 0 && curi.isHttpTransaction();
+            retVal = curi.getFetchStatus() > 0 && curi.getHttpMethod() != null;
         } else if (scheme.equals("ftp")) {
             retVal = curi.getFetchStatus() == 200;
         } else {
@@ -282,10 +280,10 @@ implements Initializable, Closeable {
      * Return IP address of given URI suitable for recording (as in a
      * classic ARC 5-field header line).
      * 
-     * @param curi CrawlURI
+     * @param curi ProcessorURI
      * @return String of IP address
      */
-    protected String getHostAddress(CrawlURI curi) {
+    protected String getHostAddress(ProcessorURI curi) {
         // special handling for DNS URIs: want address of DNS server
         if (curi.getUURI().getScheme().toLowerCase().equals("dns")) {
             return (String)curi.getData().get(A_DNS_SERVER_IP_LABEL);
@@ -442,11 +440,11 @@ implements Initializable, Closeable {
 
 
     protected boolean shouldProcess(ProcessorURI uri) {
-        if (!(uri instanceof CrawlURI)) {
+        if (!(uri instanceof ProcessorURI)) {
             return false;
         }
         
-        CrawlURI curi = (CrawlURI)uri;
+        ProcessorURI curi = (ProcessorURI)uri;
         // If failure, or we haven't fetched the resource yet, return
         if (curi.getFetchStatus() <= 0) {
             return false;

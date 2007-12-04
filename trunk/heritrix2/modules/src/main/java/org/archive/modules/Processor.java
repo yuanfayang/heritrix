@@ -24,7 +24,11 @@
 package org.archive.modules;
 
 
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_CONTENT_DIGEST;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_FETCH_HISTORY;
+
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -198,6 +202,15 @@ public abstract class Processor implements Module, Serializable {
     }
     
     
+    public static long getRecordedSize(ProcessorURI puri) {
+        if (puri.getRecorder() == null) {
+            return puri.getContentSize();
+        } else {
+            return puri.getRecorder().getRecordedInput().getSize();
+        }
+    }
+    
+
     /**
      * @return True if we have an rfc2617 payload.
      */
@@ -210,6 +223,7 @@ public abstract class Processor implements Module, Serializable {
         }
         return false;
     }
+
 
     // FIXME: Raise to interface
     // FIXME: Internationalize somehow

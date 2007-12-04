@@ -1,5 +1,5 @@
 root=map, java.lang.Object
-root:metadata=primary, org.archive.crawler.writer.DefaultMetadataProvider
+root:metadata=primary, org.archive.modules.writer.DefaultMetadataProvider
 root:metadata:robots-honoring-policy=primary, org.archive.modules.net.RobotsHonoringPolicy
 root:metadata:robots-honoring-policy:user-agents=list, java.lang.String
 root:metadata:description=string, Basic seeds sites crawl.
@@ -43,7 +43,7 @@ root:controller:processors:ExtractorHTML=object, org.archive.modules.extractor.E
 root:controller:processors:ExtractorCSS=object, org.archive.modules.extractor.ExtractorCSS
 root:controller:processors:ExtractorJS=object, org.archive.modules.extractor.ExtractorJS
 root:controller:processors:ExtractorSWF=object, org.archive.modules.extractor.ExtractorSWF
-root:controller:processors:Archiver=object, org.archive.crawler.writer.ARCWriterProcessor
+root:controller:processors:Archiver=object, org.archive.modules.writer.ARCWriterProcessor
 root:controller:processors:Updater=object, org.archive.crawler.postprocessor.CrawlStateUpdater
 root:controller:processors:LinksScoper=object, org.archive.crawler.postprocessor.LinksScoper
 root:controller:processors:LinksScoper:scope=reference, root:scope

@@ -1,5 +1,4 @@
 <%@ page import="org.archive.util.ArchiveUtils"%>
-<%@ page import="org.archive.crawler.Heritrix"%>
 <%@ page import="java.util.Properties"%>
 <%@ page import="java.lang.management.ManagementFactory"%>
 <%@ page import="java.lang.management.RuntimeMXBean"%>
@@ -27,7 +26,7 @@ OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
 <p>The information on this page refers to this web UI part of Heritrix running on <%=request.getRemoteHost() %>.</p>
         
     <fieldset><legend>Heritrix</legend>
-	Heritrix <%=Heritrix.getVersion()%><br/>
+	Heritrix <%=ArchiveUtils.VERSION%><br/>
     </fieldset>
     <br/>
 
