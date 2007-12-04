@@ -20,17 +20,19 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.url;
+package org.archive.modules.canonicalize;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.url.canonicalize.FixupQueryStr;
-import org.archive.crawler.url.canonicalize.LowercaseRule;
-import org.archive.crawler.url.canonicalize.StripSessionIDs;
-import org.archive.crawler.url.canonicalize.StripUserinfoRule;
-import org.archive.crawler.url.canonicalize.StripWWWRule;
+import org.archive.modules.canonicalize.CanonicalizationRule;
+import org.archive.modules.canonicalize.Canonicalizer;
+import org.archive.modules.canonicalize.FixupQueryStr;
+import org.archive.modules.canonicalize.LowercaseRule;
+import org.archive.modules.canonicalize.StripSessionIDs;
+import org.archive.modules.canonicalize.StripUserinfoRule;
+import org.archive.modules.canonicalize.StripWWWRule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.ExampleStateProvider;

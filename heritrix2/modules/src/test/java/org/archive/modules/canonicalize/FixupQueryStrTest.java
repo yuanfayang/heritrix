@@ -1,4 +1,4 @@
-/* LowercaseRuleTest
+/* FixupQueryStrTest
  * 
  * Created on Oct 6, 2004
  *
@@ -20,35 +20,52 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.url.canonicalize;
+package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.modules.canonicalize.FixupQueryStr;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
-
 /**
- * Unit test lowercase rule.
+ * Test we strip trailing question mark.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class LowercaseRuleTest extends ModuleTestBase {
-
+public class FixupQueryStrTest extends ModuleTestBase {
 
     @Override
     protected Class getModuleClass() {
-        return LowercaseRule.class;
+        return FixupQueryStr.class;
     }
 
     @Override
     protected Object makeModule() throws Exception {
-        return new LowercaseRule();
+        return new FixupQueryStr();
     }
 
     public void testCanonicalize() throws URIException {
+        ExampleStateProvider context = new ExampleStateProvider();
         final String url = "http://WWW.aRchive.Org/index.html";
-        assertTrue("Didn't lowercase" + url,
-            url.toLowerCase().equals((new LowercaseRule()).
-                canonicalize(url, new ExampleStateProvider())));
+        assertTrue("Mangled " + url,
+            url.equals((new FixupQueryStr()).
+                canonicalize(url, context)));
+        assertTrue("Failed to strip '?' " + url,
+            url.equals((new FixupQueryStr()).
+                canonicalize(url + "?", context)));
+        assertTrue("Failed to strip '?&' " + url,
+            url.equals((new FixupQueryStr()).
+                canonicalize(url + "?&", context)));
+        assertTrue("Failed to strip extraneous '&' " + url,
+            (url + "?x=y").equals((new FixupQueryStr()).
+                canonicalize(url + "?&x=y", context)));
+        String tmp = url + "?x=y";
+        assertTrue("Mangled x=y " + tmp,
+            tmp.equals((new FixupQueryStr()).
+                canonicalize(tmp, context)));
+        String tmp2 = tmp + "&";
+        String fixed = new FixupQueryStr().
+            canonicalize(tmp2, context);
+        assertTrue("Mangled " + tmp2, tmp.equals(fixed));
     }
 }

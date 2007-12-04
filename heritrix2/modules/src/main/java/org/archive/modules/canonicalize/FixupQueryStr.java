@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.url.canonicalize;
+package org.archive.modules.canonicalize;
 
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;

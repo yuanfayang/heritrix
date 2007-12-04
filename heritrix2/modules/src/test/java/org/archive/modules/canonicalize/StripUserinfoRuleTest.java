@@ -1,4 +1,4 @@
-/* StripWWWRuleTest
+/* StripUserinfoRuleTest
  * 
  * Created on Oct 6, 2004
  *
@@ -20,44 +20,54 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.url.canonicalize;
+package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.modules.canonicalize.StripUserinfoRule;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
 
 /**
- * Test stripping 'www' if present.
+ * Test stripping of userinfo from an url.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class StripWWWNRuleTest extends ModuleTestBase {
+public class StripUserinfoRuleTest extends ModuleTestBase {
+
 
     @Override
     protected Class getModuleClass() {
-        return StripWWWNRule.class;
+        return StripUserinfoRule.class;
     }
 
     @Override
     protected Object makeModule() throws Exception {
-        return new StripWWWNRule();
+        return new StripUserinfoRule();
     }
 
     public void testCanonicalize() throws URIException {
         ExampleStateProvider context = new ExampleStateProvider();
         String url = "http://WWW.aRchive.Org/index.html";
-        String expectedResult = "http://aRchive.Org/index.html";
-        String result = (new StripWWWNRule()).
+        final String expectedResult = url;
+        String result = (new StripUserinfoRule()).
             canonicalize(url, context);
-        assertTrue("Failed " + result, expectedResult.equals(result));
-        url = "http://www001.aRchive.Org/index.html";
-        result = (new StripWWWNRule()).
+        assertTrue("Mangled no userinfo " + result,
+            url.equals(result));
+        url = "http://stack:password@WWW.aRchive.Org/index.html";
+        result = (new StripUserinfoRule()).
             canonicalize(url, context);
-        assertTrue("Failed " + result, expectedResult.equals(result));
-        url = "http://www3.aRchive.Org/index.html";
-        result = (new StripWWWNRule()).
+        assertTrue("Didn't strip userinfo " + result,
+            expectedResult.equals(result));
+        url = "http://stack:pass@@@@@@word@WWW.aRchive.Org/index.html";
+        result = (new StripUserinfoRule()).
             canonicalize(url, context);
-        assertTrue("Failed " + result, expectedResult.equals(result));
+        assertTrue("Didn't get to last @ " + result,
+            expectedResult.equals(result));
+        url = "ftp://stack:pass@@@@@@word@archive.org/index.html";
+        result = (new StripUserinfoRule()).
+            canonicalize(url, context);
+        assertTrue("Didn't get to last @ " + result,
+            "ftp://archive.org/index.html".equals(result));
     }
 }

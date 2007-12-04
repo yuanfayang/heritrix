@@ -20,9 +20,10 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.url.canonicalize;
+package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.modules.canonicalize.StripSessionIDs;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
