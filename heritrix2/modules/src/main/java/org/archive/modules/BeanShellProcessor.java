@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  */
-package org.archive.crawler.processor;
+package org.archive.modules;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,9 +30,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-//import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.modules.Processor;
-import org.archive.modules.ProcessorURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.Sheet;
