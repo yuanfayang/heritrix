@@ -55,6 +55,16 @@ public class LocaleCacheTest extends TestCase {
     
     
     public void testSearchOrder() {
+        try {
+            testSearchOrder2();
+        } catch (RuntimeException e) {
+            // I hate maven.
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    
+    private void testSearchOrder2() {
         // Test language/country/variant that does exist.
         Locale locale = new Locale("en", "US", "borkborkbork");
         Map<String,String> props = LocaleCache.load(LocaleCache.class, locale);
