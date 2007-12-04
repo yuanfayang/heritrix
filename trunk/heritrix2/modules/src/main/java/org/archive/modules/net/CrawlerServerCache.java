@@ -1,8 +1,6 @@
-package org.archive.crawler.framework;
+package org.archive.modules.net;
 
 import org.archive.modules.fetcher.DefaultServerCache;
-import org.archive.modules.net.CrawlHost;
-import org.archive.modules.net.CrawlServer;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
@@ -12,7 +10,7 @@ import org.archive.state.StateProvider;
 
 import com.sleepycat.je.DatabaseException;
 
-// FIXME: Move down to processors
+
 public class CrawlerServerCache extends DefaultServerCache 
 implements Initializable {
 
