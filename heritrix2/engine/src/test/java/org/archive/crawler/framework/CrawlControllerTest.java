@@ -32,7 +32,7 @@ import static org.archive.util.TmpDirTestCase.TEST_TMP_SYSTEM_PROPERTY_NAME;
 import java.io.File;
 import java.io.FileWriter;
 
-import org.archive.modules.net.CrawlerServerCache;
+import org.archive.modules.net.BdbServerCache;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
@@ -100,7 +100,7 @@ public class CrawlControllerTest extends ModuleTestBase {
         CrawlController controller = new CrawlController();
         def.set(controller, CrawlController.SHEET_MANAGER, manager);
         def.set(controller, CrawlController.SERVER_CACHE, 
-                new CrawlerServerCache());
+                new BdbServerCache());
         def.set(controller, CrawlController.CHECKPOINTS_DIR, cp);
         controller.initialTasks(def);
         return controller;
