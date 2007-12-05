@@ -55,7 +55,7 @@ import org.xbill.DNS.Lookup;
  * @author Kristinn Sigurdsson
  *
  * @see org.archive.crawler.framework.StatisticsTracking
- * @see org.archive.crawler.admin.StatisticsTracker
+ * @see org.archive.crawler.admin.StatisticsTrackerImpl
  */
 public abstract class AbstractTracker extends Bean 
 implements StatisticsTracking, CrawlStatusListener, Serializable, Module, 
