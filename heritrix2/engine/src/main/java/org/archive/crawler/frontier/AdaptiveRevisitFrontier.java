@@ -51,7 +51,7 @@ import static org.archive.modules.fetcher.FetchStatusCodes.*;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -96,8 +96,8 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
 
     
     @Immutable
-    final public static Key<CrawlController> CONTROLLER = 
-        Key.makeAuto(CrawlController.class);
+    final public static Key<CrawlControllerImpl> CONTROLLER = 
+        Key.makeAuto(CrawlControllerImpl.class);
     
     @Immutable
     final public static Key<BdbModule> BDB =
@@ -169,7 +169,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         Key.make(false);
 
     
-    private CrawlController controller;
+    private CrawlControllerImpl controller;
     private SeedModuleImpl seeds;
     private BdbModule bdb;
     private ServerCache serverCache;

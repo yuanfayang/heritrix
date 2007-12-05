@@ -1158,7 +1158,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeProcessorsReportTo(PrintWriter writer) {
-        controller.reportTo(CrawlController.PROCESSORS_REPORT,writer);
+        controller.reportTo(CrawlControllerImpl.PROCESSORS_REPORT,writer);
     }
     
     protected void writeReportFile(String reportName, String filename) {
@@ -1180,7 +1180,7 @@ implements CrawlURIDispositionListener, Serializable {
      * @param writer Where to write.
      */
     protected void writeManifestReportTo(PrintWriter writer) {
-        controller.reportTo(CrawlController.MANIFEST_REPORT, writer);
+        controller.reportTo(CrawlControllerImpl.MANIFEST_REPORT, writer);
     }
     
     /**

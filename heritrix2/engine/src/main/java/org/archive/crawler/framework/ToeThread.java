@@ -80,7 +80,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
-    private CrawlController controller;
+    private CrawlControllerImpl controller;
     private int serialNumber;
     
     /**
@@ -125,9 +125,9 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
         int outBufferSize = controller
-                .get(controller, CrawlController.RECORDER_OUT_BUFFER_BYTES);
+                .get(controller, CrawlControllerImpl.RECORDER_OUT_BUFFER_BYTES);
         int inBufferSize = controller
-                .get(controller, CrawlController.RECORDER_IN_BUFFER_BYTES);
+                .get(controller, CrawlControllerImpl.RECORDER_IN_BUFFER_BYTES);
         httpRecorder = new Recorder(controller.getScratchDir(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
@@ -295,7 +295,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         currentCuri.setThreadNumber(this.serialNumber);
         lastStartTime = System.currentTimeMillis();
         Map<String,Processor> localProcessors = 
-            controller.get(controller, CrawlController.PROCESSORS);
+            controller.get(controller, CrawlControllerImpl.PROCESSORS);
         currentCuri.setStateProvider(controller.getSheetManager());
         currentCuri.setRecorder(httpRecorder);
         try {
@@ -414,7 +414,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
      *
      * @return Returns the CrawlController.
      */
-    public CrawlController getController() {
+    public CrawlControllerImpl getController() {
         return controller;
     }
 

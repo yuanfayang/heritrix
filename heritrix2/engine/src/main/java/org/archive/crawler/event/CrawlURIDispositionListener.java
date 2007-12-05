@@ -42,7 +42,7 @@ import org.archive.crawler.datamodel.CrawlURI;
  *
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.framework.CrawlController
+ * @see org.archive.crawler.framework.CrawlControllerImpl
  */
 public interface CrawlURIDispositionListener
 {

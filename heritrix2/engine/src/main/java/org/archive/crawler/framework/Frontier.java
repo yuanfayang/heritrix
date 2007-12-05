@@ -59,7 +59,7 @@ import org.json.JSONException;
  * amount), delays between connections etc.
  *
  * <p>A URIFrontier is created by the
- * {@link org.archive.crawler.framework.CrawlController CrawlController} which
+ * {@link org.archive.crawler.framework.CrawlControllerImpl CrawlController} which
  * is in turn responsible for providing access to it. Most significant among
  * those modules interested in the Frontier are the
  * {@link org.archive.crawler.framework.ToeThread ToeThreads} who perform the
@@ -89,7 +89,7 @@ import org.json.JSONException;
  * <p>Furthermore any implementation of the URI Frontier should trigger
  * {@link org.archive.crawler.event.CrawlURIDispositionListener
  * CrawlURIDispostionEvents} by invoking the proper methods on the
- * {@link org.archive.crawler.framework.CrawlController CrawlController}.
+ * {@link org.archive.crawler.framework.CrawlControllerImpl CrawlController}.
  * Doing this allows a custom built
  * {@link org.archive.crawler.framework.StatisticsTracking
  * Statistics Tracking} module to gather any other additional data it might be
@@ -103,11 +103,11 @@ import org.json.JSONException;
  * @author Gordon Mohr
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.framework.CrawlController
- * @see org.archive.crawler.framework.CrawlController#fireCrawledURIDisregardEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlController#fireCrawledURIFailureEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlController#fireCrawledURINeedRetryEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlController#fireCrawledURISuccessfulEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlControllerImpl
+ * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURIDisregardEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURIFailureEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURINeedRetryEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURISuccessfulEvent(CrawlURI)
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.ToeThread
  * @see org.archive.crawler.framework.FrontierHostStatistics

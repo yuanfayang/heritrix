@@ -98,7 +98,7 @@ public class EngineImpl extends Bean implements Engine {
 
     
     final private static String CHECKPOINT_DIR_PATH = 
-        CONTROLLER_PATH + ":" + CrawlController.CHECKPOINTS_DIR.getFieldName();
+        CONTROLLER_PATH + ":" + CrawlControllerImpl.CHECKPOINTS_DIR.getFieldName();
     
     final public static String LOGS_DIR_PATH =
         CONTROLLER_PATH + ":logger-module:dir";

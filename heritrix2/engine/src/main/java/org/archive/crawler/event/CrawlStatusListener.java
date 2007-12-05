@@ -20,7 +20,7 @@ package org.archive.crawler.event;
 
 import java.io.File;
 
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.state.StateProvider;
 
 
@@ -33,7 +33,7 @@ import org.archive.state.StateProvider;
  *
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.framework.CrawlController#addCrawlStatusListener(CrawlStatusListener)
+ * @see org.archive.crawler.framework.CrawlControllerImpl#addCrawlStatusListener(CrawlStatusListener)
  */
 
 public interface CrawlStatusListener {
@@ -91,7 +91,7 @@ public interface CrawlStatusListener {
     public void crawlResuming(String statusMessage);
     
     /**
-     * Called by {@link CrawlController} when checkpointing.
+     * Called by {@link CrawlControllerImpl} when checkpointing.
      * @param checkpointDir Checkpoint dir.  Write checkpoint state here.
      * @throws Exception A fatal exception.  Any exceptions
      * that are let out of this checkpoint are assumed fatal

@@ -45,7 +45,7 @@ public class ToePool extends ThreadGroup implements Reporter {
     /** run worker thread slightly lower than usual */
     public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
     
-    protected CrawlController controller;
+    protected CrawlControllerImpl controller;
     protected int nextSerialNumber = 1;
     protected int targetSize = 0; 
 
@@ -54,7 +54,7 @@ public class ToePool extends ThreadGroup implements Reporter {
      *
      * @param c A reference to the CrawlController for the current crawl.
      */
-    public ToePool(CrawlController c) {
+    public ToePool(CrawlControllerImpl c) {
         super(c.alertThreadGroup, "ToeThreads");        
         this.controller = c;
         setDaemon(true);
@@ -180,7 +180,7 @@ public class ToePool extends ThreadGroup implements Reporter {
     /**
      * @return Instance of CrawlController.
      */
-    public CrawlController getController() {
+    public CrawlControllerImpl getController() {
         return controller;
     }
     

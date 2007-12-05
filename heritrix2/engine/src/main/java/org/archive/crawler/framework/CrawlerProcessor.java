@@ -38,15 +38,15 @@ public abstract class CrawlerProcessor extends Processor
 implements Initializable {
 
     
-    protected CrawlController controller;
+    protected CrawlControllerImpl controller;
     
     
     /**
      * The crawl controller.
      */
     @Immutable
-    final public static Key<CrawlController> CONTROLLER = 
-        Key.makeAuto(CrawlController.class);
+    final public static Key<CrawlControllerImpl> CONTROLLER = 
+        Key.makeAuto(CrawlControllerImpl.class);
     
     
     
