@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.archive.crawler.framework.AlertTracker;
 import org.archive.crawler.framework.Engine;
-import org.archive.crawler.framework.JobController;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.JobStage;
 
 /**
@@ -81,7 +81,7 @@ public class CrawlJob implements Comparable<CrawlJob> {
         int alerts;
         if (stage == JobStage.ACTIVE) {
             try {
-                JobController jc = Misc.find(jmxc, name, JobController.class);
+                CrawlController jc = Misc.find(jmxc, name, CrawlController.class);
                 crawlstatus = jc.getCrawlStatusString();
             } catch (RuntimeException e) {
                 crawlstatus = "UNKNOWN";

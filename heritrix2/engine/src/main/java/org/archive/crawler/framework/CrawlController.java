@@ -17,7 +17,7 @@ import org.archive.openmbeans.annotations.Parameter;
  * 
  * @author pjack
  */
-public interface JobController {
+public interface CrawlController {
 
     /** 
      * Operator requested crawl begin

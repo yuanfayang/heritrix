@@ -45,7 +45,7 @@ import org.archive.crawler.framework.AlertTracker;
 import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.framework.Frontier;
-import org.archive.crawler.framework.JobController;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.JobStage;
 import org.archive.crawler.framework.StatisticsTracking;
 import org.json.JSONObject;
@@ -78,7 +78,7 @@ public class Console {
             JMXConnector jmxc = remote.getJMXConnector();
             String job = crawlJob.getName();
 
-            JobController controller;
+            CrawlController controller;
             StatisticsTracking stats;
 
             // TODO: Better exception handling here.
@@ -89,7 +89,7 @@ public class Console {
                         "HeapMemoryUsage"));
 
             if(crawlJob.getJobStage()==JobStage.ACTIVE){
-                controller = Misc.find(jmxc, job, JobController.class);
+                controller = Misc.find(jmxc, job, CrawlController.class);
                 stats = Misc.find(jmxc, job, StatisticsTracking.class);
                 request.setAttribute("controller", controller);
                 request.setAttribute("stats", stats);

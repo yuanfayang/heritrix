@@ -127,7 +127,7 @@ public class CheckpointSelfTest extends SelfTestBase {
         invokeAndWait("basic", "requestCrawlPause", CrawlStatus.PAUSED);
         invokeAndWait("basic", "requestCrawlCheckpoint", CrawlStatus.PAUSED);
         invokeAndWait("basic", "requestCrawlStop", CrawlStatus.FINISHED);
-        waitFor("org.archive.crawler:*,name=basic,type=org.archive.crawler.framework.JobController", false);
+        waitFor("org.archive.crawler:*,name=basic,type=org.archive.crawler.framework.CrawlController", false);
         stopHeritrix();
         Set<ObjectName> set = dumpMBeanServer();
         if (!set.isEmpty()) {

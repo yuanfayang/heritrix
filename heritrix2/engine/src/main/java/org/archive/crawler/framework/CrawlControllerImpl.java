@@ -84,7 +84,7 @@ public class CrawlControllerImpl extends Bean implements
     StateProvider, 
     Initializable,
     KeyChangeListener,
-    JobController {
+    CrawlController {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
@@ -287,7 +287,7 @@ public class CrawlControllerImpl extends Bean implements
     
 
     public CrawlControllerImpl() {
-        super(JobController.class);
+        super(CrawlController.class);
     }
     
     public void initialTasks(StateProvider provider) {        
