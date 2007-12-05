@@ -1,7 +1,7 @@
 
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
 <%@ page import="org.archive.crawler.webui.Crawler"%>
-<%@ page import="org.archive.crawler.framework.JobController"%>
+<%@ page import="org.archive.crawler.framework.CrawlController"%>
 
 <html>
 <head>
@@ -14,7 +14,7 @@
 <%
     Crawler crawler = (Crawler)Text.get(request, "crawler");
     CrawlJob crawljob = (CrawlJob)Text.get(request, "job");
-    JobController controller = (JobController)Text.get(request, "controller");
+    CrawlController controller = (CrawlController)Text.get(request, "controller");
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
 %>
 

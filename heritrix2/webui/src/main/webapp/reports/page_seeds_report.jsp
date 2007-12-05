@@ -1,7 +1,7 @@
 
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
 <%@ page import="org.archive.crawler.webui.Crawler"%>
-<%@ page import="org.archive.crawler.framework.StatisticsTracking"%>
+<%@ page import="org.archive.crawler.framework.StatisticsTracker"%>
 <%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 <%@ page import="javax.management.openmbean.CompositeData"%>
 
@@ -23,7 +23,7 @@
 <%
     Crawler crawler = (Crawler)Text.get(request, "crawler");
     CrawlJob crawljob = (CrawlJob)Text.get(request, "job");
-    StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
+    StatisticsTracker stats = (StatisticsTracker)Text.get(request, "stats");
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
 
     // TODO: Handle crawl reports for completed jobs.

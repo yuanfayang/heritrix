@@ -1,7 +1,7 @@
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
-<%@ page import="org.archive.crawler.framework.StatisticsTracking" %>
-<%@ page import="org.archive.crawler.framework.JobController" %>
+<%@ page import="org.archive.crawler.framework.StatisticsTracker" %>
+<%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
 <%@ page import="javax.management.openmbean.CompositeData"%>
@@ -9,10 +9,10 @@
 <% 
 
 Crawler crawler = (Crawler)Text.get(request, "crawler");
-StatisticsTracking stats = (StatisticsTracking)Text.get(request, "stats");
+StatisticsTracker stats = (StatisticsTracker)Text.get(request, "stats");
 CompositeData memory = (CompositeData)Text.get(request, "memory"); 
 CrawlJob job = (CrawlJob)Text.get(request, "job"); 
-JobController controller = (JobController)Text.get(request, "controller");
+CrawlController controller = (CrawlController)Text.get(request, "controller");
 
 String qs = Text.jobQueryString(request);
 

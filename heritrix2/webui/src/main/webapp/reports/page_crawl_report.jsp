@@ -1,7 +1,7 @@
 
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
 <%@ page import="org.archive.crawler.webui.Crawler"%>
-<%@ page import="org.archive.crawler.framework.StatisticsTracking"%>
+<%@ page import="org.archive.crawler.framework.StatisticsTracker"%>
 <%@ page import="org.archive.crawler.framework.JobStage"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
 <%@ page import="org.archive.crawler.framework.CrawlController"%>
@@ -27,7 +27,7 @@
 <%
     Crawler crawler = (Crawler)request.getAttribute("crawler");
     CrawlJob crawljob = (CrawlJob)request.getAttribute("job");
-    StatisticsTracking stats = (StatisticsTracking)request.getAttribute("stats");
+    StatisticsTracker stats = (StatisticsTracker)request.getAttribute("stats");
     String qs = crawler.getQueryString() + "&job=" + crawljob.getName();
     String qsStatus = "&statusorder=" + request.getAttribute("statusorder");
     String qsFiletype = "&fileorder=" + request.getAttribute("fileorder");
