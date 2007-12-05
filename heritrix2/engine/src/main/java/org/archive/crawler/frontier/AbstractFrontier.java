@@ -832,7 +832,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         return disregardedUriCount.get();
     }
 
-    /** @deprecated misnomer; use StatisticsTracking figures instead */
+    /** @deprecated misnomer; use StatisticsTracker figures instead */
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }

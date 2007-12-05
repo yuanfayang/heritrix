@@ -118,8 +118,8 @@ public class CrawlControllerImpl extends Bean implements
      * information to the user interface.
      */
     @Global
-    final public static Key<StatisticsTracking> STATISTICS_TRACKER = 
-        Key.make(StatisticsTracking.class, StatisticsTrackerImpl.class);
+    final public static Key<StatisticsTracker> STATISTICS_TRACKER = 
+        Key.make(StatisticsTracker.class, StatisticsTrackerImpl.class);
 
     final public static Key<Map<String,Processor>> PROCESSORS =
         Key.makeMap(Processor.class);
@@ -267,11 +267,6 @@ public class CrawlControllerImpl extends Bean implements
      * at the end of the crawl (the absolutely last thing done).
      */
     transient private StringBuffer manifest;
-
-
-
-
-//    protected StatisticsTracking statistics = null;
 
 
     // Since there is a high probability that there will only ever by one
@@ -477,8 +472,8 @@ public class CrawlControllerImpl extends Bean implements
     /**
      * @return Object this controller is using to track crawl statistics
      */
-    public StatisticsTracking getStatistics() {
-        StatisticsTracking statTracker = sheetManager.get(this, STATISTICS_TRACKER);
+    public StatisticsTracker getStatistics() {
+        StatisticsTracker statTracker = sheetManager.get(this, STATISTICS_TRACKER);
         return statTracker;
     }
     

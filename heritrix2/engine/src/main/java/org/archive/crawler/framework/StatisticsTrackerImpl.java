@@ -117,7 +117,7 @@ import org.archive.util.PaddingStringBuffer;
  * @author Parker Thompson
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.framework.StatisticsTracking
+ * @see org.archive.crawler.framework.StatisticsTracker
  * @see org.archive.crawler.framework.AbstractTracker
  */
 public class StatisticsTrackerImpl extends AbstractTracker

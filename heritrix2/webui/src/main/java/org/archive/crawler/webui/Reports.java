@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.StatisticsTrackerImpl;
-import org.archive.crawler.framework.StatisticsTracking;
+import org.archive.crawler.framework.StatisticsTracker;
 
 public class Reports {
 
@@ -72,7 +72,7 @@ public class Reports {
                 request.setAttribute("controller", controller);
                 break;
             case FORCE: 
-                Misc.find(jmxc, job, StatisticsTracking.class).dumpReports();
+                Misc.find(jmxc, job, StatisticsTracker.class).dumpReports();
                 request.setAttribute("message", 
                         "Force generation of reports signal sent to crawler");
             case OVERVIEW : 
@@ -85,8 +85,8 @@ public class Reports {
                 break;
             case CRAWL : 
                 // Need access to remote statistics tracker.
-                StatisticsTracking stats = 
-                    Misc.find(jmxc, job, StatisticsTracking.class);
+                StatisticsTracker stats = 
+                    Misc.find(jmxc, job, StatisticsTracker.class);
                 request.setAttribute("stats",stats);
                 // Build status code report
                 String orderStatusCodeBy = "uris";
@@ -186,7 +186,7 @@ public class Reports {
                 break;
             case SEEDS :
                 // Need access to remote statistics tracker.
-                stats = Misc.find(jmxc, job, StatisticsTracking.class);
+                stats = Misc.find(jmxc, job, StatisticsTracker.class);
                 request.setAttribute("stats", stats);
                 break;
             }

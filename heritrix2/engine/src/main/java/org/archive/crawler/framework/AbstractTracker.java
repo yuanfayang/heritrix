@@ -39,7 +39,7 @@ import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
 /**
- * A partial implementation of the StatisticsTracking interface.
+ * A partial implementation of the StatisticsTracker interface.
  * <p>
  * It covers the thread handling. (Launching, pausing etc.)  Included in this is
  * keeping track of the total time spent (actually) crawling.  Several methods
@@ -54,11 +54,11 @@ import org.xbill.DNS.Lookup;
  *
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.framework.StatisticsTracking
+ * @see org.archive.crawler.framework.StatisticsTracker
  * @see org.archive.crawler.admin.StatisticsTrackerImpl
  */
 public abstract class AbstractTracker extends Bean 
-implements StatisticsTracking, CrawlStatusListener, Serializable, Module, 
+implements StatisticsTracker, CrawlStatusListener, Serializable, Module, 
 Initializable, Finishable {
 
 
@@ -101,7 +101,7 @@ Initializable, Finishable {
      * Constructor.
      */
     public AbstractTracker() {
-        super(StatisticsTracking.class);
+        super(StatisticsTracker.class);
     }
 
     
@@ -339,7 +339,7 @@ Initializable, Finishable {
     }
 
     /**
-     * @see org.archive.crawler.framework.StatisticsTracking#crawlDuration()
+     * @see org.archive.crawler.framework.StatisticsTracker#crawlDuration()
      */
     public long crawlDuration() {
         return getCrawlerTotalElapsedTime();
