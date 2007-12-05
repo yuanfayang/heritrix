@@ -48,7 +48,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.JobStage;
 import org.archive.settings.Association;
 import org.archive.settings.jmx.JMXSheetManager;
@@ -739,7 +739,7 @@ public class Sheets {
      * Returns the JMXSheetManager specified in the request.
      * 
      * Needs five request parameters.  The first three are host, port and
-     * id; these identify the CrawlJobManager like always.  The last is
+     * id; these identify the Engine like always.  The last is
      * either a parameter named "job", which indicates we're dealing with
      * an active crawl job, or a parameter named "profile", which indicates
      * we're dealing with an offline profile.
@@ -755,7 +755,7 @@ public class Sheets {
      */
     public static Remote<JMXSheetManager> getSheetManager(
             HttpServletRequest request) throws Exception {
-        Remote<CrawlJobManager> manager = CrawlerArea.open(request);
+        Remote<Engine> manager = CrawlerArea.open(request);
         try {
             CrawlJob job = CrawlJob.fromRequest(request, 
                     manager.getJMXConnector());

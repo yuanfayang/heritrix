@@ -71,7 +71,7 @@ class FSMPathContext implements PathContext, Serializable {
      * <dl>
      * <dt>current.job</dt>
      * <dd>The current job name, eg "basic_seed_sites-20071011120033".  The value 
-     * will not include the "stage prefix" used by {@link CrawlJobManagerImpl}.
+     * will not include the "stage prefix" used by {@link EngineImpl}.
      * </dd>
      * <dt>original.job</dt>
      * <dd>The original job name, eg "basic_seed_sites-20071010120033".  This will

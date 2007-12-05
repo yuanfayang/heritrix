@@ -33,7 +33,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.JobStage;
 import org.archive.modules.seeds.SeedModule;
 import org.archive.openmbeans.annotations.BeanProxy;
@@ -63,16 +63,16 @@ public class Seeds {
             CrawlJob job = (CrawlJob)request.getAttribute("job");
             JMXConnector jmxc = remote.getJMXConnector();
             JMXSheetManager sheetManager = remote.getObject(); 
-            CrawlJobManager crawlJobManager = BeanProxy.proxy(
+            Engine engine = BeanProxy.proxy(
                     jmxc.getMBeanServerConnection(), 
                     crawler.getObjectName(), 
-                    CrawlJobManager.class);
-            long size = crawlJobManager.getFileSize(job.encode(), 
+                    Engine.class);
+            long size = engine.getFileSize(job.encode(), 
                     SETTINGS_PATH);
             request.setAttribute("overflow", size > MAX_FILE_SIZE);
 
             File f = new File(sheetManager.getFilePath(SETTINGS_PATH));
-            String seeds = crawlJobManager.readFile(job.encode(),
+            String seeds = engine.readFile(job.encode(),
                     SETTINGS_PATH,
                     null,
                     0,
@@ -116,13 +116,13 @@ public class Seeds {
         CrawlJob job = (CrawlJob)request.getAttribute("job");
         JMXConnector jmxc = remote.getJMXConnector();
         try {
-            CrawlJobManager crawlJobManager = BeanProxy.proxy(
+            Engine engine = BeanProxy.proxy(
                     jmxc.getMBeanServerConnection(), 
                     crawler.getObjectName(), 
-                    CrawlJobManager.class);
+                    Engine.class);
             int page = 0;
             String seeds = request.getParameter("seeds");
-            crawlJobManager.writeLines(job.encode(),
+            engine.writeLines(job.encode(),
                     "root:seeds:seedsfile",
                     null,
                     page * LINES_PER_PAGE,

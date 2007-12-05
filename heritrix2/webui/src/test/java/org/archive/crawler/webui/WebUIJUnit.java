@@ -42,8 +42,8 @@ import java.util.regex.Pattern;
 
 import org.archive.crawler.WebUI;
 import org.archive.crawler.WebUIConfig;
-import org.archive.crawler.framework.CrawlJobManagerConfig;
-import org.archive.crawler.framework.CrawlJobManagerImpl;
+import org.archive.crawler.framework.EngineConfig;
+import org.archive.crawler.framework.EngineImpl;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.TmpDirTestCase;
@@ -87,7 +87,7 @@ public class WebUIJUnit extends TmpDirTestCase {
     private Server server;
     
     /** Crawler instance. */
-    private CrawlJobManagerImpl manager;
+    private EngineImpl manager;
     
     /** Result of System.identityHashCode(manager), used all over place. */
     private int managerId;
@@ -121,9 +121,9 @@ public class WebUIJUnit extends TmpDirTestCase {
         
         // Start Heritrix.
         setupDirs();
-        CrawlJobManagerConfig config = new CrawlJobManagerConfig();
+        EngineConfig config = new EngineConfig();
         config.setJobsDirectory(getJobsDir().getAbsolutePath());
-        this.manager = new CrawlJobManagerImpl(config);
+        this.manager = new EngineImpl(config);
         this.managerId = System.identityHashCode(manager);
         
         // Authenticate a session.

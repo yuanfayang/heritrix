@@ -10,7 +10,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.StatisticsTracker;
 import org.archive.crawler.framework.StatisticsTracking;
@@ -44,7 +44,7 @@ public class Reports {
             HttpServletResponse response,
             ReportPages page) {
         // Do generic stuff:
-        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        Remote<Engine> remote = CrawlerArea.open(request);
         
         try {
             CrawlJob crawlJob = CrawlJob.lookup(request, remote);
@@ -257,8 +257,8 @@ public class Reports {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
-        CrawlJobManager cjm = remote.getObject();
+        Remote<Engine> remote = CrawlerArea.open(request);
+        Engine cjm = remote.getObject();
         CrawlJob job = CrawlJob.fromRequest(request, remote.getJMXConnector());
         try {
             String[] reports = cjm.listFiles(job.encode(), 
@@ -276,9 +276,9 @@ public class Reports {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        Remote<Engine> remote = CrawlerArea.open(request);
         String report = request.getParameter("report");
-        CrawlJobManager cjm = remote.getObject();
+        Engine cjm = remote.getObject();
         CrawlJob job = CrawlJob.fromRequest(request, remote.getJMXConnector());
         response.setContentType("text/plain");
         PrintWriter pw = response.getWriter();

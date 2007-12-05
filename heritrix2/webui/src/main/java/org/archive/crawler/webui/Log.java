@@ -32,7 +32,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.util.LogRemoteAccess;
 import org.archive.crawler.util.Logs;
 
@@ -167,7 +167,7 @@ public class Log {
 
         // All settings parsed.
         // Get appropriate log content from crawler
-        Remote<CrawlJobManager> manager = CrawlerArea.open(request);
+        Remote<Engine> manager = CrawlerArea.open(request);
         try {
             CrawlJob job = CrawlJob.lookup(request, manager);
             

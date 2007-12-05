@@ -80,7 +80,7 @@ public enum JobStage {
     /**
      * The prefix for this JobStage.  A crawl job is actually identified by 
      * two pieces of information, its stage and its name.  The API in 
-     * {@link CrawlJobManager} expects jobs to specified in this manner (eg,
+     * {@link Engine} expects jobs to specified in this manner (eg,
      * "profile-basic" for a profile named "basic".
      * 
      * @return  the prefix for this stage

@@ -17,7 +17,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * CrawlJobManager.java
+ * Engine.java
  *
  * Created on Jan 24, 2007
  *
@@ -40,7 +40,7 @@ import org.archive.openmbeans.annotations.Parameter;
  * 
  * @author pjack
  */
-public interface CrawlJobManager extends Closeable {
+public interface Engine extends Closeable {
 
     
     
@@ -120,7 +120,7 @@ public interface CrawlJobManager extends Closeable {
             @Parameter(name="newPaths", desc="New path prefixes to replace.")
             String[] newPaths);
 
-    @Operation(desc="Deregisters this CrawlJobManager from the MBeanServer.")
+    @Operation(desc="Deregisters this Engine from the MBeanServer.")
     void close();
 
     @Operation(desc="Invokes System.exit to terminate the JVM.")
