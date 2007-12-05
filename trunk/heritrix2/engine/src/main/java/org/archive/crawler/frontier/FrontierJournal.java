@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.io.CrawlerJournal;
 import org.archive.modules.DefaultProcessorURI;
@@ -154,7 +154,7 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
      * 
      * @see org.archive.crawler.framework.Frontier#importURIs(String)
      */
-    public static void importRecoverLog(final JSONObject params, final CrawlController controller)
+    public static void importRecoverLog(final JSONObject params, final CrawlControllerImpl controller)
     throws IOException {
         String path = params.optString("path");
         if (path == null) {
@@ -202,7 +202,7 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
      * @throws IOException
      */
     private static int importCompletionInfoFromLog(File source, 
-            CrawlController controller, JSONObject params) throws IOException {
+            CrawlControllerImpl controller, JSONObject params) throws IOException {
         // Scan log for 'Fs' (+maybe 'Ff') lines: add as 'alreadyIncluded'
         boolean includeSuccesses = !params.isNull("includeSuccesses");
         boolean includeFailures = !params.isNull("includeFailures");
@@ -271,7 +271,7 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
      * @param params Map of options to apply
      * @param enough latch signalling 'enough' URIs queued to begin crawling
      */
-    private static void importQueuesFromLog(File source, CrawlController controller,
+    private static void importQueuesFromLog(File source, CrawlControllerImpl controller,
             JSONObject params, int lines, CountDownLatch enough) {
         BufferedReader br;
         String read;

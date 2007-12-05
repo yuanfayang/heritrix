@@ -60,7 +60,7 @@ import org.archive.openmbeans.annotations.Parameter;
  * @see AbstractTracker
  * @see org.archive.crawler.event.CrawlStatusListener
  * @see org.archive.crawler.event.CrawlURIDispositionListener
- * @see org.archive.crawler.framework.CrawlController
+ * @see org.archive.crawler.framework.CrawlControllerImpl
  */
 public interface StatisticsTracking extends Runnable {
     /** Seed successfully crawled */

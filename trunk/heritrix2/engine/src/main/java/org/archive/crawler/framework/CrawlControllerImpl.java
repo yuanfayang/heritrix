@@ -78,7 +78,7 @@ import org.xbill.DNS.Lookup;
  *
  * @author Gordon Mohr
  */
-public class CrawlController extends Bean implements 
+public class CrawlControllerImpl extends Bean implements 
     Serializable, 
     Reporter, 
     StateProvider, 
@@ -88,7 +88,7 @@ public class CrawlController extends Bean implements
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
-        ArchiveUtils.classnameBasedUID(CrawlController.class,1);
+        ArchiveUtils.classnameBasedUID(CrawlControllerImpl.class,1);
 
 
     @Immutable
@@ -188,7 +188,7 @@ public class CrawlController extends Bean implements
     final public static Key<Integer> CHECKPOINTER_PERIOD = Key.make(-1);
 
     static {
-        KeyManager.addKeys(CrawlController.class);
+        KeyManager.addKeys(CrawlControllerImpl.class);
     }
     
     /**
@@ -197,7 +197,7 @@ public class CrawlController extends Bean implements
      * They appear on console.
      */
     private final static Logger LOGGER =
-        Logger.getLogger(CrawlController.class.getName());
+        Logger.getLogger(CrawlControllerImpl.class.getName());
 
     private transient ToePool toePool;
 
@@ -286,7 +286,7 @@ public class CrawlController extends Bean implements
 
     
 
-    public CrawlController() {
+    public CrawlControllerImpl() {
         super(JobController.class);
     }
     
@@ -1144,7 +1144,7 @@ public class CrawlController extends Bean implements
 
     public String getProcessorsReport() {
         StringWriter sw = new StringWriter();
-        this.reportTo(CrawlController.PROCESSORS_REPORT,new PrintWriter(sw));
+        this.reportTo(CrawlControllerImpl.PROCESSORS_REPORT,new PrintWriter(sw));
         return sw.toString();
     }
 

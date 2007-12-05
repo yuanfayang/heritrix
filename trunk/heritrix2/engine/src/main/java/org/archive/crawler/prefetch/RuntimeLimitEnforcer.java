@@ -30,7 +30,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlStatus;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.modules.ProcessResult;

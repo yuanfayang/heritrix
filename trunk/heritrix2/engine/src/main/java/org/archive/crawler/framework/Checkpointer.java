@@ -88,7 +88,7 @@ public class Checkpointer implements Serializable {
      */
     private transient Thread checkpointThread = null;
     
-    private transient CrawlController controller;
+    private transient CrawlControllerImpl controller;
     
     /**
      * Setup in constructor or on a call to revovery.
@@ -102,7 +102,7 @@ public class Checkpointer implements Serializable {
      * @param cc CrawlController instance thats hosting this Checkpointer.
      * @param checkpointDir Where to store checkpoint.
      */
-    public Checkpointer(final CrawlController cc, final File checkpointDir) {
+    public Checkpointer(final CrawlControllerImpl cc, final File checkpointDir) {
         this(cc, DEFAULT_PREFIX);
     }
     
@@ -112,24 +112,24 @@ public class Checkpointer implements Serializable {
      * @param cc CrawlController instance thats hosting this Checkpointer.
      * @param prefix Prefix for checkpoint label.
      */
-    public Checkpointer(final CrawlController cc, final String prefix) {
+    public Checkpointer(final CrawlControllerImpl cc, final String prefix) {
         super();
         initialize(cc, prefix);
         
     }
     
-    protected void initialize(final CrawlController cc, final String prefix) {
+    protected void initialize(final CrawlControllerImpl cc, final String prefix) {
         this.controller = cc;
         this.checkpointPrefix = prefix;
         // Period is in hours.
-        int period = cc.get(cc, CrawlController.CHECKPOINTER_PERIOD);
+        int period = cc.get(cc, CrawlControllerImpl.CHECKPOINTER_PERIOD);
         if (period <= 0) {
             return;
         }
         // Convert period from hours to milliseconds.
         long periodMs = period * (1000 * 60 * 60);
         TimerTask tt = new TimerTask() {
-            private CrawlController cController = cc;
+            private CrawlControllerImpl cController = cc;
             public void run() {
                 if (isCheckpointing()) {
                     LOGGER.info("CheckpointTimerThread skipping checkpoint, " +
@@ -180,7 +180,7 @@ public class Checkpointer implements Serializable {
             super(name);
         }
 
-        public CrawlController getController() {
+        public CrawlControllerImpl getController() {
         	return Checkpointer.this.controller;
         }
         
@@ -244,7 +244,7 @@ public class Checkpointer implements Serializable {
         this.checkpointInProgressDir = null;
     }
     
-    protected CrawlController getController() {
+    protected CrawlControllerImpl getController() {
         return this.controller;
     }
     
@@ -328,7 +328,7 @@ public class Checkpointer implements Serializable {
      * from here on out.
      * @param cc CrawlController instance.
      */
-    public void recover(final CrawlController cc) {
+    public void recover(final CrawlControllerImpl cc) {
         // Prepend the checkpoint name with a little 'r' so we tell apart
         // checkpoints made from a recovery.  Allow for there being
         // multiple 'r' prefixes.

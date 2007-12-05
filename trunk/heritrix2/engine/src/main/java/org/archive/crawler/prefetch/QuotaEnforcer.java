@@ -29,7 +29,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.Frontier;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
@@ -207,7 +207,7 @@ public class QuotaEnforcer extends Processor implements Initializable {
     /**
      * Constructor.
      */
-    public QuotaEnforcer(CrawlController controller) {
+    public QuotaEnforcer(CrawlControllerImpl controller) {
         super();
     }
     

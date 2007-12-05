@@ -70,8 +70,8 @@ Initializable, Finishable {
 
     
     @Immutable
-    final public static Key<CrawlController> CONTROLLER = 
-        Key.makeAuto(CrawlController.class);
+    final public static Key<CrawlControllerImpl> CONTROLLER = 
+        Key.makeAuto(CrawlControllerImpl.class);
 
     
     @Immutable
@@ -82,7 +82,7 @@ Initializable, Finishable {
     /** A reference to the CrawlContoller of the crawl that we are to track
      * statistics for.
      */
-    protected CrawlController controller;
+    protected CrawlControllerImpl controller;
     
     protected CrawlerLoggerModule loggerModule;
 
@@ -176,7 +176,7 @@ Initializable, Finishable {
      * This method will be called by run() at intervals specified in
      * the crawl order file.  It is also invoked when pausing or
      * stopping a crawl to capture the state at that point.  Default behavior is
-     * call to {@link CrawlController#logProgressStatistics} so CrawlController
+     * call to {@link CrawlControllerImpl#logProgressStatistics} so CrawlController
      * can act on progress statistics event.
      * <p>
      * It is recommended that for implementations of this method it be

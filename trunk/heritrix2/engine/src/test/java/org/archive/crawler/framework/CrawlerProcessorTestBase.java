@@ -37,11 +37,11 @@ import org.archive.modules.ProcessorTestBase;
 public abstract class CrawlerProcessorTestBase extends ProcessorTestBase {
 
     
-    protected CrawlController controller;
+    protected CrawlControllerImpl controller;
 
 
     protected void setUp() throws Exception {
-        controller = CrawlControllerTest.makeTempCrawlController();
+        controller = CrawlControllerImplTest.makeTempCrawlController();
     }
 
 

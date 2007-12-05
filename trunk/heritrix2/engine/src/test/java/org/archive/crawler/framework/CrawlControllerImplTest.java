@@ -44,12 +44,12 @@ import org.archive.util.IoUtils;
  * 
  * @author pjack
  */
-public class CrawlControllerTest extends ModuleTestBase {
+public class CrawlControllerImplTest extends ModuleTestBase {
     
     
     @Override
     protected Class<?> getModuleClass() {
-        return CrawlController.class;
+        return CrawlControllerImpl.class;
     }
 
     // Public so other tests can use it
@@ -63,7 +63,7 @@ public class CrawlControllerTest extends ModuleTestBase {
     // TODO TESTME
 
     
-    public static CrawlController makeTempCrawlController() throws Exception {
+    public static CrawlControllerImpl makeTempCrawlController() throws Exception {
         String tmpPath = System.getProperty(TEST_TMP_SYSTEM_PROPERTY_NAME);
         if (tmpPath == null) {
             tmpPath = DEFAULT_TEST_TMP_DIR;
@@ -97,11 +97,11 @@ public class CrawlControllerTest extends ModuleTestBase {
         
         Path cp = new Path(checkpoints.getAbsolutePath());
         
-        CrawlController controller = new CrawlController();
-        def.set(controller, CrawlController.SHEET_MANAGER, manager);
-        def.set(controller, CrawlController.SERVER_CACHE, 
+        CrawlControllerImpl controller = new CrawlControllerImpl();
+        def.set(controller, CrawlControllerImpl.SHEET_MANAGER, manager);
+        def.set(controller, CrawlControllerImpl.SERVER_CACHE, 
                 new BdbServerCache());
-        def.set(controller, CrawlController.CHECKPOINTS_DIR, cp);
+        def.set(controller, CrawlControllerImpl.CHECKPOINTS_DIR, cp);
         controller.initialTasks(def);
         return controller;
     }

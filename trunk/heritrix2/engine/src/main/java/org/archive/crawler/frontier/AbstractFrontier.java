@@ -68,7 +68,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
 import org.archive.modules.canonicalize.CanonicalizationRule;
@@ -111,7 +111,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
-    protected CrawlController controller;
+    protected CrawlControllerImpl controller;
     protected CrawlerLoggerModule loggerModule;
 
     /** ordinal numbers to assign to created CrawlURIs */
@@ -248,8 +248,8 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * The crawl controller using this Frontier.
      */
     @Immutable
-    final public static Key<CrawlController> CONTROLLER = 
-        Key.makeAuto(CrawlController.class);
+    final public static Key<CrawlControllerImpl> CONTROLLER = 
+        Key.makeAuto(CrawlControllerImpl.class);
     
     
     @Immutable
