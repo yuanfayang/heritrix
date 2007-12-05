@@ -1,7 +1,7 @@
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
-<%@ page import="org.archive.crawler.framework.StatisticsTracking" %>
-<%@ page import="org.archive.crawler.framework.JobController" %>
+<%@ page import="org.archive.crawler.framework.StatisticsTracker" %>
+<%@ page import="org.archive.crawler.framework.CrawlController" %>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
 <%@ page import="javax.management.openmbean.CompositeData"%>
