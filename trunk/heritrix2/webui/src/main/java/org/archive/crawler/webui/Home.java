@@ -51,7 +51,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.Engine;
-import org.archive.crawler.framework.JobController;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.JobStage;
 import org.archive.util.JmxUtils;
 import org.archive.util.JndiUtils;
@@ -90,7 +90,7 @@ public class Home {
         Map<Crawler,Collection<CrawlJob>> actives = 
             new HashMap<Crawler,Collection<CrawlJob>>();
         String query = "org.archive.crawler:*,type=" 
-            + JobController.class.getName();
+            + CrawlController.class.getName();
         for (Crawler c: allCrawlers) {
             Collection<CrawlJob> active = new TreeSet<CrawlJob>();
             actives.put(c, active);

@@ -363,7 +363,7 @@ public class EngineImpl extends Bean implements Engine {
     
     
     private ObjectName findCrawlController(String name) {
-        String query = DOMAIN + ":*,type=" + JobController.class.getName() 
+        String query = DOMAIN + ":*,type=" + CrawlController.class.getName() 
             + ",name=" + name;
         return JmxUtils.findUnique(server, query);
     }
@@ -467,7 +467,7 @@ public class EngineImpl extends Bean implements Engine {
 
     public synchronized void close() {
         unregister(oname);
-        String query = DOMAIN + ":*,type=" + JobController.class.getName();
+        String query = DOMAIN + ":*,type=" + CrawlController.class.getName();
         Set<ObjectName> jobs = JmxUtils.find(server, query);
         for (ObjectName job: jobs) try {
             server.invoke(job, "requestCrawlStop", new Object[0], new String[0]);

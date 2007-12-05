@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.Engine;
-import org.archive.crawler.framework.JobController;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.StatisticsTracker;
 import org.archive.crawler.framework.StatisticsTracking;
 
@@ -55,7 +55,7 @@ public class Reports {
             // Do page specific stuff:
             switch(page){
             case KILL_THREAD :
-                JobController controller = Misc.find(jmxc, job, JobController.class);
+                CrawlController controller = Misc.find(jmxc, job, CrawlController.class);
                 String message = "Kill operation: ";
                 try {
                     String threadNumber =request.getParameter("threadNumber");
@@ -79,9 +79,9 @@ public class Reports {
             case THREADS : 
             case FRONTIER : 
             case PROCESSORS : 
-                // Need JobController 
+                // Need CrawlController 
                 request.setAttribute("controller", 
-                        Misc.find(jmxc, job, JobController.class));
+                        Misc.find(jmxc, job, CrawlController.class));
                 break;
             case CRAWL : 
                 // Need access to remote statistics tracker.
