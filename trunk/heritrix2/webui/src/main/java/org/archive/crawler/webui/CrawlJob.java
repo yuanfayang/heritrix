@@ -4,7 +4,7 @@ import javax.management.remote.JMXConnector;
 import javax.servlet.http.HttpServletRequest;
 
 import org.archive.crawler.framework.AlertTracker;
-import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.JobStage;
 
@@ -145,7 +145,7 @@ public class CrawlJob implements Comparable<CrawlJob> {
     /**
      * Looks up a CrawlJob given just the job's name, not its stage.  The
      * given request object must contain a String parameter named "job".  The
-     * given CrawlJobManager will be consulted to find a job with that name,
+     * given Engine will be consulted to find a job with that name,
      * regardless of its stage.  If the job is active, a connection will be
      * made to that job's CrawlController to get the crawl status.
      * 
@@ -154,11 +154,11 @@ public class CrawlJob implements Comparable<CrawlJob> {
      * links should still work when an active job becomes a completed job.
      * 
      * @param request   request containing the job name
-     * @param remote    the CrawlJobManager used to look up the job
+     * @param remote    the Engine used to look up the job
      * @return   the CrawlJob with that name
      */
     public static CrawlJob lookup(HttpServletRequest request, 
-            Remote<CrawlJobManager> remote) {
+            Remote<Engine> remote) {
         String jobName = request.getParameter("job");
         JMXConnector jmxc = remote.getJMXConnector();
         for (String s: remote.getObject().listJobs()) {

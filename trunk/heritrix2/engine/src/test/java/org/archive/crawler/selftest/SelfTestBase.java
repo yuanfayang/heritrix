@@ -254,9 +254,9 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         heritrixThread.start();
 
         // Wait up to 20 seconds for the main OpenMBean to appear.
-        ObjectName cjm = getCrawlJobManager();
+        ObjectName cjm = getEngine();
 
-        // Tell the CrawlJobManager to launch a new job based on the 
+        // Tell the Engine to launch a new job based on the 
         // default profile.
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         server.invoke(
@@ -274,7 +274,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
     protected void stopHeritrix() throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        ObjectName cjm = getCrawlJobManager();
+        ObjectName cjm = getEngine();
         server.invoke(cjm, "close", new Object[0], new String[0]);
         heritrixThread.interrupt();
     }
@@ -408,12 +408,12 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     }
     
     
-    protected static ObjectName getCrawlJobManager() throws Exception {
-        return waitFor("org.archive.crawler:*,name=CrawlJobManager", true);
+    protected static ObjectName getEngine() throws Exception {
+        return waitFor("org.archive.crawler:*,name=Engine", true);
 //        ObjectName cjm = JmxUtils.makeObjectName(
-//                CrawlJobManagerImpl.DOMAIN,
-//                CrawlJobManagerImpl.NAME, 
-//                CrawlJobManagerImpl.TYPE);
+//                EngineImpl.DOMAIN,
+//                EngineImpl.NAME, 
+//                EngineImpl.TYPE);
 //        waitFor(cjm);
 //        return cjm;
     }

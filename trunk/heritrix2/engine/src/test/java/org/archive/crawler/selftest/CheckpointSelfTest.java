@@ -138,7 +138,7 @@ public class CheckpointSelfTest extends SelfTestBase {
         });
         this.heritrixThread.start();
         
-        ObjectName cjm = getCrawlJobManager();
+        ObjectName cjm = getEngine();
         String[] checkpoints = (String[])server.invoke(
                 cjm,
                 "listCheckpoints", 

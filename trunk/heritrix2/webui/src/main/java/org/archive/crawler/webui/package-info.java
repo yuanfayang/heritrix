@@ -15,7 +15,7 @@
  * {@link Text} class.  <i>All</i> such methods live in that class, so 
  * presentation JSPs only need to import one thing.</li>
  * <li>A presentation JSP may also need to import model interfaces, like 
- * java.util.List or org.archive.crawler.framework.CrawlJobManager.</li>
+ * java.util.List or org.archive.crawler.framework.Engine.</li>
  * <li>Application code is stored in jsp files that begin with "do_".</li>
  * <li>An application code JSP always consists of exactly one method 
  * invocation.  Let's call these methods <i>action methods</i>.</li>

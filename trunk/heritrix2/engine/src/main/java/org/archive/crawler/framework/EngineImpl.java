@@ -17,7 +17,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * CrawlJobManagerImpl.java
+ * EngineImpl.java
  *
  * Created on Jan 24, 2007
  *
@@ -74,7 +74,7 @@ import org.archive.util.JmxUtils;
 import com.sleepycat.je.DatabaseException;
 
 /**
- * Implementation for CrawlJobManager.  Jobs and profiles are stored in a 
+ * Implementation for Engine.  Jobs and profiles are stored in a 
  * directory called the jobsDir.  The jobs are contained as subdirectories of
  * jobDir.  These subdirectories have strange names:  The are composed of 
  * <i>both</i> the job's stage and the job's name.  Eg, a profile named "basic"
@@ -86,12 +86,12 @@ import com.sleepycat.je.DatabaseException;
  * 
  * @author pjack
  */
-public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
+public class EngineImpl extends Bean implements Engine {
     
     private static final long serialVersionUID = 3L;
 
-    final public static String NAME = "CrawlJobManager";
-    final public static String TYPE = "CrawlJobManager";
+    final public static String NAME = "Engine";
+    final public static String TYPE = "Engine";
     
     
     final private static String CONTROLLER_PATH = "root:controller";
@@ -104,7 +104,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
         CONTROLLER_PATH + ":logger-module:dir";
 
     final private static Logger LOGGER = 
-        Logger.getLogger(CrawlJobManagerImpl.class.getName()); 
+        Logger.getLogger(EngineImpl.class.getName()); 
     
     final public static String DOMAIN = "org.archive.crawler";
     
@@ -122,8 +122,8 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     private HashMap<String, LogRemoteAccessImpl> logRemoteAccess;
 
     
-    public CrawlJobManagerImpl(CrawlJobManagerConfig config) {
-        super(CrawlJobManager.class);
+    public EngineImpl(EngineConfig config) {
+        super(Engine.class);
         this.server = config.getServer();
         if (server == null) {
             throw new IllegalArgumentException("MBeanServer must not be null.");
@@ -678,11 +678,11 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
     
             final String job = changeState(j, ACTIVE);
             File dest = new File(getJobsDir(), job);
-            File bootstrap = new File(dest, CrawlJobManagerImpl.BOOTSTRAP);
+            File bootstrap = new File(dest, EngineImpl.BOOTSTRAP);
             FileSheetManager fsm;
             final String name = getJobName(job);
             final JMXModuleListener jmxListener = new JMXModuleListener(
-                    CrawlJobManagerImpl.DOMAIN, name, server);
+                    EngineImpl.DOMAIN, name, server);
 
             List<ModuleListener> list = new ArrayList<ModuleListener>();
             list.add(jmxListener);
@@ -706,7 +706,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
 
         public void run() {
-            synchronized (CrawlJobManagerImpl.this) {
+            synchronized (EngineImpl.this) {
                 try {
                     doLaunch();
                 } catch (Exception e) {
@@ -827,7 +827,7 @@ public class CrawlJobManagerImpl extends Bean implements CrawlJobManager {
 
         
         public void run() {
-            synchronized (CrawlJobManagerImpl.this) {
+            synchronized (EngineImpl.this) {
                 try {
                     doCheckpointRecover();
                 } catch (RuntimeException e) {

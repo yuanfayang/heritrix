@@ -75,7 +75,7 @@ public class Crawler implements Comparable<Crawler> {
     
     
     /**
-     * The JMX name of the CrawlJobManager.
+     * The JMX name of the Engine.
      */
     private ObjectName objectName;
     
@@ -248,10 +248,10 @@ public class Crawler implements Comparable<Crawler> {
      * 
      * <p>If the source is MANUAL and the ObjectName is not set, then 
      * this method contacts the remote MBean server, and performs an MBean
-     * query to get all of the CrawlJobManager beans registered in that server.
-     * The returned collection will contain one crawler for each CrawlJobManager
+     * query to get all of the Engine beans registered in that server.
+     * The returned collection will contain one crawler for each Engine
      * found in the query.  If any error occurs during processing any of
-     * the CrawlJobManagers -- or if contact could not be established, or
+     * the Engines -- or if contact could not be established, or
      * if a network error occurs -- then this Crawler's error field is set
      * and a 1-element collection containing only this crawler is returned.
      * 
@@ -261,7 +261,7 @@ public class Crawler implements Comparable<Crawler> {
      * 
      * @return   A 1-element collection if this crawler already has an 
      *    ObjectName; or a possibly multi-element collection if this crawler
-     *    discovered multiple CrawlJobManager ObjectNames in the remote server.
+     *    discovered multiple Engine ObjectNames in the remote server.
      */
     public Collection<Crawler> testConnection() {
         if ((username == null) || (password == null)) {
@@ -284,15 +284,15 @@ public class Crawler implements Comparable<Crawler> {
             
             // Otherwise, this is a newly minted manual connection from the
             // operator.  We need to connect to the remote MBeanServer and
-            // ask it for ALL CrawlJobManagers it knows about; there may
+            // ask it for ALL Engines it knows about; there may
             // be more than one.
             MBeanServerConnection conn = jmxc.getMBeanServerConnection();
-            String query = "org.archive.crawler:*,name=CrawlJobManager";
+            String query = "org.archive.crawler:*,name=Engine";
             ObjectName qname = new ObjectName(query);
             @SuppressWarnings("unchecked")
             Set<ObjectName> set = conn.queryNames(null, qname);
             if (set.isEmpty()) {
-                error = "No CrawlJobManagers found on host.";
+                error = "No Engines found on host.";
                 return Collections.singleton(this);
             }
             

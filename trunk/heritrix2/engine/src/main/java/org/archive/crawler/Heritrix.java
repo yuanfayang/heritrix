@@ -53,8 +53,8 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.archive.crawler.framework.CrawlJobManagerConfig;
-import org.archive.crawler.framework.CrawlJobManagerImpl;
+import org.archive.crawler.framework.EngineConfig;
+import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.framework.JobStage;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.IoUtils;
@@ -235,7 +235,7 @@ public class Heritrix {
             System.exit(1);
         }
 
-        CrawlJobManagerConfig config = new CrawlJobManagerConfig();
+        EngineConfig config = new EngineConfig();
         WebUIConfig webConfig = new WebUIConfig();
         File properties = getDefaultPropertiesFile();
 
@@ -295,9 +295,9 @@ public class Heritrix {
             if (cl.hasOption('u')) {
                 out.println("Not running crawl engine.");
             } else {
-                CrawlJobManagerImpl cjm = new CrawlJobManagerImpl(config);
+                EngineImpl cjm = new EngineImpl(config);
                 registerJndi(cjm.getObjectName(), out);
-                out.println("CrawlJobManager registered at " 
+                out.println("Engine registered at " 
                         + cjm.getObjectName());
                 if (cl.hasOption('r')) {
                     launch(cjm, cl.getOptionValue('r'));
@@ -408,7 +408,7 @@ public class Heritrix {
     protected static Context getJndiContext() throws NamingException {
     	Context c = null;
     	try {
-    	    c = JndiUtils.getSubContext(CrawlJobManagerImpl.DOMAIN);
+    	    c = JndiUtils.getSubContext(EngineImpl.DOMAIN);
     	} catch (NoInitialContextException e) {
     	    logger.fine("No JNDI Context: " + e.toString());
     	}
@@ -421,11 +421,11 @@ public class Heritrix {
     }    
 
 
-    private static void launch(CrawlJobManagerImpl cjm, String job) 
+    private static void launch(EngineImpl cjm, String job) 
     throws Exception {
         for (String s: cjm.listJobs()) {
             if (s.equals(JobStage.PROFILE.getPrefix() + job)) {
-                String newName = CrawlJobManagerImpl.getCopyDefaultName(job);
+                String newName = EngineImpl.getCopyDefaultName(job);
                 newName = JobStage.READY.getPrefix() + newName;
                 cjm.copy(s, newName);
                 cjm.launchJob(newName);

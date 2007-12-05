@@ -39,8 +39,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.framework.CrawlJobManager;
-import org.archive.crawler.framework.CrawlJobManagerImpl;
+import org.archive.crawler.framework.Engine;
+import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.framework.JobStage;
 import org.archive.settings.jmx.JMXSheetManager;
 
@@ -60,7 +60,7 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = open(request);
+        Remote<Engine> remote = open(request);
         JMXConnector jmxc = remote.getJMXConnector();
         List<CrawlJob> active = new ArrayList<CrawlJob>();
         List<CrawlJob> ready = new ArrayList<CrawlJob>();
@@ -146,8 +146,8 @@ public class CrawlerArea {
             return;
         }
         
-        Remote<CrawlJobManager> remote = open(request);
-        CrawlJobManager manager = remote.getObject();
+        Remote<Engine> remote = open(request);
+        Engine manager = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             CrawlJob job = CrawlJob.fromRequest(request, jmxc);
@@ -161,11 +161,11 @@ public class CrawlerArea {
 
     
     
-    public static Remote<CrawlJobManager> open(HttpServletRequest request) {
+    public static Remote<Engine> open(HttpServletRequest request) {
         Crawler c = Home.getCrawler(request);
         request.setAttribute("crawler", c);
         JMXConnector jmx = c.connect();
-        return Remote.make(jmx, c.getObjectName(), CrawlJobManager.class);
+        return Remote.make(jmx, c.getObjectName(), Engine.class);
     }
 
     public static void showAbout(
@@ -175,7 +175,7 @@ public class CrawlerArea {
         Crawler crawler = Home.getCrawler(request);
         request.setAttribute("crawler", crawler);
         JMXConnector jmxc = crawler.connect();
-        CrawlJobManager cjm = open(request).getObject();
+        Engine cjm = open(request).getObject();
         request.setAttribute("heritrix.version", cjm.getHeritrixVersion());
         
         try{
@@ -241,7 +241,7 @@ public class CrawlerArea {
     
     private static String getCopyDefaultName(CrawlJob cj) {
         String name = cj.getName();
-        return CrawlJobManagerImpl.getCopyDefaultName(name);
+        return EngineImpl.getCopyDefaultName(name);
     }
 
 
@@ -249,8 +249,8 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response){
-        Remote<CrawlJobManager> remote = open(request);
-        CrawlJobManager cjm = remote.getObject();
+        Remote<Engine> remote = open(request);
+        Engine cjm = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             CrawlJob job = CrawlJob.fromRequest(request, jmxc);
@@ -284,8 +284,8 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = open(request);
-        CrawlJobManager cjm = remote.getObject();
+        Remote<Engine> remote = open(request);
+        Engine cjm = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             CrawlJob job = CrawlJob.fromRequest(request, jmxc);
@@ -305,8 +305,8 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = open(request);
-        CrawlJobManager cjm = remote.getObject();
+        Remote<Engine> remote = open(request);
+        Engine cjm = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             CrawlJob job = CrawlJob.fromRequest(request, jmxc);
@@ -329,7 +329,7 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = open(request);
+        Remote<Engine> remote = open(request);
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             CrawlJob.fromRequest(request, jmxc);
@@ -344,8 +344,8 @@ public class CrawlerArea {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = open(request);
-        CrawlJobManager cjm = remote.getObject();
+        Remote<Engine> remote = open(request);
+        Engine cjm = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             CrawlJob job = CrawlJob.fromRequest(request, jmxc);

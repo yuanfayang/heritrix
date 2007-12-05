@@ -42,8 +42,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.archive.crawler.framework.AlertTracker;
-import org.archive.crawler.framework.CrawlJobManager;
-import org.archive.crawler.framework.CrawlJobManagerImpl;
+import org.archive.crawler.framework.Engine;
+import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.JobStage;
@@ -72,7 +72,7 @@ public class Console {
             HttpServletRequest request,
             HttpServletResponse response,
             Action action) {
-        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        Remote<Engine> remote = CrawlerArea.open(request);
         try {
             CrawlJob crawlJob = CrawlJob.lookup(request, remote);
             JMXConnector jmxc = remote.getJMXConnector();
@@ -178,8 +178,8 @@ public class Console {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
-        CrawlJobManager cjm = remote.getObject();
+        Remote<Engine> remote = CrawlerArea.open(request);
+        Engine cjm = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             CrawlJob.fromRequest(request, jmxc);
@@ -205,8 +205,8 @@ public class Console {
             ServletContext sc,
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
-        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
-        CrawlJobManager cjm = remote.getObject();
+        Remote<Engine> remote = CrawlerArea.open(request);
+        Engine cjm = remote.getObject();
         JMXConnector jmxc = remote.getJMXConnector();
         try {
             
@@ -225,7 +225,7 @@ public class Console {
             String source = request.getParameter("source");
             if(!source.equals("file")) {
                 // use prior job's recovery ;
-                String path = cjm.getFilePath(source, CrawlJobManagerImpl.LOGS_DIR_PATH);
+                String path = cjm.getFilePath(source, EngineImpl.LOGS_DIR_PATH);
                 // FIXME: this will break when WUI is on different platform than engine
                 path = path + File.separator + "recover.gz";
                 params.put("path",path);

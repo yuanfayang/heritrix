@@ -17,7 +17,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * CrawlJobManagerConfig.java
+ * EngineConfig.java
  *
  * Created on Apr 25, 2007
  *
@@ -31,11 +31,11 @@ import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 
 /**
- * Configuration for CrawlJobManager.
+ * Configuration for EngineImpl.
  * 
  * @author pjack
  */
-public class CrawlJobManagerConfig {
+public class EngineConfig {
 
     
     private String jobsDirectory = "jobs";
@@ -43,7 +43,7 @@ public class CrawlJobManagerConfig {
     private Thread heritrixThread = Thread.currentThread();
 
 
-    public CrawlJobManagerConfig() {
+    public EngineConfig() {
     }
 
 

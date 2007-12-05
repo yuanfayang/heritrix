@@ -50,7 +50,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.archive.crawler.framework.CrawlJobManager;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.JobController;
 import org.archive.crawler.framework.JobStage;
 import org.archive.util.JmxUtils;
@@ -272,7 +272,7 @@ public class Home {
             stopWebUI(sc, request, response);
             return;
         }
-        Remote<CrawlJobManager> remote = CrawlerArea.open(request);
+        Remote<Engine> remote = CrawlerArea.open(request);
         try {
             if (kind.equals("klutz")) {
                 remote.getObject().systemExit();
@@ -369,7 +369,7 @@ public class Home {
             NameClassPair pair = enu.next();
             ObjectName oname = new ObjectName("org.archive.crawler:" + pair.getName());
             String name = oname.getKeyProperty(JmxUtils.NAME);
-            if ((name != null) && name.equals("CrawlJobManager")) {
+            if ((name != null) && name.equals("Engine")) {
                 Crawler crawler = Crawler.fromObjectName(oname);
                 crawler.setSource(Crawler.Source.JNDI);
                 crawler.setUsername(user);
