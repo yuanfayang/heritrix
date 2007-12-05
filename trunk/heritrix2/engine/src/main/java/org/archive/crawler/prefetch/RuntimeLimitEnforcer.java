@@ -32,8 +32,9 @@ import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlStatus;
-import org.archive.crawler.framework.CrawlerProcessor;
+import org.archive.crawler.framework.StatisticsTracker;
 import org.archive.modules.ProcessResult;
+import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
@@ -66,13 +67,19 @@ import org.archive.state.KeyManager;
  * 
  * @author Kristinn Sigur&eth;sson
  */
-public class RuntimeLimitEnforcer extends CrawlerProcessor {
+public class RuntimeLimitEnforcer extends Processor {
 
     private static final long serialVersionUID = 3L;
     
     protected static Logger logger = Logger.getLogger(
             RuntimeLimitEnforcer.class.getName());
 
+    
+    final public static Key<CrawlControllerImpl> CONTROLLER = 
+        Key.makeAuto(CrawlControllerImpl.class);
+    
+    final public static Key<StatisticsTracker> STATISTICS_TRACKER =
+        Key.makeAuto(StatisticsTracker.class);
 
     /**
      * The action that the processor takes once the runtime has elapsed.
@@ -145,8 +152,10 @@ public class RuntimeLimitEnforcer extends CrawlerProcessor {
     @Override
     protected ProcessResult innerProcessResult(ProcessorURI curi)
     throws InterruptedException {
+        CrawlControllerImpl controller = curi.get(this, CONTROLLER);
+        StatisticsTracker stats = curi.get(this, STATISTICS_TRACKER);
         long allowedRuntime = getRuntime(curi);
-        long currentRuntime = controller.getStatistics().crawlDuration();
+        long currentRuntime = stats.crawlDuration();
         if(currentRuntime > allowedRuntime){
             Operation op = curi.get(this, END_OPERATION);
             if(op != null){

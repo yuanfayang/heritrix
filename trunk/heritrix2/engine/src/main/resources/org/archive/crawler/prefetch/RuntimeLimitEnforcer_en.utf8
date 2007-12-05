@@ -32,3 +32,10 @@ The amount of time, in seconds, that the crawl will be allowed to run
 before this processor performs it's 'end operation.' 
 
 
+controller-description:
+The CrawlController used to stop or pause crawls if runtime limits are 
+detected.
+
+
+statistics-tracker-description:
+The StatisticsTracker used to determine how long the crawl is running.
