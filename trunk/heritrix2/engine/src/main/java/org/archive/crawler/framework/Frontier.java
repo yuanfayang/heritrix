@@ -68,7 +68,7 @@ import org.json.JSONException;
  * <p>The methods defined in this interface are those required to get URIs for
  * processing, report the results of processing back (ToeThreads) and to get
  * access to various statistical data along the way. The statistical data is
- * of interest to {@link org.archive.crawler.framework.StatisticsTracking
+ * of interest to {@link org.archive.crawler.framework.StatisticsTracker
  * Statistics Tracking} modules. A couple of additional methods are provided
  * to be able to inspect and manipulate the Frontier at runtime.
  *
@@ -91,7 +91,7 @@ import org.json.JSONException;
  * CrawlURIDispostionEvents} by invoking the proper methods on the
  * {@link org.archive.crawler.framework.CrawlControllerImpl CrawlController}.
  * Doing this allows a custom built
- * {@link org.archive.crawler.framework.StatisticsTracking
+ * {@link org.archive.crawler.framework.StatisticsTracker
  * Statistics Tracking} module to gather any other additional data it might be
  * interested in by examining the completed URIs.
  *
@@ -108,7 +108,7 @@ import org.json.JSONException;
  * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURIFailureEvent(CrawlURI)
  * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURINeedRetryEvent(CrawlURI)
  * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURISuccessfulEvent(CrawlURI)
- * @see org.archive.crawler.framework.StatisticsTracking
+ * @see org.archive.crawler.framework.StatisticsTracker
  * @see org.archive.crawler.framework.ToeThread
  * @see org.archive.crawler.framework.FrontierHostStatistics
  * @see org.archive.crawler.settings.ModuleType

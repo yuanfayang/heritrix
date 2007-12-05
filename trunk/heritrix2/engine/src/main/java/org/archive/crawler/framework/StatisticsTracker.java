@@ -45,7 +45,7 @@ import org.archive.openmbeans.annotations.Parameter;
  * the CrawlController or the URIFrontier may be interested in at
  * run time but do not want to have keep track of for themselves.
  * {@link org.archive.crawler.framework.AbstractTracker AbstractTracker}
- * implements these. If there are more then one StatisticsTracking
+ * implements these. If there are more then one StatisticsTracker
  * classes defined in the crawl order only the first one will be
  * used to access this data.
  *
@@ -62,7 +62,7 @@ import org.archive.openmbeans.annotations.Parameter;
  * @see org.archive.crawler.event.CrawlURIDispositionListener
  * @see org.archive.crawler.framework.CrawlControllerImpl
  */
-public interface StatisticsTracking extends Runnable {
+public interface StatisticsTracker extends Runnable {
     /** Seed successfully crawled */
     public static final String SEED_DISPOSITION_SUCCESS =
         "Seed successfully crawled";
