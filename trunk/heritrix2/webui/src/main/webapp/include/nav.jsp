@@ -24,7 +24,7 @@ String the_sheet = (String)request.getAttribute("sheet");
 
 <div style="float:right">
 <a href="<%=request.getContextPath()%>/help/do_show_about_ui.jsp">About</a><br/>
-<a href="<%=request.getContextPath()%>/help/do_show_help.jsp">Help</a>
+<a href="<%=request.getContextPath()%>/help/do_show_help.jsp">Help&rarr;</a>
 </div>
 
 <table>

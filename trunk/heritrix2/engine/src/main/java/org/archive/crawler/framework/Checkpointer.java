@@ -36,7 +36,6 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -51,6 +50,11 @@ import org.archive.util.ArchiveUtils;
 public class Checkpointer implements Serializable {
     private static final long serialVersionUID = 7610078446694353173L;
 
+    /** 
+     * Name of file written with timestamp into valid checkpoints.
+     */
+    public static final String VALIDITY_STAMP_FILENAME = "valid";
+    
     private final static Logger LOGGER =
         Logger.getLogger(Checkpointer.class.getName());
 
@@ -262,7 +266,7 @@ public class Checkpointer implements Serializable {
 
     protected void writeValidity() {
         File valid = new File(this.checkpointInProgressDir,
-            Checkpoint.VALIDITY_STAMP_FILENAME);
+            VALIDITY_STAMP_FILENAME);
         try {
             FileOutputStream fos = new FileOutputStream(valid);
             fos.write(ArchiveUtils.get14DigitDate().getBytes());
