@@ -118,8 +118,8 @@ public class CrawlControllerImpl extends Bean implements
      * information to the user interface.
      */
     @Global
-    final public static Key<List<StatisticsTracking>> LOGGERS = 
-        Key.makeList(StatisticsTracking.class);
+    final public static Key<StatisticsTracking> STATISTICS_TRACKER = 
+        Key.make(StatisticsTracking.class, StatisticsTracker.class);
 
     final public static Key<Map<String,Processor>> PROCESSORS =
         Key.makeMap(Processor.class);
@@ -478,14 +478,8 @@ public class CrawlControllerImpl extends Bean implements
      * @return Object this controller is using to track crawl statistics
      */
     public StatisticsTracking getStatistics() {
-        List<StatisticsTracking> statTrackers = sheetManager.get(this, LOGGERS);
-        if (statTrackers == null) {
-            return null;
-        }
-        if (statTrackers.isEmpty()) {
-            return null;
-        }
-        return statTrackers.get(0);
+        StatisticsTracking statTracker = sheetManager.get(this, STATISTICS_TRACKER);
+        return statTracker;
     }
     
     /**
