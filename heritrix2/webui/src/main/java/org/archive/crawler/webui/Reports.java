@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.StatisticsTracker;
+import org.archive.crawler.framework.StatisticsTrackerImpl;
 import org.archive.crawler.framework.StatisticsTracking;
 
 public class Reports {
@@ -95,14 +95,14 @@ public class Reports {
                 }
                 request.setAttribute("statusorder", orderStatusCodeBy);
                 String[] status_keys = stats.getReportKeys(
-                        StatisticsTracker.Reports.STATUSCODE.toString());
+                        StatisticsTrackerImpl.Reports.STATUSCODE.toString());
                 TreeSet<ReportLine> status = 
                     new TreeSet<ReportLine>();
                 for(String statusKey : status_keys){
                     ReportLine scw = new ReportLine();
                     scw.legend = statusKey;
                     scw.numberOfURIS = stats.getReportValue(
-                            StatisticsTracker.Reports.STATUSCODE.toString(), 
+                            StatisticsTrackerImpl.Reports.STATUSCODE.toString(), 
                             statusKey);
                     if(orderStatusCodeBy.equalsIgnoreCase("uris")){
                         scw.orderby = scw.numberOfURIS;
@@ -118,17 +118,17 @@ public class Reports {
                 }
                 request.setAttribute("fileorder", orderFileTypeBy);
                 String[] file_keys = stats.getReportKeys(
-                        StatisticsTracker.Reports.FILETYPE_URIS.toString());
+                        StatisticsTrackerImpl.Reports.FILETYPE_URIS.toString());
                 TreeSet<ReportLine> filetypes = 
                     new TreeSet<ReportLine>();
                 for(String fileKey : file_keys){
                     ReportLine scw = new ReportLine();
                     scw.legend = fileKey;
                     scw.numberOfURIS = stats.getReportValue(
-                            StatisticsTracker.Reports.FILETYPE_URIS.toString(), 
+                            StatisticsTrackerImpl.Reports.FILETYPE_URIS.toString(), 
                             fileKey);
                     scw.bytes = stats.getReportValue(
-                            StatisticsTracker.Reports.FILETYPE_BYTES.toString(), 
+                            StatisticsTrackerImpl.Reports.FILETYPE_BYTES.toString(), 
                             fileKey);
                     if(orderFileTypeBy.equalsIgnoreCase("uris")){
                         scw.orderby = scw.numberOfURIS;
@@ -149,13 +149,13 @@ public class Reports {
                 String[] hosts_keys = null; 
                 if(orderHostsBy.equals("lastactive")){
                     hosts_keys = stats.getReportKeys(
-                            StatisticsTracker.Reports.HOST_LAST_ACTIVE.toString());
+                            StatisticsTrackerImpl.Reports.HOST_LAST_ACTIVE.toString());
                 } else if(orderHostsBy.equals("bytes")){
                     hosts_keys = stats.getReportKeys(
-                            StatisticsTracker.Reports.HOST_BYTES.toString());
+                            StatisticsTrackerImpl.Reports.HOST_BYTES.toString());
                 } else {
                     hosts_keys = stats.getReportKeys(
-                            StatisticsTracker.Reports.HOST_URIS.toString());
+                            StatisticsTrackerImpl.Reports.HOST_URIS.toString());
                 }
                         
                 TreeSet<ReportLine> hosts = 
@@ -164,13 +164,13 @@ public class Reports {
                     ReportLine scw = new ReportLine();
                     scw.legend = hostKey;
                     scw.numberOfURIS = stats.getReportValue(
-                            StatisticsTracker.Reports.HOST_URIS.toString(), 
+                            StatisticsTrackerImpl.Reports.HOST_URIS.toString(), 
                             hostKey);
                     scw.bytes = stats.getReportValue(
-                            StatisticsTracker.Reports.HOST_BYTES.toString(), 
+                            StatisticsTrackerImpl.Reports.HOST_BYTES.toString(), 
                             hostKey);
                     scw.lastActive = stats.getReportValue(
-                            StatisticsTracker.Reports.HOST_LAST_ACTIVE.toString(), 
+                            StatisticsTrackerImpl.Reports.HOST_LAST_ACTIVE.toString(), 
                             hostKey);
                     if(orderHostsBy.equalsIgnoreCase("lastactive")){
                         scw.orderby = scw.lastActive;

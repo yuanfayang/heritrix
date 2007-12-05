@@ -120,7 +120,7 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.AbstractTracker
  */
-public class StatisticsTracker extends AbstractTracker
+public class StatisticsTrackerImpl extends AbstractTracker
 implements CrawlURIDispositionListener, Serializable {
     private static final long serialVersionUID = 8004878315916392305L;
 
@@ -162,7 +162,7 @@ implements CrawlURIDispositionListener, Serializable {
      * Messages from the StatisticsTracker.
      */
     private final static Logger logger =
-        Logger.getLogger(StatisticsTracker.class.getName());
+        Logger.getLogger(StatisticsTrackerImpl.class.getName());
     
     // TODO: Need to be able to specify file where the object will be
     // written once the CrawlEnded event occurs
@@ -238,10 +238,10 @@ implements CrawlURIDispositionListener, Serializable {
 
 
     static {
-        KeyManager.addKeys(StatisticsTracker.class);
+        KeyManager.addKeys(StatisticsTrackerImpl.class);
     }
 
-    public StatisticsTracker() {
+    public StatisticsTrackerImpl() {
         
     }
     

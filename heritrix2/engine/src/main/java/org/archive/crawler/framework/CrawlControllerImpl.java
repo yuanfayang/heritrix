@@ -119,7 +119,7 @@ public class CrawlControllerImpl extends Bean implements
      */
     @Global
     final public static Key<StatisticsTracking> STATISTICS_TRACKER = 
-        Key.make(StatisticsTracking.class, StatisticsTracker.class);
+        Key.make(StatisticsTracking.class, StatisticsTrackerImpl.class);
 
     final public static Key<Map<String,Processor>> PROCESSORS =
         Key.makeMap(Processor.class);
