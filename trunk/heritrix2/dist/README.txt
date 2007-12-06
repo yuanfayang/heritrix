@@ -4,44 +4,47 @@ $Id$
 0.0 Contents
 
 1.0 Introduction
-2.0 Webmasters!
-3.0 Getting Started
-4.0 Developer Documentation
-5.0 Release History
-6.0 License
+2.0 Online Reference
+3.0 Getting Started Tips
+4.0 License
 
 1.0 Introduction
+
 Heritrix is the Internet Archive's open-source, extensible, web-scale,
 archival-quality web crawler project. Heritrix (sometimes spelled heretrix, or
 misspelled or missaid as heratrix/heritix/heretix/heratix) is an archaic word
-for heiress (woman who inherits). Since our crawler seeks to collect and
-preserve the digital artifacts of our culture for the benefit of future
-researchers and generations, this name seemed apt. 
+for heiress (woman who inherits). Our crawler seeks to collect and preserve 
+the digital artifacts of our culture for the benefit of future researchers 
+and generations. 
 
-2.0 Webmasters!
-Heritrix is designed to respect the robots.txt 
-<http://www.robotstxt.org/wc/robots.html> exclusion directives and META robots
-tags <http://www.robotstxt.org/wc/exclusion.html#meta>. If you notice our
-crawler behaving poorly, please send us email at archive-crawler-agent *at*
-lists *dot* sourceforge *dot* net. 
+2.0 Online Reference
 
-3.0 Getting Started
-See the User Manual at ./docs/articles/user_manual/index.html or at
-<http://crawler.archive.org/articles/user_manual/index.html>.
+The most up-to-date information about Heritrix is on the project wiki:
 
-4.0 Developer Documentation
-See ./docs/articles/developer_manual/index.html or
-<http://crawler.archive.org/articles/developer_manual/index.html>.
+ http://webteam.archive.org/confluence/display/Heritrix/Home
+ 
+3.0 Getting Started Tips
 
+The shell script 'heritrix' in the 'bin' directory is usually sufficient to 
+launch Heritrix. You must use the '-a' launch flag to set an authentication
+password on the web user interface. You must use the '-b' launch flag if you
+want the web user interface to accept non-local connections. 
 
-5.0 Release History
+The bundled job profiles are good starting points for designing your own 
+crawl configurations. However, they each require several changes before they
+will work for crawling:
 
-See the Heritrix Release Notes in the local directory
-docs/articles/releasenotes/index.html if this is a binary release or
-at http://crawler.archive.org/articles/releasenotes/index.html.
+- You must configure an 'operator-contact-url' on the job's global settings
+  sheet. This URL will be added to the 'User-Agent' included on your crawl's
+  outbound traffic, and should be an HTTP URL supplying information about 
+  the purpose of your crawl and containing contact information if visited 
+  sites need to report problems.
+- You must configure an 'operator-contact-email' address on the job's global
+  settings sheet. This email address will be sent as the 'From' header on your
+  crawl's outbound traffic.
+- You must supply one or more 'seed' URLs to serve as crawl starting points. 
 
-
-6.0 License
+4.0 License
 
 Heritrix is free software; you can redistribute it and/or modify it
 under the terms of the GNU Lesser Public License as published by the
@@ -58,5 +61,7 @@ along with Heritrix (See LICENSE.txt); if not, write to the Free
 Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 02111-1307  USA
                                                                                 
-For the licenses for libraries used by Heritrix and included in its
-distribution, see below in section '8.0 Dependencies'.
+Heritrix includes a variety of other open source libraries under the
+terms of their respective licenses. Please consult those individual
+licenses to learn whether the libraries are usable and redistributable 
+in contexts other than the Heritrix distribution. 

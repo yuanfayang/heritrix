@@ -2,11 +2,18 @@ Heritrix is free software; you can redistribute it and/or modify it under
 the terms of the GNU Lesser Public license (LGPL) reproduced below.  
 
 Heritrix includes the libraries it depends upon.  The libraries used can be
-found under the 'lib' directory and are listed here,
-http://crawler.archive.org/dependencies.html. The accompanying project.xml
-dependencies section, also available online at http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/project.xml?rev=1,
-points to each libraries' license and notes copyright where pertinent.
+found under the 'lib' directory, and are used under the terms of their 
+respective lcienses. Dependencies can also be viewed as part of the project
+XML build specification ('pom') files:
 
+http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/pom.xml?view=markup
+
+http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/commons/pom.xml?view=markup
+http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/modules/pom.xml?view=markup
+http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/engine/pom.xml?view=markup
+http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/webui/pom.xml?view=markup
+http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/dist/pom.xml?view=markup
+--
 
 		  GNU LESSER GENERAL PUBLIC LICENSE
 		       Version 2.1, February 1999
