@@ -81,8 +81,9 @@ public interface ProcessorURI extends StateProvider {
 
     boolean containsDataKey(String attr);
     Map<String,Object> getData();
-	void makeHeritable(String attr);
-	Map<String,Object> getPersistentDataMap();
+    void makeHeritable(String attr);
+    Map<String,Object> getPersistentDataMap();
+    void addPersistentDataMapKey(String s);
     
     String getUserAgent();
     void setUserAgent(String ua);

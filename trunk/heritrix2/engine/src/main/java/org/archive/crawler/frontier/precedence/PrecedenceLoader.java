@@ -32,8 +32,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import org.archive.crawler.io.CrawlerJournal;
-import org.archive.crawler.recrawl.PersistProcessor;
+import org.archive.io.CrawlerJournal;
+import org.archive.modules.recrawl.PersistProcessor;
 import org.archive.util.bdbje.EnhancedEnvironment;
 import org.archive.util.iterator.LineReadingIterator;
 

@@ -38,7 +38,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.Frontier;
-import org.archive.crawler.io.CrawlerJournal;
+import org.archive.io.CrawlerJournal;
 import org.archive.modules.DefaultProcessorURI;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.extractor.HTMLLinkContext;

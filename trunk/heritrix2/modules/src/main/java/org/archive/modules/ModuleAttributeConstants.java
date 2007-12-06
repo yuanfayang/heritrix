@@ -32,6 +32,8 @@ public class ModuleAttributeConstants {
 
     public static final String A_HTTP_TRANSACTION = "http-transaction";
 
+    public static final String A_FETCH_BEGAN_TIME= "fetch-began-time";
+
     private ModuleAttributeConstants() {
     }
 

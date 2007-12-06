@@ -20,22 +20,21 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.recrawl;
+package org.archive.modules.recrawl;
 
 import java.util.HashMap;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.Expert;
-import org.archive.state.Initializable;
 import org.archive.state.Key;
-import org.archive.state.StateProvider;
+import org.archive.state.KeyManager;
 
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
+import static org.archive.modules.ModuleAttributeConstants.A_HTTP_TRANSACTION;
+import static org.archive.modules.ModuleAttributeConstants.A_FETCH_BEGAN_TIME;
 
 /**
  * Maintain a history of fetch information inside the CrawlURI's attributes. 
@@ -43,7 +42,7 @@ import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
  * @author gojomo
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
-public class FetchHistoryProcessor extends Processor implements Initializable {
+public class FetchHistoryProcessor extends Processor {
 
     private static final long serialVersionUID = 8476621038669163983L;
     
@@ -58,11 +57,12 @@ public class FetchHistoryProcessor extends Processor implements Initializable {
     // class description: "FetchHistoryProcessor. Maintain a history of fetch " +
     // "information inside the CrawlURI's attributes.."
     
-    public FetchHistoryProcessor(String name) {
+    public FetchHistoryProcessor() {
     }
 
     @Override
     protected void innerProcess(ProcessorURI curi) throws InterruptedException {
+        curi.addPersistentDataMapKey(A_FETCH_HISTORY);
         HashMap<String, Object> latestFetch = new HashMap<String,Object>();
 
         // save status
@@ -132,16 +132,13 @@ public class FetchHistoryProcessor extends Processor implements Initializable {
     }
 
 
-    public void initialTasks(StateProvider defaults) {
-        // ensure history info persists across enqueues and recrawls
-        CrawlURI.addDataPersistentMember(A_FETCH_HISTORY);
+    @Override
+    protected boolean shouldProcess(ProcessorURI uri) {
+        // TODO evaluate if any pre-eligibility testing should occur
+        return true;
     }
-
-	@Override
-	protected boolean shouldProcess(ProcessorURI uri) {
-		// TODO evaluate if any pre-eligibility testing should occur
-		return true;
-	}
     
-    
+    static {
+        KeyManager.addKeys(FetchHistoryProcessor.class);
+    }
 }

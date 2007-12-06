@@ -28,7 +28,8 @@ import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import org.archive.crawler.recrawl.PersistProcessor;
+
+import org.archive.modules.recrawl.PersistProcessor;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;

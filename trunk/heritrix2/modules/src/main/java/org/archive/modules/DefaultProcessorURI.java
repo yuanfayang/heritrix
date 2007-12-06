@@ -386,6 +386,10 @@ implements ProcessorURI {
         // FIXME?
         return null;
     }
+    
+    public void addPersistentDataMapKey(String s) {
+        
+    }
 
     
     public void incrementDiscardedOutLinks() {
