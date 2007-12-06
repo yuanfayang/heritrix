@@ -47,6 +47,7 @@ import static org.archive.crawler.datamodel.SchedulingConstants.*;
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
 
+import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.credential.CredentialAvatar;
 import org.archive.modules.credential.Rfc2617Credential;
@@ -1168,6 +1169,12 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     	return persistentKeys;
     }
 
+    public void addPersistentDataMapKey(String s) {
+        if (!persistentKeys.contains(s)) {
+            addDataPersistentMember(s);
+        }
+    }
+    
     /**
      * Add the key of data map items you want to persist across
      * processings.
@@ -1271,8 +1278,8 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
 
     public long getFetchBeginTime() {
-        if (containsDataKey(A_FETCH_BEGAN_TIME)) {
-            return (Long)getData().get(A_FETCH_BEGAN_TIME);
+        if (containsDataKey(ModuleAttributeConstants.A_FETCH_BEGAN_TIME)) {
+            return (Long)getData().get(ModuleAttributeConstants.A_FETCH_BEGAN_TIME);
         } else {
             return 1L;
         }
@@ -1324,7 +1331,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
 
     public void setFetchBeginTime(long time) {
-    	getData().put(A_FETCH_BEGAN_TIME, time);
+    	getData().put(ModuleAttributeConstants.A_FETCH_BEGAN_TIME, time);
     }
 
     public void setFetchCompletedTime(long time) {

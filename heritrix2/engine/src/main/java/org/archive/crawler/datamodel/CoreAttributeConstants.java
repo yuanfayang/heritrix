@@ -58,7 +58,6 @@ public interface CoreAttributeConstants {
     public static String A_RRECORD_SET_LABEL = "dns-records";
     public static String A_DNS_FETCH_TIME    = "dns-fetch-time";
     public static String A_DNS_SERVER_IP_LABEL = ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
-    public static String A_FETCH_BEGAN_TIME= "fetch-began-time";
     public static String A_FETCH_COMPLETED_TIME = "fetch-completed-time";
     public static String A_HTTP_TRANSACTION = ModuleAttributeConstants.A_HTTP_TRANSACTION;
 

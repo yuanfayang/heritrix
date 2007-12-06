@@ -1,6 +1,6 @@
-/* PersistStoreProcessor
+/* PersistLoadProcessor.java
  * 
- * Created on Feb 12, 2005
+ * Created on Feb 13, 2005
  *
  * Copyright (C) 2007 Internet Archive.
  * 
@@ -20,39 +20,46 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.recrawl;
+package org.archive.modules.recrawl;
+
+import java.util.Map;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.StateProvider;
+import org.archive.state.KeyManager;
 
 /**
- * Store CrawlURI attributes from latest fetch to persistent storage for
+ * Loads CrawlURI attributes from previous fetch from persistent storage for
  * consultation by a later recrawl. 
  * 
  * @author gojomo
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
- */ 
-public class PersistStoreProcessor extends PersistOnlineProcessor 
-{
-    private static final long serialVersionUID = -8308356194337303758L;
+ */
+public class PersistLoadProcessor extends PersistOnlineProcessor {
+    private static final long serialVersionUID = -1917169316015093131L;
 
-//    class description: "PersistStoreProcessor. Stores CrawlURI attributes " +
-//    "from latest fetch for consultation by a later recrawl."
-
-    public PersistStoreProcessor() {
-    }
-
-    public void initialTasks(StateProvider defaults) {
-        super.initialTasks(defaults);
-    }
+    // class description: "PersistLoadProcessor. Loads CrawlURI attributes " +
+    // "from a previous crawl for current consultation."
     
+    public PersistLoadProcessor() {
+    }
+
     @Override
     protected void innerProcess(ProcessorURI curi) throws InterruptedException {
-        store.put(persistKeyFor(curi),curi.getPersistentDataMap());
+        Map<String, Object> prior = 
+        	(Map<String,Object>) store.get(persistKeyFor(curi));
+        if(prior!=null) {
+            // merge in keys
+            curi.getData().putAll(prior); 
+        }
     }
 
-	@Override
-	protected boolean shouldProcess(ProcessorURI uri) {
-		return shouldStore(uri);
-	}
+    @Override
+    protected boolean shouldProcess(ProcessorURI uri) {
+        return shouldLoad(uri);
+    }
+
+    static {
+        KeyManager.addKeys(PersistLoadProcessor.class);
+    }
+	
 }

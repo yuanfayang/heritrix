@@ -55,6 +55,7 @@ import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.canonicalize.CanonicalizationRule;
 import org.archive.modules.canonicalize.Canonicalizer;
 import org.archive.modules.deciderules.DecideRule;
@@ -893,7 +894,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
      */
     protected long calculateSnoozeTime(CrawlURI curi) {
         long durationToWait = 0;
-        if (curi.containsDataKey(A_FETCH_BEGAN_TIME)
+        if (curi.containsDataKey(ModuleAttributeConstants.A_FETCH_BEGAN_TIME)
             && curi.containsDataKey(A_FETCH_COMPLETED_TIME)) {
             
             

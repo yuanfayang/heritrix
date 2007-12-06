@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.recrawl;
+package org.archive.modules.recrawl;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +29,7 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.SerializationUtils;
-import org.archive.crawler.framework.CrawlerLoggerModule;
-import org.archive.crawler.io.CrawlerJournal;
+import org.archive.io.CrawlerJournal;
 import org.archive.modules.ProcessorURI;
 import org.archive.settings.Finishable;
 import org.archive.settings.RecoverAction;
@@ -38,9 +37,9 @@ import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
+import org.archive.state.Path;
 import org.archive.state.StateProvider;
-import org.archive.util.FileUtils;
-
 
 
 /**
@@ -59,14 +58,10 @@ implements Checkpointable, Initializable, Finishable {
     protected CrawlerJournal log;
 
     @Immutable
-    final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
-        Key.makeAuto(CrawlerLoggerModule.class);
-
-    @Immutable
-    final public static Key<String> LOG_FILENAME = Key.make("persistlog.txtser.gz");
+    final public static Key<Path> LOG_FILE = 
+        Key.make(new Path("logs/persistlog.txtser.gz")); 
     // description: "Filename to which to log URI persistence information. " +
-    // "Interpreted relative to job logs directory. " +
-    // "Default is 'persistlog.txtser.gz'. "
+    // "Default is 'logs/persistlog.txtser.gz'. "
     
 //    class description: "PersistLogProcessor. Logs CrawlURI attributes " +
 //    "from latest fetch for consultation by a later recrawl."
@@ -77,9 +72,7 @@ implements Checkpointable, Initializable, Finishable {
 
     public void initialTasks(StateProvider provider) {
         try {
-            File logFile = FileUtils.maybeRelative(
-            		provider.get(this, LOGGER_MODULE).getLogsDir(),
-                    provider.get(this,LOG_FILENAME));
+            File logFile = provider.get(this, LOG_FILE).toFile();
             log = new CrawlerJournal(logFile);
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -104,8 +97,15 @@ implements Checkpointable, Initializable, Finishable {
         log.checkpoint(dir,null);
     }
 
-	@Override
-	protected boolean shouldProcess(ProcessorURI uri) {
-		return shouldStore(uri);
-	}
+    @Override
+    protected boolean shouldProcess(ProcessorURI uri) {
+        return shouldStore(uri);
+    }
+    
+    static {
+        KeyManager.addKeys(PersistLogProcessor.class);
+    }
+
+
+
 }

@@ -24,7 +24,6 @@
  */
 package org.archive.crawler.frontier;
 
-import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_BEGAN_TIME;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_COMPLETED_TIME;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_NONFATAL_ERRORS;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_CUSTOM_PROCESSOR;
@@ -71,6 +70,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
+import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.canonicalize.CanonicalizationRule;
 import org.archive.modules.canonicalize.Canonicalizer;
 import org.archive.modules.deciderules.DecideRule;
@@ -987,7 +987,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     protected long politenessDelayFor(CrawlURI curi) {
         long durationToWait = 0;
         Map<String,Object> cdata = curi.getData();
-        if (cdata.containsKey(A_FETCH_BEGAN_TIME)
+        if (cdata.containsKey(ModuleAttributeConstants.A_FETCH_BEGAN_TIME)
                 && cdata.containsKey(A_FETCH_COMPLETED_TIME)) {
 
             long completeTime = curi.getFetchCompletedTime();

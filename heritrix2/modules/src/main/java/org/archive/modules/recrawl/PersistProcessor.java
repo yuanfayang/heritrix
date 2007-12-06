@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.recrawl;
+package org.archive.modules.recrawl;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.SerializationUtils;
-import org.archive.crawler.io.CrawlerJournal;
+import org.archive.io.CrawlerJournal;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.settings.file.BdbModule;
