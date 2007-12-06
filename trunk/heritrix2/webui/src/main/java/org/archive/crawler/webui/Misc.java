@@ -92,6 +92,14 @@ public class Misc {
     
     public static void forward(HttpServletRequest request, 
             HttpServletResponse response, String path) {
+        // Set "page" variable for nav.jsp
+        if (request.getAttribute("page") == null) {
+            int i = path.lastIndexOf('/');
+            String attr = (i >= 0) ? path.substring(i + 1) : path;
+            i = attr.lastIndexOf('.');
+            attr = (i >= 0) ? attr.substring(0, i) : attr;
+            request.setAttribute("page", attr);
+        }
         try {
             request.getRequestDispatcher(path).forward(request, response);
         } catch (ServletException e) {
