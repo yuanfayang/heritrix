@@ -15,18 +15,6 @@
 </p>
 <p>
     <b><a target="_blank" 
-    href="<%=request.getContextPath()%>/docs/articles/user_manual/index.html">User
-        Manual</a></b><br> Covers creating, configuring, launching,
-        monitoring and analysing crawl jobs. For all users.
-</p>
-<p>
-    <b><a target="_blank" 
-        href="<%=request.getContextPath()%>/docs/articles/developer_manual/index.html">Developer Manual</a></b><br> Covers how to write add on modules for Heritrix
-        and provides in depth coverage of Heritrix's architecture. For
-        advanced users.
-</p>
-<p>
-    <b><a target="_blank" 
         href="<%=request.getContextPath()%>/docs/articles/releasenotes/index.html">Release Notes</a></b><br>
 </p>
 <p>

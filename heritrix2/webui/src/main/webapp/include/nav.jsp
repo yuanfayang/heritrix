@@ -13,6 +13,7 @@
 String the_headline = (String)request.getAttribute("headline"); 
 Crawler the_crawler = (Crawler)request.getAttribute("crawler");
 CrawlJob the_job = (CrawlJob)request.getAttribute("job");
+String the_page = (String)request.getAttribute("page");
 String the_jqs = "";
 if(the_job != null){
     the_jqs = Text.jobQueryString(request);
@@ -23,8 +24,15 @@ String the_sheet = (String)request.getAttribute("sheet");
 %>
 
 <div style="float:right">
-<a href="<%=request.getContextPath()%>/help/do_show_about_ui.jsp">About</a><br/>
-<a href="<%=request.getContextPath()%>/help/do_show_help.jsp">Help&rarr;</a>
+<a href="<%=request.getContextPath()%>/help/do_show_help.jsp">About</a><br/>
+<% if (the_page != null) { %>
+
+  <a 
+     title="Get help on this page from the Heritrix wiki (external link)"
+     href="http://webteam.archive.org/confluence/display/Heritrix/<%=the_page%>">
+     Help&rarr;</a>
+     
+<% } %>
 </div>
 
 <table>
