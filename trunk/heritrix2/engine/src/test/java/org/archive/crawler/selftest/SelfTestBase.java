@@ -252,6 +252,8 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         String[] args = { "-j", path + "/jobs", "-n" };
         heritrixThread = new HeritrixThread(args);
         heritrixThread.start();
+        
+        configureHeritrix();
 
         // Wait up to 20 seconds for the main OpenMBean to appear.
         ObjectName cjm = getEngine();
@@ -269,6 +271,11 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // CrawlController for the job.  Find the CrawlController.
         
         waitFor("org.archive.crawler:*,name=basic,type=org.archive.crawler.framework.CrawlController", true);
+    }
+    
+    
+    protected void configureHeritrix() throws Exception {
+        
     }
     
     
@@ -324,6 +331,14 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         File selftest = new File(tmp, "selftest");
         File crawl = new File(selftest, getSelfTestName());
         return crawl;
+    }
+    
+    
+    protected File getReadyJobDir() {
+        File crawl = getCrawlDir();
+        File jobs = new File(crawl, "jobs");
+        File theJob = new File(jobs, "ready-basic");
+        return theJob;
     }
     
     
