@@ -131,12 +131,12 @@ public interface Engine extends Closeable {
     String readFile(
             @Parameter(name="job", desc="The job whose file to read.")
             String job,
-            
-            @Parameter(name="filename", desc="An optional filename if the settingsPath resolves to a directory.")
-            String filename,
 
             @Parameter(name="settingsPath", desc="The settings path to a file setting in that job.")
             String settingsPath,
+
+            @Parameter(name="filename", desc="An optional filename if the settingsPath resolves to a directory.")
+            String filename,
             
             @Parameter(name="startPos", desc="The starting byte offset in that file.")
             long startPos,
