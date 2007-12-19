@@ -509,12 +509,16 @@ public class EngineImpl extends Bean implements Engine {
             String fileName, long startPos, int length) throws IOException {
         String path = getFilePath(job, settingsPath);
         File f = new File(path);
+        if (fileName != null) {
+            f = new File(f, fileName);
+        }
         byte[] buf;
         RandomAccessInputStream raf = null;
         try {
             raf = new RandomAccessInputStream(f);
             raf.position(startPos);
             length = Math.min(length, (int)(f.length() - startPos));
+            length = Math.max(length, 0);
             buf = new byte[length];
             IoUtils.readFully(raf, buf);
         } finally {
