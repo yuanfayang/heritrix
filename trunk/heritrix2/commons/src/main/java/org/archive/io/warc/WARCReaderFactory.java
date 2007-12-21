@@ -105,7 +105,7 @@ implements WARCConstants {
 			throws IOException {
 		// For now, assume stream is compressed. Later add test of input
 		// stream or handle exception thrown when figure not compressed stream.
-		return new CompressedWARCReader(f, is, atFirstRecord);
+		return new CompressedWARCReader(f, asRepositionable(is), atFirstRecord);
 	}
     
     public static WARCReader get(final URL arcUrl, final long offset)
