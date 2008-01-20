@@ -141,8 +141,13 @@ public class PrecedenceLoader {
                 map.put(A_PRECALC_PRECEDENCE, precedence);
                 historyMap.put(key,map);
                 count++;
+                if(count % 100000 == 0) {
+                    System.out.print(count+"... ");
+                }
             }
             br.close();
+            System.out.println();
+            System.out.println(count+" entries loaded");
         } else {
             // error
             System.err.println("unacceptable source file");
