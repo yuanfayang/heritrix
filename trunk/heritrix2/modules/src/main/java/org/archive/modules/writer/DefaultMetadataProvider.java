@@ -73,19 +73,22 @@ public class DefaultMetadataProvider implements
     final public static Key<String> HTTP_USER_AGENT =
         KeyMaker
             .make("Mozilla/5.0 (compatible; heritrix/@VERSION@ +@OPERATOR_CONTACT_URL@)")
-            .addConstraint(new PatternConstraint(Pattern.compile("^.*\\+@OPERATOR_CONTACT_URL@.*$")))
+            .addConstraint(new PatternConstraint(
+                    Pattern.compile("^.*\\+@OPERATOR_CONTACT_URL@.*$")))
             .toKey();
     
     final public static Key<String> OPERATOR_FROM =
         KeyMaker
             .make("ENTER-A-CONTACT-EMAIL-FOR-CRAWL-OPERATOR")
-            .addConstraint(new PatternConstraint(Pattern.compile("^[-\\w]+@[-\\w]+\\.[-\\w\\.]+$")))
+            .addConstraint(new PatternConstraint(
+                    Pattern.compile("^\\S+@[-\\w]+\\.[-\\w\\.]+$")))
             .toKey();
     
     final public static Key<String> OPERATOR_CONTACT_URL =
         KeyMaker
             .make("ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR")
-            .addConstraint(new PatternConstraint(Pattern.compile("^https?://.*$")))
+            .addConstraint(new PatternConstraint(
+                    Pattern.compile("^https?://.*$")))
             .toKey();
     
     @Immutable
