@@ -59,6 +59,7 @@ import org.archive.crawler.framework.JobStage;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JndiUtils;
+import org.archive.ws.jmxadaptor.JmxAdaptor;
 
 
 /**
@@ -153,6 +154,8 @@ public class Heritrix {
         options.addOption("a", "webui-admin", true,  "Specifies the " +
         		"authorization password which must be supplied to " +
         		"access the webui. Required if launching the webui.");
+        options.addOption("P", "ws-port", true, "The port the JMX HTTP adaptor " + 
+        		"should listen on.");
         return options;
     }
     
@@ -273,6 +276,13 @@ public class Heritrix {
         if (cl.hasOption('p')) {
             int port = Integer.parseInt(cl.getOptionValue('p'));
             webConfig.setPort(port);
+        }
+        if (cl.hasOption('P')) {
+            int port = Integer.parseInt(cl.getOptionValue('P'));
+            JmxAdaptor adaptor = new JmxAdaptor(port);
+            ObjectName name = new ObjectName("Server:name=HttpAdaptor");
+            config.getServer().registerMBean(adaptor, name);
+            adaptor.start();
         }
         if (cl.hasOption('w')) {
             webConfig.setPathToWAR(cl.getOptionValue('w'));
