@@ -19,6 +19,15 @@ public class JmxAdaptor extends HttpAdaptor {
         // Register our replacement command processors.
         removeCommandProcessor("mbean");
         addCommandProcessor("mbean", "org.archive.ws.jmxadaptor.MBeanCommandProcessor");
+        
+        removeCommandProcessor("getattribute");
+        addCommandProcessor("getattribute", "org.archive.ws.jmxadaptor.GetAttributeCommandProcessor");
+
+        removeCommandProcessor("setattribute");
+        addCommandProcessor("setattribute", "org.archive.ws.jmxadaptor.SetAttributeCommandProcessor");
+        
+        removeCommandProcessor("invoke");
+        addCommandProcessor("invoke", "org.archive.ws.jmxadaptor.InvokeOperationCommandProcessor");
         return result;
     }
 

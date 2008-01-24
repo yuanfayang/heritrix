@@ -39,7 +39,7 @@
                   <format property="timestamp" pattern="yyyyMMdd.HHmmss" />
                 </tstamp>
                 <delete failonerror="false" file="target/classes/org/archive/util/timestamp.txt" />
-                <echo file="target/classes/org/archive/util/timestamp.txt" message="timestamp=${timestamp}" />
+                <echo message="timestamp=${timestamp}" file="target/classes/org/archive/util/timestamp.txt" />
               </tasks>
             </configuration>
           </execution>
@@ -208,6 +208,11 @@
       <groupId>mx4j</groupId>
       <artifactId>mx4j-tools</artifactId>
       <version>3.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.thoughtworks.xstream</groupId>
+      <artifactId>xstream</artifactId>
+      <version>1.2.2</version>
     </dependency>
   </dependencies>
 </project>
