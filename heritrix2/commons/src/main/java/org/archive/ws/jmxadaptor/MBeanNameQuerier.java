@@ -15,33 +15,37 @@ import mx4j.tools.adaptor.http.HttpInputStream;
  */
 public class MBeanNameQuerier {
     protected MBeanServer server;
-    
+
     public String patternStringForType(String type, String job) {
         String pattern = "*:*";
-        
+
         if (type != null) {
             pattern += ",type=" + type;
         }
-        
+
         if (job != null) {
             pattern += ",name=" + job;
         }
         return pattern;
     }
-    
-    public ObjectName patternByHttpVars(HttpInputStream in) throws MalformedObjectNameException, NullPointerException {
+
+    public ObjectName patternByHttpVars(HttpInputStream in)
+            throws MalformedObjectNameException, NullPointerException {
         String objName = in.getVariable("objectname");
         if (objName != null && !objName.equals("")) {
             return new ObjectName(objName);
         }
-        
-        objName = patternStringForType(in.getVariable("type"), in.getVariable("job"));
+
+        objName = patternStringForType(in.getVariable("type"), in
+                .getVariable("name"));
         return new ObjectName(objName);
     }
-    
-    public Set<ObjectName> namesByHttpVars(HttpInputStream in) throws MalformedObjectNameException {
+
+    public Set<ObjectName> namesByHttpVars(HttpInputStream in)
+            throws MalformedObjectNameException {
         ObjectName objectName = patternByHttpVars(in);
-        Set<ObjectName> names = new TreeSet<ObjectName>(CommandProcessorUtil.createObjectNameComparator());
+        Set<ObjectName> names = new TreeSet<ObjectName>(CommandProcessorUtil
+                .createObjectNameComparator());
         names.addAll(server.queryNames(objectName, null));
         return names;
     }
