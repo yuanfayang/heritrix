@@ -15,7 +15,10 @@ public class JmxAdaptor extends HttpAdaptor {
     public ObjectName preRegister(MBeanServer server, ObjectName name)
             throws Exception {
         ObjectName result = super.preRegister(server, name);
-        // TODO: Register our replacement command processors.
+        
+        // Register our replacement command processors.
+        removeCommandProcessor("mbean");
+        addCommandProcessor("mbean", "org.archive.ws.jmxadaptor.MBeanCommandProcessor");
         return result;
     }
 
