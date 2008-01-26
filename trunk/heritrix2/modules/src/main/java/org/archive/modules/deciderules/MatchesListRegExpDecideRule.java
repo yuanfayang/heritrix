@@ -64,7 +64,7 @@ public class MatchesListRegExpDecideRule extends PredicatedAcceptDecideRule {
      * AND when matching. False if the list of regular expressions should be
      * considered as logically OR when matching.
      */
-    final public static Key<Boolean> LIST_LOGIC = Key.make(true);
+    final public static Key<Boolean> LIST_LOGICAL_OR = Key.make(true);
     
     static {
         KeyManager.addKeys(MatchesListRegExpDecideRule.class);
@@ -88,7 +88,7 @@ public class MatchesListRegExpDecideRule extends PredicatedAcceptDecideRule {
         }
 
         String str = uri.toString();
-        boolean listLogicOR = uri.get(this, LIST_LOGIC);
+        boolean listLogicOR = uri.get(this, LIST_LOGICAL_OR);
 
         for (Pattern p: regexps) {
             boolean matches = p.matcher(str).matches();
