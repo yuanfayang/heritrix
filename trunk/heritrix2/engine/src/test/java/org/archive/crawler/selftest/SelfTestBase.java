@@ -394,7 +394,11 @@ public abstract class SelfTestBase extends TmpDirTestCase {
                 throw new IllegalStateException("Could not find " + 
                         name + " after 20 seconds.");
             }
-            Thread.sleep(500);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ie) {
+                System.err.println("SelfTestBase.waitFor() sleep interrupted");
+            }
             set = server.queryNames(null, name);
             if (set.size() > 1) {
                 throw new IllegalStateException(set.size() + " matches for " + query);
