@@ -26,6 +26,7 @@
 
     <form name="passwordForm">
     Auth? <input method="POST" type="password" name="enteredPassword"/>
+    <input type="submit" value="go"/>
     </form>
 
     </body>
