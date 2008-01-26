@@ -128,7 +128,7 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
 
         final boolean overlyEagerLinkDetection =
             ((Boolean)getUncheckedAttribute(
-                curi, ATTR_OVERLY_EAGER_LINK_DETECTION)).booleanValue();
+                curi, EXTRACT_VALUE_ATTRIBUTES)).booleanValue();
 
         // HREF
         if (((attr = attributes.get("href")) != null) &&

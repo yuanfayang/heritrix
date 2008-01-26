@@ -178,8 +178,8 @@ implements CoreAttributeConstants {
     public static final String ATTR_EXTRACT_JAVASCRIPT =
         "extract-javascript";
 
-    public static final String ATTR_OVERLY_EAGER_LINK_DETECTION =
-        "overly-eager-link-detection";
+    public static final String EXTRACT_VALUE_ATTRIBUTES =
+        "extract-value-attributes";
     
     public static final String ATTR_IGNORE_UNEXPECTED_HTML = 
         "ignore-unexpected-html";
@@ -221,9 +221,10 @@ implements CoreAttributeConstants {
                 "will be ignored. Default is true", Boolean.TRUE));
         t.setExpertSetting(true);
         t = addElementToDefinition(
-            new SimpleType(ATTR_OVERLY_EAGER_LINK_DETECTION,
-            "If true, strings that look like URIs found in unusual " +
-            "places (such as form VALUE attributes) will be extracted. " +
+            new SimpleType(EXTRACT_VALUE_ATTRIBUTES,
+            "If true, strings that look like URIs found in element VALUE " +
+            "attributes (which are sometimes used as URIs by in-page " +
+            "Javascript or server-side redirects) will be extracted. " +
             "This typically finds both valid and invalid URIs, and " +
             "attempts to fetch the invalid URIs sometimes generate " +
             "webmaster concerns over odd crawler behavior. Default " +
@@ -258,8 +259,8 @@ implements CoreAttributeConstants {
         final boolean ignoreFormActions = ((Boolean)getUncheckedAttribute(curi,
                 ATTR_IGNORE_FORM_ACTION_URLS)).booleanValue();
         
-        final boolean overlyEagerLinkDetection = ((Boolean)getUncheckedAttribute
-                (curi, ATTR_OVERLY_EAGER_LINK_DETECTION)).booleanValue();
+        final boolean extractValueAttributes = ((Boolean)getUncheckedAttribute
+                (curi, EXTRACT_VALUE_ATTRIBUTES)).booleanValue();
         
         final String elementStr = element.toString();
 
@@ -363,7 +364,7 @@ implements CoreAttributeConstants {
                 }
             } else if (attr.start(10) > -1) {
                 // VALUE, with possibility of URI
-                if (overlyEagerLinkDetection 
+                if (extractValueAttributes 
                         && TextUtils.matches(LIKELY_URI_PATH, value)) {
                     CharSequence context = Link.elementContext(element,
                         attr.group(10));
