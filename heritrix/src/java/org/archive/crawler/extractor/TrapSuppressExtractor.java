@@ -21,16 +21,10 @@
  */
 package org.archive.crawler.extractor;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.ToeThread;
 
 
 /** 
