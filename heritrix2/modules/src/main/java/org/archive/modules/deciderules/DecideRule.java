@@ -37,7 +37,8 @@ public abstract class DecideRule implements Module, Serializable {
     
     final public static Key<Boolean> ENABLED = Key.make(true);
 
-    
+    final public static Key<String> COMMENT = Key.make("");
+
     static {
         KeyManager.addKeys(DecideRule.class);
     }
