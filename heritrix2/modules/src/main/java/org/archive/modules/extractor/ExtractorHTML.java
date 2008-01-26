@@ -225,7 +225,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * generate webmaster concerns over odd crawler behavior. Default is true.
      */
     @Expert
-    public static final Key<Boolean> OVERLY_EAGER_LINK_DETECTION =
+    public static final Key<Boolean> EXTRACT_VALUE_ATTRIBUTES =
         Key.make(true);
     
 
@@ -304,8 +304,8 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         final boolean ignoreFormActions = 
             curi.get(this, IGNORE_FORM_ACTION_URLS);
         
-        final boolean overlyEagerLinkDetection = 
-            curi.get(this, OVERLY_EAGER_LINK_DETECTION);
+        final boolean extractValueAttributes = 
+            curi.get(this, EXTRACT_VALUE_ATTRIBUTES);
         
         final String elementStr = element.toString();
 
@@ -398,7 +398,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
                 }
             } else if (attr.start(10) > -1) {
                 // VALUE, with possibility of URI
-                if (overlyEagerLinkDetection
+                if (extractValueAttributes
                         && TextUtils.matches(LIKELY_URI_PATH, value)) {
                     CharSequence context = elementContext(element,
                         attr.group(10));

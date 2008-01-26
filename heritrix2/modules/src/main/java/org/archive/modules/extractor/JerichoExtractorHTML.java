@@ -128,7 +128,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
                 IGNORE_FORM_ACTION_URLS);
 
         final boolean overlyEagerLinkDetection = curi.get(this, 
-                OVERLY_EAGER_LINK_DETECTION);
+                EXTRACT_VALUE_ATTRIBUTES);
 
         // HREF
         if (((attr = attributes.get("href")) != null) &&

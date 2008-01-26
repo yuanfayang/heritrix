@@ -22,9 +22,10 @@ If true, only ACTION URIs with a METHOD of GET (explicit or implied)
 are extracted. Default is true.
 
 
-overly-eager-link-detection-description:
-If true, strings that look like URIs found in unusual places (such as
-form VALUE attributes) will be extracted. This typically finds both
+extract-value-attributes-description:
+If true, strings that look like URIs found in element VALUE attributes 
+(which are sometimes used as URIs by in-page Javascript or server-side 
+redirects) will be extracted. This typically finds both
 valid and invalid URIs, and attempts to fetch the invalid URIs sometimes
 generate webmaster concerns over odd crawler behavior. Default is true.
 
