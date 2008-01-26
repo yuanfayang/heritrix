@@ -134,15 +134,26 @@ public abstract class ModuleTestBase extends TestCase {
         return null;
     }
     
-
     /**
-     * Returns the class of the module to test.
+     * Returns the class of the module to test. Deduces from 
+     * test class name if possible. 
      * 
      * @return   the class of the module to test
      */
-    protected abstract Class<?> getModuleClass();
-    
-    
+    protected Class<?> getModuleClass() {
+        String myClassName = this.getClass().getCanonicalName();
+        if(!myClassName.endsWith("Test")) {
+            throw new UnsupportedOperationException(
+                    "Cannot get module class of "+myClassName);
+        }
+        String moduleClassName = myClassName.substring(0,myClassName.length()-4);
+        try {
+            return Class.forName(moduleClassName);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Return an example instance of the module.  This is used by 
      * testSerialization to ensure the module can be serialized.
@@ -150,8 +161,9 @@ public abstract class ModuleTestBase extends TestCase {
      * @return   an example instance of the module
      * @throws Exception   if the module cannot be constructed for any reason
      */
-    protected abstract Object makeModule() throws Exception ;
-
+    protected Object makeModule() throws Exception {
+        return getModuleClass().newInstance();
+    }
 
     /**
      * Tests that the processor developer remembered to invoke 

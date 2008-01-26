@@ -31,7 +31,7 @@ import org.archive.state.Key;
 import org.archive.state.KeyManager;
 
 /**
- * PredicatedDecideRule whose default decision is REJECT.
+ * PredicatedDecideRule whose default decision is ACCEPT.
  * 
  * @author pjack
  */

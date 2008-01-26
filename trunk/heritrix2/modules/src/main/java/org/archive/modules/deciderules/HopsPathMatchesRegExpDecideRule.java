@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -34,9 +35,7 @@ import org.archive.modules.ProcessorURI;
  * @author gojomo
  */
 public class HopsPathMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
-
     private static final long serialVersionUID = 3L;
-
 
     /**
      * Usual constructor. 
@@ -51,4 +50,7 @@ public class HopsPathMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
         return uri.getPathFromSeed();
     }
     
+    static {
+        KeyManager.addKeys(HopsPathMatchesRegExpDecideRule.class);
+    }
 }
