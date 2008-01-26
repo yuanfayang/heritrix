@@ -54,6 +54,7 @@ import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy;
 import org.archive.crawler.frontier.precedence.CostUriPrecedencePolicy;
 import org.archive.crawler.frontier.precedence.QueuePrecedencePolicy;
@@ -1269,6 +1270,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print("          Exhausted queues: ");
         w.print(exhaustedCount);
         w.print("\n");
+        
+        w.print("\n -----===== MANAGER THREAD =====-----\n");
+        ToeThread.reportThread(managerThread, w);
         
         w.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
         @SuppressWarnings("unchecked")

@@ -217,7 +217,7 @@ public class ToePool extends ThreadGroup implements Reporter {
         writer.print(" Job being crawled: "
                 + this.controller.getSheetManager().getCrawlName() + "\n");
         writer.print(" Number of toe threads in pool: " + getToeCount() + " ("
-                + getActiveToeCount() + " active)\n");
+                + getActiveToeCount() + " active)\n\n");
 
         Thread[] toes = this.getToes();
         synchronized (toes) {
@@ -227,9 +227,6 @@ public class ToePool extends ThreadGroup implements Reporter {
                 }
                 ToeThread tt = (ToeThread) toes[i];
                 if (tt != null) {
-                    writer
-                            .print("   ToeThread #" + tt.getSerialNumber()
-                                    + "\n");
                     tt.reportTo(writer);
                 }
             }
