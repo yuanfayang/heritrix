@@ -81,10 +81,8 @@ import org.mortbay.jetty.webapp.WebAppContext;
  * @author pjack
  */
 public class WebUIJUnit extends TmpDirTestCase {
-    
-
-    /** Jetty server. */
-    private Server server;
+        
+    WebUI webui;
     
     /** Crawler instance. */
     private EngineImpl manager;
@@ -108,15 +106,13 @@ public class WebUIJUnit extends TmpDirTestCase {
      */
     public void setUp() throws Exception {
         // Start Jetty.
-        
-        server = new Server();
 
         WebUIConfig webConf = new WebUIConfig();
         webConf.setPort(7777);
         webConf.setPathToWAR(WebUITestMain.getWebAppDir().getAbsolutePath());
         webConf.setUiPassword("x");
         
-        WebUI webui = new WebUI(webConf);
+        webui = new WebUI(webConf);
         webui.start();
         
         // Start Heritrix.
@@ -138,12 +134,7 @@ public class WebUIJUnit extends TmpDirTestCase {
      * Stops Jetty, stops Heritrix.
      */
     public void tearDown() {
-        try {
-            server.stop();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
+        webui.stop();
         manager.close();        
     }
     
@@ -547,10 +538,9 @@ public class WebUIJUnit extends TmpDirTestCase {
     private String find(String regex) {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(this.lastFetched);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        throw new IllegalStateException("Didn't find expected pattern: " + regex);
+        boolean found = matcher.find(); 
+        assertTrue("Didn't find expected pattern: " + regex, found);
+        return matcher.group(1);
     }
     
     
