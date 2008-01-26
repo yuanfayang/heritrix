@@ -79,9 +79,9 @@ public class DefaultMetadataProvider implements
     
     final public static Key<String> OPERATOR_FROM =
         KeyMaker
-            .make("ENTER-A-CONTACT-EMAIL-FOR-CRAWL-OPERATOR")
+            .make("")
             .addConstraint(new PatternConstraint(
-                    Pattern.compile("^\\S+@[-\\w]+\\.[-\\w\\.]+$")))
+                    Pattern.compile("^(\\s*|\\S+@[-\\w]+\\.[-\\w\\.]+)$")))
             .toKey();
     
     final public static Key<String> OPERATOR_CONTACT_URL =
