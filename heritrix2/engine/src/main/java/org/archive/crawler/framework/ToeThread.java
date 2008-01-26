@@ -533,9 +533,28 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         }
         pw.print(ArchiveUtils.formatMillisecondsToConventional(time));
         pw.println();
+
+        pw.print("    ");
+        pw.print("step: ");
+        pw.print(step);
+        pw.print(" for ");
+        pw.print(ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-atStepSince));
+        pw.println();
+
+        reportThread(this, pw);
+        pw.print("]");
+        pw.println();
         
+        pw.flush();
+    }
+
+    /**
+     * @param t Thread
+     * @param pw PrintWriter
+     */
+    static public void reportThread(Thread t, PrintWriter pw) {
         ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
-        ThreadInfo info = tmxb.getThreadInfo(this.getId());
+        ThreadInfo info = tmxb.getThreadInfo(t.getId());
         pw.print("Java Thread State: ");
         pw.println(info.getThreadState());
         pw.print("Blocked/Waiting On: ");
@@ -549,24 +568,13 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         } else {
             pw.println("NONE");
         }
-
-        pw.print("    ");
-        pw.print("step: ");
-        pw.print(step);
-        pw.print(" for ");
-        pw.print(ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-atStepSince));
-        pw.println();
-
-        StackTraceElement[] ste = this.getStackTrace();
+        
+        StackTraceElement[] ste = t.getStackTrace();
         for(int i=0;i<ste.length;i++) {
             pw.print("    ");
             pw.print(ste[i].toString());
             pw.println();
         }
-        pw.print("]");
-        pw.println();
-        
-        pw.flush();
     }
 
     /**
