@@ -69,6 +69,7 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.apache.commons.lang.StringUtils;
 
 import static org.archive.modules.ProcessorURI.FetchType.HTTP_POST;
 import static org.archive.modules.fetcher.FetchErrors.*;
@@ -739,7 +740,9 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         }
         
         method.setRequestHeader("User-Agent", userAgent);
-        method.setRequestHeader("From", from);
+        if(StringUtils.isNotBlank(from)) {
+            method.setRequestHeader("From", from);
+        }
 
         // Set retry handler.
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,

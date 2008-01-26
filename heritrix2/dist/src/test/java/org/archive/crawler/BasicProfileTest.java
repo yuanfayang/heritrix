@@ -44,9 +44,8 @@ public class BasicProfileTest extends TmpDirTestCase {
         new FileOutputStream(config).close();
         
         int errors = Validator.validate(config.getAbsolutePath());
-        // We expect two errors:
+        // We expect one error:
         //  root:metadata:operator-contact-url=string, ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR
-        //  root:metadata:operator-from=string, ENTER-A-CONTACT-EMAIL-FOR-CRAWL-OPERATOR
-        assertEquals(2, errors);
+        assertEquals(1, errors);
     }
 }
