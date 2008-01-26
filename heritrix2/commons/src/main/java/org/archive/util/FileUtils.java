@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -279,7 +280,9 @@ public class FileUtils {
             String message = "Copying " + src.getAbsolutePath() + " to " +
                 dest.getAbsolutePath() + " with extent " + extent +
                 " got IOE: " + e.getMessage();
-            if ((e.getMessage()!=null)&&e.getMessage().equals("Invalid argument")) {
+            if ((e instanceof ClosedByInterruptException) ||
+                    ((e.getMessage()!=null)
+                            &&e.getMessage().equals("Invalid argument"))) {
                 LOGGER.severe("Failed copy, trying workaround: " + message);
                 workaroundCopyFile(src, dest);
             } else {
