@@ -81,7 +81,7 @@ public class LinksScoper extends Scoper implements PostProcessor {
      * INFO). Depends on {@link Scoper#OVERRIDE_LOGGER} being enabled.
      */
     @Expert
-    final public static Key<DecideRuleSequence> REJECT_RULES = 
+    final public static Key<DecideRuleSequence> LOG_REJECTS_RULES = 
         Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
 
     
@@ -232,7 +232,7 @@ public class LinksScoper extends Scoper implements PostProcessor {
         if (!LOGGER.isLoggable(Level.INFO)) {
             return;
         }
-        DecideRuleSequence seq = caUri.get(this, REJECT_RULES);
+        DecideRuleSequence seq = caUri.get(this, LOG_REJECTS_RULES);
         if (seq.decisionFor(caUri) == DecideResult.ACCEPT) {
             LOGGER.info(caUri.getUURI().toString());
         }
