@@ -23,7 +23,6 @@ package org.archive.modules.extractor;
 
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.modules.ProcessorURI;
 
 
@@ -34,7 +33,7 @@ import org.archive.modules.ProcessorURI;
  * @author gojomo
  *
  */
-public class TrapSuppressExtractor extends ContentExtractor implements CoreAttributeConstants {
+public class TrapSuppressExtractor extends ContentExtractor  {
     private static final long serialVersionUID = -1028783453022579530L;
 
     private static final Logger LOGGER =
