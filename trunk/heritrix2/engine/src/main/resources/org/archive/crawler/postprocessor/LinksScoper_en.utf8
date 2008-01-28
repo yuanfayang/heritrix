@@ -12,9 +12,9 @@ with all discovered links processed before remaining seeds. Seed
 redirects are treated as one hop from a seed. 
 
 
-reject-rules-description:
-DecideRules applied after an URI has been rejected. If the rules return 
-ACCEPT, the URI is logged (if the logging level is 
+log-rejects-rules-description:
+DecideRules applied to URIs that have been rejected by normal scoping. 
+If the rules return ACCEPT, the URI is logged (if the logging level is 
 INFO). Depends on override-logger being enabled. 
 
 
