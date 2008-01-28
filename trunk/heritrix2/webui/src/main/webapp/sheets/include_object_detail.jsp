@@ -75,10 +75,10 @@ if (type.equals("auto")) {
   <td>
    <label for="reuse_select">
    Pick an existing object to reuse:<br/>
+   </label>
    <select name="reuse_known">
    <% the_settings.printReuseOptions(out, the_setting); %>
    </select>
-   </label>
   </td>
  </tr>
  <tr>
@@ -106,10 +106,10 @@ if (type.equals("auto")) {
   <td>
    <label for="create_select">
    Pick an object type to create:<br/>
+   </label>
    <select name="create_known">
    <% the_settings.printCreateOptions(out, the_setting); %>
    </select>
-   </label>
   </td>
  </tr>
  <tr>
