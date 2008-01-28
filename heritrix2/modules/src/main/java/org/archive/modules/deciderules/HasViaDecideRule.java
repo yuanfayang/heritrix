@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 
@@ -52,5 +53,9 @@ public class HasViaDecideRule extends PredicatedAcceptDecideRule {
     @Override
     protected boolean evaluate(ProcessorURI uri) {
         return uri.getVia() != null;
+    }
+    
+    static {
+        KeyManager.addKeys(HasViaDecideRule.class);
     }
 }
