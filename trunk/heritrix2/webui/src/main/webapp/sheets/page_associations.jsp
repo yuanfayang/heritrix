@@ -21,7 +21,7 @@ String add = (String)Text.get(request, "add");
 
 One entry per line. SURT prefixes entered will be used directly. If the option
 below is checked, other URIs will be converted to SURT form then truncated to 
-the implied prefix, and lain hosts/domains will be changed to the implied 
+the implied prefix, and plain hosts/domains will be changed to the implied 
 HTTP URI then converted as above. (If unchecked, all strings are accepted
 literally.)
 
