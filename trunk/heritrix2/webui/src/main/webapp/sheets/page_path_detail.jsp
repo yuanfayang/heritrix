@@ -49,9 +49,9 @@ input.textbox { width: 400px; }
 <p>Enter a value for the setting below.
 
 <% if (setting.isObjectType()) { %>
-<form action="do_save_object_path.jsp" method="post">
+<form action="do_save_object_path.jsp#<%=Text.attr(path)%>" method="post">
 <% } else { %>
-<form action="do_save_path.jsp" method="post">
+<form action="do_save_path.jsp#<%=Text.attr(path)%>" method="post">
 <% } %>
 <% Text.printSheetFormFields(request, out); %>
 <input type="hidden" name="path" value="<%=Text.attr(path)%>">
