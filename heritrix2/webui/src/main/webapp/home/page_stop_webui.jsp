@@ -13,24 +13,15 @@
 
 <%@include file="/include/nav.jsp"%>
 
-<h3>Stop the web UI?</h3>
+<h3>Stop the web UI Java VM process?</h3>
+
+Any engines in the same Java VM will also be stopped.<p>
 
 You will have to restart it from the command line.
 
-<table>
-<tr>
-<td>
- <form method="get" action="do_show_home.jsp">
- <input type="submit" value="Cancel">
- </form>
-</td>
-<td>
  <form method="post" action="do_stop_webui.jsp">
- <input type="submit" value="Stop">
+ <input type="submit" value="Stop Web UI JVM">
  </form>
-</td>
-</tr>
-</table>
 
 </body>
 </html>
