@@ -49,7 +49,7 @@ public class TrapSuppressExtractor extends ContentExtractor  {
      * Usual constructor. 
      * @param name
      */
-    public TrapSuppressExtractor(String name) {
+    public TrapSuppressExtractor() {
     }
 
     protected boolean shouldExtract(ProcessorURI uri) {
