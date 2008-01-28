@@ -103,7 +103,7 @@ for (Setting s: settings.getSettings()) {
 
 <% String action = settings.isObjectElementType(setting) ? "do_add_object_element.jsp" : "do_add_element.jsp"; %>
 
-<form action="<%=action%>" method="post">
+<form action="<%=action%>#<%=Text.attr(path)%>" method="post">
 <% Text.printSheetFormFields(request, out); %>
 <input type="hidden" name="path" value="<%=Text.attr(setting.getPath())%>">
 
