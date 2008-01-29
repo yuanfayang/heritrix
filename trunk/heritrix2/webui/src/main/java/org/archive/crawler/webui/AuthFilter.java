@@ -62,10 +62,18 @@ public class AuthFilter implements Filter {
                 this.filterConfig.getInitParameter("authUrl");
             boolean isAuth = Boolean.TRUE.equals(httpReq.getSession(true).getAttribute(IS_AUTHORIZED));
             if (!isAuth && !authUrl.equals(path)) {
-                httpReq.getSession(true).setAttribute(CONTINUE_URL, path);
-                // direct all requests that are unauth to auth
-                ((HttpServletResponse)res).sendRedirect(authUrl);
-                return;
+              // If there is a queryString, we need to append "?" +
+              // queryString to the redir path.  Otherwise leave it
+              // alone.
+              if (httpReq.getQueryString() != null) {
+                  StringBuffer pathBuf = new StringBuffer(path);
+                  pathBuf.append("?").append( httpReq.getQueryString());
+                  path = pathBuf.toString();
+              }
+              httpReq.getSession(true).setAttribute(CONTINUE_URL, path);
+              // direct all requests that are unauth to auth
+              ((HttpServletResponse)res).sendRedirect(authUrl);
+              return;
             }
         }
         chain.doFilter(req, res);
