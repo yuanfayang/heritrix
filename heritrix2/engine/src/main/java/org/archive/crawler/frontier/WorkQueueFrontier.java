@@ -566,64 +566,75 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                 activationsWanted--;
             }
                    
+            // find a non-empty ready queue, if any 
             WorkQueue readyQ = null;
-            String key = readyClassQueues.poll();
-            if (key != null) {
+            do {
+                String key = readyClassQueues.poll();
+                if(key== null) {
+                    // no ready queues
+                    break;
+                }
                 readyQ = getQueueFor(key);
-            }
+                if(readyQ==null) {
+                     // readyQ key wasn't in all queues: unexpected
+                    logger.severe("Key "+ key +
+                        " in readyClassQueues but not allQueues");
+                    break;
+                }
+                if(readyQ.getCount()==0) {
+                    // readyQ is empty and ready: it's exhausted
+                    // release held status, allowing any subsequent 
+                    // enqueues to again put queue in ready
+                    readyQ.clearHeld();
+                    readyQ = null;
+                }
+            } while (readyQ == null);
+            
             if (readyQ != null) {
                 assert !inProcessQueues.contains(readyQ) : "double activation";
                 while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
-                    curi = readyQ.peek(this);                     
-                    if (curi != null) {
-                        curi.setStateProvider(manager);
-                        
-                        // check if curi belongs in different queue
-                        String currentQueueKey = getClassKey(curi);
-                        if (currentQueueKey.equals(curi.getClassKey())) {
-                            // curi was in right queue, emit
-                            noteAboutToEmit(curi, readyQ);
-                            inProcessQueues.add(readyQ);
-                            return curi;
-                        }
-                        // URI's assigned queue has changed since it
-                        // was queued (eg because its IP has become
-                        // known). Requeue to new queue.
-                        readyQ.dequeue(this,curi);
-                        doJournalRelocated(curi);
-                        curi.setClassKey(currentQueueKey);
-                        decrementQueuedCount(1);
-                        curi.setHolderKey(null);
-                        // curi will be requeued to true queue after lock
-                        //  on readyQ is released, to prevent deadlock
-                    } else {
-                        // readyQ is empty and ready: it's exhausted
-                        // release held status, allowing any subsequent 
-                        // enqueues to again put queue in ready
-                        readyQ.clearHeld();
+                    curi = readyQ.peek(this);   
+                    if(curi == null) {
+                        // should not reach
+                        logger.severe("No CrawlURI from ready non-empty queue "
+                                + readyQ.classKey);
                         break;
                     }
-                    if(curi!=null) {
-                        // complete the requeuing begun earlier
-                        sendToQueue(curi);
+                    
+                    curi.setStateProvider(manager);
+                    
+                    // check if curi belongs in different queue
+                    String currentQueueKey = getClassKey(curi);
+                    if (currentQueueKey.equals(curi.getClassKey())) {
+                        // curi was in right queue, emit
+                        noteAboutToEmit(curi, readyQ);
+                        inProcessQueues.add(readyQ);
+                        return curi;
                     }
-                }
-            } else {
-                // ReadyQ key wasn't in all queues: unexpected
-                if (key != null) {
-                    logger.severe("Key "+ key +
-                        " in readyClassQueues but not allQueues");
+                    // URI's assigned queue has changed since it
+                    // was queued (eg because its IP has become
+                    // known). Requeue to new queue.
+                    readyQ.dequeue(this,curi);
+                    doJournalRelocated(curi);
+                    curi.setClassKey(currentQueueKey);
+                    decrementQueuedCount(1);
+                    curi.setHolderKey(null);
+                    sendToQueue(curi);
                 }
             }
                 
             if(inProcessQueues.size()==0) {
                 // Nothing was ready or in progress or imminent to wake; ensure 
                 // any piled-up pending-scheduled URIs are considered
-                if(this.alreadyIncluded.requestFlush()>0) {
-                    return findEligibleURI();
-                }
+                this.alreadyIncluded.requestFlush();
             }
+            
+            // never return null if there are any eligible inactives
+            if(getTotalEligibleInactiveQueues()>0) {
+                return findEligibleURI();
+            }
+            
             // nothing eligible
             return null; 
     }
