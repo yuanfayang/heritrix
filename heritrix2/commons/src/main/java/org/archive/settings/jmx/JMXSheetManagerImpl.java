@@ -271,8 +271,10 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
 
         if (o instanceof SettingsList) {
             int index = Integer.parseInt(key);
-            int index2 = up ? index-- : index++;
-            Collections.swap((SettingsList<?>)o, index, index2);
+            int index2 = up ? index - 1 : index + 1;
+            @SuppressWarnings("unchecked")
+            SettingsList<Object> list = (SettingsList<Object>)o;
+            list.swap(index, index2);
         } else if (o instanceof SettingsMap) {
             ((SettingsMap<?>)o).moveElement(key, up);
         } else {
