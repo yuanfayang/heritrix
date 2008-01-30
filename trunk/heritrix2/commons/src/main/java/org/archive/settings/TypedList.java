@@ -29,13 +29,28 @@ package org.archive.settings;
 import java.util.List;
 
 /**
+ * 
+ * 
  * @author pjack
  *
  */
 public interface TypedList<T> extends List<T> {
 
-    
+
+    /**
+     * Returns the element type of the list.
+     * 
+     * @return  the element type of the list.
+     */
     Class<T> getElementType();
 
+    /**
+     * Returns the sheets that defined the element at the given index.
+     * 
+     * @param index    the index of the element
+     * @return         the sheets that defined that element
+     */
     List<Sheet> getSheets(int index);
+
+
 }
