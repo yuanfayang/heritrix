@@ -60,7 +60,20 @@ public class SingleSheet extends Sheet {
      * Maps a module to the Key/Value settings for that module.  The map only
      * keeps weak references to the module; the existence of settings for a
      * module will not prevent that module from being garbage collected.
-     * It's assumed that modules don't override equals() and hashcode().
+     * 
+     * <p>It's assumed that modules don't override equals() and hashcode().
+     * 
+     * <p>This is a map of maps.  The outer Map goes from a module to a 
+     * map of Key->values containing that module's settings.
+     * 
+     * <p>The values contained in the Map<Key<?>,Object> are a little strange.
+     * If a particular Key maps to a simple value, then the Map entry will
+     * contain that Key and its value, which is straightforward.
+     * 
+     * <p>However, if a Key maps to a module type, then the Key Map entry 
+     * will contain that Key and a {@link ModuleInfo} will will eventually 
+     * resolve to the actual module value for the setting.  See 
+     * {@link ModuleInfo} for the rationale behind this bizarre behavior.
      */
     private transient WeakHashMap<Object,Map<Key<?>,Object>> settings;
 
@@ -328,10 +341,50 @@ public class SingleSheet extends Sheet {
     }
 
     /**
-     * Sets a property.
+     * Changes the value for a setting.
+     * 
+     * <p>The rules governing this can be quite complex, depending on the the
+     * type of the setting (the result of {@link Key#getType()}).
+     * 
+     * <p>If the Key has a simple type, then the value of the setting 
+     * simply changes to the given value.  If the given module implements 
+     * {@link KeyChangeListener}, then it will be notified of the changed value.
+     * 
+     * <p>If the Key has a complex type, then the behavior of this method 
+     * depends on three factors.  To describe those factors, let's assume that:
+     * 
+     * <ul>
+     * <li><i>M</i> is the given module.</li>
+     * <li><i>K</i> is the given Key.</li>
+     * <li><i>P</i> is that module's previous value, if any.</li>
+     * <li><i>N</i> is the given new value for the module.</li>
+     * </ul>
+     * 
+     * Given the above, then the three factors are:
+     * 
+     * <ol>
+     * <li>Does <i>M</i> already have a value for <i>K</i> in this sheet?  Put
+     * another way, does <i>P</i> exist?</li>
+     * <li>If so, does <i>K</i> represent the first time that <i>P</i> was 
+     * ever used in this configuration?</li>
+     * </ol>
+     * 
+     * If the answer to either #1 or #2 is no then this 
+     * method will behave the same as for simple types: The new setting is added
+     * to the sheet, and if <i>M</i> is a {@link KeyChangeListener} then it 
+     * will be notified of the change.  Also, all of the {@link ModuleListeners} 
+     * defined in the {@link SheetManager} are notified that <i>N</i> has been
+     * used in the configuration (perhaps again).
+     * 
+     * <p>If the answers to both #1 and #2 are yes, then <i>all</i> settings
+     * that had a value of <i>P</i> are changed to have a value of <i>N</i>.
+     * This is what end users usually expect: If you change the first
+     * definition of the ServerCache, then you expect everything that refers
+     * to the ServerCache to use the new value; you don't expect to have to 
+     * go through every sheet and manually change the value yourself. 
      * 
      * @param <T>         the type of the property to set
-     * @param module   the processor to set the property on
+     * @param module      the module to set the property on
      * @param key         the property to set
      * @param value       the new value for that property, or null to remove
      *     the property from this sheet
