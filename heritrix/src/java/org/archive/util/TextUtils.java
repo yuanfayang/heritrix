@@ -235,23 +235,7 @@ public class TextUtils {
             return cs;
         }
         
-        // If both of these do not equal zero, then cs has entity code
-        int startEntityCode = -1;
-        int endEntityCode = -1;
-    
-        // Check for encodings, make sure start and end are within certain range
-        for (int i = 0; i < cs.length(); i++) {
-            if (cs.charAt(i) == '&') {
-                startEntityCode = i;
-            } else if (cs.charAt(i) == ';' && startEntityCode >= 0 &&
-                    i > startEntityCode &&
-                    ((i - startEntityCode) < MAX_ENTITY_WIDTH)) {
-                endEntityCode = i;
-            }
-        }
-
-        return (startEntityCode != 0 && endEntityCode != 0)?
-            StringEscapeUtils.unescapeHtml(cs.toString()): cs;
+        return StringEscapeUtils.unescapeHtml(cs.toString());
     }
     
     /**
