@@ -110,6 +110,12 @@ public class TextUtilsTest extends TestCase {
         final String entityQuote = "aaa&quot;aaa";
         cs = TextUtils.unescapeHtml(entityQuote);
         assertEquals(cs, "aaa\"aaa");
+        final String hexencoded = "aaa&#x000A;aaa";
+        cs = TextUtils.unescapeHtml(hexencoded);
+        assertEquals(cs, "aaa\naaa");
+        final String zeroPos = "&amp;aaa";
+        cs = TextUtils.unescapeHtml(zeroPos);
+        assertEquals(cs, "&aaa");
     }
     
     public void testUnescapeHtmlWithDanglingAmpersand() {
