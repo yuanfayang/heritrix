@@ -381,6 +381,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
             CompressedStream o = (CompressedStream)this.out;
             o.finish();
             o.flush();
+            o.end();
             this.out = o.getWrappedStream();
         }
     }
@@ -509,7 +510,9 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     
     
     /**
-     * An override so we get access to underlying output stream.
+     * An override so we get access to underlying output stream
+     * and offer an end() that does not accompany closing underlying
+     * stream. 
      * @author stack
      */
     private class CompressedStream extends GZIPOutputStream {
@@ -524,5 +527,17 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
         OutputStream getWrappedStream() {
             return this.out;
         }
+
+        /**
+         * Release the deflater's native process resources,
+         * which otherwise would not occur until either
+         * finalization or DeflaterOutputStream.close() 
+         * (which would also close underlying stream). 
+         */
+        public void end() {
+            def.end();
+        }
+        
+        
     }
 }
