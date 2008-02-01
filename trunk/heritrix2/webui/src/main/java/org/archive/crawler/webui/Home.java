@@ -94,17 +94,22 @@ public class Home {
         for (Crawler c: allCrawlers) {
             Collection<CrawlJob> active = new TreeSet<CrawlJob>();
             actives.put(c, active);
-            JMXConnector jmxc = c.connect();
-            try {
-                Set<ObjectName> onames = Misc.find(jmxc, query);
-                for (ObjectName oname: onames) {
-                    String jobName = oname.getKeyProperty("name");
-                    CrawlJob cj = CrawlJob.determineCrawlStatus(jmxc, jobName, 
-                            JobStage.ACTIVE);
-                    active.add(cj);
+            if (c.getError() == null) {
+                JMXConnector jmxc = null;
+                try {
+                    jmxc = c.connect();
+                    Set<ObjectName> onames = Misc.find(jmxc, query);
+                    for (ObjectName oname: onames) {
+                        String jobName = oname.getKeyProperty("name");
+                        CrawlJob cj = CrawlJob.determineCrawlStatus(jmxc, jobName, 
+                                JobStage.ACTIVE);
+                        active.add(cj);
+                    }
+                } catch (Exception e) {
+                    c.setError(e.getMessage());
+                } finally {
+                    Misc.close(jmxc);
                 }
-            } finally {
-                Misc.close(jmxc);
             }
         }
 
@@ -337,7 +342,6 @@ public class Home {
             Crawler crawler = iter.next();
             Collection<Crawler> all = crawler.testConnection();
             if (all.size() > 0) {
-                iter.remove();
                 result.addAll(all);
             } else {
                 result.add(crawler);
