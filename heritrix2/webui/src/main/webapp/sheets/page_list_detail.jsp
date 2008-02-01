@@ -3,6 +3,7 @@
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.Setting" %>
 <%@ page import="org.archive.crawler.webui.Settings" %>
+<%@ page import="org.archive.crawler.webui.Settings.Editability" %>
 <%
 
 Crawler crawler = (Crawler)Text.get(request, "crawler");
@@ -11,6 +12,7 @@ String path = (String)Text.get(request, "path");
 String sheet = (String)Text.get(request, "sheet");
 String error = (String)request.getAttribute("error");
 Setting setting = settings.getSetting(path);
+boolean canEdit = settings.getEditability(setting) == Editability.EDITABLE;
 int row = -1;
 
 int count = 0;
@@ -50,6 +52,8 @@ for (Setting s: settings.getSettings()) {
 </tr>
 </table>
 
+<jsp:include page="include_editability_detail.jsp" flush="true"/>
+
 <% if (error != null) { %>
 <font color="red"><h3><%=Text.html(error)%></h3></font>
 <% } %>
@@ -75,29 +79,35 @@ for (Setting s: settings.getSettings()) {
 <td class="info<%=(row % 2)%>">
  <%=Text.html(s.getValue())%>
 </td>
-<td class="info<%=(row % 2)%>">
- <% if (row > 0) { %>
-   <a href="do_move_element_up.jsp?<%=qs%>" title="Move this element up.">
- <% } %>
-  Move Up
- <% if (row > 0) { %>
-   </a>
- <% } %>
+<% if (canEdit) { %>
+  <td class="info<%=(row % 2)%>">
+   <% if (row > 0) { %>
+     <a href="do_move_element_up.jsp?<%=qs%>" title="Move this element up.">
+   <% } %>
+    Move Up
+   <% if (row > 0) { %>
+     </a>
+   <% } %>
  
- <% if (row < count - 1) { %>
- |
-    <a href="do_move_element_down.jsp?<%=qs%>" title="Move this element down.">
-  Move Down
- </a>
- <% } %>
+   <% if (row < count - 1) { %>
+   |
+      <a href="do_move_element_down.jsp?<%=qs%>" title="Move this element down.">
+    Move Down
+   </a>
+   <% } %>
 </td>
+<% } %>
 </tr>
 <%   } // end if %>
 <% } // end for %>
 </table>
 
 <p>
+
+<% if (canEdit) { %>
+
 <hr/>
+
 
 <h3>Add New Element</h3>
 
@@ -125,6 +135,7 @@ for (Setting s: settings.getSettings()) {
 <input type="submit" value="Submit">
 </form>
 
+<% } %>
 
 </body>
 </html>

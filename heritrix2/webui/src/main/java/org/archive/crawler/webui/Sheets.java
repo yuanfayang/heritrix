@@ -398,8 +398,8 @@ public class Sheets {
         } finally {
             remote.close();
         }
-
-        showSheetEditor(sc, request, response);
+        
+        showPathDetail(sc, request, response);
     }
     
     
