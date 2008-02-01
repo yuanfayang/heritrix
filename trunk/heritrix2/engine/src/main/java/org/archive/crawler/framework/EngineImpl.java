@@ -38,6 +38,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,6 +51,7 @@ import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
+import org.apache.commons.collections.map.ReferenceMap;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
 import static org.archive.crawler.framework.JobStage.*;
@@ -120,6 +122,8 @@ public class EngineImpl extends Bean implements Engine {
     final private Thread heritrixThread;
     
     private HashMap<String, LogRemoteAccessImpl> logRemoteAccess;
+    
+    private Map<String, SheetManager> sheetManagers;
 
     
     public EngineImpl(EngineConfig config) {
@@ -141,8 +145,11 @@ public class EngineImpl extends Bean implements Engine {
         }
         
         logRemoteAccess = new HashMap<String, LogRemoteAccessImpl>();
-        
+        @SuppressWarnings("unchecked")
+        Map<String,SheetManager> sm = new ReferenceMap(
+                ReferenceMap.HARD, ReferenceMap.WEAK);
         register(this, oname);
+        this.sheetManagers = sm;
         this.heritrixThread = config.getHeritrixThread();
     }
     
@@ -298,6 +305,7 @@ public class EngineImpl extends Bean implements Engine {
         FileSheetManager fsm;
         try {
             fsm = new FileSheetManager(bootstrap, name, false);
+            sheetManagers.put(job, fsm);
         } catch (DatabaseException e) {
             IOException io = new IOException();
             io.initCause(e);
@@ -653,6 +661,11 @@ public class EngineImpl extends Bean implements Engine {
             throw new IllegalStateException("No such job: " + job);
         }
     }
+    
+    
+    public SheetManager getSheetManager(String job) {
+        return sheetManagers.get(job);
+    }
 
     
     public synchronized long getFileSize(String job, String settingsPath) {
@@ -692,6 +705,7 @@ public class EngineImpl extends Bean implements Engine {
             list.add(jmxListener);
             list.add(ListModuleListener.make(CrawlStatusListener.class));
             fsm = new FileSheetManager(bootstrap, name, true, list);
+            sheetManagers.put(job, fsm);
 
             final ObjectName smName = createJMXSheetManager(name, fsm);
             final ObjectName ccName = findCrawlController(name);

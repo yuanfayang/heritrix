@@ -34,6 +34,7 @@ import javax.management.ObjectName;
 import org.archive.openmbeans.annotations.Attribute;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
+import org.archive.settings.SheetManager;
 
 /**
  * 
@@ -205,4 +206,14 @@ public interface Engine extends Closeable {
              
              @Parameter(name="settingsPath", desc="The settings path to a file setting for that job.")
              String settingsPath);
+     
+     /**
+      * Returns the SheetManager for the given job.  Useful for applications
+      * that embed Heritrix.
+      * 
+      * @param job   the stage-name of the job whose sheet manager to return
+      * @return   that SheetMangaer, or null if the job does not exist
+      */
+     SheetManager getSheetManager(String job);
+
 }
