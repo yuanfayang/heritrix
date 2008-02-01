@@ -48,8 +48,6 @@ import org.archive.state.KeyManager;
 import org.archive.state.PathContext;
 import org.archive.state.StateProvider;
 
-import sun.security.util.PathList;
-
 
 /**
  * Manager for sheets.  
@@ -488,7 +486,6 @@ public abstract class SheetManager implements StateProvider, Serializable {
             
             List<String> paths = new ArrayList<String>();
             
-            @Override
             public void consume(String path, List<Sheet> sheet, Object value,
                     Class type, String seenPath) {
                 if (cls.isInstance(value)) {
