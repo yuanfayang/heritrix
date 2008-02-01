@@ -13,6 +13,10 @@
 #sheets-dir=/tmp/sheets
 
 
+#  The directory containing the BDB environment used by the settings system.
+#bdb-dir=state
+
+
 #  Whether or not to copy the bdb logs during a checkpoint.  This can greatly
 #  slow down the checkpoint operation if the crawl is big.
 #bdb-checkpoint-copy-bdbje-logs=true
