@@ -40,11 +40,15 @@ import java.util.logging.Logger;
 
 import org.archive.settings.file.Checkpointable;
 import org.archive.settings.path.PathChangeException;
+import org.archive.settings.path.PathListConsumer;
+import org.archive.settings.path.PathLister;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.PathContext;
 import org.archive.state.StateProvider;
+
+import sun.security.util.PathList;
 
 
 /**
@@ -464,4 +468,43 @@ public abstract class SheetManager implements StateProvider, Serializable {
     
     public abstract PathContext getPathContext();
 
+ 
+    /**
+     * Finds a unique module in the global sheet.  There must be only one 
+     * module that is an instance of the given type in the sheet, or this
+     * method raises IllegalStateException.  If no module is an instance of
+     * the type, then null is returned.
+     * 
+     * @param <T>   the type of the module to return
+     * @param cls   the type of the module to return
+     * @return   the one module in the global sheet that is an instance of
+     *     that type, or null if no such module exists
+     * @exception  IllegalStateException   if more than one module in the 
+     *     global sheet is an instance of that type
+     */
+    public <T> T findUniqueGlobalModule(final Class<T> cls) {
+        final Holder result = new Holder();
+        PathListConsumer consumer = new PathListConsumer() {
+            
+            List<String> paths = new ArrayList<String>();
+            
+            @Override
+            public void consume(String path, List<Sheet> sheet, Object value,
+                    Class type, String seenPath) {
+                if (cls.isInstance(value)) {
+                    if (result.module == null) {
+                        paths.add(path);
+                        result.module = value;
+                    } else if (result.module != value) {
+                        paths.add(path);
+                        throw new IllegalStateException("Not unique: " + paths); 
+                    }
+                }
+            }
+            
+        };
+        
+        PathLister.resolveAll(getGlobalSheet(), consumer, false);
+        return cls.cast(result.module);
+    }
 }
