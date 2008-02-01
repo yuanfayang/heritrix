@@ -15,10 +15,14 @@ Crawler the_crawler = (Crawler)request.getAttribute("crawler");
 CrawlJob the_job = (CrawlJob)request.getAttribute("job");
 String the_page = (String)request.getAttribute("page");
 String the_jqs = "";
+String the_sqs = "";
 if(the_job != null){
     the_jqs = Text.jobQueryString(request);
 }
 String the_sheet = (String)request.getAttribute("sheet");
+if (the_sheet != null) {
+    the_sqs = the_jqs + "&sheet=" + Text.query(the_sheet);
+}
 
 
 %>
@@ -93,7 +97,10 @@ String the_sheet = (String)request.getAttribute("sheet");
 
 
 <% if (the_sheet != null) { %>
-<b>Sheet:</b> <%=Text.html(the_sheet)%>
+<b>Sheet:</b> 
+<a href="<%=request.getContextPath()%>/sheets/do_show_sheet_editor.jsp?<%=the_sqs%>">
+ <%=Text.html(the_sheet)%>
+</a>
 <%
     // Check for uncommitted changes to the sheet and display commit/rollback options if so
     Collection<String> navCheckedOut = (Collection)request.getAttribute("checkedOut");
