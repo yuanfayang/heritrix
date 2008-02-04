@@ -181,7 +181,7 @@ else
             break
         fi
         kill -0 $HERITRIX_PID
-        if [ $? ne 0 ]
+        if [ $? -ne 0 ]
         then
             echo
             echo "ERROR: JVM terminated without running Heritrix."
