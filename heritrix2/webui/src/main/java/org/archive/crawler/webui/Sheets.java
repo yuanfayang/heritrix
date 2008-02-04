@@ -331,6 +331,15 @@ public class Sheets {
                 sheetManager.set(sheet, path, type, value);
                 anchor = "#" + path;
             }
+            if (request.getParameter("details") != null) {
+                String input = request.getParameter("details");
+                String url = request.getContextPath() 
+                    + "/sheets/do_show_path_detail.jsp?" 
+                    + Text.sheetQueryString(request) 
+                    + "&path=" + Text.query(input);
+                response.sendRedirect(url);
+                return;
+            }
         } finally {
             remote.close();
         }
