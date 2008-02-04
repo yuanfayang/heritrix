@@ -300,6 +300,23 @@ public class Console {
     }
 
     
+    public static void rotateLogFiles(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Crawler c = Home.getCrawler(request);
+        JMXConnector jmxc = c.connect();
+        try {
+            CrawlJob cj = CrawlJob.fromRequest(request, jmxc);
+            AlertTracker at = Misc.find(jmxc, cj.getName(), AlertTracker.class);
+            at.rotateLogFiles();
+        } finally {
+            Misc.close(jmxc);
+        }
+        showJobConsole(sc, request, response);
+    }
+    
+    
     
     public static void showDeleteURIs(
             ServletContext sc,

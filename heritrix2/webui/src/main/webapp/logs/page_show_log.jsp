@@ -233,5 +233,10 @@
     </tr>
 </table>
 </form>
+
+<a href="<%=request.getContextPath()%>/console/do_rotate_log_files.jsp?<%=Text.jobQueryString(request)%>">
+Rotate Log Files
+</a>
+
 </body>
 </html>

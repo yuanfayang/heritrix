@@ -58,6 +58,7 @@ import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
+import org.archive.util.ArchiveUtils;
 
 /**
  * @author pjack
@@ -241,6 +242,10 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
         
     }
 
+    
+    public void rotateLogFiles() throws IOException {
+        rotateLogFiles(CURRENT_LOG_SUFFIX + "." + ArchiveUtils.get14DigitDate());
+    }
     
     protected void rotateLogFiles(String generationSuffix)
     throws IOException {
