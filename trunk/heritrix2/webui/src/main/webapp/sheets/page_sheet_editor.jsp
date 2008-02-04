@@ -122,10 +122,11 @@ for (Setting setting: settings.getSettings()) {
          value="<%=Text.attr(path +"`" + type + "`" + value)%>">add</button>
     <% } %>
   <% } %>
-  <a 
-    class="rowLink"
-    href="do_show_path_detail.jsp?<%=qs%>"
-    title="View details for this setting.">details</a>
+  <button
+     class="rowLink"
+     type="submit"
+     name="details"
+     value="<%=Text.attr(path)%>">details</button>
 </div>
 
 <% } // end for %> 
