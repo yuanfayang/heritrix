@@ -151,17 +151,8 @@ public interface Engine extends Closeable {
             @Parameter(name="job", desc="The job whose file to read.")
             String job,
             
-            @Parameter(name="settingsPath", desc="The settings path to a FileModule in that job.")
+            @Parameter(name="settingsPath", desc="The settings path to a file path in that job.")
             String settingsPath,
-
-            @Parameter(name="filename", desc="An optional filename if the settingsPath resolves to a directory.")
-            String filename,
-
-            @Parameter(name="startLine", desc="The starting line number to write.")
-            int startLine,
-
-            @Parameter(name="lineCount", desc="The number of lines in a page.")
-            int lineCount,
             
             @Parameter(name="lines", desc="The new text to write.")
             String lines) throws IOException;

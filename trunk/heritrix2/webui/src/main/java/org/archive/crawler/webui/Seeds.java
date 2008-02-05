@@ -124,9 +124,6 @@ public class Seeds {
             String seeds = request.getParameter("seeds");
             engine.writeLines(job.encode(),
                     "root:seeds:seedsfile",
-                    null,
-                    page * LINES_PER_PAGE,
-                    LINES_PER_PAGE,
                     seeds);
             if (job.getJobStage() == JobStage.ACTIVE) {
                 SeedModule seedModule = getSeedModule(jmxc, job);
