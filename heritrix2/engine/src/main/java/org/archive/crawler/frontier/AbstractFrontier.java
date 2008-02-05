@@ -120,11 +120,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     @Immutable
     final public static Key<DecideRule> SCOPE =
         Key.make(DecideRule.class, null);
-    
-    @Immutable
-    final public static Key<Path> SCRATCH_DIR = 
-        Key.make(new Path("scratch"));
-    
+        
     @Immutable
     final public static Key<Path> RECOVERY_DIR =
         Key.make(new Path("logs"));
