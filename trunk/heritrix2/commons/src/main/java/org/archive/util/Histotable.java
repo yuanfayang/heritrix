@@ -159,4 +159,16 @@ public class Histotable<K> extends TreeMap<K,Long> {
         }
         return net;
     }
+
+    /** Return 0 instead of null for absent keys. 
+     * 
+     * @see java.util.TreeMap#get(java.lang.Object)
+     */
+    @Override
+    public Long get(Object key) {
+        Long val = super.get(key);
+        return val == null ? 0 : val;
+    }
+    
+    
 }
