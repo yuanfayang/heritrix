@@ -237,6 +237,13 @@ public abstract class PathTestBase extends TestCase {
         this.stub_o1_bar_map_d = Stub.make(Foo.class);
         m1.put("d", stub_o1_bar_map_d);
 
+        this.stub_o1_bar_slist = new SettingsList<String>(o1, String.class);
+        o1.set(this.stub_bar, Bar.SLIST, this.stub_o1_bar_slist);
+        this.stub_o1_bar_slist_3 = "three";
+        stub_o1_bar_slist.add(stub_o1_bar_slist_3);
+        this.stub_o1_bar_slist_4 = "four";
+        stub_o1_bar_slist.add(stub_o1_bar_slist_4);
+        
         stub_manager.commit(o1);        
     }
     
@@ -326,6 +333,13 @@ public abstract class PathTestBase extends TestCase {
         this.o1_bar_map_d = new Foo("o1_bar_map_d");
         o1_bar_map.put("d", o1_bar_map_d);
 
+        this.o1_bar_slist = new SettingsList<String>(o1, String.class);
+        o1.set(this.bar, Bar.SLIST, this.o1_bar_slist);
+        this.o1_bar_slist_3 = "three";
+        o1_bar_slist.add(o1_bar_slist_3);
+        this.o1_bar_slist_4 = "four";
+        o1_bar_slist.add(o1_bar_slist_4);
+        
         manager.commit(o1);        
     }
     
