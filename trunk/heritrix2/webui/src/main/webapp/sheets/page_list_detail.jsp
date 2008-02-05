@@ -95,6 +95,9 @@ for (Setting s: settings.getSettings()) {
     Move Down
    </a>
    <% } %>
+   |
+   <a href="do_remove_path.jsp?<%=qs%>" title="Delete this element.">
+   Delete
 </td>
 <% } %>
 </tr>

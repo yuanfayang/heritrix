@@ -349,6 +349,25 @@ public class Sheets {
         response.sendRedirect(url);
 //        showSheetEditor(sc, request, response);
     }
+
+    
+    public static void removePath(
+            ServletContext sc,
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        Remote<JMXSheetManager> remote = getSheetManager(request);
+        JMXSheetManager sheetManager = remote.getObject();
+        String sheet = request.getParameter("sheet");
+        request.setAttribute("sheet", sheet);
+        try {
+            String path = request.getParameter("path");
+            String key = request.getParameter("key");
+            sheetManager.remove(sheet, path + PathValidator.DELIMITER + key);
+            showPathDetail(sc, request, response);
+        } finally {
+            remote.close();
+        }
+    }
     
     
     public static void savePath(
