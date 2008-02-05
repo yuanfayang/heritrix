@@ -205,6 +205,19 @@ tr.infoalt{
     background-color: #FFFFCC;
 }
 
+td.info0 {
+    border: solid #BBB 1px;
+    border-collapse: collapse;    
+    padding: 2px;
+}
+
+td.info1 {
+    border: solid #BBB 1px;
+    border-collapse: collapse;    
+    background-color: #FFFFDD;
+    padding: 2px;
+}
+
 .nospace {
     display:inline;
     margin:0px;
