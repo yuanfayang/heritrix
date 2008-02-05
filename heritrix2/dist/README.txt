@@ -21,7 +21,7 @@ and generations.
 
 The most up-to-date information about Heritrix is on the project wiki:
 
- http://webteam.archive.org/confluence/display/Heritrix/Home
+ http://webteam.archive.org/confluence/display/Heritrix/2.0.0
  
 3.0 Getting Started Tips
 
