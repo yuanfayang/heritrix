@@ -116,7 +116,7 @@ then
         -Dcom.sun.management.jmxremote.ssl=false \
         -Dcom.sun.management.jmxremote.password.file=${HERITRIX_HOME}/conf/jmxremote.password"
     else
-      echo 'WARNING: No $HERITRIX_HOME/conf/jmxremote.password found.'
+      echo 'WARNING: $HERITRIX_HOME/conf/jmxremote.password not found.'
       echo 'WARNING: Disabling remote JMX.'
       JMX_OPTS="-Dcom.sun.management.jmxremote"
     fi
