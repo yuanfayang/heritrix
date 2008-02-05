@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -293,6 +294,12 @@ public abstract class SheetManager implements StateProvider, Serializable {
      */
     public abstract Collection<String> getAssociations(String context);
 
+    /**
+     * Returns all contexts (prefixes) for which there are associated
+     * sheet names. 
+     * @return sorted set of all contexts
+     */
+    public abstract Set<String> getContexts();
     
     public void cleanup() {}
     

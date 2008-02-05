@@ -449,6 +449,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         return surtToSheets.duplicates(context);
     }
 
+    @Override @SuppressWarnings("unchecked")
+    public Set<String> getContexts() {
+        return surtToSheets.keySet();
+    }
     
     @Override @SuppressWarnings("unchecked")
     public List<Association> findConfigNames(String uri) {
