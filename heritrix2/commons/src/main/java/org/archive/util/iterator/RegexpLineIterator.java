@@ -90,7 +90,7 @@ extends TransformingIteratorWrapper<String,String> {
             return output.toString();
         }
         // no match; possibly error
-        logger.info("nonsense line: "+line);
+        logger.warning("line not extracted nor no-op: "+line);
         return null;
     }
 }
