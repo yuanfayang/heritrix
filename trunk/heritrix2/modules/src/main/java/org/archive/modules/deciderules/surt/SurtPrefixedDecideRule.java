@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.PredicatedAcceptDecideRule;
@@ -67,8 +69,8 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
 
     private static final long serialVersionUID = 3L;
 
-    //private static final Logger logger =
-    //    Logger.getLogger(SurtPrefixedDecideRule.class.getName());
+    private static final Logger logger =
+        Logger.getLogger(SurtPrefixedDecideRule.class.getName());
 
 
     /**
@@ -144,7 +146,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     public void initialTasks(StateProvider provider) {
 //        this.directory = provider.get(this, DIRECTORY);
         this.seeds = provider.get(this, SEEDS);
-        this.buildSurtPrefixSet(provider);
+        this.readPrefixes(provider);
     }
 
     /**
@@ -238,8 +240,8 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
                     fr.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
+                logger.log(Level.SEVERE,"Problem reading SURTs source file: "+e,e);
+                // continue: operator will see severe log message or alert
             }
         }
         
@@ -254,8 +256,8 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
                     fr.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
+                logger.log(Level.SEVERE,"Problem reading seeds file: "+e,e);
+                // continue: operator will see severe log message or alert
             }
         }
 
