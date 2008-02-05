@@ -97,7 +97,7 @@ public class Heritrix {
     /**
      * Name of the heritrix properties file.
      */
-    private static final String PROPERTIES = "heritrix.properties";
+    private static final String PROPERTIES = "logging.properties";
 
 
     /**
@@ -126,20 +126,24 @@ public class Heritrix {
     
     private static Options options() {
         Options options = new Options();
+        options.addOption("h", "help", true, "Usage information." );
         options.addOption("j", "jobs-dir", true, "The jobs directory.  " +
                         "Defaults to ./jobs");
-        options.addOption("h", "heritrix-properties", true, 
-                "The full path to the heritrix properties file " + 
-                "(eg, conf/heritrix.properties).  If present, this file " +
+        options.addOption("l", "logging-properties", true, 
+                "The full path to the logging properties file " + 
+                "(eg, conf/logging.properties).  If present, this file " +
                 "will be used to configure Java logging.  Defaults to " +
-                "./conf/heritrix.properties");
+                "./conf/logging.properties");
+        options.addOption("a", "webui-admin", true,  "Specifies the " +
+        		"authorization password which must be supplied to " +
+        		"access the webui. Required if launching the webui.");
         options.addOption("b", "webui-bind-hosts", true, 
                 "A comma-separated list of hostnames for the " +
-                "webui to bind to.  Ignored if -r is not specified.");
+                "webui to bind to.");
         options.addOption("p", "webui-port", true, "The port the webui " +
-                "should listen on.  Ignored if -r is not specified.");
+                "should listen on.");
         options.addOption("w", "webui-war-path", true, "The path to the " +
-                "Heritrix webui WAR.  Ignored if -n is specified.");
+                "Heritrix webui WAR.");
         options.addOption("n", "no-web-ui", false, "Do not run the admin web " +
                 "user interface; only run the crawl engine.  If set, the " +
         	"crawl engine will need to be controlled via JMX or a remote " +
@@ -150,9 +154,6 @@ public class Heritrix {
         	"profile name to launch at launch.  If you specify a profile " +
         	"name, the profile will first be copied to a new ready job, " +
         	"and that ready job will be launched.");
-        options.addOption("a", "webui-admin", true,  "Specifies the " +
-        		"authorization password which must be supplied to " +
-        		"access the webui. Required if launching the webui.");
         return options;
     }
     
@@ -219,6 +220,11 @@ public class Heritrix {
         CommandLine cl = getCommandLine(out, args);
         if (cl == null) return;
 
+        if (cl.hasOption('h')) {
+          usage(out);
+          return ;
+        }
+
         if (cl.hasOption('n') && cl.hasOption('u')) {
             out.println("Only one of -n or -u may be specified.");
             usage(out);
@@ -253,8 +259,8 @@ public class Heritrix {
             config.setJobsDirectory(cl.getOptionValue('j'));
         }
                 
-        if (cl.hasOption('h')) {
-            properties = new File(cl.getOptionValue('h'));
+        if (cl.hasOption('l')) {
+            properties = new File(cl.getOptionValue('l'));
         }
 
         if (cl.hasOption('b')) {
