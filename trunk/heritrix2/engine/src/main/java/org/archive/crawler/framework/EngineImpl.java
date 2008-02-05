@@ -25,6 +25,12 @@
  */
 package org.archive.crawler.framework;
 
+import static org.archive.crawler.framework.JobStage.ACTIVE;
+import static org.archive.crawler.framework.JobStage.COMPLETED;
+import static org.archive.crawler.framework.JobStage.DELIMITER;
+import static org.archive.crawler.framework.JobStage.PROFILE;
+import static org.archive.crawler.framework.JobStage.READY;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -52,9 +58,7 @@ import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
 import org.apache.commons.collections.map.ReferenceMap;
-import org.archive.crawler.Heritrix;
 import org.archive.crawler.event.CrawlStatusListener;
-import static org.archive.crawler.framework.JobStage.*;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.openmbeans.annotations.Bean;
@@ -64,10 +68,10 @@ import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
-import org.archive.settings.jmx.LoggingDynamicMBean;
 import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
+import org.archive.settings.jmx.LoggingDynamicMBean;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
@@ -174,7 +178,11 @@ public class EngineImpl extends Bean implements Engine {
     }
 
     
-    private boolean isValidJob(String job) {
+    private boolean isValidJob(File job) {
+        return job.isDirectory() && isValidJobName(job.getName());
+    }
+
+    private boolean isValidJobName(String job) {
         return job.startsWith(PROFILE.getPrefix())
             || job.startsWith(READY.getPrefix()) 
             || job.startsWith(ACTIVE.getPrefix())
@@ -183,7 +191,7 @@ public class EngineImpl extends Bean implements Engine {
     
     
     private void validateJobName(String job) {
-        if (isValidJob(job)) {
+        if (isValidJobName(job)) {
             return;
         }
         throw new IllegalArgumentException(job + " is not a valid state-name name.");
@@ -501,11 +509,11 @@ public class EngineImpl extends Bean implements Engine {
 
     
     public String[] listJobs() {
-        String[] r = jobsDir.list();
+        File[] r = jobsDir.listFiles();
         ArrayList<String> result = new ArrayList<String>(r.length);
-        for (String f: r) {
+        for (File f: r) {
             if (isValidJob(f)) {
-                result.add(f);
+                result.add(f.getName());
             }
         }
         return result.toArray(new String[result.size()]);
