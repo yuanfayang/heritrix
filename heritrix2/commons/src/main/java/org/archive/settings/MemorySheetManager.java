@@ -196,8 +196,12 @@ public class MemorySheetManager extends SheetManager {
         return result;
     }
     
-    
-    
+    @Override
+    public Set<String> getContexts() {
+        return associations.keySet();
+    }
+
+
     @Override
     public void associate(Sheet sheet, Collection<String> surts) {
         for (String surt: surts) {

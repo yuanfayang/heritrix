@@ -1019,7 +1019,26 @@ implements CrawlURIDispositionListener, Serializable {
             }
         }
     }
-  
+
+    /**
+     * Write a report of all contexts (prefixes) to associated sheet names.
+     * 
+     * @param writer
+     */
+    protected void writeAssociationsReportTo(PrintWriter writer) {
+        
+        writer.print("[context] [sheet name]\n");
+        // for each source
+        for(String context : controller.getSheetManager().getContexts()) {
+            for(String sheetName : controller.getSheetManager().getAssociations(context)) {
+                writer.print(context);
+                writer.print(" ");
+                writer.print(sheetName);
+                writer.println();
+            }
+        }
+    }
+    
     /**
      * Return a copy of the hosts distribution in reverse-sorted (largest first)
      * order.
@@ -1206,6 +1225,8 @@ implements CrawlURIDispositionListener, Serializable {
             writeFrontierReportTo(w);
         } else if ("source".equals(reportName)) {
             writeSourceReportTo(w);
+        } else if ("associations".equals(reportName)) {
+            writeAssociationsReportTo(w);
         }// / TODO else default/error
     }
 
@@ -1239,6 +1260,7 @@ implements CrawlURIDispositionListener, Serializable {
         if (!sourceHostDistribution.isEmpty()) {
             writeReportFile("source","source-report.txt");
         }
+        writeReportFile("associations","associations-report.txt");
     }
 
     public void crawlCheckpoint(StateProvider def, File cpDir) throws Exception {
