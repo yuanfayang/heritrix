@@ -179,12 +179,17 @@ must be readable only by the owner.  For example,
   conf $ chmod 600 jmxremote.password
   conf $ cd ..
 
-then edit "jmxremote.password" in your favorite editor to set the
+then edit "jmxremote.password" in your favorite editor and edit
+the lines:
+
+  #monitorRole [password goes here]
+  #controlRole [password goes here]
+
+by removing the "#" character at the start of each and setting the
+passwords to your liking, such as:
 
   monitorRole  somePassword
-  controlRole  somePassword
-
-passwords to your liking.
+  controlRole  someOtherPassword
 
 Then launch Heritrix with the "-n" option to disable the Web UI.
 
