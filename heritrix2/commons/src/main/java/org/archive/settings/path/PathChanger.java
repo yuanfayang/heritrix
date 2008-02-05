@@ -451,12 +451,29 @@ public class PathChanger {
         
         String parentPath = path.substring(0, p);
         String lastToken = path.substring(p + 1);
-        Object parent = PathValidator.check(sheet, parentPath);
+        Object parent = PathValidator.validate(sheet, parentPath);
         if (parent instanceof Map) {
+            parent = PathValidator.check(sheet, parentPath);
             ((Map)parent).remove(lastToken);
             return;
         } else if (parent instanceof List) {
-            ((List)parent).remove(Integer.parseInt(lastToken));
+            @SuppressWarnings("unchecked")
+            List<Object> mergedList = (List<Object>)parent; 
+            
+            parent = PathValidator.check(sheet, parentPath);
+            @SuppressWarnings("unchecked")
+            List<Object> editableList = (List<Object>)parent;
+            
+            int index = Integer.parseInt(lastToken);
+            int adjustedIndex = index - mergedList.size() + editableList.size();
+
+            if (adjustedIndex < 0) {
+                throw new PathChangeException("Index of " + index 
+                        + " modifies global sheet, not " + sheet);
+            }
+                
+            editableList.remove(adjustedIndex);
+
             return;
         }
         

@@ -25,7 +25,10 @@ package org.archive.settings.path;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.Stub;
@@ -145,4 +148,103 @@ public class PathChangerTest extends PathTestBase {
     }
 
 
+    @SuppressWarnings("unchecked")
+    public void testGlobalListRemove() throws Exception {
+        SingleSheet global = (SingleSheet)manager.checkout("global");
+        PathChanger.remove(global, "root:bar:list:1");
+        List list = (List)PathValidator.validate(global, "root:bar:list");
+        assertSame(list, 
+                bar_list_0,
+                bar_list_2);
+        
+        PathChanger.remove(global, "root:bar:slist:1");
+        list = (List)PathValidator.validate(global, "root:bar:slist");
+        assertSame(list,
+                bar_slist_0,
+                bar_slist_2);
+
+    }
+    
+    
+    
+    @SuppressWarnings("unchecked")
+    public void testOverrideListRemove() throws Exception {
+        SingleSheet o1 = (SingleSheet)manager.checkout("o1");
+        PathChanger.remove(o1, "root:bar:list:3");
+        List list = (List)PathValidator.validate(o1, "root:bar:list");
+        assertSame(list, 
+                bar_list_0, 
+                bar_list_1, 
+                bar_list_2, 
+                o1_bar_list_4);
+        
+        PathChanger.remove(o1, "root:bar:slist:3");
+        list = (List)PathValidator.validate(o1, "root:bar:slist");
+        assertSame(list, 
+                bar_slist_0, 
+                bar_slist_1, 
+                bar_slist_2, 
+                o1_bar_slist_4);
+
+        o1 = (SingleSheet)stub_manager.checkout("o1");
+        PathChanger.remove(o1, "root:bar:list:3");
+        list = (List)PathValidator.validate(o1, "root:bar:list");
+        assertSame(list, 
+                stub_bar_list_0, 
+                stub_bar_list_1, 
+                stub_bar_list_2, 
+                stub_o1_bar_list_4);
+
+        PathChanger.remove(o1, "root:bar:slist:3");
+        list = (List)PathValidator.validate(o1, "root:bar:slist");
+        assertSame(list, 
+                stub_bar_slist_0, 
+                stub_bar_slist_1,
+                stub_bar_slist_2,
+                stub_o1_bar_slist_4);
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    public void testGlobalMapRemove() throws Exception {
+        SingleSheet global = (SingleSheet)manager.checkout("global");
+        PathChanger.remove(global, "root:bar:map:b");
+        Map map = (Map)PathValidator.validate(global, "root:bar:map");
+        assertSame(map.values(), bar_map_a, bar_map_c);
+
+        PathChanger.remove(global, "root:bar:smap:b");
+        map = (Map)PathValidator.validate(global, "root:bar:smap");
+        assertSame(map.values(), bar_smap_a, bar_smap_c);
+    }
+
+    
+    @SuppressWarnings("unchecked")
+    public void testOverrideMapRemove() throws Exception {
+        SingleSheet o1 = (SingleSheet)manager.checkout("o1");
+        PathChanger.remove(o1, "root:bar:map:b");
+        Map map = (Map)PathValidator.validate(o1, "root:bar:map");
+        assertSame(map.values(),
+                bar_map_a,
+                bar_map_b,
+                bar_map_c,
+                o1_bar_map_d);
+        
+        PathChanger.remove(o1, "root:bar:map:d");
+        map = (Map)PathValidator.validate(o1, "root:bar:map");
+        assertSame(map.values(),
+                bar_map_a,
+                bar_map_b,
+                bar_map_c);
+    }
+    
+    
+    private static void assertSame(Collection<Object> actual, 
+            Object... expected) {
+        ArrayList<Object> list = new ArrayList<Object>(actual);
+        if (list.equals(Arrays.asList(expected))) {
+            return;
+        }
+        
+        fail("Expected " + Arrays.asList(expected) + " but got " + list);
+    }
 }
