@@ -129,6 +129,18 @@ then
   CLASS_MAIN='org.archive.crawler.Heritrix'
 fi
 
+# A bit of a hack to ensure that if the user puts -h/--help on the
+# command line run CLASS_MAIN in the foreground so the output will go
+# to the terminal.
+for i in "$@"
+do
+    if [ "$i" == "-h" ] || [ "$i" == "--help" ]
+    then
+        FOREGROUND="true"
+        break
+    fi
+done
+
 # heritrix_dmesg.log contains startup output from the crawler main class. 
 # As soon as content appears in this log, this shell script prints the 
 # successful (or failed) startup content and moves off waiting on heritrix
