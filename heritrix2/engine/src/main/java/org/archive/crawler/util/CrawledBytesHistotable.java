@@ -19,7 +19,6 @@ implements Accumulator<CrawlURI>, CoreAttributeConstants {
     
     public CrawledBytesHistotable() {
         super();
-        tally(NOVEL,0);
     }
 
     public void accumulate(CrawlURI curi) {
