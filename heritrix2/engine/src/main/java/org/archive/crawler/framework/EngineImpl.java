@@ -271,6 +271,11 @@ public class EngineImpl extends Bean implements Engine {
             FileUtils.copyFiles(srcState, ff, new File(dest, "state"), 
                     false, true);
         }
+        
+        File srcResources = new File(src, "resources");
+        if (srcResources.isDirectory()) {
+            FileUtils.copyFiles(srcResources, new File(dest, "resources"));
+        }
     }
 
     
