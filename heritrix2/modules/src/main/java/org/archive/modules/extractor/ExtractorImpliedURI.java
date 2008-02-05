@@ -128,7 +128,7 @@ public class ExtractorImpliedURI extends Extractor {
                     LinkContext lc = LinkContext.SPECULATIVE_MISC;
                     Hop hop = Hop.SPECULATIVE;
                     Link out = new Link(src, target, lc, hop);
-                    links.add(out);
+                    curi.getOutLinks().add(out);
                     linksExtracted.incrementAndGet();
 
                     boolean removeTriggerURI = 
