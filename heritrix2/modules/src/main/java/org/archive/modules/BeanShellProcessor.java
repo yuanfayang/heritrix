@@ -122,8 +122,7 @@ implements Initializable, KeyChangeListener {
                 interpreter.set("curi",curi);
                 interpreter.eval("process(curi)");
             } catch (EvalError e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                logger.log(Level.WARNING,"BeanShell error", e);
             } 
         }
     }
