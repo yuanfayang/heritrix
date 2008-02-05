@@ -233,9 +233,6 @@ implements CrawlURIDispositionListener, Serializable {
     // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
     private int seedsCrawled;
     private int seedsNotCrawled;
-    // sExitMessage: only set at crawl-end
-    private String sExitMessage = "Before crawl end";
-
 
     static {
         KeyManager.addKeys(StatisticsTrackerImpl.class);
@@ -957,13 +954,6 @@ implements CrawlURIDispositionListener, Serializable {
         }
         return sortedSet.iterator();
     }
-
-    public void crawlEnded(String message) {
-        logger.info("Entered crawlEnded");
-        this.sExitMessage = message; // held for reference by reports
-        super.crawlEnded(message);
-        logger.info("Leaving crawlEnded");
-    }
     
     /**
      * @param writer Where to write.
@@ -1138,7 +1128,7 @@ implements CrawlURIDispositionListener, Serializable {
     
     protected void writeCrawlReportTo(PrintWriter writer) {
         writer.print("Crawl Name: " + controller.getSheetManager().getCrawlName());
-        writer.print("\nCrawl Status: " + sExitMessage);
+        writer.print("\nCrawl Status: " + controller.getCrawlExitStatus().desc);
         writer.print("\nDuration Time: " +
                 ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));
         writer.print("\nTotal Seeds Crawled: " + seedsCrawled);

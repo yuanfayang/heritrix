@@ -561,6 +561,7 @@ public class CrawlControllerImpl extends Bean implements
     protected void completeStop() {
         LOGGER.fine("Entered complete stop.");
 
+
         sheetManager.closeModules();
         loggerModule.closeLogFiles();
         
@@ -1101,9 +1102,12 @@ public class CrawlControllerImpl extends Bean implements
         sendNotification(n);
     }
 
-
     public String getCrawlStatusString() {
         return this.state.toString();
+    }
+    
+    public CrawlStatus getCrawlExitStatus() {
+        return this.sExit;
     }
 
     public String getToeThreadReport() {
