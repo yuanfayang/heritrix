@@ -64,4 +64,4 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 Heritrix includes a variety of other open source libraries under the
 terms of their respective licenses. Please consult those individual
 licenses to learn whether the libraries are usable and redistributable 
-in contexts other than the Heritrix distribution. 
+in contexts other than the Heritrix distribution.
