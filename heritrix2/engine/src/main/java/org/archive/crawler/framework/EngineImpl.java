@@ -35,7 +35,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -548,52 +547,24 @@ public class EngineImpl extends Bean implements Engine {
 
     public synchronized void writeLines(String job, 
             String settingsPath,
-            String fileName,
-            int startLine, int lineCount, String lines) throws IOException {
+            String lines) throws IOException {
         String path = getFilePath(job, settingsPath);
         File f = new File(path);
-        if (fileName != null) {
-            f = new File(f, fileName);
-        }
-        if (startLine < 0) {
-            throw new IllegalArgumentException("startLine must be positive.");
-        }
 
         File tempFile = new File(f.getAbsolutePath() + ".temp");
         
-        BufferedReader br = null;
         BufferedWriter bw = null;
         try {
             BufferedReader linesBr = new BufferedReader(new StringReader(lines));
-            br = new BufferedReader(new FileReader(f));
             bw = new BufferedWriter(new FileWriter(tempFile));
-            for (int i = 0; i < startLine; i++) {
-                String line = br.readLine();
-                if (line == null) {
-                    break;
-                }
-                bw.write(line);
-                bw.write('\n');
-            }
             
             int count = 0;
             for (String s = linesBr.readLine(); s != null; s = linesBr.readLine()) {
                 count++;
-                br.readLine();
                 bw.write(s);
                 bw.write('\n');
-            }
-            
-            for (int i = count; i < lineCount; i++) {
-                br.readLine();
-            }
-            
-            for (String s = br.readLine(); s != null; s = br.readLine()) {
-                bw.write(s);
-                bw.write('\n');
-            }            
+            }           
         } finally {
-            IoUtils.close(br);
             IoUtils.close(bw);
         }
         f.delete();
