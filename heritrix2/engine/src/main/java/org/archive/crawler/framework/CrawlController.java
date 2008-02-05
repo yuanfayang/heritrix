@@ -8,12 +8,7 @@ import org.archive.openmbeans.annotations.Parameter;
 
 /**
  * Interface for controlling a crawl job.  The implementation is 
- * {@link CrawlControllerImpl}, which is an open MBean.  Ideally this interface
- * would be named CrawlController, and the implementation would be named
- * CrawlControllerImpl, to follow MBean standard practice.  However the
- * CrawlController class has been with us for a very long time, and is 
- * referenced by practically everything else, so that refactoring would be
- * onerous.
+ * {@link CrawlControllerImpl}, which is an open MBean.  
  * 
  * @author pjack
  */
