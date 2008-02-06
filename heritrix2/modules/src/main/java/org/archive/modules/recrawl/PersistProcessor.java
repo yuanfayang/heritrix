@@ -30,8 +30,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.SerializationUtils;
 import org.archive.io.CrawlerJournal;
 import org.archive.modules.Processor;
@@ -60,6 +63,9 @@ import com.sleepycat.je.EnvironmentConfig;
  * @author gojomo
  */
 public abstract class PersistProcessor extends Processor {
+    private static final Logger logger =
+        Logger.getLogger(PersistProcessor.class.getName());
+
     /** name of history Database */
     public static final String URI_HISTORY_DBNAME = "uri_history";
     
@@ -177,14 +183,26 @@ public abstract class PersistProcessor extends Processor {
             Iterator iter = new LineReadingIterator(br);
             while(iter.hasNext()) {
                 String line = (String) iter.next(); 
+                line = line.trim();
+                if(line.length()==0) {
+                    continue;
+                }
                 String[] splits = line.split(" ");
-                historyMap.put(
+                if(splits.length!=2) {
+                    logger.severe("bad line: "+line);
+                    continue;
+                }
+                try {
+                    historyMap.put(
                         splits[0], 
                         SerializationUtils.deserialize(
-                                Base64.decodeBase64(splits[1].getBytes("UTF8"))));
+                            Base64.decodeBase64(splits[1].getBytes("UTF8"))));
+                } catch (RuntimeException e) {
+                    logger.log(Level.SEVERE,"problem with line: "+line, e);
+                }
                 count++;
             }
-            br.close();
+            IOUtils.closeQuietly(br);
         } else {
             // open the source env history DB, copying entries to target env
             EnhancedEnvironment sourceEnv = setupEnvironment(source);
@@ -233,14 +251,26 @@ public abstract class PersistProcessor extends Processor {
             Iterator iter = new LineReadingIterator(br);
             while(iter.hasNext()) {
                 String line = (String) iter.next(); 
+                line = line.trim();
+                if(line.length()==0) {
+                    continue;
+                }
                 String[] splits = line.split(" ");
-                Map alist = (Map)SerializationUtils.deserialize(
+                if(splits.length!=2) {
+                    logger.severe("bad line: "+line);
+                    continue;
+                }
+                try {
+                    Map alist = (Map)SerializationUtils.deserialize(
                         Base64.decodeBase64(splits[1].getBytes("UTF8")));
-                System.out.println(
+                    System.out.println(
                         splits[0] + " " + ArchiveUtils.prettyString(alist));
+                } catch (RuntimeException e) {
+                    logger.log(Level.SEVERE,"problem with line: "+line, e);
+                }
                 count++;
             }
-            br.close();
+            IOUtils.closeQuietly(br);
         } else {
             // open the source env history DB, copying entries to target env
             EnhancedEnvironment sourceEnv = setupEnvironment(source);
