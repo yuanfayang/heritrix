@@ -156,7 +156,8 @@ public class CrawlerArea {
         } finally {
             remote.close();
         }
-        Console.showJobConsole(sc, request, response);
+        response.sendRedirect(
+                "/console/do_show_job_console.jsp?"+Text.jobQueryString(request));
     }
 
     
