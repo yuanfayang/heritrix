@@ -136,8 +136,8 @@ public class CrawlerJournal {
      */
     public synchronized void writeLine(String string) {
         try {
-            this.out.write("\n");
             this.out.write(string);
+            this.out.write("\n");
             noteLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -152,9 +152,9 @@ public class CrawlerJournal {
      */
     public synchronized void writeLine(String s1, String s2) {
         try {
-            this.out.write("\n");
             this.out.write(s1);
             this.out.write(s2);
+            this.out.write("\n");
             noteLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -170,10 +170,10 @@ public class CrawlerJournal {
      */
     public synchronized void writeLine(String s1, String s2, String s3) {
         try {
-            this.out.write("\n");
             this.out.write(s1);
             this.out.write(s2);
             this.out.write(s3);
+            this.out.write("\n");
             noteLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -190,8 +190,8 @@ public class CrawlerJournal {
             return;
         }
         try {
-            this.out.write("\n");
             mstring.write(out);
+            this.out.write("\n");
             noteLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -215,9 +215,9 @@ public class CrawlerJournal {
      */
     protected void considerTimestamp() throws IOException {
         if(timestamp_interval > 0 && lines % timestamp_interval == 0) {
-            out.write("\n");
             out.write(LOG_TIMESTAMP);
             out.write(ArchiveUtils.getLog14Date());
+            out.write("\n");
         }
     }
 
@@ -242,8 +242,8 @@ public class CrawlerJournal {
      * 
      * @param err
      */
-    public void seriousError(String err) {
-        writeLine("\n"+LOG_ERROR+ArchiveUtils.getLog14Date()+" "+err);
+    public synchronized void seriousError(String err) {
+        writeLine(LOG_ERROR+ArchiveUtils.getLog14Date()+" "+err+"\n");
     }
 
     /**
