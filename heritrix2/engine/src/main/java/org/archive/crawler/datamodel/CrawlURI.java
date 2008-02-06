@@ -218,8 +218,10 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     private boolean prerequisite = false;
 
     
-    private FetchType fetchType = FetchType.UNKNOWN;
+    transient private FetchType fetchType = FetchType.UNKNOWN;
 
+    transient private HttpMethod method = null;
+    
     /** 
      * Monotonically increasing number within a crawl;
      * useful for tending towards breadth-first ordering.
@@ -853,7 +855,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      * @return True if this is a http transaction.
      */
     public boolean isHttpTransaction() {
-        return containsDataKey(A_HTTP_TRANSACTION);
+        return method != null;
     }
 
     /**
@@ -1343,7 +1345,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
 
     public void setHttpMethod(HttpMethod method) {
-        getData().put(A_HTTP_TRANSACTION, method);
+        this.method = method;
         if (method instanceof PostMethod) {
             fetchType = FetchType.HTTP_POST;
         } else if (method instanceof GetMethod) {
@@ -1404,10 +1406,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
 
 
     public HttpMethod getHttpMethod() {
-        if (data != null) {
-            return (HttpMethod)data.get(A_HTTP_TRANSACTION);
-        }
-        return null;
+        return method;
     }
 
 
