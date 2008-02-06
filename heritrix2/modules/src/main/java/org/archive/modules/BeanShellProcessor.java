@@ -164,8 +164,7 @@ implements Initializable, KeyChangeListener {
                 logger.log(Level.SEVERE,"unable to read script file",e);
             }
         } catch (EvalError e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.log(Level.SEVERE,"error in source file",e);
         }
         
         return interpreter; 
