@@ -140,4 +140,13 @@ public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
             }
         }));
     }
+    
+    public void testMultipleAttributesPerElement() throws URIException {
+        UURI uuri = UURIFactory.getInstance("http://www.example.org");
+        DefaultProcessorURI curi = new DefaultProcessorURI(uuri, null);
+        CharSequence cs = "<a src=\"http://www.example.com/\" href=\"http://www.archive.org/\"> "; 
+        JerichoExtractorHTML ex = (JerichoExtractorHTML)makeExtractor();
+        ex.extract(curi, cs);
+        assertTrue("not all links found", curi.getOutLinks().size() == 2);
+    }
 }

@@ -152,7 +152,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             }
         }
         // ACTION
-        else if (((attr = attributes.get("action")) != null) &&
+        if (((attr = attributes.get("action")) != null) &&
                  ((attrValue = attr.getValue()) != null)) {
             if (!ignoreFormActions) {
                 CharSequence context = elementContext(elementName, attr
@@ -161,7 +161,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             }
         }
         // ON_
-        else if ((attrList = findOnAttributes(attributes)).size() != 0) {
+        if ((attrList = findOnAttributes(attributes)).size() != 0) {
             for (Iterator attrIter = attrList.iterator(); attrIter.hasNext();) {
                 attr = (Attribute) attrIter.next();
                 CharSequence valueSegment = attr.getValueSegment();
@@ -171,7 +171,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             }
         }
         // SRC atc.
-        else if ((((attr = attributes.get("src")) != null)
+        if ((((attr = attributes.get("src")) != null)
                 || ((attr = attributes.get("lowsrc")) != null)
                 || ((attr = attributes.get("background")) != null)
                 || ((attr = attributes.get("cite")) != null)
@@ -194,14 +194,14 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             processEmbed(curi, attrValue, context, hopType);
         }
         // CODEBASE
-        else if (((attr = attributes.get("codebase")) != null) &&
+        if (((attr = attributes.get("codebase")) != null) &&
                  ((attrValue = attr.getValue()) != null)) {
             codebase = StringEscapeUtils.unescapeHtml(attrValue);
             CharSequence context = elementContext(elementName, attr.getKey());
             processEmbed(curi, codebase, context);
         }
         // CLASSID DATA
-        else if ((((attr = attributes.get("classid")) != null)
+        if ((((attr = attributes.get("classid")) != null)
                 || ((attr = attributes.get("data")) != null)) &&
                    ((attrValue = attr.getValue()) != null)) {
             if (resources == null)
@@ -209,7 +209,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             resources.add(attrValue);
         }
         // ARCHIVE
-        else if (((attr = attributes.get("archive")) != null) &&
+        if (((attr = attributes.get("archive")) != null) &&
                  ((attrValue = attr.getValue()) != null)) {
             if (resources == null)
                 resources = new ArrayList<String>();
@@ -219,7 +219,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             }
         }
         // CODE
-        else if (((attr = attributes.get("code")) != null) &&
+        if (((attr = attributes.get("code")) != null) &&
                  ((attrValue = attr.getValue()) != null)) {
             if (resources == null)
                 resources = new ArrayList<String>();
@@ -232,7 +232,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             }
         }
         // VALUE
-        else if (((attr = attributes.get("value")) != null) &&
+        if (((attr = attributes.get("value")) != null) &&
                  ((attrValue = attr.getValue()) != null)) {
             if (TextUtils.matches(LIKELY_URI_PATH, attrValue)
                     && overlyEagerLinkDetection) {
@@ -243,7 +243,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
 
         }
         // STYLE
-        else if (((attr = attributes.get("style")) != null) &&
+        if (((attr = attributes.get("style")) != null) &&
                  ((attrValue = attr.getValue()) != null)) {
             // STYLE inline attribute
             // then, parse for URIs
