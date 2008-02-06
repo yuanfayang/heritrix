@@ -90,7 +90,7 @@ implements CoreAttributeConstants {
             url = new URL("http://" + this.ARCHIVE_DOT_ORG);
         } else {
             File f = new File(getTmpDir(), this.ARCHIVE_DOT_ORG + ".html");
-            url = new URL("file://" + f.getAbsolutePath());
+            url = f.toURI().toURL();
             FileOutputStream fos = new FileOutputStream(f);
             fos.write(("<html><head><title>test</title><body>" +
                 "<a href=" + this.LINK_TO_FIND + ">Hewlett Foundation</a>" +
