@@ -12,7 +12,7 @@
     <error-page>
       <exception-type>java.lang.Exception
       </exception-type>
-      <location>/heritrix/error.jsp</location>
+      <location>/error.jsp</location>
     </error-page>
     <session-config>
         <session-timeout>2880</session-timeout> <!-- 48h * 60 minutes -->
