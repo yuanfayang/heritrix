@@ -222,4 +222,13 @@ implements CoreAttributeConstants {
             }
         }));
     }
+    
+    public void testMultipleAttributesPerElement() throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory
+                .getInstance("http://www.example.com"));
+        CharSequence cs = "<a src=\"http://www.example.com/\" href=\"http://www.archive.org/\"> ";
+        this.extractor.extract(curi, cs);
+        Link[] links = curi.getOutLinks().toArray(new Link[0]);
+        assertTrue("not all links found", links.length == 2);
+    }
 }
