@@ -16,7 +16,7 @@ Collection<CrawlJob> completed = (Collection)Text.get(request, "completed");
 active = new TreeSet<CrawlJob>(active);
 ready = new TreeSet<CrawlJob>(ready);
 profiles = new TreeSet<CrawlJob>(profiles);
-completed = new TreeSet<CrawlJob>(completed);
+// don't resort completed; already in preferred (revchron)
 
 String copyUrl = request.getContextPath() + "/crawler_area/do_show_copy.jsp";
 String deleteUrl = request.getContextPath() + "/crawler_area/do_show_delete.jsp";
