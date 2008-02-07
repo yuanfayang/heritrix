@@ -63,7 +63,6 @@ public class ClassicScope extends CrawlScope {
     //        .getName());
 
     public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
-    public static final String ATTR_FORCE_ACCEPT_FILTER = "force-accept-filter";
 
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
 
@@ -73,8 +72,6 @@ public class ClassicScope extends CrawlScope {
     
     @SuppressWarnings("deprecation")
     private org.archive.crawler.filter.OrFilter excludeFilter;
-    @SuppressWarnings("deprecation")
-    private org.archive.crawler.filter.OrFilter forceAcceptFilter;
 
     /**
      * @param name
@@ -98,17 +95,11 @@ public class ClassicScope extends CrawlScope {
         this.excludeFilter = (org.archive.crawler.filter.OrFilter)
             addElementToDefinition(new org.archive.crawler.filter.OrFilter(
                 ATTR_EXCLUDE_FILTER));
-        this.forceAcceptFilter = (org.archive.crawler.filter.OrFilter)
-            addElementToDefinition(
-                new org.archive.crawler.filter.OrFilter(
-                        ATTR_FORCE_ACCEPT_FILTER));
-        this.forceAcceptFilter.setExpertSetting(true);
 
         // Try to preserve the values of these attributes when we exchange
         // scopes.
         setPreservedFields(new String[] { ATTR_SEEDS, ATTR_MAX_LINK_HOPS,
-            ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER,
-            ATTR_FORCE_ACCEPT_FILTER });
+            ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER });
     }
 
     /**
@@ -128,7 +119,7 @@ public class ClassicScope extends CrawlScope {
      *         this scope.
      */
     protected final boolean innerAccepts(Object o) {
-        return forceAccepts(o) || (((isSeed(o) || focusAccepts(o)) ||
+        return (((isSeed(o) || focusAccepts(o)) ||
             additionalFocusAccepts(o) || transitiveAccepts(o)) &&
             !excludeAccepts(o));
     }
@@ -159,7 +150,7 @@ public class ClassicScope extends CrawlScope {
      * @param o the URI to check.
      * @return True if force-accepts filter accepts passed object.
      */
-    protected boolean forceAccepts(Object o) {
+    protected boolean xforceAccepts(Object o) {
         return false;
     }
     
