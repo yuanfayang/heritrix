@@ -31,6 +31,8 @@ import static org.archive.crawler.framework.JobStage.DELIMITER;
 import static org.archive.crawler.framework.JobStage.PROFILE;
 import static org.archive.crawler.framework.JobStage.READY;
 
+import it.unimi.dsi.fastutil.longs.LongComparators;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -41,6 +43,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +61,7 @@ import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
 import org.apache.commons.collections.map.ReferenceMap;
+import org.apache.commons.lang.ArrayUtils;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.io.RandomAccessInputStream;
@@ -370,7 +375,7 @@ public class EngineImpl extends Bean implements Engine {
         jl.start();
         jl.join();
         if (jl.exception != null) {
-            throw jl.exception;
+            throw new RuntimeException(jl.exception);
         }
     }
 
@@ -514,6 +519,12 @@ public class EngineImpl extends Bean implements Engine {
     
     public String[] listJobs() {
         File[] r = jobsDir.listFiles();
+        Arrays.sort(r,new Comparator<File>() {
+            public int compare(File o1, File o2) {
+                return LongComparators.OPPOSITE_COMPARATOR.compare(
+                        o1.lastModified(),
+                        o2.lastModified());
+            }});
         ArrayList<String> result = new ArrayList<String>(r.length);
         for (File f: r) {
             if (isValidJob(f)) {
