@@ -1,6 +1,8 @@
 <%@ page import="org.archive.crawler.webui.Log"%>
 <%@ page import="org.archive.crawler.webui.Text"%>
 <%@ page import="org.archive.crawler.webui.Crawler"%>
+<%@ page import="org.archive.crawler.webui.CrawlJob"%>
+<%@ page import="org.archive.crawler.framework.JobStage"%>
 <%@ page import="org.archive.util.TextUtils"%>
 <%@ page import="org.archive.crawler.webui.Log.Mode"%>
 <%@ page import="org.archive.crawler.util.Logs"%>
@@ -13,6 +15,7 @@
 	Logs currentLog = log.getCurrentLog();     
 	Mode mode = log.getMode(); 
 	int linesToShow = log.getLinesToShow();
+	CrawlJob crawlJob = (CrawlJob)Text.get(request, "job");
 %>
 <html>
 <head>
@@ -234,9 +237,21 @@
 </table>
 </form>
 
-<a href="<%=request.getContextPath()%>/console/do_rotate_log_files.jsp?<%=Text.jobQueryString(request)%>">
-Rotate Log Files
-</a>
+<% if (crawlJob.getJobStage() == JobStage.ACTIVE) { %>
+
+<hr>
+
+<h3>Rotate Log Files</h3>
+
+<form 
+   method="post" 
+   action="<%=request.getContextPath()%>/console/do_rotate_log_files.jsp?<%=Text.jobQueryString(request)%>"
+   >
+   <input type="checkbox" name="confirm" value="yes">Confirm<br/>
+   <input type="submit" value="Rotate Log Files">
+</form>
+
+<% } %>
 
 </body>
 </html>

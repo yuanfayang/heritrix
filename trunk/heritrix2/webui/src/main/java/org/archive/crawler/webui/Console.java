@@ -308,8 +308,13 @@ public class Console {
         JMXConnector jmxc = c.connect();
         try {
             CrawlJob cj = CrawlJob.fromRequest(request, jmxc);
-            AlertTracker at = Misc.find(jmxc, cj.getName(), AlertTracker.class);
-            at.rotateLogFiles();
+            if (request.getParameter("confirm") != null) {
+                AlertTracker at = Misc.find(jmxc, cj.getName(), AlertTracker.class);
+                at.rotateLogFiles();
+                new Flash("Logs rotated.").addToSession(request);
+            } else {
+                new Flash(Flash.Kind.NACK, "Logs NOT rotated; please check the confirm box.").addToSession(request);
+            }
         } finally {
             Misc.close(jmxc);
         }
