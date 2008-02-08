@@ -48,7 +48,6 @@ import org.archive.state.KeyTypes;
  */
 public class SingleSheet extends Sheet {
 
-    static enum NULL { VALUE };
 
     /**
      * 
@@ -99,8 +98,8 @@ public class SingleSheet extends Sheet {
      * 
      * @param manager   the manager who created this sheet
      */
-    SingleSheet(SheetManager manager, String name, boolean global) {
-        super(manager, name);
+    SingleSheet(SheetManager manager, String parentName, String name, boolean global) {
+        super(manager, parentName, name);
         this.global = global;
         this.settings = new WeakHashMap<Object,Map<Key<?>,Object>>();
         this.primaries = new WeakHashMap<Object,String>();
@@ -115,7 +114,7 @@ public class SingleSheet extends Sheet {
     @Override
     SingleSheet duplicate() {
         SingleSheet result = new SingleSheet(
-                getSheetManager(), getName(), global);
+                getSheetManager(), parentName, getName(), global);
         result.primaries.putAll(this.primaries);
         Duplicator d = new Duplicator(this, result);
         
@@ -148,174 +147,122 @@ public class SingleSheet extends Sheet {
     }
 
 
+    @Override
     public boolean contains(Object module, Key<?> key) {
-        return checkUnsafe(module, key) != null;
+        Map<Key<?>,Object> keys = settings.get(module);
+        if (keys == null) {
+            return false;
+        }
+        return keys.containsKey(key);
     }
     
     
-    @Override
-    <T> T check(Object module, Key<T> key) {
-        if (module == null) {
-            throw new IllegalArgumentException("Requested key on null module.");
-        }
-        validateModuleType(module, key);
-        Object value = checkUnsafe(module, key);
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof ModuleInfo) {
-            ModuleInfo mi = (ModuleInfo)value;
-            value = mi.holder.module;
-        }
-        return key.getType().cast(value);
-    }
-    
-    
-    @Override
-    <T> Stub checkStub(Stub module, Key<T> key) {
-        validateModuleType(module, key);
-        if (isLive(key)) {
-            throw new IllegalStateException("Not a stub key.");
-        }
-        Object r = checkUnsafe(module, key);
-        if (r instanceof ModuleInfo) {
-            ModuleInfo mi = (ModuleInfo)r;
-            r = mi.holder.module;
-        }
-        return (Stub)r;
-    }
-
-    
-    private Object checkUnsafe(Object module, Key<?> key) {
+    private Object fetch(Object module, Key<?> key) {
         Map<Key<?>,Object> keys = settings.get(module);
         if (keys == null) {
             return null;
         }
         return keys.get(key);
     }
+    
+    
+    @Override
+    Object check(Object module, Key<?> key) {
+        Object r = fetch(module, key);
+        if (r instanceof ModuleInfo) {
+            r = ((ModuleInfo)r).holder.module;
+        }
+        return r;
+    }
 
+
+    @Override
     public <T> Resolved<T> resolve(Object module, Key<T> key) {
+        // check preconditions
         if (module == null) {
             throw new IllegalArgumentException("Requested key on null module.");
         }
         validateModuleType(module, key);
         
+        // Map/List elements may need to be merged with parent sheet(s)'
         if (Map.class.isAssignableFrom(key.getType())) {
             return resolveMap(module, key);
         }
         if (List.class.isAssignableFrom(key.getType())) {
             return resolveList(module, key);
         }
-        if (isLive(key)) {
-            return resolveLive(module, key);
+
+        // If this sheet doesn't override the key, defer to the parent.
+        if (!contains(module, key)) {
+            return getParent().resolve(module, key);
+        }
+        
+        // This sheet overrides the key.  Get the overridden value...
+        Object result = fetch(module, key);
+
+        // Module values are actually stored as a ModuleInfo, from which the 
+        // actual module instance can be retrieved.  In stub mode, the instance
+        // will be a Stub<T> instead of a T.
+        if (result instanceof ModuleInfo) {
+            ModuleInfo minfo = (ModuleInfo)result;
+            if (isLive(key.getType())) {
+                T typesafe = key.getType().cast(minfo.holder.module);
+                return Resolved.makeLive(module, key, typesafe, this);
+            } else {
+                @SuppressWarnings("unchecked")
+                Stub<?> stub = (Stub)minfo.holder.module;
+                return Resolved.makeStub(module, key, stub, this);
+            }
         } else {
-            return resolveStub((Stub)module, key);
+            // It was a just simple value (eg, a String).
+            T typesafe = key.getType().cast(result);
+            return Resolved.makeLive(module, key, typesafe, this);
         }
-    }
-
-    
-    private <T> Resolved<T> resolveLive(Object module, Key<T> key) {
-        T result = check(module, key);
-        if (result == null) {
-            return resolveDefault(module, key);
-        }
-        if (result == NULL.VALUE) {
-            result = null;
-        }
-        if (result instanceof ModuleInfo) {
-            ModuleInfo minfo = (ModuleInfo)result;
-            result = key.getType().cast(minfo.holder.module);
-        }
-        return Resolved.makeLive(module, key, result, this);
-    }
-
-    
-    private <T> Resolved<T> resolveStub(Stub module, Key<T> key) {
-        Object result = checkUnsafe(module, key);
-        if (result == null) {
-            return resolveDefault(module, key);
-        }
-        if (result == NULL.VALUE) {
-            result = null;
-        }
-        if (result instanceof ModuleInfo) {
-            ModuleInfo minfo = (ModuleInfo)result;
-            result = minfo.holder.module;
-        }
-        Stub r = (Stub)result;
-        return Resolved.makeStub(module, key, r, this);
     }
     
     
     private <T> Resolved<T> resolveMap(Object module, Key<T> key) {
-        SingleSheet global = getGlobalSheet();
-
-        Key k = key;
-        TypedMap<Object> defMap = (TypedMap)global.resolveEditableMap(module, k);
+        // Merge all values into one glorious map.
+        List<Sheet> sheets = new ArrayList<Sheet>();
+        List<TypedMap<Object>> maps = new ArrayList<TypedMap<Object>>();        
+        for (Sheet sh = this; !(sh instanceof UnspecifiedSheet); sh = sh.getParent()) {
+            if (sh.contains(module, key)) {
+                sheets.add(sh);
+                Object o = sh.check(module, key);
+                TypedMap<Object> map = (TypedMap)o;
+                maps.add(map);
+            }
+        }
         
-        // If this is the global sheet, avoid redundant double-check.
-        @SuppressWarnings("unchecked")
-        TypedMap<Object> myMap = (global == this) ? null 
-                : (TypedMap)this.resolveEditableMap(module, k);
-
-        TypedMap<Object> result;
-        List<Sheet> sheets;
-        if ((defMap == null) && (myMap == null)) {
-            Sheet un = getSheetManager().getUnspecifiedSheet();
-            return un.resolve(module, key);
+        // If no sheets actually overrode the map, then just use the default.
+        if (sheets.isEmpty()) {
+            return getSheetManager().getUnspecifiedSheet().resolve(module, key);
         }
-        if ((myMap != null) && (defMap != null)) {
-            List<TypedMap<Object>> maps = new ArrayList<TypedMap<Object>>(2);
-            maps.add(myMap);  // First check this sheet's map
-            maps.add(defMap); // Then check default sheet's map.
-            result = new MultiTypedMap<Object>(maps, null);
-            sheets = new ArrayList<Sheet>(2);
-            sheets.add(this);
-            sheets.add(global);
-        } else if (myMap != null) {
-            result = myMap;
-            sheets = Collections.singletonList((Sheet)this);
-        } else { // defMap != null
-            result = defMap;
-            sheets = Collections.singletonList((Sheet)global);
-        }
-
+        
+        TypedMap<Object> result = new MultiTypedMap<Object>(maps, null);
         return Resolved.makeMap(module, key, result, sheets);
     }
-    
-    
+
+
     private <T> Resolved<T> resolveList(Object module, Key<T> key) {
-        SingleSheet def = getGlobalSheet();
-        @SuppressWarnings("unchecked")
-        TypedList<Object> defList = (TypedList)def.check(module, key);
-        @SuppressWarnings("unchecked")
-        TypedList<Object> myList = (def == this) ? null 
-                :  (TypedList)this.check(module, key);
-        
-        TypedList<Object> result;
-        List<Sheet> sheets;
-        if ((defList == null) && (myList == null)) {
-            Sheet un = getSheetManager().getUnspecifiedSheet();
-            return un.resolve(module, key);
+        // Merge all values into one glorious map.
+        List<Sheet> sheets = new ArrayList<Sheet>();
+        List<TypedList<Object>> lists = new ArrayList<TypedList<Object>>();        
+        for (Sheet sh = this; !(sh instanceof UnspecifiedSheet); sh = sh.getParent()) {
+            if (sh.contains(module, key)) {
+                sheets.add(sh);
+                Object o = sh.check(module, key);
+                TypedList<Object> list = (TypedList)o;
+                lists.add(0, list);
+            }
         }
 
-
-        if ((defList != null) && (myList != null)) {
-            List<TypedList<Object>> lists = new ArrayList<TypedList<Object>>(2);
-            lists.add(defList);
-            lists.add(myList);
-            result = new MultiTypedList<Object>(lists, null);
-            sheets = new ArrayList<Sheet>(2);
-            sheets.add(this);
-            sheets.add(def);
-        } else if (defList != null) {
-            result = defList;
-            sheets = Collections.singletonList((Sheet)def);
-        } else { // myList != null
-            result = myList;
-            sheets = Collections.singletonList((Sheet)this);
+        // If no sheets actually overrode the map, then just use the default.
+        if (sheets.isEmpty()) {
+            return getSheetManager().getUnspecifiedSheet().resolve(module, key);
         }
 
+        TypedList<Object> result = new MultiTypedList<Object>(lists, null);
         return Resolved.makeList(module, key, result, sheets);
     }
     
@@ -579,24 +526,18 @@ public class SingleSheet extends Sheet {
         if ((o instanceof List) && (!(o instanceof SettingsList))) {
             throw new IllegalArgumentException("Lists must be TypedList.");
         }
-        if (o == null) {
-            return NULL.VALUE;
-        }
         return o;
     }
 
     
     public <T> Map<String,T> resolveEditableMap(Object o, Key<Map<String,T>> k) {
-        Map result = check(o, k);
+        Map result = (Map)check(o, k);
         return result;
     }
 
     
     public List resolveEditableList(Object o, Key<List> k) {
-        List result = check(o, k);
-//        if ((result == null) && !global) {
-//            result = getSheetManager().getGlobalSheet().check(o, k);
-//        }
+        List result = (List)check(o, k);
         return result;
     }
 

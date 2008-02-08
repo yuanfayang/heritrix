@@ -68,7 +68,7 @@ public class PathListerTest extends PathTestBase {
      * output.  Just be sure to visually inspect the results before pasting
      * it into a resource file.
      */
-    public void ntestPrint() {
+    public void xtestPrint() {
         SingleSheet ss = (SingleSheet)manager.getSheet("o1");
         StringWriter sw = new StringWriter();
         FilePathListConsumer consumer = new FilePathListConsumer(sw);
@@ -85,6 +85,7 @@ public class PathListerTest extends PathTestBase {
     public void testPathLister() throws Exception {
         runSheet("global");
         runSheet("o1");
+        run(manager, bundle, true);
     }
 
 
@@ -107,6 +108,13 @@ public class PathListerTest extends PathTestBase {
         run(stub_manager, sheetName, false);
     }
 
+    
+    static void run(SheetManager manager, String sheetName, boolean resolve) 
+    throws Exception {
+        SingleSheet ss = (SingleSheet)manager.getSheet(sheetName);
+        run(manager, ss, resolve);
+    }
+    
 
     /**
      * Load the resource containing expected output for the given sheet,
@@ -120,19 +128,19 @@ public class PathListerTest extends PathTestBase {
      * @param resolve     true to test the resolveAll operation, false to test
      *                     the getAll operation.
      */
-    static void run(SheetManager manager, String sheetName, boolean resolve) 
+    static void run(SheetManager manager, Sheet sheet, boolean resolve) 
     throws Exception {
+        String sheetName = sheet.getName();
         String suffix = resolve ? ".resolved.txt" : ".get.txt";
         String expected = load(sheetName + suffix);
         StringWriter sw = new StringWriter();
         FilePathListConsumer consumer = new FilePathListConsumer(sw);
         consumer.setIncludeSheets(true);
         consumer.setSheetsDelim('|');
-        SingleSheet ss = (SingleSheet)manager.getSheet(sheetName);
         if (resolve) {
-            PathLister.resolveAll(ss, consumer, true);
+            PathLister.resolveAll(sheet, consumer, true);
         } else {
-            PathLister.getAll(ss, consumer, true);
+            PathLister.getAll((SingleSheet)sheet, consumer, true);
         }
         String result = sw.toString();
         assertEquals(expected, result);        

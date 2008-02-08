@@ -35,7 +35,6 @@ import org.archive.state.StateProvider;
 
 /**
  * A sheet of settings.  Sheets must be created via a sheet manager.
- * Concrete implementations are safe for use by concurrent threads.
  * 
  * @author pjack
  */
@@ -47,6 +46,11 @@ public abstract class Sheet implements StateProvider, Serializable {
      */
     final private SheetManager manager;
 
+    
+    /**
+     * The parent of this sheet.  May be null if this is the UnspecifiedSheet.
+     */
+    final String parentName;
 
     private String name;
     
@@ -62,11 +66,12 @@ public abstract class Sheet implements StateProvider, Serializable {
      * 
      * @param manager   the manager who created this sheet
      */
-    Sheet(SheetManager manager, String name) {
+    Sheet(SheetManager manager, String parentName, String name) {
         if (manager == null) {
             throw new IllegalArgumentException();
         }
         this.name = name;
+        this.parentName = parentName;
         this.manager = manager;
     }
     
@@ -79,6 +84,23 @@ public abstract class Sheet implements StateProvider, Serializable {
     public SheetManager getSheetManager() {
         return manager;
     }
+    
+
+    /**
+     * Returns the parent of this SingleSheet.  The parent will either be
+     * another SingleSheet, or the default sheet if this sheet is the global
+     * sheet.
+     * 
+     * @return   the parent of this sheet
+     */
+    public Sheet getParent() {
+        if (parentName == null) {
+            return null;
+        }
+        // Look up by name in case actual sheet instance was replaced by
+        // a checkout/commit
+        return manager.getSheet(parentName);
+    }
 
     
     /**
@@ -89,11 +111,6 @@ public abstract class Sheet implements StateProvider, Serializable {
      */
     public String getName() {
         return name;
-    }
-    
-    
-    void setName(String name) {
-        this.name = name;
     }
 
     
@@ -113,62 +130,52 @@ public abstract class Sheet implements StateProvider, Serializable {
     
     
     /**
-     * Looks up a value for a property.  TODO: Collapse checkStub into 
-     * this for simplicity's sake.  There are two methods because they used
-     * to be public and required different signatures for type safety.
+     * Returns true if this sheet contains a value for the given key and
+     * module.
      * 
-     * @param <T>
-     * @param module   the module who needs the property value
-     * @param key         a key (declared by the module) that defines the
-     *                    property to return
-     * @return  either the value for that module/Key combination, or null
-     *    if this sheet does not include such a value
+     * @param module   the module to check
+     * @param key      a key of that module to check
+     * @return      true if this sheet contains a value for that module/key
      */
-    abstract <T> T check(Object module, Key<T> key);
+    public abstract boolean contains(Object module, Key<?> key);
 
-    
-    abstract <T> Stub checkStub(Stub module, Key<T> key);
-    
+    abstract Object check(Object module, Key<?> key);
+
+
+    /**
+     * Resolves a the given setting on the given module.  The returned 
+     * {@link Resolved} object will contain the value of the setting, as well
+     * as the list of sheets that were consulted to provide the value.
+     * 
+     * @param <T>     the type of the setting
+     * @param module  the module whose setting to resolve
+     * @param key     the setting to resolve
+     * @return        the resolution of that setting
+     */
     public abstract <T> Resolved<T> resolve(Object module, Key<T> key);
 
-
-    <T> Resolved<T> resolveDefault(Object module, Key<T> key) {
-        if (isLive(key)) {
-            return resolveDefaultLive(module, key);
-        } else {
-            return resolveDefaultStub(module, key);
-        }
-    }
     
-    
-    private <T> Resolved<T> resolveDefaultLive(Object module, Key<T> key) {
-        SingleSheet defaults = getGlobalSheet();
-        T result = defaults.check(module, key);
-        if (result == null) {
-            Sheet un = getSheetManager().getUnspecifiedSheet();
-            return un.resolve(module, key);
-        }
-        return Resolved.makeLive(module, key, result, defaults);
-    }
-    
-    
-    private <T> Resolved<T> resolveDefaultStub(Object module, Key<T> key) {
-        Stub stub = (Stub)module;
-        SingleSheet defaults = getGlobalSheet();
-        Stub result = defaults.checkStub(stub, key);
-        if (result == null) {
-            Sheet un = getSheetManager().getUnspecifiedSheet();
-            return un.resolve(module, key);
-        }
-        return Resolved.makeStub(module, key, result, defaults);
-    }
-    
-    
+    /**
+     * Returns this sheet's value for the given setting on the given module.
+     * If this sheet does not contain an override for the setting, then 
+     * the parent sheet (and its parents) will be consulted until a value 
+     * is found.  Ultimately the default sheet must provide a value.
+     * 
+     * <p>For list settings, the returned value will actually be a merged list
+     * of all the elements provided by this sheet's list (if any) and its parent 
+     * sheets' lists (if any).
+     * 
+     * <p>For map settings, the returned value will be a merged map containing
+     * this sheet's mappings (if any) and its parent sheets' mappings (if any).
+     * 
+     * @param <T>      the type of the setting 
+     * @param module   the module whose setting to resolve
+     * @param key      the setting whose value to return
+     * @return         the value of that setting
+     */
     public <T> T get(Object module, Key<T> key) {
         return resolve(module, key).getLiveValue();
     }
-
-
 
     
     /**
@@ -215,16 +222,13 @@ public abstract class Sheet implements StateProvider, Serializable {
     public String toString() {
         return name;
     }
-    
-    
+
+
     abstract Sheet duplicate();
 
-    
-    
-    
-    
+
     static <T> void validateModuleType(Object module, Key<T> key) {
-        Class mtype = Stub.getType(module);
+        Class<?> mtype = Stub.getType(module);
         if (!key.getOwner().isAssignableFrom(mtype)) {
             throw new IllegalArgumentException("Illegal module type.  " +
                     "Key owner is " + key.getOwner().getName() + 

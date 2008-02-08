@@ -40,6 +40,9 @@ import org.archive.state.Path;
 class UnspecifiedSheet extends Sheet {
 
     
+    private static enum NULL { VALUE };
+    
+    
     /**
      * First version.
      */
@@ -80,30 +83,22 @@ class UnspecifiedSheet extends Sheet {
     
     
     public UnspecifiedSheet(SheetManager manager, String name) {
-        super(manager, name);
+        super(manager, null, name);
         thisList = Collections.singletonList((Sheet)this);
         this.defaults = new ConcurrentHashMap<ModuleKey,Object>();
     }
-    
+
     @Override
     UnspecifiedSheet duplicate() {
         return this;
     }
 
     @Override
-    public <T> T check(Object module, Key<T> key) {
+    Object check(Object module, Key<?> key) {
         return get(module, key);
     }
 
-    @Override
-    public <T> Stub checkStub(Stub module, Key<T> key) {
-        validateModuleType(module, key);
-        SingleSheet global = getSheetManager().getGlobalSheet();
-        Object def = getDefault(global, module, key);
-        return (Stub)def;
-    }
 
-    
     <T> Object getDefault(SingleSheet global, Object module, Key<T> k) {
         Class<T> type = k.getType();
         if (KeyTypes.isSimple(type)) {
@@ -123,7 +118,7 @@ class UnspecifiedSheet extends Sheet {
         ModuleKey mk = new ModuleKey(module, k);
         Object result = defaults.get(mk);
         if (result != null) {
-            if (result == SingleSheet.NULL.VALUE) {
+            if (result == NULL.VALUE) {
                 return null;
             } else {
                 return result;
@@ -159,13 +154,13 @@ class UnspecifiedSheet extends Sheet {
         }
 
         if (result == null) {
-            result = SingleSheet.NULL.VALUE;
+            result = NULL.VALUE;
         }
         Object r = defaults.putIfAbsent(mk, result);
         if (r != null) {
             result = r;
         }
-        if (result == SingleSheet.NULL.VALUE) {
+        if (result == NULL.VALUE) {
             return null;
         }
         return result;
@@ -210,5 +205,10 @@ class UnspecifiedSheet extends Sheet {
         return Resolved.make(module, k, value, thisList);
     }
 
+
+    @Override
+    public boolean contains(Object module, Key<?> k) {
+        return true;
+    }
 
 }

@@ -91,6 +91,7 @@ public class MemorySheetManager extends SheetManager {
         super("unkownn", live);
         this.pathContext = new DefaultPathContext(new File("."));
         sheets = new HashMap<String,Sheet>();
+        sheets.put(DEFAULT_SHEET_NAME, getUnspecifiedSheet());
         associations = new TreeMap<String,Set<Sheet>>();
         SingleSheet globals = addSingleSheet(GLOBAL_SHEET_NAME);
         if (live) {
@@ -127,21 +128,12 @@ public class MemorySheetManager extends SheetManager {
             if (old != null) {
                 throw new IllegalArgumentException("Sheet already exists: " + name);
             }
-            SingleSheet r = createSingleSheet(name);
-            sheets.put(name, r);
-            return r;
-        }
-    }
-
-    
-    @Override
-    public SheetBundle addSheetBundle(String name, Collection<Sheet> c) {
-        synchronized (sheets) {
-            Sheet old = sheets.get(name);
-            if (old != null) {
-                throw new IllegalArgumentException("Sheet already exists: " + name);
+            SingleSheet r;
+            if (name.equals(GLOBAL_SHEET_NAME)) {
+                r = createSingleSheet(null, name);
+            } else {
+                r = createSingleSheet(getGlobalSheet(), name);
             }
-            SheetBundle r = createSheetBundle(name, c);
             sheets.put(name, r);
             return r;
         }

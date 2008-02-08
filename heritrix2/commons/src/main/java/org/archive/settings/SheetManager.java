@@ -62,6 +62,8 @@ public abstract class SheetManager implements StateProvider, Serializable {
     
     final public static String GLOBAL_SHEET_NAME = "global";
     
+    final public static String DEFAULT_SHEET_NAME = "default";
+    
     final private UnspecifiedSheet unspecified;
     
     final transient private Stub<?> stubThis;
@@ -127,7 +129,7 @@ public abstract class SheetManager implements StateProvider, Serializable {
     }
 
     
-    Sheet getUnspecifiedSheet() {
+    public Sheet getUnspecifiedSheet() {
         return unspecified;
     }
     
@@ -186,20 +188,6 @@ public abstract class SheetManager implements StateProvider, Serializable {
      */
     public abstract SingleSheet addSingleSheet(String name);
 
-    
-    /**
-     * Adds a sheet bundle with the given name.  Subclasses should use
-     * {@link #createSheetBundle(String)} to allocate a new sheet, then 
-     * store that sheet in persistent storage, etc.
-     * 
-     * @param name    the name for the new sheet
-     * @return   the newly allocated sheet
-     * @throws  IllegalArgumentException  
-     *  if a sheet with that name already exists
-     */
-    public abstract SheetBundle addSheetBundle(String name, 
-            Collection<Sheet> sheets);
-
 
     /**
      * Returns the sheet with the give name.
@@ -219,10 +207,11 @@ public abstract class SheetManager implements StateProvider, Serializable {
      * @return   the newly created and registered sheet
      * @throws IllegalArgumentException   if that name already exists
      */
-    final protected SingleSheet createSingleSheet(String name) 
+    final protected SingleSheet createSingleSheet(SingleSheet parent, String name) 
     throws IllegalArgumentException {
         boolean global = name.equals(GLOBAL_SHEET_NAME);
-        SingleSheet result = new SingleSheet(this, name, global);
+        String parentName = global ? DEFAULT_SHEET_NAME : parent.getName();
+        SingleSheet result = new SingleSheet(this, parentName, name, global);
         return result;
     }
 
