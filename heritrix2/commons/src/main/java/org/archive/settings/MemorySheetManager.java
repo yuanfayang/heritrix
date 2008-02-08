@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.archive.settings.file.PrefixFinder;
 import org.archive.settings.path.PathChangeException;
@@ -268,7 +269,8 @@ public class MemorySheetManager extends SheetManager {
     public Sheet findConfig(String context) {
         final List<Sheet> result = new ArrayList<Sheet>();
         List<String> prefixes = new ArrayList<String>();
-        PrefixFinder.find((SortedSet<String>)associations.keySet(), context, prefixes);
+        TreeSet<String> k = new TreeSet<String>(associations.keySet());
+        PrefixFinder.find(k, context, prefixes);
         for (String prefix: prefixes) {
             Set<Sheet> sheets = associations.get(prefix);
             for (Sheet sheet: sheets) {
