@@ -32,11 +32,6 @@ public interface JMXSheetManager {
             @Parameter(name = "name", desc = "The name for the new sheet")
             String name);
 
-    @Operation(desc = "Creates a new sheet bundle.", impact = Bean.ACTION)
-    void makeSheetBundle(
-            @Parameter(name = "name", desc = "The name for the new sheet")
-            String name);
-
     @Operation(desc = "Returns the settings overriden by the given single sheet.", type = "org.archive.settings.jmx.Types.GET_DATA_ARRAY")
     CompositeData[] getAll(
             @Parameter(name = "name", desc = "The name of the single sheet whose overrides to return.")
@@ -96,14 +91,33 @@ public interface JMXSheetManager {
             @Parameter(name = "value", desc = "The new value for the setting at that path.")
             String value);
 
-    @Operation(desc = "Resolves the value of a setting.")
-    String resolve(
+    @Operation(desc = "Returns the value of a setting as a string.")
+    String get(
 
             @Parameter(name = "sheetName", desc = "The name of the sheet whose setting to resolve.")
             String sheetName,
 
             @Parameter(name = "path", desc = "The path to the setting whose value to resolve.")
             String path);
+    
+    @Operation(desc = "Resolves the value of a setting.", type="org.archive.settings.jmx.Types.GET_DATA")
+    CompositeData resolve(
+
+            @Parameter(name = "sheetName", desc = "The name of the sheet whose setting to resolve.")
+            String sheetName,
+
+            @Parameter(name = "path", desc = "The path to the setting whose value to resolve.")
+            String path);
+
+    @Operation(desc="Returns true if the given sheet contains an override for the given setting.")
+    boolean contains(
+            @Parameter(name = "sheetName", desc = "The name of the sheet whose setting to check.")
+            String sheetName,
+
+            @Parameter(name = "path", desc = "The path to the setting to check.")
+            String path);
+
+    
 
     @Operation(desc = "Associates a sheet with a SURT prefix.")
     void associate(
@@ -189,25 +203,6 @@ public interface JMXSheetManager {
             @Parameter(name="sheetName", desc="The name of the sheet to test.")
             String sheetName);
 
-    @Operation(desc="Returns the names of the sheets contained in the given" +
-                "sheet bundle.")
-    String[] getBundledSheets(            
-            @Parameter(name="bundleName", desc="The name of the bundle whose sheets to return.")
-            String bundleName);
-
-    @Operation(desc="Moves a sheet inside a bundle.")
-    void moveBundledSheet(
-            
-            @Parameter(name="bundle", desc="The name of the sheet bundle containing the sheet to move.")
-            String bundle, 
-            
-            @Parameter(name="sheetToMove", desc="The name of the sheet inside " +
-                        "the bundle to move.  If sheetToMove is not yet a " +
-                        "member of the bundle, it will be added to the bundle.")
-            String sheetToMove, 
-            
-            @Parameter(name="index", desc="The index to move the sheet to.")
-            int index);
 
     @Attribute(desc="Returns true if the sheet manager is live.", def="false")
     boolean isLive();

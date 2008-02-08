@@ -23,12 +23,9 @@
  */
 package org.archive.settings.file;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -37,7 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -52,7 +48,6 @@ import org.archive.settings.ModuleListener;
 import org.archive.settings.Stub;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.Sheet;
-import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.path.ConstraintChecker;
@@ -60,7 +55,6 @@ import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathListConsumer;
 import org.archive.settings.path.PathLister;
-import org.archive.state.DefaultPathContext;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
@@ -155,9 +149,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     /** The extension for files containing SingleSheet information. */
     final private static String SINGLE_EXT = ".sheet";
-
-    /** The extension for files containing SingleBundle information. */
-    final private static String BUNDLE_EXT = ".bundle";
 
     /** Logger. */
     final private static Logger LOGGER = Logger
@@ -369,33 +360,16 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
                 loadSingleSheet(sname);
             }
         }
-        
-        // Load sheet bundles last.
-        for (File f: sheetsDir.listFiles()) {
-            String name = f.getName();
-            if (name.endsWith(BUNDLE_EXT)) {
-                int p = name.lastIndexOf('.');
-                String sname = name.substring(0, p);
-                loadSheetBundle(sname);
-            }
-        }
-        // FIXME: Load or at least clear associations...
     }
 
 
     @Override
     public SingleSheet addSingleSheet(String name) {
-        SingleSheet r = createSingleSheet(name);
+        SingleSheet r = createSingleSheet(getGlobalSheet(), name);
         addSheet(r);
         return r;
     }
 
-    @Override
-    public SheetBundle addSheetBundle(String name, Collection<Sheet> sheets) {
-        SheetBundle r = createSheetBundle(name, sheets);
-        addSheet(r);
-        return r;
-    }
 
     /**
      * Adds a new sheet. The given sheet is saved to disk and placed in the
@@ -406,17 +380,14 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      * @throws IllegalArgumentException
      *             if any existing sheet has the same name as the given sheet
      */
-    private void addSheet(Sheet sheet) {
+    private void addSheet(SingleSheet sheet) {
         String name = sheet.getName();
         String ext = this.getSheetExtension(name);
         if (ext != null) {
             throw new IllegalArgumentException("Sheet already exists: " + name);
         }
-        if (sheet instanceof SheetBundle) {
-            saveSheetBundle((SheetBundle) sheet);
-        } else {
-            saveSingleSheet((SingleSheet) sheet);
-        }
+
+        saveSingleSheet((SingleSheet) sheet);
         this.sheets.put(name, sheet);
     }
 
@@ -507,6 +478,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     @Override
     public Sheet getSheet(String sheetName) throws IllegalArgumentException {
+        if (sheetName.equals(DEFAULT_SHEET_NAME)) {
+            return this.getUnspecifiedSheet();
+        }
         Sheet r = sheets.get(sheetName);
         if (r == null) {
             r = loadSheet(sheetName);
@@ -525,9 +499,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         HashSet<String> r = new HashSet<String>();
         for (String s : files) {
             String name = removeSuffix(s, SINGLE_EXT);
-            if (name == null) {
-                name = removeSuffix(s, BUNDLE_EXT);
-            }
             if (name != null) {
                 r.add(name);
             }
@@ -594,9 +565,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         if (new File(sheetsDir, name + SINGLE_EXT).exists()) {
             return loadSingleSheet(name);
         }
-        if (new File(sheetsDir, name + BUNDLE_EXT).exists()) {
-            return loadSheetBundle(name);
-        }
         return null;
     }
 
@@ -611,7 +579,12 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private SingleSheet loadSingleSheet(String name) {
         File f = new File(sheetsDir, name + SINGLE_EXT);
         try {
-            SingleSheet r = createSingleSheet(name);
+            SingleSheet r;
+            if (name.equals(GLOBAL_SHEET_NAME)) {
+                r = createSingleSheet(null, name);
+            } else {
+                r = createSingleSheet(getGlobalSheet(), name);
+            }
             if (name.equals(GLOBAL_SHEET_NAME)) {
                 setManagerDefaults(r);
             }
@@ -637,49 +610,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
     }
 
-    /**
-     * Loads the sheet bundle with the given name. If the sheet cannot be loaded
-     * for any reaso, the reason is logged and this method returns null.
-     * 
-     * @param name
-     *            the name of the sheet bundle to load
-     * @return the loaded sheet bundle, or null
-     */
-    private SheetBundle loadSheetBundle(String name) {
-        File f = new File(sheetsDir, name + BUNDLE_EXT);
-        Collection<Sheet> c = new LinkedList<Sheet>();
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new FileReader(f));
-            for (String s = br.readLine(); s != null; s = br.readLine()) {
-                if (!s.startsWith("#")) {
-                    c.add(getSheet(s));
-                }
-            }
-            SheetBundle r = createSheetBundle(name, c);
-            sheets.put(name, r);
-            return r;
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Could not load sheet.", e);
-            return null;
-        } finally {
-            IoUtils.close(br);
-        }
-    }
-
-    /**
-     * Saves the given sheet to disk.
-     * 
-     * @param s
-     *            the sheet to save
-     */
-//    private void saveSheet(Sheet s) {
-//        if (s instanceof SingleSheet) {
-//            saveSingleSheet((SingleSheet) s);
-//        } else {
-//            saveSheetBundle((SheetBundle) s);
-//        }
-//    }
 
     /**
      * Saves a single sheet to disk. This method first saves the sheet to a
@@ -717,40 +647,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         }
     }
 
-    /**
-     * Saves a sheet bundle to disk. First saves the sheet to a temporary file,
-     * then renames that file to the <code>.bundle</code> for that sheet. If a
-     * problem occurs, the problem is logged but no exception is raised.
-     * 
-     * @param sb
-     *            the sheet bundle to save
-     */
-    private void saveSheetBundle(SheetBundle sb) {
-        File temp = new File(sheetsDir, sb.getName() + BUNDLE_EXT + ".temp");
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter(temp);
-            for (Sheet s : sb.getSheets()) {
-                fw.write(s.getName() + '\n');
-            }
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Can't save " + sb.getName(), e);
-            return;
-        } finally {
-            IoUtils.close(fw);
-        }
-
-        File saved = new File(sheetsDir, sb.getName() + BUNDLE_EXT);
-        try {
-            // Copy temp -> Saved
-            org.apache.commons.io.FileUtils.copyFile(temp, saved, true);
-            // Remove temp
-            org.apache.commons.io.FileUtils.forceDelete(temp);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, 
-                    "Could not rename temp file for " + sb.getName(), e);
-        }
-    }
 
     /**
      * Returns the extension for the given sheet.
@@ -763,9 +659,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private String getSheetExtension(String sheetName) {
         if (new File(sheetsDir, sheetName + SINGLE_EXT).exists()) {
             return SINGLE_EXT;
-        }
-        if (new File(sheetsDir, sheetName + BUNDLE_EXT).exists()) {
-            return BUNDLE_EXT;
         }
         return null;
     }

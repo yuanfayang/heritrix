@@ -52,7 +52,6 @@ import org.archive.settings.Stub;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
-import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.FilePathListConsumer;
@@ -63,6 +62,7 @@ import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathListConsumer;
 import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
+import org.archive.settings.path.StringPathListConsumer;
 import org.archive.state.KeyTypes;
 import org.archive.state.Path;
 
@@ -171,15 +171,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         stamp();
         manager.addSingleSheet(name);
     }
-    
-    
-    public synchronized void makeSheetBundle(String name) {
-        stamp();
-        Collection<Sheet> empty = Collections.emptyList();
-        manager.addSheetBundle(name, empty);
-    }
 
-    
+
     public synchronized CompositeData[] getAll(String name) {
         stamp();
         SingleSheet sheet = (SingleSheet)getSheet(name);
@@ -338,7 +331,7 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
     
-    public synchronized String resolve(
+    public synchronized String get(
             String sheetName,
             String path
             ) {
@@ -352,6 +345,46 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
             return v.toString();
         }
         return Stub.getType(v).getName();
+    }
+    
+    
+    public synchronized boolean contains(
+            String sheetName,
+            String path) {
+        stamp();
+        return false;
+//        SingleSheet sheet = getSingleSheet(sheetName);
+//        Object v = PathValidator.check(sheet, path);
+//        if (KeyTypes.isSimple(v.getClass())) {
+//            return v.toString();
+//        }
+//        return Stub.getType(v).getName();
+    }
+    
+    
+    public synchronized CompositeData resolve(
+            String sheetName,
+            final String path) {
+        stamp();
+        SingleSheet sheet = getSingleSheet(sheetName);
+        final Map<String,Object> map = new HashMap<String,Object>();
+        PathListConsumer plc = new StringPathListConsumer() {
+            
+            @Override
+            protected void consume(String path, String[] sheets, String value,
+                    String type) {
+                map.put("path", path);
+                map.put("sheets", sheets);
+                map.put("value", value);
+                map.put("type", type);
+            }
+
+        };
+        try {
+            return new CompositeDataSupport(Types.GET_DATA, map);
+        } catch (OpenDataException e) {
+            throw new IllegalStateException(e);
+        }
     }
     
     
@@ -501,62 +534,8 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
         
         return sheet instanceof SingleSheet;
     }
-    
-    
-    public synchronized String[] getBundledSheets(String bundleName) {
-        stamp();
-        Sheet sheet = getSheet(bundleName);
-        if (!(sheet instanceof SheetBundle)) {
-            throw new IllegalArgumentException(bundleName + " is not a bundle.");
-        }
-        
-        SheetBundle bundle = (SheetBundle)sheet;
-        List<Sheet> sheets = bundle.getSheets();
-        String[] result = new String[sheets.size()];
-        for (int i = 0; i < sheets.size(); i++) {
-            result[i] = sheets.get(i).getName();
-        }
-        return result;
-    }
 
-    
-    public synchronized void moveBundledSheet(
-            String bundleName, 
-            String move, 
-            int index) {
-        stamp();
-        SheetAndProblems sh = checkedOut.get(bundleName);
-        if (sh == null) {
-            throw new IllegalArgumentException(bundleName + 
-                    " is not checked out.");
-        }
-        Sheet sheet = sh.sheet;
-        if (!(sheet instanceof SheetBundle)) {
-            throw new IllegalArgumentException(bundleName + " is not a bundle.");
-        }
-        
-        SheetBundle bundle = (SheetBundle)sheet;
-        List<Sheet> sheets = bundle.getSheets();
-        int moveIndex = indexOf(sheets, move);
-        
-        if (moveIndex < 0) {
-            Sheet s = manager.getSheet(move);
-            if (s == null) {
-                throw new IllegalArgumentException("No such sheet: " + move);
-            }
-            moveIndex = sheets.size();
-            sheets.add(s);
-        }
-        
-        if (index == moveIndex) {
-            return;
-        }
-        
-        Sheet s = sheets.remove(moveIndex);
-        sheets.add(index, s);
-    }
-    
-    
+
     private static int indexOf(List<Sheet> sheets, String name) {
         int i = 0;
         for (Sheet sheet: sheets) {

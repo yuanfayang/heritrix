@@ -25,6 +25,7 @@ package org.archive.modules.credential;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -34,7 +35,6 @@ import org.archive.modules.credential.CredentialStore;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.Sheet;
-import org.archive.settings.SheetBundle;
 import org.archive.settings.SingleSheet;
 import org.archive.state.Key;
 import org.archive.state.ModuleTestBase;
@@ -67,8 +67,9 @@ public class CredentialStoreTest extends ModuleTestBase {
         SingleSheet global = manager.getGlobalSheet();
         SingleSheet domain = manager.addSingleSheet("domain");
         SingleSheet hostSingle = manager.addSingleSheet("hostSingle");
-        SheetBundle host = manager.addSheetBundle("host", 
-                Arrays.asList(new Sheet[] { hostSingle, domain }));
+        manager.associate(hostSingle, Collections.singleton("org.archive"));
+        manager.associate(domain, Collections.singleton("org."));
+        Sheet host = manager.findConfig("org.archive.foo");
         
         CredentialStore store = new CredentialStore();
         global.set(store, CredentialStore.CREDENTIALS, 

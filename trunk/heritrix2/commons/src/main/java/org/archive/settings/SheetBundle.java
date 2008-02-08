@@ -26,33 +26,108 @@ package org.archive.settings;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.archive.state.Key;
-import org.archive.state.KeyTypes;
 
 
 /**
- * A bundle of sheets.
+ * A bundle of sheets.  These are created by the 
+ * {@link SheetManager#findConfig(String)} method if multiple overrides are
+ * present for a given context string.
+ * 
+ * <p>This class is immutable and read-only.  It is expected that instances
+ * will live a short while (in Heritrix, during the lifetime of one CrawlURI
+ * being processed) and then discarded.
  * 
  * @author pjack
  */
-public class SheetBundle extends Sheet {
-
+class SheetBundle extends Sheet {
 
     /**
      * First version.
      */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * The sheets contained in this bundle.  This is the list of sheets as
+     * it was passed to the constructor.
+     */
+    final private List<Sheet> sheets;
 
     /**
-     * The sheets contained in this bundle.
+     * The sheets, plus their parent sheets, in order of settings list element 
+     * resolution.  This list reorders the elements in {@link sheets} -- 
+     * however, this list will always be longer than {@link sheets} because
+     * it also includes the parent sheets.
+     * 
+     * <p>The sheet elements in this list are ordered in the way that the
+     * sheets' elements should be appended to a {@link MultiTypedList} for 
+     * a particular Key<List<?>> value.  There are two rules:
+     * 
+     * <ol>
+     * <li>Setting list elements are added in the order the sheets were 
+     * specified in {@link sheets}; but</li>
+     * <li>Parent setting list elements always appear before child setting
+     * list elements.</li>
+     * </ol>
+     * 
+     * <p>For instance, assume the SheetManager had the following sheets:
+     * 
+     * <ul>
+     * <li>global (of course)
+     * <li>D (child of global)
+     * <li>A (child of D)
+     * <li>K (child of D)
+     * <li>S (child of global)
+     * </ul>
+     * 
+     * <p>If you construct a SheetBundle with the sheets (A, K, S) then 
+     * the sheetsInListOrder would contain (global, D, A, K, S).  If you 
+     * constructed the SheetBundle with the sheets (S, K, A) then the
+     * sheetsInListOrder would contain (global, S, D, K, A).
      */
-    private List<Sheet> sheets;
+    final private List<Sheet> sheetsInListOrder;
 
+    
+    /**
+     * The sheets, plus their parent sheets, in order of settings list element 
+     * resolution.  This list reorders the elements in {@link sheets} -- 
+     * however, this list will always be longer than {@link sheets} because
+     * it also includes the parent sheets.
+     * 
+     * <p>The sheet elements in this list are ordered in the way that the
+     * sheets' elements should be consulted in a {@link MultiTypedMap} for 
+     * a particular Key<Map<String,?>> value.  There are two rules:
+     * 
+     * <ol>
+     * <li>Setting map elements are consulted in the order the sheets were
+     * specified in {@link sheets}; but</li>
+     * <li>Parent setting list elements always consulted after child setting
+     * list elements.</li>
+     * </ol>
+     * 
+     * <p>For instance, assume the SheetManager had the following sheets:
+     * 
+     * <ul>
+     * <li>global
+     * <li>D (child of global)
+     * <li>A (child of D)
+     * <li>K (child of D)
+     * <li>S (child of global)
+     * </ul>
+     * 
+     * <p>If you construct a SheetBundle with the sheets (A, K, S) then 
+     * the sheetsInMapOrder would contain (A, K, D, S, global).  If you 
+     * constructed the SheetBundle with the sheets (S, K, A) then the
+     * sheetsInMapOrder would contain (S, K, A, D, global).
+     */
+    final private List<Sheet> sheetsInMapOrder;
+    
 
     /**
      * Constructor.
@@ -61,69 +136,115 @@ public class SheetBundle extends Sheet {
      * @param sheets
      */
     SheetBundle(SheetManager manager, String name, Collection<Sheet> sheets) {
-        super(manager, name);
-        this.sheets = new CopyOnWriteArrayList<Sheet>(sheets);
+        super(manager, null, name);
+        this.sheets = Collections.unmodifiableList(new ArrayList<Sheet>(sheets));
+        this.sheetsInListOrder = orderSheetsForListElements(this.sheets);
+        this.sheetsInMapOrder = orderSheetsForMapElements(this.sheets);
+    }
+    
+    
+    private void addParentsForListElements(Map<Sheet,Object> map, Sheet sheet) {
+        if (sheet instanceof UnspecifiedSheet) {
+            return;
+        }
+        addParentsForListElements(map, sheet.getParent());
+        map.put(sheet, null);
+    }
+    
+    
+    private List<Sheet> orderSheetsForListElements(List<Sheet> orig) {
+        Map<Sheet,Object> result = new LinkedHashMap<Sheet,Object>();
+        for (Sheet sheet: orig) {
+            addParentsForListElements(result, sheet);
+        }
+        return Collections.unmodifiableList(
+                new ArrayList<Sheet>(result.keySet()));
+    }
+    
+    
+    private void addParentsForMapElements(List<Sheet> list, Sheet sheet) {
+        if (sheet.getName().equals(SheetManager.GLOBAL_SHEET_NAME)) {
+            if (!list.contains(sheet)) {
+                list.add(sheet);
+            }
+            return;
+        }
+        Sheet parent = sheet.getParent();
+        addParentsForMapElements(list, parent);
+        int i = list.indexOf(parent);
+        list.add(i, sheet);
     }
 
-    
+
+    private List<Sheet> orderSheetsForMapElements(List<Sheet> orig) {
+        List<Sheet> result = new ArrayList<Sheet>();
+        for (Sheet sheet: orig) {
+            addParentsForMapElements(result, sheet);
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+
+
     @Override
     SheetBundle duplicate() {
         return new SheetBundle(getSheetManager(), getName(),
                 new CopyOnWriteArrayList<Sheet>(sheets));
         
     }
-    
+
+
+    @Override
+    public boolean contains(Object module, Key<?> key) {
+        for (Sheet sheet: sheets) {
+            if (sheet.contains(module, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
-     * Returns the first non-null value returned by this bundle's list of
+     * Returns the first present value returned by this bundle's list of
      * sheets.  The sheets are consulted in order starting at the beginning
      * of the list.  If any particular sheet contains a non-null value for
      * the given processor/key combination, then that value is returned and
      * any remaining sheets in the bundle are ignored.
      */
-    <T> T check(Object processor, Key<T> key) {
+    @Override
+    Object check(Object module, Key<?> key) {
         for (Sheet sheet: sheets) {
-            T result = sheet.check(processor, key);
-            if (result != null) {
-                return result;
+            if (sheet.contains(module, key)) {
+                return sheet.check(module, key);
             }
+            Object result = sheet.check(module, key);
+            return result;
         }
         return null;
     }
 
-    
-    <T> Stub checkStub(Stub module, Key<T> key) {
-        for (Sheet sheet: sheets) {
-            Stub result = sheet.checkStub(module, key);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
-    }
-    
-    
+
+    @Override
     public <T> Resolved<T> resolve(Object module, Key<T> key) {
-        
         if (Map.class.isAssignableFrom(key.getType())) {
             return resolveMap(module, key);
         }
-        
-        
         if (List.class.isAssignableFrom(key.getType())) {
             return resolveList(module, key);
         }
-        
         return resolveNormal(module, key);
     }
+
     
     
+
     @SuppressWarnings("unchecked")
     private <T> Resolved<T> resolveMap(Object module, Key<T> k) {
         Key<Object> key = (Key)k;
         List<TypedMap<Object>> list = new ArrayList<TypedMap<Object>>();
         List<Sheet> definer = null;
-        for (Sheet sheet: sheets) {
+        for (Sheet sheet: sheetsInMapOrder) {
             TypedMap map;
             if (sheet instanceof SingleSheet) {
                 map = (TypedMap)sheet.check(module, key);
@@ -136,6 +257,8 @@ public class SheetBundle extends Sheet {
                     }
                 }
             } else if (sheet instanceof SheetBundle) {
+                // TODO: It's now impossible for a bundle to contain other bundles
+                // This can probably be safely deleted.
                 Resolved r = sheet.resolve(module, key);
                 map = (TypedMap)r.getValue();
                 if (map != null) {
@@ -172,7 +295,7 @@ public class SheetBundle extends Sheet {
         Key<Object> key = (Key)k;
         List<TypedList<Object>> lists = new ArrayList<TypedList<Object>>();
         List<Sheet> definer = null;
-        for (Sheet sheet: sheets) {
+        for (Sheet sheet: sheetsInListOrder) {
             TypedList list;
             if (sheet instanceof SingleSheet) {
                 list = (TypedList)sheet.check(module, key);
@@ -185,6 +308,8 @@ public class SheetBundle extends Sheet {
                     }
                 }
             } else if (sheet instanceof SheetBundle) {
+                // TODO: It's now impossible for a bundle to contain other bundles
+                // This can probably be safely deleted.
                 Resolved r = sheet.resolve(module, key);
                 list = (TypedList)r.getValue();
                 if (list != null) {
@@ -200,7 +325,7 @@ public class SheetBundle extends Sheet {
         }
 
         if (lists.isEmpty()) {
-            return getGlobalSheet().resolve(module, k);
+            return getSheetManager().getUnspecifiedSheet().resolve(module, k);
         }
         
         TypedList<Object> result; 
@@ -212,68 +337,14 @@ public class SheetBundle extends Sheet {
         return Resolved.makeList(module, k, result, definer);
     }
 
-    
+
     private <T> Resolved<T> resolveNormal (Object module, Key<T> key) {
-        List<Sheet> sheets = new ArrayList<Sheet>();
-        sheets.add(this);
-        Resolved<T> r = resolveNormal(sheets, module, key);
-        if (r == null) {
-            return resolveDefault(module, key);
-        } else {
-            return r;
-        }
-    }
-    
-    
-    private static <T> Resolved<T> resolveNormal(
-            List<Sheet> sheets, 
-            Object module, 
-            Key<T> key) {
-        SheetBundle bundle = (SheetBundle)sheets.get(sheets.size() - 1);
-        for (Sheet sheet: bundle.getSheets()) {
-            if (sheet instanceof SheetBundle) {
-                SheetBundle sb = (SheetBundle)sheet;
-                sheets.add(sb);
-                Resolved<T> r = resolveNormal(sheets, module, key);
-                if (r != null) {
-                    return r;
-                }
-                sheets.remove(sheets.size() - 1);
-            } else {
-                SingleSheet ss = (SingleSheet)sheet;
-                if (isLive(bundle, key.getType())) {
-                    T value = ss.check(module, key);
-                    if (value != null) {
-                        sheets.add(ss);
-                        return Resolved.makeLive(module, key, value, sheets);
-                    }
-                } else {
-                    Stub value = ss.checkStub((Stub)module, key);
-                    if (value != null) {
-                        sheets.add(ss);
-                        return Resolved.makeStub(module, key, value, sheets);
-                    }
-                }
+        for (Sheet sheet: sheetsInMapOrder) {
+            if (sheet.contains(module, key)) {
+                return sheet.resolve(module, key);
             }
         }
-        return null;
-    }
-    
-    
-    private static boolean isLive(Sheet sheet, Class c) {
-        if (sheet.getSheetManager().isLive()) {
-            return true;
-        }
-        if (KeyTypes.isSimple(c)) {
-            return true;
-        }
-        if (Map.class.isAssignableFrom(c)) {
-            return true;
-        }
-        if (List.class.isAssignableFrom(c)) {
-            return true;
-        }
-        return false;
+        return getSheetManager().getUnspecifiedSheet().resolve(module, key);
     }
 
 

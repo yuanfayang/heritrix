@@ -141,15 +141,9 @@ public class Sheets {
                 sheetManager.checkout(sheet);
             }
             
-            if (sheetManager.isSingleSheet(sheet)) {
-                Settings settings = getSettings(request, sheetManager, sheet);
-                request.setAttribute("settings", settings);
-                Misc.forward(request, response, "page_sheet_editor.jsp");
-            } else {
-                String[] bundled = sheetManager.getBundledSheets(sheet);
-                request.setAttribute("bundled", Arrays.asList(bundled));
-                Misc.forward(request, response, "page_bundle_editor.jsp");
-            }
+            Settings settings = getSettings(request, sheetManager, sheet);
+            request.setAttribute("settings", settings);
+            Misc.forward(request, response, "page_sheet_editor.jsp");
         } finally {
             remote.close();
         }
@@ -216,27 +210,6 @@ public class Sheets {
         }
         request.setAttribute("single", true);
         Misc.forward(request, response, "page_add_sheet.jsp");
-    }
-
-    
-    public static void addSheetBundle(
-            ServletContext sc,
-            HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
-        Remote<JMXSheetManager> remote = getSheetManager(request);
-        JMXSheetManager sheetManager = remote.getObject();
-        String sheet = request.getParameter("sheet");
-        request.setAttribute("sheet", sheet);
-        try {
-            sheetManager.makeSheetBundle(sheet);
-        } catch (Exception e) {
-            request.setAttribute("error", e.getMessage());
-            Misc.forward(request, response, "page_add_sheet_bundle.jsp");
-        } finally {
-            remote.close();
-        }
-        
-        showSheetEditor(sc, request, response);
     }
 
     
@@ -667,28 +640,6 @@ public class Sheets {
             remote.close();
         }
     }
-
-    
-    public static void moveBundledSheets(
-            ServletContext sc,
-            HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
-        Remote<JMXSheetManager> remote = getSheetManager(request);
-        JMXSheetManager sheetManager = remote.getObject();
-        String sheet = request.getParameter("sheet");
-        request.setAttribute("sheet", sheet);
-        String move = request.getParameter("move");
-        int index = Integer.parseInt(request.getParameter("index"));
-        try {
-            sheetManager.moveBundledSheet(sheet, move, index);
-        } finally {
-            remote.close();
-        }
-        
-        showSheetEditor(sc, request, response);
-    }
-    
-    
 
     
     public static void deleteSheet(

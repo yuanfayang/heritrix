@@ -23,10 +23,12 @@
  */
 package org.archive.settings.path;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.archive.settings.MemorySheetManager;
+import org.archive.settings.Sheet;
 import org.archive.settings.Stub;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
@@ -44,21 +46,30 @@ import junit.framework.TestCase;
  * live-mode managers form the test data set used by subclasses to perform
  * tests on path-related operations.
  * 
- * Things not yet tested:
+ * <p>The configuration consists of the global sheet and two override sheets,
+ * o1 and o2.  o1 is associated with the prefix "org.archive.", and o2 is 
+ * associated with the prefix "org." -- in other words, o1 is more specific 
+ * than o2.  An anonymous sheet bundle is created containing overrides from
+ * both o1 and o2.
  * 
- * 1. Maps/Lists when two sheets with same override are bundled
- * 2. Bundled sheet does what we expect
- * 3. Modifying a checked-out sheet doesn't modify original.
- * 4. It's impossible to modify a sheet that isn't checked out.
- * 5. Impossible to modify an IMMUTABLE setting in a non-stub manager.
- * 6. Impossible to modify a GLOBAL setting in a non-global sheet.
- * 7. Primary change in an override sheet?
+ * <p>Things not yet tested:
+ * 
+ * <ol>
+ * <li>Modifying a checked-out sheet doesn't modify original.
+ * <li>It's impossible to modify a sheet that isn't checked out.
+ * <li>Impossible to modify an IMMUTABLE setting in a non-stub manager.
+ * <li>Impossible to modify a GLOBAL setting in a non-global sheet.
+ * <li>Primary change in an override sheet?
+ * <li>Child sheets (eg, create a sheet "sub1" whose parent is o1, and not 
+ * global -- and see if that messes up bundling?
+ * </ol>
  * 
  * @author pjack
  */
 public abstract class PathTestBase extends TestCase {
 
     SheetManager manager;
+    Sheet bundle; // a bundle containing both o1 and o2 overrides
     
     // Objects in the global sheet for normal-mode tests
     Foo first;                // root:first
@@ -100,6 +111,24 @@ public abstract class PathTestBase extends TestCase {
     Map<String,String> o1_bar_smap;
     String o1_bar_smap_b;
     String o1_bar_smap_d;
+    
+    // Objects in the second override sheet.
+    String o2_first_ten;        // root:first:ten (override)
+    Foo o2_second;              // root:second (override)
+    List<Foo> o2_bar_list;      // root:bar:list (override/append)
+    Foo o2_bar_list_3;          // root:bar:list:3 (new element)
+    Foo o2_bar_list_4;          // root:bar:list:4 (new element)
+    Map<String,Foo> o2_bar_map; // root:bar:map (override/merge)
+    Foo o2_bar_map_b;           // root:bar:map:b  (replace element)
+    Foo o2_bar_map_e;           // root:bar:map:d  (new element)
+    List<String> o2_bar_slist;
+    String o2_bar_slist_3;
+    String o2_bar_slist_4;
+    Map<String,String> o2_bar_smap;
+    String o2_bar_smap_b;
+    String o2_bar_smap_d;
+    
+    
     
     
     SheetManager stub_manager;
@@ -340,7 +369,45 @@ public abstract class PathTestBase extends TestCase {
         this.o1_bar_slist_4 = "four";
         o1_bar_slist.add(o1_bar_slist_4);
         
-        manager.commit(o1);        
+        manager.commit(o1);
+        manager.associate(o1, Collections.singleton("org.archive."));
+
+        // ===== o2 sheet =====
+        manager.addSingleSheet("o2");
+        SingleSheet o2 = (SingleSheet)manager.checkout("o2");
+        Map<String,Object> o2_root = new SettingsMap<Object>(o2, Object.class);
+        o2.set(manager, SheetManager.ROOT, o2_root);
+        
+        this.o2_first_ten = "three plus seven";
+        o2.set(this.first, Foo.TEN, this.o2_first_ten);        
+        this.o2_second = new Foo("o2_second");
+        o2_root.put("second", o2_second);
+        
+        this.o2_bar_list = new SettingsList<Foo>(o2, Foo.class);
+        o2.set(this.bar, Bar.LIST, this.o2_bar_list);
+        this.o2_bar_list_3 = new Foo("o2_bar_list_3");
+        o2_bar_list.add(o2_bar_list_3);
+        this.o2_bar_list_4 = new Foo("o2_bar_list_4");
+        o2_bar_list.add(o2_bar_list_4);
+
+        this.o2_bar_map = new SettingsMap<Foo>(o2, Foo.class);
+        o2.set(this.bar, Bar.MAP, this.o2_bar_map);
+        this.o2_bar_map_b = new Foo("o2_bar_map_b");
+        o2_bar_map.put("b", o2_bar_map_b);
+        this.o2_bar_map_e = new Foo("o2_bar_map_e");
+        o2_bar_map.put("e", o2_bar_map_e);
+
+        this.o2_bar_slist = new SettingsList<String>(o2, String.class);
+        o2.set(this.bar, Bar.SLIST, this.o2_bar_slist);
+        this.o2_bar_slist_3 = "three o2";
+        o2_bar_slist.add(o2_bar_slist_3);
+        this.o2_bar_slist_4 = "four o2";
+        o2_bar_slist.add(o2_bar_slist_4);
+        
+        manager.commit(o2);
+        manager.associate(o2, Collections.singleton("org."));
+        
+        bundle = manager.findConfig("org.archive.foo");
     }
     
 
