@@ -1204,7 +1204,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
-        stream.writeUTF(uuri.toString());
+        stream.writeUTF(uuri.toString()); //
         stream.writeObject((via == null) ? null : via.getURI());
         stream.writeObject((data==null || data.isEmpty()) ? null : data);
         stream.writeObject((outLinks.isEmpty()) ? null : outLinks);
@@ -1513,6 +1513,9 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
 
     
     public void setStateProvider(SheetManager manager) {
+        if(this.provider!=null) {
+            return;
+        }
         this.manager = manager;
         this.provider = manager.findConfig(SURT.fromURI(toString()));
     }
