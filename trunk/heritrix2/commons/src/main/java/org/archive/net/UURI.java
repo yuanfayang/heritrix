@@ -251,16 +251,29 @@ implements CharSequence, Serializable {
     }
 
     /**
-     * Override to cache result
+     * Returns an alternate, functional String representation -- in this 
+     * case, a String of the URI represented by this UURI instance.  
      * 
-     * @return String representation of this URI
+     * @return
      */
-    public synchronized String toString() {
+    public synchronized String toCustomString() {
         if (this.cachedString == null) {
             this.cachedString = super.toString();
             coalesceUriStrings();
         }
         return this.cachedString;
+    }
+    
+    /**
+     * Override to cache result
+     * 
+     * TODO: eliminate, moving most callers to toCustomString, to avoid 
+     * overloading/diluting toString()
+     * (see http://webteam.archive.org/confluence/display/Heritrix/Preserve+toString%28%29 )
+     * @return String representation of this URI
+     */
+    public String toString() {
+        return toCustomString();
     }
 
     public synchronized String getEscapedURI() {

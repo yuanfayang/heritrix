@@ -1204,7 +1204,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
-        stream.writeUTF(uuri.toString()); //
+        stream.writeUTF(uuri.toCustomString()); //
         stream.writeObject((via == null) ? null : via.getURI());
         stream.writeObject((data==null || data.isEmpty()) ? null : data);
         stream.writeObject((outLinks.isEmpty()) ? null : outLinks);
