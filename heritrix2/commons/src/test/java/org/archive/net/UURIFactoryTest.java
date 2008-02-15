@@ -31,6 +31,7 @@ import java.util.TreeMap;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.lang.SerializationUtils;
 
 /**
  * Test UURIFactory for proper UURI creation across variety of
@@ -1064,5 +1065,44 @@ public class UURIFactoryTest extends TestCase {
         }
         UURI goodUuri = UURIFactory.getInstance(base,suspectUri);
         goodUuri.getReferencedHost();
+    }
+    
+    /**
+     * A UURI's string representation should be same after a 
+     * serialization roundtrip. 
+     *  
+     * @throws URIException
+     */
+    public final void testSerializationRoundtrip() throws URIException {
+        UURI uuri = UURIFactory.
+            getInstance("http://www.example.com/path?query#anchor");
+        UURI uuri2 = (UURI) SerializationUtils.deserialize(
+                SerializationUtils.serialize(uuri));
+        assertEquals("Not equal", uuri.toString(), uuri2.toString());
+        uuri = UURIFactory.
+            getInstance("file://///boo_hoo/wwwroot/CMS/Images1/Banner.gif");
+        uuri2 = (UURI) SerializationUtils.deserialize(
+            SerializationUtils.serialize(uuri));
+        assertEquals("Not equal", uuri.toString(), uuri2.toString());
+    }
+    
+    /**
+     * A UURI's string representation should be same after a 
+     * toCustomString-getInstance roundtrip. 
+     *  
+     * @throws URIException
+     */
+    public final void testToCustomStringRoundtrip() throws URIException {
+        UURI uuri = UURIFactory.
+            getInstance("http://www.example.com/path?query#anchor");
+        UURI uuri2 = UURIFactory.getInstance(uuri.toCustomString());
+        assertEquals("Not equal", uuri.toString(), uuri2.toString());
+        // TODO: fix
+        // see [HER-1470] UURI String roundtrip (UURIFactory.getInstance(uuri.toString()) results in different URI for file: (and perhaps other) URIs
+        // http://webteam.archive.org/jira/browse/HER-1470
+//        uuri = UURIFactory.
+//            getInstance("file://///boo_hoo/wwwroot/CMS/Images1/Banner.gif");
+//        uuri2 = UURIFactory.getInstance(uuri.toCustomString());
+//        assertEquals("Not equal", uuri.toString(), uuri2.toString());
     }
 }
