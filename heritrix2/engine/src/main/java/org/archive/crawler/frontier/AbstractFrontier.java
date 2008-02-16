@@ -1399,14 +1399,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         inbound = new ArrayBlockingQueue<InEvent>(inboundCapacity, true);
     }
     
-    
-    protected void setStateProvider(CrawlURI curi) {
-        StateProvider p = curi.getStateProvider();
-        if (p == null) {
-            curi.setStateProvider(manager);
-        }
-    }
-    
     /**
      * Arrange for the given InEvent to be done by the managerThread, via
      * enqueueing with other events if possible, but directly if not possible
