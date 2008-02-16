@@ -170,6 +170,9 @@
        <configuration>
         <descriptors>
          <descriptor>
+          src/main/assembly/dist.xml
+         </descriptor>
+         <descriptor>
           src/main/assembly/src.xml
          </descriptor>
         </descriptors>
@@ -185,25 +188,6 @@
        </executions>
      </plugin>
      
-     <plugin>
-       <artifactId>maven-assembly-plugin</artifactId>
-       <configuration>
-        <descriptors>
-         <descriptor>
-          src/main/assembly/dist.xml
-         </descriptor>
-        </descriptors>
-       </configuration>
-       <executions>
-        <execution>
-         <id>job.assembly.package</id>
-         <phase>package</phase>
-         <goals>
-          <goal>attached</goal>
-         </goals>         
-        </execution>
-       </executions>
-     </plugin>
     </plugins>
   </build>
 </project>
