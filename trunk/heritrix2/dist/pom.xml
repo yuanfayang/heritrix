@@ -164,13 +164,13 @@
           </postProcess>
         </configuration>
       </plugin>
-
-      <plugin>
+     
+     <plugin>
        <artifactId>maven-assembly-plugin</artifactId>
        <configuration>
         <descriptors>
          <descriptor>
-          src/main/assembly/dist.xml
+          src/main/assembly/src.xml
          </descriptor>
         </descriptors>
        </configuration>
@@ -190,7 +190,7 @@
        <configuration>
         <descriptors>
          <descriptor>
-          src/main/assembly/src.xml
+          src/main/assembly/dist.xml
          </descriptor>
         </descriptors>
        </configuration>
