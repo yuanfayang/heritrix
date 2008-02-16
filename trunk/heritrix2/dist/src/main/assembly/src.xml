@@ -13,7 +13,15 @@
 
    <moduleSets>
     <moduleSet>
-     <sources/>
+     <sources>
+         <fileSets>
+          <fileSet>
+            <excludes>
+              <exclude>target/**</exclude>
+            </excludes>
+          </fileSet>
+        </fileSets>
+     </sources>
     </moduleSet>
    </moduleSets>
 </assembly>
