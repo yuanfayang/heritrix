@@ -567,39 +567,46 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             }
                    
             // find a non-empty ready queue, if any 
+            // TODO: refactor to untangle these loops, early-exits, etc!
             WorkQueue readyQ = null;
-            do {
-                String key = readyClassQueues.poll();
-                if(key== null) {
-                    // no ready queues
-                    break;
+            findauri: while(true) {
+                findaqueue: do {
+                    String key = readyClassQueues.poll();
+                    if(key== null) {
+                        // no ready queues
+                        break;
+                    }
+                    readyQ = getQueueFor(key);
+                    if(readyQ==null) {
+                         // readyQ key wasn't in all queues: unexpected
+                        logger.severe("Key "+ key +
+                            " in readyClassQueues but not allQueues");
+                        break findaqueue;
+                    }
+                    if(readyQ.getCount()==0) {
+                        // readyQ is empty and ready: it's exhausted
+                        // release held status, allowing any subsequent 
+                        // enqueues to again put queue in ready
+                        readyQ.clearHeld();
+                        readyQ = null;
+                    }
+                } while (readyQ == null);
+                
+                if (readyQ == null) {
+                    break findauri; 
                 }
-                readyQ = getQueueFor(key);
-                if(readyQ==null) {
-                     // readyQ key wasn't in all queues: unexpected
-                    logger.severe("Key "+ key +
-                        " in readyClassQueues but not allQueues");
-                    break;
-                }
-                if(readyQ.getCount()==0) {
-                    // readyQ is empty and ready: it's exhausted
-                    // release held status, allowing any subsequent 
-                    // enqueues to again put queue in ready
-                    readyQ.clearHeld();
-                    readyQ = null;
-                }
-            } while (readyQ == null);
-            
-            if (readyQ != null) {
+               
                 assert !inProcessQueues.contains(readyQ) : "double activation";
-                while(true) { // loop left by explicit return or break on empty
+                returnauri: while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
                     curi = readyQ.peek(this);   
                     if(curi == null) {
                         // should not reach
                         logger.severe("No CrawlURI from ready non-empty queue "
-                                + readyQ.classKey);
-                        break;
+                                + readyQ.classKey + "\n" 
+                                + readyQ.singleLineLegend() + "\n"
+                                + readyQ.singleLineReport() + "\n");
+                        break returnauri;
                     }
                     
                     curi.setStateProvider(manager);
@@ -621,7 +628,16 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                     decrementQueuedCount(1);
                     curi.setHolderKey(null);
                     sendToQueue(curi);
+                    if(readyQ.getCount()==0) {
+                        // readyQ is empty and ready: it's exhausted
+                        // release held status, allowing any subsequent 
+                        // enqueues to again put queue in ready
+                        readyQ.clearHeld();
+                        readyQ = null;
+                        continue findauri;
+                    }
                 }
+
             }
                 
             if(inProcessQueues.size()==0) {
