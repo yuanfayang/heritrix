@@ -109,7 +109,7 @@ command-line argument sets the Web UI's password to "admin".
 Upon successful launch of Heritrix, you should see something like the
 following on your terminal
 
-  heritrix-2.0.1 $ ./bin/heritrix -a admin
+  heritrix-2.0.0 $ ./bin/heritrix -a admin
   WARNING: $HERITRIX_HOME/conf/jmxremote.password not found.
   WARNING: Disabling remote JMX.
   Tue Feb  5 10:47:00 PST 2008 Starting heritrix....
@@ -174,7 +174,7 @@ The easiest way to do this is to copy and edit the JMX password
 template file.  In addition, as required by JMX, the password file
 must be readable only by the owner.  For example,
 
-  heritrix-2.0.1 $ cd conf
+  heritrix-2.0.0 $ cd conf
   conf $ cp jmxremote.password.template jmxremote.password
   conf $ chmod 600 jmxremote.password
   conf $ cd ..
@@ -193,7 +193,7 @@ passwords to your liking, such as:
 
 Then launch Heritrix with the "-n" option to disable the Web UI.
 
-  heritrix-2.0.1 $ ./bin/heritrix -n
+  heritrix-2.0.0 $ ./bin/heritrix -n
   Tue Feb  5 12:53:29 PST 2008 Starting heritrix
   No JNDI context.
   Engine registered at org.archive.crawler:instance=28290629,jmxport=8849,name=Engine,type=org.archive.crawler.framework.Engine,host=localhost
