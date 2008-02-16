@@ -932,7 +932,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             }
             incrementFailedFetchCount();
             // let queue note error
-            setStateProvider(curi);
+            curi.setStateProvider(manager);
             wq.noteError(curi.get(this, ERROR_PENALTY_AMOUNT));
             doJournalFinishedFailure(curi);
             wq.expend(getCost(curi)); // failures cost
