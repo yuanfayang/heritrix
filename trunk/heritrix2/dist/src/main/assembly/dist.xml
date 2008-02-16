@@ -22,6 +22,10 @@
      </includes>
     </fileSet>
     <fileSet>
+     <directory>src/main/licenses</directory>
+     <outputDirectory>/lib</outputDirectory>
+    </fileSet>
+    <fileSet>
      <directory>target/site</directory>
      <outputDirectory>/docs</outputDirectory>
     </fileSet>
