@@ -9,7 +9,8 @@
    <fileSets>
     <fileSet>
       <directory>..</directory>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory>/project</outputDirectory>
+      <useDefaultExcludes>false</useDefaultExcludes>
       <excludes>
         <exclude>**/target/**</exclude>
       </excludes>
