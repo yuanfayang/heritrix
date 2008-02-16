@@ -39,9 +39,6 @@ will work for crawling:
   outbound traffic, and should be an HTTP URL supplying information about 
   the purpose of your crawl and containing contact information if visited 
   sites need to report problems.
-- You must configure an 'operator-contact-email' address on the job's global
-  settings sheet. This email address will be sent as the 'From' header on your
-  crawl's outbound traffic.
 - You must supply one or more 'seed' URLs to serve as crawl starting points. 
 
 4.0 License
