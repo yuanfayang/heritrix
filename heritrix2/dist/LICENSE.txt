@@ -1,18 +1,15 @@
-Heritrix is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser Public license (LGPL) reproduced below.  
+Heritrix is free software; you can redistribute it and/or modify it 
+under the terms of the GNU Lesser Public license (LGPL) reproduced 
+below.  
 
-Heritrix includes the libraries it depends upon.  The libraries used can be
-found under the 'lib' directory, and are used under the terms of their 
-respective lcienses. Dependencies can also be viewed as part of the project
-XML build specification ('pom') files:
+Individual source code files may be subject to or offered under other
+licenses, as indicated therein. 
+ 
+Heritrix is distributed with the libraries it depends upon.  The 
+libraries can be found under the 'lib' directory, and are used under 
+the terms of their respective licenses, which are included alongside 
+the libraries in the 'lib' directory. 
 
-http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/pom.xml?view=markup
-
-http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/commons/pom.xml?view=markup
-http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/modules/pom.xml?view=markup
-http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/engine/pom.xml?view=markup
-http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/webui/pom.xml?view=markup
-http://archive-crawler.svn.sourceforge.net/viewvc/archive-crawler/trunk/heritrix2/dist/pom.xml?view=markup
 --
 
 		  GNU LESSER GENERAL PUBLIC LICENSE
