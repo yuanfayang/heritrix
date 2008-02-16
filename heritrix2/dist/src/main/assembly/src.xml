@@ -10,7 +10,6 @@
     <fileSet>
       <directory>..</directory>
       <outputDirectory>/project</outputDirectory>
-      <useDefaultExcludes>false</useDefaultExcludes>
       <excludes>
         <exclude>**/target/**</exclude>
       </excludes>
