@@ -1,0 +1,19 @@
+<assembly>
+   <id>src</id>
+   <formats>
+      <format>tar.gz</format>
+      <format>zip</format>
+   </formats>
+   <includeBaseDirectory>true</includeBaseDirectory>
+         <dependencySets>
+            <dependencySet>
+              <outputDirectory>/lib</outputDirectory>
+            </dependencySet>
+         </dependencySets>
+
+   <moduleSets>
+    <moduleSet>
+     <sources/>
+    </moduleSet>
+   </moduleSets>
+</assembly>
