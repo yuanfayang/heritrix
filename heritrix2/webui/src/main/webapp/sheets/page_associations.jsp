@@ -17,7 +17,8 @@ String add = (String)Text.get(request, "add");
 
 <%@include file="/include/nav.jsp"%>
 
-<h2>Associate URL prefixes with '<%=sheet%>'</h2>
+<h2><%=Text.attr(add).equals("Y")?"Add":"Remove"%>
+URL prefixes associated with '<%=sheet%>'</h2>
 
 One entry per line. SURT prefixes entered will be used directly. If the option
 below is checked, other URIs will be converted to SURT form then truncated to 
