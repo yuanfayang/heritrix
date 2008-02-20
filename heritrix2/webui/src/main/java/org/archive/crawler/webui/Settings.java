@@ -26,13 +26,22 @@
 
 package org.archive.crawler.webui;
 
+import static org.archive.settings.path.PathChanger.AUTO_TAG;
+import static org.archive.settings.path.PathChanger.LIST_TAG;
+import static org.archive.settings.path.PathChanger.MAP_TAG;
+import static org.archive.settings.path.PathChanger.OBJECT_TAG;
+import static org.archive.settings.path.PathChanger.PRIMARY_TAG;
+import static org.archive.settings.path.PathChanger.REFERENCE_TAG;
+import static org.archive.state.KeyTypes.ENUM_TAG;
+
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,6 +52,7 @@ import java.util.TreeSet;
 
 import javax.servlet.jsp.JspWriter;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.archive.settings.SheetManager;
 import org.archive.settings.file.FileSheetManager;
@@ -51,15 +61,6 @@ import org.archive.settings.path.PathValidator;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
-import org.archive.util.IoUtils;
-
-import static org.archive.settings.path.PathChanger.PRIMARY_TAG;
-import static org.archive.settings.path.PathChanger.REFERENCE_TAG;
-import static org.archive.settings.path.PathChanger.OBJECT_TAG;
-import static org.archive.settings.path.PathChanger.AUTO_TAG;
-import static org.archive.settings.path.PathChanger.MAP_TAG;
-import static org.archive.settings.path.PathChanger.LIST_TAG;
-import static org.archive.state.KeyTypes.ENUM_TAG;
 
 
 /**
@@ -738,22 +739,31 @@ public class Settings {
             if (result != null) {
                 return result;
             }
-            String path = '/' + clz.getName().replace('.', '/') + ".subclasses";
-            InputStream input = clz.getResourceAsStream(path);
-            if (input == null) {
-                result = Collections.emptySet();
-                subclasses.put(clz.getName(), result);
-                return result;
-            }
-            
-            BufferedReader br = null;
             try {
+                String path = clz.getName().replace('.', '/') + ".subclasses";
+                Enumeration<URL> resources = ClassLoader.getSystemResources(path);
+                
+                if (!resources.hasMoreElements()) {
+                    result = Collections.emptySet();
+                    subclasses.put(clz.getName(), result);
+                    return result;
+                }
+                
                 result = new TreeSet<String>(new BaseNameComp());
-                br = new BufferedReader(new InputStreamReader(input));
-                for (String s = br.readLine(); s != null; s = br.readLine()) {
-                    s = s.trim();
-                    if (s.length() > 0 && !s.startsWith("#")) {
-                        result.add(s);
+                while(resources.hasMoreElements()) {
+                    URL rez = resources.nextElement();
+                    BufferedReader br = null; 
+                    try {
+                        br = new BufferedReader(
+                                new InputStreamReader(rez.openStream()));
+                        for (String s = br.readLine(); s != null; s = br.readLine()) {
+                            s = s.trim();
+                            if (s.length() > 0 && !s.startsWith("#")) {
+                                result.add(s);
+                            }
+                        }
+                    } finally {
+                        IOUtils.closeQuietly(br);
                     }
                 }
                 subclasses.put(clz.getName(), result);
@@ -763,9 +773,7 @@ public class Settings {
                 result = Collections.emptySet();
                 subclasses.put(clz.getName(), result);
                 return result;                
-            } finally {
-                IoUtils.close(br);
-            }
+            } 
         }
     }
     
