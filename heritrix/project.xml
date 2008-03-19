@@ -336,14 +336,14 @@
          </dependency>
         <dependency>
             <id>je</id>
-            <version>3.2.44</version>
+            <version>3.2.74</version>
             <url>http://www.oracle.com/technology/products/berkeley-db/je/index.html</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
                 <description>Berkeley DB Java Edition.  
-                Copyright (c) 2007 Oracle.  
+                Copyright (c) 2008 Oracle.  
                 All rights reserved.  See above link for how to obtain source.  
                 </description>
                 <license>http://www.oracle.com/technology/software/products/berkeley-db/htdocs/jeoslicense.html
