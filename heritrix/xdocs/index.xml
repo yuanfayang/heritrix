@@ -43,6 +43,44 @@
         <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Release 2.0.0 official 2008-02-20">
+    <p>The official Heritrix 2.0.0 release is now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.0+Release+Notes">
+Release notes, with instructions to download and install</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&package_id=254931">
+Download from Sourceforge files area</a></p>
+
+<p>Four notable differences in Heritrix 2 are:</p>
+
+<p>(1) A more rigorous separation of the Web UI from the 'crawl engine',
+giving greater flexibility to control crawlers remotely.</p>
+<p>(2) A new settings system, easing module development and offering new
+opportunities for dynamic configuration construction.</p>
+<p>(3) A new mechanism for custom override settings for sets of related
+URIs, extending beyond Heritrix 1.x's domain-centric overrides.</p>
+<p>(4) A new system for ordering URIs within a single URI-queue, and for
+allocating frontier effort among different URI-queues, based on assigned
+integer 'precedence' values.</p>
+
+<p>A <a href="http://webteam.archive.org/confluence/display/Heritrix/2.0+Tutorial">
+tutorial of starting a basic crawl</a> in the changed web UI is
+available.</p>
+
+<p>Documentation for 2.0 is still limited but will gradually improve on the 
+project wiki. (There are now direct help links from individual web UI 
+settings to actual or potential wiki pages.)</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
     <subsection name="Release 1.12.1 05/06/2007">
     <p>Release 1.12.1 is a bug fix release.
       See the <a href="articles/releasenotes/1_12_1.html">Release Notes</a> and
