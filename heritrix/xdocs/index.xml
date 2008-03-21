@@ -68,9 +68,10 @@ integer 'precedence' values.</p>
 tutorial of starting a basic crawl</a> in the changed web UI is
 available.</p>
 
-<p>Documentation for 2.0 is still limited but will gradually improve on the 
-project wiki. (There are now direct help links from individual web UI 
-settings to actual or potential wiki pages.)</p>
+<p>Documentation for 2.0 is still limited but will gradually improve on 
+<a href="http://webteam.archive.org/confluence/display/Heritrix/Home">the 
+project wiki</a>. (There are now direct help links from individual web 
+UI settings to actual or potential wiki pages.)</p>
 
 <p>Questions and discussion are as always welcome on the 
 <a href="http://tech.groups.yahoo.com/group/archive-crawler/">
