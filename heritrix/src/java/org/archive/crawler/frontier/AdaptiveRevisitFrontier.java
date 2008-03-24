@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
 
@@ -62,6 +63,8 @@ import org.archive.net.UURI;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
+
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 
 /**
@@ -141,6 +144,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     public final static String ATTR_USE_URI_UNIQ_FILTER = "use-uri-uniq-filter";
     protected final static Boolean DEFAULT_USE_URI_UNIQ_FILTER = new Boolean(false);
+    
+    /** The Class to use for QueueAssignmentPolicy
+     */
+    public final static String ATTR_QUEUE_ASSIGNMENT_POLICY = "queue-assignment-policy";
+    protected final static String DEFAULT_QUEUE_ASSIGNMENT_POLICY = HostnameQueueAssignmentPolicy.class.getName();
     
     private CrawlController controller;
     
@@ -239,6 +247,26 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     DEFAULT_USE_URI_UNIQ_FILTER));
             t.setExpertSetting(true);
             t.setOverrideable(false);
+            // Read the list of permissible choices from heritrix.properties.
+            // Its a list of space- or comma-separated values.
+            String queueStr = System.getProperty(AbstractFrontier.class.getName() +
+                    "." + ATTR_QUEUE_ASSIGNMENT_POLICY,
+                    HostnameQueueAssignmentPolicy.class.getName() + " " +
+                    IPQueueAssignmentPolicy.class.getName() + " " +
+                    BucketQueueAssignmentPolicy.class.getName() + " " +
+                    SurtAuthorityQueueAssignmentPolicy.class.getName() + " " +
+                    TopmostAssignedSurtQueueAssignmentPolicy.class.getName());
+            Pattern p = Pattern.compile("\\s*,\\s*|\\s+");
+            String [] queues = p.split(queueStr);
+            if (queues.length <= 0) {
+                throw new RuntimeException("Failed parse of " +
+                        " assignment queue policy string: " + queueStr);
+            }
+            t = addElementToDefinition(new SimpleType(ATTR_QUEUE_ASSIGNMENT_POLICY,
+                    "Defines how to assign URIs to queues. Can assign by host, " +
+                    "by ip, and into one of a fixed set of buckets (1k).",
+                    DEFAULT_QUEUE_ASSIGNMENT_POLICY, queues));
+            t.setExpertSetting(true);
 
         // Register persistent CrawlURI items 
         CrawlURI.addAlistPersistentMember(A_CONTENT_STATE_KEY);
@@ -250,7 +278,12 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         controller = c;
         controller.addCrawlStatusListener(this);
 
-        queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
+		String clsName = (String) getUncheckedAttribute(null,ATTR_QUEUE_ASSIGNMENT_POLICY);
+		try {
+			queueAssignmentPolicy = (QueueAssignmentPolicy) Class.forName(clsName).newInstance();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
         
         hostQueues = new AdaptiveRevisitQueueList(c.getBdbEnvironment(),
             c.getBdbEnvironment().getClassCatalog());
@@ -710,8 +743,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.processingCleanup(); 
         curi.resetDeferrals();   
         curi.resetFetchAttempts();
+        
         try {
-            hq.update(curi, true, wakeupTime);
+            hq.update(curi, true, wakeupTime, shouldBeForgotten(curi));
         } catch (IOException e) {
             logger.severe("An IOException occured when updating " + 
                     curi.toString() + "\n" + e.getMessage());
@@ -750,8 +784,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         if(errorWait){
             curi.resetDeferrals(); //Defferals only refer to immediate retries.
         }
-        try {
-            hq.update(curi, errorWait, retryTime);
+        try {                      	
+            hq.update(curi, errorWait, retryTime, shouldBeForgotten(curi));
         } catch (IOException e) {
             // TODO Handle IOException
             e.printStackTrace();
@@ -801,6 +835,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             if(shouldForget && alreadyIncluded != null){
                 alreadyIncluded.forget(canonicalize(curi.getUURI()),curi);
             }
+            
             hq.update(curi,false, 0, shouldForget); 
         } catch (IOException e) {
             // TODO Handle IOException
@@ -851,14 +886,30 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @return True if curi should be forgotten.
      */
     protected boolean shouldBeForgotten(CrawlURI curi) {
+    	boolean shouldForget = false;
+    	
         switch(curi.getFetchStatus()) {
             case S_OUT_OF_SCOPE:
             case S_TOO_MANY_EMBED_HOPS:
             case S_TOO_MANY_LINK_HOPS:
-                return true;
+            	shouldForget = true;
             default:
-                return false;
+            	shouldForget = false;
         }
+        
+    	if (! shouldForget) {
+    		if (curi.containsKey(A_NO_REVISIT)) {
+        		Boolean noRevisit = (Boolean)curi.getObject(A_NO_REVISIT);
+            	if (noRevisit) {
+            		if (logger.isLoggable(Level.FINE)) {
+            	      logger.fine("NO_REVISIT tag set for URI: " + curi.getUURI().toString());
+            		}
+            	    shouldForget = true;
+            	}
+    		}
+        }
+    	
+    	return shouldForget;
     }
 
     /**

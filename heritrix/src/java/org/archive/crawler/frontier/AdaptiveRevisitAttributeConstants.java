@@ -52,8 +52,13 @@ extends CoreAttributeConstants {
     
     public static final String A_WAIT_REEVALUATED = "wait-reevaluated";
     
+    /** Mark a URI as not revisited. Used for custom processors that want to
+     * implement selective revisiting.
+     */
+    public static final String A_NO_REVISIT = "no-revisit";
+    
     /** No knowledge of URI content. Possibly not fetched yet, unable
-     *  to check if different or an error occured on last fetch attempt. */
+     *  to check if different or an error occurred on last fetch attempt. */
     public static final int CONTENT_UNKNOWN = -1;
     
     /** URI content has not changed between the two latest, successfully
