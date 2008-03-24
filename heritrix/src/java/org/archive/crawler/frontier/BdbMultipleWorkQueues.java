@@ -168,6 +168,9 @@ public class BdbMultipleWorkQueues {
             OperationStatus result = null;
             try {
                 cursor = pendingUrisDB.openCursor(null,null);
+                // NOTE: this mutates key, and thus also the marker, 
+                // advancing the marker as a side-effect for future 
+                // followup operations
                 result = cursor.getSearchKey(key, value, null);
                 
                 while(matches<maxMatches && result == OperationStatus.SUCCESS) {
@@ -574,7 +577,6 @@ public class BdbMultipleWorkQueues {
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry value = new DatabaseEntry();
         Cursor cursor = pendingUrisDB.openCursor(null,null);
-        OperationStatus status;
         while(cursor.getNext(key,value,null)==OperationStatus.SUCCESS) {
             if(value.getData().length==0) {
                 continue;

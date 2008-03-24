@@ -78,6 +78,7 @@ import javax.management.openmbean.OpenMBeanParameterInfoSupport;
 import javax.management.openmbean.SimpleType;
 
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.io.IOUtils;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.Checkpoint;
@@ -91,7 +92,6 @@ import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.AbstractFrontier;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.ModuleAttributeInfo;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.util.CheckpointUtils;
@@ -268,6 +268,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     
     private final static String IMPORT_URI_OPER = "importUri";
     private final static String IMPORT_URIS_OPER = "importUris";
+    private final static String DUMP_URIS_OPER = "dumpUris";
     private final static String PAUSE_OPER = "pause";
     private final static String RESUME_OPER = "resume";
     private final static String FRONTIER_REPORT_OPER = "frontierReport";
@@ -1406,6 +1407,20 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             "Add file of passed URLs to the frontier", args, SimpleType.STRING,
                 MBeanOperationInfo.ACTION));
         
+        
+        args = new OpenMBeanParameterInfoSupport[4];
+        args[0] = new OpenMBeanParameterInfoSupport("filename",
+                "File to print to", SimpleType.STRING);
+        args[1] = new OpenMBeanParameterInfoSupport("regexp",
+                "Regular expression URLs must match", SimpleType.STRING);
+        args[2] = new OpenMBeanParameterInfoSupport("numberOfMatches",
+                "Maximum number of matches to return", SimpleType.INTEGER);
+        args[3] = new OpenMBeanParameterInfoSupport("verbose",
+                "Should they be verbose descriptions", SimpleType.BOOLEAN);
+        operations.add(new OpenMBeanOperationInfoSupport(DUMP_URIS_OPER,
+                "Dump pending URIs from frontier to a file", args,
+                SimpleType.VOID, MBeanOperationInfo.ACTION));
+        
         operations.add(new OpenMBeanOperationInfoSupport(PAUSE_OPER,
             "Pause crawling (noop if already paused)", null, SimpleType.VOID,
             MBeanOperationInfo.ACTION));
@@ -1876,6 +1891,19 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 ((Boolean)params[3]).booleanValue());
         }
         
+        if (operationName.equals(DUMP_URIS_OPER)) {
+            JmxUtils.checkParamsCount(DUMP_URIS_OPER, params, 4);
+            mustBeCrawling();
+            if (!this.controller.isPaused()) {
+                throw new RuntimeOperationsException(
+                        new IllegalArgumentException("Must " + "be paused"),
+                        "Cannot dump URI's from running job.");
+            }
+            dumpUris((String) params[0], (String) params[1],
+                    ((Integer) params[2]).intValue(), ((Boolean) params[3])
+                            .booleanValue());
+        }
+        
         if (operationName.equals(PAUSE_OPER)) {
             JmxUtils.checkParamsCount(PAUSE_OPER, params, 0);
             mustBeCrawling();
@@ -2024,7 +2052,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * @see #getInitialMarker(String, boolean)
      * @see org.archive.crawler.framework.FrontierMarker
      */
-    public ArrayList getPendingURIsList(FrontierMarker marker,
+    public ArrayList<String> getPendingURIsList(FrontierMarker marker,
             int numberOfMatches, boolean verbose)
     throws InvalidFrontierMarkerException {
         return  (this.controller != null && this.controller.isPaused())?
@@ -2033,6 +2061,37 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             null;
     }
 
+    public void dumpUris(String filename, String regexp, int numberOfMatches,
+            boolean verbose) {
+        try {
+            PrintWriter out = new PrintWriter(filename); 
+            FrontierMarker marker = 
+                controller.getFrontier().getInitialMarker(regexp, false);
+            int matchesDumped = 0;
+            
+            while(matchesDumped<numberOfMatches) {
+                int batchMatches = Math.min(100, numberOfMatches-matchesDumped);
+                
+                ArrayList<String> batchOfUris = 
+                    getPendingURIsList(marker,batchMatches,false);
+                for(String uriLine : batchOfUris) {
+                    out.write(uriLine);
+                    out.write("\n");
+                    matchesDumped++;
+                }
+                if (batchOfUris.size()<batchMatches) {
+                    // must be exhausted; we're finished
+                    break; 
+                }
+            }
+            IOUtils.closeQuietly(out); 
+        } catch (FileNotFoundException e) {
+            logger.log(Level.SEVERE, "Failed dumpUris write", e);
+        } catch (InvalidFrontierMarkerException e) {
+            logger.log(Level.SEVERE, "Failed dumpUris", e);
+        }
+    }
+    
     public void crawlStarted(String message) {
         if (this.mbeanName != null) {
             // Can be null around job startup.
