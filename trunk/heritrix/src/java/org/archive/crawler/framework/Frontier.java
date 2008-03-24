@@ -356,7 +356,7 @@ public interface Frontier extends Reporter {
      * @see FrontierMarker
      * @see #getInitialMarker(String, boolean)
      */
-    public ArrayList getURIsList(FrontierMarker marker,
+    public ArrayList<String> getURIsList(FrontierMarker marker,
                                  int numberOfMatches,
                                  boolean verbose)
                              throws InvalidFrontierMarkerException;

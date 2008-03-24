@@ -65,8 +65,6 @@ import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 
 /**
  * A Frontier that will repeatedly visit all encountered URIs. 
@@ -1118,7 +1116,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#getURIsList(org.archive.crawler.framework.FrontierMarker, int, boolean)
      */
-    public synchronized ArrayList getURIsList(FrontierMarker marker,
+    public synchronized ArrayList<String> getURIsList(FrontierMarker marker,
             int numberOfMatches, boolean verbose)
         throws InvalidFrontierMarkerException {
         // TODO Auto-generated method stub
