@@ -114,6 +114,8 @@ implements AdaptiveRevisitAttributeConstants {
                 // TODO: In the future processors should take note of the content
                 // state, removing the need for the following 'skip'
                 curi.skipToProcessorChain(getController().getPostprocessorChain());
+                // Since this is an unchanged page, no need to reschedule all of it's links.
+                curi.clearOutlinks();
                 // Make not in log
                 curi.addAnnotation("unchanged");
                 // Set content size to zero, we are not going to 'write it to disk'
@@ -136,6 +138,10 @@ implements AdaptiveRevisitAttributeConstants {
                 logger.finer("On " + curi.toString()
                         + " content state was " + "already set as UNCHANGED.");
             }
+            // Just like matching digests, there is no need to continue processing.
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            // Since this is an unchanged page, no need to reschedule all of it's links.
+            curi.clearOutlinks();
         }
         
         // Update visit and version counters
