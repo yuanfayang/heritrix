@@ -50,6 +50,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.FrontierMarker;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
@@ -603,7 +604,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void schedule(CandidateURI caURI) {
-        batchSchedule(caURI);        
+        batchSchedule(caURI);
+        if(!(Thread.currentThread() instanceof ToeThread)) {
+            // can't count on processing-cycle flush; force
+            batchFlush();
+        }
     }
 
     /* (non-Javadoc)
