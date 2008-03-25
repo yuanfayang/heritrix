@@ -496,7 +496,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-    protected void batchFlush() {
+    synchronized protected void batchFlush() {
         innerBatchFlush();
     }
 
