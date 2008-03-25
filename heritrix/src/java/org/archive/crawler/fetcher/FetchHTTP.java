@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -46,8 +48,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
@@ -94,9 +94,7 @@ import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.deciderules.DecideRule;
 import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
@@ -123,7 +121,6 @@ import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
 
 /**
  * HTTP fetcher that uses <a
@@ -241,7 +238,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     public static final String ATTR_BDB_COOKIES = "use-bdb-for-cookies";
     private static Boolean DEFAULT_BDB_COOKIES = new Boolean(true);
     
-    public static final String ATTR_LOCAL_ADDRESS = "bind-address";
+    public static final String ATTR_HTTP_BIND_ADDRESS = A_HTTP_BIND_ADDRESS;
     
     /**
      * Database backing cookie map, if using BDB
@@ -410,7 +407,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
               new Boolean(false)));
            e.setOverrideable(true);
            e.setExpertSetting(true);
-           e = addElementToDefinition(new SimpleType(ATTR_LOCAL_ADDRESS,
+           e = addElementToDefinition(new SimpleType(ATTR_HTTP_BIND_ADDRESS,
                "Local IP address or hostname to use when making connections " +
                "(binding sockets). When not specified, uses default local" +
                "address(es).", ""));
@@ -745,6 +742,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      *
      * @param curi CrawlURI from which we pull configuration.
      * @param method The Method to configure.
+     * @return HostConfiguration copy customized for this CrawlURI
      */
     protected HostConfiguration configureMethod(CrawlURI curi, HttpMethod method) {
         // Don't auto-follow redirects
@@ -813,7 +811,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // added above: e.g. Connection, Range, or Referer?
         setAcceptHeaders(curi, method);
         
-        return configureProxy(curi);
+        HostConfiguration config = new HostConfiguration(http.getHostConfiguration());
+        configureProxy(curi, config);
+        configureBindAddress(curi, config);
+        return config;
     }
 
     /**
@@ -848,11 +849,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
     /**
      * Setup proxy, based on attributes in CrawlURI and settings, 
-     * for this CrawlURI only. 
-     * @return HostConfiguration customized as necessary, or null if no
-     * customization required
+     * in the given HostConfiguration
      */
-    private HostConfiguration configureProxy(CrawlURI curi) {
+    private void configureProxy(CrawlURI curi, HostConfiguration config) {
         String proxy = (String) getAttributeEither(curi, ATTR_HTTP_PROXY_HOST);
         int port = -1; 
         if(proxy.length()==0) {
@@ -861,21 +860,30 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             String portString = (String)getAttributeEither(curi, ATTR_HTTP_PROXY_PORT);
             port = portString.length()>0 ? Integer.parseInt(portString) : -1; 
         }
-        HostConfiguration config = this.http.getHostConfiguration();
-        if(config.getProxyHost() == proxy && config.getProxyPort() == port) {
-            // no change
-            return null; 
+        if(proxy!=null) {
+            config.setProxy(proxy,port);
         }
-        if (proxy != null && proxy.equals(config.getProxyHost()) 
-                && config.getProxyPort() == port) {
-            // no change
-            return null; 
-        }
-        config = new HostConfiguration(config); // copy of config
-        config.setProxy(proxy,port);
-        return config; 
     }
 
+    /**
+     * Setup local bind address, based on attributes in CrawlURI and settings, 
+     * in the given HostConfiguration 
+     */
+    private void configureBindAddress(CrawlURI curi, HostConfiguration config) {
+        String addressString = (String) getAttributeEither(curi, ATTR_HTTP_BIND_ADDRESS);
+        if(addressString != null && addressString.length() > 0) {
+            try {
+                InetAddress localAddress = InetAddress.getByName(addressString);
+                config.setLocalAddress(localAddress);
+            } catch (UnknownHostException e) {
+                // Convert all to RuntimeException so get an exception out
+                // if initialization fails.
+                throw new RuntimeException("Unknown host " + addressString
+                    + " in " + ATTR_HTTP_BIND_ADDRESS);
+            }
+        }
+    }
+    
     /**
      * Get a value either from inside the CrawlURI instance, or from 
      * settings (module attributes). 
@@ -1215,24 +1223,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Set client to be version 1.0.
         hcp.setVersion(HttpVersion.HTTP_1_0);
 
-		String addressStr = null;
-		try {
-			addressStr = (String) getAttribute(ATTR_LOCAL_ADDRESS);
-		} catch (Exception e1) {
-			// If exception, just use default.
-		}
-		if (addressStr != null && addressStr.length() > 0) {
-			try {
-				InetAddress localAddress = InetAddress.getByName(addressStr);
-				this.http.getHostConfiguration().setLocalAddress(localAddress);
-			} catch (UnknownHostException e) {
-				// Convert all to RuntimeException so get an exception out
-				// if initialization fails.
-				throw new RuntimeException("Unknown host " + addressStr
-				    + " in " + ATTR_LOCAL_ADDRESS);
-			}
-		}
-
 		configureHttpCookies();
         
         // Configure how we want the method to act.
@@ -1245,11 +1235,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         this.http.getParams().setIntParameter(
             HttpMethodParams.STATUS_LINE_GARBAGE_LIMIT, 10);
         
-        HostConfiguration configOrNull = configureProxy(null);
-        if(configOrNull!=null) {
-            // global proxy settings are in effect
-            this.http.setHostConfiguration(configOrNull);
-        }
+        // modify the default config with any global settings
+        HostConfiguration config = this.http.getHostConfiguration();
+        configureProxy(null, config);
+        configureBindAddress(null,config);
         
         // Use our own protocol factory, one that gets IP to use from
         // heritrix cache (They're cached in CrawlHost instances).
