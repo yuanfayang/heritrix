@@ -905,16 +905,17 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             	shouldForget = false;
         }
         
-    	if (! shouldForget) {
-    		if (curi.containsKey(A_NO_REVISIT)) {
-        		Boolean noRevisit = (Boolean)curi.getObject(A_NO_REVISIT);
-            	if (noRevisit) {
-            		if (logger.isLoggable(Level.FINE)) {
-            	      logger.fine("NO_REVISIT tag set for URI: " + curi.getUURI().toString());
-            		}
-            	    shouldForget = true;
-            	}
-    		}
+    	if (!shouldForget) {
+            if (curi.containsKey(A_DISCARD_REVISIT)) {
+                Boolean noRevisit = (Boolean) curi.getObject(A_DISCARD_REVISIT);
+                if (noRevisit) {
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("NO_REVISIT tag set for URI: "
+                                + curi.getUURI().toString());
+                    }
+                    shouldForget = true;
+                }
+            }
         }
     	
     	return shouldForget;
