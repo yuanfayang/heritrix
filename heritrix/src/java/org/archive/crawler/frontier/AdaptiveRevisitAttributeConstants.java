@@ -52,10 +52,15 @@ extends CoreAttributeConstants {
     
     public static final String A_WAIT_REEVALUATED = "wait-reevaluated";
     
-    /** Mark a URI as not revisited. Used for custom processors that want to
-     * implement selective revisiting.
+    /** Mark a URI to be dropped from revisit handling. Used for custom 
+     * processors that want to implement more selective revisiting. 
+     * Actual effect depends on whether an alreadyIncluded structure
+     * is used. If an alreadyIncluded is used, dropping the URI from 
+     * revisit handling means it won't be visited again. If an
+     * alreadyIncluded is not used, this merely drops one discovery of 
+     * the URI, and it may be rediscovered and thus revisited that way.
      */
-    public static final String A_NO_REVISIT = "no-revisit";
+    public static final String A_DISCARD_REVISIT = "no-revisit";
     
     /** No knowledge of URI content. Possibly not fetched yet, unable
      *  to check if different or an error occurred on last fetch attempt. */
