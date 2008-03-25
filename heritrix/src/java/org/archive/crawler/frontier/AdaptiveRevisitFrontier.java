@@ -262,9 +262,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                         " assignment queue policy string: " + queueStr);
             }
             t = addElementToDefinition(new SimpleType(ATTR_QUEUE_ASSIGNMENT_POLICY,
-                    "Defines how to assign URIs to queues. Can assign by host, " +
-                    "by ip, and into one of a fixed set of buckets (1k).",
-                    DEFAULT_QUEUE_ASSIGNMENT_POLICY, queues));
+                "Defines how to assign URIs to queues. Can assign by host, " +
+                "by ip, and into one of a fixed set of buckets (1k). NOTE: " +
+                "Use of policies other than the default " +
+                "HostnameQueueAssignmentPolicy is untested and provided " +
+                "for use at your own risk. Further, changing this policy " +
+                "during a crawl, or between restarts using the same data " +
+                "directory, is likely to cause unrecoverable problems.",
+                DEFAULT_QUEUE_ASSIGNMENT_POLICY, queues));
             t.setExpertSetting(true);
 
         // Register persistent CrawlURI items 
