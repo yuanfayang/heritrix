@@ -52,7 +52,7 @@ import org.archive.util.anvl.ANVLRecord;
  * @author stack
  * @version $Date: 2006-08-29 19:35:48 -0700 (Tue, 29 Aug 2006) $ $Version$
  */
-public class ExperimentalWARCWriterTest
+public class WARCWriterTest
 extends TmpDirTestCase implements WARCConstants {
     private static final AtomicInteger SERIAL_NO = new AtomicInteger();
     
@@ -64,7 +64,7 @@ extends TmpDirTestCase implements WARCConstants {
     private static final String SOME_URL = "http://www.archive.org/test/";
     
     public void testCheckHeaderLineValue() throws Exception {
-        ExperimentalWARCWriter writer = new ExperimentalWARCWriter();
+        WARCWriter writer = new WARCWriter();
         writer.checkHeaderValue("one");
         IOException exception = null;
         try {
@@ -83,7 +83,7 @@ extends TmpDirTestCase implements WARCConstants {
     }
 
     public void testMimetypes() throws IOException {
-        ExperimentalWARCWriter writer = new ExperimentalWARCWriter();
+        WARCWriter writer = new WARCWriter();
         writer.checkHeaderLineMimetypeParameter("text/xml");
         writer.checkHeaderLineMimetypeParameter("text/xml+rdf");
         assertEquals(writer.checkHeaderLineMimetypeParameter(
@@ -97,18 +97,18 @@ extends TmpDirTestCase implements WARCConstants {
     	File [] files = {getTmpDir()};
         
     	// Write uncompressed.
-        ExperimentalWARCWriter writer =
-        	new ExperimentalWARCWriter(SERIAL_NO, Arrays.asList(files),
+        WARCWriter writer =
+        	new WARCWriter(SERIAL_NO, Arrays.asList(files),
         			this.getClass().getName(), "suffix", false, -1, null);
         writeFile(writer);
         
         // Write compressed.
-        writer = new ExperimentalWARCWriter(SERIAL_NO, Arrays.asList(files),
+        writer = new WARCWriter(SERIAL_NO, Arrays.asList(files),
         		this.getClass().getName(), "suffix", true, -1, null);
         writeFile(writer);
     }
     
-    private void writeFile(final ExperimentalWARCWriter writer)
+    private void writeFile(final WARCWriter writer)
     throws IOException {
         try {
             writeWarcinfoRecord(writer);
@@ -119,7 +119,7 @@ extends TmpDirTestCase implements WARCConstants {
         }
     }
     
-    private void writeWarcinfoRecord(ExperimentalWARCWriter writer)
+    private void writeWarcinfoRecord(WARCWriter writer)
     throws IOException {
     	ANVLRecord meta = new ANVLRecord();
     	meta.addLabelValue("size", "1G");
@@ -129,7 +129,7 @@ extends TmpDirTestCase implements WARCConstants {
     		new ByteArrayInputStream(bytes), bytes.length);
 	}
 
-	protected void writeBasicRecords(final ExperimentalWARCWriter writer)
+	protected void writeBasicRecords(final WARCWriter writer)
     throws IOException {
     	ANVLRecord headerFields = new ANVLRecord();
     	headerFields.addLabelValue("x", "y");
@@ -182,7 +182,7 @@ extends TmpDirTestCase implements WARCConstants {
      * @return Length of record written.
      * @throws IOException
      */
-    protected int writeRandomHTTPRecord(ExperimentalWARCWriter w, int index)
+    protected int writeRandomHTTPRecord(WARCWriter w, int index)
     throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         String indexStr = Integer.toString(index);
@@ -217,7 +217,7 @@ extends TmpDirTestCase implements WARCConstants {
     throws IOException {
         cleanUpOldFiles(baseName);
         File [] files = {getTmpDir()};
-        ExperimentalWARCWriter w = new ExperimentalWARCWriter(SERIAL_NO,
+        WARCWriter w = new WARCWriter(SERIAL_NO,
             Arrays.asList(files), baseName + '-' + PREFIX, "", compress,
             maxSize, null);
         assertNotNull(w);
@@ -323,10 +323,10 @@ extends TmpDirTestCase implements WARCConstants {
         validate(arcFile, recordCount + 1 /*Header record*/);
     }
     
-    protected ExperimentalWARCWriter createWARCWriter(String NAME,
+    protected WARCWriter createWARCWriter(String NAME,
             boolean compress) {
         File [] files = {getTmpDir()};
-        return new ExperimentalWARCWriter(SERIAL_NO,
+        return new WARCWriter(SERIAL_NO,
         	Arrays.asList(files), NAME, "",
             compress, DEFAULT_MAX_WARC_FILE_SIZE, null);
     }
@@ -338,7 +338,7 @@ extends TmpDirTestCase implements WARCConstants {
         return baos;
     }
     
-    protected static void writeRecord(ExperimentalWARCWriter w, String url,
+    protected static void writeRecord(WARCWriter w, String url,
         String mimetype, int len, ByteArrayOutputStream baos)
     throws IOException {
         w.writeResourceRecord(url,
@@ -364,10 +364,10 @@ extends TmpDirTestCase implements WARCConstants {
         return count;
     }
     
-    protected ExperimentalWARCWriter createWithOneRecord(String name,
+    protected WARCWriter createWithOneRecord(String name,
         boolean compressed)
     throws IOException {
-        ExperimentalWARCWriter writer = createWARCWriter(name, compressed);
+        WARCWriter writer = createWARCWriter(name, compressed);
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html",
             content.length(), getBaos(content));
@@ -398,7 +398,7 @@ extends TmpDirTestCase implements WARCConstants {
     
     protected void holeyUrl(String name, boolean compress, String urlInsert)
     throws IOException {
-        ExperimentalWARCWriter writer = createWithOneRecord(name, compress);
+        WARCWriter writer = createWithOneRecord(name, compress);
         // Add some bytes on the end to mess up the record.
         String content = getContent();
         ByteArrayOutputStream baos = getBaos(content);
@@ -417,8 +417,8 @@ extends TmpDirTestCase implements WARCConstants {
     public static File createWARCFile(File arcdir, boolean compress)
     throws IOException {
         File [] files = {arcdir};
-        ExperimentalWARCWriter writer =
-            new ExperimentalWARCWriter(SERIAL_NO, Arrays.asList(files),
+        WARCWriter writer =
+            new WARCWriter(SERIAL_NO, Arrays.asList(files),
             "test", "", compress, DEFAULT_MAX_WARC_FILE_SIZE, null);
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html", content.length(),

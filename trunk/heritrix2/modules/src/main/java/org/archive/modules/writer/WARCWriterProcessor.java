@@ -70,7 +70,7 @@ import org.apache.commons.lang.StringUtils;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.warc.ExperimentalWARCWriter;
+import org.archive.io.warc.WARCWriter;
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
@@ -95,13 +95,13 @@ import org.archive.util.anvl.ANVLRecord;
  * 
  * @author stack
  */
-public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
+public class WARCWriterProcessor extends WriterPoolProcessor {
 
 
     private static final long serialVersionUID = 6182850087635847443L;
 
     private static final Logger logger = 
-        Logger.getLogger(ExperimentalWARCWriterProcessor.class.getName());
+        Logger.getLogger(WARCWriterProcessor.class.getName());
     
     /**
      * Whether to write 'request' type records. Default is true.
@@ -151,7 +151,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
 
 
     static {
-        KeyManager.addKeys(ExperimentalWARCWriterProcessor.class);
+        KeyManager.addKeys(WARCWriterProcessor.class);
     }
 
     private transient List<String> cachedMetadata;
@@ -163,7 +163,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     /**
      * Constructor.
      */
-    public ExperimentalWARCWriterProcessor() {
+    public WARCWriterProcessor() {
     }
 
     @Override
@@ -221,7 +221,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
             position = writer.getPosition();
         }
         
-        ExperimentalWARCWriter w = (ExperimentalWARCWriter)writer;
+        WARCWriter w = (WARCWriter)writer;
         try {
             // Write a request, response, and metadata all in the one
             // 'transaction'.
@@ -309,7 +309,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return checkBytesWritten(curi);
     }
     
-    protected URI writeRequest(final ExperimentalWARCWriter w,
+    protected URI writeRequest(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
@@ -329,7 +329,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return uid;
     }
     
-    protected URI writeResponse(final ExperimentalWARCWriter w,
+    protected URI writeResponse(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
@@ -348,7 +348,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return baseid;
     }
     
-    protected URI writeResource(final ExperimentalWARCWriter w,
+    protected URI writeResource(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
@@ -368,7 +368,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     }
 
     
-    protected URI writeRevisitDigest(final ExperimentalWARCWriter w,
+    protected URI writeRevisitDigest(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
@@ -394,7 +394,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         return baseid;
     }
     
-    protected URI writeRevisitNotModified(final ExperimentalWARCWriter w,
+    protected URI writeRevisitNotModified(final WARCWriter w,
             final String timestamp, 
             final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
@@ -440,7 +440,7 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
         }
     }
 
-	protected URI writeMetadata(final ExperimentalWARCWriter w,
+	protected URI writeMetadata(final WARCWriter w,
             final String timestamp,
             final URI baseid, final ProcessorURI curi,
             final ANVLRecord namedFields) 
@@ -583,6 +583,6 @@ public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor {
     // good to keep at end of source: must run after all per-Key 
     // initialization values are set.
     static {
-        KeyManager.addKeys(ExperimentalWARCWriterProcessor.class);
+        KeyManager.addKeys(WARCWriterProcessor.class);
     }
 }

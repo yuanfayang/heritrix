@@ -44,7 +44,7 @@ import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecord;
 import org.archive.io.warc.WARCConstants;
-import org.archive.io.warc.ExperimentalWARCWriter;
+import org.archive.io.warc.WARCWriter;
 import org.archive.util.FileUtils;
 import org.archive.util.anvl.ANVLRecord;
 
@@ -80,7 +80,7 @@ public class Arc2Warc {
    
    protected void transform(final ARCReader reader, final File warc)
    throws IOException {
-	   ExperimentalWARCWriter writer = null;
+	   WARCWriter writer = null;
 	   // No point digesting. Digest is available after reading of ARC which
 	   // is too late for inclusion in WARC.
 	   reader.setDigest(false);
@@ -102,7 +102,7 @@ public class Arc2Warc {
 	       metadata.add(ar.toString());
 	       // Now create the writer.  If reader was compressed, lets write
 	       // a compressed WARC.
-		   writer = new ExperimentalWARCWriter(null, bos, warc,
+		   writer = new WARCWriter(null, bos, warc,
 		       reader.isCompressed(), null, metadata);
 		   // Write a warcinfo record with description about how this WARC
 		   // was made.
@@ -134,7 +134,7 @@ public class Arc2Warc {
 	   }
    }
    
-   protected void write(final ExperimentalWARCWriter writer,
+   protected void write(final WARCWriter writer,
 		   final ARCRecord r)
    throws IOException {
 	   ANVLRecord ar = new ANVLRecord();
