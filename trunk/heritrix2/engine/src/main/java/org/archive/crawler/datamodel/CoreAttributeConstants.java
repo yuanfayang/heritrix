@@ -105,6 +105,8 @@ public interface CoreAttributeConstants {
     /** local override of proxy port */ 
     public static final String A_HTTP_PROXY_PORT = "http-proxy-port";
 
+    /** local override of origin bind address */ 
+    public static final String A_HTTP_BIND_ADDRESS = "http-bind-address";
 
     /**
      * Fetch truncation codes present in {@link CrawlURI} annotations.

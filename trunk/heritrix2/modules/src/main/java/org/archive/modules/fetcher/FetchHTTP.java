@@ -322,7 +322,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * Local IP address or hostname to use when making connections (binding
      * sockets). When not specified, uses default local address(es).
      */
-    final public static Key<String> LOCAL_ADDRESS = Key.make("");
+    final public static Key<String> HTTP_BIND_ADDRESS = Key.make("");
 
     
     /**
@@ -781,7 +781,11 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         // added above: e.g. Connection, Range, or Referer?
         setAcceptHeaders(curi, method);
 
-        return configureProxy(curi);
+        HostConfiguration config = 
+            new HostConfiguration(http.getHostConfiguration());
+        configureProxy(curi, config);
+        configureBindAddress(curi, config);
+        return config;
     }
 
     /**
@@ -814,38 +818,43 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
     }
     
     /**
-     * Setup proxy, based on attributes in ProcessorURI and settings, for this
-     * ProcessorURI only.
-     * 
-     * @return HostConfiguration customized as necessary, or null if no
-     *         customization required
+     * Setup proxy, based on attributes in ProcessorURI and settings, 
+     * in given HostConfiguration
      */
-    private HostConfiguration configureProxy(StateProvider curi) {
+    private void configureProxy(StateProvider curi, HostConfiguration config) {
         String proxy = (String) getAttributeEither(curi, HTTP_PROXY_HOST);
-        int port = -1;
-        if (proxy.length() == 0) {
-            proxy = null;
-        } else {
-            port = (Integer) getAttributeEither(curi, HTTP_PROXY_PORT);            
-        }
-        return configureProxy(proxy, port);
+        int port = (Integer) getAttributeEither(curi, HTTP_PROXY_PORT);            
+        configureProxy(proxy, port, config);
     }
     
-    private HostConfiguration configureProxy(String proxy, int port) {
-        HostConfiguration config = http.getHostConfiguration();
-        if (config.getProxyHost() == proxy && config.getProxyPort() == port) {
-            // no change
-            return null;
+    private void configureProxy(String proxy, int port, 
+            HostConfiguration config) {
+        if(StringUtils.isNotEmpty(proxy)) {
+            config.setProxy(proxy, port);
         }
-        if (proxy != null && proxy.equals(config.getProxyHost())
-                && config.getProxyPort() == port) {
-            // no change
-            return null;
+    }
+    
+    /**
+     * Setup local bind address, based on attributes in ProcessorURI and 
+     * settings, in given HostConfiguration
+     */
+    private void configureBindAddress(StateProvider curi, HostConfiguration config) {
+        String addressString = (String) getAttributeEither(curi, HTTP_BIND_ADDRESS);
+        configureBindAddress(addressString,config);
+    }
+
+    private void configureBindAddress(String address, HostConfiguration config) {
+        if (StringUtils.isNotEmpty(address)) {
+            try {
+                InetAddress localAddress = InetAddress.getByName(address);
+                config.setLocalAddress(localAddress);
+            } catch (UnknownHostException e) {
+                // Convert all to RuntimeException so get an exception out
+                // if initialization fails.
+                throw new RuntimeException("Unknown host " + address
+                        + " in local-address");
+            }
         }
-        config = new HostConfiguration(config); // copy of config
-        System.out.println("Configuring " + proxy + ":" + port);
-        config.setProxy(proxy, port);
-        return config;
     }
 
     /**
@@ -1179,8 +1188,10 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
 
     protected void configureHttp(StateProvider defaults) {
         int soTimeout = defaults.get(this, SOTIMEOUT_MS);
-        String addressStr = defaults.get(this, LOCAL_ADDRESS);
-        String proxy = (String) getAttributeEither(defaults, HTTP_PROXY_HOST);
+        String addressStr = 
+            (String) getAttributeEither(defaults, HTTP_BIND_ADDRESS);
+        String proxy = 
+            (String) getAttributeEither(defaults, HTTP_PROXY_HOST);
         int port = -1;
         if (proxy.length() == 0) {
             proxy = null;
@@ -1216,18 +1227,6 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         // Set client to be version 1.0.
         hcp.setVersion(HttpVersion.HTTP_1_0);
 
-        if (addressStr != null && addressStr.length() > 0) {
-            try {
-                InetAddress localAddress = InetAddress.getByName(addressStr);
-                this.http.getHostConfiguration().setLocalAddress(localAddress);
-            } catch (UnknownHostException e) {
-                // Convert all to RuntimeException so get an exception out
-                // if initialization fails.
-                throw new RuntimeException("Unknown host " + addressStr
-                        + " in local-address");
-            }
-        }
-
         // configureHttpCookies(defaults);
 
         // Configure how we want the method to act.
@@ -1243,11 +1242,9 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         if ((proxy != null) && (proxy.length() == 0)) {
             proxy = null;
         }
-        HostConfiguration configOrNull = configureProxy(proxy, port);
-        if (configOrNull != null) {
-            // global proxy settings are in effect
-            this.http.setHostConfiguration(configOrNull);
-        }
+        HostConfiguration config = http.getHostConfiguration();
+        configureProxy(proxy, port, config);
+        configureBindAddress(addressStr,config);
 
         hcmp.setParameter(SSL_FACTORY_KEY, this.sslfactory);
     }
