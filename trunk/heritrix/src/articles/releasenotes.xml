@@ -12,6 +12,26 @@
     </authorgroup>
   </articleinfo>
 
+  <sect1 id="1_14_0">
+    <title>Release 1.14.0 - TBD</title>
+
+    <abstract>
+      <para>Release 1.14.0 adds a number of small features to the 
+      Heritrix 1.x line, most notably upgrading support for the WARC 
+      archived-web-content format to version 0.17 (ISO Committee Draft). 
+      This release also includes 41 bug fixes or other incremental 
+      improvements.</para>
+    </abstract>
+
+	<para>Other details on this release, including a list of all 
+	tracked issues addressed, are available at:
+	<ulink
+        url="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.0">
+        Release Notes - Heritrix 1.14.0 at project wiki</ulink>
+    </para>
+	
+  </sect1>
+
   <sect1 id="1_12_1">
     <title>Release 1.12.1 - 5/6/2007</title>
 
