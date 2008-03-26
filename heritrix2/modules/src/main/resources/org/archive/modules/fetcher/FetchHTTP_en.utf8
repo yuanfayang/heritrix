@@ -37,7 +37,7 @@ load-cookies-from-file-description:
 File to preload cookies from. 
 
 
-local-address-description:
+http-bind-address-description:
 Local IP address or hostname to use when making connections (binding 
 sockets). When not specified, uses default local address(es). 
 
