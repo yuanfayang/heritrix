@@ -22,7 +22,6 @@ org.archive.crawler.extractor.ExtractorImpliedURI|ExtractorImpliedURI
 org.archive.crawler.extractor.ChangeEvaluator|ChangeEvaluator
 org.archive.crawler.extractor.HTTPContentDigest|HTTPContentDigest
 org.archive.crawler.writer.ARCWriterProcessor|Archiver
-org.archive.crawler.writer.ExperimentalV10WARCWriterProcessor|V10WARCArchiver
 org.archive.crawler.writer.WARCWriterProcessor|WARCArchiver
 org.archive.crawler.writer.Kw3WriterProcessor|Kw3Archiver
 org.archive.crawler.writer.MirrorWriterProcessor|MirrorWriter
