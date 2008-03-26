@@ -30,7 +30,7 @@ import java.io.File;
 
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.DefaultServerCache;
-import org.archive.modules.writer.ExperimentalWARCWriterProcessor;
+import org.archive.modules.writer.WARCWriterProcessor;
 import org.archive.modules.writer.MetadataProvider;
 import org.archive.modules.writer.WriterPoolProcessor;
 import org.archive.state.ExampleStateProvider;
@@ -39,11 +39,11 @@ import org.archive.util.TmpDirTestCase;
 
 
 /**
- * Unit test for {@link ExperimentalWARCWriterProcessor}.
+ * Unit test for {@link WARCWriterProcessor}.
  *
  * @author pjack
  */
-public class ExperimentalWARCWriterProcessorTest extends ProcessorTestBase {
+public class WARCWriterProcessorTest extends ProcessorTestBase {
     public class DummyMetadataProvider implements MetadataProvider {
         public String getAudience() {
             return null;
@@ -81,7 +81,7 @@ public class ExperimentalWARCWriterProcessorTest extends ProcessorTestBase {
 
     @Override
     protected Class<?> getModuleClass() {
-        return ExperimentalWARCWriterProcessor.class;
+        return WARCWriterProcessor.class;
     }
     
     
@@ -94,7 +94,7 @@ public class ExperimentalWARCWriterProcessorTest extends ProcessorTestBase {
         ExampleStateProvider sp = new ExampleStateProvider();
         Path dir = new Path(tmp.getAbsolutePath());
 
-        ExperimentalWARCWriterProcessor result = new ExperimentalWARCWriterProcessor();
+        WARCWriterProcessor result = new WARCWriterProcessor();
         sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
         sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
         sp.set(result, WriterPoolProcessor.METADATA_PROVIDER, new DummyMetadataProvider());

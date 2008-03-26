@@ -54,7 +54,7 @@ import org.archive.util.anvl.ANVLRecord;
  * @author stack
  * @version $Revision: 4604 $ $Date: 2006-09-05 22:38:18 -0700 (Tue, 05 Sep 2006) $
  */
-public class ExperimentalWARCWriter extends WriterPoolMember
+public class WARCWriter extends WriterPoolMember
 implements WARCConstants {
     
     /**
@@ -80,7 +80,7 @@ implements WARCConstants {
      * Shutdown Constructor
      * Has default access so can make instance to test utility methods.
      */
-    ExperimentalWARCWriter() {
+    WARCWriter() {
         this(null, null, "", "", true, -1, null);
     }
     
@@ -95,7 +95,7 @@ implements WARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    public ExperimentalWARCWriter(final AtomicInteger serialNo,
+    public WARCWriter(final AtomicInteger serialNo,
     		final OutputStream out, final File f,
     		final boolean cmprs, final String a14DigitDate,
             final List warcinfoData)
@@ -114,7 +114,7 @@ implements WARCConstants {
      * @param suffix File tail to use.  If null, unused.
      * @param warcinfoData File metadata for warcinfo record.
      */
-    public ExperimentalWARCWriter(final AtomicInteger serialNo,
+    public WARCWriter(final AtomicInteger serialNo,
     		final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final long maxSize, final List warcinfoData) {
