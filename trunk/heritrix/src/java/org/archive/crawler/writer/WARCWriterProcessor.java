@@ -55,7 +55,7 @@ import org.archive.crawler.settings.Type;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.warc.ExperimentalWARCWriter;
+import org.archive.io.warc.WARCWriter;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.uid.GeneratorFactory;
@@ -74,7 +74,7 @@ import org.w3c.dom.Document;
  * 
  * @author stack
  */
-public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor
+public class WARCWriterProcessor extends WriterPoolProcessor
 implements CoreAttributeConstants, CrawlStatusListener,
 WriterPoolSettings, FetchStatusCodes, WARCConstants {
     private static final long serialVersionUID = 6182850087635847443L;
@@ -119,7 +119,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     /**
      * @param name Name of this writer.
      */
-    public ExperimentalWARCWriterProcessor(final String name) {
+    public WARCWriterProcessor(final String name) {
         super(name, "Experimental WARCWriter processor (Version 0.17)");
         Type e = addElementToDefinition(
                 new SimpleType(ATTR_WRITE_REQUESTS,
@@ -211,7 +211,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             position = writer.getPosition();
         }
         
-        ExperimentalWARCWriter w = (ExperimentalWARCWriter)writer;
+        WARCWriter w = (WARCWriter)writer;
         try {
             // Write a request, response, and metadata all in the one
             // 'transaction'.
@@ -298,7 +298,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         checkBytesWritten();
     }
     
-    protected URI writeRequest(final ExperimentalWARCWriter w,
+    protected URI writeRequest(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
@@ -318,7 +318,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return uid;
     }
     
-    protected URI writeResponse(final ExperimentalWARCWriter w,
+    protected URI writeResponse(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
@@ -337,7 +337,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return baseid;
     }
     
-    protected URI writeResource(final ExperimentalWARCWriter w,
+    protected URI writeResource(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
@@ -356,7 +356,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return baseid;
     }
     
-    protected URI writeRevisitDigest(final ExperimentalWARCWriter w,
+    protected URI writeRevisitDigest(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
@@ -382,7 +382,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return baseid;
     }
     
-    protected URI writeRevisitNotModified(final ExperimentalWARCWriter w,
+    protected URI writeRevisitNotModified(final WARCWriter w,
             final String timestamp, 
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
@@ -428,7 +428,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         }
     }
 
-	protected URI writeMetadata(final ExperimentalWARCWriter w,
+	protected URI writeMetadata(final WARCWriter w,
             final String timestamp,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 

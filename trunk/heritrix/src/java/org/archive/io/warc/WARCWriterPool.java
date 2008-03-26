@@ -59,7 +59,7 @@ public class WARCWriterPool extends WriterPool {
             final int poolMaximumActive, final int poolMaximumWait) {
     	super(serial, new BasePoolableObjectFactory() {
             public Object makeObject() throws Exception {
-                return new ExperimentalWARCWriter(serial,
+                return new WARCWriter(serial,
                 		settings.getOutputDirs(),
                         settings.getPrefix(), settings.getSuffix(),
                         settings.isCompressed(), settings.getMaxSize(),

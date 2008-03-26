@@ -23,7 +23,6 @@
 package org.archive.io.warc;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.archive.io.UTF8Bytes;
 import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
@@ -54,13 +52,9 @@ import org.archive.util.anvl.ANVLRecord;
  * @author stack
  * @version $Revision: 4604 $ $Date: 2006-09-05 22:38:18 -0700 (Tue, 05 Sep 2006) $
  */
-public class ExperimentalWARCWriter extends WriterPoolMember
+public class WARCWriter extends WriterPoolMember
 implements WARCConstants {
-    /**
-     * Buffer to reuse writing streams.
-     */
-    private final byte [] readbuffer = new byte[16 * 1024];
-    
+
     /**
      * NEWLINE as bytes.
      */
@@ -76,14 +70,14 @@ implements WARCConstants {
     /**
      * Metadata.
      */
-    private final List fileMetadata;
+    private final List<String> fileMetadata;
     
     
     /**
      * Shutdown Constructor
      * Has default access so can make instance to test utility methods.
      */
-    ExperimentalWARCWriter() {
+    WARCWriter() {
         this(null, null, "", "", true, -1, null);
     }
     
@@ -98,10 +92,10 @@ implements WARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    public ExperimentalWARCWriter(final AtomicInteger serialNo,
+    public WARCWriter(final AtomicInteger serialNo,
     		final OutputStream out, final File f,
     		final boolean cmprs, final String a14DigitDate,
-            final List warcinfoData)
+            final List<String> warcinfoData)
     throws IOException {
         super(serialNo, out, f, cmprs, a14DigitDate);
         this.fileMetadata = warcinfoData;
@@ -117,10 +111,10 @@ implements WARCConstants {
      * @param suffix File tail to use.  If null, unused.
      * @param warcinfoData File metadata for warcinfo record.
      */
-    public ExperimentalWARCWriter(final AtomicInteger serialNo,
+    public WARCWriter(final AtomicInteger serialNo,
     		final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final long maxSize, final List warcinfoData) {
+            final long maxSize, final List<String> warcinfoData) {
         super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
         	WARC_FILE_EXTENSION);
         this.fileMetadata = warcinfoData;
