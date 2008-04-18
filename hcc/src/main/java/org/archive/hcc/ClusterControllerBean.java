@@ -1172,7 +1172,7 @@ public class ClusterControllerBean implements
             while (e.hasMore()) {
                 NameClassPair ncp = e.next();
                 String jndiName = ncp.getName();
-
+                
                 try {
                     ObjectName on = new ObjectName(":" + jndiName);
                     Hashtable ht = on.getKeyPropertyList();
