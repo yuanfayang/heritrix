@@ -13,7 +13,7 @@
   </articleinfo>
 
   <sect1 id="1_14_0">
-    <title>Release 1.14.0 - TBD</title>
+    <title>Release 1.14.0 - 2008-04-27</title>
 
     <abstract>
       <para>Release 1.14.0 adds a number of small features to the 
@@ -33,7 +33,7 @@
   </sect1>
 
   <sect1 id="1_12_1">
-    <title>Release 1.12.1 - 5/6/2007</title>
+    <title>Release 1.12.1 - 2007-05-06</title>
 
     <abstract>
       <para>Release 1.12.1 is primarily a bug-fix release. A total of 21 bugs 
@@ -71,7 +71,7 @@
   </sect1>
 
   <sect1 id="1_12_0">
-    <title>Release 1.12.0 - 3/16/2007</title>
+    <title>Release 1.12.0 - 2007-03-16</title>
 
     <abstract>
       <para>Release 1.12.0 is the first of several planned releases enhancing
@@ -200,7 +200,7 @@
   </sect1>
 
   <sect1 id="1_10_2">
-    <title>Release 1.10.2 - 01/15/2007</title>
+    <title>Release 1.10.2 - 2007-01-15</title>
 
     <abstract>
       <para>This is primarily a bug-fix release, with a couple of new
@@ -531,7 +531,7 @@
   </sect1>
 
   <sect1 id="1_10_1">
-    <title>Release 1.10.1 - 09/27/2006</title>
+    <title>Release 1.10.1 - 2006-09-27</title>
 
     <abstract>
       <para>Bug fixes.</para>
@@ -629,7 +629,7 @@
   </sect1>
 
   <sect1 id="1_10_0">
-    <title>Release 1.10.0 - 09/11/2006</title>
+    <title>Release 1.10.0 - 2006-09-11</title>
 
     <abstract>
       <para>Release 1.10.0 adds new configuration options, experimental new
@@ -2179,7 +2179,7 @@
   </sect1>
 
   <sect1 id="1_8_0">
-    <title>Release 1.8.0 - 05/05/2006</title>
+    <title>Release 1.8.0 - 2006-05-05</title>
 
     <abstract>
       <para>Release 1.8.0 adds a number of minor improvements and fixes. Most
@@ -2822,7 +2822,7 @@
   </sect1>
 
   <sect1 id="1_6_0">
-    <title>Release 1.6.0 - 12/01/2005</title>
+    <title>Release 1.6.0 - 2005-12-01</title>
 
     <abstract>
       <para>Release 1.6.0 offers improved remote control and monitoring via
@@ -5366,7 +5366,7 @@
   </sect1>
 
   <sect1 id="1_4_0">
-    <title>Release 1.4.0 - 04/28/2005</title>
+    <title>Release 1.4.0 - 2005-04-28</title>
 
     <abstract>
       <para>Much improved memory usage, new scoping/filter model, and a new
@@ -7669,7 +7669,7 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
   </sect1>
 
   <sect1 id="1_2_0">
-    <title>Release 1.2.0 - 11/16/2004</title>
+    <title>Release 1.2.0 - 2004-11-16</title>
 
     <abstract>
       <para>Added IP-based politeness, configurable URI-canonicalization, and
@@ -9376,7 +9376,7 @@ java.net.SocketException: Socket is not connected
   </sect1>
 
   <sect1 id="0_10_0">
-    <title>Release 0.10.0 - 2004-06-046</title>
+    <title>Release 0.10.0 - 2004-06-04</title>
 
     <abstract>
       <para>Release for second heritrix workshop, Copenhagen 06/2004 (1.0.0
