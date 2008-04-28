@@ -43,6 +43,31 @@
         <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Release 1.14.0 available 2008-04-27">
+    <p>The official Heritrix 1.14.0 release is now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.0">
+Release notes, with instructions to download and install</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&package_id=73980&release_id=595427">
+Download from Sourceforge files area</a></p>
+
+<p>Release 1.14.0 adds a number of small features to the Heritrix 1.x 
+line, most notably upgrading support for the WARC archived-web-content 
+format to version 0.17 (ISO Committee Draft). This release also 
+includes 41 bug fixes or other incremental improvements, including 
+several based on community contributions or requests.</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
+
     <subsection name="Release 2.0.0 official 2008-02-20">
     <p>The official Heritrix 2.0.0 release is now available.</p>
 
