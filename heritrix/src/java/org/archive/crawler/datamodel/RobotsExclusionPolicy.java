@@ -249,7 +249,14 @@ public class RobotsExclusionPolicy implements Serializable {
     }
 
 
-
+    /**
+     * Get the crawl-delay that applies to the given user-agent, or
+     * -1 (indicating no crawl-delay known) if not internal RobotsTxt
+     * instance. 
+     * 
+     * @param userAgent
+     * @return int Crawl-Delay value, or -1 if non available
+     */
     public int getCrawlDelay(String userAgent) {
         if (robotstxt==null) {
             return -1;
