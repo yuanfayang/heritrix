@@ -50,12 +50,12 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.RobotsExclusionPolicy;
 import org.archive.crawler.datamodel.CrawlSubstats.Stage;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
-import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.ModuleType;
@@ -110,6 +110,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     // 3 secs.
     protected final static Integer DEFAULT_MIN_DELAY = new Integer(3000);
 
+    /**
+     * Whether to respect a 'Crawl-Delay' (in seconds) given in a site's
+     * robots.txt
+     */
+    public final static String ATTR_RESPECT_CRAWL_DELAY = "respect-crawl-delay";
+
+    // by default, respect any robots.txt-provided Crawl-Delay
+    protected final static Boolean DEFAULT_RESPECT_CRAWL_DELAY = true;
+    
     /** never wait more than this long, regardless of multiple */
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
 
@@ -233,6 +242,10 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         addElementToDefinition(new SimpleType(ATTR_MIN_DELAY,
                 "Always wait this long after one completion before recontacting "
                         + "same server.", DEFAULT_MIN_DELAY));
+        addElementToDefinition(new SimpleType(ATTR_RESPECT_CRAWL_DELAY,
+                "Whether to respect a Crawl-Delay directive in a " +
+                "site's robots.txt. Default is true.", 
+                DEFAULT_RESPECT_CRAWL_DELAY));
         addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
                 "How often to retry fetching a URI that failed to be retrieved. "
                         + "If zero, the crawler will get the robots.txt only.",
@@ -777,6 +790,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
 
             long minDelay = ((Integer)getUncheckedAttribute(curi,
                     ATTR_MIN_DELAY)).longValue();
+            
             if (minDelay > durationToWait) {
                 // wait at least the minimum
                 durationToWait = minDelay;
@@ -789,6 +803,22 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                 durationToWait = maxDelay;
             }
 
+            if(((Boolean)getUncheckedAttribute(curi, ATTR_RESPECT_CRAWL_DELAY))) {
+                CrawlServer s = controller.getServerCache().getServerFor(curi);
+                String ua = curi.getUserAgent();
+                if(ua==null) {
+                    ua = controller.getOrder().getUserAgent(curi);
+                }
+                RobotsExclusionPolicy rep = s.getRobots(); 
+                if (rep!=null) {
+                    long crawlDelay = 1000 * s.getRobots().getCrawlDelay(ua);
+                    if (crawlDelay > durationToWait) {
+                        // wait at least the directive crawl-delay
+                        durationToWait = crawlDelay;
+                    }
+                }
+            }
+            
             long now = System.currentTimeMillis();
             int maxBandwidthKB = ((Integer)getUncheckedAttribute(curi,
                     ATTR_MAX_HOST_BANDWIDTH_USAGE)).intValue();
