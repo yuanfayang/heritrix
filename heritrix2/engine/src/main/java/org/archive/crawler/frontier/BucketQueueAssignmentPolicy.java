@@ -32,6 +32,7 @@ import org.archive.modules.net.ServerCache;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 /**
@@ -49,7 +50,7 @@ implements Initializable {
     private static final int DEFAULT_QUEUES_HOSTS_MODULO = 1021;
 
     @Immutable
-    final private static Key<ServerCache> SERVER_CACHE =
+    final public static Key<ServerCache> SERVER_CACHE =
         Key.makeAuto(ServerCache.class);
     
     private ServerCache serverCache;
@@ -83,5 +84,11 @@ implements Initializable {
 
     public int maximumNumberOfKeys() {
         return DEFAULT_NOIP_BITMASK + DEFAULT_QUEUES_HOSTS_MODULO + 2;
+    }
+    
+    // good to keep at end of source: must run after all per-Key
+    // initialization values are set.
+    static {
+        KeyManager.addKeys(BucketQueueAssignmentPolicy.class);
     }
 }
