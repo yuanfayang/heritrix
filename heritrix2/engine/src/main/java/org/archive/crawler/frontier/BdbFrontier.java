@@ -194,15 +194,6 @@ implements Serializable, Checkpointable {
         }
     }
     
-    @Override
-    protected void initQueue(boolean recycle) throws IOException {
-        try {
-            this.pendingUris = createMultipleWorkQueues(recycle);
-        } catch(DatabaseException e) {
-            throw (IOException)new IOException(e.getMessage()).initCause(e);
-        }
-    }
-    
     protected void closeQueue() {
         if (manager.get(this, DUMP_PENDING_AT_CLOSE)) {
             try {
@@ -266,7 +257,10 @@ implements Serializable, Checkpointable {
                 StoredIterator.close(i);
             }
         }
-
+    }
+    
+    @Override
+    protected void initOtherQueues(boolean recycle) throws DatabaseException {
         // small risk of OutOfMemoryError: if 'hold-queues' is false,
         // readyClassQueues may grow in size without bound
         readyClassQueues = new LinkedBlockingQueue<String>();
@@ -283,6 +277,9 @@ implements Serializable, Checkpointable {
         // unresponsive queues, an unbounded number of snoozed queues 
         // may exist
         snoozedClassQueues = new DelayQueue<DelayedWorkQueue>();
+        
+        // initialize master map in which other queues live
+        this.pendingUris = createMultipleWorkQueues(recycle);
     }
 
 
