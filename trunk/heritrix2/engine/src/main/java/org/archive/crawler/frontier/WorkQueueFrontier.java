@@ -198,7 +198,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         alreadyIncluded.setDestination(this);
         
         try {
-            initAllQueues(false);
+            initInternalQueues(false);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -207,7 +207,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     }
 
     /**
-     * Initializes all queues.  May decide to keep all queues in memory based on
+     * Initializes internal queues.  May decide to keep all queues in memory based on
      * {@link QueueAssignmentPolicy#maximumNumberOfKeys}.  Otherwise invokes
      * {@link #initAllQueues()} to actually set up the queues.
      * 
@@ -218,7 +218,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @throws IOException
      * @throws DatabaseException
      */
-    protected void initAllQueues(boolean recycle) 
+    protected void initInternalQueues(boolean recycle) 
     throws IOException, DatabaseException {
         if (workQueueDataOnDisk()
                 && get(QUEUE_ASSIGNMENT_POLICY).maximumNumberOfKeys() >= 0
@@ -229,11 +229,22 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         } else {
             this.initAllQueues();
         }
-        initQueue(recycle);
-        
+        this.initOtherQueues(recycle);
     }
     
+    /**
+     * Initialize the allQueues field in an implementation-appropriate
+     * way.
+     * @throws DatabaseException
+     */
     protected abstract void initAllQueues() throws DatabaseException;
+    
+    /**
+     * Initialize all other internal queues in an implementation-appropriate
+     * way.
+     * @throws DatabaseException
+     */
+    protected abstract void initOtherQueues(boolean recycle) throws DatabaseException;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
@@ -1421,7 +1432,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         getQueueFor(temp).expend(getCost(temp));
     }
     
-    protected abstract void initQueue(boolean recycle) throws IOException;
     protected abstract void closeQueue() throws IOException;
     
     /**
