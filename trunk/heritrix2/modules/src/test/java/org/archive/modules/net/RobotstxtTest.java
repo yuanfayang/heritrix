@@ -27,43 +27,82 @@ package org.archive.modules.net;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.archive.modules.net.Robotstxt;
 
 import junit.framework.TestCase;
 
 public class RobotstxtTest extends TestCase {
     public void testParseRobots() throws IOException {
-        LinkedList<String> userAgents = new LinkedList<String>();
-        HashMap<String,List<String>> disallows
-         = new HashMap<String,List<String>>();
         BufferedReader reader = new BufferedReader(new StringReader("BLAH"));
-        assertFalse(Robotstxt.parse(reader, userAgents, disallows));
-        assertTrue(disallows.size() == 0);
+        Robotstxt r = new Robotstxt(reader);
+        assertFalse(r.hasErrors);
+        assertTrue(r.getUserAgents().size() == 0);
         // Parse archive robots.txt with heritrix agent.
         String agent = "archive.org_bot";
         reader = new BufferedReader(
             new StringReader("User-agent: " + agent + "\n" +
             "Disallow: /cgi-bin/\n" +
             "Disallow: /details/software\n"));
-        assertFalse(Robotstxt.parse(reader, userAgents, disallows));
-        assertTrue(disallows.size() == 1);
-        assertTrue(userAgents.size() == 1);
-        assertEquals(userAgents.get(0), agent);
+        r = new Robotstxt(reader);
+        assertFalse(r.hasErrors);
+        assertTrue(r.getUserAgents().size() == 1);
+        assertTrue(r.agentsToDirectives.size() == 1);
+        assertEquals(r.getUserAgents().get(0), agent);
         // Parse archive robots.txt with star agent.
         agent = "*";
         reader = new BufferedReader(
             new StringReader("User-agent: " + agent + "\n" +
             "Disallow: /cgi-bin/\n" +
             "Disallow: /details/software\n"));
-        disallows = new HashMap<String,List<String>>();
-        userAgents = new LinkedList<String>();
-        assertFalse(Robotstxt.parse(reader, userAgents, disallows));
-        assertTrue(disallows.size() == 1);
-        assertTrue(userAgents.size() == 1);
-        assertEquals(userAgents.get(0), "");
+        r = new Robotstxt(reader);
+        assertFalse(r.hasErrors);
+        assertTrue(r.getUserAgents().size() == 1);
+        assertTrue(r.agentsToDirectives.size() == 1);
+        assertEquals(r.getUserAgents().get(0), "");
+    }
+    
+    Robotstxt sampleRobots1() throws IOException {
+        BufferedReader reader = new BufferedReader(
+            new StringReader(
+                "User-agent: *\n" +
+                "Disallow: /cgi-bin/\n" +
+                "Disallow: /details/software\n" +
+                "\n"+
+                "User-agent: denybot\n" +
+                "Disallow: /\n" +
+                "\n"+
+                "User-agent: allowbot1\n" +
+                "Disallow: \n" +
+                "\n"+
+                "User-agent: allowbot2\n" +
+                "Disallow: /foo\n" +
+                "Allow: /\n"+
+                "\n"+
+                "User-agent: delaybot\n" +
+                "Disallow: /\n" +
+                "Crawl-Delay: 20\n"+
+                "Allow: /images/\n"
+            ));
+        return new Robotstxt(reader); 
+    }
+    
+    public void testDirectives() throws IOException {
+        Robotstxt r = sampleRobots1();
+        // bot allowed with empty disallows
+        assertTrue(r.getDirectivesFor("Mozilla allowbot1 99.9").allows("/path"));
+        assertTrue(r.getDirectivesFor("Mozilla allowbot1 99.9").allows("/"));
+        // bot allowed with explicit allow
+        assertTrue(r.getDirectivesFor("Mozilla allowbot2 99.9").allows("/path"));
+        assertTrue(r.getDirectivesFor("Mozilla allowbot2 99.9").allows("/"));
+        assertTrue(r.getDirectivesFor("Mozilla allowbot2 99.9").allows("/foo"));
+        // bot denied with blanket deny
+        assertFalse(r.getDirectivesFor("Mozilla denybot 99.9").allows("/path"));
+        assertFalse(r.getDirectivesFor("Mozilla denybot 99.9").allows("/"));
+        // unnamed bot with mixed catchall allow/deny
+        assertTrue(r.getDirectivesFor("Mozilla anonbot 99.9").allows("/path"));
+        assertFalse(r.getDirectivesFor("Mozilla anonbot 99.9").allows("/cgi-bin/foo.pl"));
+        // no crawl-delay
+        assertEquals(r.getDirectivesFor("Mozilla denybot 99.9").getCrawlDelay(),-1);
+        // with crawl-delay 
+        assertEquals(r.getDirectivesFor("Mozilla delaybot 99.9").getCrawlDelay(),20);
     }
 }

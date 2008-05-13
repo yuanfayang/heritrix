@@ -74,9 +74,11 @@ import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.canonicalize.CanonicalizationRule;
 import org.archive.modules.canonicalize.Canonicalizer;
 import org.archive.modules.deciderules.DecideRule;
+import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
+import org.archive.modules.net.RobotsExclusionPolicy;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.modules.seeds.SeedModuleImpl;
@@ -138,6 +140,11 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      */
     final public static Key<Integer> MIN_DELAY_MS = Key.make(3000);
     
+    /**
+     * Whether to respect a 'Crawl-Delay' (in seconds) given in a site's
+     * robots.txt
+     */
+    final public static Key<Boolean> RESPECT_CRAWL_DELAY = Key.make(true);
 
     /** never wait more than this long, regardless of multiple */
     final public static Key<Integer> MAX_DELAY_MS = Key.make(30000);
@@ -287,6 +294,16 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
         Key.make(QueueAssignmentPolicy.class, 
                 SurtAuthorityQueueAssignmentPolicy.class);
+    
+    
+    /**
+     * Auto-discovered module providing configured (or overridden)
+     * User-Agent value; now necessary in frontier because User-Agent
+     * may affect politeness delays via robots.txt Crawl-Delay. 
+     */
+    final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
+        Key.makeAuto(UserAgentProvider.class);
+
     
     /**
      * @param name Name of this frontier.
@@ -1001,7 +1018,25 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                 // wait no more than the maximum
                 durationToWait = maxDelay;
             }
-
+            
+            if (curi.get(this,RESPECT_CRAWL_DELAY)) {
+                CrawlServer s = ServerCacheUtil.getServerFor(
+                        getServerCache(),curi.getUURI());
+                UserAgentProvider uap = curi.get(this, USER_AGENT_PROVIDER);
+                String ua = curi.getUserAgent();
+                if (ua == null) {
+                    ua = uap.getUserAgent(curi);
+                }
+                RobotsExclusionPolicy rep = s.getRobots();
+                if (rep != null) {
+                    long crawlDelay = 1000 * s.getRobots().getCrawlDelay(ua);
+                    if (crawlDelay > durationToWait) {
+                        // wait at least the directive crawl-delay
+                        durationToWait = crawlDelay;
+                    }
+                }
+            }
+            
             long now = System.currentTimeMillis();
             int maxBandwidthKB = curi.get(this, MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
             if (maxBandwidthKB > 0) {
@@ -1022,54 +1057,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             }
         }
         return durationToWait;
-    }
-
-    /**
-     * Ensure that any overall-bandwidth-usage limit is respected, by pausing as
-     * long as necessary.
-     * 
-     * @param now
-     * @throws InterruptedException
-     */
-    private void enforceBandwidthThrottle(long now) throws InterruptedException {
-        int maxBandwidthKB = get(TOTAL_BANDWIDTH_USAGE_KB_SEC);
-        if (maxBandwidthKB > 0) {
-            // Make sure that new bandwidth setting doesn't affect total crawl
-            if (maxBandwidthKB != lastMaxBandwidthKB) {
-                lastMaxBandwidthKB = maxBandwidthKB;
-                processedBytesAfterLastEmittedURI = totalProcessedBytes;
-            }
-
-            // Enforce bandwidth limit
-            long sleepTime = nextURIEmitTime - now;
-            float maxBandwidth = maxBandwidthKB * 1.024F; // Kilo_factor
-            long processedBytes = totalProcessedBytes
-                    - processedBytesAfterLastEmittedURI;
-            long shouldHaveEmittedDiff = nextURIEmitTime == 0? 0
-                    : nextURIEmitTime - now;
-            nextURIEmitTime = (long)(processedBytes / maxBandwidth) + now
-                    + shouldHaveEmittedDiff;
-            processedBytesAfterLastEmittedURI = totalProcessedBytes;
-            if (sleepTime > 0) {
-                long targetTime = now + sleepTime;
-                now = System.currentTimeMillis();
-                while (now < targetTime) {
-                    synchronized (this) {
-                        if (logger.isLoggable(Level.FINE)) {
-                            logger.fine("Frontier waits for: " + sleepTime
-                                    + "ms to respect bandwidth limit.");
-                        }
-                        // TODO: now that this is a wait(), frontier can
-                        // still schedule and finish items while waiting,
-                        // which is good, but multiple threads could all
-                        // wait for the same wakeTime, which somewhat
-                        // spoils the throttle... should be fixed.
-                        wait(targetTime - now);
-                    }
-                    now = System.currentTimeMillis();
-                }
-            }
-        }
     }
 
     /**

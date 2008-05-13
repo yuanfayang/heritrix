@@ -29,9 +29,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,6 +50,10 @@ import org.archive.state.StateProvider;
  * The expiration of policies after a suitable amount of time has
  * elapsed since last fetch is handled outside this class, in 
  * CrawlServer itself. 
+ * 
+ * TODO: refactor RobotsHonoringPolicy to be a class-per-policy, and 
+ * then see if a CrawlServer with a HonoringPolicy and a RobotsTxt
+ * makes this mediating class unnecessary. 
  * 
  * @author gojomo
  *
@@ -77,8 +79,10 @@ public class RobotsExclusionPolicy implements Serializable {
     final public static RobotsExclusionPolicy DENYALL =
         new RobotsExclusionPolicy(Type.DENYALL);
 
-    private LinkedList<String> userAgents = null;
-    private HashMap<String,List<String>> disallows = null;
+    private Robotstxt robotstxt = null;
+    // FIXME?: this 'transient' seems wrong -- likely to cause
+    // all non-normal policies to break when CrawlServer
+    // go through a serialization/deserialization cycle
     RobotsHonoringPolicy honoringPolicy = null; // was transient
 
     private String lastUsedUserAgent = null;
@@ -94,14 +98,10 @@ public class RobotsExclusionPolicy implements Serializable {
     public static RobotsExclusionPolicy policyFor(StateProvider settings,
             BufferedReader reader, RobotsHonoringPolicy honoringPolicy)
     throws IOException {
-        LinkedList<String> userAgents = new LinkedList<String>();
-        HashMap<String,List<String>> disallows
-         = new HashMap<String,List<String>>();
-        Robotstxt.parse(reader, userAgents, disallows);
-        return (disallows.isEmpty())?
+        Robotstxt robots = new Robotstxt(reader);
+        return (robots.allowsAll())?
             ALLOWALL:
-            new RobotsExclusionPolicy(settings, userAgents, disallows,
-                honoringPolicy);
+            new RobotsExclusionPolicy(settings, robots, honoringPolicy);
     }
 
 
@@ -111,27 +111,28 @@ public class RobotsExclusionPolicy implements Serializable {
      * @param d
      * @param honoringPolicy
      */
-    public RobotsExclusionPolicy(StateProvider context, LinkedList<String> u,
-            HashMap<String,List<String>> d, 
+    public RobotsExclusionPolicy(StateProvider context, 
+            Robotstxt robotstxt, 
             RobotsHonoringPolicy honoringPolicy) {
-        userAgents = u;
-        disallows = d;
+        this.robotstxt = robotstxt;
         this.honoringPolicy = honoringPolicy;
 
-        if(honoringPolicy == null) {
-            return;
-        }
+        if(honoringPolicy == null) return;
 
         // If honoring policy is most favored user agent, all rules should be checked
         if(honoringPolicy.isType(context, RobotsHonoringPolicy.Type.MOST_FAVORED)) {
-            userAgentsToTest = userAgents;
+            userAgentsToTest = robotstxt.getUserAgents();
 
         // IF honoring policy is most favored of set, then make a list with only the set as members
         } else if(honoringPolicy.isType(context, RobotsHonoringPolicy.Type.MOST_FAVORED_SET)) {
             userAgentsToTest = new ArrayList<String>();
-            List<String> userAgentSet = honoringPolicy.getUserAgents(context);
-            for (String userAgent: userAgentSet) {
-                for (String ua: userAgents) {
+            Iterator userAgentSet = honoringPolicy.getUserAgents(context).iterator();
+            while(userAgentSet.hasNext()) {
+                String userAgent = (String) userAgentSet.next();
+
+                Iterator iter = robotstxt.getUserAgents().iterator();
+                while ( iter.hasNext() ) {
+                    String ua = (String)iter.next();
                     if (userAgent.indexOf(ua)>-1) {
                         userAgentsToTest.add(ua);
                         break;
@@ -142,7 +143,7 @@ public class RobotsExclusionPolicy implements Serializable {
     }
 
     public RobotsExclusionPolicy(Type type) {
-        this(null, null, null, null);
+        this(null, null, null);
         this.type = type;
     }
 
@@ -161,7 +162,7 @@ public class RobotsExclusionPolicy implements Serializable {
 
             lastUsedUserAgent = userAgent;
             userAgentsToTest = new ArrayList<String>();
-            Iterator iter = userAgents.iterator();
+            Iterator iter = robotstxt.getUserAgents().iterator();
             String lowerCaseUserAgent = userAgent.toLowerCase();
             while ( iter.hasNext() ) {
                 String ua = (String)iter.next();
@@ -174,39 +175,28 @@ public class RobotsExclusionPolicy implements Serializable {
         }
 
         boolean disallow = false;
-        boolean examined = false;
         String ua = null;
 
         // Go thru list of all user agents we might act as
         Iterator uas = userAgentsToTest.iterator();
-        while(uas.hasNext() && examined == false) {
-            disallow = false;
+        while(uas.hasNext()) {
             ua = (String) uas.next();
-            Iterator dis = ((List) disallows.get(ua)).iterator();
-
-            // Check if the current user agent is allowed to crawl
-            while(dis.hasNext() && examined == false && disallow == false) {
-                String disallowedPath = (String) dis.next();
-                if(disallowedPath.length() == 0) {
-                    // blanket allow
-                    examined = true;
-                    disallow = false;
-                    break;
-                }
-                try {
-                    String p = curi.getUURI().getPathQuery();
-                    if (p != null && p.startsWith(disallowedPath) ) {
-                        // the user agent tested isn't allowed to get this uri
-                        disallow = true;
-                    }
-                }
-                catch (URIException e) {
-                    logger.log(Level.SEVERE,"Failed getPathQuery from " + curi, e);
-                }
+            String path = null; 
+            try {
+                 path = curi.getUURI().getPathQuery();
+            } catch (URIException e) {
+                logger.log(Level.SEVERE,"Failed getPathQuery from " + curi, e);
+                disallow = false;
+                break;
             }
-            if(disallow == false) {
-                // the user agent tested is allowed
-                examined = true;
+            if(robotstxt.getDirectivesFor(ua).allows(path)) {
+                // at least one applicable set of rules allows
+                disallow = false;
+                break; 
+            } else {
+                // at least one applicable set of rules disallows
+                // so disallow unless later test allows
+                disallow = true; 
             }
         }
 
@@ -264,4 +254,18 @@ public class RobotsExclusionPolicy implements Serializable {
         return null;
     }
 
+    /**
+     * Get the crawl-delay that applies to the given user-agent, or
+     * -1 (indicating no crawl-delay known) if not internal RobotsTxt
+     * instance. 
+     * 
+     * @param userAgent
+     * @return int Crawl-Delay value, or -1 if non available
+     */
+    public int getCrawlDelay(String userAgent) {
+        if (robotstxt==null) {
+            return -1;
+        }
+        return robotstxt.getDirectivesFor(userAgent).getCrawlDelay();
+    }
 }
