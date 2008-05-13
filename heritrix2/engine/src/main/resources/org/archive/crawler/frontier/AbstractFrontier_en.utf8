@@ -25,6 +25,10 @@ force-queue-assignment-description:
 queue assignment to force onto CrawlURIs; intended to be overridden 
 
 
+respect-crawl-delay-description:
+Whether to respect a 'Crawl-Delay' (in seconds) given in a site's
+robots.txt; default is true
+
 max-delay-ms-description:
 never wait more than this long, regardless of multiple 
 
@@ -100,3 +104,6 @@ processors for consistency.
 
 server-cache-description:
 The server cache to use for the frontier. 
+
+user-agent-provider-description:
+The UserAgentProvider to use for the frontier. 

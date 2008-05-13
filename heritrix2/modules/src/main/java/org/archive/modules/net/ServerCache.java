@@ -26,6 +26,13 @@ package org.archive.modules.net;
 
 import org.apache.commons.collections.Closure;
 
+/**
+ * Interface for crawl-global registry of CrawlServer (host:port) 
+ * and CrawlHost (hostname) objects.
+ * 
+ * TODO?: Turn this into an abstract superclass which subsumes the 
+ * utility methods of ServerCacheUtil.
+ */
 public interface ServerCache {
 
     CrawlHost getHostFor(String host);

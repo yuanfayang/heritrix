@@ -26,24 +26,36 @@ package org.archive.modules.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Utility class for parsing 'robots.txt' format directives, into a list
- * of named user-agents and map from user-agents to disallowed paths. 
+ * Utility class for parsing and representing 'robots.txt' format 
+ * directives, into a list of named user-agents and map from user-agents 
+ * to RobotsDirectives. 
  */
-public class Robotstxt {
-    public static boolean parse(BufferedReader reader,
-            final LinkedList<String> userAgents, 
-            final Map<String,List<String>> disallows)
-    throws IOException {
-        boolean hasErrors = false;
+public class Robotstxt implements Serializable {
+    static final long serialVersionUID = 7025386509301303890L;
+    
+    // all user agents contained in this robots.txt
+    // may be thinned of irrelevant entries
+    LinkedList<String> userAgents = new LinkedList<String>();
+    // map user-agents to directives
+    Map<String,RobotsDirectives> agentsToDirectives = 
+        new HashMap<String,RobotsDirectives>();
+    // 
+    boolean hasErrors = false;
+    
+    static RobotsDirectives NO_DIRECTIVES = new RobotsDirectives();
+    
+    public Robotstxt(BufferedReader reader) throws IOException {
         String read;
         // current is the disallowed paths for the preceding User-Agent(s)
-        ArrayList<String> current = null;
+        RobotsDirectives current = null;
         // whether a non-'User-Agent' directive has been encountered
         boolean hasDirectivesYet = false; 
         String catchall = null;
@@ -68,7 +80,7 @@ public class Robotstxt {
                     if (current == null || hasDirectivesYet ) {
                         // only create new rules-list if necessary
                         // otherwise share with previous user-agent
-                        current = new ArrayList<String>();
+                        current = new RobotsDirectives();
                         hasDirectivesYet = false; 
                     }
                     if (ua.equals("*")) {
@@ -77,7 +89,7 @@ public class Robotstxt {
                     } else {
                         userAgents.addLast(ua);
                     }
-                    disallows.put(ua, current);
+                    agentsToDirectives.put(ua, current);
                     continue;
                 }
                 if (read.matches("(?i)Disallow:.*")) {
@@ -87,7 +99,7 @@ public class Robotstxt {
                         continue;
                     }
                     String path = read.substring(9).trim();
-                    current.add(path);
+                    current.addDisallow(path);
                     hasDirectivesYet = true; 
                     continue;
                 }
@@ -101,7 +113,8 @@ public class Robotstxt {
                     // yet understand it, as sufficient to end a 
                     // grouping of User-Agent lines
                     hasDirectivesYet = true;
-                    // TODO: understand/save/respect 'Crawl-Delay' 
+                    current.setCrawlDelay(
+                            Integer.parseInt(read.substring(12).trim()));
                     continue;
                 }
                 if (read.matches("(?i)Allow:.*")) {
@@ -110,11 +123,9 @@ public class Robotstxt {
                         hasErrors = true;
                         continue;
                     }
-                    // consider an Allow, even though we don't 
-                    // yet understand it, as sufficient to end a 
-                    // grouping of User-Agent lines
+                    String path = read.substring(6).trim();
+                    current.addAllow(path);
                     hasDirectivesYet = true;
-                    // TODO: understand/save/respect 'Allow' 
                     continue;
                 }
                 // unknown line; do nothing for now
@@ -124,13 +135,32 @@ public class Robotstxt {
         if (catchall != null) {
             userAgents.addLast(catchall);
         }
-        return hasErrors;
     }
 
+
     /**
-     * @param args Command-line arguments.
+     * Does this policy effectively allow everything? (No 
+     * disallows or timing (crawl-delay) directives?)
+     * @return
      */
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
+    public boolean allowsAll() {
+        // TODO: refine so directives that are all empty are also 
+        // recognized as allowing all
+        return agentsToDirectives.isEmpty();
+    }
+    
+    public List<String> getUserAgents() {
+        return userAgents;
+    }
+
+    public RobotsDirectives getDirectivesFor(String ua) {
+        // find matching ua
+        for(String uaListed : userAgents) {
+            if(ua.indexOf(uaListed)>-1) {
+                return agentsToDirectives.get(uaListed);
+            }
+        }
+        // no applicable user-agents, so empty directives
+        return NO_DIRECTIVES; 
     }
 }

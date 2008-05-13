@@ -36,12 +36,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.util.Iterator;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURI;
-import org.archive.net.UURIFactory;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 
@@ -53,50 +49,12 @@ import org.archive.util.iterator.RegexpLineIterator;
  * 
  * @author gojomo
  */
-public class SurtPrefixSet extends TreeSet<String> {
+public class SurtPrefixSet extends PrefixSet {
 
     private static final long serialVersionUID = 2598365040524933110L;
 
     private static final String SURT_PREFIX_DIRECTIVE = "+";
 
-    /**
-     * Test whether the given String is prefixed by one
-     * of this set's entries. 
-     * 
-     * @param s
-     * @return True if contains prefix.
-     */
-    public boolean containsPrefixOf(String s) {
-        SortedSet sub = headSet(s);
-        // because redundant prefixes have been eliminated,
-        // only a test against last item in headSet is necessary
-        if (!sub.isEmpty() && s.startsWith((String)sub.last())) {
-            return true; // prefix substring exists
-        } // else: might still exist exactly (headSet does not contain boundary)
-        return contains(s); // exact string exists, or no prefix is there
-    }
-    
-    /** 
-     * Maintains additional invariant: if one entry is a 
-     * prefix of another, keep only the prefix. 
-     * 
-     * @see java.util.Collection#add(java.lang.Object)
-     */
-    public boolean add(String s) {
-        SortedSet sub = headSet(s);
-        if (!sub.isEmpty() && s.startsWith((String)sub.last())) {
-            // no need to add; prefix is already present
-            return false;
-        }
-        boolean retVal = super.add(s);
-        sub = tailSet(s+"\0");
-        while(!sub.isEmpty() && ((String)sub.first()).startsWith(s)) {
-            // remove redundant entries
-            sub.remove(sub.first());
-        }
-        return retVal;
-    }
-    
     
     /**
      * Read a set of SURT prefixes from a reader source; keep sorted and 
