@@ -24,6 +24,8 @@
 */ 
 package org.archive.crawler.frontier;
 
+import java.util.logging.Logger;
+
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
@@ -39,6 +41,9 @@ import junit.framework.TestCase;
  * @author gojomo
  */
 public class BdbMultipleWorkQueuesTest extends TestCase {
+    private static Logger logger =
+        Logger.getLogger(BdbMultipleWorkQueuesTest.class.getName());
+
     
     /**
      * Basic sanity checks for calculateInsertKey() -- ensure ordinal, cost,
@@ -48,6 +53,10 @@ public class BdbMultipleWorkQueuesTest extends TestCase {
      * @throws URIException
      */
     public void testCalculateInsertKey() throws URIException {
+        while(Thread.interrupted()) {
+            logger.warning("stray interrupt cleared");
+        }
+
         for (long ordinalOrigin = 1; ordinalOrigin < Long.MAX_VALUE / 4; ordinalOrigin <<= 1) {
             CrawlURI cauri1 = 
                 new CrawlURI(UURIFactory.getInstance("http://archive.org/foo"));
