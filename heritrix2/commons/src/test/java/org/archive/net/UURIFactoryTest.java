@@ -679,7 +679,7 @@ public class UURIFactoryTest extends TestCase {
         UURI uuri = UURIFactory.getInstance(base, relative);
         assertEquals("Derelativized " + relative + " gave " 
               + uuri + " not " + expected,
-	                uuri,UURIFactory.getInstance(expected));
+	                UURIFactory.getInstance(expected),uuri);
     }
 	
 	/**
