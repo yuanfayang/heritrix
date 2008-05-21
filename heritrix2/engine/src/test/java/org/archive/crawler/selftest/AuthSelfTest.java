@@ -67,7 +67,7 @@ public class AuthSelfTest
     @Override
     protected void verify() throws Exception {
         Set<String> found = this.filesInArcs();
-        assertTrue(EXPECTED.equals(found));
+        assertEquals("wrong files in ARCs",EXPECTED,found);
     }
 
 
@@ -129,7 +129,7 @@ public class AuthSelfTest
             "root:credential-store:credentials:test" +
             "=object, org.archive.modules.credential.Rfc2617Credential\n" +
             "root:credential-store:credentials:test:" +
-            "credential-domain=string, localhost:7777\n" +
+            "credential-domain=string, 127.0.0.1:7777\n" +
             "root:credential-store:credentials:test:realm" +
             "=string, Hyrule\n" +
             "root:credential-store:credentials:test:login" +
@@ -139,9 +139,9 @@ public class AuthSelfTest
             "root:credential-store:credentials:test2" +
             "=object, org.archive.modules.credential.HtmlFormCredential\n" +
             "root:credential-store:credentials:test2:credential-domain" +
-            "=string, localhost:7777\n" +
+            "=string, 127.0.0.1:7777\n" +
             "root:credential-store:credentials:test2:login-uri" +
-            "=string, http://localhost:7777/login/login.html\n" +
+            "=string, http://127.0.0.1:7777/login/login.html\n" +
             "root:credential-store:credentials:test2:form-items" +
             "=map, java.lang.String\n" +
             "root:credential-store:credentials:test2:form-items" +

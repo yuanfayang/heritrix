@@ -104,9 +104,9 @@ public class Precedence3SelfTest extends SelfTestBase {
         
         System.out.println(crawled);
       
-        assertEquals("dns:localhost", crawled.get(0));
-        assertEquals("http://localhost:7777/robots.txt", crawled.get(1));
-        assertEquals("http://localhost:7777/H.html", crawled.get(2));
+//        assertEquals("dns:localhost", crawled.get(0));
+        assertEquals("http://127.0.0.1:7777/robots.txt", crawled.get(0));
+        assertEquals("http://127.0.0.1:7777/H.html", crawled.get(1));
 
         // D contains the keyword and L does not.
         // D's children (B and F) should be crawled before L's (J and N).
@@ -145,7 +145,7 @@ public class Precedence3SelfTest extends SelfTestBase {
     }
     
     private String toFullURI(char ch) {
-        return "http://localhost:7777/" + ch + ".html";
+        return "http://127.0.0.1:7777/" + ch + ".html";
     }
 
     @Override
