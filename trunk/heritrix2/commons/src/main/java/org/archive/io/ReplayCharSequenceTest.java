@@ -192,6 +192,8 @@ public class ReplayCharSequenceTest extends TmpDirTestCase
             String result = rcs.toString();
             assertEquals("Strings don't match", result, expectedResult);
             rcs.close();
+            System.gc();
+            System.runFinalization();
         }
     }
     
