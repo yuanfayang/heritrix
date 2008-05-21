@@ -43,17 +43,17 @@ public class Precedence4SelfTest extends Precedence1SelfTest {
             IoUtils.close(br);
         }
         
-        assertEquals("dns:localhost", crawled.get(0));
-        assertEquals("http://localhost:7777/robots.txt", crawled.get(1));
-        assertEquals("http://localhost:7777/five/a.html", crawled.get(2));
-        assertEquals("http://localhost:7777/five/b.html", crawled.get(crawled.size() - 1));
+        //assertEquals("dns:localhost", crawled.get(0));
+        assertEquals("http://127.0.0.1:7777/robots.txt", crawled.get(0));
+        assertEquals("http://127.0.0.1:7777/five/a.html", crawled.get(1));
+        assertEquals("http://127.0.0.1:7777/five/b.html", crawled.get(crawled.size() - 1));
     }
     
     
     @Override
     protected void configure(JMXSheetManager sm) {
-        sm.associate("HiPri", "http://(localhost,:7777)/five/a.html");
-        sm.associate("LoPri", "http://(localhost,:7777)/five/b.html");        
+        sm.associate("HiPri", "http://(127.0.0.1:7777)/five/a.html");
+        sm.associate("LoPri", "http://(127.0.0.1:7777)/five/b.html");        
     }
 
 

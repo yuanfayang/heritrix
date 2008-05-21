@@ -118,18 +118,17 @@ public class Precedence1SelfTest extends SelfTestBase {
      * Expected results of the crawl.
      */
     final private static String EXPECTED =
-        "dns:localhost\n" + 
-        "http://localhost:7777/robots.txt\n" + 
-        "http://localhost:7777/seed.html\n" + 
-        "http://localhost:7777/one/a.html\n" + 
-        "http://localhost:7777/one/b.html\n" + 
-        "http://localhost:7777/one/c.html\n" + 
-        "http://localhost:7777/five/a.html\n" + 
-        "http://localhost:7777/five/b.html\n" + 
-        "http://localhost:7777/five/c.html\n" + 
-        "http://localhost:7777/ten/a.html\n" + 
-        "http://localhost:7777/ten/b.html\n" +
-        "http://localhost:7777/ten/c.html\n";
+        "http://127.0.0.1:7777/robots.txt\n" + 
+        "http://127.0.0.1:7777/seed.html\n" + 
+        "http://127.0.0.1:7777/one/a.html\n" + 
+        "http://127.0.0.1:7777/one/b.html\n" + 
+        "http://127.0.0.1:7777/one/c.html\n" + 
+        "http://127.0.0.1:7777/five/a.html\n" + 
+        "http://127.0.0.1:7777/five/b.html\n" + 
+        "http://127.0.0.1:7777/five/c.html\n" + 
+        "http://127.0.0.1:7777/ten/a.html\n" + 
+        "http://127.0.0.1:7777/ten/b.html\n" +
+        "http://127.0.0.1:7777/ten/c.html\n";
     
     
     @Override
@@ -176,8 +175,8 @@ public class Precedence1SelfTest extends SelfTestBase {
     
 
     protected void configure(JMXSheetManager sm) {
-        sm.associate("HiPri", "http://(localhost,:7777)/one");
-        sm.associate("LoPri", "http://(localhost,:7777)/ten");        
+        sm.associate("HiPri", "http://(127.0.0.1:7777)/one");
+        sm.associate("LoPri", "http://(127.0.0.1:7777)/ten");        
     }
     
 

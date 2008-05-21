@@ -48,7 +48,7 @@ import org.mortbay.jetty.servlet.ServletHolder;
  */
 public class CheckpointSelfTest extends SelfTestBase {
 
-    final private static String HOST = "localhost";
+    final private static String HOST = "127.0.0.1";
     
     final private static int MIN_PORT = 7000;
     
