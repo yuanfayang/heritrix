@@ -290,7 +290,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
             // If https and no port specified, add default https port to
             // distinuish https from http server without a port.
             if (!key.matches(".+:[0-9]+")) {
-                key += ":" + UURIFactory.HTTPS_PORT;
+                key += UURIFactory.HTTPS_PORT;
             }
         }
         return key;

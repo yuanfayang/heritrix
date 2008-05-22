@@ -233,8 +233,6 @@ public abstract class Credential implements Module, Serializable {
             ProcessorURI curi) {
         String cd = getCredentialDomain(curi);
 
-        // TODO: Account for port.  Currently we do not distingush between
-        // http and https; they both get same crawl server instance.
         CrawlServer serv = ServerCacheUtil.getServerFor(cache, curi.getUURI());
         String serverName = serv.getName();
 //        String serverName = controller.getServerCache().getServerFor(curi).
