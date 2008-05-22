@@ -251,8 +251,6 @@ public abstract class Credential extends ModuleType {
                 e.getMessage());
         }
 
-        // TODO: Account for port.  Currently we do not distingush between
-        // http and https; they both get same crawl server instance.
         String serverName = controller.getServerCache().getServerFor(curi).
             getName();
         logger.fine("RootURI: Comparing " + serverName + " " + cd);
