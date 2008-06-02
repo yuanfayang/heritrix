@@ -3,7 +3,7 @@
   <meta>
 	  <name>$name</name>
 	  <description><![CDATA[$description]]></description>
-	  <operator>Archive-It</operator>
+	  <operator>$operator</operator>
 	  <organization><![CDATA[$organization]]></organization>
 	  <audience/>
 	  <date>$date</date>
