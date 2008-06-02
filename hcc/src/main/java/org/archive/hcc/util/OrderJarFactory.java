@@ -45,8 +45,9 @@ import java.util.logging.Logger;
 public class OrderJarFactory {
     private static Logger log =
         Logger.getLogger(OrderJarFactory.class.getName());
-    
     public static final String NAME_KEY = "name";
+    public static final String OPERATOR_KEY = "operator";
+    
     public static final String DURATION_KEY = "duration";
     public static final String TEST_CRAWL_KEY = "isTest";
     public static final String ONE_HOP_OFF_KEY = "oneHopOff";
@@ -86,6 +87,8 @@ public class OrderJarFactory {
                     .format(new Date());
 
             order = order.replace("$name", parameters.get(NAME_KEY).toString());
+            order = order.replace("$operator", parameters.get(OPERATOR_KEY).toString());
+
             order = order.replace("$arcPrefix", parameters
                     .get(NAME_KEY)
                     .toString());

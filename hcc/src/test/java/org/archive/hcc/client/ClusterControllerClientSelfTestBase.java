@@ -35,6 +35,7 @@ public class ClusterControllerClientSelfTestBase
     public File getTestJar() {
         Map map = new HashMap();
         map.put(OrderJarFactory.NAME_KEY, "test");
+        map.put(OrderJarFactory.OPERATOR_KEY, "test operator");
         map.put(OrderJarFactory.DESCRIPTION, "This is a <b>TEST</b> description.");
         map.put(OrderJarFactory.ORGANIZATION, "The Test Organization");
 
