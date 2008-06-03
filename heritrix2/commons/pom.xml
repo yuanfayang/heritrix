@@ -17,6 +17,23 @@
   </description>
 
     <repositories>
+     <repository>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>warn</checksumPolicy>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+        <checksumPolicy>fail</checksumPolicy>
+      </snapshots>
+      <id>oracleReleases</id>
+      <name>Oracle Released Java Packages</name>
+      <url>http://download.oracle.com/maven</url>
+      <layout>default</layout>
+    </repository>
+    
     <repository>
       <releases>
         <enabled>true</enabled>
@@ -33,6 +50,8 @@
       <url>http://builds.archive.org:8080/maven2</url>
       <layout>default</layout>
     </repository>
+    
+
   </repositories>
   
   <dependencies>
@@ -85,9 +104,9 @@
   
         <!-- These are normal dependencies. -->  
         <dependency>
-              <groupId>berkeleydb</groupId>
+              <groupId>com.sleepycat</groupId>
               <artifactId>je</artifactId>
-              <version>3.2.44</version>
+              <version>3.2.76</version>
         </dependency> 
         <dependency>
              <groupId>commons-lang</groupId>
