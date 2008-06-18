@@ -23,6 +23,12 @@
  */
 package org.archive.crawler.prefetch;
 
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DOMAIN_PREREQUISITE_FAILURE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_ROBOTS_PRECLUDED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_ROBOTS_PREREQUISITE_FAILURE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_UNFETCHABLE_URI;
+
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,7 +45,6 @@ import org.archive.modules.credential.CredentialStore;
 import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
@@ -47,12 +52,9 @@ import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Expert;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -70,65 +72,91 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         Logger.getLogger(PreconditionEnforcer.class.getName());
 
 
-    @Immutable
-    final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
-        Key.makeAuto(UserAgentProvider.class);
-
+    public UserAgentProvider getUserAgentProvider() {
+        return (UserAgentProvider) kp.get("userAgentProvider");
+    }
+    @Autowired
+    public void setUserAgentProvider(UserAgentProvider provider) {
+        kp.put("userAgentProvider",provider);
+    }
+    
     /**
-     * The minimum interval for which a dns-record will be considered valid (in
-     * seconds). If the record's DNS TTL is larger, that will be used instead.
+     * The minimum interval for which a dns-record will be considered 
+     * valid (in seconds). If the record's DNS TTL is larger, that will 
+     * be used instead.
      */
-    @Expert
-    final public static Key<Integer> IP_VALIDITY_DURATION_SECONDS =
-        Key.make(60*60*6);
-
+    {
+        setIpValidityDurationSeconds(6*60*60); // 6 hours
+    }
+    public int getIpValidityDurationSeconds() {
+        return (Integer) kp.get("ipValidityDurationSeconds");
+    }
+    public void setIpValidityDurationSeconds(int duration) {
+        kp.put("ipValidityDurationSeconds",duration);
+    }
 
     /**
      * The time in seconds that fetched robots.txt information is considered to
      * be valid. If the value is set to '0', then the robots.txt information
      * will never expire.
      */
-    @Expert
-    final public static Key<Integer> ROBOTS_VALIDITY_DURATION_SECONDS =
-        Key.make(60*60*24);
-
+    {
+        setRobotsValidityDurationSeconds(24*60*60); // 24 hours
+    }
+    public int getRobotsValidityDurationSeconds() {
+        return (Integer) kp.get("robotsValidityDurationSeconds");
+    }
+    public void setRobotsValidityDurationSeconds(int duration) {
+        kp.put("robotsValidityDurationSeconds",duration);
+    }
 
     /**
      * Whether to only calculate the robots status of an URI, without actually
      * applying any exclusions found. If true, exlcuded URIs will only be
      * annotated in the crawl.log, but still fetched. Default is false.
      */
-    @Expert
-    final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.make(false);
+    {
+        setCalculateRobotsOnly(false);
+    }
+    public boolean getCalculateRobotsOnly() {
+        return (Boolean) kp.get("calculateRobotsOnly");
+    }
+    public void setCalculateRobotsOnly(boolean recheck) {
+        kp.put("calculateRobotsOnly",recheck);
+    }   
     
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
     
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
+    public CredentialStore getCredentialStore() {
+        return (CredentialStore) kp.get("credentialStore");
+    }
+    @Autowired
+    public void setCredentialStore(CredentialStore credentials) {
+        kp.put("credentialStore",credentials);
+    }
     
-    
-    @Immutable
-    final public static Key<CredentialStore> CREDENTIAL_STORE =
-        Key.makeAuto(CredentialStore.class);
-    
-    
-    @Immutable
-    final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
-        Key.makeAuto(CrawlerLoggerModule.class);
-    
-    private ServerCache serverCache;
-    private CredentialStore credentialStore;
-    private CrawlerLoggerModule loggerModule;
+    protected CrawlerLoggerModule loggerModule;
+    public CrawlerLoggerModule getLoggerModule() {
+        return this.loggerModule;
+    }
+    @Autowired
+    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+        this.loggerModule = loggerModule;
+    }
     
     public PreconditionEnforcer() {
         super();
     }
     
-    
     public void initialTasks(StateProvider global) {
-        this.serverCache = global.get(this, SERVER_CACHE);
-        this.credentialStore = global.get(this, CREDENTIAL_STORE);
-        this.loggerModule = global.get(this, LOGGER_MODULE);
+
     }
 
     
@@ -226,7 +254,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         if (cs.isValidRobots()) {
             String ua = getUserAgent(curi);
             if(cs.getRobots().disallows(curi, ua)) {
-                if(curi.get(this, CALCULATE_ROBOTS_ONLY)) {
+                if(getCalculateRobotsOnly()) {
                     // annotate URI as excluded, but continue to process normally
                     curi.getAnnotations().add("robotExcluded");
                     return false; 
@@ -254,7 +282,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
     
     
     private String getUserAgent(StateProvider context) {
-        UserAgentProvider uap = context.get(this, USER_AGENT_PROVIDER);
+        UserAgentProvider uap = getUserAgentProvider();
         return uap.getUserAgent(context);
     }
 
@@ -309,17 +337,6 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         return false;
     }
 
-    /**
-     * Get the maximum time a dns-record is valid.
-     *
-     * @param curi the uri this time is valid for.
-     * @return the maximum time a dns-record is valid -- in seconds -- or
-     * negative if record's ttl should be used.
-     */
-    public long getIPValidityDuration(ProcessorURI curi) {
-        return curi.get(this, IP_VALIDITY_DURATION_SECONDS);
-    }
-
     /** Return true if ip should be looked up.
      *
      * @param curi the URI to check.
@@ -337,17 +354,11 @@ public class PreconditionEnforcer extends Processor implements Initializable {
             return false;
         }
 
-        long duration = getIPValidityDuration(curi);
+        long duration = getIpValidityDurationSeconds();
         if (duration == 0) {
             // Never expire ip if duration is null (set by user or more likely,
             // set to zero in case where we tried in FetchDNS but failed).
             return false;
-        }
-
-        // catch old "default" -1 settings that are now problematic,
-        // convert to new minimum
-        if (duration <= 0) {
-            duration = IP_VALIDITY_DURATION_SECONDS.getDefaultValue();
         }
         
         long ttl = host.getIpTTL();
@@ -363,15 +374,6 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         }
 
         return (duration + host.getIpFetched()) < System.currentTimeMillis();
-    }
-
-    /** Get the maximum time a robots.txt is valid.
-     *
-     * @param curi
-     * @return the time a robots.txt is valid in milliseconds.
-     */
-    public long getRobotsValidityDuration(ProcessorURI curi) {
-        return curi.get(this, ROBOTS_VALIDITY_DURATION_SECONDS) * 1000L;
     }
 
     /**
@@ -390,7 +392,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
             // Have not attempted to fetch robots
             return true;
         }
-        long duration = getRobotsValidityDuration(curi);
+        long duration = getRobotsValidityDurationSeconds()*1000L;
         if (duration == 0) {
             // When zero, robots should be valid forever
             return false;
@@ -424,7 +426,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
 
         boolean result = false;
 
-        CredentialStore cs = credentialStore;
+        CredentialStore cs = getCredentialStore();
         if (cs == null) {
             logger.severe("No credential store for " + curi);
             return result;
@@ -537,13 +539,5 @@ public class PreconditionEnforcer extends Processor implements Initializable {
     
     private CrawlHost getHostFor(ProcessorURI curi) {
         return ServerCacheUtil.getHostFor(serverCache, curi.getUURI());
-    }
-
-    
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(PreconditionEnforcer.class);
     }
 }

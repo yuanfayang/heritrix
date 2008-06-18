@@ -35,10 +35,8 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -59,17 +57,14 @@ public class BdbCookieStorage extends AbstractCookieStorage {
     final private static Logger LOGGER = 
         Logger.getLogger(BdbCookieStorage.class.getName()); 
     
-    @Immutable
-    final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
+    protected BdbModule bdb;
+    @Autowired
+    public void setBdbModule(BdbModule bdb) {
+        this.bdb = bdb;
+    }
     
     public static String COOKIEDB_NAME = "http_cookies";
-    
-    static {
-        KeyManager.addKeys(BdbCookieStorage.class);
-    }
-
-    
-    private BdbModule bdb;
+ 
     private transient Database cookieDb;
     private transient StoredSortedMap cookies;
 
@@ -78,7 +73,6 @@ public class BdbCookieStorage extends AbstractCookieStorage {
 
 
     protected SortedMap<String,Cookie> prepareMap(StateProvider provider) {
-        this.bdb = provider.get(this, BDB);
         try {
             StoredClassCatalog classCatalog = bdb.getClassCatalog();
             BdbModule.BdbConfig dbConfig = new BdbModule.BdbConfig();

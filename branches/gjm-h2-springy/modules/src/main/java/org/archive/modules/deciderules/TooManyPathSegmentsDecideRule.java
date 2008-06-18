@@ -25,10 +25,6 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-
-
 
 /**
  * Rule REJECTs any CrawlURIs whose total number of path-segments (as
@@ -45,12 +41,15 @@ public class TooManyPathSegmentsDecideRule extends PredicatedRejectDecideRule {
     /**
      * Number of path segments beyond which this rule will reject URIs.
      */
-    final public static Key<Integer> MAX_PATH_DEPTH = Key.make(20);
-
-    static {
-        KeyManager.addKeys(TooManyPathSegmentsDecideRule.class);
+    {
+        setMaxPathDepth(20);
     }
-
+    public int getMaxPathDepth() {
+        return (Integer) kp.get("maxPathDepth");
+    }
+    public void setMaxPathDepth(int maxPathDepth) {
+        kp.put("maxPathDepth", maxPathDepth);
+    }
     /**
      * Usual constructor. 
      */
@@ -68,7 +67,7 @@ public class TooManyPathSegmentsDecideRule extends PredicatedRejectDecideRule {
     protected boolean evaluate(ProcessorURI curi) {
         String uri = curi.toString();
         int count = 0;
-        int threshold = curi.get(this, MAX_PATH_DEPTH);
+        int threshold = getMaxPathDepth();
         for (int i = 0; i < uri.length(); i++) {
             if (uri.charAt(i) == '/') {
                 count++;

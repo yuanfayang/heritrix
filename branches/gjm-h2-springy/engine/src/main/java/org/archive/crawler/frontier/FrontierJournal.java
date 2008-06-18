@@ -231,8 +231,8 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
                         UURI u = UURIFactory.getInstance(s);
                         if(scope!=null) {
                             CrawlURI caUri = CrawlURI.fromHopsViaString(read.substring(3));
-                            
-                            caUri.setStateProvider(controller.getSheetManager());
+                            //TODO:SPRINGY
+///                            caUri.setStateProvider(controller.getSheetManager());
                             // skip out-of-scope URIs if so configured
                             if(!scope.accepts(caUri)) {
                                 continue;
@@ -306,7 +306,8 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
                         try {
                             CrawlURI caUri = CrawlURI.fromHopsViaString(read.substring(3));
                             
-                            caUri.setStateProvider(controller.getSheetManager());
+                            //TODO:SPRINGY
+//                            caUri.setStateProvider(controller.getSheetManager());
                             if(scope!=null) {
                                 // skip out-of-scope URIs if so configured
                                 if(!scope.accepts(caUri)) {

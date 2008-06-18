@@ -30,11 +30,11 @@ package org.archive.modules.writer;
 public interface MetadataProvider {
     
     String getJobName();
-    String getJobOperator();
-    String getJobDescription();
+    String getOperator();
+    String getDescription();
     String getUserAgent();
-    String getFrom();
-    String getRobotsPolicy();
+    String getOperatorFrom();
+    String getRobotsPolicyName();
     String getAudience();
     String getOrganization();
 }

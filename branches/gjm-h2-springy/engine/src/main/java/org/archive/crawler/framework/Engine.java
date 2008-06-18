@@ -77,6 +77,7 @@ public interface Engine extends Closeable {
             ) throws IOException;
 
     
+    
     @Operation(desc="Closes an open SheetManager.")
     public void closeSheetManagerStub(
             

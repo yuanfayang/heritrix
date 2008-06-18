@@ -121,14 +121,11 @@ public class JerichoExtractorHTML extends ExtractorHTML {
         String codebase = null;
         ArrayList<String> resources = null;
 
-        final boolean framesAsEmbeds = curi.get(this, 
-                TREAT_FRAMES_AS_EMBED_LINKS);
+        final boolean framesAsEmbeds = getTreatFramesAsEmbedLinks();
 
-        final boolean ignoreFormActions = curi.get(this, 
-                IGNORE_FORM_ACTION_URLS);
-
-        final boolean overlyEagerLinkDetection = curi.get(this, 
-                EXTRACT_VALUE_ATTRIBUTES);
+        final boolean ignoreFormActions = getIgnoreFormActionUrls();
+        
+        final boolean overlyEagerLinkDetection = getExtractValueAttributes();
 
         // HREF
         if (((attr = attributes.get("href")) != null) &&
@@ -147,7 +144,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
                     UURI base = UURIFactory.getInstance(attrValue);
                     curi.setBaseURI(base);
                 } catch (URIException e) {
-                    logUriError(e, curi, attrValue);
+                    logUriError(e, curi.getUURI(), attrValue);
                 }
             }
         }
@@ -248,7 +245,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             // STYLE inline attribute
             // then, parse for URIs
             this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
-                    uriErrors, curi, attrValue);
+                    this, curi, attrValue);
         }
 
         // handle codebase/resources
@@ -306,11 +303,11 @@ public class JerichoExtractorHTML extends ExtractorHTML {
         if ("refresh".equals(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                int max = this.uriErrors.getMaxOutlinks(curi);
+                int max = getExtractorHelper().getMaxOutlinks();
                 Link.addRelativeToBase(curi, max, refreshUri, 
                         HTMLLinkContext.META, Hop.REFER);
             } catch (URIException e) {
-                logUriError(e, curi, refreshUri);
+                logUriError(e, curi.getUURI(), refreshUri);
             }
         }
         return false;
@@ -333,7 +330,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
 
         // then, parse for URIs
         this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
-                uriErrors, curi, element.getContent());
+                this, curi, element.getContent());
     }
 
     protected void processForm(ProcessorURI curi, Element element) {
@@ -341,7 +338,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
         String name = element.getAttributeValue("name");
         String queryURL = "";
 
-        final boolean ignoreFormActions = curi.get(this, IGNORE_FORM_ACTION_URLS);
+        final boolean ignoreFormActions = getIgnoreFormActionUrls();
 
         if (ignoreFormActions) {
             return;
@@ -350,7 +347,7 @@ public class JerichoExtractorHTML extends ExtractorHTML {
         // method-sensitive extraction
         String method = StringUtils.defaultIfEmpty(
                 element.getAttributeValue("method"), "GET");
-        if(curi.get(this, EXTRACT_ONLY_FORM_GETS) 
+        if(getExtractOnlyFormGets() 
                  && ! "GET".equalsIgnoreCase(method)) {
              return;
         }

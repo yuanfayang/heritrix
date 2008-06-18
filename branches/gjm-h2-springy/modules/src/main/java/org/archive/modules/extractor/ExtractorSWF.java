@@ -32,11 +32,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.KeyManager;
 
 import com.anotherbigidea.flash.interfaces.SWFTagTypes;
 import com.anotherbigidea.flash.readers.SWFReader;
 import com.anotherbigidea.flash.readers.TagParser;
+import com.anotherbigidea.flash.writers.SWFActionsImpl;
 import com.anotherbigidea.io.InStream;
 
 /**
@@ -57,6 +57,8 @@ public class ExtractorSWF extends ContentExtractor {
     protected AtomicLong linksExtracted = new AtomicLong(0);
 
     private static final int MAX_READ_SIZE = 1024 * 1024; // 1MB
+
+    static final String JSSTRING = "javascript:";
 
     /**
      * @param name
@@ -92,8 +94,7 @@ public class ExtractorSWF extends ContentExtractor {
 
             // Create SWF action that will add discoved URIs to CrawlURI
             // alist(s).
-            CrawlUriSWFAction curiAction = new CrawlUriSWFAction(uriErrors, 
-                    curi);
+            CrawlUriSWFAction curiAction = new CrawlUriSWFAction(curi);
 
             // Overwrite parsing of specific tags that might have URIs.
             CustomSWFTags customTags = new CustomSWFTags(curiAction);
@@ -230,9 +231,56 @@ public class ExtractorSWF extends ContentExtractor {
         }
     }
     
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorSWF.class);
+    
+    /**
+     * SWF action that handles discovered URIs.
+     *
+     * @author Igor Ranitovic
+     */
+    public class CrawlUriSWFAction extends SWFActionsImpl {
+        
+        ProcessorURI curi;
+        
+        private long linkCount;
+
+        /**
+         *
+         * @param curi
+         */
+        public CrawlUriSWFAction(ProcessorURI curi) {
+            assert (curi != null) : "CrawlURI should not be null";
+            this.curi = curi;
+            this.linkCount = 0;
+        }
+
+        /**
+         * Overwrite handling of discovered URIs.
+         *
+         * @param url Discovered URL.
+         * @param target Discovered target (currently not being used.)
+         * @throws IOException
+         */
+        public void getURL(String url, String target)
+        throws IOException {
+            // I have done tests on a few tens of swf files and have not seen a need
+            // to use 'target.' Most of the time 'target' is not set, or it is set
+            // to '_self' or '_blank'.
+            if (url.startsWith(JSSTRING)) {
+                linkCount =+ ExtractorJS.considerStrings(ExtractorSWF.this, curi, url, 
+                        false);
+            } else {
+                int max = getExtractorHelper().getMaxOutlinks();
+                Link.addRelativeToVia(curi, max, url, LinkContext.EMBED_MISC, 
+                        Hop.EMBED);
+                linkCount++;
+            }
+        }
+        
+        /**
+         * @return Total number of links extracted from a swf file.
+         */
+        public long getLinkCount() {
+            return linkCount;
+        }
     }
 }

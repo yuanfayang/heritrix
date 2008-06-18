@@ -24,9 +24,29 @@
  */
 package org.archive.modules.fetcher;
 
+import static org.archive.modules.ProcessorURI.FetchType.HTTP_POST;
+import static org.archive.modules.fetcher.FetchErrors.HEADER_TRUNC;
+import static org.archive.modules.fetcher.FetchErrors.LENGTH_TRUNC;
+import static org.archive.modules.fetcher.FetchErrors.TIMER_TRUNC;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_FAILED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_LOST;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DOMAIN_PREREQUISITE_FAILURE;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_ETAG_HEADER;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_FETCH_HISTORY;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_LAST_MODIFIED_HEADER;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_REFERENCE_LENGTH;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_STATUS;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -34,12 +54,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -70,12 +84,15 @@ import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.lang.StringUtils;
-
-import static org.archive.modules.ProcessorURI.FetchType.HTTP_POST;
-import static org.archive.modules.fetcher.FetchErrors.*;
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
-
+import org.archive.httpclient.ConfigurableX509TrustManager;
+import org.archive.httpclient.HttpRecorderGetMethod;
+import org.archive.httpclient.HttpRecorderMethod;
+import org.archive.httpclient.HttpRecorderPostMethod;
+import org.archive.httpclient.SingleHttpConnectionManager;
+import org.archive.httpclient.ConfigurableX509TrustManager.TrustLevel;
+import org.archive.io.RecorderLengthExceededException;
+import org.archive.io.RecorderTimeoutException;
+import org.archive.io.RecorderTooMuchHeaderException;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
@@ -83,30 +100,19 @@ import org.archive.modules.credential.Credential;
 import org.archive.modules.credential.CredentialAvatar;
 import org.archive.modules.credential.CredentialStore;
 import org.archive.modules.credential.Rfc2617Credential;
+import org.archive.modules.deciderules.AcceptDecideRule;
 import org.archive.modules.deciderules.DecideResult;
-import org.archive.modules.deciderules.DecideRuleSequence;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.net.UURI;
-import org.archive.httpclient.ConfigurableX509TrustManager;
-import org.archive.httpclient.HttpRecorderGetMethod;
-import org.archive.httpclient.HttpRecorderMethod;
-import org.archive.httpclient.HttpRecorderPostMethod;
-import org.archive.httpclient.SingleHttpConnectionManager;
-import org.archive.io.RecorderLengthExceededException;
-import org.archive.io.RecorderTimeoutException;
-import org.archive.io.RecorderTooMuchHeaderException;
 import org.archive.settings.Finishable;
-import org.archive.state.Expert;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.Nullable;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * HTTP fetcher that uses <a
@@ -128,20 +134,42 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
     /**
      * Proxy host IP (set only if needed).
      */
-    @Expert
-    final public static Key<String> HTTP_PROXY_HOST = Key.make("");
+    {
+        setHttpProxyHost("");
+    }
+    public String getHttpProxyHost() {
+        return (String) kp.get("httpProxyHost");
+    }
+    public void setHttpProxyHost(String host) {
+        kp.put("httpProxyHost",host);
+    }
 
     /**
      * Proxy port (set only if needed).
      */
-    @Expert
-    final public static Key<Integer> HTTP_PROXY_PORT = Key.make(0);
+    {
+        setHttpProxyPort(0);
+    }
+    public int getHttpProxyPort() {
+        return (Integer) kp.get("httpProxyPort");
+    }
+    public void setHttpProxyPort(Integer host) {
+        kp.put("httpProxyPort",host);
+    }
 
     /**
      * If the fetch is not completed in this number of seconds, give up (and
      * retry later).
      */
-    final public static Key<Integer> TIMEOUT_SECONDS = Key.make(1200);
+    {
+        setTimeoutSeconds(20*60); // 20 minutes
+    }
+    public int getTimeoutSeconds() {
+        return (Integer) kp.get("timeoutSeconds");
+    }
+    public void setTimeoutSeconds(Integer timeout) {
+        kp.put("timeoutSeconds",timeout);
+    }
 
     /**
      * If the socket is unresponsive for this number of milliseconds, give up.
@@ -151,57 +179,106 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * {@link #TIMEOUT_SECONDS} for optimal configuration: ensures at least one
      * retry read.
      */
-    @Expert
-    final public static Key<Integer> SOTIMEOUT_MS = Key.make(20000);
+    {
+        setSoTimeoutMs(20*1000); // 20 minutes
+    }
+    public int getSoTimeoutMs() {
+        return (Integer) kp.get("soTimeoutMs");
+    }
+    public void setSoTimeoutMs(int timeout) {
+        kp.put("soTimeoutMs",timeout);
+    }
 
     /**
      * Maximum length in bytes to fetch. Fetch is truncated at this length. A
      * value of 0 means no limit.
      */
-    final public static Key<Long> MAX_LENGTH_BYTES = Key.make(0L);
-
+    {
+        setMaxLengthBytes(0L); // no limit
+    }
+    public int getMaxLengthBytes() {
+        return (Integer) kp.get("maxLengthBytes");
+    }
+    public void setMaxLengthBytes(long timeout) {
+        kp.put("maxLengthBytes",timeout);
+    }
 
     /**
      * Accept Headers to include in each request. Each must be the complete
      * header, e.g., 'Accept-Language: en'.
      */
-    final public static Key<List<String>> ACCEPT_HEADERS = Key
-            .makeList(String.class);
-
+    {
+        setAcceptHeaders(Collections.EMPTY_LIST);
+    }
+    @SuppressWarnings("unchecked")
+    public List<String> getAcceptHeaders() {
+        return (List<String>) kp.get("acceptHeaders");
+    }
+    public void setAcceptHeaders(List headers) {
+        kp.put("acceptHeaders",headers);
+    }
+    
     /**
      * The character encoding to use for files that do not have one specified in
      * the HTTP response headers. Default: ISO-8859-1.
      */
-    @Expert
-    final public static Key<String> DEFAULT_ENCODING = Key
-            .make("ISO-8859-1");
+    {
+        setDefaultEncoding("ISO-8859-1");
+    }
+    public String getDefaultEncoding() {
+        return (String) kp.get("defaultEncoding");
+    }
+    public void setDefaultEncoding(String encoding) {
+        kp.put("defaultEncoding",encoding);
+    }
 
     /**
      * Whether or not to perform an on-the-fly digest hash of retrieved
      * content-bodies.
      */
-    @Expert
-    final public static Key<Boolean> DIGEST_CONTENT = Key.make(true);
- 
+    {
+        setDigestContent(true);
+    }
+    public boolean getDigestContent() {
+        return (Boolean) kp.get("digestContent");
+    }
+    public void setDigestContent(boolean digest) {
+        kp.put("digestContent",digest);
+    }
  
     /**
      * Which algorithm (for example MD5 or SHA-1) to use to perform an
      * on-the-fly digest hash of retrieved content-bodies.
      */
-    @Expert
-    final public static Key<String> DIGEST_ALGORITHM = Key.make("sha1");
-
+    String digestAlgorithm = "sha1"; 
+    public String getDigestAlgorithm() {
+        return digestAlgorithm;
+    }
+    public void setDigestAlgorithm(String digestAlgorithm) {
+        this.digestAlgorithm = digestAlgorithm;
+    }
 
     /**
      * The maximum KB/sec to use when fetching data from a server. The default
      * of 0 means no maximum.
      */
-    @Expert
-    final public static Key<Integer> FETCH_BANDWIDTH = Key.make(0);
+    {
+        setMaxFetchKBSec(0); // no limit
+    }
+    public int getMaxFetchKBSec() {
+        return (Integer) kp.get("maxFetchKBSec");
+    }
+    public void setMaxFetchKBSec(int rate) {
+        kp.put("maxFetchKBSec",rate);
+    }
 
-
-    final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
-        Key.makeAuto(UserAgentProvider.class);
+    public UserAgentProvider getUserAgentProvider() {
+        return (UserAgentProvider) kp.get("userAgentProvider");
+    }
+    @Autowired
+    public void setUserAgentProvider(UserAgentProvider provider) {
+        kp.put("userAgentProvider",provider);
+    }
 
     /**
      * SSL certificate trust level. Range is from the default 'open' (trust all
@@ -210,11 +287,12 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * 'normal' (all valid certificates not including selfsigned) to 'strict'
      * (Cert is valid and DN must match servername).
      */
-    @Immutable @Expert
-    final public static Key<String> TRUST_LEVEL = Key
-            .make(ConfigurableX509TrustManager.DEFAULT);
-
-    public static final String SHA1 = "sha1";
+    public TrustLevel getTrustLevel() {
+        return (TrustLevel) kp.get("trustLevel");
+    }
+    public void getTrustLevel(TrustLevel trustLevel) {
+        kp.put("trustLevel",trustLevel);
+    }
 
     private transient HttpClient http = null;
 
@@ -232,8 +310,15 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * aborted. Prerequisites such as robots.txt by-pass filtering (i.e. they
      * cannot be midfetch aborted.
      */
-    final public static Key<DecideRuleSequence> MIDFETCH_RULES = Key
-            .make(DecideRuleSequence.class, DecideRuleSequence.class);
+    {
+        setShouldFetchBodyRule(new AcceptDecideRule());
+    }
+    public DecideRule getShouldFetchBodyRule() {
+        return (DecideRule) kp.get("shouldFetchBodyRule");
+    }
+    public void setShouldFetchBodyRule(DecideRule rule) {
+        kp.put("shouldFetchBodyRule", rule);
+    }
 
     // see [ 1379040 ] regex for midfetch filter not being stored in crawl order
     // http://sourceforge.net/support/tracker.php?aid=1379040
@@ -247,9 +332,15 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
     /**
      * Send 'Connection: close' header with every request.
      */
-    @Expert
-    final public static Key<Boolean> SEND_CONNECTION_CLOSE = Key
-            .make(true);
+    {
+        setSendConnectionClose(true);
+    }
+    public boolean getSendConnectionClose() {
+        return (Boolean) kp.get("sendConnectionClose");
+    }
+    public void setSendConnectionClose(boolean sendClose) {
+        kp.put("sendConnectionClose",sendClose);
+    }
 
     private static final Header HEADER_SEND_CONNECTION_CLOSE = new Header(
             "Connection", "close");
@@ -262,8 +353,15 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * remote server and can be of assistance to webmasters trying to figure how
      * a crawler got to a particular area on a site.
      */
-    @Expert
-    final public static Key<Boolean> SEND_REFERER = Key.make(true);
+    {
+        setSendReferer(true);
+    }
+    public boolean getSendReferer() {
+        return (Boolean) kp.get("sendReferer");
+    }
+    public void setSendReferer(boolean sendClose) {
+        kp.put("sendReferer",sendClose);
+    }
 
     /**
      * Send 'Range' header when a limit ({@link #MAX_LENGTH_BYTES}) on
@@ -276,24 +374,43 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * the response mid-download. On rare occasion, sending 'Range' will
      * generate '416 Request Range Not Satisfiable' response.
      */
-    @Expert
-    final public static Key<Boolean> SEND_RANGE = Key.make(false);
-
+    {
+        setSendRange(false);
+    }
+    public boolean getSendRange() {
+        return (Boolean) kp.get("sendRange");
+    }
+    public void setSendRange(boolean sendRange) {
+        kp.put("sendRange",sendRange);
+    }
     
     /**
      * Send 'If-Modified-Since' header, if previous 'Last-Modified' fetch
      * history information is available in URI history.
      */
-    @Expert
-    final public static Key<Boolean> SEND_IF_MODIFIED_SINCE = Key.make(true);
+    {
+        setSendIfModifiedSince(true);
+    }
+    public boolean getSendIfModifiedSince() {
+        return (Boolean) kp.get("sendIfModifiedSince");
+    }
+    public void setSendIfModifiedSince(boolean sendIfModifiedSince) {
+        kp.put("sendIfModifiedSince",sendIfModifiedSince);
+    }
 
     /**
      * Send 'If-None-Match' header, if previous 'Etag' fetch history information
      * is available in URI history.
      */
-    @Expert
-    final public static Key<Boolean> SEND_IF_NONE_MATCH = Key.make(true);
-
+    {
+        setSendIfNoneMatch(true);
+    }
+    public boolean getSendIfNoneMatch() {
+        return (Boolean) kp.get("sendIfNoneMatch");
+    }
+    public void setSendIfNoneMatch(boolean sendIfNoneMatch) {
+        kp.put("sendIfNoneMatch",sendIfNoneMatch);
+    }
     
     public static final String REFERER = "Referer";
 
@@ -305,42 +422,60 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
 
     public static final String HTTPS_SCHEME = "https";
 
-    /**
-     * 
-     */
-    @Immutable @Nullable
-    final public static Key<CookieStorage> COOKIE_STORAGE = 
-        Key.make(CookieStorage.class, BdbCookieStorage.class);
+    
+    CookieStorage cookieStorage;
+    @Autowired
+    public void setCookieStorage(CookieStorage storage) {
+        this.cookieStorage = storage; 
+    }
 
     /**
      * Disable cookie handling.
      */
-    final public static Key<Boolean> IGNORE_COOKIES = Key.make(false);
-
+    {
+        setIgnoreCookies(false);
+    }
+    public boolean getIgnoreCookies() {
+        return (Boolean) kp.get("ignoreCookies");
+    }
+    public void setIgnoreCookies(boolean ignoreCookies) {
+        kp.put("ignoreCookies",ignoreCookies);
+    }
 
     /**
      * Local IP address or hostname to use when making connections (binding
      * sockets). When not specified, uses default local address(es).
      */
-    final public static Key<String> HTTP_BIND_ADDRESS = Key.make("");
+    protected String httpBindAddress = "";
+    public String getHttpBindAddress(){
+        return this.httpBindAddress;
+    }
+    public void setHttpBindAddress(String address) {
+        this.httpBindAddress = address;
+    }
 
-    
     /**
      * Used to store credentials.
      */
-    @Immutable
-    final public static Key<CredentialStore> CREDENTIAL_STORE =
-        Key.makeAuto(CredentialStore.class);
-    
+    public CredentialStore getCredentialStore() {
+        return (CredentialStore) kp.get("credentialStore");
+    }
+    @Autowired
+    public void setCredentialStore(CredentialStore credentials) {
+        kp.put("credentialStore",credentials);
+    }
     
     /**
      * Used to do DNS lookups.
      */
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE =
-        Key.makeAuto(ServerCache.class);
-//        Key.make(ServerCache.class, null);
-
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
 
     static {
         Protocol.registerProtocol("http", new Protocol("http",
@@ -366,11 +501,6 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * Socket factory that has the configurable trust manager installed.
      */
     private transient SSLSocketFactory sslfactory = null;
-    private String trustLevel;
-
-    private CredentialStore credentialStore;
-
-    private ServerCache serverCache;
 
     /**
      * Constructor.
@@ -387,10 +517,10 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         Recorder rec = curi.getRecorder();
 
         // Shall we get a digest on the content downloaded?
-        boolean digestContent = curi.get(this, DIGEST_CONTENT);
+        boolean digestContent = getDigestContent();
         String algorithm = null;
         if (digestContent) {
-            algorithm = curi.get(this, DIGEST_ALGORITHM);
+            algorithm = getDigestAlgorithm();
             rec.getRecordedInput().setDigest(algorithm);
         } else {
             // clear
@@ -434,11 +564,11 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         method.setDoAuthentication(addedCredentials);
 
         // set hardMax on bytes (if set by operator)
-        long hardMax = getMaxLength(curi);
+        long hardMax = getMaxLengthBytes();
         // set overall timeout (if set by operator)
-        long timeoutMs = 1000 * getTimeout(curi);
+        long timeoutMs = 1000 * getTimeoutSeconds();
         // Get max fetch rate (bytes/ms). It comes in in KB/sec
-        long maxRateKBps = getMaxFetchRate(curi);
+        long maxRateKBps = getMaxFetchKBSec();
         rec.getRecordedInput().setLimits(hardMax, timeoutMs, maxRateKBps);
 
         try {
@@ -573,8 +703,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         if (curi.isPrerequisite()) {
             return false;
         }
-        DecideRuleSequence seq = curi.get(this, MIDFETCH_RULES);
-        DecideResult r = seq.decisionFor(curi);
+        DecideResult r = getShouldFetchBodyRule().decisionFor(curi);
         if (r != DecideResult.REJECT) {
             return false;
         }
@@ -622,9 +751,8 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
 
         try {
             encoding = ((HttpMethodBase) method).getResponseCharSet();
-            if (encoding == null
-                    || encoding.equals(DEFAULT_ENCODING.getDefaultValue())) {
-                encoding = uri.get(this, DEFAULT_ENCODING);
+            if (encoding == null) {
+                encoding = getDefaultEncoding();
             }
         } catch (Exception e) {
             logger.warning("Failed get default encoding: "
@@ -724,7 +852,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         // .intValue());
 
         // Set cookie policy.
-        boolean ignoreCookies = curi.get(this, IGNORE_COOKIES);
+        boolean ignoreCookies = getIgnoreCookies();
         method.getParams().setCookiePolicy(
                 ignoreCookies ? CookiePolicy.IGNORE_COOKIES
                         : CookiePolicy.BROWSER_COMPATIBILITY);
@@ -732,7 +860,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         method.getParams().setVersion(HttpVersion.HTTP_1_0);
 
-        UserAgentProvider uap = curi.get(this, USER_AGENT_PROVIDER);
+        UserAgentProvider uap = getUserAgentProvider();
         String from = uap.getFrom(curi);
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
@@ -748,17 +876,17 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
                 new HeritrixHttpMethodRetryHandler());
 
-        final long maxLength = getMaxLength(curi);
-        if (maxLength > 0 && curi.get(this, SEND_RANGE)) {
+        final long maxLength = getMaxLengthBytes();
+        if (maxLength > 0 && getSendRange()) {
             method.addRequestHeader(RANGE, RANGE_PREFIX.concat(Long
                     .toString(maxLength - 1)));
         }
 
-        if (curi.get(this, SEND_CONNECTION_CLOSE)) {
+        if (getSendConnectionClose()) {
             method.addRequestHeader(HEADER_SEND_CONNECTION_CLOSE);
         }
 
-        if (curi.get(this, SEND_REFERER)) {
+        if (getSendReferer()) {
             // RFC2616 says no referer header if referer is https and the url
             // is not
             String via = flattenVia(curi);
@@ -771,9 +899,9 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         }
 
         if (!curi.isPrerequisite()) {
-            setConditionalGetHeader(curi, method, SEND_IF_MODIFIED_SINCE, 
+            setConditionalGetHeader(curi, method, getSendIfModifiedSince(), 
                     A_LAST_MODIFIED_HEADER, "If-Modified-Since");
-            setConditionalGetHeader(curi, method, SEND_IF_NONE_MATCH, 
+            setConditionalGetHeader(curi, method, getSendIfNoneMatch(), 
                     A_ETAG_HEADER, "If-None-Match");
         }
         
@@ -798,8 +926,8 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * @param targetHeader header to set if possible
      */
     protected void setConditionalGetHeader(ProcessorURI curi, HttpMethod method, 
-            Key<Boolean> setting, String sourceHeader, String targetHeader) {
-        if (curi.get(this, setting)) {
+            boolean conditional, String sourceHeader, String targetHeader) {
+        if (conditional) {
             try {
                 Map[] history = (Map[])curi.getData().get(A_FETCH_HISTORY);
                 int previousStatus = (Integer) history[0].get(A_STATUS);
@@ -821,9 +949,9 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * Setup proxy, based on attributes in ProcessorURI and settings, 
      * in given HostConfiguration
      */
-    private void configureProxy(StateProvider curi, HostConfiguration config) {
-        String proxy = (String) getAttributeEither(curi, HTTP_PROXY_HOST);
-        int port = (Integer) getAttributeEither(curi, HTTP_PROXY_PORT);            
+    private void configureProxy(ProcessorURI curi, HostConfiguration config) {
+        String proxy = (String) getAttributeEither(curi, "httpProxyHost");
+        int port = (Integer) getAttributeEither(curi, "httpProxyPort");            
         configureProxy(proxy, port, config);
     }
     
@@ -838,8 +966,8 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      * Setup local bind address, based on attributes in ProcessorURI and 
      * settings, in given HostConfiguration
      */
-    private void configureBindAddress(StateProvider curi, HostConfiguration config) {
-        String addressString = (String) getAttributeEither(curi, HTTP_BIND_ADDRESS);
+    private void configureBindAddress(ProcessorURI curi, HostConfiguration config) {
+        String addressString = (String) getAttributeEither(curi, "httpBindAddress");
         configureBindAddress(addressString,config);
     }
 
@@ -867,15 +995,13 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
      *            key to lookup
      * @return value from either ProcessorURI (preferred) or settings
      */
-    protected Object getAttributeEither(StateProvider provider, Key<?> key) {
-        if (provider instanceof ProcessorURI) {
-            ProcessorURI curi = (ProcessorURI) provider;
-            Object r = curi.getData().get(key.getFieldName());
-            if (r != null) {
-                return r;
-            }
+    protected Object getAttributeEither(ProcessorURI curi, String key) {
+        
+        Object r = curi.getData().get(key);
+        if (r != null) {
+            return r;
         }
-        return provider.get(this, key);
+        return kp.get(key);
     }
 
     /**
@@ -912,7 +1038,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         CrawlServer server = serverCache.getServerFor(serverKey);
         if (server.hasCredentialAvatars()) {
             for (CredentialAvatar ca : server.getCredentialAvatars()) {
-                Credential c = ca.getCredential(credentialStore, curi);
+                Credential c = ca.getCredential(getCredentialStore(), curi);
                 if (c.isEveryTime()) {
                     c.populate(curi, this.http, method, ca.getPayload());
                 }
@@ -925,7 +1051,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         // by the handle401 method if its a rfc2617 or it'll have been set into
         // the curi by the preconditionenforcer as this login uri came through.
         for (CredentialAvatar ca : curi.getCredentialAvatars()) {
-            Credential c = ca.getCredential(credentialStore, curi);
+            Credential c = ca.getCredential(getCredentialStore(), curi);
             if (c.populate(curi, this.http, method, ca.getPayload())) {
                 result = true;
             }
@@ -950,7 +1076,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
             // The avatar needs to be added to the server that is dependent
             // on this precondition. Find it by name. Get the name from
             // the credential this avatar represents.
-            Credential c = credentialStore.getCredential(curi, ca);
+            Credential c = getCredentialStore().getCredential(curi, ca);
             String cd = c.getCredentialDomain(curi);
             if (cd != null) {
                 CrawlServer cs = serverCache.getServerFor(cd);
@@ -1018,7 +1144,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
             // second time around.
             String serverKey = getServerKey(curi);
             CrawlServer server = serverCache.getServerFor(serverKey);
-            Set storeRfc2617Credentials = credentialStore.subset(curi,
+            Set storeRfc2617Credentials = getCredentialStore().subset(curi,
                     Rfc2617Credential.class, server.getName());
             if (storeRfc2617Credentials == null
                     || storeRfc2617Credentials.size() <= 0) {
@@ -1127,7 +1253,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
                     if (result == null) {
                         result = new HashSet<Credential>();
                     }
-                    result.add(ca.getCredential(credentialStore, curi));
+                    result.add(ca.getCredential(getCredentialStore(), curi));
                 }
             }
         }
@@ -1135,18 +1261,12 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
     }
 
     public void initialTasks(StateProvider defaults) {
+        configureHttp();
 
-        this.serverCache = defaults.get(this, SERVER_CACHE);
-        this.credentialStore = defaults.get(this, CREDENTIAL_STORE);
-
-        configureHttp(defaults);
-
-        CookieStorage cm = defaults.get(this, COOKIE_STORAGE);
-        if (cm != null) {        
-            http.getState().setCookiesMap(cm.getCookiesMap());
+        if (cookieStorage != null) {        
+            http.getState().setCookiesMap(cookieStorage.getCookiesMap());
         }
 
-        this.trustLevel = defaults.get(this, TRUST_LEVEL);
         setSSLFactory();
     }
     
@@ -1159,7 +1279,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
             SSLContext context = SSLContext.getInstance("SSL");
             context.init(null,
                     new TrustManager[] { new ConfigurableX509TrustManager(
-                            trustLevel) }, null);
+                            getTrustLevel()) }, null);
             this.sslfactory = context.getSocketFactory();
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed configure of ssl context "
@@ -1171,11 +1291,10 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
 
     public void finalTasks(StateProvider defaults) {
         // At the end save cookies to the file specified in the order file.
-        CookieStorage cs = defaults.get(this, COOKIE_STORAGE);
-        if (cs != null) {
+        if (cookieStorage != null) {
             @SuppressWarnings("unchecked")
             Map<String, Cookie> map = http.getState().getCookiesMap();
-            cs.saveCookiesMap(map);
+            cookieStorage.saveCookiesMap(map);
         }
         cleanupHttp();
     }
@@ -1186,19 +1305,16 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
     protected void cleanupHttp() {
     }
 
-    protected void configureHttp(StateProvider defaults) {
-        int soTimeout = defaults.get(this, SOTIMEOUT_MS);
-        String addressStr = 
-            (String) getAttributeEither(defaults, HTTP_BIND_ADDRESS);
-        String proxy = 
-            (String) getAttributeEither(defaults, HTTP_PROXY_HOST);
+    protected void configureHttp() {
+        int soTimeout = getSoTimeoutMs();
+        String addressStr = getHttpBindAddress();
+        String proxy = getHttpProxyHost();
         int port = -1;
         if (proxy.length() == 0) {
             proxy = null;
         } else {
-            port = (Integer) getAttributeEither(defaults, HTTP_PROXY_PORT);            
+            port = getHttpProxyPort();            
         }
-
         configureHttp(soTimeout, addressStr, proxy, port);
     }
     
@@ -1249,25 +1365,6 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         hcmp.setParameter(SSL_FACTORY_KEY, this.sslfactory);
     }
 
-
-    /**
-     * @param curi
-     *            Current ProcessorURI. Used to get context.
-     * @return Timeout value for total request.
-     */
-    private int getTimeout(ProcessorURI curi) {
-        return curi.get(this, TIMEOUT_SECONDS);
-    }
-
-    private int getMaxFetchRate(ProcessorURI curi) {
-        return curi.get(this, FETCH_BANDWIDTH);
-    }
-
-    private long getMaxLength(ProcessorURI curi) {
-        return curi.get(this, MAX_LENGTH_BYTES);
-    }
-
-
     /*
      * (non-Javadoc)
      * 
@@ -1285,7 +1382,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
 
 
     private void setAcceptHeaders(ProcessorURI curi, HttpMethod get) {
-        List<String> acceptHeaders = curi.get(this, ACCEPT_HEADERS);
+        List<String> acceptHeaders = getAcceptHeaders();
         if (acceptHeaders.isEmpty()) {
             return;
         }
@@ -1404,10 +1501,5 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         }
         return h;
     }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(FetchHTTP.class);
-    }
+
 }

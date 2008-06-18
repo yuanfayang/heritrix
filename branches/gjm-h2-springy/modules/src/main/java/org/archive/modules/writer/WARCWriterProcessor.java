@@ -54,6 +54,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,10 +77,7 @@ import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.modules.extractor.Link;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+
 import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
@@ -106,39 +104,57 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
     /**
      * Whether to write 'request' type records. Default is true.
      */
-    @Expert
-    final public static Key<Boolean> WRITE_REQUESTS = Key.make(true);
-
+    {
+        setWriteRequests(true);
+    }
+    public boolean getWriteRequests() {
+        return (Boolean) kp.get("writeRequests");
+    }
+    public void setWriteRequests(boolean writeRequests) {
+        kp.put("writeRequests",writeRequests);
+    }
     
     /**
      * Whether to write 'metadata' type records. Default is true.
      */
-    @Expert
-    final public static Key<Boolean> WRITE_METADATA = Key.make(true);
-
-
+    {
+        setWriteMetadata(true);
+    }
+    public boolean getWriteMetadata() {
+        return (Boolean) kp.get("writeMetadata");
+    }
+    public void setWriteMetadata(boolean writeMetadata) {
+        kp.put("writeMetadata",writeMetadata);
+    }
+    
     /**
      * Whether to write 'revisit' type records when a URI's history indicates
      * the previous fetch had an identical content digest. Default is true.
      */
-    @Expert
-    final public static Key<Boolean> WRITE_REVISIT_FOR_IDENTICAL_DIGESTS =
-        Key.make(true);
+    {
+        setWriteRevisitForIdenticalDigests(true);
+    }
+    public boolean getWriteRevisitForIdenticalDigests() {
+        return (Boolean) kp.get("writeRevisitForIdenticalDigests");
+    }
+    public void setWriteRevisitForIdenticalDigests(boolean writeRevisits) {
+        kp.put("writeRevisitForIdenticalDigests",writeRevisits);
+    }
 
-    
     /**
      * Whether to write 'revisit' type records when a 304-Not Modified response
      * is received. Default is true.
      */
-    @Expert
-    final public static Key<Boolean> WRITE_REVISIT_FOR_NOT_MODIFIED =
-        Key.make(true);
+    {
+        setWriteRevisitForNotModified(true);
+    }
+    public boolean getWriteRevisitForNotModified() {
+        return (Boolean) kp.get("writeRevisitForNotModified");
+    }
+    public void setWriteRevisitForNotModified(boolean writeRevisits) {
+        kp.put("writeRevisitForNotModified",writeRevisits);
+    }
 
-    /**
-     * Default path list.
-     */
-    private static final String [] DEFAULT_PATH = {"warcs"};
-    
     /**
      * Where to save files. Supply absolute or relative path. If relative, files
      * will be written relative to the order.disk-path setting. If more than one
@@ -146,20 +162,20 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
      * safe to change midcrawl (You can remove and add new dirs as the crawler
      * progresses).
      */
-    @Global
-    final public static Key<List<String>> PATH = Key.makeSimpleList(String.class, "warcs");
-
-
-    static {
-        KeyManager.addKeys(WARCWriterProcessor.class);
+    List<String> storePaths;
+    {
+        storePaths = new ArrayList<String>();
+        storePaths.add("warcs");
+    }
+    public List<String> getStorePaths() {
+        return storePaths;
+    }
+    public void setStorePaths(List<String> paths) {
+        this.storePaths = paths; 
     }
 
     private transient List<String> cachedMetadata;
 
-    protected String [] getDefaultPath() {
-        return DEFAULT_PATH;
-    }
-    
     /**
      * Constructor.
      */
@@ -168,10 +184,8 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
 
     @Override
     protected void setupPool(final AtomicInteger serialNo) {
-        int maxActive = getMaxActive();
-        int maxWait = getMaxWait();
         WriterPoolSettings wps = getWriterPoolSettings();
-        setPool(new WARCWriterPool(serialNo, wps, maxActive, maxWait));
+        setPool(new WARCWriterPool(serialNo, wps, getPoolMaxActive(), getPoolMaxWait()));
     }
 
 
@@ -242,11 +256,11 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
                 URI rid;
                 
                 if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
-                        curi.get(this, WRITE_REVISIT_FOR_IDENTICAL_DIGESTS)) {
+                        getWriteRevisitForIdenticalDigests()) {
                     rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
                             baseid, curi, headers);
                 } else if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED && 
-                        curi.get(this, WRITE_REVISIT_FOR_NOT_MODIFIED)) {
+                        getWriteRevisitForNotModified()) {
                     rid = writeRevisitNotModified(w, timestamp,
                             baseid, curi, headers);
                 } else {
@@ -272,11 +286,11 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
                 headers.addLabelValue(HEADER_KEY_CONCURRENT_TO,
                     '<' + rid.toString() + '>');
 
-                if (curi.get(this, WRITE_REQUESTS)) {
+                if (getWriteRequests()) {
                     writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
                             baseid, curi, headers);
                 }
-                if (curi.get(this, WRITE_METADATA)) {
+                if (getWriteMetadata()) {
                     writeMetadata(w, timestamp, baseid, curi, headers);
                 } 
             } else if (lowerCaseScheme.equals("dns")) {
@@ -517,14 +531,6 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         return result;
     }  
 
-
-    @Override
-    protected Key<List<String>> getPathKey() {
-        return PATH;
-    }
-
-
-    
     public List<String> getMetadata(StateProvider global) {
         if (cachedMetadata != null) {
             return cachedMetadata;
@@ -543,9 +549,9 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         record.addLabelValue("conformsTo","http://crawler.archive.org/warc/0.17/WARC0.17ISO.doc");
         // Get other values from metadata provider
 
-        MetadataProvider provider = global.get(this, METADATA_PROVIDER);
+        MetadataProvider provider = getMetadataProvider();
 
-        addIfNotBlank(record,"operator", provider.getJobOperator());
+        addIfNotBlank(record,"operator", provider.getOperator());
         addIfNotBlank(record,"publisher", provider.getOrganization());
         addIfNotBlank(record,"audience", provider.getAudience());
         addIfNotBlank(record,"isPartOf", provider.getJobName());
@@ -562,13 +568,13 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
 //                    logger.log(Level.WARNING,"obtaining warc created date",e);
 //                }
 //            }
-        addIfNotBlank(record,"description", provider.getJobDescription());
-        addIfNotBlank(record,"robots", provider.getRobotsPolicy());
+        addIfNotBlank(record,"description", provider.getDescription());
+        addIfNotBlank(record,"robots", provider.getRobotsPolicyName());
 
         addIfNotBlank(record,"http-header-user-agent",
                 provider.getUserAgent());
         addIfNotBlank(record,"http-header-from",
-                provider.getFrom());
+                provider.getOperatorFrom());
 
         // really ugly to return as List<String>, but changing would require 
         // larger refactoring
@@ -579,10 +585,5 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         if(StringUtils.isNotBlank(value)) {
             record.addLabelValue(label, value);
         }
-    }
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(WARCWriterProcessor.class);
     }
 }

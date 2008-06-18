@@ -38,15 +38,11 @@ import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 
@@ -78,22 +74,37 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * converted to the implied SURT prefix, and literal SURT prefixes may be
      * listed on lines beginning with a '+' character.
      */
-    final public static Key<Path> SURTS_SOURCE_FILE = Key.make(Path.EMPTY);
-    
+    protected Path surtsSourceFile = Path.EMPTY;
+    public Path getSurtsSourceFile() {
+        return surtsSourceFile;
+    }
+    public void setSurtsSourceFile(Path surtsSourceFile) {
+        this.surtsSourceFile = surtsSourceFile;
+    }
 
     /**
      * Should seeds also be interpreted as SURT prefixes.
      */
-    final public static Key<Boolean> SEEDS_AS_SURT_PREFIXES = Key.make(true);
+    protected boolean seedsAsSurtPrefixes = true; 
+    public boolean getSeedsAsSurtPrefixes() {
+        return seedsAsSurtPrefixes;
+    }
+    public void setSeedsAsSurtPrefixes(boolean seedsAsSurtPrefixes) {
+        this.seedsAsSurtPrefixes = seedsAsSurtPrefixes;
+    }
 
-    
 
     /**
      * Dump file to save SURT prefixes actually used: Useful debugging SURTs.
      */
-    @Expert
-    final public static Key<Path> SURTS_DUMP_FILE = Key.make(Path.EMPTY);
-
+    protected Path surtsDumpFile = Path.EMPTY;
+    public Path getSurtsDumpFile() {
+        return surtsDumpFile;
+    }
+    public void setSurtsDumpFile(Path surtsDumpFile) {
+        this.surtsDumpFile = surtsDumpFile;
+    }
+    
 
     /**
      * Whether to rebuild the internal structures from source files (including
@@ -102,9 +113,13 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * domain overrides are set. Rereading large source files can take a long
      * time.
      */
-    @Expert @Global
-    final public static Key<Boolean> REBUILD_ON_RECONFIG = Key.make(true);
-
+    protected boolean rebuildOnReconfig = true; 
+    public boolean getRebuildOnReconfig() {
+        return rebuildOnReconfig;
+    }
+    public void setRebuildOnReconfig(boolean rebuildOnReconfig) {
+        this.rebuildOnReconfig = rebuildOnReconfig;
+    }
 
     /**
      * Whether to also make the configured decision if a URI's 'via' URI (the
@@ -112,29 +127,26 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * established prefixes. For example, can be used to ACCEPT URIs that are
      * 'one hop off' URIs fitting the SURT prefixes. Default is false.
      */
-    @Expert @Global
-    final public static Key<Boolean> ALSO_CHECK_VIA = 
-        Key.make(false);
+    {
+        setAlsoCheckVia(false);
+    }
+    public boolean getAlsoCheckVia() {
+        return (Boolean) kp.get("alsoCheckVia");
+    }
+    public void setAlsoCheckVia(boolean checkVia) {
+        kp.put("alsoCheckVia", checkVia);
+    }
 
-
-    @Immutable 
-    final public static Key<SeedModuleImpl> SEEDS = 
-        Key.makeAuto(SeedModuleImpl.class);
-    
-    
-    protected SurtPrefixSet surtPrefixes = null;
-
-    
-//    private Path directory;
-    
-    private SeedModuleImpl seeds;
-    
-    //private CrawlController controller;
-
-    static {
-        KeyManager.addKeys(SurtPrefixedDecideRule.class);
+    protected SeedModuleImpl seeds;
+    public SeedModuleImpl getSeeds() {
+        return this.seeds;
+    }
+    @Autowired
+    public void setSeeds(SeedModuleImpl seeds) {
+        this.seeds = seeds;
     }
     
+    protected SurtPrefixSet surtPrefixes = null;
 
     /**
      * Usual constructor. 
@@ -144,9 +156,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
 
     
     public void initialTasks(StateProvider provider) {
-//        this.directory = provider.get(this, DIRECTORY);
-        this.seeds = provider.get(this, SEEDS);
-        this.readPrefixes(provider);
+        this.readPrefixes();
     }
 
     /**
@@ -157,7 +167,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      */
     @Override
     protected boolean evaluate(ProcessorURI uri) {
-        if (uri.get(this, ALSO_CHECK_VIA)) {
+        if (getAlsoCheckVia()) {
             if (innerDecide(uri, uri.getVia())) {
                 return true;
             }
@@ -173,7 +183,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
         if (candidateSurt == null) {
             return false;
         }
-        if (getPrefixes(context).containsPrefixOf(candidateSurt)) {
+        if (getPrefixes().containsPrefixOf(candidateSurt)) {
             return true;
         } else {
             return false;
@@ -186,24 +196,24 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * 
      * @return SurtPrefixSet to use for check
      */
-    private synchronized SurtPrefixSet getPrefixes(StateProvider uri) {
+    private synchronized SurtPrefixSet getPrefixes() {
         if (surtPrefixes == null) {
-            readPrefixes(uri);
+            readPrefixes();
         }
         return surtPrefixes;
     }
 
-    protected void readPrefixes(StateProvider uri) {
-        buildSurtPrefixSet(uri);
-        dumpSurtPrefixSet(uri);
+    protected void readPrefixes() {
+        buildSurtPrefixSet();
+        dumpSurtPrefixSet();
     }
     
     /**
      * Dump the current prefixes in use to configured dump file (if any)
      */
-    protected void dumpSurtPrefixSet(StateProvider uri) {
+    protected void dumpSurtPrefixSet() {
         // dump surts to file, if appropriate
-        Path dumpPath = uri.get(this, SURTS_DUMP_FILE);
+        Path dumpPath = getSurtsDumpFile();
         if (!dumpPath.isEmpty()) {
             File dump = dumpPath.toFile();
             try {
@@ -224,12 +234,12 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * Construct the set of prefixes to use, from the seed list (
      * which may include both URIs and '+'-prefixed directives).
      */
-    protected void buildSurtPrefixSet(StateProvider uri) {
+    protected void buildSurtPrefixSet() {
         SurtPrefixSet newSurtPrefixes = new SurtPrefixSet();
         FileReader fr = null;
 
         // read SURTs from file, if appropriate
-        Path sourcePath = uri.get(this, SURTS_SOURCE_FILE);        
+        Path sourcePath = getSurtsSourceFile();        
         if (!sourcePath.isEmpty()) {
             File source = sourcePath.toFile();
             try {
@@ -246,7 +256,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
         }
         
         // interpret seeds as surts, if appropriate
-        boolean deduceFromSeeds = uri.get(this, SEEDS_AS_SURT_PREFIXES);
+        boolean deduceFromSeeds = getSeedsAsSurtPrefixes();
         if(deduceFromSeeds) {
             try {
                 fr = new FileReader(getSeedfile());
@@ -268,9 +278,8 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * Re-read prefixes after an update.
      */
     public synchronized void keyChanged(KeyChangeEvent event) {
-        StateProvider provider = event.getStateProvider();
-        if (provider.get(this, REBUILD_ON_RECONFIG)) {
-            readPrefixes(provider);
+        if (getRebuildOnReconfig()) {
+            readPrefixes();
         }
         // TODO: make conditional on file having actually changed,
         // perhaps by remembering mod-time

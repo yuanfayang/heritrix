@@ -25,8 +25,6 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
 
@@ -45,17 +43,14 @@ public class TooManyHopsDecideRule extends PredicatedRejectDecideRule {
     /**
      * Max path depth for which this filter will match.
      */
-    final public static Key<Integer> MAX_HOPS = Key.make(20);
-
-    
-    /**
-     * Default access so available to test code.
-     */
-    static final Integer DEFAULT_MAX_HOPS = new Integer(20);
-
-    
-    static {
-        KeyManager.addKeys(TooManyHopsDecideRule.class);
+    {
+            setMaxHops(20);
+    }
+    public int getMaxHops() {
+        return (Integer) kp.get("maxHops");
+    }
+    public void setMaxHops(int maxHops) {
+        kp.put("maxHops", maxHops);
     }
     
     /**
@@ -77,7 +72,7 @@ public class TooManyHopsDecideRule extends PredicatedRejectDecideRule {
         if (hops == null) {
             return false;
         }
-        if (hops.length() <= uri.get(this, MAX_HOPS)) {
+        if (hops.length() <= getMaxHops()) {
             return false;
         }
         return true;

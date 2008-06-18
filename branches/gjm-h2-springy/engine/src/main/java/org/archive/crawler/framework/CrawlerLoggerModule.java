@@ -45,20 +45,18 @@ import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.io.GenerationFileHandler;
-import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.openmbeans.annotations.Bean;
+import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author pjack
@@ -66,18 +64,23 @@ import org.archive.util.ArchiveUtils;
  */
 public class CrawlerLoggerModule extends Bean  
 implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
-
-
     private static final long serialVersionUID = 1L;
 
-    @Immutable
-    public final static Key<Path> DIR = Key.make(new Path("logs"));
+    protected Path path = new Path("logs"); 
+    public Path getPath() {
+        return path;
+    }
+    public void setPath(Path path) {
+        this.path = path;
+    }
 
-    
-    public final static Key<Integer> MAX_OUTLINKS = Key.make(6000);
-    
-    static {
-        KeyManager.addKeys(CrawlerLoggerModule.class);
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
     }
     
     // manifest support
@@ -153,12 +156,14 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     transient private Map<String,Logger> loggers = new HashMap<String,Logger>();
 
 
-    private Path dir;
 
     
     private StringBuffer manifest = new StringBuffer();
     
     private transient AlertThreadGroup atg;
+
+
+
 
     public CrawlerLoggerModule() {
         super(AlertTracker.class);
@@ -166,8 +171,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
 
     
     public void initialTasks(StateProvider provider) {
-        dir = provider.get(this, DIR);
-        dir.toFile().mkdirs();
+        path.toFile().mkdirs();
         this.atg = AlertThreadGroup.current();
         try {
             setupLogs();
@@ -178,7 +182,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     
     
     private void setupLogs() throws IOException {
-        String logsPath = dir.toFile().getAbsolutePath() + File.separatorChar;
+        String logsPath = path.toFile().getAbsolutePath() + File.separatorChar;
         uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
         runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
             logsPath);
@@ -320,7 +324,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
 
 
     public File getLogsDir() {
-        return dir.toFile();
+        return path.toFile();
     }
 
 
@@ -392,13 +396,8 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         loggers = new HashMap<String,Logger>();
-        dir.toFile().mkdirs();
+        path.toFile().mkdirs();
         this.atg = AlertThreadGroup.current();
         this.setupLogs();
-    }
-
-    
-    public int getMaxOutlinks(ProcessorURI puri) {
-        return puri.get(this, MAX_OUTLINKS);
     }
 }

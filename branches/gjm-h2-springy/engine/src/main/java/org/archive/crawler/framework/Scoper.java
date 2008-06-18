@@ -30,11 +30,9 @@ import org.archive.crawler.util.LogUtils;
 import org.archive.modules.Processor;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
-import org.archive.state.Expert;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Base class for Scopers.
@@ -47,11 +45,6 @@ public abstract class Scoper extends Processor implements Initializable {
     private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
     
-
-    protected DecideRule scope;
-    protected CrawlerLoggerModule loggerModule;
-
-
     /**
      * If enabled, override default logger for this class (Default logger writes
      * the console). Override logger will instead send all logging to a file
@@ -60,18 +53,33 @@ public abstract class Scoper extends Processor implements Initializable {
      * suffix pattern, etc. in heritrix.properties. This attribute is only
      * checked once, on startup of a job.
      */
-    @Expert
-    final public static Key<Boolean> OVERRIDE_LOGGER = Key.make(false);
+    {
+        setLogToFile(true);
+    }
+    public boolean getLogToFile() {
+        return (Boolean) kp.get("logToFile");
+    }
+    public void setLogToFile(boolean enabled) {
+        kp.put("logToFile",enabled);
+    }
 
+    protected CrawlerLoggerModule loggerModule;
+    public CrawlerLoggerModule getLoggerModule() {
+        return this.loggerModule;
+    }
+    @Autowired
+    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+        this.loggerModule = loggerModule;
+    }
     
-    @Immutable
-    final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
-        Key.makeAuto(CrawlerLoggerModule.class);
-    
-    
-    @Immutable
-    final public static Key<DecideRule> SCOPE =
-        Key.make(DecideRule.class, null);
+    protected DecideRule scope;
+    public DecideRule getScope() {
+        return this.scope;
+    }
+    @Autowired
+    public void setDecideRule(DecideRule scope) {
+        this.scope = scope;
+    }
     
     // FIXME: Weirdo log overriding might not work on a per-subclass basis,
     // we may need to cut and paste it to the three subclasses, or eliminate
@@ -80,7 +88,6 @@ public abstract class Scoper extends Processor implements Initializable {
     // Also, eliminating weirdo log overriding would mean we wouldn't need to
     // tie into the CrawlController; we'd just need the scope.
     
-
     /**
      * Constructor.
      */
@@ -88,21 +95,15 @@ public abstract class Scoper extends Processor implements Initializable {
         super();
     }
 
-
     public void initialTasks(StateProvider defaults) {
-        this.scope = defaults.get(this, SCOPE);
-        this.loggerModule = defaults.get(this, LOGGER_MODULE);
-        if (!defaults.get(this, OVERRIDE_LOGGER)) {
-            return;
+        if (getLogToFile()) {
+            // Set up logger for this instance.  May have special directives
+            // since this class can log scope-rejected URLs.
+            LogUtils.createFileLogger(loggerModule.getLogsDir(),
+                this.getClass().getName(),
+                Logger.getLogger(this.getClass().getName()));
         }
-
-        // Set up logger for this instance.  May have special directives
-        // since this class can log scope-rejected URLs.
-        LogUtils.createFileLogger(loggerModule.getLogsDir(),
-            this.getClass().getName(),
-            Logger.getLogger(this.getClass().getName()));
     }
-
 
     /**
      * Schedule the given {@link CrawlURI CrawlURI} with the Frontier.

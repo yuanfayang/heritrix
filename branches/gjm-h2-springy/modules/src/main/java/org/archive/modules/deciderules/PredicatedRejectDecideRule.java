@@ -27,7 +27,6 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
 
 /**
  * PredicatedDecideRule whose default decision is REJECT.
@@ -36,15 +35,21 @@ import org.archive.state.Key;
  */
 public abstract class PredicatedRejectDecideRule extends PredicatedDecideRule {
 
-    final public static Key<DecideResult> DECISION = 
-        Key.make(DecideResult.REJECT);
-
+    {
+        setDecision(DecideResult.REJECT);
+    }
+    public DecideResult getDecision() {
+        return (DecideResult) kp.get("decision");
+    }
+    public void setDecision(DecideResult decision) {
+        kp.put("decision", decision);
+    }
     protected DecideResult getDefaultDecision(ProcessorURI uri) {
-        return uri.get(this, DECISION);
+        return getDecision();
     }
     
     public DecideResult onlyDecision(ProcessorURI uri) {
-        return uri.get(this, DECISION);
+        return getDecision();
     }
     
 }

@@ -23,6 +23,11 @@
  */
 package org.archive.modules.fetcher;
 
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DNS_SUCCESS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DOMAIN_UNRESOLVABLE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_GETBYNAME_SUCCESS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_UNFETCHABLE_URI;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,22 +40,16 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
-
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
-import org.archive.state.Expert;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Recorder;
 import org.archive.util.InetAddressUtil;
+import org.archive.util.Recorder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
@@ -78,53 +77,67 @@ public class FetchDNS extends Processor implements Initializable {
     private short TypeType = Type.A;
     protected InetAddress serverInetAddr = null;
 
-    private ServerCache crawlHostCache;
-
     /**
      * If a DNS lookup fails, whether or not to fallback to InetAddress
      * resolution, which may use local 'hosts' files or other mechanisms.
      */
-    @Expert
-    final public static Key<Boolean> ACCEPT_NON_DNS_RESOLVES = 
-        Key.make(false);
-
+    boolean acceptNonDnsResolves = false; 
+    public boolean getAcceptNonDnsResolves() {
+        return acceptNonDnsResolves;
+    }
+    public void setAcceptNonDnsResolves(boolean acceptNonDnsResolves) {
+        this.acceptNonDnsResolves = acceptNonDnsResolves;
+    }
     
     /**
      * Used to do DNS lookups.
      */
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
     
     /**
      * Whether or not to perform an on-the-fly digest hash of retrieved
      * content-bodies.
      */
-    @Expert
-    final public static Key<Boolean> DIGEST_CONTENT = Key.make(true);
-
+    {
+        setDigestContent(true);
+    }
+    public boolean getDigestContent() {
+        return (Boolean) kp.get("digestContent");
+    }
+    public void setDigestContent(boolean digest) {
+        kp.put("digestContent",digest);
+    }
 
     /**
      * Which algorithm (for example MD5 or SHA-1) to use to perform an 
      * on-the-fly digest hash of retrieved content-bodies.
      */
-    @Expert
-    final public static Key<String> DIGEST_ALGORITHM = Key.make("sha1");
-
+    String digestAlgorithm = "sha1"; 
+    public String getDigestAlgorithm() {
+        return digestAlgorithm;
+    }
+    public void setDigestAlgorithm(String digestAlgorithm) {
+        this.digestAlgorithm = digestAlgorithm;
+    }
 
     private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES
         = 6 * 60 * 60; // 6 hrs
     
     private byte [] reusableBuffer = new byte[1024];
 
-
-    
     public FetchDNS() {
     }
 
     
     public void initialTasks(StateProvider p) {
-        this.crawlHostCache = p.get(this, SERVER_CACHE);
+
     }
     
     protected boolean shouldProcess(ProcessorURI curi) {
@@ -146,7 +159,7 @@ public class FetchDNS extends Processor implements Initializable {
             return;
         }
 
-        CrawlHost targetHost = crawlHostCache.getHostFor(dnsName);
+        CrawlHost targetHost = getServerCache().getHostFor(dnsName);
         if (isQuadAddress(curi, dnsName, targetHost)) {
         	// We're done processing.
         	return;
@@ -172,7 +185,7 @@ public class FetchDNS extends Processor implements Initializable {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Failed find of recordset for " + dnsName);
             }
-            if (curi.get(this, ACCEPT_NON_DNS_RESOLVES)||"localhost".equals(dnsName)) {
+            if (getAcceptNonDnsResolves()||"localhost".equals(dnsName)) {
                 // Do lookup that bypasses javadns.
                 InetAddress address = null;
                 try {
@@ -259,10 +272,10 @@ public class FetchDNS extends Processor implements Initializable {
 
         Recorder rec = curi.getRecorder();
         // Shall we get a digest on the content downloaded?
-        boolean digestContent = curi.get(this, DIGEST_CONTENT);
+        boolean digestContent = getDigestContent();
         String algorithm = null;
         if (digestContent) {
-            algorithm = curi.get(this, DIGEST_ALGORITHM);
+            algorithm = getDigestAlgorithm();
             rec.getRecordedInput().setDigest(algorithm);
         } else {
             rec.getRecordedInput().setDigest((MessageDigest)null);
@@ -341,11 +354,5 @@ public class FetchDNS extends Processor implements Initializable {
             break;
         }
         return arecord;
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(FetchDNS.class);
     }
 }

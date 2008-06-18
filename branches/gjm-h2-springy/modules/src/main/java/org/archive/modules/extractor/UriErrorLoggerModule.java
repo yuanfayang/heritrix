@@ -28,7 +28,6 @@ package org.archive.modules.extractor;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.LoggerModule;
-import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 
 /**
@@ -37,8 +36,5 @@ import org.archive.net.UURI;
  */
 public interface UriErrorLoggerModule extends LoggerModule {
 
-
     void logUriError(URIException e, UURI u, CharSequence l);
-
-    int getMaxOutlinks(ProcessorURI puri);
 }

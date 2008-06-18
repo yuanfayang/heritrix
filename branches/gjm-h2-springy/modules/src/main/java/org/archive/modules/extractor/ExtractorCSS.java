@@ -33,7 +33,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
-import org.archive.state.KeyManager;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -122,7 +121,7 @@ public class ExtractorCSS extends ContentExtractor {
         // for sure close it before we leave.
         try {
             this.numberOfLinksExtracted +=
-                processStyleCode(uriErrors, curi, cs);
+                processStyleCode(this, curi, cs);
             // Set flag to indicate that link extraction is completed.
             return true;
         } finally {
@@ -137,7 +136,7 @@ public class ExtractorCSS extends ContentExtractor {
         }
     }
 
-    public static long processStyleCode(UriErrorLoggerModule uriErrors, 
+    public static long processStyleCode(Extractor ext, 
             ProcessorURI curi, CharSequence cs) {
         long foundLinks = 0;
         Matcher uris = null;
@@ -152,12 +151,12 @@ public class ExtractorCSS extends ContentExtractor {
                 cssUri = TextUtils.replaceAll(CSS_BACKSLASH_ESCAPE, cssUri,
                         "$1");
                 foundLinks++;
-                int max = uriErrors.getMaxOutlinks(curi);
+                int max = ext.getExtractorHelper().getMaxOutlinks();
                 try {
                     Link.addRelativeToBase(curi, max, cssUri, 
                             LinkContext.EMBED_MISC, Hop.EMBED);
                 } catch (URIException e) {
-                    uriErrors.logUriError(e, curi.getUURI(), cssUri);
+                    ext.logUriError(e, curi.getUURI(), cssUri);
                 }
             }
         } catch (StackOverflowError e) {
@@ -176,11 +175,5 @@ public class ExtractorCSS extends ContentExtractor {
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorCSS.class);
     }
 }

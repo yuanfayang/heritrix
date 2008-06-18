@@ -47,6 +47,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
@@ -57,6 +58,7 @@ import org.archive.state.StateProvider;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.bdbje.EnhancedEnvironment;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
@@ -186,30 +188,30 @@ Serializable, Closeable {
      */
     private static final long serialVersionUID = 1L;
 
-    @Immutable
-    final public static Key<String> DIR = Key.make("state");
+//    @Immutable
+//    final public static Key<String> DIR = Key.make("state");
+//    
+//    @Immutable
+//    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(60); 
+//    
+//    @Immutable
+//    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
+//        Key.make(true);
+//    
+//    static {
+//        KeyManager.addKeys(BdbModule.class);
+//    }
     
-    @Immutable
-    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(60); 
+    private JobHome homeDirectory; 
     
-    @Immutable
-    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-        Key.make(true);
-    
-    static {
-        KeyManager.addKeys(BdbModule.class);
-    }
-    
-    private boolean checkpointCopy;
+    private boolean checkpointCopyLogs;
     
     private String path;
     
     private int cachePercent;
     
     private transient EnhancedEnvironment bdbEnvironment;
-    
-    private transient Database classCatalogDB;
-    
+        
     private transient StoredClassCatalog classCatalog;
     
     private Map<String,CachedBdbMap> bigMaps = 
@@ -225,9 +227,6 @@ Serializable, Closeable {
 
     
     public void initialTasks(StateProvider provider) {
-        checkpointCopy = provider.get(this, CHECKPOINT_COPY_BDBJE_LOGS);
-        cachePercent = provider.get(this, BDB_CACHE_PERCENT);
-        path = provider.get(this, DIR);
         try {
             setUp(path, cachePercent, true);
         } catch (DatabaseException e) {
@@ -353,9 +352,9 @@ Serializable, Closeable {
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         if (in instanceof CheckpointRecovery) {
-            CheckpointRecovery cr = (CheckpointRecovery)in;
-            path = cr.translatePath(path);
-            cr.setState(this, DIR, path);
+//            CheckpointRecovery cr = (CheckpointRecovery)in;
+//            path = cr.translatePath(path);
+//            cr.setState(this, DIR, path);
         }
         try {
             setUp(path, this.cachePercent, false);
@@ -392,7 +391,7 @@ Serializable, Closeable {
 
     public void checkpoint(File dir, List<RecoverAction> actions) 
     throws IOException {
-        if (checkpointCopy) {
+        if (checkpointCopyLogs) {
             actions.add(new BdbRecover(path));
         }
         // First sync bigMaps
@@ -496,7 +495,7 @@ Serializable, Closeable {
                     for (final Iterator i = srcFilenames.iterator();
                             i.hasNext() && !pastLastLogFile;) {
                         String name = (String) i.next();
-                        if (this.checkpointCopy) {
+                        if (this.checkpointCopyLogs) {
                             FileUtils.copyFiles(new File(path, name),
                                 new File(bdbDir, name));
                         }
@@ -618,6 +617,46 @@ Serializable, Closeable {
             this.bdb.close2();
         }
         
+    }
+
+
+    public int getCachePercent() {
+        return cachePercent;
+    }
+
+
+    public void setCachePercent(int cachePercent) {
+        this.cachePercent = cachePercent;
+    }
+
+
+    public boolean isCheckpointCopyLogs() {
+        return checkpointCopyLogs;
+    }
+
+
+    public void setCheckpointCopyLogs(boolean checkpointCopyLogs) {
+        this.checkpointCopyLogs = checkpointCopyLogs;
+    }
+
+
+    public JobHome getHomeDirectory() {
+        return homeDirectory;
+    }
+
+    @Autowired
+    public void setHomeDirectory(JobHome homeDirectory) {
+        this.homeDirectory = homeDirectory;
+    }
+
+
+    public String getPath() {
+        return path;
+    }
+
+
+    public void setPath(String path) {
+        this.path = path;
     }
 
 }

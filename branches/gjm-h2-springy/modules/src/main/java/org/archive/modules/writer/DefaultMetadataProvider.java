@@ -28,20 +28,18 @@ package org.archive.modules.writer;
 
 import java.io.Serializable;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.RobotsHonoringPolicy;
-import org.archive.settings.SheetManager;
-import org.archive.state.Immutable;
+import org.archive.settings.JobHome;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
-import org.archive.state.KeyManager;
 import org.archive.state.Module;
-import org.archive.state.PatternConstraint;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author pjack
@@ -52,129 +50,136 @@ public class DefaultMetadataProvider implements
     MetadataProvider, 
     UserAgentProvider, 
     Serializable, 
-    Module {
+    Module,
+    HasKeyedProperties {
 
     private static final long serialVersionUID = 1L;
 
-    @Immutable
-    final public static Key<SheetManager> SHEET_MANAGER = 
-        Key.makeAuto(SheetManager.class);
+    KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
     
-    @Immutable
-    final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-        Key.makeAuto(RobotsHonoringPolicy.class);
+    public RobotsHonoringPolicy getRobotsHonoringPolicy() {
+        return (RobotsHonoringPolicy) kp.get("robotsHonoringPolicy");
+    }
+    @Autowired
+    public void setRobotsHonoringPolicy(RobotsHonoringPolicy policy) {
+        kp.put("robotsHonoringPolicy",policy);
+    }
 
-    @Immutable
-    final public static Key<String> OPERATOR_NAME = Key.make("");
-    
-    @Immutable
-    final public static Key<String> DESCRIPTION = Key.make("");
+    String operator = "";
+    public String getOperator() {
+        return operator;
+    }
+    public void setOperator(String operatorName) {
+        this.operator = operatorName;
+    }
 
-    final public static Key<String> HTTP_USER_AGENT =
-        KeyMaker
-            .make("Mozilla/5.0 (compatible; heritrix/@VERSION@ +@OPERATOR_CONTACT_URL@)")
-            .addConstraint(new PatternConstraint(
-                    Pattern.compile("^.*\\+@OPERATOR_CONTACT_URL@.*$")))
-            .toKey();
+    String description = ""; 
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+    }
     
-    final public static Key<String> OPERATOR_FROM =
-        KeyMaker
-            .make("")
-            .addConstraint(new PatternConstraint(
-                    Pattern.compile("^(\\s*|\\S+@[-\\w]+\\.[-\\w\\.]+)$")))
-            .toKey();
+    {
+        setUserAgentTemplate("Mozilla/5.0 (compatible; heritrix/@VERSION@ +@OPERATOR_CONTACT_URL@)");
+    }
+    public String getUserAgentTemplate() {
+        return (String) kp.get("userAgentTemplate");
+    }
+    public void setUserAgentTemplate(String template) {
+        // TODO compile pattern outside method
+        if(!template.matches("^.*\\+@OPERATOR_CONTACT_URL@.*$")) {
+            throw new IllegalArgumentException("bad user-agent: "+template);
+        }
+        kp.put("userAgentTemplate",template);
+    }
     
-    final public static Key<String> OPERATOR_CONTACT_URL =
-        KeyMaker
-            .make("ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR")
-            .addConstraint(new PatternConstraint(
-                    Pattern.compile("^https?://.*$")))
-            .toKey();
+    {
+        setOperatorFrom("");
+    }
+    public String getOperatorFrom() {
+        return (String) kp.get("operatorFrom");
+    }
+    public void setOperatorFrom(String operatorFrom) {
+        // TODO compile pattern outside method
+        if(!operatorFrom.matches("^(\\s*|\\S+@[-\\w]+\\.[-\\w\\.]+)$")) {
+            throw new IllegalArgumentException("bad operatorFrom: "+operatorFrom);
+        }
+        kp.put("operatorFrom",operatorFrom);
+    }
     
-    @Immutable
-    final public static Key<String> AUDIENCE = Key.make("");
-    
-    @Immutable
+    {
+        setOperatorContactUrl("ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR");
+    }
+    public String getOperatorContactUrl() {
+        return (String) kp.get("operatorContactUrl");
+    }
+    public void setOperatorContactUrl(String operatorContactUrl) {
+        // TODO compile pattern outside method
+        if(!operatorContactUrl.matches("^https?://.*$")) {
+            throw new IllegalArgumentException("bad operatorContactUrl: "+operatorContactUrl);
+        }
+        kp.put("operatorContactUrl",operatorContactUrl);
+    }
+
+
+    String audience = ""; 
+    public String getAudience() {
+        return audience;
+    }
+    public void setAudience(String audience) {
+        this.audience = audience;
+    }
+   
+    String organization = ""; 
+    public String getOrganization() {
+        return organization;
+    }
+    public void setOrganization(String organization) {
+        this.organization = organization;
+    }
     final public static Key<String> ORGANIZATION = Key.make("");
 
 
-    static {
-        KeyManager.addKeys(DefaultMetadataProvider.class);
-    }
-
-    
-    private SheetManager manager;
-    private String operatorName;
-    private String description;
-    private String robotsPolicy;
-    private String userAgent;
-    private String from;
-    private String audience;
-    private String organization;
-    
-    
     public void initialTasks(StateProvider global) {
-        this.manager = global.get(this, SHEET_MANAGER);
-        this.robotsPolicy = global.get(this, ROBOTS_HONORING_POLICY).getType(global).toString();
-        this.operatorName = global.get(this, OPERATOR_NAME);
-        this.description = global.get(this, DESCRIPTION);
-        this.from = global.get(this, OPERATOR_FROM);
-        this.userAgent = getUserAgent(global);
-        this.audience = global.get(this, AUDIENCE);
-        this.organization = global.get(this, ORGANIZATION);
-    }
 
-    public String getFrom() {
-        return from;
     }
     
-    
-    public String getFrom(StateProvider context) {
-        return from;
-    }
-
-    
-    public String getUserAgent(StateProvider context) {
-        String userAgent = context.get(this, HTTP_USER_AGENT);
-        String contactURL = context.get(this, OPERATOR_CONTACT_URL);
+    public String getUserAgent() {
+        String userAgent = getUserAgentTemplate();
+        String contactURL = getOperatorContactUrl();
         userAgent = userAgent.replaceFirst("@OPERATOR_CONTACT_URL@", contactURL);
         userAgent = userAgent.replaceFirst("@VERSION@",
                 Matcher.quoteReplacement(ArchiveUtils.VERSION));
         return userAgent;
     }
+    public String getUserAgent(StateProvider context) {
+        // TODO: eliminate this version from all callers
+        return getUserAgent(); 
+    }
+
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
     
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-
-    public String getJobDescription() {
-        return description;
-    }
-
-
     public String getJobName() {
-        return manager.getCrawlName();
+        return jobHome.getName();
     }
 
-
-    public String getJobOperator() {
-        return operatorName;
+    public String getRobotsPolicyName() {
+        return getRobotsHonoringPolicy().getType().toString();
     }
 
-
-    public String getRobotsPolicy() {
-        return robotsPolicy;
-    }
-
-    
-    public String getAudience() {
-        return audience;
-    }
-    
-    
-    public String getOrganization() {
-        return organization;
-    }
-
+    public String getFrom(StateProvider context) {
+        return getOperatorFrom();
+    } 
 }

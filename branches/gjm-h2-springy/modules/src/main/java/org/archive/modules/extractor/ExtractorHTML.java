@@ -37,14 +37,11 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Expert;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Basic link-extraction, from an HTML content-body,
@@ -94,15 +91,21 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      */
 // version w/ less unnecessary backtracking
     
-    @Immutable @Expert
-    final public static Key<Integer> MAX_ELEMENT_LENGTH = Key.make(1024);
-
+    {
+        setMaxElementLength(1024); // no limit
+    }
+    public int getMaxElementLength() {
+        return (Integer) kp.get("maxElementLength");
+    }
+    public void setMaxElementLength(long max) {
+        kp.put("maxElementLength",max);
+    }
       
-      static final String RELEVANT_TAG_EXTRACTOR =
-          "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
-          "|((style[^>]*+)>.*?</style)" + // 3, 4
-          "|(((meta)|(?:\\w{1,"+MAX_ELEMENT_REPLACE+"}))\\s+[^>]*+)" + // 5, 6, 7
-          "|(!--.*?--))>"; // 8 
+    static final String RELEVANT_TAG_EXTRACTOR =
+      "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
+      "|((style[^>]*+)>.*?</style)" + // 3, 4
+      "|(((meta)|(?:\\w{1,"+MAX_ELEMENT_REPLACE+"}))\\s+[^>]*+)" + // 5, 6, 7
+      "|(!--.*?--))>"; // 8 
 
 //    version w/ problems with unclosed script tags 
 //    static final String RELEVANT_TAG_EXTRACTOR =
@@ -119,13 +122,30 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 //    static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
 //     "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
 
-    @Immutable @Expert
-    public static final Key<Integer> MAX_ATTR_NAME_LENGTH = Key.make(1024);
+    {
+        setMaxAttrNameLength(1024); // no limit
+    }
+
+    public int getMaxAttrNameLength() {
+        return (Integer) kp.get("maxAttrNameLength");
+    }
+
+    public void setMaxAttrNameLength(long max) {
+        kp.put("maxAttrNameLength", max);
+    }
 
 
-    @Immutable @Expert
-    public static final Key<Integer> MAX_ATTR_VAL_LENGTH = Key.make(16384);
+    {
+        setMaxAttrNameLength(16384); // no limit
+    }
 
+    public int getMaxAttrValLength() {
+        return (Integer) kp.get("maxAttrValLength");
+    }
+
+    public void setMaxAttrValLength(long max) {
+        kp.put("maxAttrValLength", max);
+    }
       
     // TODO: perhaps cut to near MAX_URI_LENGTH
     
@@ -185,27 +205,43 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * IMG, 'E' hop-type), otherwise they are treated as navigational links.
      * Default is true.
      */
-    @Expert
-    public static final Key<Boolean> TREAT_FRAMES_AS_EMBED_LINKS = 
-        Key.make(true);
-
+    {
+        setTreatFramesAsEmbedLinks(true);
+    }
+    public boolean getTreatFramesAsEmbedLinks() {
+        return (Boolean) kp.get("treatFramesAsEmbedLinks");
+    }
+    public void setTreatFramesAsEmbedLinks(boolean asEmbeds) {
+        kp.put("treatFramesAsEmbedLinks",asEmbeds);
+    }
     
     /**
      * If true, URIs appearing as the ACTION attribute in HTML FORMs are
      * ignored. Default is false.
      */
-    @Expert
-    public static final Key<Boolean> IGNORE_FORM_ACTION_URLS =
-        Key.make(false);
-
+    {
+        setIgnoreFormActionUrls(false);
+    }
+    public boolean getIgnoreFormActionUrls() {
+        return (Boolean) kp.get("ignoreFormActionUrls");
+    }
+    public void setIgnoreFormActionUrls(boolean ignoreActions) {
+        kp.put("ignoreFormActionUrls",ignoreActions);
+    }
 
     /**
      * If true, only ACTION URIs with a METHOD of GET (explicit or implied)
      * are extracted. Default is true.
      */
-    @Expert
-    public static final Key<Boolean> EXTRACT_ONLY_FORM_GETS =
-        Key.make(true);
+    {
+        setExtractOnlyFormGets(true);
+    }
+    public boolean getExtractOnlyFormGets() {
+        return (Boolean) kp.get("extractOnlyFormGets");
+    }
+    public void setExtractOnlyFormGets(boolean onlyGets) {
+        kp.put("extractOnlyFormGets",onlyGets);
+    }
     
     /**
      * If true, in-page Javascript is scanned for strings that
@@ -214,9 +250,15 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * sometimes generates webmaster concerns over odd crawler
      * behavior. Default is true.
      */
-    @Expert
-    public static final Key<Boolean> EXTRACT_JAVASCRIPT = Key.make(true);
-    
+    {
+        setExtractJavascript(true);
+    }
+    public boolean getExtractJavascript() {
+        return (Boolean) kp.get("extractJavascript");
+    }
+    public void setExtractJavascript(boolean extractJavascript) {
+        kp.put("extractJavascript",extractJavascript);
+    }    
 
     /**
      * If true, strings that look like URIs found in unusual places (such as
@@ -224,30 +266,41 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * and invalid URIs, and attempts to fetch the invalid URIs sometimes
      * generate webmaster concerns over odd crawler behavior. Default is true.
      */
-    @Expert
-    public static final Key<Boolean> EXTRACT_VALUE_ATTRIBUTES =
-        Key.make(true);
-    
+    {
+        setExtractValueAttributes(true);
+    }
+    public boolean getExtractValueAttributes() {
+        return (Boolean) kp.get("extractValueAttributes");
+    }
+    public void setExtractValueAttributes(boolean extractValueAttributes) {
+        kp.put("extractValueAttributes",extractValueAttributes);
+    }    
 
     /**
      * If true, URIs which end in typical non-HTML extensions (such as .gif)
      * will not be scanned as if it were HTML. Default is true.
      */
-    @Expert
-    public static final Key<Boolean> IGNORE_UNEXPECTED_HTML = 
-        Key.make(true);
-    
+    {
+        setIgnoreUnexpectedHtml(true);
+    }
+    public boolean getIgnoreUnexpectedHtml() {
+        return (Boolean) kp.get("ignoreUnexpectedHtml");
+    }
+    public void setIgnoreUnexpectedHtml(boolean ignoreUnexpectedHtml) {
+        kp.put("ignoreUnexpectedHtml",ignoreUnexpectedHtml);
+    }
     
     /**
      * The robots honoring policy to use when considering a robots META tag.
      */
-    public static final Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-        Key.makeAuto(RobotsHonoringPolicy.class);
-    
-    static {
-        KeyManager.addKeys(ExtractorHTML.class);
+    public RobotsHonoringPolicy getRobotsHonoringPolicy() {
+        return (RobotsHonoringPolicy) kp.get("robotsHonoringPolicy");
     }
-    
+    @Autowired
+    public void setRobotsHonoringPolicy(RobotsHonoringPolicy policy) {
+        kp.put("robotsHonoringPolicy",policy);
+    }
+ 
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
@@ -265,21 +318,17 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
     @Override
     public void initialTasks(StateProvider global) {
         super.initialTasks(global);
-        this.honoringPolicy = global.get(this, ROBOTS_HONORING_POLICY);
-        int maxElementLength = global.get(this, MAX_ELEMENT_LENGTH);
-        int maxAttrNameLength = global.get(this, MAX_ATTR_NAME_LENGTH);
-        int maxAttrValLength = global.get(this, MAX_ATTR_VAL_LENGTH);
 
         String regex = RELEVANT_TAG_EXTRACTOR;
         regex = regex.replace(MAX_ELEMENT_REPLACE, 
-                    Integer.toString(maxElementLength));
+                    Integer.toString(getMaxElementLength()));
         this.relevantTagExtractor = Pattern.compile(regex);
         
         regex = EACH_ATTRIBUTE_EXTRACTOR;
         regex = regex.replace(MAX_ATTR_NAME_REPLACE, 
-                    Integer.toString(maxAttrNameLength));
+                    Integer.toString(getMaxAttrNameLength()));
         regex = regex.replace(MAX_ATTR_VAL_REPLACE,
-                    Integer.toString(maxAttrValLength));
+                    Integer.toString(getMaxAttrValLength()));
         this.eachAttributeExtractor = Pattern.compile(regex);
     }
     
@@ -299,13 +348,13 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         CharSequence method = null; 
         
         final boolean framesAsEmbeds = 
-            curi.get(this, TREAT_FRAMES_AS_EMBED_LINKS);
+            getTreatFramesAsEmbedLinks();
 
         final boolean ignoreFormActions = 
-            curi.get(this, IGNORE_FORM_ACTION_URLS);
+            getIgnoreFormActionUrls();
         
         final boolean extractValueAttributes = 
-            curi.get(this, EXTRACT_VALUE_ATTRIBUTES);
+            getExtractValueAttributes();
         
         final String elementStr = element.toString();
 
@@ -333,7 +382,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
                         UURI base = UURIFactory.getInstance(value.toString());
                         curi.setBaseURI(base);
                     } catch (URIException e) {
-                        logUriError(e, curi, value);
+                        logUriError(e, curi.getUURI(), value);
                     }
                 }
             } else if (attr.start(3) > -1) {
@@ -409,7 +458,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
                 // STYLE inline attribute
                 // then, parse for URIs
                 this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
-                        uriErrors, curi, value);
+                        this, curi, value);
                 
             } else if (attr.start(12) > -1) {
                 // METHOD
@@ -456,7 +505,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         // finish handling form action, now method is available
         if(action != null) {
             if(method == null || "GET".equalsIgnoreCase(method.toString()) 
-                        || ! curi.get(this, EXTRACT_ONLY_FORM_GETS)) {
+                        || ! getExtractOnlyFormGets()) {
                 processLink(curi, action, actionContext);
             }
         }
@@ -470,9 +519,9 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
      * @param cs    CharSequence of javascript code
      */
     protected void processScriptCode(ProcessorURI curi, CharSequence cs) {
-        if (curi.get(this, EXTRACT_JAVASCRIPT)) {
+        if (getExtractJavascript()) {
             this.numberOfLinksExtracted +=
-                ExtractorJS.considerStrings(uriErrors, curi, cs, false);
+                ExtractorJS.considerStrings(this, curi, cs, false);
         }
     }
 
@@ -509,10 +558,10 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
             // to become a part of is expected to outlive the current
             // ReplayCharSequence.
             HTMLLinkContext hc = new HTMLLinkContext(context.toString());
-            int max = uriErrors.getMaxOutlinks(curi);
+            int max = getExtractorHelper().getMaxOutlinks();
             Link.addRelativeToBase(curi, max, uri, hc, hop);
         } catch (URIException e) {
-            logUriError(e, curi, uri);
+            logUriError(e, curi.getUURI(), uri);
         }
     }
 
@@ -536,7 +585,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 
     
     protected boolean shouldExtract(ProcessorURI uri) {
-        if (uri.get(this, IGNORE_UNEXPECTED_HTML)) {
+        if (getIgnoreUnexpectedHtml()) {
             try {
                 // HTML was not expected (eg a GIF was expected) so ignore
                 // (as if a soft 404)
@@ -762,11 +811,11 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                int max = uriErrors.getMaxOutlinks(curi);
+                int max = getExtractorHelper().getMaxOutlinks();
                 Link.addRelativeToBase(curi, max, refreshUri, 
                         HTMLLinkContext.META, Hop.REFER);
             } catch (URIException e) {
-                logUriError(e, curi, refreshUri);
+                logUriError(e, curi.getUURI(), refreshUri);
             }
         }
         return false;
@@ -788,8 +837,9 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 
         // then, parse for URIs
         this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
-                uriErrors,
-            curi, sequence.subSequence(endOfOpenTag,sequence.length()));
+                this,
+                curi, 
+                sequence.subSequence(endOfOpenTag,sequence.length()));
     }
     
 

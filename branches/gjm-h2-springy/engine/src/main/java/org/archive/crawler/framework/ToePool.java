@@ -215,7 +215,7 @@ public class ToePool extends ThreadGroup implements Reporter {
         writer.print("Toe threads report - "
                 + ArchiveUtils.get12DigitDate() + "\n");
         writer.print(" Job being crawled: "
-                + this.controller.getSheetManager().getCrawlName() + "\n");
+                + this.controller.getJobHome().getName() + "\n");
         writer.print(" Number of toe threads in pool: " + getToeCount() + " ("
                 + getActiveToeCount() + " active)\n\n");
 

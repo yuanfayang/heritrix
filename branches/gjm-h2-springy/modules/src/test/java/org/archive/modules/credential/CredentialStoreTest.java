@@ -26,6 +26,7 @@ package org.archive.modules.credential;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -72,12 +73,14 @@ public class CredentialStoreTest extends ModuleTestBase {
         Sheet host = manager.findConfig("org.archive.foo");
         
         CredentialStore store = new CredentialStore();
-        global.set(store, CredentialStore.CREDENTIALS, 
-                new SettingsMap<Credential>(global, Credential.class));
-        domain.set(store, CredentialStore.CREDENTIALS, 
-                new SettingsMap<Credential>(domain, Credential.class));
-        hostSingle.set(store, CredentialStore.CREDENTIALS, 
-                new SettingsMap<Credential>(hostSingle, Credential.class));
+        //FIXME:SPRINGY
+//        store.setCredentials(new HashMap<K, V>());
+//        global.set(store, CredentialStore.CREDENTIALS, 
+//                new SettingsMap<Credential>(global, Credential.class));
+//        domain.set(store, CredentialStore.CREDENTIALS, 
+//                new SettingsMap<Credential>(domain, Credential.class));
+//        hostSingle.set(store, CredentialStore.CREDENTIALS, 
+//                new SettingsMap<Credential>(hostSingle, Credential.class));
         
         writeCrendentials(store, global, "global");
         writeCrendentials(store, domain, "domain");
@@ -90,19 +93,19 @@ public class CredentialStoreTest extends ModuleTestBase {
         checkContextNames(store, domain, types.size() * 2); // should be global + domain
         checkContextNames(store, host, types.size() * 3); // should be global + domain + host
 
-        Key<Map<String,Credential>> k = CredentialStore.CREDENTIALS;
-        Map<String,Credential> defMap = global.resolveEditableMap(store, k);
-        for (String name: globalNames) {
-            defMap.remove(name);
-        }
+        //FIXME:SPRINGY
+//        Key<Map<String,Credential>> k = CredentialStore.CREDENTIALS;
+//        Map<String,Credential> defMap = global.resolveEditableMap(store, k);
+//        for (String name: globalNames) {
+//            defMap.remove(name);
+//        }
         // Should be only host and domain objects at deepest scope.
         checkContextNames(store, host, types.size() * 2);
     }
 
     private List<String> checkContextNames(CredentialStore store, 
             Sheet sheet, int size) {
-        Map<String,Credential> map = sheet.get(store, 
-                CredentialStore.CREDENTIALS);
+        Map<String,Credential> map = store.getCredentials();
 
         List<String> names = new ArrayList<String>(size);
         names.addAll(map.keySet());
@@ -114,7 +117,8 @@ public class CredentialStoreTest extends ModuleTestBase {
                 String prefix) throws Exception {
         Map<String,Credential> map = new SettingsMap<Credential>(context, 
                 Credential.class);
-        context.set(store, CredentialStore.CREDENTIALS, map);
+//        context.set(store, CredentialStore.CREDENTIALS, map);
+        store.setCredentials(map);
         
         List<Class> types = CredentialStore.getCredentialTypes();
         for (Class cl: types) {

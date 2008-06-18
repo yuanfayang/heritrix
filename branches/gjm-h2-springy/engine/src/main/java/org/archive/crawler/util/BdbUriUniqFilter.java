@@ -33,11 +33,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import st.ata.util.FPGenerator;
 
@@ -89,23 +87,17 @@ implements Initializable, Serializable {
     
     private static final String COLON_SLASH_SLASH = "://";
     
-    
-    @Immutable
-    public static final Key<BdbModule> BDB = 
-        Key.makeAuto(BdbModule.class);
-    
-    static {
-        KeyManager.addKeys(BdbUriUniqFilter.class);
+    protected BdbModule bdb;
+    @Autowired
+    public void setBdbModule(BdbModule bdb) {
+        this.bdb = bdb;
     }
-    
-    private BdbModule bdb;
     
     public BdbUriUniqFilter() {
     }
     
     
     public void initialTasks(StateProvider provider) {
-        this.bdb = provider.get(this, BDB);
         try {
             BdbModule.BdbConfig config = getDatabaseConfig();
             config.setAllowCreate(true);

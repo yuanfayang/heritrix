@@ -30,9 +30,6 @@ import java.util.regex.Pattern;
 import org.archive.modules.ProcessorURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.Global;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
 
@@ -48,21 +45,22 @@ implements KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
-
     /**
      * Number of times the pattern should be allowed to occur. This rule returns
      * its decision (usually REJECT) if a path-segment is repeated more than
      * number of times.
      */
-    @Global
-    final public static Key<Integer> MAX_REPETITIONS = Key.make(2);
-
+    {
+        setMaxRepetitions(2);
+    }
+    public int getMaxRepetitions() {
+        return (Integer) kp.get("maxRepetitions");
+    }
+    public void setMaxRepetitions(int maxRepetitions) {
+        kp.put("maxRepetitions", maxRepetitions);
+    }
 
     private AtomicReference<Pattern> pattern = new AtomicReference<Pattern>();
-
-    static {
-        KeyManager.addKeys(PathologicalPathDecideRule.class);
-    }
     
     /** Constructs a new PathologicalPathFilter.
      *
@@ -74,7 +72,7 @@ implements KeyChangeListener {
 
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {
-        int maxRep = uri.get(this, MAX_REPETITIONS);
+        int maxRep = getMaxRepetitions();
         Pattern p = getPattern(maxRep);
         if (p.matcher(uri.getUURI().toString()).matches()) {
             return DecideResult.REJECT;

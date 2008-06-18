@@ -23,33 +23,33 @@
  */
 package org.archive.crawler.framework;
 
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_RUNTIME_EXCEPTION;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_PROCESSING_THREAD_KILLED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_SERIOUS_ERROR;
+
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
 import org.archive.crawler.datamodel.CrawlURI;
-
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.io.SinkHandlerLogThread;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
+import org.archive.modules.ProcessorChain;
 import org.archive.modules.fetcher.HostResolver;
-import org.archive.io.SinkHandlerLogThread;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
+import org.archive.util.ProgressStatisticsReporter;
 import org.archive.util.Recorder;
 import org.archive.util.RecorderMarker;
-import org.archive.util.ProgressStatisticsReporter;
 import org.archive.util.Reporter;
 
 import com.sleepycat.util.RuntimeExceptionWrapper;
@@ -124,11 +124,9 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         controller = g.getController();
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
-        int outBufferSize = controller
-                .get(controller, CrawlControllerImpl.RECORDER_OUT_BUFFER_BYTES);
-        int inBufferSize = controller
-                .get(controller, CrawlControllerImpl.RECORDER_IN_BUFFER_BYTES);
-        httpRecorder = new Recorder(controller.getScratchDir(),
+        int outBufferSize = controller.getRecorderOutBufferBytes();
+        int inBufferSize = controller.getRecorderInBufferBytes();
+        httpRecorder = new Recorder(controller.getScratchDir().toFile(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
     }
@@ -137,7 +135,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
      * @see java.lang.Thread#run()
      */
     public void run() {
-        String name = controller.getSheetManager().getCrawlName();
+        String name = controller.getJobHome().getName();
         logger.fine(getName()+" started for order '"+name+"'");
 
         try {
@@ -294,20 +292,21 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
     private void processCrawlUri() throws InterruptedException {
         currentCuri.setThreadNumber(this.serialNumber);
         lastStartTime = System.currentTimeMillis();
-        Map<String,Processor> localProcessors = 
-            controller.get(controller, CrawlControllerImpl.PROCESSORS);
-        currentCuri.setStateProvider(controller.getSheetManager());
+        ProcessorChain localProcessors = 
+            controller.getProcessorChain();
+//        currentCuri.setStateProvider(controller.getSheetManager());
+        //TODO:SPRINGY push overrides
         currentCuri.setRecorder(httpRecorder);
         try {
-            Set<Map.Entry<String,Processor>> procs = localProcessors.entrySet();
-            Iterator<Map.Entry<String,Processor>> iter = procs.iterator();
-            Map.Entry<String,Processor> curProc = 
+            //Set<Map.Entry<String,Processor>> procs = localProcessors.entrySet();
+            Iterator<Processor> iter = localProcessors.iterator();
+            Processor curProc = 
                 iter.hasNext() ? iter.next() : null;
             while (curProc != null) {
                 setStep(STEP_ABOUT_TO_BEGIN_PROCESSOR);
-                currentProcessorName = curProc.getKey();
+                currentProcessorName = curProc.getName();
                 continueCheck();
-                ProcessResult pr = curProc.getValue().process(currentCuri);
+                ProcessResult pr = curProc.process(currentCuri);
                 switch (pr.getProcessStatus()) {
                     case PROCEED:
                         curProc = iter.hasNext() ? iter.next() : null;
@@ -347,11 +346,11 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
     }
 
     
-    private Map.Entry<String,Processor> advanceToNamed(
-            Iterator<Map.Entry<String,Processor>> iter, String name) {
+    private Processor advanceToNamed(
+            Iterator<Processor> iter, String name) {
         while (iter.hasNext()) {
-            Map.Entry<String,Processor> me = iter.next();
-            if (me.getKey().equals(name)) {
+            Processor me = iter.next();
+            if (me.getName().equals(name)) {
                 return me;
             }
         }
@@ -359,11 +358,10 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
     }
 
     
-    private Map.Entry<String,Processor> advanceToPostProcessing(
-            Iterator<Map.Entry<String,Processor>> iter) {
+    private Processor advanceToPostProcessing(Iterator<Processor> iter) {
         while (iter.hasNext()) {
-            Map.Entry<String,Processor> me = iter.next();
-            if (me.getValue() instanceof PostProcessor) {
+            Processor me = iter.next();
+            if (me instanceof PostProcessor) {
                 return me;
             }
         }
@@ -654,13 +652,13 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
     }
 
     public void progressStatisticsLine(PrintWriter writer) {
-        writer.print(getController().getStatistics()
+        writer.print(getController().getStatisticsTracker()
             .getProgressStatisticsLine());
         writer.print("\n");
     }
 
     public void progressStatisticsLegend(PrintWriter writer) {
-        writer.print(getController().getStatistics()
+        writer.print(getController().getStatisticsTracker()
             .progressStatisticsLegend());
         writer.print("\n");
     }

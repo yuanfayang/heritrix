@@ -29,27 +29,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
-public class DecideRuleSequence extends DecideRule {
-
+public class DecideRuleSequence extends DecideRule  {
     final private static Logger LOGGER = 
         Logger.getLogger(DecideRuleSequence.class.getName());
-    
     private static final long serialVersionUID = 3L;
-
-    final public static Key<List<DecideRule>> RULES = 
-        Key.makeList(DecideRule.class);
-
-    static {
-        KeyManager.addKeys(DecideRuleSequence.class);
+    
+    @SuppressWarnings("unchecked")
+    public List<DecideRule> getRules() {
+        return (List<DecideRule>) kp.get("rules");
+    }
+    public void setRules(List rules) {
+        kp.put("rules", rules);
     }
 
     public DecideResult innerDecide(ProcessorURI uri) {
         DecideResult result = DecideResult.PASS;
-        List<DecideRule> rules = uri.get(this, RULES);
+        List<DecideRule> rules = getRules();
         int max = rules.size();
         for (int i = 0; i < max; i++) {
             DecideRule rule = rules.get(i);
@@ -68,11 +65,5 @@ public class DecideRuleSequence extends DecideRule {
             LOGGER.finest("DecideRuleSequence returned " + result);
         }
         return result;
-    }
-
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(DecideRuleSequence.class);
     }
 }

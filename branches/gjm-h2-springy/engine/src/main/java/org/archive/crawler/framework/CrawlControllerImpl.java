@@ -31,10 +31,10 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EventObject;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -47,24 +47,21 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.modules.Processor;
+import org.archive.modules.ProcessorChain;
 import org.archive.modules.net.ServerCache;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Emitter;
-import org.archive.settings.KeyChangeEvent;
-import org.archive.settings.KeyChangeListener;
-import org.archive.settings.ListModuleListener;
-import org.archive.settings.SheetManager;
-import org.archive.settings.SingleSheet;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Immutable;
+import org.archive.settings.JobHome;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -81,114 +78,209 @@ import org.xbill.DNS.Lookup;
 public class CrawlControllerImpl extends Bean implements 
     Serializable, 
     Reporter, 
-    StateProvider, 
     Initializable,
-    KeyChangeListener,
-    CrawlController {
+    CrawlController,
+    BeanFactoryAware {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlControllerImpl.class,1);
 
-
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
-
+    ApplicationContext appCtx; 
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.appCtx = (ApplicationContext)beanFactory;
+    }
+    
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
 
     /**
      * The frontier to use for the crawl.
      */
-    @Immutable
-    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class);
+    protected Frontier frontier;
+    public Frontier getFrontier() {
+        return this.frontier;
+    }
+    @Autowired
+    public void setFrontier(Frontier frontier) {
+        this.frontier = frontier;
+    }
 
-    
-    @Immutable
-    final public static Key<Path> SCRATCH_DIR = 
-        Key.make(new Path("scratch"));
-    
-    @Immutable
-    final public static Key<Path> CHECKPOINTS_DIR =
-        Key.make(new Path("checkpoints"));
+    /**
+     * Scratch directory for temporary overflow-to-disk
+     */
+    protected Path scratchDir = new Path("scratch");
+    public Path getScratchDir() {
+        return scratchDir;
+    }
+    public void setScratchDir(Path scratchDir) {
+        this.scratchDir = scratchDir;
+    }
 
+
+    /**
+     * Checkpoints directory
+     */
+    protected Path checkpointsDir = new Path("checkpoints");
+    public Path getCheckpointsDir() {
+        return checkpointsDir;
+    }
+    public void setCheckpointsDir(Path checkpointsDir) {
+        this.checkpointsDir = checkpointsDir;
+    }
 
     /**
      * Statistics tracking modules.  Any number of specialized statistics 
      * trackers that monitor a crawl and write logs, reports and/or provide 
      * information to the user interface.
      */
-    @Global
-    final public static Key<StatisticsTracker> STATISTICS_TRACKER = 
-        Key.make(StatisticsTracker.class, StatisticsTrackerImpl.class);
+    protected StatisticsTracker statisticsTracker;
+    public StatisticsTracker getStatisticsTracker() {
+        return this.statisticsTracker;
+    }
+    @Autowired
+    public void setStatisticsTracker(StatisticsTracker statisticsTracker) {
+        this.statisticsTracker = statisticsTracker;
+    }
 
-    final public static Key<Map<String,Processor>> PROCESSORS =
-        Key.makeMap(Processor.class);
+    
+    /**
+     * Processor chain
+     */
+    protected ProcessorChain processorChain;
+    public ProcessorChain getProcessorChain() {
+        return this.processorChain;
+    }
+    @Autowired
+    public void setProcessorChain(ProcessorChain processorChain) {
+        this.processorChain = processorChain;
+    }
 
     
     /**
      * Maximum number of bytes to download. Once this number is exceeded 
      * the crawler will stop. A value of zero means no upper limit.
      */
-    @Global
-    final public static Key<Long> MAX_BYTES_DOWNLOAD = Key.make(0L);
-
+    long maxBytesDownload = 0L;
+    public long getMaxBytesDownload() {
+        return maxBytesDownload;
+    }
+    public void setMaxBytesDownload(long maxBytesDownload) {
+        this.maxBytesDownload = maxBytesDownload;
+    }
 
     /**
      * Maximum number of documents to download. Once this number is exceeded the 
      * crawler will stop. A value of zero means no upper limit.
      */
-    @Global
-    final public static Key<Long> MAX_DOCUMENT_DOWNLOAD = Key.make(0L);
-
+    long maxDocumentsDownload = 0L; 
+    public long getMaxDocumentsDownload() {
+        return maxDocumentsDownload;
+    }
+    public void setMaxDocumentsDownload(long maxDocumentsDownload) {
+        this.maxDocumentsDownload = maxDocumentsDownload;
+    }
 
     /**
      * Maximum amount of time to crawl (in seconds). Once this much time has 
      * elapsed the crawler will stop. A value of zero means no upper limit.
      */
-    @Global
-    final public static Key<Long> MAX_TIME_SEC = Key.make(0L);
-
-
+    long maxTimeSeconds = 0L;
+    public long getMaxTimeSeconds() {
+        return maxTimeSeconds;
+    }
+    public void setMaxTimeSeconds(long maxTimeSeconds) {
+        this.maxTimeSeconds = maxTimeSeconds;
+    }
+    
     /**
      * Maximum number of threads processing URIs at the same time.
      */
-    final public static Key<Integer> MAX_TOE_THREADS = Key.make(25);
-
-    /** whether to pause, rather than finish, when crawl appears done */
-    final public static Key<Boolean> PAUSE_AT_FINISH = Key.make(false);
+    int maxToeThreads = 25; 
+    public int getMaxToeThreads() {
+        return maxToeThreads;
+    }
+    public void setMaxToeThreads(int maxToeThreads) {
+        this.maxToeThreads = maxToeThreads;
+        toePool.setSize(this.maxToeThreads);
+    }
     
-    /** whether to pause at crawl start */
-    final public static Key<Boolean> PAUSE_AT_START = Key.make(false);
+    /** whether to pause, rather than finish, when crawl appears done */
+    boolean pauseAtFinish = false; 
+    public boolean getPauseAtFinish() {
+        return pauseAtFinish;
+    }
+    public void setPauseAtFinish(boolean pauseAtFinish) {
+        this.pauseAtFinish = pauseAtFinish;
+    }
 
+    /** whether to pause at crawl start */
+    boolean pauseAtStart = false; 
+    public boolean getPauseAtStart() {
+        return pauseAtStart;
+    }
+    public void setPauseAtStart(boolean pauseAtStart) {
+        this.pauseAtStart = pauseAtStart;
+    }
+    
     /**
      * Size in bytes of in-memory buffer to record outbound traffic. One such 
      * buffer is reserved for every ToeThread. 
      */
-    @Expert @Immutable
-    final public static Key<Integer> RECORDER_OUT_BUFFER_BYTES = Key.make(4096);
-
-
+    int recorderOutBufferBytes = 4096;
+    public int getRecorderOutBufferBytes() {
+        return recorderOutBufferBytes;
+    }
+    public void setRecorderOutBufferBytes(int recorderOutBufferBytes) {
+        this.recorderOutBufferBytes = recorderOutBufferBytes;
+    }
+    
     /**
      * Size in bytes of in-memory buffer to record inbound traffic. One such 
      * buffer is reserved for every ToeThread.
      */
-    @Expert @Immutable
-    final public static Key<Integer> RECORDER_IN_BUFFER_BYTES = 
-        Key.make(65536);
+    int recorderInBufferBytes = 65536;
+    public int getRecorderInBufferBytes() {
+        return recorderInBufferBytes;
+    }
+    public void setRecorderInBufferBytes(int recorderInBufferBytes) {
+        this.recorderInBufferBytes = recorderInBufferBytes;
+    }
     
-    
-    @Immutable
-    final public static Key<SheetManager> SHEET_MANAGER = 
-        Key.makeAuto(SheetManager.class);
+    /**
+     * Period at which to create automatic checkpoints; -1 means
+     * no auto checkpointing. 
+     */
+    int checkpointerPeriod = -1;
+    public int getCheckpointerPeriod() {
+        return checkpointerPeriod;
+    }
+    public void setCheckpointerPeriod(int checkpointerPeriod) {
+        this.checkpointerPeriod = checkpointerPeriod;
+    }
 
-    final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
-        Key.makeAuto(CrawlerLoggerModule.class);
+    protected CrawlerLoggerModule loggerModule;
+    public CrawlerLoggerModule getLoggerModule() {
+        return this.loggerModule;
+    }
+    @Autowired
+    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+        this.loggerModule = loggerModule;
+    }
 
-    @Immutable
-    final public static Key<Integer> CHECKPOINTER_PERIOD = Key.make(-1);
-
-    static {
-        KeyManager.addKeys(CrawlControllerImpl.class);
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
     }
     
     /**
@@ -200,16 +292,6 @@ public class CrawlControllerImpl extends Bean implements
         Logger.getLogger(CrawlControllerImpl.class.getName());
 
     private transient ToePool toePool;
-
-    private Frontier frontier;
-
-    /**
-     * Sheet manager for context (SURT) based settings.  Passed to the
-     * constructor.
-     */
-    private SheetManager sheetManager;
-
-    private CrawlerLoggerModule loggerModule;
     
     // Used to enable/disable single-threaded operation after OOM
     private volatile transient boolean singleThreadMode = false; 
@@ -238,16 +320,6 @@ public class CrawlControllerImpl extends Bean implements
     }
 
     transient private State state = State.NASCENT;
-
-    /**
-     * For discardable temp files (eg fetch buffers).
-     */
-    private Path scratchDir;
-
-    /**
-     * Directory that holds checkpoint.
-     */
-    private Path checkpointsDir;
     
     /**
      * Checkpointer.
@@ -285,13 +357,8 @@ public class CrawlControllerImpl extends Bean implements
         super(CrawlController.class);
     }
     
-    public void initialTasks(StateProvider provider) {        
-        this.sheetManager = provider.get(this, SHEET_MANAGER);
-        this.loggerModule = provider.get(this, LOGGER_MODULE);
-        this.scratchDir = provider.get(this, SCRATCH_DIR);
-        this.checkpointsDir = provider.get(this, CHECKPOINTS_DIR);
+    public void initialTasks(StateProvider sp) {        
         this.checkpointer = new Checkpointer(this, this.checkpointsDir.toFile());
-        this.frontier = provider.get(this, FRONTIER);
 
         this.singleThreadLock = new ReentrantLock();
         sExit = null;
@@ -303,7 +370,6 @@ public class CrawlControllerImpl extends Bean implements
         //dns.getRecords("localhost", Type.A, DClass.IN);
         
         // setupToePool();
-        setThresholds();
         
         reserveMemory = new LinkedList<char[]>();
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
@@ -456,26 +522,6 @@ public class CrawlControllerImpl extends Bean implements
         fce.setStackTrace(e.getStackTrace());
         return fce;
     }
-
-    
-
-    /**
-     * Sets the values for max bytes, docs and time based on crawl order. 
-     */
-    private void setThresholds() {
-        maxBytes = sheetManager.get(this, MAX_BYTES_DOWNLOAD);
-        maxDocument = sheetManager.get(this, MAX_DOCUMENT_DOWNLOAD);
-        maxTime = sheetManager.get(this, MAX_TIME_SEC);
-    }
-   
-
-    /**
-     * @return Object this controller is using to track crawl statistics
-     */
-    public StatisticsTracker getStatistics() {
-        StatisticsTracker statTracker = sheetManager.get(this, STATISTICS_TRACKER);
-        return statTracker;
-    }
     
     /**
      * Send crawl change event to all listeners.
@@ -484,12 +530,12 @@ public class CrawlControllerImpl extends Bean implements
      * @see #sendCheckpointEvent(File) for special case event sending
      * telling listeners to checkpoint.
      */
+    @SuppressWarnings("unchecked")
     protected void sendCrawlStateChangeEvent(State newState, 
             CrawlStatus status) {
-        this.state = newState;
-        List<CrawlStatusListener> registeredCrawlStatusListeners = 
-            ListModuleListener.get(sheetManager, CrawlStatusListener.class);
-        for (CrawlStatusListener l: registeredCrawlStatusListeners) {
+        this.state = newState; 
+        Map registeredCrawlStatusListeners = appCtx.getBeansOfType(CrawlStatusListener.class);
+        for (CrawlStatusListener l: (Collection<CrawlStatusListener>)registeredCrawlStatusListeners.values()) {
             switch (newState) {
                 case PAUSED:
                     l.crawlPaused(status.getDescription());
@@ -544,11 +590,11 @@ public class CrawlControllerImpl extends Bean implements
         // A proper exit will change this value.
         this.sExit = CrawlStatus.FINISHED_ABNORMAL;
         
-        Thread statLogger = new Thread(getStatistics());
+        Thread statLogger = new Thread(getStatisticsTracker());
         statLogger.setName("StatLogger");
         statLogger.start();
         
-        if (get(this,PAUSE_AT_START)) {
+        if (getPauseAtStart()) {
             requestCrawlPause();
         } else {
             getFrontier().start();
@@ -562,20 +608,15 @@ public class CrawlControllerImpl extends Bean implements
         LOGGER.fine("Entered complete stop.");
 
 
-        sheetManager.closeModules();
+//        sheetManager.closeModules();
         loggerModule.closeLogFiles();
         
         // Release reference to logger file handler instances.
         this.manifest = null;
 
-//        this.frontier = null;
-//        this.disk = null;
-//        this.scratchDisk = null;
-//        this.order = null;
-//        this.scope = null;
-        if (this.sheetManager !=  null) {
-            this.sheetManager.cleanup();
-        }
+//        if (this.sheetManager !=  null) {
+//            this.sheetManager.cleanup();
+//        }
         this.reserveMemory = null;
         if (this.checkpointer != null) {
             this.checkpointer.cleanup();
@@ -598,7 +639,7 @@ public class CrawlControllerImpl extends Bean implements
 
         // Ok, now we are ready to exit.
         sendCrawlStateChangeEvent(State.FINISHED, this.sExit);
-        this.sheetManager = null;
+//        this.sheetManager = null;
     }
     
     synchronized void completePause() {
@@ -614,8 +655,7 @@ public class CrawlControllerImpl extends Bean implements
             this.sExit = CrawlStatus.FINISHED;
             return false;
         }
-
-        if (maxBytes > 0 && frontier.totalBytesWritten() >= maxBytes) {
+        if (maxBytes > 0 && getStatisticsTracker().totalBytesCrawled() >= maxBytes) {
             // Hit the max byte download limit!
             sExit = CrawlStatus.FINISHED_DATA_LIMIT;
             return false;
@@ -624,7 +664,7 @@ public class CrawlControllerImpl extends Bean implements
             // Hit the max document download limit!
             this.sExit = CrawlStatus.FINISHED_DOCUMENT_LIMIT;
             return false;
-        } else if (maxTime > 0 && getStatistics().crawlDuration() >= maxTime * 1000) {
+        } else if (maxTime > 0 && getStatisticsTracker().crawlDuration() >= maxTime * 1000) {
             // Hit the max byte download limit!
             this.sExit = CrawlStatus.FINISHED_TIME_LIMIT;
             return false;
@@ -760,27 +800,9 @@ public class CrawlControllerImpl extends Bean implements
     public void setupToePool() {
         toePool = new ToePool(this);
         // TODO: make # of toes self-optimizing
-        int max = sheetManager.get(this, MAX_TOE_THREADS);
-        toePool.setSize(max);
+        toePool.setSize(getMaxToeThreads());
         toePool.waitForAll();
     }
-
-
-    /**
-     * @return The server cache instance.
-     */
-    ServerCache getServerCache() {
-        return get(this, SERVER_CACHE);
-    }
-
-
-    /**
-     * @return The frontier.
-     */
-    public Frontier getFrontier() {
-        return frontier;
-    }
-
 
     /**
      * @return The number of ToeThreads
@@ -805,29 +827,6 @@ public class CrawlControllerImpl extends Bean implements
 		// TODO Auto-generated method stub
 		return toePool.singleLineReport();
 	}
-
-    /**
-     * While many settings will update automatically when the SettingsHandler is
-     * modified, some settings need to be explicitly changed to reflect new
-     * settings. This includes, number of toe threads and seeds.
-     */
-    public void keyChanged(KeyChangeEvent event) {
-        if (event.getKey() == MAX_TOE_THREADS) {
-            int max = sheetManager.get(this, MAX_TOE_THREADS);
-            toePool.setSize(max);
-        }
-        
-        setThresholds();
-    }
-
-    /**
-     * @return The settings handler.
-     */
-    public SheetManager getSheetManager() {
-        return sheetManager;
-    }
-
-
 
     /**
      * Kills a thread. For details see
@@ -1031,13 +1030,13 @@ public class CrawlControllerImpl extends Bean implements
             "Processors report - "
                 + ArchiveUtils.get12DigitDate()
                 + "\n");
-        writer.print("  Job being crawled:    " + sheetManager.getCrawlName()
+        writer.print("  Job being crawled:    " + getJobHome().getName()
                 + "\n");
 
-        writer.print("  Number of Processors: " + get(this, PROCESSORS).size() + "\n");
+        writer.print("  Number of Processors: " + getProcessorChain().size() + "\n");
         writer.print("  NOTE: Some processors may not return a report!\n\n");
 
-        for (Processor p: get(this, PROCESSORS).values()) {
+        for (Processor p: getProcessorChain()) {
             writer.print(p.report());
         }
     }
@@ -1076,22 +1075,6 @@ public class CrawlControllerImpl extends Bean implements
      */
     public Object getState() {
         return this.state;
-    }
-
-
-    public <T> T get(Object module, Key<T> key) {
-        SingleSheet def = sheetManager.getGlobalSheet();
-        return def.get(module, key);
-    }
-
-
-    File getScratchDir() {
-        return scratchDir.toFile();
-    }
-    
-    
-    public File getCheckpointsDir() {
-        return checkpointsDir.toFile();
     }
     
     @Emitter(desc="Emitted when the crawl status changes (eg, when a crawl "
@@ -1158,7 +1141,7 @@ public class CrawlControllerImpl extends Bean implements
                 break;
             }
             if(atFinish()) { // really, "just reached finish"
-                if (get(this,PAUSE_AT_FINISH)) {
+                if (getPauseAtFinish()) {
                     requestCrawlPause();
                 } else {
                     beginCrawlStop();
@@ -1176,5 +1159,4 @@ public class CrawlControllerImpl extends Bean implements
             // do nothing
         }
     }
-
 }

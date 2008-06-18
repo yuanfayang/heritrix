@@ -59,15 +59,13 @@ import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.jmx.Types;
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
 import org.archive.util.MimetypeUtils;
 import org.archive.util.PaddingStringBuffer;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * This is an implementation of the AbstractTracker. It is designed to function
@@ -133,30 +131,45 @@ implements CrawlURIDispositionListener, Serializable {
         HOST_LAST_ACTIVE
     }
 
-    
-    @Immutable
-    final public static Key<SeedModuleImpl> SEEDS =
-        Key.makeAuto(SeedModuleImpl.class);
+    protected SeedModuleImpl seeds;
+    public SeedModuleImpl getSeeds() {
+        return this.seeds;
+    }
+    @Autowired
+    public void setSeeds(SeedModuleImpl seeds) {
+        this.seeds = seeds;
+    }
 
-    @Immutable
-    final public static Key<BdbModule> BDB =
-        Key.makeAuto(BdbModule.class);
+    protected BdbModule bdb;
+    @Autowired
+    public void setBdbModule(BdbModule bdb) {
+        this.bdb = bdb;
+    }
+
+    protected Path reportsDir = new Path(".");
+    public Path getReportsDir() {
+        return reportsDir;
+    }
+    public void setReportsDir(Path reportsDir) {
+        this.reportsDir = reportsDir;
+    }
     
-    @Immutable
-    final public static Key<Path> REPORTS_DIR =
-        Key.make(new Path("."));
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
     
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE =
-        Key.makeAuto(ServerCache.class);
-    
-    @Immutable
-    final public static Key<Integer> LIVE_HOST_REPORT_SIZE = Key.make(20);
-    
-    private SeedModuleImpl seeds;
-    private ServerCache serverCache;
-    private BdbModule bdb;
-    private Path reportsDir;
+    protected int liveHostReportSize = 20;
+    public int getLiveHostReportSize() {
+        return liveHostReportSize;
+    }
+    public void setLiveHostReportSize(int liveHostReportSize) {
+        this.liveHostReportSize = liveHostReportSize;
+    }
     
     /**
      * Messages from the StatisticsTracker.
@@ -234,10 +247,6 @@ implements CrawlURIDispositionListener, Serializable {
     private int seedsCrawled;
     private int seedsNotCrawled;
 
-    static {
-        KeyManager.addKeys(StatisticsTrackerImpl.class);
-    }
-
     public StatisticsTrackerImpl() {
         
     }
@@ -245,10 +254,6 @@ implements CrawlURIDispositionListener, Serializable {
     @Override
     public void initialTasks(StateProvider p) {
         super.initialTasks(p);
-        this.seeds = p.get(this, SEEDS);
-        this.bdb = p.get(this, BDB);
-        this.reportsDir = p.get(this, REPORTS_DIR);
-        this.serverCache = p.get(this, SERVER_CACHE);
         try {
             this.sourceHostDistribution = bdb.getBigMap("sourceHostDistribution",
             	    false, String.class, HashMap.class);
@@ -261,9 +266,9 @@ implements CrawlURIDispositionListener, Serializable {
             this.processedSeedsRecords = bdb.getBigMap("processedSeedsRecords",
                     false, String.class, SeedRecord.class);
             
-            this.hostsDistributionTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));
-            this.hostsBytesTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));
-            this.hostsLastFinishedTop = new LargestSet(p.get(this, LIVE_HOST_REPORT_SIZE));
+            this.hostsDistributionTop = new LargestSet(getLiveHostReportSize());
+            this.hostsBytesTop = new LargestSet(getLiveHostReportSize());
+            this.hostsLastFinishedTop = new LargestSet(getLiveHostReportSize());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -909,7 +914,7 @@ implements CrawlURIDispositionListener, Serializable {
      * @return the seed iterator
      * FIXME: Consider using TransformingIterator here
      */
-    public Iterator<String> getSeeds() {
+    public Iterator<String> getSeedsIterator() {
         List<String> seedsCopy = new Vector<String>();
         Iterator<UURI> i = seeds.seedsIterator();
         while (i.hasNext()) {
@@ -919,7 +924,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
 
     public Iterator<SeedRecord> getSeedRecordsSortedByStatusCode() {
-        return getSeedRecordsSortedByStatusCode(getSeeds());
+        return getSeedRecordsSortedByStatusCode(getSeedsIterator());
     }
     
     protected Iterator<SeedRecord> getSeedRecordsSortedByStatusCode(
@@ -964,7 +969,7 @@ implements CrawlURIDispositionListener, Serializable {
 
         seedsCrawled = 0;
         seedsNotCrawled = 0;
-        for (Iterator<SeedRecord> i = getSeedRecordsSortedByStatusCode(getSeeds());
+        for (Iterator<SeedRecord> i = getSeedRecordsSortedByStatusCode(getSeedsIterator());
                 i.hasNext();) {
             SeedRecord sr = (SeedRecord)i.next();
             writer.print(sr.getStatusCode());
@@ -1019,14 +1024,15 @@ implements CrawlURIDispositionListener, Serializable {
         
         writer.print("[context] [sheet name]\n");
         // for each source
-        for(String context : controller.getSheetManager().getContexts()) {
-            for(String sheetName : controller.getSheetManager().getAssociations(context)) {
-                writer.print(context);
-                writer.print(" ");
-                writer.print(sheetName);
-                writer.println();
-            }
-        }
+        //TODO:SPRINGY
+//        for(String context : controller.getSheetManager().getContexts()) {
+//            for(String sheetName : controller.getSheetManager().getAssociations(context)) {
+//                writer.print(context);
+//                writer.print(" ");
+//                writer.print(sheetName);
+//                writer.println();
+//            }
+//        }
     }
     
     /**
@@ -1127,7 +1133,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeCrawlReportTo(PrintWriter writer) {
-        writer.print("Crawl Name: " + controller.getSheetManager().getCrawlName());
+        writer.print("Crawl Name: " + controller.getJobHome().getName());
         writer.print("\nCrawl Status: " + controller.getCrawlExitStatus().desc);
         writer.print("\nDuration Time: " +
                 ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));

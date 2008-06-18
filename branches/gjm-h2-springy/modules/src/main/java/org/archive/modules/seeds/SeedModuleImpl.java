@@ -38,9 +38,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.seeds.SeedFileIterator;
-import org.archive.modules.seeds.SeedListener;
-import org.archive.modules.seeds.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
@@ -49,12 +46,7 @@ import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
@@ -78,38 +70,36 @@ public class SeedModuleImpl extends Bean implements
     private static final Logger logger =
         Logger.getLogger(SeedModuleImpl.class.getName());
 
-
     /**
      * File from which to extract seeds.
      */
-    @Expert @Immutable
-    final public static Key<Path> SEEDSFILE = 
-        Key.make(new Path("seeds.txt"));
-
-
+    protected Path seedsFile = new Path("seeds.txt");
+    public Path getSeedsFile() {
+        return seedsFile;
+    }
+    public void setSeedsFile(Path seedsFile) {
+        this.seedsFile = seedsFile;
+    }
+    
     /**
      * Whether to reread the seeds specification, whether it has changed or not,
      * every time any configuration change occurs. If true, seeds are reread
      * even when (for example) new domain overrides are set. Rereading the seeds
      * can take a long time with large seed lists.
      */
-    @Global @Expert
-    final public static Key<Boolean> REREAD_SEEDS_ON_CONFIG = Key.make(true);
+    protected boolean rereadSeedsOnConfig = true;
+    public boolean getRereadSeedsOnConfig() {
+        return rereadSeedsOnConfig;
+    }
+    public void setRereadSeedsOnConfig(boolean rereadSeedsOnConfig) {
+        this.rereadSeedsOnConfig = rereadSeedsOnConfig;
+    }
 
 
     protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();
 
     protected Set<SeedRefreshListener> seedRefreshListeners = 
         new HashSet<SeedRefreshListener>();
-
-    
-    private Path seedsFile;
-
-    
-    static {
-        KeyManager.addKeys(SeedModuleImpl.class);
-    }
-    
 
     /** 
      * Constructor.
@@ -120,9 +110,8 @@ public class SeedModuleImpl extends Bean implements
 
 
     public void initialTasks(StateProvider provider) {
-        this.seedsFile = provider.get(this, SEEDSFILE);
-    }
 
+    }
 
     /**
      * Refresh seeds.
@@ -197,11 +186,10 @@ public class SeedModuleImpl extends Bean implements
      * files) may be necessary.
      */
     public void keyChanged(KeyChangeEvent event) {
-        StateProvider context = event.getStateProvider();
         // TODO: further improve this so that case with hundreds of
         // thousands or millions of seeds works better without requiring
         // this specific settings check 
-        if (context.get(this, REREAD_SEEDS_ON_CONFIG)) {
+        if (getRereadSeedsOnConfig()) {
             refreshSeeds();
         }
     }

@@ -27,14 +27,12 @@ import java.util.logging.Level;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Finishable;
-import org.archive.state.Global;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -60,31 +58,35 @@ import org.xbill.DNS.Lookup;
 public abstract class AbstractTracker extends Bean 
 implements StatisticsTracker, CrawlStatusListener, Serializable, Module, 
 Initializable, Finishable {
-
-
     /**
      * The interval between writing progress information to log.
      */
-    @Global
-    final public static Key<Integer> INTERVAL_SECONDS = Key.make(20);
-
+    int intervalSeconds = 20;
+    public int getIntervalSeconds() {
+        return this.intervalSeconds;
+    }
+    public void setIntervalSeconds(int interval) {
+        this.intervalSeconds = interval;
+    }
     
-    @Immutable
-    final public static Key<CrawlControllerImpl> CONTROLLER = 
-        Key.makeAuto(CrawlControllerImpl.class);
-
-    
-    @Immutable
-    final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
-        Key.makeAuto(CrawlerLoggerModule.class);
-    
-    
-    /** A reference to the CrawlContoller of the crawl that we are to track
-     * statistics for.
-     */
     protected CrawlControllerImpl controller;
+    public CrawlControllerImpl getCrawlController() {
+        return this.controller;
+    }
+    @Autowired
+    public void setCrawlController(CrawlControllerImpl controller) {
+        this.controller = controller;
+    }
+
     
     protected CrawlerLoggerModule loggerModule;
+    public CrawlerLoggerModule getLoggerModule() {
+        return this.loggerModule;
+    }
+    @Autowired
+    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+        this.loggerModule = loggerModule;
+    }
 
     // Keep track of time.
     protected long crawlerStartTime;
@@ -106,8 +108,7 @@ Initializable, Finishable {
 
     
     public void initialTasks(StateProvider p) {
-        this.controller = p.get(this, CONTROLLER);
-        this.loggerModule = p.get(this, LOGGER_MODULE);
+
     }
     
     /**
@@ -256,7 +257,7 @@ Initializable, Finishable {
      * log file.
      */
     protected int getLogWriteInterval() {
-        return controller.get(this, INTERVAL_SECONDS);
+        return getIntervalSeconds();
     }
 
     /**
