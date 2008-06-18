@@ -26,21 +26,18 @@
 package org.archive.crawler.postprocessor;
 
 
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
+
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.archive.crawler.datamodel.CrawlURI;
-
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.crawler.framework.Frontier;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -56,17 +53,19 @@ implements PostProcessor, Initializable {
 
     private static final long serialVersionUID = -3L;
 
-    
-    Frontier frontier;
-
     ReentrantLock lock = new ReentrantLock(true);
     
     /**
      * The frontier to use.
      */
-    @Immutable
-    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class);
-
+    protected Frontier frontier;
+    public Frontier getFrontier() {
+        return this.frontier;
+    }
+    @Autowired
+    public void setFrontier(Frontier frontier) {
+        this.frontier = frontier;
+    }
 
     /**
      */
@@ -74,7 +73,7 @@ implements PostProcessor, Initializable {
     }
 
     public void initialTasks(StateProvider provider) {
-        this.frontier = provider.get(this, FRONTIER);
+
     }
     
     protected boolean shouldProcess(ProcessorURI puri) {
@@ -110,11 +109,5 @@ implements PostProcessor, Initializable {
      */
     protected void schedule(CrawlURI caUri) {
         frontier.schedule(caUri);
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(FrontierScheduler.class);
     }
 }

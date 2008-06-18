@@ -278,8 +278,9 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        StateProvider def = controller.getSheetManager().getGlobalSheet();
-        return Canonicalizer.canonicalize(def, uuri.toString(), rules);
+        //StateProvider def = controller.getSheetManager().getGlobalSheet();
+        // TODO:FIXME?
+        return Canonicalizer.canonicalize(null, uuri.toString(), rules);
     }
 
     /**

@@ -63,9 +63,10 @@ import org.archive.state.Path;
 import org.archive.state.PathContext;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 
-import static org.archive.settings.file.BdbModule.BDB_CACHE_PERCENT;
-import static org.archive.settings.file.BdbModule.CHECKPOINT_COPY_BDBJE_LOGS;
+//import static org.archive.settings.file.BdbModule.BDB_CACHE_PERCENT;
+//import static org.archive.settings.file.BdbModule.CHECKPOINT_COPY_BDBJE_LOGS;
 
 import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.tuple.TupleBinding;
@@ -140,6 +141,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         KeyManager.addKeys(FileSheetManager.class);
     }
 
+    final private static String BEANS_CONFIG = "crawler-beans.xml";
+    
     final private static String ATTR_SHEETS = "sheets-dir";
     
     final private static String BDB_PREFIX = "bdb-";
@@ -157,8 +160,8 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     /** The sheets subdirectory. */
     private File sheetsDir;
 
-    /** The main configuration file. */
-    private transient File mainConfig;
+    /** The main configuration directory. */
+    private transient File mainDir;
     
     /** Sheets that are currently in memory. */
     private Map<String, Sheet> sheets;
@@ -182,13 +185,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     final private Map<String,List<PathChangeException>> problems = 
         new HashMap<String,List<PathChangeException>>();
 
-    final private BdbModule bdb;
+    private BdbModule bdb;
     
     final private Path dir;
     
     private String bdbDir;
     
-    final private int bdbCachePercent;
+    private int bdbCachePercent;
 
     private boolean copyCheckpoint;
     
@@ -211,57 +214,62 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             Collection<ModuleListener> listeners) 
     throws IOException, DatabaseException {
         super(name, listeners, live);
-        this.mainConfig = main;        
-        this.pathContext = new FSMPathContext(mainConfig.getParentFile(), name);
+        this.mainDir = main;        
+        this.pathContext = new FSMPathContext(mainDir, name);
 
-        Properties p = load(main);
+//        Properties p = load(main);
+//        
+//        String path = getBdbProperty(p, BdbModule.DIR);
+//        File f = new File(path);
+//        if (!f.isAbsolute()) {
+//            f = new File(mainDir, path);
+//        }
+//
+//        
+//        this.bdbDir = f.getAbsolutePath();
+//        if (live) {
+//            this.bdbCachePercent = Integer.parseInt(
+//                    getBdbProperty(p, BDB_CACHE_PERCENT));
+//        } else {
+//            // Don't use as much memory for profiles & ready jobs.
+//            this.bdbCachePercent = Integer.parseInt(
+//                    p.getProperty(BDB_PREFIX + "stub-cache-percent", "5"));
+//        }
+//        String truthiness = getBdbProperty(p, CHECKPOINT_COPY_BDBJE_LOGS);
+//        if (truthiness.equals("true")) {
+//            this.copyCheckpoint = true;
+//        } else if (truthiness.equals("false")) {
+//            this.copyCheckpoint = false;
+//        } else {
+//            throw new IllegalStateException("Illegal boolean: " + truthiness);
+//        }
         
-        String path = getBdbProperty(p, BdbModule.DIR);
-        File f = new File(path);
-        if (!f.isAbsolute()) {
-            f = new File(mainConfig.getParent(), path);
-        }
+//      ExampleStateProvider dsp = new ExampleStateProvider();
 
+        this.dir = new Path(mainDir.getAbsolutePath());
         
-        this.bdbDir = f.getAbsolutePath();
-        if (live) {
-            this.bdbCachePercent = Integer.parseInt(
-                    getBdbProperty(p, BDB_CACHE_PERCENT));
-        } else {
-            // Don't use as much memory for profiles & ready jobs.
-            this.bdbCachePercent = Integer.parseInt(
-                    p.getProperty(BDB_PREFIX + "stub-cache-percent", "5"));
-        }
-        String truthiness = getBdbProperty(p, CHECKPOINT_COPY_BDBJE_LOGS);
-        if (truthiness.equals("true")) {
-            this.copyCheckpoint = true;
-        } else if (truthiness.equals("false")) {
-            this.copyCheckpoint = false;
-        } else {
-            throw new IllegalStateException("Illegal boolean: " + truthiness);
-        }
-        
-        ExampleStateProvider dsp = new ExampleStateProvider();
-
-        this.dir = new Path(main.getParentFile().getAbsolutePath());
-        
-        this.bdb = new BdbModule();
-        dsp.set(bdb, BdbModule.DIR, this.bdbDir);
-        dsp.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
-        dsp.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
-        bdb.initialTasks(dsp);
+//        this.bdb = new BdbModule();
+//        dsp.set(bdb, BdbModule.DIR, this.bdbDir);
+//        dsp.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
+//        dsp.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+//        bdb.initialTasks(dsp);
         
         
-        String prop = p.getProperty(ATTR_SHEETS);
-        this.sheetsDir = getRelative(main, prop, DEFAULT_SHEETS);
-        validateDir(sheetsDir);
+//        String prop = p.getProperty(ATTR_SHEETS);
+        this.sheetsDir = getRelative(main, null, DEFAULT_SHEETS);
+//        validateDir(sheetsDir);
         sheets = new HashMap<String, Sheet>();
 
-        initBdb();
+//        initBdb();
         
-        reload();
+//        reload();
     }
 
+    public void start() {
+        File config = new File(mainDir,BEANS_CONFIG);
+        FileSystemXmlApplicationContext ac = new FileSystemXmlApplicationContext(config.getAbsolutePath());
+        ac.start();
+    }
     
     private void initBdb() throws DatabaseException {
         BdbModule.BdbConfig config = new BdbModule.BdbConfig();
@@ -669,9 +677,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.set(this, MANAGER, this);
             ss.set(this, BDB, bdb);
             ss.set(this, DIR, dir);
-            ss.set(bdb, BdbModule.DIR, bdbDir);
-            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
-            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+//            ss.set(bdb, BdbModule.DIR, bdbDir);
+//            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
+//            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
             ss.addPrimary(getManagerModule());
             ss.addPrimary(bdb);
         } else {
@@ -681,9 +689,9 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             ss.setStub(manager, MANAGER, manager);
             ss.setStub(manager, BDB, bdb);
             ss.setStub(manager, DIR, dir);
-            ss.set(bdb, BdbModule.DIR, bdbDir);
-            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
-            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
+//            ss.set(bdb, BdbModule.DIR, bdbDir);
+//            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
+//            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
             ss.addPrimary(getManagerModule());
             ss.addPrimary(bdb);
         }
@@ -691,19 +699,19 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     
     
     public File getDirectory() {
-        return mainConfig.getParentFile();
+        return mainDir;
     }
 
     
     public void checkpoint(File dir, List<RecoverAction> actions) 
     throws IOException {
         File config = new File(dir, "config.txt");
-        FileUtils.copyFile(mainConfig, config);
+        FileUtils.copyFile(mainDir, config);
         
         File sheets = new File(dir, "sheets");
         FileUtils.copyFiles(sheetsDir, sheets);
         
-        actions.add(new FSMRecover(mainConfig.getAbsolutePath(), 
+        actions.add(new FSMRecover(mainDir.getAbsolutePath(), 
                 sheetsDir.getAbsolutePath()));
         
     }
@@ -711,18 +719,18 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(mainConfig);
+        out.writeObject(mainDir);
         out.defaultWriteObject();
     }
     
     
     private void readObject(ObjectInputStream inp) 
     throws IOException, ClassNotFoundException {
-        mainConfig = (File)inp.readObject();
+        mainDir = (File)inp.readObject();
         if (inp instanceof CheckpointRecovery) {
             CheckpointRecovery cr = (CheckpointRecovery)inp;
-            mainConfig = 
-                new File(cr.translatePath(mainConfig.getAbsolutePath()));
+            mainDir = 
+                new File(cr.translatePath(mainDir.getAbsolutePath()));
         }
         inp.defaultReadObject();
         if (inp instanceof CheckpointRecovery) {
@@ -823,7 +831,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 
     
     public void stubCleanup() {
-        bdb.close();
+//        bdb.close();
     }
 
     

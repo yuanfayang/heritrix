@@ -92,7 +92,8 @@ public class CrawlControllerImplTest extends ModuleTestBase {
         checkpoints.mkdirs();
         
         BdbModule bdb = new BdbModule();
-        def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
+        bdb.setPath(state.getAbsolutePath());
+//        def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
         bdb.initialTasks(def);
         
         Path cp = new Path(checkpoints.getAbsolutePath());

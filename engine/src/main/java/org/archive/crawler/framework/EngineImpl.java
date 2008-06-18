@@ -30,7 +30,6 @@ import static org.archive.crawler.framework.JobStage.COMPLETED;
 import static org.archive.crawler.framework.JobStage.DELIMITER;
 import static org.archive.crawler.framework.JobStage.PROFILE;
 import static org.archive.crawler.framework.JobStage.READY;
-
 import it.unimi.dsi.fastutil.longs.LongComparators;
 
 import java.io.BufferedReader;
@@ -61,7 +60,6 @@ import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
 import org.apache.commons.collections.map.ReferenceMap;
-import org.apache.commons.lang.ArrayUtils;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.util.LogRemoteAccessImpl;
 import org.archive.io.RandomAccessInputStream;
@@ -108,7 +106,9 @@ public class EngineImpl extends Bean implements Engine {
 
     
     final private static String CHECKPOINT_DIR_PATH = 
-        CONTROLLER_PATH + ":" + CrawlControllerImpl.CHECKPOINTS_DIR.getFieldName();
+        //TODO:SPRINGY
+        "";
+//        CONTROLLER_PATH + ":" + CrawlControllerImpl.CHECKPOINTS_DIR.getFieldName();
     
     final public static String LOGS_DIR_PATH =
         CONTROLLER_PATH + ":logger-module:dir";
@@ -118,7 +118,7 @@ public class EngineImpl extends Bean implements Engine {
     
     final public static String DOMAIN = "org.archive.crawler";
     
-    final public static String BOOTSTRAP = "config.txt";
+//    final public static String BOOTSTRAP = "config.txt";
     
     // If null, no JMX registrations occur
     private MBeanServer server;
@@ -318,10 +318,10 @@ public class EngineImpl extends Bean implements Engine {
             throw new IllegalArgumentException("No such profile: " + job);
         }
 
-        File bootstrap = new File(src, BOOTSTRAP);
+//        File bootstrap = new File(src, BOOTSTRAP);
         FileSheetManager fsm;
         try {
-            fsm = new FileSheetManager(bootstrap, name, false);
+            fsm = new FileSheetManager(src, name, false);
             sheetManagers.put(job, fsm);
         } catch (DatabaseException e) {
             IOException io = new IOException();
@@ -332,6 +332,7 @@ public class EngineImpl extends Bean implements Engine {
         JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, name, DOMAIN, fsm);
         return jmx.getObjectName();
     }
+
 
     public synchronized ObjectName getLogs(String job) throws IOException {
         if(logRemoteAccess.containsKey(job)){
@@ -690,7 +691,7 @@ public class EngineImpl extends Bean implements Engine {
     
             final String job = changeState(j, ACTIVE);
             File dest = new File(getJobsDir(), job);
-            File bootstrap = new File(dest, EngineImpl.BOOTSTRAP);
+//            File bootstrap = new File(dest, EngineImpl.BOOTSTRAP);
             FileSheetManager fsm;
             final String name = getJobName(job);
             final JMXModuleListener jmxListener = new JMXModuleListener(
@@ -699,7 +700,11 @@ public class EngineImpl extends Bean implements Engine {
             List<ModuleListener> list = new ArrayList<ModuleListener>();
             list.add(jmxListener);
             list.add(ListModuleListener.make(CrawlStatusListener.class));
-            fsm = new FileSheetManager(bootstrap, name, true, list);
+            fsm = new FileSheetManager(dest, name, true, list);
+            
+            // actually builds crawler from config: 
+            fsm.start();
+            
             sheetManagers.put(job, fsm);
 
             final ObjectName smName = createJMXSheetManager(name, fsm);

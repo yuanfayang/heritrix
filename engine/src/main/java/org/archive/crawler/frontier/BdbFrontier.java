@@ -48,11 +48,9 @@ import org.archive.queue.StoredQueue;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.file.Checkpointable;
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.collections.StoredIterator;
 import com.sleepycat.je.Database;
@@ -88,14 +86,20 @@ implements Serializable, Checkpointable {
     /** all URIs scheduled to be crawled */
     protected transient BdbMultipleWorkQueues pendingUris;
 
-    @Immutable
-    final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
-
-    @Immutable
-    final public static Key<Boolean> DUMP_PENDING_AT_CLOSE = Key.make(false);
-
-    private BdbModule bdb;
+    protected BdbModule bdb;
+    @Autowired
+    public void setBdbModule(BdbModule bdb) {
+        this.bdb = bdb;
+    }
     
+    boolean dumpPendingAtClose = false; 
+    public boolean getDumpPendingAtClose() {
+        return dumpPendingAtClose;
+    }
+    public void setDumpPendingAtClose(boolean dumpPendingAtClose) {
+        this.dumpPendingAtClose = dumpPendingAtClose;
+    }
+
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.WorkQueueFrontier#getInactiveQueuesByPrecedence()
      */
@@ -150,9 +154,11 @@ implements Serializable, Checkpointable {
             wq = (WorkQueue)allQueues.get(classKey);
             if (wq == null) {
                 wq = new BdbWorkQueue(classKey, this);
-                wq.setTotalBudget(curi.get(this, QUEUE_TOTAL_BUDGET));
+                //TODO:SPRINGY set overrides
+                wq.setTotalBudget(getQueueTotalBudget());
                 wq.setStateProvider(manager);
-                wq.get(this, QUEUE_PRECEDENCE_POLICY).queueCreated(wq);
+                //TODO:SPRINGY set overrides 
+                getQueuePrecedencePolicy().queueCreated(wq);
                 allQueues.put(classKey, wq);
             }
         }
@@ -195,7 +201,7 @@ implements Serializable, Checkpointable {
     }
     
     protected void closeQueue() {
-        if (manager.get(this, DUMP_PENDING_AT_CLOSE)) {
+        if (getDumpPendingAtClose()) {
             try {
                 dumpAllPendingToLog();
             } catch (DatabaseException e) {
@@ -226,7 +232,6 @@ implements Serializable, Checkpointable {
 
     
     public void initialTasks(StateProvider p) {
-        this.bdb = p.get(this, BDB);
         super.initialTasks(p);
     }
     
@@ -340,12 +345,5 @@ implements Serializable, Checkpointable {
             }
         };
         pendingUris.forAllPendingDo(tolog);
-    }
-    
-
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(BdbFrontier.class);
     }
 }

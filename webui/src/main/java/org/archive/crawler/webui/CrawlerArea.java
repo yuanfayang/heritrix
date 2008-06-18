@@ -145,6 +145,7 @@ public class CrawlerArea {
             CrawlerArea.showCrawler(sc, request, response);
             return;
         }
+        // TODO: check for pending config errors before attempting launch
         
         Remote<Engine> remote = open(request);
         Engine manager = remote.getObject();

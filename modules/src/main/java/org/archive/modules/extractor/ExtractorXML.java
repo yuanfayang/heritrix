@@ -38,6 +38,8 @@ import org.archive.modules.ProcessorURI;
 import org.archive.state.KeyManager;
 import org.archive.util.TextUtils;
 
+import com.sun.corba.se.spi.legacy.connection.GetEndPointInfoAgainException;
+
 
 /**
  * A simple extractor which finds HTTP URIs inside XML/RSS files,
@@ -104,7 +106,7 @@ public class ExtractorXML extends ContentExtractor {
             return false;
         }
         try {
-            this.linksExtracted.addAndGet(processXml(uriErrors, curi, cs));
+            this.linksExtracted.addAndGet(processXml(this, curi, cs));
 
             // Set flag to indicate that link extraction is completed.
             return true;
@@ -120,7 +122,7 @@ public class ExtractorXML extends ContentExtractor {
         }
     }
 
-    public static long processXml(UriErrorLoggerModule uriErrors, 
+    public static long processXml(Extractor ext, 
             ProcessorURI curi, CharSequence cs) {
         long foundLinks = 0;
         Matcher uris = null;
@@ -135,13 +137,13 @@ public class ExtractorXML extends ContentExtractor {
                 // treat as speculative, as whether context really 
                 // intends to create a followable/fetchable URI is
                 // unknown
-                int max = uriErrors.getMaxOutlinks(curi);
+                int max = ext.getExtractorHelper().getMaxOutlinks();
                 Link.add(curi, max, xmlUri, LinkContext.SPECULATIVE_MISC, 
                         Hop.SPECULATIVE);
             } catch (URIException e) {
                 // There may not be a controller (e.g. If we're being run
                 // by the extractor tool).
-                uriErrors.logUriError(e, curi.getUURI(), xmlUri);
+                ext.logUriError(e, curi.getUURI(), xmlUri);
             }
         }
         return foundLinks;

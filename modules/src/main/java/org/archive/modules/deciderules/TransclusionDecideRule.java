@@ -27,9 +27,6 @@ package org.archive.modules.deciderules;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.Hop;
 import org.archive.state.Key;
-import org.archive.state.KeyManager;
-
-
 
 /**
  * Rule ACCEPTs any CrawlURIs whose path-from-seed ('hopsPath' -- see
@@ -58,16 +55,28 @@ public class TransclusionDecideRule extends PredicatedAcceptDecideRule {
      * Maximum number of non-navlink (non-'L') hops to ACCEPT.
      */
     public static final Key<Integer> MAX_TRANS_HOPS = Key.make(2);
-
+    {
+        setMaxTransHops(2);
+    }
+    public int getMaxTransHops() {
+        return (Integer) kp.get("maxTransHops");
+    }
+    public void setMaxTransHops(int maxTransHops) {
+        kp.put("maxTransHops", maxTransHops);
+    }
     
     /**
      * Maximum number of speculative ('X') hops to ACCEPT.
      */
     public static final Key<Integer> MAX_SPECULATIVE_HOPS = Key.make(1);
-
-    
-    static {
-        KeyManager.addKeys(TransclusionDecideRule.class);
+    {
+        setMaxSpeculativeHops(1);
+    }
+    public int getMaxSpeculativeHops() {
+        return (Integer) kp.get("maxSpeculativeHops");
+    }
+    public void setMaxSpeculativeHops(int maxSpeculativeHops) {
+        kp.put("maxSpeculativeHops", maxSpeculativeHops);
     }
 
     /**

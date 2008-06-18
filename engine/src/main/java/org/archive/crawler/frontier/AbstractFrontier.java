@@ -52,6 +52,7 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -88,11 +89,9 @@ import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Immutable;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -100,99 +99,230 @@ import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Shared facilities for Frontier implementations.
  * 
  * @author gojomo
  */
-public abstract class AbstractFrontier extends Bean
-implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefreshListener {
+public abstract class AbstractFrontier 
+    extends Bean
+    implements CrawlStatusListener, 
+               Frontier, 
+               Serializable, 
+               Initializable, 
+               SeedRefreshListener, 
+               HasKeyedProperties {
     private static final long serialVersionUID = 555881755284996860L;
 
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
+    KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
+    
     protected CrawlControllerImpl controller;
+    public CrawlControllerImpl getCrawlController() {
+        return this.controller;
+    }
+    @Autowired
+    public void setCrawlController(CrawlControllerImpl controller) {
+        this.controller = controller;
+    }
+    
     protected CrawlerLoggerModule loggerModule;
+    public CrawlerLoggerModule getLoggerModule() {
+        return this.loggerModule;
+    }
+    @Autowired
+    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+        this.loggerModule = loggerModule;
+    }
 
+    protected SeedModuleImpl seeds;
+    public SeedModuleImpl getSeeds() {
+        return this.seeds;
+    }
+    @Autowired
+    public void setSeeds(SeedModuleImpl seeds) {
+        this.seeds = seeds;
+    }
+    
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
+    
     /** ordinal numbers to assign to created CrawlURIs */
     protected AtomicLong nextOrdinal = new AtomicLong(1);
 
-    @Immutable
-    final public static Key<DecideRule> SCOPE =
-        Key.make(DecideRule.class, null);
-        
-    @Immutable
-    final public static Key<Path> RECOVERY_DIR =
-        Key.make(new Path("logs"));
     
+    //TODO:SPRINGY decide if this should be overridable
+    protected DecideRule scope;
+    public DecideRule getScope() {
+        return this.scope;
+    }
+    @Autowired
+    public void setDecideRule(DecideRule scope) {
+        this.scope = scope;
+    }
+        
+    protected Path recoveryDir = new Path("logs");
+    public Path getRecoveryDir() {
+        return recoveryDir;
+    }
+    public void setRecoveryDir(Path recoveryDir) {
+        this.recoveryDir = recoveryDir;
+    }
+
     /**
      * How many multiples of last fetch elapsed time to wait before recontacting
      * same server.
-     */    
-    final public static Key<Float> DELAY_FACTOR = Key.make((float)5);
-
+     */
+    {
+        setDelayFactor(5.0f);
+    }
+    public float getDelayFactor() {
+        return (Float) kp.get("delayFactor");
+    }
+    public void setDelayFactor(float factor) {
+        kp.put("delayFactor",factor);
+    }
 
     /**
      * always wait this long after one completion before recontacting same
      * server, regardless of multiple
      */
-    final public static Key<Integer> MIN_DELAY_MS = Key.make(3000);
+    {
+        setMinDelayMs(3000);
+    }
+    public int getMinDelayMs() {
+        return (Integer) kp.get("minDelayMs");
+    }
+    public void setMinDelayMs(int minDelay) {
+        kp.put("minDelayMs",minDelay);
+    }
     
     /**
      * Whether to respect a 'Crawl-Delay' (in seconds) given in a site's
      * robots.txt
      */
-    final public static Key<Boolean> RESPECT_CRAWL_DELAY = Key.make(true);
+    {
+        setRespectCrawlDelay(true);
+    }
+    public boolean getRespectCrawlDelay() {
+        return (Boolean) kp.get("respectCrawlDelay");
+    }
+    public void setRespectCrawlDelay(boolean respect) {
+        kp.put("respectCrawlDelay",respect);
+    }
 
     /** never wait more than this long, regardless of multiple */
-    final public static Key<Integer> MAX_DELAY_MS = Key.make(30000);
-    
+    {
+        setMaxDelayMs(30000);
+    }
+    public int getMaxDelayMs() {
+        return (Integer) kp.get("maxDelayMs");
+    }
+    public void setMaxDelayMs(int maxDelay) {
+        kp.put("maxDelayMs",maxDelay);
+    }    
 
     /** number of hops of embeds (ERX) to bump to front of host queue */
-    final public static Key<Integer> PREFERENCE_EMBED_HOPS = Key.make(1);
-
+    {
+        setPreferenceEmbedHops(1);
+    }
+    public int getPreferenceEmbedHops() {
+        return (Integer) kp.get("preferenceEmbedHops");
+    }
+    public void setPreferenceEmbedHops(int pref) {
+        kp.put("preferenceEmbedHops",pref);
+    }
 
     /** maximum per-host bandwidth usage */
-    @Expert
-    final public static Key<Integer> MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC =
-        Key.make(0);
-
+    {
+        setMaxPerHostBandwidthUsageKbSec(0);
+    }
+    public int getMaxPerHostBandwidthUsageKbSec() {
+        return (Integer) kp.get("maxPerHostBandwidthUsageKbSec");
+    }
+    public void setMaxPerHostBandwidthUsageKbSec(int max) {
+        kp.put("maxPerHostBandwidthUsageKbSec",max);
+    }
 
     /** maximum overall bandwidth usage */
-    @Global
-    final public static Key<Integer> TOTAL_BANDWIDTH_USAGE_KB_SEC =
-        Key.make(0);
-
+    {
+        setTotalBandwidthUsageKbSec(0);
+    }
+    public int getTotalBandwidthUsageKbSec() {
+        return (Integer) kp.get("totalBandwidthUsageKbSec");
+    }
+    public void setTotalBandwidthUsageKbSec(int total) {
+        kp.put("totalBandwidthUsageKbSec",total);
+    }
 
     /** for retryable problems, seconds to wait before a retry */
-    final public static Key<Long> RETRY_DELAY_SECONDS = Key.make(900L);
-
+    {
+        setRetryDelaySeconds(900);
+    }
+    public int getRetryDelaySeconds() {
+        return (Integer) kp.get("retryDelaySeconds");
+    }
+    public void setRetryDelaySeconds(int delay) {
+        kp.put("retryDelaySeconds",delay);
+    }
     
     /** maximum times to emit a CrawlURI without final disposition */
-    final public static Key<Integer> MAX_RETRIES = Key.make(30);
-
+    {
+        setMaxRetries(30000);
+    }
+    public int getMaxRetries() {
+        return (Integer) kp.get("maxRetries");
+    }
+    public void setMaxRetries(int maxRetries) {
+        kp.put("maxRetries",maxRetries);
+    }
 
     /** size of the 'outbound' mediation queue between manager thread 
      * and toethreads */
-    @Immutable @Expert
-    final public static Key<Integer> OUTBOUND_QUEUE_CAPACITY = 
-        Key.make(50);
+    int outboundQueueCapacity = 50; 
+    public int getOutboundQueueCapacity() {
+        return this.outboundQueueCapacity;
+    }
+    public void setOutboundQueueCapacity(int capacity) {
+        this.outboundQueueCapacity = capacity; 
+    }
     
     /** size of the inbound queue as multiple of the outbound queue */
-    @Immutable @Expert
-    final public static Key<Integer> INBOUND_QUEUE_MULTIPLE = 
-        Key.make(3);
+    int inboundQueueMultiple = 3;
+    public int getInboundQueueMultiple() {
+        return this.inboundQueueMultiple;
+    }
+    public void setInboundQueueMultiple(int multiple) {
+        this.inboundQueueMultiple = multiple;
+    }
     
 
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
-    @Immutable @Expert
-    final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
-        Key.make("");
+    {
+        setForceQueueAssignment("");
+    }
+    public String getForceQueueAssignment() {
+        return (String) kp.get("forceQueueAssignment");
+    }
+    public void setForceQueueAssignment(String forceQueueAssignment) {
+        kp.put("forceQueueAssignment",forceQueueAssignment);
+    }
 
     // word chars, dash, period, comma, colon
-    protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.,:]*";
+//    protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.,:]*";
 
     /**
      * Whether to tag seeds with their own URI as a heritable 'source' String,
@@ -200,16 +330,28 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * from that seed. When present, such source tags appear in the
      * second-to-last crawl.log field.
      */
-    @Immutable
-    final public static Key<Boolean> SOURCE_TAG_SEEDS = Key.make(false);
-
+    {
+        setSourceTagSeeds(false);
+    }
+    public boolean getSourceTagSeeds() {
+        return (Boolean) kp.get("sourceTagSeeds");
+    }
+    public void setSourceTagSeeds(boolean sourceTagSeeds) {
+        kp.put("sourceTagSeeds",sourceTagSeeds);
+    }
 
     /**
      * Recover log on or off attribute.
      */
-    @Immutable @Expert
-    final public static Key<Boolean> RECOVERY_LOG_ENABLED = Key.make(true);
-
+    {
+        setRecoveryLogEnabled(true);
+    }
+    public boolean getRecoveryLogEnabled() {
+        return (Boolean) kp.get("recoveryLogEnabled");
+    }
+    public void setRecoveryLogEnabled(boolean enabled) {
+        kp.put("recoveryLogEnabled",enabled);
+    }
 
     // top-level stats
     /** total URIs queued to be visited */
@@ -226,8 +368,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * Used when bandwidth constraint are used.
      */
     protected long totalProcessedBytes = 0;
-
-    private transient long nextURIEmitTime = 0;
 
     protected long processedBytesAfterLastEmittedURI = 0;
     
@@ -246,44 +386,20 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     /** file collecting report of ignored seed-file entries (if any) */
     public static final String IGNORED_SEEDS_FILENAME = "seeds.ignored";
 
-    
-    /**
-     * The crawl controller using this Frontier.
-     */
-    @Immutable
-    final public static Key<CrawlControllerImpl> CONTROLLER = 
-        Key.makeAuto(CrawlControllerImpl.class);
-    
-    
-    @Immutable
-    final public static Key<CrawlerLoggerModule> LOGGER_MODULE =
-        Key.makeAuto(CrawlerLoggerModule.class);
-
-    
-    @Immutable
-    final public static Key<SeedModuleImpl> SEEDS = 
-        Key.makeAuto(SeedModuleImpl.class);
-    
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
-    
     /**
      * Ordered list of url canonicalization rules.  Rules are applied in the 
      * order listed from top to bottom.
      */
-    @Immutable
-    final public static Key<List<CanonicalizationRule>> RULES = 
-        Key.makeList(CanonicalizationRule.class);
-    
-    @Immutable
-    final public static Key<SheetManager> MANAGER =
-        Key.makeAuto(SheetManager.class);
-
-    
-//    private Path scratchDir;
-    private Path recoveryDir;
-
+    {
+        setCanonicalizationRules(Collections.EMPTY_LIST);
+    }
+    @SuppressWarnings("unchecked")
+    public List<CanonicalizationRule> getCanonicalizationRules() {
+        return (List<CanonicalizationRule>) kp.get("canonicalizationRules");
+    }
+    public void setCanonicalizationRules(List rules) {
+        kp.put("canonicalizationRules",rules);
+    }
 
     /**
      * Defines how to assign URIs to queues. Can assign by host, by ip, 
@@ -291,18 +407,28 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * a topmost-assignable domain, and into one of a fixed set of buckets 
      * (1k).
      */
-    final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
-        Key.make(QueueAssignmentPolicy.class, 
-                SurtAuthorityQueueAssignmentPolicy.class);
-    
-    
+    {
+        setQueueAssignmentPolicy(new SurtAuthorityQueueAssignmentPolicy());
+    }
+    public QueueAssignmentPolicy getQueueAssignmentPolicy() {
+        return (QueueAssignmentPolicy) kp.get("queueAssignmentPolicy");
+    }
+    public void setQueueAssignmentPolicy(QueueAssignmentPolicy policy) {
+        kp.put("queueAssignmentPolicy",policy);
+    }
+
     /**
      * Auto-discovered module providing configured (or overridden)
      * User-Agent value; now necessary in frontier because User-Agent
      * may affect politeness delays via robots.txt Crawl-Delay. 
      */
-    final public static Key<UserAgentProvider> USER_AGENT_PROVIDER =
-        Key.makeAuto(UserAgentProvider.class);
+    public UserAgentProvider getUserAgentProvider() {
+        return (UserAgentProvider) kp.get("userAgentProvider");
+    }
+    @Autowired
+    public void setUserAgentProvider(UserAgentProvider provider) {
+        kp.put("userAgentProvider",provider);
+    }
 
     
     /**
@@ -362,24 +488,17 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     }
     
     public void initialTasks(StateProvider provider) {
-//        this.scratchDir = provider.get(this, SCRATCH_DIR);
-        this.recoveryDir = provider.get(this, RECOVERY_DIR);
-        this.controller = provider.get(this, CONTROLLER);
-        this.loggerModule = provider.get(this, LOGGER_MODULE);
-        this.manager = provider.get(this, MANAGER);
-        
-        SeedModuleImpl seeds = provider.get(this, SEEDS);
         seeds.addSeedRefreshListener(this);
         
-        if (provider.get(this, RECOVERY_LOG_ENABLED)) try {
+        if (getRecoveryLogEnabled()) try {
             initJournal(loggerModule.getLogsDir().getAbsolutePath());
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
         
-        this.outboundCapacity = provider.get(this,OUTBOUND_QUEUE_CAPACITY);
+        this.outboundCapacity = getOutboundQueueCapacity();
         this.inboundCapacity = outboundCapacity * 
-            provider.get(this, INBOUND_QUEUE_MULTIPLE);
+            getInboundQueueMultiple();
         outbound = new ArrayBlockingQueue<CrawlURI>(outboundCapacity, true);
         inbound = new ArrayBlockingQueue<InEvent>(inboundCapacity, true);
         pause();
@@ -628,10 +747,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                     FrontierJournal.LOGNAME_RECOVER);
         }
     }
-    
-    public <T> T get(Key<T> key) {
-        return manager.getGlobalSheet().get(this, key);
-    }
 
     public void start() {
         requestState(State.RUN);
@@ -693,11 +808,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         FrontierGroup group = getGroup(curi);
         group.tally(curi, stage);
     }
-
-    protected ServerCache getServerCache() {
-        return manager.get(this, SERVER_CACHE);
-    }
-
 
     protected void doJournalFinishedSuccess(CrawlURI c) {
         tally(c,Stage.SUCCEEDED);
@@ -860,8 +970,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
         logger.info("beginning");
         // Get the seeds to refresh.
         Writer ignoredWriter = new StringWriter();
-        Iterator<UURI> iter = manager.getGlobalSheet().get(this, SEEDS)
-            .seedsIterator(ignoredWriter);
+        Iterator<UURI> iter = getSeeds().seedsIterator(ignoredWriter);
         int count = 0; 
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
@@ -869,7 +978,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             caUri.setStateProvider(manager);
             caUri.setSeed(true);
             caUri.setSchedulingDirective(SchedulingConstants.MEDIUM);
-            if (get(SOURCE_TAG_SEEDS)) {
+            if (getSourceTagSeeds()) {
                 caUri.setSourceTag(caUri.toString());
             }
             schedule(caUri);
@@ -938,14 +1047,14 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             // This is a feature. This is handling for case where a seed
             // gets immediately redirected to another page. What we're doing is
             // treating the immediate redirect target as a seed.
-            manager.getGlobalSheet().get(this, SEEDS).addSeed(curi);
+            getSeeds().addSeed(curi);
             // And it needs rapid scheduling.
 	    if (curi.getSchedulingDirective() == SchedulingConstants.NORMAL)
                 curi.setSchedulingDirective(SchedulingConstants.MEDIUM);
         }
 
         // optionally preferencing embeds up to MEDIUM
-        int prefHops = curi.get(this,PREFERENCE_EMBED_HOPS); 
+        int prefHops = getPreferenceEmbedHops(); 
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
@@ -984,7 +1093,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     protected long retryDelayFor(CrawlURI curi) {
         int status = curi.getFetchStatus();
         return (status == S_CONNECT_FAILED || status == S_CONNECT_LOST ||
-                status == S_DOMAIN_UNRESOLVABLE)? curi.get(this,RETRY_DELAY_SECONDS) : 0;
+                status == S_DOMAIN_UNRESOLVABLE)? getRetryDelaySeconds() : 0;
                 // no delay for most
     }
 
@@ -1005,24 +1114,24 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
 
             long completeTime = curi.getFetchCompletedTime();
             long durationTaken = (completeTime - curi.getFetchBeginTime());
-            durationToWait = (long)(curi.get(this,DELAY_FACTOR) * durationTaken);
+            durationToWait = (long)(getDelayFactor() * durationTaken);
 
-            long minDelay = curi.get(this,MIN_DELAY_MS);
+            long minDelay = getMinDelayMs();
             if (minDelay > durationToWait) {
                 // wait at least the minimum
                 durationToWait = minDelay;
             }
 
-            long maxDelay = curi.get(this,MAX_DELAY_MS);
+            long maxDelay = getMaxDelayMs();
             if (durationToWait > maxDelay) {
                 // wait no more than the maximum
                 durationToWait = maxDelay;
             }
             
-            if (curi.get(this,RESPECT_CRAWL_DELAY)) {
+            if (getRespectCrawlDelay()) {
                 CrawlServer s = ServerCacheUtil.getServerFor(
                         getServerCache(),curi.getUURI());
-                UserAgentProvider uap = curi.get(this, USER_AGENT_PROVIDER);
+                UserAgentProvider uap = getUserAgentProvider();
                 String ua = curi.getUserAgent();
                 if (ua == null) {
                     ua = uap.getUserAgent(curi);
@@ -1038,7 +1147,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             }
             
             long now = System.currentTimeMillis();
-            int maxBandwidthKB = curi.get(this, MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
+            int maxBandwidthKB = getMaxPerHostBandwidthUsageKbSec();
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
                 ServerCache cache = this.getServerCache();
@@ -1081,14 +1190,10 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
 
     protected boolean overMaxRetries(CrawlURI curi) {
         // never retry more than the max number of times
-        if (curi.getFetchAttempts() >= curi.get(this,MAX_RETRIES)) {
+        if (curi.getFetchAttempts() >= getMaxRetries()) {
             return true;
         }
         return false;
-    }
-
-    public DecideRule getScope() {
-        return controller.get(this, SCOPE);
     }
     
     /* (non-Javadoc)
@@ -1156,11 +1261,12 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                             // Danger of double-add of seeds because of this code here.
                             // Only call addSeed if no via.  If a via, the schedule will
                             // take care of updating scope.
-                            manager.getGlobalSheet().get(this, SEEDS).addSeed(curi);
+                            getSeeds().addSeed(curi);
                         }
                     }
                     if(scope!=null) {
-                        curi.setStateProvider(controller.getSheetManager());
+                        //TODO:SPRINGY
+//                        curi.setStateProvider(controller.getSheetManager());
                         if(!scope.accepts(curi)) {
                             continue;
                         }
@@ -1256,7 +1362,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      */
     protected String canonicalize(UURI uuri) {
         Sheet global = manager.getGlobalSheet();
-        List<CanonicalizationRule> rules = global.get(this, RULES);
+        List<CanonicalizationRule> rules = getCanonicalizationRules();
         return Canonicalizer.canonicalize(global, uuri.toString(), rules);
     }
 
@@ -1301,11 +1407,11 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      * @return a String token representing a queue
      */
     public String getClassKey(CrawlURI cauri) {
-        String queueKey = cauri.get(this,FORCE_QUEUE_ASSIGNMENT);
+        String queueKey = getForceQueueAssignment();
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
-            queueKey = cauri.get(this, QUEUE_ASSIGNMENT_POLICY).getClassKey(
-                    cauri);
+            //TODO:SPRINGY set overrides based on cauri?
+            queueKey = getQueueAssignmentPolicy().getClassKey(cauri);
         }
         return queueKey;
     }
@@ -1360,7 +1466,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     private void writeObject(ObjectOutputStream out) 
     throws IOException {
         out.defaultWriteObject();
-        boolean recoveryLogEnabled = get(RECOVERY_LOG_ENABLED);
+        boolean recoveryLogEnabled = getRecoveryLogEnabled();
         out.writeBoolean(recoveryLogEnabled);
         if (recoveryLogEnabled) {
             out.writeUTF(loggerModule.getLogsDir().getAbsolutePath());

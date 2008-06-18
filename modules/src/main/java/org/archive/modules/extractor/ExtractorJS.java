@@ -31,7 +31,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
-import org.archive.state.KeyManager;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -132,7 +131,7 @@ public class ExtractorJS extends ContentExtractor {
 
         try {
             try {
-                numberOfLinksExtracted += considerStrings(uriErrors, curi, cs, 
+                numberOfLinksExtracted += considerStrings(this, curi, cs, 
                         true);
             } catch (StackOverflowError e) {
                 DevUtils.warnHandle(e, "ExtractorJS StackOverflowError");
@@ -152,7 +151,7 @@ public class ExtractorJS extends ContentExtractor {
         }
     }
 
-    public static long considerStrings(UriErrorLoggerModule uriErrors, 
+    public static long considerStrings(Extractor ext, 
             ProcessorURI curi, CharSequence cs, boolean handlingJSFile) {
         long foundLinks = 0;
         Matcher strings =
@@ -167,7 +166,7 @@ public class ExtractorJS extends ContentExtractor {
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
                 foundLinks++;
                 try {
-                    int max = uriErrors.getMaxOutlinks(curi);
+                    int max = ext.getExtractorHelper().getMaxOutlinks();
                     if (handlingJSFile) {
                         Link.addRelativeToVia(curi, max, string, JS_MISC, 
                                 SPECULATIVE);
@@ -176,10 +175,10 @@ public class ExtractorJS extends ContentExtractor {
                                 SPECULATIVE);
                     }
                 } catch (URIException e) {
-                    uriErrors.logUriError(e, curi.getUURI(), string);
+                    ext.logUriError(e, curi.getUURI(), string);
                 }
             } else {
-               foundLinks += considerStrings(uriErrors, curi, subsequence, 
+               foundLinks += considerStrings(ext, curi, subsequence, 
                        handlingJSFile);
             }
             TextUtils.recycleMatcher(uri);
@@ -199,11 +198,5 @@ public class ExtractorJS extends ContentExtractor {
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorJS.class);
     }
 }

@@ -141,7 +141,7 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
             } catch (URIException e1) {
                 // There may not be a controller (e.g. If we're being run
                 // by the extractor tool).
-                logUriError(e1, curi, uri);
+                logUriError(e1, curi.getUURI(), uri);
             }
         }
         

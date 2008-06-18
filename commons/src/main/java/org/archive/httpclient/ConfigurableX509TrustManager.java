@@ -27,8 +27,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Logger;
 
 import javax.net.ssl.TrustManager;
@@ -66,55 +64,47 @@ public class ConfigurableX509TrustManager implements X509TrustManager
     protected static Logger logger = Logger.getLogger(
         "org.archive.httpclient.ConfigurableX509TrustManager");
 
-    /**
-     * Trust anything given us.
-     *
-     * Default setting.
-     *
-     * <p>See <a href="http://javaalmanac.com/egs/javax.net.ssl/TrustAll.html">
-     *  e502. Disabling Certificate Validation in an HTTPS Connection</a> from
-     * the java almanac for how to trust all.
-     */
-    public final static String OPEN = "open";
+    public static enum TrustLevel { 
+        /**
+         * Trust anything given us.
+         *
+         * Default setting.
+         *
+         * <p>See <a href="http://javaalmanac.com/egs/javax.net.ssl/TrustAll.html">
+         *  e502. Disabling Certificate Validation in an HTTPS Connection</a> from
+         * the java almanac for how to trust all.
+         */
+        OPEN,
 
-    /**
-     * Trust any valid cert including self-signed certificates.
-     */
-    public final static String LOOSE = "loose";
-
-    /**
-     * Normal jsse behavior.
-     *
-     * Seemingly any certificate that supplies valid chain of trust.
-     */
-    public final static String NORMAL = "normal";
-
-    /**
-     * Strict trust.
-     *
-     * Ensure server has same name as cert DN.
-     */
-    public final static String STRICT = "strict";
-
-    /**
-     * All the levels of trust as an array from babe-in-the-wood to strict.
-     */
-    public static String [] LEVELS_AS_ARRAY = {OPEN, LOOSE, NORMAL, STRICT};
-
-    /**
-     * Levels as a list.
-     */
-    private static List LEVELS = Arrays.asList(LEVELS_AS_ARRAY);
+        /**
+         * Trust any valid cert including self-signed certificates.
+         */
+        LOOSE,
+    
+        /**
+         * Normal jsse behavior.
+         *
+         * Seemingly any certificate that supplies valid chain of trust.
+         */
+        NORMAL,
+    
+        /**
+         * Strict trust.
+         *
+         * Ensure server has same name as cert DN.
+         */
+        STRICT,
+    }
 
     /**
      * Default setting for trust level.
      */
-    public final static String DEFAULT = OPEN;
+    public final static TrustLevel DEFAULT = TrustLevel.OPEN;
 
     /**
      * Trust level.
      */
-    private String trustLevel = DEFAULT;
+    private TrustLevel trustLevel = DEFAULT;
 
 
     /**
@@ -139,7 +129,7 @@ public class ConfigurableX509TrustManager implements X509TrustManager
      * @throws NoSuchAlgorithmException
      * @throws KeyStoreException
      */
-    public ConfigurableX509TrustManager(String level)
+    public ConfigurableX509TrustManager(TrustLevel level)
     throws NoSuchAlgorithmException, KeyStoreException {
         super();
         TrustManagerFactory factory = TrustManagerFactory.
@@ -158,13 +148,12 @@ public class ConfigurableX509TrustManager implements X509TrustManager
         }
         this.standardTrustManager = (X509TrustManager)trustmanagers[0];
 
-        this.trustLevel =
-            (LEVELS.contains(level.toLowerCase()))? level: DEFAULT;
+        this.trustLevel = level;
     }
 
     public void checkClientTrusted(X509Certificate[] certificates, String type)
     throws CertificateException {
-        if (this.trustLevel.equals(OPEN)) {
+        if (this.trustLevel.equals(TrustLevel.OPEN)) {
             return;
         }
 
@@ -173,17 +162,17 @@ public class ConfigurableX509TrustManager implements X509TrustManager
 
     public void checkServerTrusted(X509Certificate[] certificates, String type)
     throws CertificateException {
-        if (this.trustLevel.equals(OPEN)) {
+        if (this.trustLevel.equals(TrustLevel.OPEN)) {
             return;
         }
 
         try {
             this.standardTrustManager.checkServerTrusted(certificates, type);
-            if (this.trustLevel.equals(STRICT)) {
-                logger.severe(STRICT + " not implemented.");
+            if (this.trustLevel.equals(TrustLevel.STRICT)) {
+                logger.severe(TrustLevel.STRICT + " not implemented.");
             }
         } catch (CertificateException e) {
-            if (this.trustLevel.equals(LOOSE) &&
+            if (this.trustLevel.equals(TrustLevel.LOOSE) &&
                 certificates != null && certificates.length == 1)
             {
                     // If only one cert and its valid and it caused a

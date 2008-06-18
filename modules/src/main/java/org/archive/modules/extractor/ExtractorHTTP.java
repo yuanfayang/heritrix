@@ -30,7 +30,6 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.ProcessorURI.FetchType;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.KeyManager;
 
 
 /**
@@ -79,7 +78,7 @@ public class ExtractorHTTP extends Extractor {
             curi.getOutLinks().add(link);
             numberOfLinksExtracted++;
         } catch (URIException e) {
-            logUriError(e, curi, loc.getValue());
+            logUriError(e, curi.getUURI(), loc.getValue());
         }
 
     }
@@ -92,11 +91,5 @@ public class ExtractorHTTP extends Extractor {
         ret.append("  CrawlURIs handled: " + this.getURICount());
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorHTTP.class);
     }
 }

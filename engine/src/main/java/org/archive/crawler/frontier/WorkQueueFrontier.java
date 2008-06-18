@@ -54,6 +54,7 @@ import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
+import org.archive.crawler.framework.StatisticsTracker;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy;
 import org.archive.crawler.frontier.precedence.CostUriPrecedencePolicy;
@@ -62,14 +63,11 @@ import org.archive.crawler.frontier.precedence.UriPrecedencePolicy;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Immutable;
-import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Transform;
 import org.archive.util.Transformer;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -102,53 +100,109 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * will be "long snoozed" instead of "short snoozed".  A "long snoozed"
      * queue may be swapped to disk because it's not needed soon.  
      */
-    @Immutable @Expert
-    final public static Key<Long> SNOOZE_LONG_MS = 
-        Key.make(5L*60L*1000L);
-    
+    long snoozeLongMs = 5L*60L*1000L; 
+    public long getSnoozeLongMs() {
+        return snoozeLongMs;
+    }
+    public void setSnoozeLongMs(long snooze) {
+        this.snoozeLongMs = snooze;
+    }
     
     private static final Logger logger =
         Logger.getLogger(WorkQueueFrontier.class.getName());
     
-    /** whether to hold queues INACTIVE until needed for throughput */
-    final public static Key<Boolean> HOLD_QUEUES = Key.make(true);
+    /**
+     * Whether queues should start INACTIVE (only becoming active 
+     * when needed to keep the crawler busy), or if queues should 
+     * start out ready (which means all nonempty queues are 
+     * considered in a round-robin fashion)
+     * 
+     * @return true if new queues should held inactive
+     */
+    boolean holdQueues = true; 
+    public boolean getHoldQueues() {
+        return holdQueues;
+    }
+    public void setHoldQueues(boolean holdQueues) {
+        this.holdQueues = holdQueues;
+        
+    }
 
     /** amount to replenish budget on each activation (duty cycle) */
-    @Expert
-    final public static Key<Integer> BALANCE_REPLENISH_AMOUNT = 
-        Key.make(3000);
-    
-    /** whether to hold queues INACTIVE until needed for throughput */
-    @Expert
-    final public static Key<Integer> ERROR_PENALTY_AMOUNT = 
-        Key.make(100);
+    {
+        setBalanceReplenishAmount(3000);
+    }
+    public int getBalanceReplenishAmount() {
+        return (Integer) kp.get("balanceReplenishAmount");
+    }
+    public void setBalanceReplenishAmount(int replenish) {
+        kp.put("balanceReplenishAmount",replenish);
+    }
+
+
+    /** budget penalty for an error fetch */
+    {
+        setErrorPenaltyAmount(100);
+    }
+    public int getErrorPenaltyAmount() {
+        return (Integer) kp.get("errorPenaltyAmount");
+    }
+    public void setErrorPenaltyAmount(int penalty) {
+        kp.put("errorPenaltyAmount",penalty);
+    }
 
     /** total expenditure to allow a queue before 'retiring' it  */
-    final public static Key<Long> QUEUE_TOTAL_BUDGET = Key.make(-1L);
+    {
+        setQueueTotalBudget(-1L);
+    }
+    public long getQueueTotalBudget() {
+        return (Long) kp.get("queueTotalBudget");
+    }
+    public void setQueueTotalBudget(long budget) {
+        kp.put("queueTotalBudget",budget);
+    }
 
     /** cost assignment policy to use. */
-    @Expert
-    final public static Key<CostAssignmentPolicy> COST_POLICY = 
-        Key.make(CostAssignmentPolicy.class, UnitCostAssignmentPolicy.class);
+    {
+        setCostAssignmentPolicy(new UnitCostAssignmentPolicy());
+    }
+    public CostAssignmentPolicy getCostAssignmentPolicy() {
+        return (CostAssignmentPolicy) kp.get("costAssignmentPolicy");
+    }
+    public void setCostAssignmentPolicy(CostAssignmentPolicy policy) {
+        kp.put("costAssignmentPolicy",policy);
+    }
     
     /** queue precedence assignment policy to use. */
-    @Expert
-    final public static Key<QueuePrecedencePolicy> QUEUE_PRECEDENCE_POLICY = 
-        Key.make(QueuePrecedencePolicy.class, BaseQueuePrecedencePolicy.class);
+    {
+        setQueuePrecedencePolicy(new BaseQueuePrecedencePolicy());
+    }
+    public QueuePrecedencePolicy getQueuePrecedencePolicy() {
+        return (QueuePrecedencePolicy) kp.get("queuePrecedencePolicy");
+    }
+    public void setQueuePrecedencePolicy(QueuePrecedencePolicy policy) {
+        kp.put("queuePrecedencePolicy",policy);
+    }
 
     /** precedence rank at or below which queues are not crawled */
-    @Expert @Global
-    final public static Key<Integer> PRECEDENCE_FLOOR = 
-        Key.make(255);
-    
-    /** URI precedence assignment policy to use. */
-    @Expert
-    final public static Key<UriPrecedencePolicy> URI_PRECEDENCE_POLICY = 
-        Key.make(UriPrecedencePolicy.class, CostUriPrecedencePolicy.class);
+    protected int precedenceFloor = 255; 
+    public int getPrecedenceFloor() {
+        return this.precedenceFloor;
+    }
+    public void setPrecedenceFloor(int floor) {
+        this.precedenceFloor = floor;
+    }
 
-    /** those UURIs which are already in-process (or processed), and
-     thus should not be rescheduled */
-    protected UriUniqFilter alreadyIncluded;
+    /** URI precedence assignment policy to use. */
+    {
+        setUriPrecedencePolicy(new CostUriPrecedencePolicy());
+    }
+    public UriPrecedencePolicy getUriPrecedencePolicy() {
+        return (UriPrecedencePolicy) kp.get("uriPrecedencePolicy");
+    }
+    public void setUriPrecedencePolicy(UriPrecedencePolicy policy) {
+        kp.put("uriPrecedencePolicy",policy);
+    }
 
     /** All known queues.
      */
@@ -173,18 +227,20 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     transient protected WorkQueue longestActiveQueue = null;
 
     protected int highestPrecedenceWaiting = Integer.MAX_VALUE;
-    
-    public <T> T get(Key<T> key) {
-        return manager.getGlobalSheet().get(this, key);
+
+    /** The UriUniqFilter to use, tracking those UURIs which are 
+     * already in-process (or processed), and thus should not be 
+     * rescheduled. Also known as the 'alreadyIncluded' or
+     * 'alreadySeen' structure */
+    protected UriUniqFilter uriUniqFilter;
+    public UriUniqFilter getUriUniqFilter() {
+        return this.uriUniqFilter;
+    }
+    @Autowired
+    public void setUriUniqFilter(UriUniqFilter uriUniqFilter) {
+        this.uriUniqFilter = uriUniqFilter;
     }
 
-    /**
-     * The UriUniqFilter to use.
-     */
-    @Immutable
-    public final static Key<UriUniqFilter> URI_UNIQ_FILTER =
-        Key.makeAuto(UriUniqFilter.class);
-    
     /**
      * Constructor.
      */
@@ -194,16 +250,13 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     
     public void initialTasks(StateProvider provider) {
         super.initialTasks(provider);
-        this.alreadyIncluded = provider.get(this, URI_UNIQ_FILTER);
-        alreadyIncluded.setDestination(this);
+        uriUniqFilter.setDestination(this);
         
         try {
             initInternalQueues(false);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-        
-//        loadSeeds();
     }
 
     /**
@@ -221,8 +274,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     protected void initInternalQueues(boolean recycle) 
     throws IOException, DatabaseException {
         if (workQueueDataOnDisk()
-                && get(QUEUE_ASSIGNMENT_POLICY).maximumNumberOfKeys() >= 0
-                && get(QUEUE_ASSIGNMENT_POLICY).maximumNumberOfKeys() <= 
+                && getQueueAssignmentPolicy().maximumNumberOfKeys() >= 0
+                && getQueueAssignmentPolicy().maximumNumberOfKeys() <= 
                     MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
             this.allQueues = Collections.synchronizedMap(
                     new HashMap<String,WorkQueue>());
@@ -252,8 +305,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     public void close() {
         // Cleanup.  CrawlJobs persist after crawl has finished so undo any
         // references.
-        if (this.alreadyIncluded != null) {
-            this.alreadyIncluded.close();
+        if (this.uriUniqFilter != null) {
+            this.uriUniqFilter.close();
 //            this.alreadyIncluded = null;
         }
 
@@ -301,9 +354,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         caUri.setStateProvider(manager);
         String canon = canonicalize(caUri);
         if (caUri.forceFetch()) {
-            alreadyIncluded.addForce(canon, caUri);
+            uriUniqFilter.addForce(canon, caUri);
         } else {
-            alreadyIncluded.add(canon, caUri);
+            uriUniqFilter.add(canon, caUri);
         }
     }
 
@@ -315,8 +368,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
 		// force cost to be calculated, pre-insert
 		getCost(curi);
         // set
-        curi.get(this,URI_PRECEDENCE_POLICY)
-            .uriScheduled(curi);
+        // TODO:SPRINGY set overrides by curi? 
+        getUriPrecedencePolicy().uriScheduled(curi);
 		return curi;
 	}
 	
@@ -366,7 +419,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         } else {
             // begin juggling queue between internal ordering structures
             wq.setHeld();
-            if(holdQueues()) {
+            if(getHoldQueues()) {
                 deactivateQueue(wq);
             } else {
                 replenishSessionBalance(wq);
@@ -378,16 +431,6 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             longestActiveQueue = wq; 
         }
 
-    }
-
-    /**
-     * Whether queues should start inactive (only becoming active when needed
-     * to keep the crawler busy), or if queues should start out ready.
-     * 
-     * @return true if new queues should held inactive
-     */
-    private boolean holdQueues() {
-        return get(HOLD_QUEUES);
     }
 
     /**
@@ -572,7 +615,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                 outbound.remainingCapacity() - readyClassQueues.size();
             while(activationsWanted > 0 
                     && !getInactiveQueuesByPrecedence().isEmpty() 
-                    && highestPrecedenceWaiting < get(PRECEDENCE_FLOOR)) {
+                    && highestPrecedenceWaiting < getPrecedenceFloor()) {
                 activateInactiveQueue();
                 activationsWanted--;
             }
@@ -654,7 +697,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             if(inProcessQueues.size()==0) {
                 // Nothing was ready or in progress or imminent to wake; ensure 
                 // any piled-up pending-scheduled URIs are considered
-                this.alreadyIncluded.requestFlush();
+                uriUniqFilter.requestFlush();
             }
             
             // never return null if there are any eligible inactives
@@ -676,7 +719,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     private int getCost(CrawlURI curi) {
         int cost = curi.getHolderCost();
         if (cost == CrawlURI.UNCALCULATED) {
-            cost = curi.get(this,COST_POLICY).costOf(curi);
+            //TODO:SPRINGY push overrides by curi
+            cost = getCostAssignmentPolicy().costOf(curi);
             curi.setHolderCost(cost);
         }
         return cost;
@@ -790,8 +834,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         if(contextUri == null) {
             // use globals TODO: fix problems this will cause if 
             // global total budget < override on empty queue
-            queue.setSessionBalance(get(BALANCE_REPLENISH_AMOUNT));
-            queue.setTotalBudget(get(QUEUE_TOTAL_BUDGET));
+            queue.setSessionBalance(getBalanceReplenishAmount());
+            queue.setTotalBudget(getQueueTotalBudget());
             return;
         }
         // TODO: consider confusing cross-effects of this and IP-based politeness
@@ -799,10 +843,15 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         if (p == null) {
             contextUri.setStateProvider(manager);
         }
-        queue.setSessionBalance(contextUri.get(this, BALANCE_REPLENISH_AMOUNT));
+        // TODO:SPRINGY set override
+        //queue.setSessionBalance(contextUri.get(this, BALANCE_REPLENISH_AMOUNT));
+        queue.setSessionBalance(getBalanceReplenishAmount());
+        
         // reset total budget (it may have changed)
         // TODO: is this the best way to be sensitive to potential mid-crawl changes
-        long totalBudget = contextUri.get(this, QUEUE_TOTAL_BUDGET);
+        // TODO:SPRINGY set override
+        //long totalBudget = contextUri.get(this, QUEUE_TOTAL_BUDGET);
+        long totalBudget = getQueueTotalBudget();
         queue.setTotalBudget(totalBudget);
         queue.unpeek(contextUri); // don't insist on that URI being next released
     }
@@ -814,14 +863,15 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @param wq
      */
     private void reenqueueQueue(WorkQueue wq) { 
-        wq.get(this,QUEUE_PRECEDENCE_POLICY).queueReevaluate(wq);
+        //TODO:SPRINGY set overrides by queue? 
+        getQueuePrecedencePolicy().queueReevaluate(wq);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("queue reenqueued: " +
                 wq.getClassKey());
         }
         if(highestPrecedenceWaiting < wq.getPrecedence() 
             || (wq.isOverBudget() && highestPrecedenceWaiting <= wq.getPrecedence())
-            || wq.getPrecedence() >= get(PRECEDENCE_FLOOR)) {
+            || wq.getPrecedence() >= getPrecedenceFloor()) {
             // if still over budget, deactivate
             deactivateQueue(wq);
         } else {
@@ -944,7 +994,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             incrementFailedFetchCount();
             // let queue note error
             curi.setStateProvider(manager);
-            wq.noteError(curi.get(this, ERROR_PENALTY_AMOUNT));
+            //TODO:SPRINGY set overrides by curi or wq?
+            wq.noteError(getErrorPenaltyAmount());
             doJournalFinishedFailure(curi);
             wq.expend(getCost(curi)); // failures cost
         }
@@ -996,14 +1047,14 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting " + curi);
-        alreadyIncluded.forget(canonicalize(curi.getUURI()), curi);
+        uriUniqFilter.forget(canonicalize(curi.getUURI()), curi);
     }
 
     /**  (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public long discoveredUriCount() {
-        return (this.alreadyIncluded != null)? this.alreadyIncluded.count(): 0;
+        return (this.uriUniqFilter != null)? this.uriUniqFilter.count(): 0;
     }
 
     /**
@@ -1094,7 +1145,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     protected int getTotalEligibleInactiveQueues() {
         return tallyInactiveTotals(
-                getInactiveQueuesByPrecedence().headMap(get(PRECEDENCE_FLOOR)));
+                getInactiveQueuesByPrecedence().headMap(getPrecedenceFloor()));
     }
     
     /**
@@ -1103,7 +1154,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     protected int getTotalIneligibleInactiveQueues() {
         return tallyInactiveTotals(
-                getInactiveQueuesByPrecedence().tailMap(get(PRECEDENCE_FLOOR)));
+                getInactiveQueuesByPrecedence().tailMap(getPrecedenceFloor()));
     }
 
     /**
@@ -1243,7 +1294,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print(ArchiveUtils.get12DigitDate());
         w.print("\n");
         w.print(" Job being crawled: ");
-        w.print(controller.getSheetManager().getCrawlName());
+        w.print(controller.getJobHome().getName());
         w.print("\n");
         w.print("\n -----===== STATS =====-----\n");
         w.print(" Discovered:    ");
@@ -1266,10 +1317,10 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print("\n");
         w.print("\n -----===== QUEUES =====-----\n");
         w.print(" Already included size:     ");
-        w.print(Long.toString(alreadyIncluded.count()));
+        w.print(Long.toString(uriUniqFilter.count()));
         w.print("\n");
         w.print("               pending:     ");
-        w.print(Long.toString(alreadyIncluded.pending()));
+        w.print(Long.toString(uriUniqFilter.pending()));
         w.print("\n");
         w.print("\n All class queues map size: ");
         w.print(Long.toString(allCount));
@@ -1425,7 +1476,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     }
 
     public void considerIncluded(UURI u) {
-        this.alreadyIncluded.note(canonicalize(u));
+        this.uriUniqFilter.note(canonicalize(u));
         CrawlURI temp = new CrawlURI(u);
         temp.setStateProvider(manager);
         temp.setClassKey(getClassKey(temp));
@@ -1481,7 +1532,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     public boolean isEmpty() {
         return queuedUriCount.get() == 0 
-            && alreadyIncluded.pending() == 0 
+            && uriUniqFilter.pending() == 0 
             && inbound.isEmpty();
     }
 
@@ -1560,7 +1611,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         private void setWorkQueue(WorkQueue queue) {
             long wakeTime = queue.getWakeTime();
             long delay = wakeTime - System.currentTimeMillis();
-            if (delay > get(SNOOZE_LONG_MS)) {
+            if (delay > getSnoozeLongMs()) {
                 this.workQueue = new SoftReference<WorkQueue>(queue);
             } else {
                 this.workQueue = queue;

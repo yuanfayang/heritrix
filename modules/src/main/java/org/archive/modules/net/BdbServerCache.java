@@ -2,11 +2,9 @@ package org.archive.modules.net;
 
 import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -16,23 +14,17 @@ implements Initializable {
 
     private static final long serialVersionUID = 1L;
 
-
-    @Immutable
-    final public static Key<BdbModule> BDB =
-        Key.makeAuto(BdbModule.class);
-    
-    
-    static {
-        KeyManager.addKeys(BdbServerCache.class);
+    protected BdbModule bdb;
+    @Autowired
+    public void setBdbModule(BdbModule bdb) {
+        this.bdb = bdb;
     }
-    
     
     public BdbServerCache() {
     }
     
 
     public void initialTasks(StateProvider provider) {
-        BdbModule bdb = provider.get(this, BDB);
         try {
             this.servers = bdb.getBigMap("servers", false, String.class, CrawlServer.class);
             this.hosts = bdb.getBigMap("hosts", false, String.class, CrawlHost.class);

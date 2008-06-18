@@ -29,18 +29,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.archive.modules.ProcessorURI;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
@@ -48,9 +44,6 @@ import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Global;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.IoUtils;
@@ -87,13 +80,16 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
      * safe to change midcrawl (You can remove and add new dirs as the crawler
      * progresses).
      */
-    @Global
-    final public static Key<List<String>> PATH = 
-        Key.makeSimpleList(String.class, "arcs");
-
-    
-    static {
-        KeyManager.addKeys(ARCWriterProcessor.class);
+    List<String> storePaths;
+    {
+        storePaths = new ArrayList<String>();
+        storePaths.add("arcs");
+    }
+    public List<String> getStorePaths() {
+        return storePaths;
+    }
+    public void setStorePaths(List<String> paths) {
+        this.storePaths = paths; 
     }
 
     private transient List<String> cachedMetadata;
@@ -111,10 +107,8 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
 
     @Override
     protected void setupPool(AtomicInteger serialNo) {
-        int maxActive = getMaxActive();
-        int maxWait = getMaxWait();
         WriterPoolSettings wps = getWriterPoolSettings();
-        setPool(new ARCWriterPool(serialNo, wps, maxActive, maxWait));
+        setPool(new ARCWriterPool(serialNo, wps, getPoolMaxActive(), getPoolMaxWait()));
     }
 
 
@@ -197,14 +191,6 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
         return checkBytesWritten(curi);
     }
 
-
-    @Override
-    protected Key<List<String>> getPathKey() {
-        return PATH;
-    }
-
-
-
     protected List<String> getMetadata(StateProvider global) {
         if (TEMPLATE == null) {
             return null;
@@ -213,24 +199,22 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
         if (cachedMetadata != null) {
             return cachedMetadata;
         }
-        
-        MetadataProvider provider = global.get(this, METADATA_PROVIDER);
-        
+                
         String meta = TEMPLATE;
         meta = replace(meta, "${VERSION}", ArchiveUtils.VERSION);
         meta = replace(meta, "${HOST}", getHostName());
         meta = replace(meta, "${IP}", getHostAddress());
         
-        if (provider != null) {
-            meta = replace(meta, "${JOB_NAME}", provider.getJobName());
-            meta = replace(meta, "${DESCRIPTION}", provider.getJobDescription());
-            meta = replace(meta, "${OPERATOR}", provider.getJobOperator());
+        if (meta != null) {
+            meta = replace(meta, "${JOB_NAME}", getMetadataProvider().getJobName());
+            meta = replace(meta, "${DESCRIPTION}", getMetadataProvider().getDescription());
+            meta = replace(meta, "${OPERATOR}", getMetadataProvider().getOperator());
             // TODO: fix this to match job-start-date (from UI or operator setting)
             // in the meantime, don't include a slightly-off date
             // meta = replace(meta, "${DATE}", GMT());
-            meta = replace(meta, "${USER_AGENT}", provider.getUserAgent());
-            meta = replace(meta, "${FROM}", provider.getFrom());
-            meta = replace(meta, "${ROBOTS}", provider.getRobotsPolicy());
+            meta = replace(meta, "${USER_AGENT}", getMetadataProvider().getUserAgent());
+            meta = replace(meta, "${FROM}", getMetadataProvider().getOperatorFrom());
+            meta = replace(meta, "${ROBOTS}", getMetadataProvider().getRobotsPolicyName());
         }
 
         this.cachedMetadata = Collections.singletonList(meta);
@@ -248,16 +232,6 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
 
     }
 
-    
-    private String GMT() {
-        TimeZone gmt = TimeZone.getTimeZone("GMT+00:00");
-        Calendar calendar = Calendar.getInstance(gmt);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
-        Date date = calendar.getTime();
-        return sdf.format(date) + "+00:00";
-    }
-    
-    
     private static String replace(String meta, String find, String replace) {
         replace = StringEscapeUtils.escapeXml(replace);
         return meta.replace(find, replace);

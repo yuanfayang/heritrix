@@ -45,20 +45,18 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
 
     private static final long serialVersionUID = 3L;
 
-    
-    final public static Key<Boolean> USE_DOMAIN = Key.make(true);
-    public static final String ATTR_SCOPE = "host-or-domain-scope";
-    public static final String HOST = "Host";
-    public static final String DOMAIN = "Domain";
+    {
+        setUseDomain(true);
+    }
+    public boolean getUseDomain() {
+        return (Boolean)kp.get("useDomain");
+    }
+    public void setUseDomain(boolean useDomain) {
+        kp.put("useDomain", useDomain);
+    }
     
     private static final Logger logger =
         Logger.getLogger(ScopePlusOneDecideRule.class.getName());
-    
-    
-    static {
-        KeyManager.addKeys(ScopePlusOneDecideRule.class);
-    }
-    
     
     /**
      * Constructor.
@@ -126,7 +124,7 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      */
     protected synchronized SurtPrefixSet getPrefixes(StateProvider o) {
         if (surtPrefixes == null) {
-            readPrefixes(o);
+            readPrefixes();
         }
         return surtPrefixes;
     }    
@@ -138,15 +136,15 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * @see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#readPrefixes()
      */
     @Override
-    protected void readPrefixes(StateProvider context) {
-        buildSurtPrefixSet(context);
+    protected void readPrefixes() {
+        buildSurtPrefixSet();
         // See whether Host or Domain was chosen
-        if (context.get(this, USE_DOMAIN)) {
+        if (getUseDomain()) {
             surtPrefixes.convertAllPrefixesToDomains();
         } else {
             surtPrefixes.convertAllPrefixesToHosts();            
         }
-        dumpSurtPrefixSet(context);
+        dumpSurtPrefixSet();
     }        
 
 

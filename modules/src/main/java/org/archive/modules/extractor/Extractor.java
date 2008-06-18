@@ -30,11 +30,13 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
+import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -63,7 +65,15 @@ public abstract class Extractor extends Processor implements Initializable {
     public void initialTasks(StateProvider global) {
         this.uriErrors = global.get(this, URI_ERROR_LOGGER_MODULE);    
     }
-
+    
+    ExtractorHelper extractorHelper = new ExtractorHelper();
+    public ExtractorHelper getExtractorHelper() {
+        return extractorHelper;
+    }
+    @Autowired
+    public void setExtractorHelper(ExtractorHelper helper) {
+        this.extractorHelper = helper; 
+    }
     /**
      * Processes the given URI.  This method just delegates to 
      * {@link #extract(ExtractorURI)}, catching runtime exceptions and
@@ -112,13 +122,13 @@ public abstract class Extractor extends Processor implements Initializable {
     protected abstract void extract(ProcessorURI uri);
 
     
-    protected void logUriError(URIException e, ProcessorURI uri, 
+    public void logUriError(URIException e, UURI uuri, 
             CharSequence l) {
         if (e.getReasonCode() == UURIFactory.IGNORED_SCHEME) {
             // don't log those that are intentionally ignored
             return; 
         }
-        uriErrors.logUriError(e, uri.getUURI(), l);
+        uriErrors.logUriError(e, uuri, l);
     }
 
 }

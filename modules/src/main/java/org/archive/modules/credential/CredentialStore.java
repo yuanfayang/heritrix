@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.KeyManager;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;
@@ -51,23 +53,35 @@ import org.archive.state.StateProvider;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStore implements Module, Serializable {
+public class CredentialStore implements Module, Serializable, HasKeyedProperties {
 
     private static final long serialVersionUID = 3L;
 
     private static Logger logger = Logger.getLogger(
         "org.archive.crawler.datamodel.CredentialStore");
 
-
+    KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
+    
     /**
      * Credentials used by heritrix authenticating. See
      * http://crawler.archive.org/proposals/auth/ for background.
      * 
      * @see http://crawler.archive.org/proposals/auth/
      */
-    public static final Key<Map<String,Credential>> CREDENTIALS
-     = Key.makeMap(Credential.class);
-
+    {
+        setCredentials(new HashMap<String, Credential>());
+    }
+    @SuppressWarnings("unchecked")
+    public Map<String,Credential> getCredentials() {
+        return (Map<String,Credential>) kp.get("credentials");
+    }
+    public void setCredentials(Map map) {
+        kp.put("credentials",map);
+    }
+    
     /**
      * List of possible credential types as a List.
      *
@@ -103,7 +117,7 @@ public class CredentialStore implements Module, Serializable {
      * @return An iterator or null.
      */
     public Collection<Credential> getAll(StateProvider context) {
-        Map<String,Credential> map = context.get(this, CREDENTIALS);
+        Map<String,Credential> map = getCredentials();
         return map.values();
     }
 
@@ -117,7 +131,7 @@ public class CredentialStore implements Module, Serializable {
      * @throws ReflectionException
      */
     public Credential get(StateProvider context, String name) {
-        return context.get(this, CREDENTIALS).get(name);
+        return getCredentials().get(name);
     }
 
 

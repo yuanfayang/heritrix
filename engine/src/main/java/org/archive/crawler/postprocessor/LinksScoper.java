@@ -25,25 +25,24 @@
  */
 package org.archive.crawler.postprocessor;
 
+import static org.archive.crawler.datamodel.SchedulingConstants.HIGH;
+import static org.archive.crawler.datamodel.SchedulingConstants.MEDIUM;
+import static org.archive.crawler.datamodel.SchedulingConstants.NORMAL;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_PREREQUISITE_UNSCHEDULABLE_FAILURE;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.crawler.datamodel.SchedulingConstants.*;
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.crawler.framework.Scoper;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.DecideResult;
-import org.archive.modules.deciderules.DecideRuleSequence;
+import org.archive.modules.deciderules.DecideRule;
+import org.archive.modules.deciderules.RejectDecideRule;
 import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
-import org.archive.modules.net.RobotsHonoringPolicy;
-import org.archive.state.Expert;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 /**
  * Determine which extracted links are within scope.
@@ -70,20 +69,30 @@ public class LinksScoper extends Scoper implements PostProcessor {
      * If enabled, any URL found because a seed redirected to it (original seed
      * returned 301 or 302), will also be treated as a seed.
      */
-    @Expert
-    final public static Key<Boolean> SEED_REDIRECTS_NEW_SEEDS = 
-        Key.make(true);
+    {
+        setSeedsRedirectNewSeeds(true);
+    }
+    public boolean getSeedsRedirectNewSeeds() {
+        return (Boolean) kp.get("seedsRedirectNewSeeds");
+    }
+    public void setSeedsRedirectNewSeeds(boolean redirect) {
+        kp.put("seedsRedirectNewSeeds",redirect);
+    }
 
-    
     /**
      * DecideRules applied after an URI has been rejected. If the rules return
      * {@link DecideResult#ACCEPT}, the URI is logged (if the logging level is
      * INFO). Depends on {@link Scoper#OVERRIDE_LOGGER} being enabled.
      */
-    @Expert
-    final public static Key<DecideRuleSequence> LOG_REJECTS_RULES = 
-        Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
-
+    {
+        setLogRejectsRule(new RejectDecideRule());
+    }
+    public DecideRule getLogRejectsRule() {
+        return (DecideRule) kp.get("logRejectsRule");
+    }
+    public void setLogRejectsRule(DecideRule rule) {
+        kp.put("logRejectsRule", rule);
+    }
     
     /**
      * Number of hops (of any sort) from a seed up to which a URI has higher
@@ -95,9 +104,15 @@ public class LinksScoper extends Scoper implements PostProcessor {
      * with all discovered links processed before remaining seeds. Seed
      * redirects are treated as one hop from a seed.
      */
-    @Expert
-    final public static Key<Integer> PREFERENCE_DEPTH_HOPS = Key.make(-1);
-    
+    {
+        setPreferenceDepthHops(-1); // no limit
+    }
+    public int getPreferenceDepthHops() {
+        return (Integer) kp.get("preferenceDepthHops");
+    }
+    public void setPreferenceDepthHops(int depth) {
+        kp.put("preferenceDepthHops",depth);
+    }
     
     /**
      * @param name Name of this filter.
@@ -138,9 +153,8 @@ public class LinksScoper extends Scoper implements PostProcessor {
     @Override
     protected void innerProcess(final ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
-        final boolean redirectsNewSeeds = curi.get(this, 
-                SEED_REDIRECTS_NEW_SEEDS); 
-        int preferenceDepthHops = curi.get(this, PREFERENCE_DEPTH_HOPS); 
+        final boolean redirectsNewSeeds = getSeedsRedirectNewSeeds(); 
+        int preferenceDepthHops = getPreferenceDepthHops(); 
         
         for (Link wref: curi.getOutLinks()) try {
             int directive = getSchedulingFor(curi, wref, preferenceDepthHops);
@@ -232,7 +246,7 @@ public class LinksScoper extends Scoper implements PostProcessor {
         if (!LOGGER.isLoggable(Level.INFO)) {
             return;
         }
-        DecideRuleSequence seq = caUri.get(this, LOG_REJECTS_RULES);
+        DecideRule seq = getLogRejectsRule();
         if (seq.decisionFor(caUri) == DecideResult.ACCEPT) {
             LOGGER.info(caUri.getUURI().toString());
         }
@@ -288,11 +302,5 @@ public class LinksScoper extends Scoper implements PostProcessor {
                 // Everything else normal (at least for now)
                 return NORMAL;
         }
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(LinksScoper.class);
     }
 }

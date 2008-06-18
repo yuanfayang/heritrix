@@ -53,7 +53,7 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
             return null;
         }
 
-        public String getJobDescription() {
+        public String getDescription() {
             return null;
         }
 
@@ -61,7 +61,11 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
             return null;
         }
 
-        public String getJobOperator() {
+        public String getOperator() {
+            return null;
+        }
+        
+        public String getOperatorFrom() {
             return null;
         }
 
@@ -69,7 +73,7 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
             return null;
         }
 
-        public String getRobotsPolicy() {
+        public String getRobotsPolicyName() {
             return null;
         }
 

@@ -27,29 +27,41 @@ package org.archive.modules.deciderules;
 import java.io.Serializable;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.Module;
 
 
-public abstract class DecideRule implements Module, Serializable {
-
+public abstract class DecideRule implements Module, Serializable, HasKeyedProperties {
+    protected KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
     
-    final public static Key<Boolean> ENABLED = Key.make(true);
+    {
+        setEnabled(true);
+    }
+    public boolean getEnabled() {
+        return (Boolean) kp.get("enabled");
+    }
+    public void setEnabled(boolean enabled) {
+        kp.put("enabled",enabled);
+    }
 
-    final public static Key<String> COMMENT = Key.make("");
-
-    static {
-        KeyManager.addKeys(DecideRule.class);
+    protected String comment = "";
+    public String getComment() {
+        return comment;
+    }
+    public void setComment(String comment) {
+        this.comment = comment;
     }
     
     public DecideRule() {
-        KeyManager.addKeys(getClass());
+
     }
     
-    
     public DecideResult decisionFor(ProcessorURI uri) {
-        if (!uri.get(this, ENABLED)) {
+        if (!getEnabled()) {
             return DecideResult.PASS;
         }
         DecideResult result = innerDecide(uri);
@@ -71,4 +83,5 @@ public abstract class DecideRule implements Module, Serializable {
     public boolean accepts(ProcessorURI uri) {
         return DecideResult.ACCEPT == decisionFor(uri);
     }
+    
 }

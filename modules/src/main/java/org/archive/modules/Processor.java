@@ -24,25 +24,20 @@
 package org.archive.modules;
 
 
-import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_CONTENT_DIGEST;
-import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_FETCH_HISTORY;
-
 import java.io.Serializable;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.modules.credential.CredentialAvatar;
 import org.archive.modules.credential.Rfc2617Credential;
+import org.archive.modules.deciderules.AcceptDecideRule;
 import org.archive.modules.deciderules.DecideResult;
-import org.archive.modules.deciderules.DecideRuleSequence;
+import org.archive.modules.deciderules.DecideRule;
 import org.archive.net.UURI;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.Module;
-import org.archive.state.StateProvider;
 
 
 /**
@@ -51,37 +46,56 @@ import org.archive.state.StateProvider;
  * 
  * @author pjack
  */
-public abstract class Processor implements Module, Serializable {
-    
+public abstract class Processor implements Module, Serializable, HasKeyedProperties {
+    protected KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
 
+    String name = this.getClass().getSimpleName(); 
+    public String getName() {
+        return this.name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    
     /** 
      * Whether or not this process will execute for a particular URI. 
      * If this is false for a URI, then the URI isn't processed,
      * regardless of what the DecideRules say.
      */
-    final public static Key<Boolean> ENABLED = Key.make(Boolean.TRUE);
-
+    {
+        setEnabled(true);
+    }
+    public boolean getEnabled() {
+        return (Boolean) kp.get("enabled");
+    }
+    public void setEnabled(boolean enabled) {
+        kp.put("enabled",enabled);
+    }
+    
     
     /** 
-     * Decide rules (also particular to a URI) that determine whether or 
-     * not a particular URI is processed here.
+     * Decide rule(s) (also particular to a URI) that determine whether 
+     * or not a particular URI is processed here. If the rule(s) answer
+     * REJECT, processing is skipped. (ACCEPT or PASS allow processing
+     * to continue). 
      */
-    final public static Key<DecideRuleSequence> DECIDE_RULES
-     = Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
-
+    {
+        setShouldProcessRule(new AcceptDecideRule());
+    }
+    public DecideRule getShouldProcessRule() {
+        return (DecideRule) kp.get("shouldProcessRule");
+    }
+    public void setShouldProcessRule(DecideRule rule) {
+        kp.put("shouldProcessRule", rule);
+    }
 
     /**
      * The number of URIs processed by this processor.
      */
     private AtomicLong uriCount = new AtomicLong(0);
-
-
-    /**
-     * Necessary to register with the KeyManager.
-     */
-    static {
-        KeyManager.addKeys(Processor.class);
-    }
 
     
     /**
@@ -109,11 +123,11 @@ public abstract class Processor implements Module, Serializable {
      */
     public ProcessResult process(ProcessorURI uri) 
     throws InterruptedException {
-        if (!uri.get(this, ENABLED)) {
+        if (!getEnabled()) {
             return ProcessResult.PROCEED;
         }
         
-        if (uri.get(this, DECIDE_RULES).decisionFor(uri) == DecideResult.REJECT) {
+        if (getShouldProcessRule().decisionFor(uri) == DecideResult.REJECT) {
             innerRejectProcess(uri);
             return ProcessResult.PROCEED;
         }
@@ -126,7 +140,6 @@ public abstract class Processor implements Module, Serializable {
         }
     }
 
-    
     /**
      * Returns the number of URIs this processor has handled.  The returned
      * number does not include URIs that were rejected by the 

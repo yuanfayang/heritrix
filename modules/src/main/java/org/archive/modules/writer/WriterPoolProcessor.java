@@ -24,6 +24,9 @@
  */
 package org.archive.modules.writer;
 
+import static org.archive.modules.ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DNS_SUCCESS;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -36,30 +39,22 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-import org.archive.modules.ProcessorURI;
-import static org.archive.modules.ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
-
 import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
+import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.settings.RecoverAction;
-import org.archive.state.Expert;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Abstract implementation of a file pool processor.
@@ -78,9 +73,13 @@ implements Initializable, Closeable {
     /**
      * Compress files when "writing to disk.
      */
-    @Immutable
-    final public static Key<Boolean> COMPRESS = Key.make(true);
-
+    boolean compress = false; 
+    public boolean getCompress() {
+        return compress;
+    }
+    public void setCompress(boolean compress) {
+        this.compress = compress;
+    }
     
     /**
      * File prefix. The text supplied here will be used as a prefix naming
@@ -88,10 +87,13 @@ implements Initializable, Closeable {
      * look like IAH-20040808101010-0001-HOSTNAME.arc.gz ...if writing ARCs (The
      * prefix will be separated from the date by a hyphen).
      */
-    @Immutable
-    final public static Key<String> PREFIX = 
-        Key.make(WriterPoolMember.DEFAULT_PREFIX);
-
+    String prefix = WriterPoolMember.DEFAULT_PREFIX; 
+    public String getPrefix() {
+        return prefix;
+    }
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
 
     /**
      * Where to save files. Supply absolute or relative path. If relative, files
@@ -108,43 +110,65 @@ implements Initializable, Closeable {
      * Suffix to tag onto files. If value is '${HOSTNAME}', will use hostname
      * for suffix. If empty, no suffix will be added.
      */
-    @Immutable
-    final public static Key<String> SUFFIX = 
-        Key.make(WriterPoolMember.DEFAULT_SUFFIX);
-
-
+    String suffix = WriterPoolMember.DEFAULT_SUFFIX; 
+    public String getSuffix() {
+        return suffix;
+    }
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
+    }
+    
     /**
      * Max size of each file.
      */
-    @Immutable
-    final public static Key<Long> MAX_SIZE_BYTES = Key.make(100000000L);
-
+    long maxFileSizeBytes = 100000000L;
+    public long getMaxFileSizeBytes() {
+        return maxFileSizeBytes;
+    }
+    public void setMaxFileSizeBytes(long maxFileSizeBytes) {
+        this.maxFileSizeBytes = maxFileSizeBytes;
+    }
     
     /**
      * Maximum active files in pool. This setting cannot be varied over the life
      * of a crawl.
      */
-    @Immutable
-    final public static Key<Integer> POOL_MAX_ACTIVE = 
-        Key.make(WriterPool.DEFAULT_MAX_ACTIVE);
-
+    int poolMaxActive = WriterPool.DEFAULT_MAX_ACTIVE;
+    public int getPoolMaxActive() {
+        return poolMaxActive;
+    }
+    public void setPoolMaxActive(int poolMaxActive) {
+        this.poolMaxActive = poolMaxActive;
+    }
 
     /**
      * Maximum time to wait on pool element (milliseconds). This setting cannot
      * be varied over the life of a crawl.
      */
-    @Immutable
-    final public static Key<Integer> POOL_MAX_WAIT = 
-        Key.make(WriterPool.DEFAULT_MAXIMUM_WAIT);
-
+    int poolMaxWait = WriterPool.DEFAULT_MAXIMUM_WAIT;
+    public int getPoolMaxWait() {
+        return poolMaxWait;
+    }
+    public void setPoolMaxWait(int poolMaxWait) {
+        this.poolMaxWait = poolMaxWait;
+    }
     
     /**
      * Whether to skip the writing of a record when URI history information is
      * available and indicates the prior fetch had an identical content digest.
+     * Note that subclass settings may provide more fine-grained control on
+     * how identical digest content is handled; for those controls to have
+     * effect, this setting must not be 'true' (causing content to be 
+     * skipped entirely). 
      * Default is false.
      */
-    final public static Key<Boolean> SKIP_IDENTICAL_DIGESTS = Key.make(false);
-
+    boolean skipIdenticalDigests = false; 
+    public boolean getSkipIdenticalDigests() {
+        return skipIdenticalDigests;
+    }
+    public void setSkipIdenticalDigests(boolean skipIdenticalDigests) {
+        this.skipIdenticalDigests = skipIdenticalDigests;
+    }
 
     /**
      * ProcessorURI annotation indicating no record was written.
@@ -156,24 +180,37 @@ implements Initializable, Closeable {
      * exceeded this limit, this processor will stop the crawler. A value of
      * zero means no upper limit.
      */
-    @Immutable @Expert
-    final public static Key<Long> TOTAL_BYTES_TO_WRITE = Key.make(0L);
+    long maxTotalBytesToWrite = 0L;
+    public long getMaxTotalBytesToWrite() {
+        return maxTotalBytesToWrite;
+    }
+    public void setMaxTotalBytesToWrite(long maxTotalBytesToWrite) {
+        this.maxTotalBytesToWrite = maxTotalBytesToWrite;
+    }
 
-    @Immutable
-    final public static Key<MetadataProvider> METADATA_PROVIDER = 
-        Key.makeAuto(MetadataProvider.class);
+    public MetadataProvider getMetadataProvider() {
+        return (MetadataProvider) kp.get("metadataProvider");
+    }
+    @Autowired
+    public void setMetadataProvider(MetadataProvider provider) {
+        kp.put("metadataProvider",provider);
+    }
 
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
 
-    @Immutable
-    final public static Key<Path> DIRECTORY =
-        Key.make(new Path("."));
-    
-    
-    static {
-        KeyManager.addKeys(WriterPoolProcessor.class);
+    protected Path directory = new Path(".");
+    public Path getDirectory() {
+        return directory;
+    }
+    public void setDirectory(Path directory) {
+        this.directory = directory;
     }
     
     /**
@@ -186,12 +223,7 @@ implements Initializable, Closeable {
      */
     private long totalBytesWritten = 0;
 
-    
-    private ServerCache serverCache;
-    private Path directory;
     private WriterPoolSettings settings;
-    private int maxActive;
-    private int maxWait;
     private AtomicInteger serial = new AtomicInteger();
     
 
@@ -205,10 +237,6 @@ implements Initializable, Closeable {
 
 
     public synchronized void initialTasks(StateProvider context) {
-        this.serverCache = context.get(this, SERVER_CACHE);
-        this.directory = context.get(this, DIRECTORY);
-        this.maxActive = context.get(this, POOL_MAX_ACTIVE);
-        this.maxWait = context.get(this, POOL_MAX_WAIT);
         this.settings = getWriterPoolSettings(context);
         setupPool(serial);
     }
@@ -226,7 +254,7 @@ implements Initializable, Closeable {
 
     
     protected ProcessResult checkBytesWritten(StateProvider context) {
-        long max = context.get(this, TOTAL_BYTES_TO_WRITE);
+        long max = getMaxTotalBytesToWrite();
         if (max <= 0) {
             return ProcessResult.PROCEED;
         }
@@ -245,7 +273,7 @@ implements Initializable, Closeable {
      * @return true if URI should be written; false otherwise
      */
     protected boolean shouldWrite(ProcessorURI curi) {
-        if (curi.get(this, SKIP_IDENTICAL_DIGESTS)
+        if (getSkipIdenticalDigests()
             && IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
             curi.getAnnotations().add(ANNOTATION_UNWRITTEN 
                     + ":identicalDigest");
@@ -361,10 +389,10 @@ implements Initializable, Closeable {
 
 
     
-    protected abstract  Key<List<String>> getPathKey();
+    protected abstract List<String> getStorePaths();
     
     private List<File> getOutputDirs(StateProvider context) {
-        List<String> list = context.get(this, getPathKey());
+        List<String> list = getStorePaths();
         ArrayList<File> results = new ArrayList<File>();
         for (String path: list) {
             File f = new File(directory.toFile(), path);
@@ -386,26 +414,15 @@ implements Initializable, Closeable {
         return settings;
     }
     
-    
-    protected int getMaxActive() {
-        return maxActive;
-    }
-    
-    
-    protected int getMaxWait() {
-        return maxWait;
-    }
-    
-    
     private WriterPoolSettings getWriterPoolSettings(
             final StateProvider context) {
         DefaultWriterPoolSettings result = new DefaultWriterPoolSettings();
-        result.setMaxSize(context.get(this, MAX_SIZE_BYTES));
+        result.setMaxSize(getMaxFileSizeBytes());
         result.setMetadata(getMetadata(context));
         result.setOutputDirs(getOutputDirs(context));
-        result.setPrefix(context.get(this, PREFIX));
+        result.setPrefix(getPrefix());
         
-        String sfx = context.get(this, SUFFIX);
+        String sfx = getSuffix();
         if (sfx.trim().equals(WriterPoolMember.HOSTNAME_VARIABLE)) {
             String str = "localhost.localdomain";
             try {
@@ -417,7 +434,7 @@ implements Initializable, Closeable {
         }
         
         result.setSuffix(sfx);
-        result.setCompressed(context.get(this, COMPRESS));
+        result.setCompressed(getCompress());
         return result;
     }
 

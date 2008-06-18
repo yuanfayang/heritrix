@@ -24,10 +24,11 @@
 package org.archive.modules.net;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.StateProvider;
 
 /**
@@ -58,10 +59,13 @@ import org.archive.state.StateProvider;
  * @author John Erik Halse
  *
  */
-public class RobotsHonoringPolicy implements Serializable {
-
+public class RobotsHonoringPolicy implements Serializable, HasKeyedProperties {
     private static final long serialVersionUID = 3L;
 
+    KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
     
     /**
      * Policy type.
@@ -88,14 +92,8 @@ public class RobotsHonoringPolicy implements Serializable {
         MOST_FAVORED_SET 
     }
 
-/*
-    public final static int CLASSIC = 0;
-    public final static int IGNORE = 1;
-    public final static int CUSTOM = 2;
-    public final static int MOST_FAVORED = 3;
-    public final static int MOST_FAVORED_SET = 4;
-*/
-
+    /* set default values of overridable properties */
+    {
     /**
      * Policy type. The 'classic' policy simply obeys all robots.txt rules for
      * the configured user-agent. The 'ignore' policy ignores all robots rules.
@@ -105,31 +103,32 @@ public class RobotsHonoringPolicy implements Serializable {
      * policy requires you to supply an list of alternate user-agents, and for
      * every page, if any agent of the set is allowed, the page will be crawled.
      */
-    public final static Key<Type> TYPE = Key.make(Type.CLASSIC);
-
+//    public final static Key<Type> TYPE = Key.make(Type.CLASSIC);
+        setType(Type.CLASSIC); 
     
     /**
      * Should we masquerade as another user agent when obeying the rules
      * declared for it. Only relevant if the policy type is 'most-favored' or
      * 'most-favored-set'.
      */
-    public final static Key<Boolean> MASQUERADE = Key.make(false);
-
+//    public final static Key<Boolean> MASQUERADE = Key.make(false);
+        setMasquerade(false);
 
     /**
      * Custom robots to use if policy type is 'custom'. Compose as if an actual
      * robots.txt file.
      */
-    public final static Key<String> CUSTOM_ROBOTS = Key.make("");
-
+//    public final static Key<String> CUSTOM_ROBOTS = Key.make("");
+        setCustomRobots("");
     
     /**
      * Alternate user-agent values to consider using for the 'most-favored-set'
      * policy.
      */
-    public final static Key<List<String>> USER_AGENTS = Key.makeList(String.class);
-
-
+//    public final static Key<List<String>> USER_AGENTS = Key.makeList(String.class);
+        setUserAgents(new ArrayList<String>(0));
+    }
+    
     /**
      * Creates a new instance of RobotsHonoringPolicy.
      */
@@ -145,21 +144,9 @@ public class RobotsHonoringPolicy implements Serializable {
      */
     public List<String> getUserAgents(StateProvider context) {
         if (isType(context,Type.MOST_FAVORED_SET)) {
-            return context.get(this, USER_AGENTS);
+            return getUserAgents();
         }
         return null;
-    }
-
-    /**
-     * This method returns true if the crawler should masquerade as the user agent
-     * which restrictions it opted to use.
-     *
-     * (Only relevant for  policy-types: most-favored and most-favored-set).
-     *
-     * @return true if we should masquerade
-     */
-    public boolean shouldMasquerade(StateProvider context) {
-        return context.get(this, MASQUERADE);
     }
 
     /**
@@ -168,10 +155,8 @@ public class RobotsHonoringPolicy implements Serializable {
      * @return String with content of alternate robots.txt
      */
     public String getCustomRobots(StateProvider context) {
-        if (isType(context, Type.CUSTOM)) {
-            return context.get(this, CUSTOM_ROBOTS);
-        }
-        return null;
+        // TODO: change callers to ensure overrides installed, use no-arg accessor
+        return getCustomRobots();
     }
 
 
@@ -181,7 +166,8 @@ public class RobotsHonoringPolicy implements Serializable {
      * @return policy type
      */
     public Type getType(StateProvider context) {
-        return context.get(this, TYPE);
+        // TODO: change callers to ensure overrides installed, use no-arg accessor
+        return getType();
     }
 
     /**
@@ -195,9 +181,42 @@ public class RobotsHonoringPolicy implements Serializable {
         return type == getType(context);
     }
 
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(RobotsHonoringPolicy.class);
+    public String getCustomRobots() {
+        return (String) kp.get("customRobots");
+    }
+    public void setCustomRobots(String customRobots) {
+        kp.put("customRobots",customRobots);
+    }
+
+    /**
+     * This method returns true if the crawler should masquerade as the user agent
+     * which restrictions it opted to use.
+     *
+     * (Only relevant for  policy-types: most-favored and most-favored-set).
+     *
+     * @return true if we should masquerade
+     */
+    public boolean shouldMasquerade() {
+        return (Boolean) kp.get("masquerade");
+    }
+    public void setMasquerade(boolean masquerade) {
+        kp.put("masquerade",masquerade);
+    }
+
+
+    public Type getType() {
+        return (Type) kp.get("type");
+    }
+    public void setType(Type type) {
+        kp.put("type",type);
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public List<String> getUserAgents() {
+        return (List<String>) kp.get("userAgents");
+    }
+    public void setUserAgents(List<String> userAgents) {
+        kp.put("userAgents",userAgents);
     }
 }

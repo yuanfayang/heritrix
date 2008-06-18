@@ -126,7 +126,7 @@ public class Checkpointer implements Serializable {
         this.controller = cc;
         this.checkpointPrefix = prefix;
         // Period is in hours.
-        int period = cc.get(cc, CrawlControllerImpl.CHECKPOINTER_PERIOD);
+        int period = cc.getCheckpointerPeriod();
         if (period <= 0) {
             return;
         }
@@ -203,7 +203,8 @@ public class Checkpointer implements Serializable {
                 } else {
                     createCheckpointInProgressDirectory();
                     org.archive.settings.Checkpointer.checkpoint(
-                            getController().getSheetManager(),
+                            //TODO:SPRINGY
+                            null, //getController().getSheetManager(),
                             checkpointInProgressDir);
                 }
             } catch (Exception e) {
@@ -238,7 +239,7 @@ public class Checkpointer implements Serializable {
     
     protected File createCheckpointInProgressDirectory() {
         this.checkpointInProgressDir =
-            new File(Checkpointer.this.controller.getCheckpointsDir(),
+            new File(Checkpointer.this.controller.getCheckpointsDir().toFile(),
                 getNextCheckpointName());
         this.checkpointInProgressDir.mkdirs();
         return this.checkpointInProgressDir;

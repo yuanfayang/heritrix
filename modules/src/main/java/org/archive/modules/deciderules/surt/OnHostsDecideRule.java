@@ -56,9 +56,9 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
      * @see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#readPrefixes()
      */
     protected void readPrefixes(StateProvider context) {
-        buildSurtPrefixSet(context);
+        buildSurtPrefixSet();
         surtPrefixes.convertAllPrefixesToHosts();
-        dumpSurtPrefixSet(context);
+        dumpSurtPrefixSet();
     }
 
 	protected String prefixFrom(String uri) {

@@ -202,7 +202,7 @@ public class RobotsExclusionPolicy implements Serializable {
 
         // Are we supposed to masquerade as the user agent to which restrictions
         // we follow?
-        if(honoringPolicy.shouldMasquerade(curi) && ua != null && !ua.equals("")) {
+        if(honoringPolicy.shouldMasquerade() && ua != null && !ua.equals("")) {
             curi.setUserAgent(ua);
         }
         return disallow;

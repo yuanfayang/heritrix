@@ -23,13 +23,12 @@
 package org.archive.crawler.postprocessor;
 
 
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_FAILED;
+
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
-
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
@@ -37,11 +36,9 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -63,18 +60,22 @@ public class CrawlStateUpdater extends Processor implements
         Logger.getLogger(CrawlStateUpdater.class.getName());
 
 
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
     
-    
-    @Immutable
-    final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-        Key.makeAuto(RobotsHonoringPolicy.class);
-    
-    
-    private ServerCache serverCache;
-    private RobotsHonoringPolicy robotsHonoringPolicy;
+    public RobotsHonoringPolicy getRobotsHonoringPolicy() {
+        return (RobotsHonoringPolicy) kp.get("robotsHonoringPolicy");
+    }
+    @Autowired
+    public void setRobotsHonoringPolicy(RobotsHonoringPolicy policy) {
+        kp.put("robotsHonoringPolicy",policy);
+    }
 
     public CrawlStateUpdater() {
         super();
@@ -82,8 +83,7 @@ public class CrawlStateUpdater extends Processor implements
 
     
     public void initialTasks(StateProvider global) {
-        this.serverCache = global.get(this, SERVER_CACHE);
-        this.robotsHonoringPolicy = global.get(this, ROBOTS_HONORING_POLICY);
+
     }
 
     @Override
@@ -114,18 +114,12 @@ public class CrawlStateUpdater extends Processor implements
                 if (curi.getUURI().getPath() != null &&
                         curi.getUURI().getPath().equals("/robots.txt")) {
                     // Update server with robots info
-                    server.updateRobots(robotsHonoringPolicy,  curi);
+                    server.updateRobots(getRobotsHonoringPolicy(),  curi);
                 }
             }
             catch (URIException e) {
                 logger.severe("Failed get path on " + curi.getUURI());
             }
         }
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(CrawlStateUpdater.class);
     }
 }
