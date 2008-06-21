@@ -32,6 +32,7 @@ import java.util.Vector;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import org.apache.commons.io.IOUtils;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
@@ -90,14 +91,18 @@ public class ExtractorSWF extends Extractor implements CoreAttributeConstants {
 			return;
 		}
 
-		// Get link extracting SWF reader
-		SWFReader reader = getSWFReader(curi);
-		if (reader == null) {
-			return;
-		}
-
-		numberOfCURIsHandled++;
+        InputStream documentStream = null;
 		try {
+            documentStream = 
+                curi.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
+            
+            // Get link extracting SWF reader
+            SWFReader reader = getSWFReader(curi, documentStream);
+            if (reader == null) {
+                return;
+            }
+
+            numberOfCURIsHandled++;
 			// Parse file for links
 			reader.readFile();
 		} catch (IOException e) {
@@ -106,7 +111,9 @@ public class ExtractorSWF extends Extractor implements CoreAttributeConstants {
 			curi.addLocalizedError(getName(), e, "bad .swf file");
 		} catch (NegativeArraySizeException e) {
 			curi.addLocalizedError(getName(), e, "bad .swf file");
-		}
+		} finally {
+		    IOUtils.closeQuietly(documentStream);
+        }
 
 		// Set flag to indicate that link extraction is completed.
 		curi.linkExtractorFinished();
@@ -122,25 +129,10 @@ public class ExtractorSWF extends Extractor implements CoreAttributeConstants {
 	 * @param curi A CrawlURI to be processed.
 	 * @return An SWFReader.
 	 */
-	private SWFReader getSWFReader(CrawlURI curi) {
-
-		InputStream documentStream = null;
-		// Get the SWF file's content stream.
-		try {
-			documentStream = curi.getHttpRecorder().getRecordedInput()
-					.getContentReplayInputStream();
-			if (documentStream == null) {
-				return null;
-			}
-		} catch (IOException e) {
-			curi.addLocalizedError(getName(), e, "Fail reading.");
-		} finally {
-			try {
-				documentStream.close();
-			} catch (IOException e) {
-				curi.addLocalizedError(getName(), e, "Fail on close.");
-			}
-		}
+	private SWFReader getSWFReader(CrawlURI curi, InputStream documentStream) {
+        if (documentStream == null) {
+            return null;
+        }
 
 		// Create SWF actions that will add discoved URIs to CrawlURI
 		// alist(s).
