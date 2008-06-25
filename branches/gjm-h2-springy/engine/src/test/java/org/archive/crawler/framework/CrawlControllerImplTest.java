@@ -37,7 +37,6 @@ import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.ModuleTestBase;
-import org.archive.state.Path;
 import org.archive.util.IoUtils;
 
 /**
@@ -83,7 +82,6 @@ public class CrawlControllerImplTest extends ModuleTestBase {
         }
 
         MemorySheetManager manager = new MemorySheetManager();
-        SingleSheet def = manager.getGlobalSheet();
         
         File state = new File(tmp, "state");
         state.mkdirs();
@@ -92,18 +90,16 @@ public class CrawlControllerImplTest extends ModuleTestBase {
         checkpoints.mkdirs();
         
         BdbModule bdb = new BdbModule();
-        bdb.setPath(state.getAbsolutePath());
+        bdb.setDir(state.getAbsolutePath());
 //        def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
-        bdb.initialTasks(def);
+        bdb.afterPropertiesSet();
         
-        Path cp = new Path(checkpoints.getAbsolutePath());
+        String cp = checkpoints.getAbsolutePath();
         
         CrawlControllerImpl controller = new CrawlControllerImpl();
-        def.set(controller, CrawlControllerImpl.SHEET_MANAGER, manager);
-        def.set(controller, CrawlControllerImpl.SERVER_CACHE, 
-                new BdbServerCache());
-        def.set(controller, CrawlControllerImpl.CHECKPOINTS_DIR, cp);
-        controller.initialTasks(def);
+        controller.setServerCache(new BdbServerCache());
+        controller.setCheckpointsDir(cp);
+        controller.afterPropertiesSet();
         return controller;
     }
 

@@ -28,9 +28,6 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Expert;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
 import static org.archive.modules.ModuleAttributeConstants.A_HTTP_TRANSACTION;
@@ -47,8 +44,13 @@ public class FetchHistoryProcessor extends Processor {
     private static final long serialVersionUID = 8476621038669163983L;
     
     /** Desired history array length. */
-    @Expert
-    final public static Key<Integer> HISTORY_LENGTH = Key.make(2);
+    int historyLength = 2;
+    public int getHistoryLength() {
+        return this.historyLength;
+    }
+    public void setHistoryLength(int length) {
+        this.historyLength = length;
+    }
 //    key description: "Number of previous fetch entries to retain in the URI " +
 //    "history. The current fetch becomes a history entry at " +
 //    "this Processor step, so the smallest useful value is " +
@@ -93,7 +95,7 @@ public class FetchHistoryProcessor extends Processor {
         }
         
         // get or create proper-sized history array
-        int targetHistoryLength = curi.get(this, HISTORY_LENGTH);
+        int targetHistoryLength = getHistoryLength();
         HashMap[] history = 
             (HashMap[]) (curi.containsDataKey(A_FETCH_HISTORY) 
 		    ? curi.getData().get(A_FETCH_HISTORY) 
@@ -136,9 +138,5 @@ public class FetchHistoryProcessor extends Processor {
     protected boolean shouldProcess(ProcessorURI uri) {
         // TODO evaluate if any pre-eligibility testing should occur
         return true;
-    }
-    
-    static {
-        KeyManager.addKeys(FetchHistoryProcessor.class);
     }
 }

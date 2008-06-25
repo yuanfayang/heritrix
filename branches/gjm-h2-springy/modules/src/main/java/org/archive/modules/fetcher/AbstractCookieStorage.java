@@ -40,47 +40,60 @@ import java.util.SortedMap;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
-import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.Path;
+import org.apache.commons.lang.StringUtils;
+import org.archive.settings.JobHome;
 import org.archive.state.StateProvider;
 import org.archive.util.IoUtils;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author pjack
  *
  */
 public abstract class AbstractCookieStorage 
-implements CookieStorage, Initializable, Closeable, Serializable {
+implements CookieStorage, InitializingBean, Closeable, Serializable {
 
     final private static Logger LOGGER = 
         Logger.getLogger(AbstractCookieStorage.class.getName());
 
-    @Immutable
-    final public static Key<Path> LOAD_COOKIES_FROM_FILE = Key.make(Path.EMPTY);
-    
-    @Immutable
-    final public static Key<Path> SAVE_COOKIES_TO_FILE = Key.make(Path.EMPTY);
-    
-    
-    static {
-        KeyManager.addKeys(AbstractCookieStorage.class);
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
     }
     
+    protected String cookiesLoadFile = "";
+    public String getCookiesLoadFile() {
+        return cookiesLoadFile;
+    }
+    public void setCookiesLoadFile(String cookiesLoadFile) {
+        this.cookiesLoadFile = cookiesLoadFile;
+    }
+    public File resolveCookiesLoadFile() {
+        return jobHome.resolveToFile(cookiesLoadFile,null);
+    }
+
     
-//    private SortedMap<String,Cookie> cookies;
-    private Path saveCookiesToFile;
+    protected String cookiesSaveFile = "";
+    public String getCookiesSaveFile() {
+        return cookiesSaveFile;
+    }
+    public void setCookiesSaveFile(String cookiesSaveFile) {
+        this.cookiesSaveFile = cookiesSaveFile;
+    }
+    public File resolveCookiesSaveFile() {
+        return jobHome.resolveToFile(cookiesSaveFile,null);
+    }
 
-
-    public void initialTasks(StateProvider provider) {
-        Path fname = provider.get(this, LOAD_COOKIES_FROM_FILE);
-        SortedMap<String,Cookie> cookies = prepareMap(provider);
-        if (!fname.isEmpty()) {
-            loadCookies(fname.toFile().getAbsolutePath(), cookies);
+    public void afterPropertiesSet() {
+        SortedMap<String,Cookie> cookies = prepareMap();
+        if (!StringUtils.isEmpty(getCookiesLoadFile())) {
+            loadCookies(resolveCookiesLoadFile().getAbsolutePath(), cookies);
         }
-        this.saveCookiesToFile = provider.get(this, SAVE_COOKIES_TO_FILE);
     }
 
     /* (non-Javadoc)
@@ -90,7 +103,7 @@ implements CookieStorage, Initializable, Closeable, Serializable {
         // subclasses may do something        
     }
 
-    protected abstract SortedMap<String,Cookie> prepareMap(StateProvider provider);
+    protected abstract SortedMap<String,Cookie> prepareMap();
     
     /**
      * Load cookies from a file before the first fetch.
@@ -152,8 +165,7 @@ implements CookieStorage, Initializable, Closeable, Serializable {
                 }
             }
         } catch (FileNotFoundException e) {
-            System.out.println("Could not find file: " + cookiesFile
-                    + " (Element: " + LOAD_COOKIES_FROM_FILE.getFieldName() + ")");
+            System.out.println("Could not find file: " + cookiesFile);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -193,8 +205,7 @@ implements CookieStorage, Initializable, Closeable, Serializable {
             } 
         } catch (FileNotFoundException e) { 
             // We should probably throw FatalConfigurationException.
-            System.out.println("Could not find file: " + saveCookiesFile + 
-                    " (Element: " + SAVE_COOKIES_TO_FILE.getFieldName() + ")"); 
+            System.out.println("Could not find file: " + saveCookiesFile); 
         } catch (IOException e) {
             e.printStackTrace(); 
         } finally { 
@@ -214,11 +225,10 @@ implements CookieStorage, Initializable, Closeable, Serializable {
 
     public void saveCookiesMap(Map<String, Cookie> map) {
         innerSaveCookiesMap(map);
-        if (!saveCookiesToFile.isEmpty()) {
-            saveCookies(saveCookiesToFile.toFile().getAbsolutePath(), map);
+        if (!StringUtils.isEmpty(getCookiesSaveFile())) {
+            saveCookies(resolveCookiesSaveFile().getAbsolutePath(), map);
         }
     }
-
     
     protected abstract void innerSaveCookiesMap(Map<String,Cookie> map);
 

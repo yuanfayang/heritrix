@@ -28,14 +28,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -47,23 +45,24 @@ import org.springframework.beans.factory.annotation.Autowired;
  * 
  * @author pjack
  */
-public abstract class Extractor extends Processor implements Initializable {
+public abstract class Extractor extends Processor implements InitializingBean {
 
 
     /** Logger. */
     private static final Logger logger = 
         Logger.getLogger(Extractor.class.getName());
 
-
-    @Immutable
-    final public static Key<UriErrorLoggerModule> URI_ERROR_LOGGER_MODULE = 
-        Key.makeAuto(UriErrorLoggerModule.class);
-
+    protected CrawlerLoggerModule loggerModule;
+    public CrawlerLoggerModule getLoggerModule() {
+        return this.loggerModule;
+    }
+    @Autowired
+    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+        this.loggerModule = loggerModule;
+    }
     
-    protected UriErrorLoggerModule uriErrors;
-    
-    public void initialTasks(StateProvider global) {
-        this.uriErrors = global.get(this, URI_ERROR_LOGGER_MODULE);    
+    public void afterPropertiesSet() {
+//        this.uriErrors = global.get(this, URI_ERROR_LOGGER_MODULE);    
     }
     
     ExtractorHelper extractorHelper = new ExtractorHelper();
@@ -74,6 +73,7 @@ public abstract class Extractor extends Processor implements Initializable {
     public void setExtractorHelper(ExtractorHelper helper) {
         this.extractorHelper = helper; 
     }
+    
     /**
      * Processes the given URI.  This method just delegates to 
      * {@link #extract(ExtractorURI)}, catching runtime exceptions and
@@ -128,7 +128,7 @@ public abstract class Extractor extends Processor implements Initializable {
             // don't log those that are intentionally ignored
             return; 
         }
-        uriErrors.logUriError(e, uuri, l);
+        loggerModule.logUriError(e, uuri, l);
     }
 
 }

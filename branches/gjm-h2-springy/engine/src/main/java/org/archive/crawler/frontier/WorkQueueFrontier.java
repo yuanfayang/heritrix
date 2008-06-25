@@ -248,8 +248,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         super();
     }
     
-    public void initialTasks(StateProvider provider) {
-        super.initialTasks(provider);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
         uriUniqFilter.setDestination(this);
         
         try {

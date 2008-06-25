@@ -37,8 +37,7 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Initializable;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +49,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author gojomo
  *
  */
-public class ExtractorHTML extends ContentExtractor implements Initializable {
+public class ExtractorHTML extends ContentExtractor implements InitializingBean {
 
     private static final long serialVersionUID = 2L;
 
@@ -97,7 +96,7 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
     public int getMaxElementLength() {
         return (Integer) kp.get("maxElementLength");
     }
-    public void setMaxElementLength(long max) {
+    public void setMaxElementLength(int max) {
         kp.put("maxElementLength",max);
     }
       
@@ -123,27 +122,27 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 //     "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
 
     {
-        setMaxAttrNameLength(1024); // no limit
+        setMaxAttrNameLength(1024); // 1K
     }
 
     public int getMaxAttrNameLength() {
         return (Integer) kp.get("maxAttrNameLength");
     }
 
-    public void setMaxAttrNameLength(long max) {
+    public void setMaxAttrNameLength(int max) {
         kp.put("maxAttrNameLength", max);
     }
 
 
     {
-        setMaxAttrNameLength(16384); // no limit
+        setMaxAttrValLength(16384); // 16K
     }
 
     public int getMaxAttrValLength() {
         return (Integer) kp.get("maxAttrValLength");
     }
 
-    public void setMaxAttrValLength(long max) {
+    public void setMaxAttrValLength(int max) {
         kp.put("maxAttrValLength", max);
     }
       
@@ -316,8 +315,8 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
 
     
     @Override
-    public void initialTasks(StateProvider global) {
-        super.initialTasks(global);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
 
         String regex = RELEVANT_TAG_EXTRACTOR;
         regex = regex.replace(MAX_ELEMENT_REPLACE, 
@@ -798,8 +797,8 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
             RobotsHonoringPolicy policy = honoringPolicy;
             String contentLower = content.toLowerCase();
             if ((policy == null
-                || (!policy.isType(curi, RobotsHonoringPolicy.Type.IGNORE)
-                    && !policy.isType(curi, RobotsHonoringPolicy.Type.CUSTOM)))
+                || (!policy.isType(RobotsHonoringPolicy.Type.IGNORE)
+                    && !policy.isType(RobotsHonoringPolicy.Type.CUSTOM)))
                 && (contentLower.indexOf("nofollow") >= 0
                     || contentLower.indexOf("none") >= 0)) {
                 // if 'nofollow' or 'none' is specified and the

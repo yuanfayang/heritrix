@@ -22,18 +22,12 @@
  */
 package org.archive.modules.canonicalize;
 
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
-
-
-
-
 /**
  * Strip any trailing question mark.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class FixupQueryStr
+public class FixupQueryString
 extends BaseRule {
 
     private static final long serialVersionUID = 3L;
@@ -50,15 +44,11 @@ extends BaseRule {
         " Operates on all schemes.  This is a good rule to run toward the" +
         " end of canonicalization processing.";
         */
-
-    static {
-        KeyManager.addKeys(FixupQueryStr.class);
-    }
     
-    public FixupQueryStr() {
+    public FixupQueryString() {
     }
 
-    public String canonicalize(String url, StateProvider context) {
+    public String canonicalize(String url) {
         if (url == null || url.length() <= 0) {
             return url;
         }

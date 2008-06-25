@@ -27,13 +27,10 @@ package org.archive.crawler.frontier.precedence;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.archive.crawler.frontier.WorkQueue;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 /**
  * QueuePrecedencePolicy that sets a uri-queue's precedence to a configured
@@ -75,8 +72,15 @@ public class SuccessCountsQueuePrecedencePolicy extends BaseQueuePrecedencePolic
 //    }
 
     /** comma-separated list of success-counts at which precedence is bumped*/
-    final public static Key<String> INCREMENT_COUNTS = 
-        Key.make("100,1000");
+    {
+        setIncrementCounts("100,1000");
+    }
+    public String getIncrementCounts() {
+        return (String) kp.get("incrementCounts");
+    }
+    public void setIncrementCounts(String counts) {
+        kp.put("incrementCounts",counts);
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.QueuePrecedencePolicy#queueReevaluate(org.archive.crawler.frontier.WorkQueue)
@@ -88,9 +92,9 @@ public class SuccessCountsQueuePrecedencePolicy extends BaseQueuePrecedencePolic
         // and optimizing will probably require inserting stateful policy 
         // helper object into WorkQueue -- expected when URI-precedence is
         // also supported
-        int precedence = wq.get(this,BASE_PRECEDENCE) - 1;
+        int precedence = getBasePrecedence() - 1;
         Collection<Integer> increments = CollectionUtils.collect(
-                Arrays.asList(wq.get(this,INCREMENT_COUNTS).split(",")),
+                Arrays.asList(getIncrementCounts().split(",")),
                 new Transformer() {
                     public Object transform(final Object string) {
                         return Integer.parseInt((String)string);
@@ -104,12 +108,5 @@ public class SuccessCountsQueuePrecedencePolicy extends BaseQueuePrecedencePolic
             increment = iter.hasNext() ? iter.next() : increment; 
         }
         return precedence;
-    }
-
-    
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(SuccessCountsQueuePrecedencePolicy.class);
     }
 }

@@ -2,15 +2,14 @@ package org.archive.modules.net;
 
 import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Initializable;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.je.DatabaseException;
 
 
 public class BdbServerCache extends DefaultServerCache 
-implements Initializable {
+implements InitializingBean {
 
     private static final long serialVersionUID = 1L;
 
@@ -24,7 +23,7 @@ implements Initializable {
     }
     
 
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
         try {
             this.servers = bdb.getBigMap("servers", false, String.class, CrawlServer.class);
             this.hosts = bdb.getBigMap("hosts", false, String.class, CrawlHost.class);

@@ -22,10 +22,10 @@
  */
 package org.archive.modules.credential;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Logger;
-
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -34,10 +34,6 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -61,56 +57,45 @@ public class HtmlFormCredential extends Credential {
      * Full URI of page that contains the HTML login form we're to apply these
      * credentials too: E.g. http://www.archive.org
      */
-    @Global @Expert
-    final public static Key<String> LOGIN_URI = Key.make("");
-
-
+    String loginUri = "";
+    public String getLoginUri() {
+        return this.loginUri;
+    }
+    public void setLoginUri(String loginUri) {
+        this.loginUri = loginUri;
+    }
+    
     /**
      * Form items.
      */
-    @Global @Expert
-    final public static Key<Map<String,String>> FORM_ITEMS = 
-        Key.makeMap(String.class);
-
+    Map<String,String> formItems = new HashMap<String,String>();
+    public Map<String,String> getFormItems() {
+        return this.formItems;
+    }
+    public void setFormItems(Map<String,String> formItems) {
+        this.formItems = formItems;
+    }
     
+    
+    enum Method {
+        GET,
+        POST
+    }
     /**
      * GET or POST.
      */
-    @Global @Expert
-    final public static Key<String> FORM_METHOD = Key.make("POST");
-    
+    Method httpMethod = Method.POST;
+    public Method getHttpMethod() {
+        return this.httpMethod;
+    }
+    public void setHttpMethod(Method method) {
+        this.httpMethod = method; 
+    }
 
     /**
      * Constructor.
      */
     public HtmlFormCredential() {
-    }
-
-    /**
-     * @param context ProcessorURI context to use.
-     * @return login-uri.
-     * @throws AttributeNotFoundException
-     */
-    public String getLoginUri(final ProcessorURI context) {
-        return context.get(this, LOGIN_URI);
-    }
-
-    /**
-     * @param context ProcessorURI context to use.
-     * @return login-uri.
-     * @throws AttributeNotFoundException
-     */
-    public String getHttpMethod(final ProcessorURI context) {
-        return context.get(this, FORM_METHOD);
-    }
-
-    /**
-     * @param context ProcessorURI context to use.
-     * @return Form inputs as convenient map.  Returns null if no form items.
-     * @throws AttributeNotFoundException
-     */
-    public Map<String,String> getFormItems(final ProcessorURI context) {
-        return context.get(this, FORM_ITEMS);
     }
 
     public boolean isPrerequisite(final ProcessorURI curi) {
@@ -141,11 +126,11 @@ public class HtmlFormCredential extends Credential {
     }
 
     public String getPrerequisite(ProcessorURI curi) {
-        return getLoginUri(curi);
+        return getLoginUri();
     }
 
-    public String getKey(ProcessorURI curi) {
-        return getLoginUri(curi);
+    public String getKey() {
+        return getLoginUri();
     }
 
     public boolean isEveryTime() {
@@ -158,7 +143,7 @@ public class HtmlFormCredential extends Credential {
         // http is not used.
         // payload is not used.
         boolean result = false;
-        Map<String,String> formItems = getFormItems(curi);
+        Map<String,String> formItems = getFormItems();
         if (formItems == null || formItems.size() <= 0) {
             try {
                 logger.severe("No form items for " + method.getURI());
@@ -197,15 +182,7 @@ public class HtmlFormCredential extends Credential {
         return result;
     }
 
-    public boolean isPost(ProcessorURI curi) {
-        String method = getHttpMethod(curi);
-        return method != null && method.equalsIgnoreCase("POST");
+    public boolean isPost() {
+        return Method.POST.equals(getHttpMethod());
     }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(HtmlFormCredential.class);
-    }
-
 }

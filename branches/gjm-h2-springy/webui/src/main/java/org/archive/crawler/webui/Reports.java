@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.framework.StatisticsTrackerImpl;
 import org.archive.crawler.framework.StatisticsTracker;
 
@@ -262,7 +263,7 @@ public class Reports {
         CrawlJob job = CrawlJob.fromRequest(request, remote.getJMXConnector());
         try {
             String[] reports = cjm.listFiles(job.encode(), 
-                    "root:controller:statistics-tracker:reports-dir", 
+                    EngineImpl.REPORTS_DIR_KEY, 
                     "^.*-report\\.txt");
             request.setAttribute("reports", Arrays.asList(reports));
         } finally {
@@ -287,7 +288,7 @@ public class Reports {
             String lines;
             do {
                 lines = cjm.readFile(job.encode(),
-                        "root:controller:statistics-tracker:reports-dir",
+                        EngineImpl.REPORTS_DIR_KEY,
                         report,
                         start,
                         CHUNK_SIZE);

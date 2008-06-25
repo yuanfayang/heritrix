@@ -29,9 +29,8 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
-import org.archive.state.StateProvider;
 
 /**
  * Uses target IP as basis for queue-assignment, unless it is unavailable,
@@ -40,7 +39,7 @@ import org.archive.state.StateProvider;
  * @author gojomo
  */
 public class IPQueueAssignmentPolicy
-extends HostnameQueueAssignmentPolicy implements Initializable {
+extends HostnameQueueAssignmentPolicy implements InitializingBean {
     
 
     private static final long serialVersionUID = 3L;
@@ -52,8 +51,8 @@ extends HostnameQueueAssignmentPolicy implements Initializable {
     private ServerCache serverCache;
 
     
-    public void initialTasks(StateProvider global) {
-        this.serverCache = global.get(this, SERVER_CACHE);
+    public void afterPropertiesSet() {
+
     }
 
     

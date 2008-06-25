@@ -23,7 +23,7 @@
 package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.modules.canonicalize.FixupQueryStr;
+import org.archive.modules.canonicalize.FixupQueryString;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
@@ -32,39 +32,39 @@ import org.archive.state.ModuleTestBase;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class FixupQueryStrTest extends ModuleTestBase {
+public class FixupQueryStringTest extends ModuleTestBase {
 
     @Override
     protected Class getModuleClass() {
-        return FixupQueryStr.class;
+        return FixupQueryString.class;
     }
 
     @Override
     protected Object makeModule() throws Exception {
-        return new FixupQueryStr();
+        return new FixupQueryString();
     }
 
     public void testCanonicalize() throws URIException {
         ExampleStateProvider context = new ExampleStateProvider();
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Mangled " + url,
-            url.equals((new FixupQueryStr()).
+            url.equals((new FixupQueryString()).
                 canonicalize(url, context)));
         assertTrue("Failed to strip '?' " + url,
-            url.equals((new FixupQueryStr()).
+            url.equals((new FixupQueryString()).
                 canonicalize(url + "?", context)));
         assertTrue("Failed to strip '?&' " + url,
-            url.equals((new FixupQueryStr()).
+            url.equals((new FixupQueryString()).
                 canonicalize(url + "?&", context)));
         assertTrue("Failed to strip extraneous '&' " + url,
-            (url + "?x=y").equals((new FixupQueryStr()).
+            (url + "?x=y").equals((new FixupQueryString()).
                 canonicalize(url + "?&x=y", context)));
         String tmp = url + "?x=y";
         assertTrue("Mangled x=y " + tmp,
-            tmp.equals((new FixupQueryStr()).
+            tmp.equals((new FixupQueryString()).
                 canonicalize(tmp, context)));
         String tmp2 = tmp + "&";
-        String fixed = new FixupQueryStr().
+        String fixed = new FixupQueryString().
             canonicalize(tmp2, context);
         assertTrue("Mangled " + tmp2, tmp.equals(fixed));
     }

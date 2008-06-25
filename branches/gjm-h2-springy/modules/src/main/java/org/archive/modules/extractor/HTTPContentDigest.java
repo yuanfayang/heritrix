@@ -35,8 +35,6 @@ import java.util.regex.Pattern;
 import org.archive.io.ReplayCharSequence;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.util.TextUtils;
 
 /**
@@ -79,12 +77,26 @@ public class HTTPContentDigest extends Processor {
      * matching this expression will be rewritten with the blank character for
      * the content digest.
      */
-    final public static Key<Pattern> STRIP_REG_EXPR = Key.makeNull(Pattern.class);
-
+    {
+        setStripRegex(null);
+    }
+    public Pattern getStripRegex() {
+        return (Pattern) kp.get("stripRegex");
+    }
+    public void setStripRegex(Pattern regex) {
+        kp.put("stripRegex",regex);
+    }
 
     /** Maximum file size for - longer files will be ignored. -1 = unlimited*/
-    final public static Key<Long> MAX_SIZE_BYTES = Key.make(1048576L);
-
+    {
+        setMaxSizeToDigest(1*1024*1024L); // 1MB
+    }
+    public long getMaxSizeToDigest() {
+        return (Long) kp.get("maxSizeToDigest");
+    }
+    public void setMaxSizeToDigest(long threshold) {
+        kp.put("maxSizeToDigest",threshold);
+    }
     
     private static final String SHA1 = "SHA1";
 
@@ -101,7 +113,7 @@ public class HTTPContentDigest extends Processor {
             return false;
         }
         
-        long maxSize = uri.get(this, MAX_SIZE_BYTES);
+        long maxSize = getMaxSizeToDigest();
         if ((maxSize > - 1) && (maxSize < uri.getContentSize())) {
             return false;
         }
@@ -112,7 +124,7 @@ public class HTTPContentDigest extends Processor {
     protected void innerProcess(ProcessorURI curi) throws InterruptedException {
         // Ok, if we got this far we need to calculate the content digest. 
         // Get the regexpr
-        Pattern regexpr = curi.get(this, STRIP_REG_EXPR);
+        Pattern regexpr = getStripRegex();
         
         // Get a replay of the document character seq.
         ReplayCharSequence cs = null;
@@ -175,11 +187,5 @@ public class HTTPContentDigest extends Processor {
                 }
             }
         }
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(HTTPContentDigest.class);
     }
 }

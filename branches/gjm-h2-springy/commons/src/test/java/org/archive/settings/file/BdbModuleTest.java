@@ -84,7 +84,7 @@ public class BdbModuleTest extends TmpDirTestCase {
         mgr.getRoot().put("module", bdb);
         bdb.setPath(firstState.getAbsolutePath());
 //        mgr.getGlobalSheet().set(bdb, BdbModule.DIR, firstState.getAbsolutePath());
-        bdb.initialTasks(mgr.getGlobalSheet());
+        bdb.afterPropertiesSet();
         
         BdbModule.BdbConfig config = new BdbModule.BdbConfig();
         config.setAllowCreate(true);

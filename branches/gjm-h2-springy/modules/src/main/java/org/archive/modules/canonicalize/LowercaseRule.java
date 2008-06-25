@@ -22,13 +22,6 @@
  */
 package org.archive.modules.canonicalize;
 
-
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
-
-
-
-
 /**
  * Lowercases the URL.
  * @author stack
@@ -41,10 +34,6 @@ extends BaseRule {
     
 //    private static final String DESCRIPTION = "Lowercase the URL. " +
 //        "Use this rule to lowercase the url.  Operates on all schemes.";
-
-    static {
-        KeyManager.addKeys(LowercaseRule.class);
-    }
     
     /**
      * Constructor.
@@ -53,7 +42,7 @@ extends BaseRule {
         super();
     }
 
-    public String canonicalize(String url, StateProvider context) {
+    public String canonicalize(String url) {
         return url.toLowerCase();
     }
 }

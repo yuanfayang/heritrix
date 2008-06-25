@@ -27,20 +27,12 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-
-
 
 /**
  * A Basic/Digest auth RFC2617 credential.
@@ -57,49 +49,36 @@ public class Rfc2617Credential extends Credential {
 
 
     /** Basic/Digest Auth realm. */
-    @Global @Expert
-    final public static Key<String> REALM = Key.make("Realm");
+    String realm = "Realm";
+    public String getRealm() {
+        return this.realm;
+    }
+    public void setRealm(String realm) {
+        this.realm = realm;
+    }
 
     /** Login. */
-    @Global @Expert
-    final public static Key<String> LOGIN = Key.make("login");
-    
-    /** Password. */
-    @Global @Expert
-    final public static Key<String> PASSWORD = Key.make("password");
+    String login = "login";
+    public String getLogin() {
+        return this.login;
+    }
+    public void setLogin(String login) {
+        this.login = login;
+    }
 
+    /** Password. */
+    String password = "password";
+    public String getPassword() {
+        return this.password;
+    }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     /**
      * Constructor.
      */
     public Rfc2617Credential() {
-    }
-
-    /**
-     * @param context Context to use when searching the realm.
-     * @return Realm using set context.
-     * @throws AttributeNotFoundException
-     */
-    public String getRealm(ProcessorURI context) {
-        return context.get(this, REALM);
-    }
-
-    /**
-     * @param context CrawlURI ontext to use.
-     * @return login to use doing credential.
-     * @throws AttributeNotFoundException
-     */
-    public String getLogin(ProcessorURI context) {
-        return context.get(this, LOGIN);
-    }
-
-    /**
-     * @param context CrawlURI ontext to use.
-     * @return Password to use doing credential.
-     * @throws AttributeNotFoundException
-     */
-    public String getPassword(ProcessorURI context) {
-        return context.get(this, PASSWORD);
     }
 
     public boolean isPrerequisite(ProcessorURI curi) {
@@ -120,8 +99,8 @@ public class Rfc2617Credential extends Credential {
         return null;
     }
 
-    public String getKey(ProcessorURI context) {
-        return getRealm(context);
+    public String getKey() {
+        return getRealm();
     }
 
     public boolean isEveryTime() {
@@ -151,8 +130,8 @@ public class Rfc2617Credential extends Credential {
         // does an instanceof down in its guts.
         UsernamePasswordCredentials upc = null;
         try {
-        	upc = new UsernamePasswordCredentials(getLogin(curi),
-        	    getPassword(curi));
+        	upc = new UsernamePasswordCredentials(getLogin(),
+        	    getPassword());
         	http.getState().setCredentials(new AuthScope(curi.getUURI().getHost(),
         	    curi.getUURI().getPort(), authRealm), upc);
         	logger.fine("Credentials for realm " + authRealm +
@@ -167,7 +146,7 @@ public class Rfc2617Credential extends Credential {
         return result;
     }
 
-    public boolean isPost(ProcessorURI curi) {
+    public boolean isPost() {
         // Return false.  This credential type doesn't care whether posted or
         // get'd.
         return false;
@@ -194,18 +173,12 @@ public class Rfc2617Credential extends Credential {
         if (rfc2617Credentials != null && rfc2617Credentials.size() > 0) {
             for (Iterator i = rfc2617Credentials.iterator(); i.hasNext();) {
                 Rfc2617Credential c = (Rfc2617Credential)i.next();
-                    if (c.getRealm(context).equals(realm)) {
+                    if (c.getRealm().equals(realm)) {
                         result = c;
                         break;
                     }
             }
         }
         return result;
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(Rfc2617Credential.class);
     }
 }

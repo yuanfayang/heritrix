@@ -32,10 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.KeyTypes;
-import org.archive.state.Path;
 
 class UnspecifiedSheet extends Sheet {
 
@@ -101,15 +100,15 @@ class UnspecifiedSheet extends Sheet {
 
     <T> Object getDefault(SingleSheet global, Object module, Key<T> k) {
         Class<T> type = k.getType();
-        if (KeyTypes.isSimple(type)) {
-            if (Path.class.isAssignableFrom(type)) {
-                Path p = (Path)k.getDefaultValue();
-                p = new Path(getSheetManager().getPathContext(), p.toString());
-                return p;
-            } else {
-                return k.getDefaultValue();
-            }
-        }
+//        if (KeyTypes.isSimple(type)) {
+//            if (Path.class.isAssignableFrom(type)) {
+//                Path p = (Path)k.getDefaultValue();
+//                p = new Path(getSheetManager().getPathContext(), p.toString());
+//                return p;
+//            } else {
+//                return k.getDefaultValue();
+//            }
+//        }
         
         if (k.isAutoDetected()) {
             return global.findPrimary(type);
@@ -174,8 +173,8 @@ class UnspecifiedSheet extends Sheet {
         if (getSheetManager().isLive()) {
             try {
                 Object o = c.newInstance();
-                if (o instanceof Initializable) {
-                    ((Initializable)o).initialTasks(this);
+                if (o instanceof InitializingBean) {
+                    ((InitializingBean)o).afterPropertiesSet();
                 }
                 return o;
             } catch (Exception e) {

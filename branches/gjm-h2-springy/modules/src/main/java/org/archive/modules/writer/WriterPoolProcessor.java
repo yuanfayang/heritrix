@@ -50,9 +50,9 @@ import org.archive.modules.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
+import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
-import org.archive.state.Initializable;
-import org.archive.state.Path;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.StateProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -63,7 +63,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author stack
  */
 public abstract class WriterPoolProcessor extends Processor 
-implements Initializable, Closeable {
+implements InitializingBean, Closeable {
     
     
     private static final Logger logger = 
@@ -204,13 +204,25 @@ implements Initializable, Closeable {
     public void setServerCache(ServerCache serverCache) {
         this.serverCache = serverCache;
     }
+    
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
 
-    protected Path directory = new Path(".");
-    public Path getDirectory() {
+    protected String directory = ".";
+    public String getDirectory() {
         return directory;
     }
-    public void setDirectory(Path directory) {
+    public void setDirectory(String directory) {
         this.directory = directory;
+    }
+    public File resolveDirectory() {
+        return jobHome.resolveToFile(directory,null);
     }
     
     /**
@@ -236,8 +248,8 @@ implements Initializable, Closeable {
     }
 
 
-    public synchronized void initialTasks(StateProvider context) {
-        this.settings = getWriterPoolSettings(context);
+    public synchronized void afterPropertiesSet() {
+        this.settings = makeWriterPoolSettings();
         setupPool(serial);
     }
     
@@ -253,7 +265,7 @@ implements Initializable, Closeable {
     protected abstract void setupPool(final AtomicInteger serial);
 
     
-    protected ProcessResult checkBytesWritten(StateProvider context) {
+    protected ProcessResult checkBytesWritten() {
         long max = getMaxTotalBytesToWrite();
         if (max <= 0) {
             return ProcessResult.PROCEED;
@@ -385,17 +397,15 @@ implements Initializable, Closeable {
     }
 	
     
-    protected abstract List<String> getMetadata(StateProvider context);
+    protected abstract List<String> getMetadata();
 
-
-    
     protected abstract List<String> getStorePaths();
     
-    private List<File> getOutputDirs(StateProvider context) {
+    private List<File> getOutputDirs() {
         List<String> list = getStorePaths();
         ArrayList<File> results = new ArrayList<File>();
         for (String path: list) {
-            File f = new File(directory.toFile(), path);
+            File f = new File(directory, path);
             if (!f.exists()) {
                 try {
                     f.mkdirs();
@@ -414,12 +424,11 @@ implements Initializable, Closeable {
         return settings;
     }
     
-    private WriterPoolSettings getWriterPoolSettings(
-            final StateProvider context) {
+    private WriterPoolSettings makeWriterPoolSettings() {
         DefaultWriterPoolSettings result = new DefaultWriterPoolSettings();
         result.setMaxSize(getMaxFileSizeBytes());
-        result.setMetadata(getMetadata(context));
-        result.setOutputDirs(getOutputDirs(context));
+        result.setMetadata(getMetadata());
+        result.setOutputDirs(getOutputDirs());
         result.setPrefix(getPrefix());
         
         String sfx = getSuffix();

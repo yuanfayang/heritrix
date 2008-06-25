@@ -188,10 +188,10 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
                 getPool().returnFile(writer);
             }
         }
-        return checkBytesWritten(curi);
+        return checkBytesWritten();
     }
 
-    protected List<String> getMetadata(StateProvider global) {
+    protected List<String> getMetadata() {
         if (TEMPLATE == null) {
             return null;
         }

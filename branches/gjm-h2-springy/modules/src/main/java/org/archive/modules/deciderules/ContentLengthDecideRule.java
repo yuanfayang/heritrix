@@ -23,8 +23,6 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 public class ContentLengthDecideRule extends DecideRule {
 
@@ -36,12 +34,14 @@ public class ContentLengthDecideRule extends DecideRule {
      * is less than this threshold, or REJECT otherwise.  The default is
      * 2^63, meaning any document will be accepted.
      */
-    final public static Key<Long> CONTENT_LENGTH_THRESHOLD = 
-        Key.make(Long.MAX_VALUE);
-
-    
-    static {
-        KeyManager.addKeys(ContentLengthDecideRule.class);
+    {
+        setContentLengthThreshold(Long.MAX_VALUE);
+    }
+    public long getContentLengthThreshold() {
+        return (Long) kp.get("contentLengthThreshold");
+    }
+    public void setContentLengthThreshold(long threshold) {
+        kp.put("contentLengthThreshold",threshold);
     }
 
     /**
@@ -52,7 +52,7 @@ public class ContentLengthDecideRule extends DecideRule {
     
     
     protected DecideResult innerDecide(ProcessorURI uri) {
-        if (uri.getContentLength() < uri.get(this, CONTENT_LENGTH_THRESHOLD)) {
+        if (uri.getContentLength() < getContentLengthThreshold()) {
             return DecideResult.ACCEPT;
         }
         return DecideResult.REJECT;

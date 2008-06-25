@@ -24,15 +24,13 @@
  */
 package org.archive.modules.deciderules;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-
 
 /**
  * Rule applies configured decision to any CrawlURIs whose String URI
@@ -44,7 +42,7 @@ import org.archive.state.KeyManager;
  * 
  * @see MatchesRegExpDecideRule
  */
-public class MatchesListRegExpDecideRule extends PredicatedAcceptDecideRule {
+public class MatchesListRegExpDecideRule extends PredicatedDecideRule {
 
     
     private static final long serialVersionUID = 3L;
@@ -56,18 +54,30 @@ public class MatchesListRegExpDecideRule extends PredicatedAcceptDecideRule {
     /**
      * The list of regular expressions to evalute against the URI.
      */
-    final public static Key<List<Pattern>> REGEXP_LIST = Key.makeList(Pattern.class);
-
+    {
+        setRegexList(new ArrayList<Pattern>());
+    }
+    @SuppressWarnings("unchecked")
+    public List<Pattern> getRegexList() {
+        return (List<Pattern>) kp.get("regexList");
+    }
+    public void setRegexList(List<Pattern> patterns) {
+        kp.put("regexList", patterns);
+    }
 
     /**
      * True if the list of regular expression should be considered as logically
      * AND when matching. False if the list of regular expressions should be
      * considered as logically OR when matching.
      */
-    final public static Key<Boolean> LIST_LOGICAL_OR = Key.make(true);
-    
-    static {
-        KeyManager.addKeys(MatchesListRegExpDecideRule.class);
+    {
+        setListLogicalOr(true);
+    }
+    public boolean getListLogicalOr() {
+        return (Boolean) kp.get("listLogicalOr");
+    }
+    public void setListLogicalOr(boolean listLogicalOr) {
+        kp.put("listLogicalOr",listLogicalOr);
     }
 
     /**
@@ -82,13 +92,13 @@ public class MatchesListRegExpDecideRule extends PredicatedAcceptDecideRule {
      */
     @Override
     protected boolean evaluate(ProcessorURI uri) {
-        List<Pattern> regexps = uri.get(this, REGEXP_LIST);
+        List<Pattern> regexps = getRegexList();
         if(regexps.size()==0){
             return false;
         }
 
         String str = uri.toString();
-        boolean listLogicOR = uri.get(this, LIST_LOGICAL_OR);
+        boolean listLogicOR = getListLogicalOr();
 
         for (Pattern p: regexps) {
             boolean matches = p.matcher(str).matches();

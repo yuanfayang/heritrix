@@ -24,24 +24,20 @@
 package org.archive.settings.path;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.archive.settings.Stub;
 import org.archive.settings.SettingsList;
 import org.archive.settings.SettingsMap;
 import org.archive.settings.SingleSheet;
-import org.archive.settings.path.PathValidator;
-import org.archive.state.Initializable;
+import org.archive.settings.Stub;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
 import org.archive.state.Path;
+import org.springframework.beans.factory.InitializingBean;
 
 
 /**
@@ -70,7 +66,7 @@ public class PathChanger {
     final public static Object AUTO = new Object();
     
     private static class PendingInit {
-        Initializable module;
+        InitializingBean module;
         String path;
     }
     
@@ -171,7 +167,12 @@ public class PathChanger {
                 return;
             }
             pendingInit.removeFirst();
-            pi.module.initialTasks(sheet);
+            try {
+                pi.module.afterPropertiesSet();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }    
     
@@ -267,10 +268,10 @@ public class PathChanger {
         }
         
         Object result = makeObject2(sheet, pc);
-        if (result instanceof Initializable) {
+        if (result instanceof InitializingBean) {
             PendingInit pi = new PendingInit();
             pi.path = pc.getPath();
-            pi.module = (Initializable)result;
+            pi.module = (InitializingBean)result;
             pendingInit.addFirst(pi);
         }
         return result;

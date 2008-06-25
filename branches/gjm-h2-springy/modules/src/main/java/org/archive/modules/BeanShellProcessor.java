@@ -35,11 +35,10 @@ import org.archive.settings.KeyChangeListener;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.Path;
-import org.archive.state.StateProvider;
 
 import bsh.EvalError;
 import bsh.Interpreter;
@@ -61,7 +60,7 @@ import bsh.Interpreter;
  * @version $Date$, $Revision$
  */
 public class BeanShellProcessor extends Processor 
-implements Initializable, KeyChangeListener {
+implements InitializingBean, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -170,9 +169,9 @@ implements Initializable, KeyChangeListener {
         return interpreter; 
     }
 
-    public void initialTasks(StateProvider context) {
-        this.manager = context.get(this, MANAGER);
-        isolate(context.get(this, ISOLATE_THREADS));
+    public void afterPropertiesSet() {
+//        this.manager = context.get(this, MANAGER);
+//        isolate(context.get(this, ISOLATE_THREADS));
     }
 
     /**

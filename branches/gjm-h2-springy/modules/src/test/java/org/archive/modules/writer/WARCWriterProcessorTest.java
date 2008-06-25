@@ -102,7 +102,7 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
         sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
         sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
         sp.set(result, WriterPoolProcessor.METADATA_PROVIDER, new DummyMetadataProvider());
-        result.initialTasks(sp);
+        result.afterPropertiesSet();
         return result;
     }
 

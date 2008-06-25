@@ -195,7 +195,7 @@ implements Serializable {
             return result;
         }
 
-        Collection<Credential> all = cs.getAll(curi);
+        Collection<Credential> all = cs.getAll();
         if (all == null) {
             logger.severe("Have CredentialAvatar " + toString() +
                 " but no collection: " + curi);
@@ -206,7 +206,7 @@ implements Serializable {
             if (!this.type.isInstance(c)) {
                 continue;
             }
-            String credKey = c.getKey(curi);
+            String credKey = c.getKey();
             if (credKey != null && credKey.equals(getKey())) {
                 result = c;
                 break;

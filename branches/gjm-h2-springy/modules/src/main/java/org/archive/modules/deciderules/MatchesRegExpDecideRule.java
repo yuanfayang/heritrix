@@ -27,9 +27,6 @@ package org.archive.modules.deciderules;
 import java.util.regex.Pattern;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-
 
 /**
  * Rule applies configured decision to any ProcessorURIs whose String URI
@@ -37,14 +34,18 @@ import org.archive.state.KeyManager;
  *
  * @author gojomo
  */
-public class MatchesRegExpDecideRule extends PredicatedAcceptDecideRule {
+public class MatchesRegExpDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 2L;
     
-    public static final Key<Pattern> REGEXP = Key.make(Pattern.compile("."));
-
-    static {
-        KeyManager.addKeys(MatchesRegExpDecideRule.class);
+    {
+        setRegex(Pattern.compile("."));
+    }
+    public Pattern getRegex() {
+        return (Pattern) kp.get("regex");
+    }
+    public void setRegex(Pattern regex) {
+        kp.put("regex",regex); 
     }
     
     /**
@@ -63,13 +64,8 @@ public class MatchesRegExpDecideRule extends PredicatedAcceptDecideRule {
      */
     @Override
     protected boolean evaluate(ProcessorURI uri) {
-        Pattern p = getPattern(uri);
+        Pattern p = getRegex();
         return p.matcher(getString(uri)).matches();
-    }
-
-    
-    protected Pattern getPattern(ProcessorURI uri) {
-        return uri.get(this, REGEXP);
     }
     
     protected String getString(ProcessorURI uri) {

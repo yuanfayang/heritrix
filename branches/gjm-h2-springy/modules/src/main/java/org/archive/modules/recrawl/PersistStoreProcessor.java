@@ -24,7 +24,6 @@ package org.archive.modules.recrawl;
 
 import org.archive.modules.ProcessorURI;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 /**
  * Store CrawlURI attributes from latest fetch to persistent storage for
@@ -43,8 +42,8 @@ public class PersistStoreProcessor extends PersistOnlineProcessor
     public PersistStoreProcessor() {
     }
 
-    public void initialTasks(StateProvider defaults) {
-        super.initialTasks(defaults);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
     }
     
     @Override

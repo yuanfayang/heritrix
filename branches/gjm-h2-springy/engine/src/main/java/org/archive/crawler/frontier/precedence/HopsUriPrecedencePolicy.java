@@ -25,8 +25,6 @@
 package org.archive.crawler.frontier.precedence;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 /**
  * UriPrecedencePolicy which assigns URIs a precedence equal to the number
@@ -37,23 +35,24 @@ public class HopsUriPrecedencePolicy extends BaseUriPrecedencePolicy {
     private static final long serialVersionUID = 2602303562177294731L;
 
     /** whether to count only navlinks ('L'), or all hops */
-    final public static Key<Boolean> NAVLINKS_ONLY = 
-        Key.make(true);
-    
+    {
+        setNavlinksOnly(true);
+    }
+    public boolean getNavlinksOnly() {
+        return (Boolean) kp.get("navlinksOnly");
+    }
+    public void setNavlinksOnly(boolean navsOnly) {
+        kp.put("navlinksOnly",navsOnly);
+    }
+
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy#calculatePrecedence(org.archive.crawler.datamodel.CrawlURI)
      */
     @Override
     protected int calculatePrecedence(CrawlURI curi) {
         return super.calculatePrecedence(curi) + 
-            ((curi.get(this,NAVLINKS_ONLY)) 
+            ((getNavlinksOnly()) 
                     ? curi.getLinkHopCount() 
                     : curi.getPathFromSeed().length());
-    }
-    
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(HopsUriPrecedencePolicy.class);
     }
 }

@@ -26,7 +26,6 @@ package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.Hop;
-import org.archive.state.Key;
 
 /**
  * Rule ACCEPTs any CrawlURIs whose path-from-seed ('hopsPath' -- see
@@ -47,14 +46,13 @@ import org.archive.state.Key;
  *
  * @author gojomo
  */
-public class TransclusionDecideRule extends PredicatedAcceptDecideRule {
+public class TransclusionDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = -3975688876990558918L;
 
     /**
      * Maximum number of non-navlink (non-'L') hops to ACCEPT.
      */
-    public static final Key<Integer> MAX_TRANS_HOPS = Key.make(2);
     {
         setMaxTransHops(2);
     }
@@ -68,7 +66,6 @@ public class TransclusionDecideRule extends PredicatedAcceptDecideRule {
     /**
      * Maximum number of speculative ('X') hops to ACCEPT.
      */
-    public static final Key<Integer> MAX_SPECULATIVE_HOPS = Key.make(1);
     {
         setMaxSpeculativeHops(1);
     }
@@ -114,11 +111,11 @@ public class TransclusionDecideRule extends PredicatedAcceptDecideRule {
             return false;
         }
         
-        if (specCount > curi.get(this, MAX_SPECULATIVE_HOPS)) {
+        if (specCount > getMaxSpeculativeHops()) {
             return false;
         }
         
-        return count <= curi.get(this, MAX_TRANS_HOPS);
+        return count <= getMaxTransHops();
     }
 
 

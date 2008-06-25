@@ -51,9 +51,9 @@ implements AdaptiveRevisitAttributeConstants {
         String dir = new File(getTmpDir(), "AR").getAbsolutePath();
         BdbModule bdb = new BdbModule();
         ExampleStateProvider dsp = new ExampleStateProvider();
-        bdb.setPath(dir);
+        bdb.setDir(dir);
 //        dsp.set(bdb, BdbModule.DIR, dir);
-        bdb.initialTasks(dsp);
+        bdb.afterPropertiesSet();
 
         /*
         EnvironmentConfig envConfig = new EnvironmentConfig();

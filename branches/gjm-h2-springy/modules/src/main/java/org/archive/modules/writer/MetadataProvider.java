@@ -29,7 +29,7 @@ package org.archive.modules.writer;
 
 public interface MetadataProvider {
     
-    String getJobName();
+    String getJobName(); // ensure gets set
     String getOperator();
     String getDescription();
     String getUserAgent();

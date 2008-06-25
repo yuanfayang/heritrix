@@ -666,15 +666,15 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
             // no need to reset
             return; 
         }
-        this.provider = manager.findConfig(getClassKey());
+        this.provider = null; // manager.findConfig(getClassKey()); // TODO:SPRINGY adapt
     }
 
-    public <T> T get(Object module, Key<T> key) {
-        if (provider == null) {
-            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
-        }
-        return provider.get(module, key);
-    }
+//    public <T> T get(Object module, Key<T> key) {
+//        if (provider == null) {
+//            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
+//        }
+//        return provider.get(module, key);
+//    }
 
     /**
      * @return the onInactiveQueues

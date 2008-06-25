@@ -29,7 +29,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.commons.httpclient.Cookie;
-import org.archive.state.StateProvider;
 
 public class SimpleCookieStorage extends AbstractCookieStorage {
 
@@ -38,7 +37,7 @@ public class SimpleCookieStorage extends AbstractCookieStorage {
     final private SortedMap<String,Cookie> map = new TreeMap<String,Cookie>();
 
     
-    protected SortedMap<String,Cookie> prepareMap(StateProvider p) {
+    protected SortedMap<String,Cookie> prepareMap() {
         return map;
     }
     

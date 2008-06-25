@@ -28,16 +28,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.io.SinkHandlerLogThread;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
-
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /** Allows the caller to process a CrawlURI representing a PDF
  *  for the purpose of extracting URIs
@@ -45,7 +42,7 @@ import org.archive.state.StateProvider;
  * @author Parker Thompson
  *
  */
-public class ExtractorPDF extends ContentExtractor implements Initializable {
+public class ExtractorPDF extends ContentExtractor implements InitializingBean {
 
     private static final long serialVersionUID = 3L;
 
@@ -56,35 +53,42 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
      * The maximum size of PDF files to consider.  PDFs larger than this
      * maximum will not be searched for links.
      */
-    final public static Key<Long> MAX_SIZE_TO_PARSE = Key.make(5*1024*1024L);
-    
+    {
+        setMaxSizeToParse(10*1024*1024L); // 10MB
+    }
+    public long getMaxSizeToParse() {
+        return (Long) kp.get("maxSizeToParse");
+    }
+    public void setMaxSizeToParse(long threshold) {
+        kp.put("maxSizeToParse",threshold);
+    }
 
     final private AtomicLong numberOfLinksExtracted = new AtomicLong(0);
 
-    private TempDirProvider tempDirProvider;
-    
-    
     /**
      * Provides the location for temporary PDF files to be written.
      */
-    @Immutable
-    final public static Key<TempDirProvider> TEMP_DIR_PROVIDER =
-        Key.makeAuto(TempDirProvider.class);
-    
-    
+    protected CrawlControllerImpl controller;
+    public CrawlControllerImpl getCrawlController() {
+        return this.controller;
+    }
+    @Autowired
+    public void setCrawlController(CrawlControllerImpl controller) {
+        this.controller = controller;
+    }
 
     public ExtractorPDF() {
     }
 
     
-    public void initialTasks(StateProvider p) {
-        super.initialTasks(p);
-        this.tempDirProvider = p.get(this, TEMP_DIR_PROVIDER);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
+//        this.tempDirProvider = p.get(this, TEMP_DIR_PROVIDER);
     }
     
     @Override
     protected boolean shouldExtract(ProcessorURI uri) {
-        long max = uri.get(this, MAX_SIZE_TO_PARSE);
+        long max = getMaxSizeToParse();
         if (uri.getRecorder().getRecordedInput().getSize() > max) {
             return false;
         }
@@ -104,7 +108,7 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
         } else {
             sn = System.identityHashCode(thread);
         }
-        File tempDir = tempDirProvider.getScratchDisk();
+        File tempDir = getCrawlController().resolveScratchDir();
         tempFile = new File(tempDir, "tt" + sn + "tmp.pdf");
 
         PDFParser parser;
@@ -165,11 +169,5 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorPDF.class);
     }
 }

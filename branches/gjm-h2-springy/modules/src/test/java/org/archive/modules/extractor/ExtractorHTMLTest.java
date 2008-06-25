@@ -63,7 +63,7 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
         UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();
         ExampleStateProvider dsp = new ExampleStateProvider();
         dsp.set(result, Extractor.URI_ERROR_LOGGER_MODULE, ulm);
-        result.initialTasks(dsp);
+        result.afterPropertiesSet();
         return result;
     }
     

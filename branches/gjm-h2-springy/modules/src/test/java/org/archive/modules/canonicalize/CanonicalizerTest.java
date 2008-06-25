@@ -28,7 +28,7 @@ import java.util.List;
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.canonicalize.CanonicalizationRule;
 import org.archive.modules.canonicalize.Canonicalizer;
-import org.archive.modules.canonicalize.FixupQueryStr;
+import org.archive.modules.canonicalize.FixupQueryString;
 import org.archive.modules.canonicalize.LowercaseRule;
 import org.archive.modules.canonicalize.StripSessionIDs;
 import org.archive.modules.canonicalize.StripUserinfoRule;
@@ -71,7 +71,7 @@ public class CanonicalizerTest extends TmpDirTestCase {
         this.rules.add(new StripUserinfoRule());
         this.rules.add(new StripWWWRule());
         this.rules.add(new StripSessionIDs());
-        this.rules.add(new FixupQueryStr());
+        this.rules.add(new FixupQueryString());
     }
     
     public void testCanonicalize() throws URIException {

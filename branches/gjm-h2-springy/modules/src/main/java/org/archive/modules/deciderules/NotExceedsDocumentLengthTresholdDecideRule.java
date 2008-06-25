@@ -27,9 +27,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.HttpMethod;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-
 
 /**
  * Applies configured decision for URIs with content length less than a given
@@ -38,7 +35,7 @@ import org.archive.state.KeyManager;
  * treshold.
  */
 public class NotExceedsDocumentLengthTresholdDecideRule
-extends PredicatedAcceptDecideRule {
+extends PredicatedDecideRule {
 	
 
     private static final long serialVersionUID = -8774160016195991876L;
@@ -52,23 +49,33 @@ extends PredicatedAcceptDecideRule {
      * determine content length based on HTTP header information, otherwise
      * the size of the already downloaded content will be used.
      */
-    final public static Key<Boolean> USE_AS_MIDFETCH_RULE = Key.make(true);
-
+    {
+        setUseHeaderLength(true);
+    }
+    public boolean getUseHeaderLength() {
+        return (Boolean) kp.get("useHeaderLength");
+    }
+    public void setUseHeaderLength(boolean useHeaderLength) {
+        kp.put("useHeaderLength",useHeaderLength);
+    }
     
     /**
      * Max content-length this filter will allow to pass through. If -1, 
      * then no limit.
      */
-    final public static Key<Integer> CONTENT_LENGTH_THRESHOLD = Key.make(-1);
-    
+    {
+        setContentLengthThreshold(-1L);
+    }
+    public long getContentLengthThreshold() {
+        return (Long) kp.get("contentLengthThreshold");
+    }
+    public void setContentLengthThreshold(long threshold) {
+        kp.put("contentLengthThreshold",threshold);
+    }
+
     // Header predictor state constants
     public static final int HEADER_PREDICTS_MISSING = -1;
 	
-    
-    static {
-        KeyManager.addKeys(NotExceedsDocumentLengthTresholdDecideRule.class);
-    }
-    
     public NotExceedsDocumentLengthTresholdDecideRule() {
     }
     
@@ -76,7 +83,7 @@ extends PredicatedAcceptDecideRule {
         int contentlength = HEADER_PREDICTS_MISSING;
 
         // filter used as midfetch filter
-        if (curi.get(this, USE_AS_MIDFETCH_RULE)) {
+        if (getUseHeaderLength()) {
 
             if (curi.getHttpMethod() == null) {
                 // Missing header info, let pass
@@ -114,11 +121,11 @@ extends PredicatedAcceptDecideRule {
             contentlength = (int) curi.getContentSize();
         }
         
-        return contentlength < curi.get(this, CONTENT_LENGTH_THRESHOLD);
+        return test(contentlength);
     }
     
     
-    boolean decision(ProcessorURI curi, int contentlength) {
-        return contentlength < curi.get(this, CONTENT_LENGTH_THRESHOLD);        
+    boolean test(int contentlength) {
+        return contentlength < getContentLengthThreshold();        
     }
 }

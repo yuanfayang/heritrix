@@ -143,7 +143,7 @@ public class RobotsHonoringPolicy implements Serializable, HasKeyedProperties {
      * @return List of Strings with user agents
      */
     public List<String> getUserAgents(StateProvider context) {
-        if (isType(context,Type.MOST_FAVORED_SET)) {
+        if (isType(Type.MOST_FAVORED_SET)) {
             return getUserAgents();
         }
         return null;
@@ -158,18 +158,7 @@ public class RobotsHonoringPolicy implements Serializable, HasKeyedProperties {
         // TODO: change callers to ensure overrides installed, use no-arg accessor
         return getCustomRobots();
     }
-
-
-    /**
-     * Get the policy-type.
-     *
-     * @return policy type
-     */
-    public Type getType(StateProvider context) {
-        // TODO: change callers to ensure overrides installed, use no-arg accessor
-        return getType();
-    }
-
+    
     /**
      * Check if policy is of a certain type.
      *
@@ -177,8 +166,8 @@ public class RobotsHonoringPolicy implements Serializable, HasKeyedProperties {
      * @param type      the type to check against.
      * @return true     if the policy is of the submitted type
      */
-    public boolean isType(StateProvider context, Type type) {
-        return type == getType(context);
+    public boolean isType(Type type) {
+        return type == getType();
     }
 
     public String getCustomRobots() {

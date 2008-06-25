@@ -25,6 +25,8 @@
  */
 package org.archive.state;
 
+import org.springframework.beans.factory.InitializingBean;
+
 /**
  * Implemented by modules that have custom initialization needs.  A Module that
  * implements this interface should have its {@link #initialTasks} method 
@@ -84,17 +86,12 @@ package org.archive.state;
  * 
  * @author pjack
  */
-public interface Initializable {
+public interface Initializable extends InitializingBean {
     
     
     /**
      * Initialize this module based on global configuration.
-     * 
-     * @param global  a StateProvider representing the global context for the
-     *    application.  This reference should not be cached!  The object 
-     *    representing the global context might change during the lifetime of
-     *    an application.  This parameter should never be null.
      */
-    void initialTasks(StateProvider global);
+    void afterPropertiesSet();
 
 }

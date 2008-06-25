@@ -38,8 +38,7 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.io.ReplayInputStream;
@@ -70,7 +69,7 @@ import static org.archive.modules.writer.Kw3Constants.*;
  * 
  * @author oskar
  */
-public class Kw3WriterProcessor extends Processor implements Initializable {
+public class Kw3WriterProcessor extends Processor implements InitializingBean {
 
 
   private static final long serialVersionUID = 3L;
@@ -168,7 +167,8 @@ public class Kw3WriterProcessor extends Processor implements Initializable {
 
   
   
-  public void initialTasks(StateProvider global) {
+  public void afterPropertiesSet() {
+      StateProvider global = null;
       Path arcsDirPath = global.get(this, PATH);
       
       this.arcsDir = arcsDirPath.toFile();

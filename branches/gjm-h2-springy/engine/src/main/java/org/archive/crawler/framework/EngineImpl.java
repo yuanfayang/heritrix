@@ -47,11 +47,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import javax.management.DynamicMBean;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.Notification;
@@ -66,6 +68,7 @@ import org.archive.io.RandomAccessInputStream;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.DefaultCheckpointRecovery;
+import org.archive.settings.JobHome;
 import org.archive.settings.ListModuleListener;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.SheetManager;
@@ -74,10 +77,12 @@ import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
 import org.archive.settings.jmx.LoggingDynamicMBean;
+import org.archive.spring.PathSharingContext;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -113,6 +118,8 @@ public class EngineImpl extends Bean implements Engine {
     final public static String LOGS_DIR_PATH =
         CONTROLLER_PATH + ":logger-module:dir";
 
+    public static final String REPORTS_DIR_KEY = "root:controller:statistics-tracker:reports-dir";
+
     final private static Logger LOGGER = 
         Logger.getLogger(EngineImpl.class.getName()); 
     
@@ -132,6 +139,7 @@ public class EngineImpl extends Bean implements Engine {
     private HashMap<String, LogRemoteAccessImpl> logRemoteAccess;
     
     private Map<String, SheetManager> sheetManagers;
+
 
     
     public EngineImpl(EngineConfig config) {
@@ -254,6 +262,11 @@ public class EngineImpl extends Bean implements Engine {
         File srcConfig = new File(src, "config.txt");
         if (srcConfig.exists()) {
             FileUtils.copyFile(srcConfig, new File(dest, "config.txt"));
+        }
+        
+        File beansConfig = new File(src, "crawler-beans.xml");
+        if (beansConfig.exists()) {
+            FileUtils.copyFile(beansConfig, new File(dest, "crawler-beans.xml"));
         }
 
         File srcSeeds = new File(src, "seeds.txt");
@@ -604,28 +617,37 @@ public class EngineImpl extends Bean implements Engine {
 
     
     public synchronized String getFilePath(String job, String settingPath) {
-        String jobName = JobStage.getJobName(job);
-        JobStage stage = JobStage.getJobStage(job);
-
-        ObjectName oname;
-        if (stage == JobStage.ACTIVE) {
-            String query = DOMAIN + ":*,type=" + JMXSheetManager.class.getName() 
-                + ",name=" + jobName;
-            oname = JmxUtils.findUnique(server, query);
-        } else {
-            try {
-                oname = getSheetManagerStub(job);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-        
+        File jobDir = new File(getJobsDir(), job);
+        Properties p;
         try {
-            JMXSheetManager mgr = BeanProxy.proxy(server, oname, JMXSheetManager.class);
-            return mgr.getFilePath(settingPath);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+            p = FileUtils.loadProperties(new File(jobDir,JobHome.PATHS_PROPERTIES_FILE));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+        return p.getProperty(settingPath);
+        
+//        String jobName = JobStage.getJobName(job);
+//        JobStage stage = JobStage.getJobStage(job);
+//
+//        ObjectName oname;
+//        if (stage == JobStage.ACTIVE) {
+//            String query = DOMAIN + ":*,type=" + JMXSheetManager.class.getName() 
+//                + ",name=" + jobName;
+//            oname = JmxUtils.findUnique(server, query);
+//        } else {
+//            try {
+//                oname = getSheetManagerStub(job);
+//            } catch (IOException e) {
+//                throw new IllegalStateException(e);
+//            }
+//        }
+//        
+//        try {
+//            JMXSheetManager mgr = BeanProxy.proxy(server, oname, JMXSheetManager.class);
+//            return mgr.getFilePath(settingPath);
+//        } catch (Exception e) {
+//            throw new IllegalStateException(e);
+//        }
     }
 
     
@@ -703,7 +725,12 @@ public class EngineImpl extends Bean implements Engine {
             fsm = new FileSheetManager(dest, name, true, list);
             
             // actually builds crawler from config: 
-            fsm.start();
+            PathSharingContext ac = fsm.start();
+            
+            // trigger registration of all DynamicMBean modules
+            for(Object bean : ac.getBeansOfType(DynamicMBean.class).values()) {
+                jmxListener.moduleChanged(null, bean);
+            }
             
             sheetManagers.put(job, fsm);
 

@@ -29,7 +29,7 @@ import org.archive.net.UURI;
 
 
 public class AddRedirectFromRootServerToScope 
-extends PredicatedAcceptDecideRule {
+extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 3L;
 

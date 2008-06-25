@@ -230,10 +230,10 @@ public interface JMXSheetManager {
             @Parameter(name="path", desc="The path of the setting to remove.")
             String path);
 
-    @Operation(desc="Returns an absolute file path given a settings path to a FileModule.")
-    String getFilePath(
-            @Parameter(name="setting", desc="The settings path to the FileModule.")
-            String setting);
+//    @Operation(desc="Returns an absolute file path given a settings path to a FileModule.")
+//    String getFilePath(
+//            @Parameter(name="setting", desc="The settings path to the FileModule.")
+//            String setting);
 
 
 }

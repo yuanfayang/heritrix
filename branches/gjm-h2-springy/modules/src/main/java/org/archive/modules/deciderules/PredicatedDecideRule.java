@@ -35,19 +35,26 @@ import org.archive.modules.ProcessorURI;
  */
 public abstract class PredicatedDecideRule extends DecideRule {
 
+    {
+        setDecision(DecideResult.ACCEPT);
+    }
+    public DecideResult getDecision() {
+        return (DecideResult) kp.get("decision");
+    }
+    public void setDecision(DecideResult decision) {
+        kp.put("decision",decision);
+    }
+    
     public PredicatedDecideRule() {
     }
 
-    
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {
         if (evaluate(uri)) {
-            return getDefaultDecision(uri);
+            return getDecision();
         }
         return DecideResult.PASS;
     }
-
-    protected abstract DecideResult getDefaultDecision(ProcessorURI uri);
 
     protected abstract boolean evaluate(ProcessorURI object);
 }

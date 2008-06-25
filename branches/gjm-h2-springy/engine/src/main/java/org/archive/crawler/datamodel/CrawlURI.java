@@ -1517,7 +1517,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
             return;
         }
         this.manager = manager;
-        this.provider = manager.findConfig(SURT.fromURI(toString()));
+//        this.provider = manager.findConfig(SURT.fromURI(toString()));
     }
     
     
@@ -1526,12 +1526,12 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
 
     
-    public <T> T get(Object module, Key<T> key) {
-        if (provider == null) {
-            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
-        }
-        return provider.get(module, key);
-    }
+//    public <T> T get(Object module, Key<T> key) {
+//        if (provider == null) {
+//            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
+//        }
+//        return provider.get(module, key);
+//    }
 
 
     //

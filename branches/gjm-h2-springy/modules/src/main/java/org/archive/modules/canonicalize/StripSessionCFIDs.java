@@ -24,10 +24,6 @@ package org.archive.modules.canonicalize;
 
 import java.util.regex.Pattern;
 
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
-
-
 /**
  * Strip cold fusion session ids.
  * @author stack
@@ -61,14 +57,11 @@ extends BaseRule {
     private static final Pattern COLDFUSION_PATTERN =
         Pattern.compile(REGEX, Pattern.CASE_INSENSITIVE);
     
-    static {
-        KeyManager.addKeys(StripSessionCFIDs.class);
-    }
 
     public StripSessionCFIDs() {
     }
 
-    public String canonicalize(String url, StateProvider context) {
+    public String canonicalize(String url) {
         return doStripRegexMatch(url, COLDFUSION_PATTERN.matcher(url));
     }
 

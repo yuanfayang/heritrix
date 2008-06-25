@@ -64,7 +64,6 @@ import org.archive.settings.path.PathLister;
 import org.archive.settings.path.PathValidator;
 import org.archive.settings.path.StringPathListConsumer;
 import org.archive.state.KeyTypes;
-import org.archive.state.Path;
 
 
 public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetManager {
@@ -576,15 +575,15 @@ public class JMXSheetManagerImpl extends Bean implements Serializable, JMXSheetM
     }
 
     
-    public synchronized String getFilePath(String settingPath) {
-        Sheet global = manager.getGlobalSheet();
-        Object o = PathValidator.validate(global, settingPath);
-        if (o == null) {
-            return null;
-        }
-        Path path = (Path)o;
-        return path.toFile().getAbsolutePath();
-    }
+//    public synchronized String getFilePath(String settingPath) {
+//        Sheet global = manager.getGlobalSheet();
+//        Object o = PathValidator.validate(global, settingPath);
+//        if (o == null) {
+//            return null;
+//        }
+//        Path path = (Path)o;
+//        return path.toFile().getAbsolutePath();
+//    }
     
     
     public synchronized void clearErrors(String sheetName) {

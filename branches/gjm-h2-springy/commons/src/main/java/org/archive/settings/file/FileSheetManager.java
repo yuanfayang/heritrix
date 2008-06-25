@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import java.util.logging.Logger;
 
 import org.archive.settings.Association;
 import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.JobHome;
 import org.archive.settings.ModuleListener;
 import org.archive.settings.Stub;
 import org.archive.settings.RecoverAction;
@@ -55,11 +57,9 @@ import org.archive.settings.path.PathChangeException;
 import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathListConsumer;
 import org.archive.settings.path.PathLister;
+import org.archive.spring.PathSharingContext;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.Path;
 import org.archive.state.PathContext;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
@@ -127,20 +127,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      */
     private static final long serialVersionUID = 1L;
 
-    /** The BDB environment. */
-    @Immutable
-    final public static Key<BdbModule> BDB = 
-        Key.make(BdbModule.class, null);
-
-    /** The directory this sheet manager uses. */
-    @Immutable
-    final public static Key<Path> DIR =
-        Key.make(new Path("."));
-
-    static {
-        KeyManager.addKeys(FileSheetManager.class);
-    }
-
     final private static String BEANS_CONFIG = "crawler-beans.xml";
     
     final private static String ATTR_SHEETS = "sheets-dir";
@@ -184,16 +170,6 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
      */
     final private Map<String,List<PathChangeException>> problems = 
         new HashMap<String,List<PathChangeException>>();
-
-    private BdbModule bdb;
-    
-    final private Path dir;
-    
-    private String bdbDir;
-    
-    private int bdbCachePercent;
-
-    private boolean copyCheckpoint;
     
 
     public FileSheetManager(File main, String name, boolean live) 
@@ -246,8 +222,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
         
 //      ExampleStateProvider dsp = new ExampleStateProvider();
 
-        this.dir = new Path(mainDir.getAbsolutePath());
-        
+
 //        this.bdb = new BdbModule();
 //        dsp.set(bdb, BdbModule.DIR, this.bdbDir);
 //        dsp.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
@@ -265,46 +240,16 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 //        reload();
     }
 
-    public void start() {
+    public PathSharingContext start() {
         File config = new File(mainDir,BEANS_CONFIG);
-        FileSystemXmlApplicationContext ac = new FileSystemXmlApplicationContext(config.getAbsolutePath());
+        PathSharingContext ac = new PathSharingContext(config.getAbsolutePath());
+       
         ac.start();
-    }
-    
-    private void initBdb() throws DatabaseException {
-        BdbModule.BdbConfig config = new BdbModule.BdbConfig();
-        config.setAllowCreate(true);
-        config.setSortedDuplicates(true);
-        surtToSheetsDB = bdb.openDatabase("surtToSheets", config, true);
-        EntryBinding stringBinding 
-            = TupleBinding.getPrimitiveBinding(String.class);
-        
-        this.surtToSheets = new StoredSortedMap(
-                surtToSheetsDB, stringBinding, stringBinding, true); 
-        
-    }
-    
-    
-    private String getBdbProperty(Properties p, Key<?> key) {
-        String propName = BDB_PREFIX + key.getFieldName();
-        String defValue = key.getDefaultValue().toString();
-        return p.getProperty(propName, defValue);
+        return ac; 
     }
     
     private static List<ModuleListener> emptyList() {
         return Collections.emptyList();
-    }
-
-    
-    private static Properties load(File file) throws IOException {
-        FileInputStream finp = new FileInputStream(file);
-        try {
-            Properties p = new Properties();
-            p.load(finp);
-            return p;
-        } finally {
-            IoUtils.close(finp);
-        }
     }
     
     
@@ -675,20 +620,15 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     private void setManagerDefaults(SingleSheet ss) {
         if (isLive()) {
             ss.set(this, MANAGER, this);
-            ss.set(this, BDB, bdb);
-            ss.set(this, DIR, dir);
 //            ss.set(bdb, BdbModule.DIR, bdbDir);
 //            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
 //            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
             ss.addPrimary(getManagerModule());
-            ss.addPrimary(bdb);
         } else {
             @SuppressWarnings("unchecked")
             Stub<SheetManager> manager = (Stub)getManagerModule();
             Stub<BdbModule> bdb = Stub.make(BdbModule.class);
             ss.setStub(manager, MANAGER, manager);
-            ss.setStub(manager, BDB, bdb);
-            ss.setStub(manager, DIR, dir);
 //            ss.set(bdb, BdbModule.DIR, bdbDir);
 //            ss.set(bdb, BDB_CACHE_PERCENT, bdbCachePercent);
 //            ss.set(bdb, CHECKPOINT_COPY_BDBJE_LOGS, copyCheckpoint);
@@ -737,10 +677,10 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
             CheckpointRecovery cr = (CheckpointRecovery)inp;
             sheetsDir =
                 new File(cr.translatePath(sheetsDir.getAbsolutePath()));
-            bdbDir = 
-                new File(cr.translatePath(bdbDir)).getAbsolutePath();
+//            bdbDir = 
+//                new File(cr.translatePath(bdbDir)).getAbsolutePath();
         }
-        surtToSheetsDB = bdb.getDatabase("surtToSheets");
+//        surtToSheetsDB = bdb.getDatabase("surtToSheets");
         EntryBinding stringBinding 
             = TupleBinding.getPrimitiveBinding(String.class);            
         this.surtToSheets = new StoredSortedMap(

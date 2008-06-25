@@ -126,7 +126,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         setPriority(DEFAULT_PRIORITY);
         int outBufferSize = controller.getRecorderOutBufferBytes();
         int inBufferSize = controller.getRecorderInBufferBytes();
-        httpRecorder = new Recorder(controller.getScratchDir().toFile(),
+        httpRecorder = new Recorder(controller.resolveScratchDir(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
     }

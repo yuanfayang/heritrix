@@ -30,10 +30,9 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 /**
  * Uses the target IPs as basis for queue-assignment,
@@ -42,7 +41,7 @@ import org.archive.state.StateProvider;
  * @author Christian Kohlschuetter
  */
 public class BucketQueueAssignmentPolicy extends QueueAssignmentPolicy 
-implements Initializable {
+implements InitializingBean {
 
     private static final long serialVersionUID = 3L;
 
@@ -56,8 +55,8 @@ implements Initializable {
     private ServerCache serverCache;
 
     
-    public void initialTasks(StateProvider global) {
-        this.serverCache = global.get(this, SERVER_CACHE);
+    public void afterPropertiesSet() {
+
     }
     
     public String getClassKey(final CrawlURI curi) {

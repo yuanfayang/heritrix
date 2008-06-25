@@ -22,8 +22,6 @@ package org.archive.modules.canonicalize;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.state.StateProvider;
-
 public class StripExtraSlashes extends BaseRule {
 
 
@@ -40,7 +38,7 @@ public class StripExtraSlashes extends BaseRule {
         super();
     }
 
-    public String canonicalize(String url, StateProvider context) {
+    public String canonicalize(String url) {
         Matcher matcher = REGEX.matcher(url);
         while (matcher.matches()) {
             url = matcher.group(1) + "/" + matcher.group(2);

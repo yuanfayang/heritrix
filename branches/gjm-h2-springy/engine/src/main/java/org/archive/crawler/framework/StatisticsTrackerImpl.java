@@ -57,9 +57,9 @@ import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
+import org.archive.settings.JobHome;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.jmx.Types;
-import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
@@ -145,12 +145,21 @@ implements CrawlURIDispositionListener, Serializable {
     public void setBdbModule(BdbModule bdb) {
         this.bdb = bdb;
     }
+    
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
 
-    protected Path reportsDir = new Path(".");
-    public Path getReportsDir() {
+    protected String reportsDir = ".";
+    public String getReportsDir() {
         return reportsDir;
     }
-    public void setReportsDir(Path reportsDir) {
+    public void setReportsDir(String reportsDir) {
         this.reportsDir = reportsDir;
     }
     
@@ -252,8 +261,8 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     @Override
-    public void initialTasks(StateProvider p) {
-        super.initialTasks(p);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
         try {
             this.sourceHostDistribution = bdb.getBigMap("sourceHostDistribution",
             	    false, String.class, HashMap.class);
@@ -1177,7 +1186,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeReportFile(String reportName, String filename) {
-        File f = new File(reportsDir.toFile().getPath(), filename);
+        File f = new File(jobHome.resolveToFile(reportsDir,EngineImpl.REPORTS_DIR_KEY), filename);
         try {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
             writeReportTo(reportName, bw);

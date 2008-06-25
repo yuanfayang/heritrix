@@ -27,7 +27,7 @@ import java.util.logging.Level;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Finishable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -57,7 +57,7 @@ import org.xbill.DNS.Lookup;
  */
 public abstract class AbstractTracker extends Bean 
 implements StatisticsTracker, CrawlStatusListener, Serializable, Module, 
-Initializable, Finishable {
+InitializingBean, Finishable {
     /**
      * The interval between writing progress information to log.
      */
@@ -107,7 +107,7 @@ Initializable, Finishable {
     }
 
     
-    public void initialTasks(StateProvider p) {
+    public void afterPropertiesSet() {
 
     }
     
