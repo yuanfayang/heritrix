@@ -52,9 +52,7 @@ import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.archive.state.Initializable;
-import org.archive.state.Path;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -63,14 +61,14 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  */
 public class CrawlerLoggerModule extends Bean  
-implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
+implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable {
     private static final long serialVersionUID = 1L;
 
-    protected Path path = new Path("logs"); 
-    public Path getPath() {
+    protected String path = "logs"; 
+    public String getPath() {
         return path;
     }
-    public void setPath(Path path) {
+    public void setPath(String path) {
         this.path = path;
     }
 
@@ -170,8 +168,8 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     }
 
     
-    public void initialTasks(StateProvider provider) {
-        path.toFile().mkdirs();
+    public void afterPropertiesSet() {
+        getLogsDir().mkdirs();
         this.atg = AlertThreadGroup.current();
         try {
             setupLogs();
@@ -182,7 +180,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     
     
     private void setupLogs() throws IOException {
-        String logsPath = path.toFile().getAbsolutePath() + File.separatorChar;
+        String logsPath = getLogsDir().getAbsolutePath() + File.separatorChar;
         uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
         runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
             logsPath);
@@ -324,7 +322,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
 
 
     public File getLogsDir() {
-        return path.toFile();
+        return jobHome.resolveToFile(path,EngineImpl.LOGS_DIR_PATH);
     }
 
 
@@ -396,7 +394,7 @@ implements UriErrorLoggerModule, AlertTracker, Initializable, Checkpointable {
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         loggers = new HashMap<String,Logger>();
-        path.toFile().mkdirs();
+        getLogsDir().mkdirs();
         this.atg = AlertThreadGroup.current();
         this.setupLogs();
     }

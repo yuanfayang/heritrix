@@ -27,7 +27,7 @@ import java.util.Map;
 import org.archive.settings.Finishable;
 import org.archive.settings.file.BdbModule;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -44,7 +44,7 @@ import com.sleepycat.je.DatabaseException;
  * @author gojomo
  */
 public abstract class PersistOnlineProcessor extends PersistProcessor 
-implements Initializable, Finishable {
+implements InitializingBean, Finishable {
     
     private static final long serialVersionUID = -666479480942267268L;
     
@@ -62,12 +62,12 @@ implements Initializable, Finishable {
     }
 
 
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
         // TODO: share single store instance between Load and Store processors
         // (shared context? EnhancedEnvironment?)
 
-        this.bdb = provider.get(this, BDB);
-        String dbName = provider.get(this, HISTORYDB_NAME);
+        this.bdb = null; // provider.get(this, BDB);
+        String dbName = null; // provider.get(this, HISTORYDB_NAME);
         StoredSortedMap historyMap;
         try {
             StoredClassCatalog classCatalog = bdb.getClassCatalog();

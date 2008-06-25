@@ -48,8 +48,6 @@ import org.archive.net.ClientFTP;
 import org.archive.net.FTPException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 

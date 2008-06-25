@@ -35,9 +35,8 @@ import org.archive.settings.Finishable;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 
@@ -51,7 +50,7 @@ import org.archive.state.StateProvider;
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
 public class PersistLogProcessor extends PersistProcessor 
-implements Checkpointable, Initializable, Finishable {
+implements Checkpointable, InitializingBean, Finishable {
 
     private static final long serialVersionUID = 1678691994065439346L;
     
@@ -70,14 +69,15 @@ implements Checkpointable, Initializable, Finishable {
     }
 
 
-    public void initialTasks(StateProvider provider) {
-        try {
-            File logFile = provider.get(this, LOG_FILE).toFile();
-            log = new CrawlerJournal(logFile);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            throw new RuntimeException(e);
-        }
+    public void afterPropertiesSet() {
+        LOG_FILE.getClass();
+//      try {
+//            File logFile = provider.get(this, LOG_FILE).toFile();
+//            log = new CrawlerJournal(logFile);
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            throw new RuntimeException(e);
+//        }
     }
     
 
@@ -101,11 +101,4 @@ implements Checkpointable, Initializable, Finishable {
     protected boolean shouldProcess(ProcessorURI uri) {
         return shouldStore(uri);
     }
-    
-    static {
-        KeyManager.addKeys(PersistLogProcessor.class);
-    }
-
-
-
 }

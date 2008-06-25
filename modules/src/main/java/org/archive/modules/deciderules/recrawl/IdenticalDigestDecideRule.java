@@ -25,12 +25,14 @@
 package org.archive.modules.deciderules.recrawl;
 
 
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_CONTENT_DIGEST;
+import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_FETCH_HISTORY;
+
 import java.util.Map;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.deciderules.PredicatedRejectDecideRule;
-
-import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
+import org.archive.modules.deciderules.DecideResult;
+import org.archive.modules.deciderules.PredicatedDecideRule;
 
 
 /**
@@ -39,10 +41,15 @@ import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
  *
  * @author gojomo
  */
-public class IdenticalDigestDecideRule extends PredicatedRejectDecideRule {
+public class IdenticalDigestDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 4275993790856626949L;
 
+    /** default for this class is to REJECT */
+    {
+        setDecision(DecideResult.REJECT);
+    }
+    
     /**
      * Usual constructor. 
      */

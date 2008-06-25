@@ -87,12 +87,12 @@ import org.archive.modules.seeds.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.JobHome;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Initializable;
-import org.archive.state.Path;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.iterator.LineReadingIterator;
@@ -111,7 +111,7 @@ public abstract class AbstractFrontier
     implements CrawlStatusListener, 
                Frontier, 
                Serializable, 
-               Initializable, 
+               InitializingBean, 
                SeedRefreshListener, 
                HasKeyedProperties {
     private static final long serialVersionUID = 555881755284996860L;
@@ -174,12 +174,24 @@ public abstract class AbstractFrontier
         this.scope = scope;
     }
         
-    protected Path recoveryDir = new Path("logs");
-    public Path getRecoveryDir() {
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
+    
+    protected String recoveryDir = new String("logs");
+    public String getRecoveryDir() {
         return recoveryDir;
     }
-    public void setRecoveryDir(Path recoveryDir) {
+    public void setRecoveryDir(String recoveryDir) {
         this.recoveryDir = recoveryDir;
+    }
+    public File resolveRecoveryDir() {
+        return jobHome.resolveToFile(recoveryDir,null);
     }
 
     /**
@@ -487,7 +499,7 @@ public abstract class AbstractFrontier
         managerThread.start();
     }
     
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
         seeds.addSeedRefreshListener(this);
         
         if (getRecoveryLogEnabled()) try {
@@ -988,7 +1000,7 @@ public abstract class AbstractFrontier
             }
         }
         // save ignored items (if any) where they can be consulted later
-        saveIgnoredItems(ignoredWriter.toString(), recoveryDir.toFile());
+        saveIgnoredItems(ignoredWriter.toString(), resolveRecoveryDir());
         logger.info("finished");        
     }
 
@@ -1134,7 +1146,7 @@ public abstract class AbstractFrontier
                 UserAgentProvider uap = getUserAgentProvider();
                 String ua = curi.getUserAgent();
                 if (ua == null) {
-                    ua = uap.getUserAgent(curi);
+                    ua = uap.getUserAgent();
                 }
                 RobotsExclusionPolicy rep = s.getRobots();
                 if (rep != null) {
@@ -1361,9 +1373,9 @@ public abstract class AbstractFrontier
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        Sheet global = manager.getGlobalSheet();
+        Sheet global = null; // manager.getGlobalSheet(); //TODO:SPRINGY overrides
         List<CanonicalizationRule> rules = getCanonicalizationRules();
-        return Canonicalizer.canonicalize(global, uuri.toString(), rules);
+        return Canonicalizer.canonicalize(uuri.toString(), rules);
     }
 
     /**

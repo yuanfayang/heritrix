@@ -288,8 +288,8 @@ public class JerichoExtractorHTML extends ExtractorHTML {
             curi.getData().put(A_META_ROBOTS, content);
             RobotsHonoringPolicy policy = honoringPolicy;
             String contentLower = content.toLowerCase();
-            if ((policy == null || (!policy.isType(curi,
-                    RobotsHonoringPolicy.Type.IGNORE) && !policy.isType(curi,
+            if ((policy == null || (!policy.isType(
+                    RobotsHonoringPolicy.Type.IGNORE) && !policy.isType(
                     RobotsHonoringPolicy.Type.CUSTOM)))
                     && (contentLower.indexOf("nofollow") >= 0 || contentLower
                             .indexOf("none") >= 0)) {

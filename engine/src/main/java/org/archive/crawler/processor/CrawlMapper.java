@@ -41,10 +41,9 @@ import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.deciderules.DecideRuleSequence;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
 import org.archive.state.Path;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
+import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
 
@@ -71,7 +70,7 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public abstract class CrawlMapper extends Processor implements Initializable {
+public abstract class CrawlMapper extends Processor implements InitializingBean {
 
     /**
      * PrintWriter which remembers the File to which it writes. 
@@ -311,10 +310,10 @@ public abstract class CrawlMapper extends Processor implements Initializable {
         return writer;
     }
 
-    public void initialTasks(StateProvider context) {
-        localName = context.get(this, LOCAL_NAME);
+    public void afterPropertiesSet() {
+//        localName = context.get(this, LOCAL_NAME);
         cache = new ArrayLongFPCache();
-        diversionDir = context.get(this, DIVERSION_DIR);
+//        diversionDir = context.get(this, DIVERSION_DIR);
     }
 
 

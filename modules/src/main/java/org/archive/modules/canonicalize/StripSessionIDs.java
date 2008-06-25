@@ -24,10 +24,6 @@ package org.archive.modules.canonicalize;
 
 import java.util.regex.Pattern;
 
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
-
-
 /**
  * Strip known session ids.
  * @author stack
@@ -73,15 +69,11 @@ extends BaseRule {
         Pattern.compile("^(.+)" +
             "(?:ASPSESSIONID[a-zA-Z]{8}=[a-zA-Z]{24})(?:&(.*))?$",
                 Pattern.CASE_INSENSITIVE);
-    
-    static {
-        KeyManager.addKeys(StripSessionIDs.class);
-    }
 
     public StripSessionIDs() {
     }
 
-    public String canonicalize(String url, StateProvider context) {
+    public String canonicalize(String url) {
         url = doStripRegexMatch(url, BASE_PATTERN.matcher(url));
         url = doStripRegexMatch(url, SID_PATTERN.matcher(url));
         url = doStripRegexMatch(url, ASPSESSION_PATTERN.matcher(url));

@@ -108,7 +108,7 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.net.UURI;
 import org.archive.settings.Finishable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
@@ -124,7 +124,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author others
  * @version $Id$
  */
-public class FetchHTTP extends Processor implements Initializable, Finishable {
+public class FetchHTTP extends Processor implements InitializingBean, Finishable {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(FetchHTTP.class, 1);
@@ -196,8 +196,8 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
     {
         setMaxLengthBytes(0L); // no limit
     }
-    public int getMaxLengthBytes() {
-        return (Integer) kp.get("maxLengthBytes");
+    public long getMaxLengthBytes() {
+        return (Long) kp.get("maxLengthBytes");
     }
     public void setMaxLengthBytes(long timeout) {
         kp.put("maxLengthBytes",timeout);
@@ -861,10 +861,10 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         method.getParams().setVersion(HttpVersion.HTTP_1_0);
 
         UserAgentProvider uap = getUserAgentProvider();
-        String from = uap.getFrom(curi);
+        String from = uap.getFrom();
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
-            userAgent = uap.getUserAgent(curi);
+            userAgent = uap.getUserAgent();
         }
         
         method.setRequestHeader("User-Agent", userAgent);
@@ -1077,7 +1077,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
             // on this precondition. Find it by name. Get the name from
             // the credential this avatar represents.
             Credential c = getCredentialStore().getCredential(curi, ca);
-            String cd = c.getCredentialDomain(curi);
+            String cd = c.getDomain();
             if (cd != null) {
                 CrawlServer cs = serverCache.getServerFor(cd);
                 if (cs != null) {
@@ -1260,7 +1260,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
         return result;
     }
 
-    public void initialTasks(StateProvider defaults) {
+    public void afterPropertiesSet() {
         configureHttp();
 
         if (cookieStorage != null) {        

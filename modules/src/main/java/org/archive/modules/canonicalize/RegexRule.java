@@ -26,9 +26,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 /**
  * General conversion rule.
@@ -53,105 +50,41 @@ extends BaseRule {
     /**
      * The regular expression to use to match.
      */
-    final public static Key<Pattern> REGEX = Key.make(Pattern.compile("(.*)"));    
-    
+    {
+        setRegex(Pattern.compile("(.*)"));
+    }
+    public Pattern getRegex() {
+        return (Pattern) kp.get("regex");
+    }
+    public void setRegex(Pattern regex) {
+        kp.put("regex",regex);
+    }
     
     /**
      * The format string to use when a match is found.
      */
-    final public static Key<String> FORMAT = Key.make("${1}");
-
-    //final public static Key<String> COMMENT = Key.make("");
-    
-    static {
-        KeyManager.addKeys(RegexRule.class);
+    {
+        setFormat("$1");
     }
-    
+    public String getFormat() {
+        return (String) kp.get("format");
+    }
+    public void setFormat(String format) {
+        kp.put("format",format);
+    }
+
     public RegexRule() {
     }
     
 
-    public String canonicalize(String url, StateProvider context) {
-        Pattern pattern = context.get(this, REGEX);
+    public String canonicalize(String url) {
+        Pattern pattern = getRegex();
         Matcher matcher = pattern.matcher(url);
         if (!matcher.matches()) {
             return url;
         }
-        
-        String format = context.get(this, FORMAT);
         StringBuffer buffer = new StringBuffer(url.length() * 2);
-        format(matcher, format, buffer);
+        matcher.appendReplacement(buffer,getFormat());
         return buffer.toString();
     }
-    
-    /**
-     * @param matcher Matched matcher.
-     * @param format Output format specifier.
-     * @param buffer Buffer to append output to.
-     */
-    protected void format(Matcher matcher, String format,
-            StringBuffer buffer) {
-        for (int i = 0; i < format.length(); i++) {
-            switch(format.charAt(i)) {
-                case '\\':
-                    if ((i + 1) < format.length() &&
-                            format.charAt(i + 1) == '$') {
-                        // Don't write the escape character in output.
-                        continue;
-                    }
-                    
-                case '$':
-                    // Check to see if its not been escaped.
-                    if (i == 0 || (i > 0 && (format.charAt(i - 1) != '\\'))) {
-                        // Looks like we have a matching group specifier in
-                        // our format string, something like '$2' or '${2}'.
-                        int start = i + 1;
-                        boolean curlyBraceStart = false;
-                        if (format.charAt(start) == '{') {
-                            start++;
-                            curlyBraceStart = true;
-                        }
-                        int j = start;
-                        for (; j < format.length() &&
-                                Character.isDigit(format.charAt(j)); j++) {
-                            // While a digit, increment.
-                        }
-                        if (j > start) {
-                            int groupIndex = Integer.
-                                parseInt(format.substring(start, j));
-                            if (groupIndex >= 0 && groupIndex < 256) {
-                                String g = null;
-                                try {
-                                    g = matcher.group(groupIndex);
-                                } catch (IndexOutOfBoundsException e) {
-                                    logger.warning("IndexOutOfBoundsException" +
-                                        " getting group " + groupIndex +
-                                        " from " + matcher.group(0) +
-                                        " with format of " + format);
-                                }
-                                if (g != null) {
-                                    buffer.append(g);
-                                }
-                                // Skip closing curly bracket if one.
-                                if (curlyBraceStart &&
-                                        format.charAt(j) == '}') {
-                                    j++;
-                                }
-                                // Update the loop index so that we skip over
-                                // the ${x} group item.
-                                i = (j - 1);
-                                // Don't fall through to the default.
-                                continue;
-                            }
-                        }
-                        
-                    }
-                    // Let fall through to default rule.  The '$' was escaped.
-                    
-                default:
-                    buffer.append(format.charAt(i));
-            }
-        }
-    }
-
 }

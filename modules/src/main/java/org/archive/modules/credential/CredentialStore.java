@@ -116,7 +116,7 @@ public class CredentialStore implements Module, Serializable, HasKeyedProperties
      * context.
      * @return An iterator or null.
      */
-    public Collection<Credential> getAll(StateProvider context) {
+    public Collection<Credential> getAll() {
         Map<String,Credential> map = getCredentials();
         return map.values();
     }
@@ -163,12 +163,12 @@ public class CredentialStore implements Module, Serializable, HasKeyedProperties
      */
     public Set<Credential> subset(ProcessorURI context, Class type, String rootUri) {
         Set<Credential> result = null;
-        for (Credential c: getAll(context)) {
+        for (Credential c: getAll()) {
             if (!type.isInstance(c)) {
                 continue;
             }
             if (rootUri != null) {
-                String cd = c.getCredentialDomain(context);
+                String cd = c.getDomain();
                 if (cd == null) {
                     continue;
                 }
@@ -188,7 +188,7 @@ public class CredentialStore implements Module, Serializable, HasKeyedProperties
     public Credential getCredential(ProcessorURI curi, CredentialAvatar ca) {
         Credential result = null;
 
-        Collection<Credential> all = getAll(curi);
+        Collection<Credential> all = getAll();
         if (all == null) {
             logger.severe("Have CredentialAvatar " + toString() +
                 " but no collection: " + curi);
@@ -199,7 +199,7 @@ public class CredentialStore implements Module, Serializable, HasKeyedProperties
             if (!ca.getType().isInstance(c)) {
                 continue;
             }
-            String credKey = c.getKey(curi);
+            String credKey = c.getKey();
             if (credKey != null && credKey.equals(ca.getKey())) {
                 result = c;
                 break;

@@ -36,7 +36,7 @@ public interface CookieStorage {
 
     void saveCookiesMap(Map<String,Cookie> map);
 
-    void initialTasks(StateProvider defaults);
+    void afterPropertiesSet();
 
     void finalTasks(StateProvider defaults);
 

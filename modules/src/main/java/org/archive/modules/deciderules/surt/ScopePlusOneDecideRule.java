@@ -28,8 +28,6 @@ import java.util.logging.Logger;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.net.UURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
@@ -74,7 +72,7 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      */
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {
-        SurtPrefixSet set = getPrefixes(uri);
+        SurtPrefixSet set = getPrefixes();
         UURI u = uri.getUURI();
         // First, is the URI itself in scope?
         boolean firstResult = isInScope(u, set);

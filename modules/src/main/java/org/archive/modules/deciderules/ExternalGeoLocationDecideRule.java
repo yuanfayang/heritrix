@@ -24,6 +24,8 @@ package org.archive.modules.deciderules;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,10 +34,8 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.xbill.DNS.Address;
 
 /**
@@ -53,44 +53,52 @@ import org.xbill.DNS.Address;
  * 
  * @author Igor Ranitovic
  */
-public class ExternalGeoLocationDecideRule extends PredicatedAcceptDecideRule 
-implements Initializable {
+public class ExternalGeoLocationDecideRule extends PredicatedDecideRule 
+implements InitializingBean {
 
     private static final long serialVersionUID = 3L;
 
     private static final Logger LOGGER =
         Logger.getLogger(ExternalGeoLocationDecideRule.class.getName());
 
-
-    final public static Key<ExternalGeoLookupInterface> LOOKUP = 
-        Key.make(ExternalGeoLookupInterface.class, null);
-
+    ExternalGeoLookupInterface lookup = null; 
+    public ExternalGeoLookupInterface getLookup() {
+        return this.lookup;
+    }
+    public void setLookup(ExternalGeoLookupInterface lookup) {
+        this.lookup = lookup; 
+    }
+    
     /**
      * Country code name.
      */
-    final public static Key<String> COUNTRY_CODE = Key.make("--");
-
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
-    
-    private ServerCache serverCache;
-
-    
-    static {
-        KeyManager.addKeys(ExternalGeoLocationDecideRule.class);
+    List<String> countryCodes = new ArrayList<String>();
+    public List<String> getCountryCodes() {
+        return this.countryCodes;
+    }
+    public void setCountryCodes(List<String> codes) {
+        this.countryCodes = codes; 
     }
 
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
+    
     public ExternalGeoLocationDecideRule() {
     }
 
-    public void initialTasks(StateProvider provider) {
-        this.serverCache = provider.get(this, SERVER_CACHE);
+    public void afterPropertiesSet() {
+//        this.serverCache = provider.get(this, SERVER_CACHE);
     }
     
     @Override
     protected boolean evaluate(ProcessorURI uri) {        
-        String countryCode = uri.get(this, COUNTRY_CODE);
-        ExternalGeoLookupInterface impl = uri.get(this, LOOKUP);
+        ExternalGeoLookupInterface impl = getLookup();
         if (impl == null) {
             return false;
         }
@@ -101,15 +109,15 @@ implements Initializable {
             host = uri.getUURI().getHost();
             crawlHost = serverCache.getHostFor(host);
             if (crawlHost.getCountryCode() != null) {
-                return (crawlHost.getCountryCode().equals(countryCode))
-                        ? true : false;
+                return countryCodes.contains(crawlHost.getCountryCode());
             }
             address = crawlHost.getIP();
             if (address == null) {
+                // TODO: handle transient lookup failures better
                 address = Address.getByName(host);
             }
             crawlHost.setCountryCode((String) impl.lookup(address));
-            if (crawlHost.getCountryCode().equals(countryCode)) {
+            if (countryCodes.contains(crawlHost.getCountryCode())) {
                 LOGGER.fine("Country Code Lookup: " + " " + host
                         + crawlHost.getCountryCode());
                 return true;
@@ -117,7 +125,7 @@ implements Initializable {
         } catch (UnknownHostException e) {
             LOGGER.log(Level.FINE, "Failed dns lookup " + uri, e);
             if (crawlHost != null) {
-                crawlHost.setCountryCode(COUNTRY_CODE.getDefaultValue());
+                crawlHost.setCountryCode("--");
             }
         } catch (URIException e) {
             LOGGER.log(Level.FINE, "Failed to parse hostname " + uri, e);

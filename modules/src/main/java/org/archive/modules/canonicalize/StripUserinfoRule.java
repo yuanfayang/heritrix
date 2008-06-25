@@ -24,11 +24,6 @@ package org.archive.modules.canonicalize;
 
 import java.util.regex.Pattern;
 
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
-
-
-
 /**
  * Strip any 'userinfo' found on http/https URLs.
  * @author stack
@@ -50,15 +45,11 @@ public class StripUserinfoRule extends BaseRule {
     private static final Pattern REGEX =
         Pattern.compile("^((?:(?:https?)|(?:ftps?))://)(?:[^/]+@)(.*)$",
             Pattern.CASE_INSENSITIVE);
-
-    static {
-        KeyManager.addKeys(StripUserinfoRule.class);
-    }
     
     public StripUserinfoRule() {
     }
 
-    public String canonicalize(String url, StateProvider context) {
+    public String canonicalize(String url) {
         return doStripRegexMatch(url, REGEX.matcher(url));
     }
 }

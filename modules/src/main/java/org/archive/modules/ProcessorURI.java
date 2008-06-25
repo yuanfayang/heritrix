@@ -42,7 +42,7 @@ import org.archive.util.Recorder;
  * 
  * @author pjack
  */
-public interface ProcessorURI extends StateProvider {
+public interface ProcessorURI {
 
     
     public static enum FetchType { HTTP_GET, HTTP_POST, UNKNOWN };

@@ -19,8 +19,7 @@ public class ProcessorChain implements Iterable<Processor>, HasKeyedProperties {
     }
 
     public Iterator<Processor> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return getProcessors().iterator();
     }
 
     @SuppressWarnings("unchecked")

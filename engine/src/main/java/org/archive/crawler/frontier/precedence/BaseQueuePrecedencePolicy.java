@@ -25,8 +25,8 @@
 package org.archive.crawler.frontier.precedence;
 
 import org.archive.crawler.frontier.WorkQueue;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 
 /**
  * QueuePrecedencePolicy that sets a uri-queue's precedence to a configured
@@ -35,12 +35,25 @@ import org.archive.state.KeyManager;
  * on when such changes are noted in a uri-queues lifecycle). 
  * 
  */
-public class BaseQueuePrecedencePolicy extends QueuePrecedencePolicy {
+public class BaseQueuePrecedencePolicy extends QueuePrecedencePolicy
+implements HasKeyedProperties {
     private static final long serialVersionUID = 8312032856661175869L;
     
+    protected KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
+    
     /** constant precedence to assign; default is 1 */
-    final public static Key<Integer> BASE_PRECEDENCE = 
-        Key.make(1);
+    {
+        setBasePrecedence(1);
+    }
+    public int getBasePrecedence() {
+        return (Integer) kp.get("basePrecedence");
+    }
+    public void setBasePrecedence(int precedence) {
+        kp.put("basePrecedence", precedence);
+    }
     
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.QueuePrecedencePolicy#queueCreated(org.archive.crawler.frontier.WorkQueue)
@@ -69,7 +82,7 @@ public class BaseQueuePrecedencePolicy extends QueuePrecedencePolicy {
      * @return int precedence value
      */
     protected int calculatePrecedence(WorkQueue wq) {
-        return wq.get(this,BASE_PRECEDENCE);
+        return getBasePrecedence();
     }
 
     /* (non-Javadoc)
@@ -89,11 +102,5 @@ public class BaseQueuePrecedencePolicy extends QueuePrecedencePolicy {
             // replace provider
             installProvider(wq);
         }
-    }
-
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(BaseQueuePrecedencePolicy.class);
     }
 }

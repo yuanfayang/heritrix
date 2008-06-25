@@ -38,8 +38,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
 /**
@@ -73,23 +71,44 @@ public class ExtractorImpliedURI extends Extractor {
      * pattern, the 'implied' URI will be built. The capturing groups of this
      * expression are available for the build replacement pattern.
      */
-    final public static Key<Pattern> TRIGGER_REGEXP = 
-        Key.make(Pattern.compile("^(.*)$"));
+    {
+        setRegex(Pattern.compile("^(.*)$"));
+    }
+    public Pattern getRegex() {
+        return (Pattern) kp.get("regex");
+    }
+    public void setRegex(Pattern regex) {
+        kp.put("regex",regex);
+    }
 
     
     /**
      * Replacement pattern to build 'implied' URI, using captured groups of
      * trigger expression.
      */
-    final public static Key<String> BUILD_PATTERN = Key.make("");
-
+    {
+        setFormat("");
+    }
+    public String getFormat() {
+        return (String) kp.get("format");
+    }
+    public void setFormat(String format) {
+        kp.put("format",format);
+    }
 
     /**
      * If true, all URIs that match trigger regular expression are removed 
      * from the list of extracted URIs. Default is false.
      */
-    final public static Key<Boolean> REMOVE_TRIGGER_URIS = Key.make(false);
-
+    {
+        setRemoveTriggerUris(false);
+    }
+    public boolean getRemoveTriggerUris() {
+        return (Boolean) kp.get("removeTriggerUris");
+    }
+    public void setRemoveTriggerUris(boolean remove) {
+        kp.put("removeTriggerUris",remove);
+    }
     
     final AtomicLong linksExtracted = new AtomicLong();
 
@@ -117,8 +136,8 @@ public class ExtractorImpliedURI extends Extractor {
         int max = links.size();
         for (int i = 0; i < max; i++) {
             Link link = links.get(i);
-            Pattern trigger = curi.get(this, TRIGGER_REGEXP);
-            String build = curi.get(this, BUILD_PATTERN);
+            Pattern trigger = getRegex();
+            String build = getFormat();
             CharSequence dest = link.getDestination();
             String implied = extractImplied(dest, trigger, build);
             if (implied != null) {
@@ -131,8 +150,7 @@ public class ExtractorImpliedURI extends Extractor {
                     curi.getOutLinks().add(out);
                     linksExtracted.incrementAndGet();
 
-                    boolean removeTriggerURI = 
-                        curi.get(this, REMOVE_TRIGGER_URIS);
+                    boolean removeTriggerURI = getRemoveTriggerUris();
                     // remove trigger URI from the outlinks if configured so.
                     if (removeTriggerURI) {
                        if (curi.getOutLinks().remove(link)) {
@@ -181,11 +199,5 @@ public class ExtractorImpliedURI extends Extractor {
         ret.append("  CrawlURIs handled: " + getURICount() + "\n");
         ret.append("  Links extracted:   " + linksExtracted.get() + "\n\n");
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorImpliedURI.class);
     }
 }

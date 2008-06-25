@@ -47,9 +47,6 @@ import org.archive.io.ReplayInputStream;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
-import org.archive.state.Key;
-import org.archive.state.KeyMaker;
-import org.archive.state.KeyManager;
 import org.archive.state.PatternConstraint;
 import org.archive.util.IoUtils;
 

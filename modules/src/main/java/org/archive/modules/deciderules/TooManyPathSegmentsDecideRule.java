@@ -33,10 +33,14 @@ import org.archive.modules.ProcessorURI;
  *
  * @author gojomo
  */
-public class TooManyPathSegmentsDecideRule extends PredicatedRejectDecideRule {
+public class TooManyPathSegmentsDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 3L;
 
+    /** default for this class is to REJECT */
+    {
+        setDecision(DecideResult.REJECT);
+    }
     
     /**
      * Number of path segments beyond which this rule will reject URIs.

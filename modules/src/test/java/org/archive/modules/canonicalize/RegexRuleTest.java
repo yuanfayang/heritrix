@@ -22,16 +22,12 @@
  */
 package org.archive.modules.canonicalize;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.management.InvalidAttributeValueException;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.modules.canonicalize.CanonicalizationRule;
-import org.archive.modules.canonicalize.RegexRule;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
 
@@ -42,11 +38,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class RegexRuleTest extends ModuleTestBase {
 
-
-    private List<CanonicalizationRule> rules;
-    private ExampleStateProvider context;
-
-
     @Override
     protected Class getModuleClass() {
         return RegexRule.class;
@@ -56,20 +47,13 @@ public class RegexRuleTest extends ModuleTestBase {
     protected Object makeModule() throws Exception {
         return new RegexRule();
     }
-
-    protected void setUp() throws Exception {
-        super.setUp();
-        this.rules = new ArrayList<CanonicalizationRule>();
-        this.context = new ExampleStateProvider();
-    }
     
     public void testCanonicalize()
     throws URIException, InvalidAttributeValueException {
         final String url = "http://www.aRchive.Org/index.html";
         RegexRule rr = new RegexRule();
-        this.rules.add(rr);
-        rr.canonicalize(url, context);
-        String product = rr.canonicalize(url, context);
+        rr.canonicalize(url);
+        String product = rr.canonicalize(url);
         assertTrue("Default doesn't work.",  url.equals(product));
     }
 
@@ -80,25 +64,23 @@ public class RegexRuleTest extends ModuleTestBase {
         final String url = urlBase +
 		    ";$sessionid$JKOFFNYAAKUTIP4SY5NBHOR50LD3OEPO?CATID=96029";
         RegexRule rr = new RegexRule();
-        context.set(rr, RegexRule.REGEX, 
-         Pattern.compile("^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})(\\?.*)+$"));
-        context.set(rr, RegexRule.FORMAT, "$1$2");
-        this.rules.add(rr);
-        String product = rr.canonicalize(url, context);
+        rr.setRegex(Pattern.compile("^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})(\\?.*)+$"));
+        rr.setFormat("$1$2");
+        String product = rr.canonicalize(url);
         assertTrue("Failed " + url, urlMinusSessionid.equals(product));
     }
     
-    public void testNullFormat()
-    throws InvalidAttributeValueException {
-        final String urlBase = "http://joann.com/catalog.jhtml";
-        final String url = urlBase +
-            ";$sessionid$JKOFFNYAAKUTIP4SY5NBHOR50LD3OEPO";
-        RegexRule rr = new RegexRule();
-        context.set(rr, RegexRule.REGEX, Pattern.compile(
-            "^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})$"));
-        context.set(rr, RegexRule.FORMAT, "$1$2");
-        this.rules.add(rr);
-        String product = rr.canonicalize(url, context);
-        assertTrue("Failed " + url, urlBase.equals(product));
-    }
+// This should fail -- no backrefs to nonexistent match; very easy to 
+// add match of empty-string if that's acceptable in replace.
+//    public void testNullFormat()
+//    throws InvalidAttributeValueException {
+//        final String urlBase = "http://joann.com/catalog.jhtml";
+//        final String url = urlBase +
+//            ";$sessionid$JKOFFNYAAKUTIP4SY5NBHOR50LD3OEPO";
+//        RegexRule rr = new RegexRule();
+//        rr.setRegex(Pattern.compile("^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})$"));
+//        rr.setFormat("$1$2");
+//        String product = rr.canonicalize(url);
+//        assertTrue("Failed " + url, urlBase.equals(product));
+//    }
 }

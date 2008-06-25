@@ -26,10 +26,9 @@ package org.archive.crawler.util;
 import java.io.Serializable;
 
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.LongFPSet;
 
@@ -45,7 +44,7 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  */
 public class FPUriUniqFilter extends SetBasedUriUniqFilter 
-implements Initializable, Serializable {
+implements InitializingBean, Serializable {
     // Be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class, 1);
@@ -80,8 +79,8 @@ implements Initializable, Serializable {
     }
     
     
-    public void initialTasks(StateProvider provider) {
-        this.fpset = provider.get(this, LONG_FP_SET);
+    public void afterPropertiesSet() {
+//        this.fpset = provider.get(this, LONG_FP_SET);
     }
     
     private long getFp(CharSequence canonical) {

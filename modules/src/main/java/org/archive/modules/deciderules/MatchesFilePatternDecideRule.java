@@ -26,12 +26,7 @@
 
 package org.archive.modules.deciderules;
 
-
 import java.util.regex.Pattern;
-
-import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 /**
  * Compares suffix of a passed CrawlURI, UURI, or String against a regular
@@ -78,11 +73,14 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
         
     private static final long serialVersionUID = 3L;
 
-
-    final public static Key<Preset> USE_PRESET_PATTERN = Key.make(Preset.ALL);
-
-    static {
-        KeyManager.addKeys(MatchesFilePatternDecideRule.class);
+    {
+        setUsePreset(Preset.ALL);
+    }
+    public Preset getUsePreset() {
+        return (Preset) kp.get("usePreset");
+    }
+    public void setUsePreset(Preset preset) {
+        kp.put("usePreset",preset); 
     }
 
     /**
@@ -99,10 +97,10 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
      * @see org.archive.crawler.filter.URIRegExpFilter#getRegexp(Object)
      */
     @Override
-    protected Pattern getPattern(ProcessorURI uri) {
-        Preset preset = uri.get(this, USE_PRESET_PATTERN);
+    public Pattern getRegex() {
+        Preset preset = getUsePreset();
         if (preset == Preset.CUSTOM) {
-            return uri.get(this, REGEXP);
+            return getRegex();
         }
         return preset.getPattern();
     }

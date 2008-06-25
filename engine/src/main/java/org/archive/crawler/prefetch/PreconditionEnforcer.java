@@ -52,8 +52,7 @@ import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Initializable;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -64,7 +63,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author gojomo
  */
-public class PreconditionEnforcer extends Processor implements Initializable {
+public class PreconditionEnforcer extends Processor implements InitializingBean {
 
     private static final long serialVersionUID = 3L;
 
@@ -155,7 +154,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         super();
     }
     
-    public void initialTasks(StateProvider global) {
+    public void afterPropertiesSet() {
 
     }
 
@@ -252,7 +251,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         // test against robots.txt if available
         CrawlServer cs = getServerFor(curi);
         if (cs.isValidRobots()) {
-            String ua = getUserAgent(curi);
+            String ua = getUserAgentProvider().getUserAgent();
             if(cs.getRobots().disallows(curi, ua)) {
                 if(getCalculateRobotsOnly()) {
                     // annotate URI as excluded, but continue to process normally
@@ -279,13 +278,6 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         }
         return true;
     }
-    
-    
-    private String getUserAgent(StateProvider context) {
-        UserAgentProvider uap = getUserAgentProvider();
-        return uap.getUserAgent(context);
-    }
-
 
     /**
      * @param curi ProcessorURI whose dns prerequisite we're to check.
@@ -432,7 +424,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
             return result;
         }
 
-        for (Credential c: cs.getAll(curi)) {
+        for (Credential c: cs.getAll()) {
             if (c.isPrerequisite(curi)) {
                 // This credential has a prereq. and this curi is it.  Let it
                 // through.  Add its avatar to the curi as a mark.  Also, does
@@ -500,7 +492,7 @@ public class PreconditionEnforcer extends Processor implements Initializable {
         Set<CredentialAvatar> avatars = server.getCredentialAvatars();
         for (CredentialAvatar ca: avatars) {
             String key = null;
-            key = credential.getKey(curi);
+            key = credential.getKey();
             if (ca.match(credential.getClass(), key)) {
                 result = true;
             }

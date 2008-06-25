@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -522,5 +523,25 @@ public class FileUtils {
             return f;
         }
         return new File(context, path);
+    }
+    
+    public static Properties loadProperties(File file) throws IOException {
+        FileInputStream finp = new FileInputStream(file);
+        try {
+            Properties p = new Properties();
+            p.load(finp);
+            return p;
+        } finally {
+            IoUtils.close(finp);
+        }
+    }
+    
+    public static void storeProperties(Properties p, File file) throws IOException {
+        FileOutputStream fos = new FileOutputStream(file);
+        try {
+            p.store(fos,"");
+        } finally {
+            IoUtils.close(fos);
+        }
     }
 }

@@ -35,7 +35,7 @@ import org.archive.state.KeyManager;
  *
  * @author gojomo
  */
-public class HasViaDecideRule extends PredicatedAcceptDecideRule {
+public class HasViaDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 3L;
 

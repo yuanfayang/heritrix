@@ -42,13 +42,13 @@ import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.JobHome;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.archive.state.Initializable;
-import org.archive.state.Path;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.archive.util.DevUtils;
 import org.archive.util.FileUtils;
 
@@ -60,7 +60,7 @@ import org.archive.util.FileUtils;
  */
 public class SeedModuleImpl extends Bean implements 
     SeedModule, 
-    Initializable, 
+    InitializingBean, 
     Serializable, 
     KeyChangeListener,
     Checkpointable {
@@ -70,17 +70,29 @@ public class SeedModuleImpl extends Bean implements
     private static final Logger logger =
         Logger.getLogger(SeedModuleImpl.class.getName());
 
+    
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
+    
     /**
      * File from which to extract seeds.
      */
-    protected Path seedsFile = new Path("seeds.txt");
-    public Path getSeedsFile() {
+    protected String seedsFile = "seeds.txt";
+    public String getSeedsFile() {
         return seedsFile;
     }
-    public void setSeedsFile(Path seedsFile) {
+    public void setSeedsFile(String seedsFile) {
         this.seedsFile = seedsFile;
     }
-    
+    public File resolveSeedsFile() {
+        return jobHome.resolveToFile(seedsFile,null);
+    }
     /**
      * Whether to reread the seeds specification, whether it has changed or not,
      * every time any configuration change occurs. If true, seeds are reread
@@ -109,7 +121,7 @@ public class SeedModuleImpl extends Bean implements
     }
 
 
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
 
     }
 
@@ -127,13 +139,6 @@ public class SeedModuleImpl extends Bean implements
         for (SeedRefreshListener l: seedRefreshListeners) {
             l.seedsRefreshed();
         }
-    }
-
-    /**
-     * @return Seed list file or null if problem getting settings file.
-     */
-    public File getSeedfile() {
-        return seedsFile.toFile();
     }
 
     /** Check if a URI is in the seeds.
@@ -176,7 +181,7 @@ public class SeedModuleImpl extends Bean implements
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
     public void listUsedFiles(List<String> list) {
-        File file = getSeedfile();
+        File file = resolveSeedsFile();
         list.add(file.getAbsolutePath());
     }
 
@@ -215,10 +220,11 @@ public class SeedModuleImpl extends Bean implements
      */
     public Iterator<UURI> seedsIterator(Writer ignoredItemWriter) {
         BufferedReader br;
+        File seeds = resolveSeedsFile();
         try {
-            br = new BufferedReader(new FileReader(getSeedfile()));
+            br = new BufferedReader(new FileReader(seeds));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(seeds.getAbsolutePath(),e);
         }
         return new SeedFileIterator(br,ignoredItemWriter);
     }
@@ -247,7 +253,7 @@ public class SeedModuleImpl extends Bean implements
      * @return true if successful, false if add failed for any reason
      */
     public boolean addSeed(final ProcessorURI curi) {
-        File f = getSeedfile();
+        File f = resolveSeedsFile();
         if (f != null) {
             try {
                 FileWriter fw = new FileWriter(f, true);
@@ -284,8 +290,8 @@ public class SeedModuleImpl extends Bean implements
             throws IOException {
         int id = System.identityHashCode(this);
         String backup = "seeds" + id + " .txt";
-        FileUtils.copyFile(getSeedfile(), new File(dir, backup));
-        actions.add(new SeedModuleRecoverAction(backup, getSeedfile()));
+        FileUtils.copyFile(resolveSeedsFile(), new File(dir, backup));
+        actions.add(new SeedModuleRecoverAction(backup, resolveSeedsFile()));
     }
 
     

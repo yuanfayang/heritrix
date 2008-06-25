@@ -150,12 +150,12 @@ public class LexicalCrawlMapper extends CrawlMapper {
         return (String) tail.get(tail.firstKey());
     }
 
-    public void initialTasks(StateProvider context) {
-        super.initialTasks(context);
-        this.frontier = context.get(this, FRONTIER);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
+//        this.frontier = context.get(this, FRONTIER);
 
         try {
-            loadMap(context);
+            loadMap(null);//FIXME
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);

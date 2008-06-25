@@ -35,10 +35,14 @@ import org.archive.modules.ProcessorURI;
  *
  * @author gojomo
  */
-public class TooManyHopsDecideRule extends PredicatedRejectDecideRule {
+public class TooManyHopsDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 3L;
 
+    /** default for this class is to REJECT */
+    {
+        setDecision(DecideResult.REJECT);
+    }
     
     /**
      * Max path depth for which this filter will match.

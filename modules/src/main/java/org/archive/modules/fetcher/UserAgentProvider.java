@@ -35,9 +35,9 @@ import org.archive.state.StateProvider;
 public interface UserAgentProvider {
 
     
-    public String getUserAgent(StateProvider context);
+    public String getUserAgent();
     
-    public String getFrom(StateProvider context);
+    public String getFrom();
     
     
 }

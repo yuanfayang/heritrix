@@ -33,15 +33,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.settings.KeyChangeEvent;
-import org.archive.settings.KeyChangeListener;
-import org.archive.settings.SheetManager;
-import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.Path;
-import org.archive.state.StateProvider;
+import org.archive.settings.JobHome;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import bsh.EvalError;
 import bsh.Interpreter;
@@ -62,7 +59,7 @@ import bsh.Interpreter;
  * @author gojomo
  */
 public class BeanShellDecideRule extends DecideRule 
-implements Initializable, KeyChangeListener {
+implements InitializingBean, ApplicationContextAware {
 
     private static final long serialVersionUID = 3L;
 
@@ -70,20 +67,43 @@ implements Initializable, KeyChangeListener {
         Logger.getLogger(BeanShellDecideRule.class.getName());
     
     /** BeanShell script file. */
-    @Immutable
-    final public static Key<Path> SCRIPT_FILE = Key.make(new Path(""));
-
-    final public static Key<SheetManager> MANAGER =
-        Key.makeAuto(SheetManager.class);
+    protected String scriptFile = "";
+    public String getScriptFile() {
+        return scriptFile;
+    }
+    public void setScriptFile(String scriptFile) {
+        this.scriptFile = scriptFile;
+    }
+    public File resolveScriptFile() {
+        return jobHome.resolveToFile(scriptFile,null);
+    }
+    
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
 
     /**
      * Whether each ToeThread should get its own independent script context, or
      * they should share synchronized access to one context. Default is true,
      * meaning each threads gets its own isolated context.
      */
-    @Immutable
-    final public static Key<Boolean> ISOLATE_THREADS = Key.make(true);
+    protected boolean isolateThreads = true; 
+    public boolean getIsolateThreads() {
+        return isolateThreads;
+    }
+    public void setIsolateThreads(boolean isolateThreads) {
+        this.isolateThreads = isolateThreads;
+    }
 
+    ApplicationContext appCtx;
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.appCtx = applicationContext;
+    }
 
     protected ThreadLocal<Interpreter> threadInterpreter = 
         new ThreadLocal<Interpreter>();;
@@ -91,22 +111,14 @@ implements Initializable, KeyChangeListener {
     public Map<Object,Object> sharedMap = 
         Collections.synchronizedMap(new HashMap<Object,Object>());
     protected boolean initialized = false; 
-
-    private Path scriptFile;
-    private SheetManager manager;
-
-
-    static {
-        KeyManager.addKeys(BeanShellDecideRule.class);
-    }
     
     public BeanShellDecideRule() {
     }
     
     
-    public void initialTasks(StateProvider context) {
-        this.scriptFile = context.get(this, SCRIPT_FILE);
-        this.manager = context.get(this, MANAGER);
+    public void afterPropertiesSet() {
+//        this.scriptFile = context.get(this, SCRIPT_FILE);
+//        this.manager = context.get(this, MANAGER);
     }
 
     
@@ -114,7 +126,7 @@ implements Initializable, KeyChangeListener {
     public synchronized DecideResult innerDecide(ProcessorURI uri) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
-        Interpreter interpreter = getInterpreter(uri); 
+        Interpreter interpreter = getInterpreter(); 
         synchronized(interpreter) {
             // synchronization is harmless for local thread interpreter,
             // necessary for shared interpreter
@@ -134,18 +146,18 @@ implements Initializable, KeyChangeListener {
      * to this thread. 
      * @return Interpreter to use
      */
-    protected Interpreter getInterpreter(StateProvider context) {
+    protected Interpreter getInterpreter() {
         if(sharedInterpreter==null 
-           && context.get(this, ISOLATE_THREADS)) {
+           && getIsolateThreads()) {
             // initialize
-            sharedInterpreter = newInterpreter(context);
+            sharedInterpreter = newInterpreter();
         }
         if(sharedInterpreter!=null) {
             return sharedInterpreter;
         }
         Interpreter interpreter = threadInterpreter.get(); 
         if(interpreter==null) {
-            interpreter = newInterpreter(context); 
+            interpreter = newInterpreter(); 
             threadInterpreter.set(interpreter);
         }
         return interpreter; 
@@ -158,13 +170,13 @@ implements Initializable, KeyChangeListener {
      * 
      * @return  the new Interpreter instance
      */
-    protected Interpreter newInterpreter(StateProvider context) {
+    protected Interpreter newInterpreter() {
         Interpreter interpreter = new Interpreter(); 
         try {
             interpreter.set("self", this);
-            interpreter.set("manager", manager);
+            interpreter.set("context", appCtx);
             
-            File file = scriptFile.toFile();
+            File file = resolveScriptFile();
             try {
                 interpreter.source(file.getPath());
             } catch (IOException e) {
@@ -176,25 +188,5 @@ implements Initializable, KeyChangeListener {
         }
         
         return interpreter; 
-    }
-    
-    
-    /**
-     * Setup (or reset) Intepreter variables, as appropraite based on 
-     * thread-isolation setting. 
-     */
-    public void keyChanged(KeyChangeEvent event) {
-        // TODO make it so running state (tallies, etc.) isn't lost on changes
-        // unless unavoidable
-        if (event.getKey() == ISOLATE_THREADS) {
-            boolean isolate = (Boolean)event.getNewValue();
-            if (isolate) {
-                sharedInterpreter = null; 
-                threadInterpreter = new ThreadLocal<Interpreter>(); 
-            } else {
-                sharedInterpreter = newInterpreter(event.getStateProvider()); 
-                threadInterpreter = null;
-            }
-        }
     }
 }

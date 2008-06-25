@@ -24,19 +24,15 @@
 */
 package org.archive.crawler.frontier.precedence;
 
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_PRECALC_PRECEDENCE;
+
 import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-
 import org.archive.modules.recrawl.PersistProcessor;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Expert;
-import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -50,25 +46,32 @@ import com.sleepycat.je.DatabaseException;
  * was preloaded for them into the uri-history database. 
  */
 public class PreloadedUriPrecedencePolicy extends BaseUriPrecedencePolicy 
-implements Initializable {
+implements InitializingBean {
     private static final long serialVersionUID = -1474685153995064123L;
     
     /** Backup URI precedence assignment policy to use. */
-    @Expert
-    final public static Key<UriPrecedencePolicy> DEFAULT_URI_PRECEDENCE_POLICY = 
-        Key.make(UriPrecedencePolicy.class, BaseUriPrecedencePolicy.class);
+    {
+        setDefaultUriPrecedencePolicy(new BaseUriPrecedencePolicy());
+    }
+    public UriPrecedencePolicy getDefaultUriPrecedencePolicy() {
+        return (UriPrecedencePolicy) kp.get("defaultUriPrecedencePolicy");
+    }
+    public void setDefaultUriPrecedencePolicy(UriPrecedencePolicy policy) {
+        kp.put("defaultUriPrecedencePolicy",policy);
+    }
 
     // TODO: refactor to better share code with PersistOnlineProcessor
-    @Immutable
-    final public static Key<BdbModule> BDB = Key.makeAuto(BdbModule.class);
-
     protected BdbModule bdb;
+    @Autowired
+    public void setBdbModule(BdbModule bdb) {
+        this.bdb = bdb;
+    }
+
     protected StoredSortedMap store;
     protected Database historyDb;
     
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
 
-        this.bdb = provider.get(this, BDB);
         String dbName = PersistProcessor.URI_HISTORY_DBNAME;
         StoredSortedMap historyMap;
         try {
@@ -94,7 +97,7 @@ implements Initializable {
         int precedence = calculatePrecedence(curi);
         if(precedence==0) {
             // fall back to configured default policy
-            curi.get(this,DEFAULT_URI_PRECEDENCE_POLICY).uriScheduled(curi);
+            getDefaultUriPrecedencePolicy().uriScheduled(curi);
             return;
         }
         curi.setPrecedence(precedence);
@@ -131,11 +134,5 @@ implements Initializable {
             // merge in keys
             curi.getData().putAll(prior); 
         }
-    }
-
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(PreloadedUriPrecedencePolicy.class);
     }
 }

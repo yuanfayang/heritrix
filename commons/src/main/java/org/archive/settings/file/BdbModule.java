@@ -50,11 +50,8 @@ import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Module;
-import org.archive.state.StateProvider;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.bdbje.EnhancedEnvironment;
@@ -74,7 +71,7 @@ import com.sleepycat.je.SecondaryKeyCreator;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
-public class BdbModule implements Module, Initializable, Checkpointable, 
+public class BdbModule implements Module, InitializingBean, Checkpointable, 
 Serializable, Closeable {
 
 
@@ -188,27 +185,42 @@ Serializable, Closeable {
      */
     private static final long serialVersionUID = 1L;
 
-//    @Immutable
-//    final public static Key<String> DIR = Key.make("state");
-//    
-//    @Immutable
-//    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(60); 
-//    
-//    @Immutable
-//    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-//        Key.make(true);
-//    
-//    static {
-//        KeyManager.addKeys(BdbModule.class);
-//    }
+    protected String dir = "state";
+    public String getDir() {
+        return dir;
+    }
+    public void setDir(String dir) {
+        this.dir = dir;
+    }
+    public File resolveDir() {
+        return jobHome.resolveToFile(dir,null);
+    }
     
-    private JobHome homeDirectory; 
+    int cachePercent = 60;
+    public int getCachePercent() {
+        return cachePercent;
+    }
+    public void setCachePercent(int cachePercent) {
+        this.cachePercent = cachePercent;
+    }
+
     
-    private boolean checkpointCopyLogs;
+    boolean checkpointCopyLogs = true; 
+    public boolean getCheckpointCopyLogs() {
+        return checkpointCopyLogs;
+    }
+    public void setCheckpointCopyLogs(boolean checkpointCopyLogs) {
+        this.checkpointCopyLogs = checkpointCopyLogs;
+    }
     
-    private String path;
-    
-    private int cachePercent;
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
     
     private transient EnhancedEnvironment bdbEnvironment;
         
@@ -226,9 +238,9 @@ Serializable, Closeable {
     }
 
     
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
         try {
-            setUp(path, cachePercent, true);
+            setUp(resolveDir(), getCachePercent(), true);
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
@@ -236,14 +248,13 @@ Serializable, Closeable {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
     
-    private void setUp(String path, int cachePercent, boolean create) 
+    private void setUp(File f, int cachePercent, boolean create) 
     throws DatabaseException {
         EnvironmentConfig config = new EnvironmentConfig();
         config.setAllowCreate(create);
         config.setLockTimeout(5000000);        
         config.setCachePercent(cachePercent);
         
-        File f = new File(path);
         f.mkdirs();
         this.bdbEnvironment = new EnhancedEnvironment(f, config);
         
@@ -357,7 +368,7 @@ Serializable, Closeable {
 //            cr.setState(this, DIR, path);
         }
         try {
-            setUp(path, this.cachePercent, false);
+            setUp(resolveDir(), getCachePercent(), false);
             for (CachedBdbMap map: bigMaps.values()) {
                 map.initialize(
                         this.bdbEnvironment, 
@@ -392,7 +403,7 @@ Serializable, Closeable {
     public void checkpoint(File dir, List<RecoverAction> actions) 
     throws IOException {
         if (checkpointCopyLogs) {
-            actions.add(new BdbRecover(path));
+            actions.add(new BdbRecover(getDir()));
         }
         // First sync bigMaps
         for (Map.Entry<String,CachedBdbMap> me: bigMaps.entrySet()) {
@@ -483,7 +494,7 @@ Serializable, Closeable {
                 };
 
                 srcFilenames =
-                    new HashSet<String>(Arrays.asList(new File(path).list(filter)));
+                    new HashSet<String>(Arrays.asList(resolveDir().list(filter)));
                 List tgtFilenames = Arrays.asList(bdbDir.list(filter));
                 if (tgtFilenames != null && tgtFilenames.size() > 0) {
                     srcFilenames.removeAll(tgtFilenames);
@@ -496,7 +507,7 @@ Serializable, Closeable {
                             i.hasNext() && !pastLastLogFile;) {
                         String name = (String) i.next();
                         if (this.checkpointCopyLogs) {
-                            FileUtils.copyFiles(new File(path, name),
+                            FileUtils.copyFiles(new File(resolveDir(), name),
                                 new File(bdbDir, name));
                         }
                         pw.println(name);
@@ -618,45 +629,4 @@ Serializable, Closeable {
         }
         
     }
-
-
-    public int getCachePercent() {
-        return cachePercent;
-    }
-
-
-    public void setCachePercent(int cachePercent) {
-        this.cachePercent = cachePercent;
-    }
-
-
-    public boolean isCheckpointCopyLogs() {
-        return checkpointCopyLogs;
-    }
-
-
-    public void setCheckpointCopyLogs(boolean checkpointCopyLogs) {
-        this.checkpointCopyLogs = checkpointCopyLogs;
-    }
-
-
-    public JobHome getHomeDirectory() {
-        return homeDirectory;
-    }
-
-    @Autowired
-    public void setHomeDirectory(JobHome homeDirectory) {
-        this.homeDirectory = homeDirectory;
-    }
-
-
-    public String getPath() {
-        return path;
-    }
-
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
 }

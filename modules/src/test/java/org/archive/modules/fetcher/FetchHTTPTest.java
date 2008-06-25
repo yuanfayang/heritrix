@@ -53,7 +53,7 @@ public class FetchHTTPTest extends ProcessorTestBase {
         // Use SimpleCookieStorage for FetchHTTP test, even though BDB is 
         // actual default
         esp.set(result, FetchHTTP.COOKIE_STORAGE, new SimpleCookieStorage());
-        result.initialTasks(esp);
+        result.afterPropertiesSet();
         return result;
     }
     

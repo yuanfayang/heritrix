@@ -26,8 +26,6 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-import org.archive.state.StateProvider;
-
 /**
  * URL canonicalizer.
  * @author stack
@@ -53,9 +51,9 @@ public class Canonicalizer {
      * @param rules A crawlorder instance.
      * @return Canonicalized string of uuri else uuri if an error.
      */
-    public static String canonicalize(StateProvider context, String uri,
+    public static String canonicalize(String uri,
             Iterable<CanonicalizationRule> rules) {
-        return canonicalize(context, uri, rules.iterator());
+        return canonicalize(uri, rules.iterator());
     }
 
     /**
@@ -66,7 +64,7 @@ public class Canonicalizer {
      * create a list externally).  Rules must implement the Rule interface.
      * @return Canonicalized URL.
      */
-    public static String canonicalize(StateProvider context, String uri,
+    public static String canonicalize(String uri,
             Iterator<CanonicalizationRule> rules) {
         String before = uri;
         //String beforeRule = null;
@@ -76,14 +74,14 @@ public class Canonicalizer {
             //if (logger.isLoggable(Level.FINER)) {
             //    beforeRule = canonical;
             //}
-            if (!r.isEnabled(context)) {
+            if (!r.getEnabled()) {
                 if (logger.isLoggable(Level.FINER)) {
                     logger.finer("Rule " + r.getClass().getName() 
                             + " is disabled.");
                 }
                 continue;
             }
-            canonical = r.canonicalize(canonical, context);
+            canonical = r.canonicalize(canonical);
             if (logger.isLoggable(Level.FINER)) {
                 logger.finer("Rule " + r.getClass().getName() 
                         + " " + before + " => " +

@@ -36,7 +36,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.StateProvider;
 
 /**
  * RobotsExclusionPolicy represents the actual policy adopted with 
@@ -95,13 +94,13 @@ public class RobotsExclusionPolicy implements Serializable {
      * @return Robot exclusion policy.
      * @throws IOException
      */
-    public static RobotsExclusionPolicy policyFor(StateProvider settings,
+    public static RobotsExclusionPolicy policyFor(
             BufferedReader reader, RobotsHonoringPolicy honoringPolicy)
     throws IOException {
         Robotstxt robots = new Robotstxt(reader);
         return (robots.allowsAll())?
             ALLOWALL:
-            new RobotsExclusionPolicy(settings, robots, honoringPolicy);
+            new RobotsExclusionPolicy(robots, honoringPolicy);
     }
 
 
@@ -111,7 +110,7 @@ public class RobotsExclusionPolicy implements Serializable {
      * @param d
      * @param honoringPolicy
      */
-    public RobotsExclusionPolicy(StateProvider context, 
+    public RobotsExclusionPolicy( 
             Robotstxt robotstxt, 
             RobotsHonoringPolicy honoringPolicy) {
         this.robotstxt = robotstxt;
@@ -120,13 +119,13 @@ public class RobotsExclusionPolicy implements Serializable {
         if(honoringPolicy == null) return;
 
         // If honoring policy is most favored user agent, all rules should be checked
-        if(honoringPolicy.isType(context, RobotsHonoringPolicy.Type.MOST_FAVORED)) {
+        if(honoringPolicy.isType(RobotsHonoringPolicy.Type.MOST_FAVORED)) {
             userAgentsToTest = robotstxt.getUserAgents();
 
         // IF honoring policy is most favored of set, then make a list with only the set as members
-        } else if(honoringPolicy.isType(context, RobotsHonoringPolicy.Type.MOST_FAVORED_SET)) {
+        } else if(honoringPolicy.isType(RobotsHonoringPolicy.Type.MOST_FAVORED_SET)) {
             userAgentsToTest = new ArrayList<String>();
-            Iterator userAgentSet = honoringPolicy.getUserAgents(context).iterator();
+            Iterator userAgentSet = honoringPolicy.getUserAgents().iterator();
             while(userAgentSet.hasNext()) {
                 String userAgent = (String) userAgentSet.next();
 
@@ -143,7 +142,7 @@ public class RobotsExclusionPolicy implements Serializable {
     }
 
     public RobotsExclusionPolicy(Type type) {
-        this(null, null, null);
+        this(null, null);
         this.type = type;
     }
 
@@ -155,8 +154,8 @@ public class RobotsExclusionPolicy implements Serializable {
 
         // In the common case with policy=Classic, the useragent is remembered from uri to uri on
         // the same server
-        if((honoringPolicy.isType(curi, RobotsHonoringPolicy.Type.CLASSIC) 
-                || honoringPolicy.isType(curi, RobotsHonoringPolicy.Type.CUSTOM))
+        if((honoringPolicy.isType(RobotsHonoringPolicy.Type.CLASSIC) 
+                || honoringPolicy.isType(RobotsHonoringPolicy.Type.CUSTOM))
             && (lastUsedUserAgent == null
             || !lastUsedUserAgent.equals(userAgent))) {
 

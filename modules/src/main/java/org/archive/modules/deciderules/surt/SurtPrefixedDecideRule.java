@@ -31,17 +31,16 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang.StringUtils;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.deciderules.PredicatedAcceptDecideRule;
+import org.archive.modules.deciderules.PredicatedDecideRule;
 import org.archive.modules.seeds.SeedListener;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.Initializable;
-import org.archive.state.Path;
-import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -60,8 +59,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * 
  * @author gojomo
  */
-public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule 
-        implements SeedListener, Initializable, KeyChangeListener {
+public class SurtPrefixedDecideRule extends PredicatedDecideRule 
+        implements SeedListener, InitializingBean, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -74,11 +73,11 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      * converted to the implied SURT prefix, and literal SURT prefixes may be
      * listed on lines beginning with a '+' character.
      */
-    protected Path surtsSourceFile = Path.EMPTY;
-    public Path getSurtsSourceFile() {
+    protected String surtsSourceFile = "";
+    public String getSurtsSourceFile() {
         return surtsSourceFile;
     }
-    public void setSurtsSourceFile(Path surtsSourceFile) {
+    public void setSurtsSourceFile(String surtsSourceFile) {
         this.surtsSourceFile = surtsSourceFile;
     }
 
@@ -97,11 +96,11 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     /**
      * Dump file to save SURT prefixes actually used: Useful debugging SURTs.
      */
-    protected Path surtsDumpFile = Path.EMPTY;
-    public Path getSurtsDumpFile() {
+    protected String surtsDumpFile = "";
+    public String getSurtsDumpFile() {
         return surtsDumpFile;
     }
-    public void setSurtsDumpFile(Path surtsDumpFile) {
+    public void setSurtsDumpFile(String surtsDumpFile) {
         this.surtsDumpFile = surtsDumpFile;
     }
     
@@ -155,7 +154,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     }
 
     
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
         this.readPrefixes();
     }
 
@@ -168,16 +167,16 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
     @Override
     protected boolean evaluate(ProcessorURI uri) {
         if (getAlsoCheckVia()) {
-            if (innerDecide(uri, uri.getVia())) {
+            if (innerDecide(uri.getVia())) {
                 return true;
             }
         }
 
-        return innerDecide(uri, uri.getUURI());
+        return innerDecide(uri.getUURI());
     }
     
     
-    private boolean innerDecide(StateProvider context, UURI uuri) {
+    private boolean innerDecide(UURI uuri) {
         String candidateSurt;
         candidateSurt = SurtPrefixSet.getCandidateSurt(uuri);
         if (candidateSurt == null) {
@@ -213,9 +212,9 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      */
     protected void dumpSurtPrefixSet() {
         // dump surts to file, if appropriate
-        Path dumpPath = getSurtsDumpFile();
-        if (!dumpPath.isEmpty()) {
-            File dump = dumpPath.toFile();
+        String dumpPath = getSurtsDumpFile();
+        if (!StringUtils.isEmpty(dumpPath)) {
+            File dump = new File(dumpPath);
             try {
                 FileWriter fw = new FileWriter(dump);
                 try {
@@ -239,9 +238,9 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
         FileReader fr = null;
 
         // read SURTs from file, if appropriate
-        Path sourcePath = getSurtsSourceFile();        
-        if (!sourcePath.isEmpty()) {
-            File source = sourcePath.toFile();
+        String sourcePath = getSurtsSourceFile();        
+        if (!StringUtils.isEmpty(sourcePath)) {
+            File source = new File(sourcePath);
             try {
                 fr = new FileReader(source);
                 try {
@@ -258,15 +257,16 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
         // interpret seeds as surts, if appropriate
         boolean deduceFromSeeds = getSeedsAsSurtPrefixes();
         if(deduceFromSeeds) {
+            File seeds = getSeedfile();
             try {
-                fr = new FileReader(getSeedfile());
+                fr = new FileReader(seeds);
                 try {
                     newSurtPrefixes.importFromMixed(fr, deduceFromSeeds);
                 } finally {
                     fr.close();
                 }
             } catch (IOException e) {
-                logger.log(Level.SEVERE,"Problem reading seeds file: "+e,e);
+                logger.log(Level.SEVERE,"Problem reading seeds file: "+seeds.getAbsolutePath(),e);
                 // continue: operator will see severe log message or alert
             }
         }
@@ -293,7 +293,7 @@ public class SurtPrefixedDecideRule extends PredicatedAcceptDecideRule
      */
     protected File getSeedfile() {
         seeds.addSeedListener(this);
-        return seeds.getSeedfile();
+        return seeds.resolveSeedsFile();
     }
 
     public synchronized void addedSeed(final ProcessorURI curi) {

@@ -25,9 +25,9 @@ package org.archive.modules.canonicalize;
 import java.io.Serializable;
 import java.util.regex.Matcher;
 
-import org.archive.state.Key;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.Module;
-import org.archive.state.StateProvider;
 
 /**
  * Base of all rules applied canonicalizing a URL that are configurable
@@ -40,20 +40,26 @@ import org.archive.state.StateProvider;
  * @version $Date$, $Revision$
  */
 public abstract class BaseRule
-implements CanonicalizationRule, Module, Serializable {
+implements CanonicalizationRule, Module, Serializable, HasKeyedProperties {
+    protected KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
     
-    
-    final public static Key<Boolean> ENABLED = Key.make(true);
-
+    {
+        setEnabled(true);
+    }
+    public boolean getEnabled() {
+        return (Boolean) kp.get("enabled");
+    }
+    public void setEnabled(boolean enabled) {
+        kp.put("enabled",enabled);
+    }
 
     /**
      * Constructor.
      */
     public BaseRule() {
-    }
-    
-    public boolean isEnabled(StateProvider context) {
-        return context.get(this, ENABLED);
     }
     
     /**

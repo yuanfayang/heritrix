@@ -52,16 +52,14 @@ import org.archive.modules.net.ServerCache;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Emitter;
 import org.archive.settings.JobHome;
-import org.archive.state.Initializable;
-import org.archive.state.Path;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -78,7 +76,7 @@ import org.xbill.DNS.Lookup;
 public class CrawlControllerImpl extends Bean implements 
     Serializable, 
     Reporter, 
-    Initializable,
+    InitializingBean,
     CrawlController,
     BeanFactoryAware {
  
@@ -86,9 +84,9 @@ public class CrawlControllerImpl extends Bean implements
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlControllerImpl.class,1);
 
-    ApplicationContext appCtx; 
+    ListableBeanFactory beanFactory; 
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.appCtx = (ApplicationContext)beanFactory;
+        this.beanFactory = (ListableBeanFactory)beanFactory;
     }
     
     protected ServerCache serverCache;
@@ -115,24 +113,30 @@ public class CrawlControllerImpl extends Bean implements
     /**
      * Scratch directory for temporary overflow-to-disk
      */
-    protected Path scratchDir = new Path("scratch");
-    public Path getScratchDir() {
+    protected String scratchDir = "scratch";
+    public String getScratchDir() {
         return scratchDir;
     }
-    public void setScratchDir(Path scratchDir) {
+    public void setScratchDir(String scratchDir) {
         this.scratchDir = scratchDir;
+    }
+    public File resolveScratchDir() {
+        return jobHome.resolveToFile(scratchDir,null);
     }
 
 
     /**
      * Checkpoints directory
      */
-    protected Path checkpointsDir = new Path("checkpoints");
-    public Path getCheckpointsDir() {
+    protected String checkpointsDir = "checkpoints";
+    public String getCheckpointsDir() {
         return checkpointsDir;
     }
-    public void setCheckpointsDir(Path checkpointsDir) {
+    public void setCheckpointsDir(String checkpointsDir) {
         this.checkpointsDir = checkpointsDir;
+    }
+    public File resolveCheckpointsDir() {
+        return jobHome.resolveToFile(checkpointsDir,null);
     }
 
     /**
@@ -357,8 +361,9 @@ public class CrawlControllerImpl extends Bean implements
         super(CrawlController.class);
     }
     
-    public void initialTasks(StateProvider sp) {        
-        this.checkpointer = new Checkpointer(this, this.checkpointsDir.toFile());
+    public void afterPropertiesSet() {        
+        this.checkpointer = new Checkpointer(
+                this, resolveCheckpointsDir());
 
         this.singleThreadLock = new ReentrantLock();
         sExit = null;
@@ -534,7 +539,7 @@ public class CrawlControllerImpl extends Bean implements
     protected void sendCrawlStateChangeEvent(State newState, 
             CrawlStatus status) {
         this.state = newState; 
-        Map registeredCrawlStatusListeners = appCtx.getBeansOfType(CrawlStatusListener.class);
+        Map registeredCrawlStatusListeners = beanFactory.getBeansOfType(CrawlStatusListener.class);
         for (CrawlStatusListener l: (Collection<CrawlStatusListener>)registeredCrawlStatusListeners.values()) {
             switch (newState) {
                 case PAUSED:

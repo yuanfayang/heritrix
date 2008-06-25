@@ -34,7 +34,7 @@ import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.settings.JobHome;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;
@@ -43,10 +43,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author pjack
- *
  */
 public class DefaultMetadataProvider implements 
-    Initializable, 
+    InitializingBean, 
     MetadataProvider, 
     UserAgentProvider, 
     Serializable, 
@@ -113,7 +112,8 @@ public class DefaultMetadataProvider implements
     }
     
     {
-        setOperatorContactUrl("ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR");
+        // set default to illegal value
+        kp.put("operatorContactUrl","ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR");
     }
     public String getOperatorContactUrl() {
         return (String) kp.get("operatorContactUrl");
@@ -145,7 +145,7 @@ public class DefaultMetadataProvider implements
     final public static Key<String> ORGANIZATION = Key.make("");
 
 
-    public void initialTasks(StateProvider global) {
+    public void afterPropertiesSet() {
 
     }
     
@@ -156,10 +156,6 @@ public class DefaultMetadataProvider implements
         userAgent = userAgent.replaceFirst("@VERSION@",
                 Matcher.quoteReplacement(ArchiveUtils.VERSION));
         return userAgent;
-    }
-    public String getUserAgent(StateProvider context) {
-        // TODO: eliminate this version from all callers
-        return getUserAgent(); 
     }
 
     protected JobHome jobHome;
@@ -179,7 +175,7 @@ public class DefaultMetadataProvider implements
         return getRobotsHonoringPolicy().getType().toString();
     }
 
-    public String getFrom(StateProvider context) {
+    public String getFrom() {
         return getOperatorFrom();
     } 
 }

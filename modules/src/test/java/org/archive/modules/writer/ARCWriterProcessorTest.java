@@ -63,7 +63,7 @@ public class ARCWriterProcessorTest extends ProcessorTestBase {
         ARCWriterProcessor result = new ARCWriterProcessor();
         sp.set(result, WriterPoolProcessor.DIRECTORY, path);
         sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
-        result.initialTasks(sp);
+        result.afterPropertiesSet();
         return result;
     }
 

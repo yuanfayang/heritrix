@@ -71,7 +71,7 @@ public class Seeds {
                     SETTINGS_PATH);
             request.setAttribute("overflow", size > MAX_FILE_SIZE);
 
-            File f = new File(sheetManager.getFilePath(SETTINGS_PATH));
+            File f = new File(engine.getFilePath(job.getName(),SETTINGS_PATH));
             String seeds = engine.readFile(job.encode(),
                     SETTINGS_PATH,
                     null,

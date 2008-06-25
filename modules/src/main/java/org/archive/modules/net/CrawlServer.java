@@ -137,7 +137,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
             return;
         }
         
-        RobotsHonoringPolicy.Type type = honoringPolicy.getType(curi);
+        RobotsHonoringPolicy.Type type = honoringPolicy.getType();
         if (type == RobotsHonoringPolicy.Type.IGNORE) {
             // IGNORE = ALLOWALL
             robots = RobotsExclusionPolicy.ALLOWALL;
@@ -171,7 +171,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
                 BufferedReader reader;
                 if (type == RobotsHonoringPolicy.Type.CUSTOM) {
                     reader = new BufferedReader(new StringReader(honoringPolicy
-                            .getCustomRobots(curi)));
+                            .getCustomRobots()));
                 } else {
                     contentBodyStream = curi.getRecorder()
                             .getRecordedInput().getContentReplayInputStream();
@@ -180,7 +180,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
                     reader = new BufferedReader(new InputStreamReader(
                             contentBodyStream));
                 }
-                robots = RobotsExclusionPolicy.policyFor(curi,
+                robots = RobotsExclusionPolicy.policyFor(
                         reader, honoringPolicy);
                 validRobots = true;
             } finally {

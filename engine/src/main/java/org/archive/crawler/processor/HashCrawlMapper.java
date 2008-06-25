@@ -30,7 +30,6 @@ import org.archive.net.PublicSuffixes;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 import org.archive.util.TextUtils;
 
 import st.ata.util.FPGenerator;
@@ -108,10 +107,10 @@ public class HashCrawlMapper extends CrawlMapper {
         }
     }
 
-    public void initialTasks(StateProvider context) {
-        super.initialTasks(context);
-        this.frontier = context.get(this, FRONTIER);
-        bucketCount = context.get(this, CRAWLER_COUNT);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
+//        this.frontier = context.get(this, FRONTIER);
+//        bucketCount = context.get(this, CRAWLER_COUNT);
     }
 
 

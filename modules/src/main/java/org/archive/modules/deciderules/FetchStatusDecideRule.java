@@ -24,11 +24,10 @@
 */
 package org.archive.modules.deciderules;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-
-
 
 /**
  * Rule applies the configured decision for any URI which has a
@@ -36,21 +35,22 @@ import org.archive.state.KeyManager;
  *
  * @author gojomo
  */
-public class FetchStatusDecideRule extends PredicatedAcceptDecideRule {
+public class FetchStatusDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 3L;
 
-    final public static Key<Integer> TARGET_STATUS = Key.make(0);
+    List<Integer> statusCodes = new ArrayList<Integer>();
+    public List<Integer> getStatusCodes() {
+        return this.statusCodes;
+    }
+    public void setStatusCodes(List<Integer> codes) {
+        this.statusCodes = codes; 
+    }
     
     /**
      * Default access so available to test code.
      */
     static final Integer DEFAULT_TARGET_STATUS = new Integer(0);
-    
-    
-    static {
-        KeyManager.addKeys(FetchStatusDecideRule.class);
-    }
     
     /**
      * Usual constructor. 
@@ -59,12 +59,11 @@ public class FetchStatusDecideRule extends PredicatedAcceptDecideRule {
     }
 
     /**
-     * Evaluate whether given object is over the threshold number of
-     * hops.
+     * Evaluate whether given object is equal to the configured status
      */
     @Override
     protected boolean evaluate(ProcessorURI uri) {
-        return uri.getFetchStatus() == uri.get(this, TARGET_STATUS);
+        return getStatusCodes().contains(uri.getFetchStatus());
     }
 
 }

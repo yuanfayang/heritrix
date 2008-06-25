@@ -33,8 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Initializable;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import st.ata.util.FPGenerator;
@@ -68,7 +67,7 @@ import com.sleepycat.je.OperationStatus;
  * @version $Date$, $Revision$
  */
 public class BdbUriUniqFilter extends SetBasedUriUniqFilter 
-implements Initializable, Serializable {
+implements InitializingBean, Serializable {
     private static final long serialVersionUID = -8099357538178524011L;
 
     private static Logger logger =
@@ -97,7 +96,7 @@ implements Initializable, Serializable {
     }
     
     
-    public void initialTasks(StateProvider provider) {
+    public void afterPropertiesSet() {
         try {
             BdbModule.BdbConfig config = getDatabaseConfig();
             config.setAllowCreate(true);

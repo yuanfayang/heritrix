@@ -25,19 +25,32 @@
 package org.archive.crawler.frontier.precedence;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 
 /**
  * UriPrecedencePolicy which assigns URIs a set value (perhaps a overridden
  * for different URIs). 
  */
-public class BaseUriPrecedencePolicy extends UriPrecedencePolicy {
+public class BaseUriPrecedencePolicy extends UriPrecedencePolicy 
+implements HasKeyedProperties {
     private static final long serialVersionUID = -8247330811715982746L;
     
+    protected KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
+    
     /** constant precedence to assign; default is 1 */
-    final public static Key<Integer> BASE_PRECEDENCE = 
-        Key.make(1);
+    {
+        setBasePrecedence(1);
+    }
+    public int getBasePrecedence() {
+        return (Integer) kp.get("basePrecedence");
+    }
+    public void setBasePrecedence(int precedence) {
+        kp.put("basePrecedence", precedence);
+    }
     
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.precedence.UriPrecedencePolicy#uriScheduled(org.archive.crawler.datamodel.CrawlURI)
@@ -53,12 +66,6 @@ public class BaseUriPrecedencePolicy extends UriPrecedencePolicy {
      * @return int precedence for URI
      */
     protected int calculatePrecedence(CrawlURI curi) {
-        return curi.get(this,BASE_PRECEDENCE);
-    }
-    
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(BaseUriPrecedencePolicy.class);
+        return getBasePrecedence();
     }
 }

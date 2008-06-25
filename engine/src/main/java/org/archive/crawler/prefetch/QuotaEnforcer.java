@@ -40,10 +40,9 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.state.Immutable;
-import org.archive.state.Initializable;
+import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 /**
  * A simple quota enforcer. If the host, server, or frontier group
@@ -53,7 +52,7 @@ import org.archive.state.StateProvider;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class QuotaEnforcer extends Processor implements Initializable {
+public class QuotaEnforcer extends Processor implements InitializingBean {
 
     private static final long serialVersionUID = 3L;
 
@@ -212,9 +211,8 @@ public class QuotaEnforcer extends Processor implements Initializable {
     }
     
     
-    public void initialTasks(StateProvider global) {
-        this.serverCache = global.get(this, SERVER_CACHE);
-        this.frontier = global.get(this, FRONTIER);
+    public void afterPropertiesSet() {
+
     }
     
     protected boolean shouldProcess(ProcessorURI puri) {

@@ -48,7 +48,6 @@ import org.archive.queue.StoredQueue;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.file.Checkpointable;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -231,8 +230,8 @@ implements Serializable, Checkpointable {
     }
 
     
-    public void initialTasks(StateProvider p) {
-        super.initialTasks(p);
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
     }
     
     public void checkpoint(File checkpointDir, List<RecoverAction> actions) 

@@ -36,8 +36,7 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.state.Initializable;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -51,7 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Date$, $Revision$
  */
 public class CrawlStateUpdater extends Processor implements 
-    Initializable,
+    InitializingBean,
     PostProcessor {
 
     private static final long serialVersionUID = -1072728147960180091L;
@@ -82,7 +81,7 @@ public class CrawlStateUpdater extends Processor implements
     }
 
     
-    public void initialTasks(StateProvider global) {
+    public void afterPropertiesSet() {
 
     }
 

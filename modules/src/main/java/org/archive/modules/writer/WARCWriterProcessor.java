@@ -320,7 +320,7 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
                 getPool().returnFile(writer);
             }
         }
-        return checkBytesWritten(curi);
+        return checkBytesWritten();
     }
     
     protected URI writeRequest(final WARCWriter w,
@@ -531,7 +531,7 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         return result;
     }  
 
-    public List<String> getMetadata(StateProvider global) {
+    public List<String> getMetadata() {
         if (cachedMetadata != null) {
             return cachedMetadata;
         }

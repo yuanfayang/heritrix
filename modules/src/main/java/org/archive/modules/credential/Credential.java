@@ -27,15 +27,14 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.state.Expert;
-import org.archive.state.Global;
-import org.archive.state.Key;
 import org.archive.state.Module;
 
 
@@ -62,23 +61,23 @@ public abstract class Credential implements Module, Serializable {
     /**
      * The root domain this credential goes against: E.g. www.archive.org
      */
-    @Global @Expert
-    final public static Key<String> CREDENTIAL_DOMAIN = Key.make("");
-    
-    
-    /**
-     * Constructor.
-     */
-    public Credential() {
-    }
-
+    String domain = "";
     /**
      * @param context Context to use when searching for credential domain.
      * @return The domain/root URI this credential is to go against.
      * @throws AttributeNotFoundException If attribute not found.
      */
-    public String getCredentialDomain(ProcessorURI context) {
-        return context.get(this, CREDENTIAL_DOMAIN);
+    public String getDomain() {
+        return this.domain;
+    }
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+    
+    /**
+     * Constructor.
+     */
+    public Credential() {
     }
 
     /**
@@ -115,8 +114,8 @@ public abstract class Credential implements Module, Serializable {
      */
     public void attach(ProcessorURI curi, String payload) {
         CredentialAvatar ca = (payload == null )?
-                new CredentialAvatar(this.getClass(), getKey(curi)):
-                new CredentialAvatar(this.getClass(), getKey(curi), payload);
+                new CredentialAvatar(this.getClass(), getKey()):
+                new CredentialAvatar(this.getClass(), getKey(), payload);
         curi.getCredentialAvatars().add(ca);
     }
 
@@ -136,7 +135,7 @@ public abstract class Credential implements Module, Serializable {
         Iterator<CredentialAvatar> iter = avatars.iterator();
         while (iter.hasNext()) {            
             CredentialAvatar ca = iter.next();
-            if (ca.match(getClass(), getKey(curi))) {
+            if (ca.match(getClass(), getKey())) {
                 iter.remove();
                 result = true;
             }
@@ -196,7 +195,7 @@ public abstract class Credential implements Module, Serializable {
      * @return Key that is unique to this credential type.
      * @throws AttributeNotFoundException
      */
-    public abstract String getKey(ProcessorURI context);
+    public abstract String getKey();
 
 
     /**
@@ -221,7 +220,7 @@ public abstract class Credential implements Module, Serializable {
      * credential is to be GET'd or if POST'd or GET'd are not pretinent to this
      * credential type.
      */
-    public abstract boolean isPost(ProcessorURI curi);
+    public abstract boolean isPost();
 
     /**
      * Test passed curi matches this credentials rootUri.
@@ -231,7 +230,7 @@ public abstract class Credential implements Module, Serializable {
      */
     public boolean rootUriMatch(ServerCache cache, 
             ProcessorURI curi) {
-        String cd = getCredentialDomain(curi);
+        String cd = getDomain();
 
         CrawlServer serv = ServerCacheUtil.getServerFor(cache, curi.getUURI());
         String serverName = serv.getName();

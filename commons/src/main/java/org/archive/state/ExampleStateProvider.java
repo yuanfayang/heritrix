@@ -105,7 +105,7 @@ public class ExampleStateProvider implements StateProvider {
         try {
             Object o = c.newInstance();
             if (o instanceof Initializable) {
-                ((Initializable)o).initialTasks(this);
+                ((Initializable)o).afterPropertiesSet();
             }
             return o;
         } catch (Exception e) {

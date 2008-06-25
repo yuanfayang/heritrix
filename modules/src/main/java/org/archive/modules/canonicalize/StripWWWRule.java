@@ -24,11 +24,6 @@ package org.archive.modules.canonicalize;
 
 import java.util.regex.Pattern;
 
-import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
-
-
-
 /**
  * Strip any 'www' found on http/https URLs, IF they have some
  * path/query component (content after third slash). (Top 'slash page' 
@@ -53,15 +48,11 @@ public class StripWWWRule extends BaseRule {
     
     private static final Pattern REGEX =
         Pattern.compile("(?i)^(https?://)(?:www\\.)([^/]*/.+)$");
-
-    static {
-        KeyManager.addKeys(StripWWWRule.class);
-    }
     
     public StripWWWRule() {
     }
 
-    public String canonicalize(String url, StateProvider context) {
+    public String canonicalize(String url) {
         return doStripRegexMatch(url, REGEX.matcher(url));
     }
 }

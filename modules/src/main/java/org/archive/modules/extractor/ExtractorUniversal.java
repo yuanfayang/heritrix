@@ -32,8 +32,6 @@ import org.apache.commons.io.IOUtils;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
 /**
@@ -63,15 +61,15 @@ public class ExtractorUniversal extends ContentExtractor {
     /**
      * How deep to look into files for URI strings, in bytes.
      */
-    final public static Key<Long> MAX_DEPTH_BYTES = Key.make(10240L);
-
-
-    /**
-     * Max length of URIs in bytes.
-     */
-    final public static Key<Long> MAX_URL_LENGTH = 
-        Key.make((long)UURI.MAX_URL_LENGTH);
-
+    {
+        setMaxSizeToParse(1*1024*1024L); // 1MB
+    }
+    public long getMaxSizeToParse() {
+        return (Long) kp.get("maxSizeToParse");
+    }
+    public void setMaxSizeToParse(long threshold) {
+        kp.put("maxSizeToParse",threshold);
+    }
 
     /**
      * Matches any string that begins with http:// or https:// followed by
@@ -375,11 +373,11 @@ public class ExtractorUniversal extends ContentExtractor {
             int ch = instream.read();
             StringBuffer lookat = new StringBuffer();
             long counter = 0;
-            long maxdepth = curi.get(this, MAX_DEPTH_BYTES);
+            long maxdepth = getMaxSizeToParse();
             if(maxdepth<=0) {
                 maxdepth = Long.MAX_VALUE;
             }
-            long maxURLLength = curi.get(this, MAX_URL_LENGTH);
+            long maxURLLength = UURI.MAX_URL_LENGTH;
             boolean foundDot = false;
             while(ch != -1 && ++counter <= maxdepth) {
                 if(lookat.length()>maxURLLength){
@@ -548,11 +546,5 @@ public class ExtractorUniversal extends ContentExtractor {
         ret.append("  Links extracted:   " + linksExtracted + "\n\n");
 
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorUniversal.class);
     }
 }

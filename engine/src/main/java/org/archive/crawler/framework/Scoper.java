@@ -30,8 +30,7 @@ import org.archive.crawler.util.LogUtils;
 import org.archive.modules.Processor;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
-import org.archive.state.Initializable;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -41,7 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author stack
  * @version $Date$, $Revision$
  */
-public abstract class Scoper extends Processor implements Initializable {
+public abstract class Scoper extends Processor implements InitializingBean {
     private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
     
@@ -95,7 +94,7 @@ public abstract class Scoper extends Processor implements Initializable {
         super();
     }
 
-    public void initialTasks(StateProvider defaults) {
+    public void afterPropertiesSet() {
         if (getLogToFile()) {
             // Set up logger for this instance.  May have special directives
             // since this class can log scope-rejected URLs.

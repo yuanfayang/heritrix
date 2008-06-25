@@ -49,7 +49,8 @@ public class HighestUriQueuePrecedencePolicy extends BaseQueuePrecedencePolicy {
      */
     @Override
     protected void installProvider(WorkQueue wq) {
-        HighestUriPrecedenceProvider provider = new HighestUriPrecedenceProvider(wq.get(this,BASE_PRECEDENCE));
+        // TODO:SPRINGY ensure proper override context installed for getBasePrecedence() below
+        HighestUriPrecedenceProvider provider = new HighestUriPrecedenceProvider(getBasePrecedence());
         wq.setPrecedenceProvider(provider);
     }
 
