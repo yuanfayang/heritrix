@@ -20,7 +20,29 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.frontier;
+package org.archive.crawler.extras.adaptive;
+
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_COMPLETED_TIME;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_NONFATAL_ERRORS;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_RETRY_DELAY;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_RUNTIME_EXCEPTION;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_FETCH_OVERDUE;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_NUMBER_OF_VERSIONS;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_NUMBER_OF_VISITS;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_TIME_OF_NEXT_PROCESSING;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_WAIT_INTERVAL;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_CUSTOM_PROCESSOR;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_USER;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_FAILED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_LOST;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DELETED_BY_USER;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DOMAIN_UNRESOLVABLE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_OUT_OF_SCOPE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_ROBOTS_PRECLUDED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TOO_MANY_EMBED_HOPS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TOO_MANY_LINK_HOPS;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +51,7 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -44,10 +67,6 @@ import javax.management.openmbean.CompositeData;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
-
-import static org.archive.crawler.datamodel.CoreAttributeConstants.*;
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -55,6 +74,10 @@ import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.crawler.frontier.AbstractFrontier;
+import org.archive.crawler.frontier.FrontierJournal;
+import org.archive.crawler.frontier.HostnameQueueAssignmentPolicy;
+import org.archive.crawler.frontier.QueueAssignmentPolicy;
 import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.canonicalize.CanonicalizationRule;
 import org.archive.modules.canonicalize.Canonicalizer;
@@ -64,16 +87,16 @@ import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
+import org.archive.settings.JobHome;
 import org.archive.settings.file.BdbModule;
-import org.archive.state.Expert;
+import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.KeyedProperties;
 import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
-import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
 
 /**
  * A Frontier that will repeatedly visit all encountered URIs. 
@@ -88,75 +111,198 @@ import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
  * @author Kristinn Sigurdsson
  */
 public class AdaptiveRevisitFrontier  
-implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
-
+implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver, 
+InitializingBean, HasKeyedProperties {
     private static final long serialVersionUID = -3L;
-
     private static final Logger logger =
         Logger.getLogger(AdaptiveRevisitFrontier.class.getName());
 
+    KeyedProperties kp = new KeyedProperties();
+    public KeyedProperties getKeyedProperties() {
+        return kp;
+    }
+    
+    protected CrawlControllerImpl controller;
+    public CrawlControllerImpl getCrawlController() {
+        return this.controller;
+    }
+    @Autowired
+    public void setCrawlController(CrawlControllerImpl controller) {
+        this.controller = controller;
+    }
+    
+    protected BdbModule bdb;
+    @Autowired
+    public void setBdbModule(BdbModule bdb) {
+        this.bdb = bdb;
+    }
+    
+    protected SeedModuleImpl seeds;
+    public SeedModuleImpl getSeeds() {
+        return this.seeds;
+    }
+    @Autowired
+    public void setSeeds(SeedModuleImpl seeds) {
+        this.seeds = seeds;
+    }
+    
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
+    
+    /** The UriUniqFilter to use, tracking those UURIs which are 
+     * already in-process (or processed), and thus should not be 
+     * rescheduled. Also known as the 'alreadyIncluded' or
+     * 'alreadySeen' structure */
+    protected UriUniqFilter uriUniqFilter;
+    public UriUniqFilter getUriUniqFilter() {
+        return this.uriUniqFilter;
+    }
+    @Autowired
+    public void setUriUniqFilter(UriUniqFilter uriUniqFilter) {
+        this.uriUniqFilter = uriUniqFilter;
+    }
     
     @Immutable
-    final public static Key<CrawlControllerImpl> CONTROLLER = 
-        Key.makeAuto(CrawlControllerImpl.class);
+    String dir = "";
+    public String getDir() {
+        return this.dir;
+    }
+    public void setDir(String dir) {
+        this.dir = dir; 
+    }
+    public File resolveDir() {
+        return jobHome.resolveToFile(getDir(), null);
+    }
     
-    @Immutable
-    final public static Key<BdbModule> BDB =
-        Key.makeAuto(BdbModule.class);
-    
-    @Immutable
-    final public static Key<SeedModuleImpl> SEEDS =
-        Key.makeAuto(SeedModuleImpl.class);
-    
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE =
-        Key.makeAuto(ServerCache.class);
-    
-    @Immutable
-    final public static Key<UriUniqFilter> URI_UNIQ_FILTER =
-        Key.makeAuto(UriUniqFilter.class);
-    
-    @Immutable
-    final public static Key<Path> DIR = Key.make(Path.EMPTY);
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
     
     /** How many multiples of last fetch elapsed time to wait before recontacting
      * same server */
-    final public static Key<Float> DELAY_FACTOR = Key.make((float)5.0);
+    {
+        setDelayFactor(5.0f);
+    }
+    public float getDelayFactor() {
+        return (Float) kp.get("delayFactor");
+    }
+    public void setDelayFactor(float factor) {
+        kp.put("delayFactor",factor);
+    }
     
     /** Always wait this long after one completion before recontacting
      * same server, regardless of multiple */
-    final public static Key<Integer> MIN_DELAY_MS = Key.make(2000);
+    {
+        setMinDelayMs(2000);
+    }
+    public int getMinDelayMs() {
+        return (Integer) kp.get("minDelayMs");
+    }
+    public void setMinDelayMs(int minDelay) {
+        kp.put("minDelayMs",minDelay);
+    }
     
     /** Never wait more than this long, regardless of multiple */
-    final public static Key<Integer> MAX_DELAY_MS = Key.make(30000);
+    {
+        setMaxDelayMs(30000);
+    }
+    public int getMaxDelayMs() {
+        return (Integer) kp.get("maxDelayMs");
+    }
+    public void setMaxDelayMs(int maxDelay) {
+        kp.put("maxDelayMs",maxDelay);
+    }    
     
     /** Maximum times to emit a CrawlURI without final disposition */
-    final public static Key<Integer> MAX_RETRIES = Key.make(30);
-
+    {
+        setMaxRetries(30);
+    }
+    public int getMaxRetries() {
+        return (Integer) kp.get("maxRetries");
+    }
+    public void setMaxRetries(int maxRetries) {
+        kp.put("maxRetries",maxRetries);
+    }
+    
     /** For retryable problems, seconds to wait before a retry */
-    final public static Key<Long> RETRY_DELAY = Key.make(900L);
+    {
+        setRetryDelaySeconds(900);
+    }
+    public int getRetryDelaySeconds() {
+        return (Integer) kp.get("retryDelaySeconds");
+    }
+    public void setRetryDelaySeconds(int delay) {
+        kp.put("retryDelaySeconds",delay);
+    }
     
     /** Maximum simultaneous requests in process to a host (queue) */
-    @Expert
-    final public static Key<Integer> HOST_VALENCE = Key.make(1);
-
+    {
+        setHostValence(1);
+    }
+    public int getHostValence() {
+        return (Integer) kp.get("hostValence");
+    }
+    public void setHostValence(int valence) {
+        kp.put("hostValence",valence);
+    }
+    
     /** Number of hops of embeds (ERX) to bump to front of host queue */
-    final public static Key<Integer> PREFERENCE_EMBED_HOPS = 
-        Key.make(0);
+    {
+        setPreferenceEmbedHops(0); 
+    }
+    public int getPreferenceEmbedHops() {
+        return (Integer) kp.get("preferenceEmbedHops");
+    }
+    public void setPreferenceEmbedHops(int prefHops) {
+        kp.put("preferenceEmbedHops",prefHops);
+    }
     
     /** Queue assignment to force on CrawlURIs. Intended to be used 
      *  via overrides*/
-    @Immutable
-    final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
-        Key.make("");
+    {
+        setForceQueueAssignment("");
+    }
+    public String getForceQueueAssignment() {
+        return (String) kp.get("forceQueueAssignment");
+    }
+    public void setForceQueueAssignment(String forceQueueAssignment) {
+        kp.put("forceQueueAssignment",forceQueueAssignment);
+    }
     
-    @Immutable
-    final public static Key<List<CanonicalizationRule>> URI_CANONICALIZATION_RULES =
-        Key.makeList(CanonicalizationRule.class);
+    /**
+     * Ordered list of url canonicalization rules.  Rules are applied in the 
+     * order listed from top to bottom.
+     */
+    {
+        setCanonicalizationRules(Collections.EMPTY_LIST);
+    }
+    @SuppressWarnings("unchecked")
+    public List<CanonicalizationRule> getCanonicalizationRules() {
+        return (List<CanonicalizationRule>) kp.get("canonicalizationRules");
+    }
+    public void setCanonicalizationRules(List rules) {
+        kp.put("canonicalizationRules",rules);
+    }
     
-    @Immutable
-    final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
-        Key.makeAuto(CrawlerLoggerModule.class);
+    protected CrawlerLoggerModule loggerModule;
+    public CrawlerLoggerModule getLoggerModule() {
+        return this.loggerModule;
+    }
+    @Autowired
+    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+        this.loggerModule = loggerModule;
+    }
 
     /** Acceptable characters in forced queue names.
      *  Word chars, dash, period, comma, colon */
@@ -165,24 +311,30 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
     /** Should the queue assignment ignore www in hostnames, effectively 
      *  stripping them away. 
      */
-    @Expert
-    final public static Key<Boolean> QUEUE_IGNORE_WWW = 
-        Key.make(false);
-
-    
-    private CrawlControllerImpl controller;
-    private SeedModuleImpl seeds;
-    private BdbModule bdb;
-    private ServerCache serverCache;
-    
+    {
+        setQueueIgnoreWww(false);
+    }
+    public boolean getQueueIgnoreWww() {
+        return (Boolean) kp.get("queueIgnoreWww");
+    }
+    public void setQueueIgnoreWww(boolean ignoreWww) {
+        kp.put("queueIgnoreWww",ignoreWww);
+    }
+   
     private AdaptiveRevisitQueueList hostQueues;
-    
-    private UriUniqFilter alreadyIncluded;
 
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
     /** Policy for assigning CrawlURIs to named queues */
-    private QueueAssignmentPolicy queueAssignmentPolicy = null;
+    {
+        setQueueAssignmentPolicy(new HostnameQueueAssignmentPolicy());
+    }
+    public QueueAssignmentPolicy getQueueAssignmentPolicy() {
+        return (QueueAssignmentPolicy) kp.get("queueAssignmentPolicy");
+    }
+    public void setQueueAssignmentPolicy(QueueAssignmentPolicy policy) {
+        kp.put("queueAssignmentPolicy",policy);
+    }
     
     // top-level stats
     private long succeededFetchCount = 0;
@@ -196,37 +348,19 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
     
-    private Path dir;
-    
     private List<CanonicalizationRule> rules;
     
-    private CrawlerLoggerModule loggerModule;
-
     public AdaptiveRevisitFrontier() {
     }
 
     
-    public synchronized void initialTasks(StateProvider provider) {
-        rules = provider.get(this, URI_CANONICALIZATION_RULES);
-        
-        controller = provider.get(this, CONTROLLER);
-        dir = provider.get(this, DIR);
-        this.serverCache = provider.get(this, SERVER_CACHE);
-
-        queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
-        alreadyIncluded = provider.get(this, URI_UNIQ_FILTER);
-        
-        seeds = provider.get(this, SEEDS);
-        bdb = provider.get(this, BDB);
-
+    public synchronized void afterPropertiesSet() {
         try {
             hostQueues = new AdaptiveRevisitQueueList(bdb,
                 bdb.getClassCatalog());
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-
-        
         loadSeeds();
     }
 
@@ -248,19 +382,19 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         // save ignored items (if any) where they can be consulted later
         AbstractFrontier.saveIgnoredItems(
                 ignoredWriter.toString(), 
-                dir.toFile());
+                resolveDir());
     }
     
     public String getClassKey(CrawlURI cauri) {
-        String queueKey = cauri.get(this, FORCE_QUEUE_ASSIGNMENT);
+        String queueKey = getForceQueueAssignment();
             if ("".equals(queueKey)) {
                 // Typical case, barring overrides
                 queueKey =
-                    queueAssignmentPolicy.getClassKey(cauri);
+                    getQueueAssignmentPolicy().getClassKey(cauri);
                 // The queueAssignmentPolicy is always based on Hostnames
                 // We may need to remove any www[0-9]{0,}\. prefixes from the
                 // hostnames
-                if(cauri.get(this, QUEUE_IGNORE_WWW)){
+                if(getQueueIgnoreWww()){
                     queueKey = queueKey.replaceAll("^www[0-9]{0,}\\.","");
                 }
             }
@@ -348,7 +482,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         }
         
         // Optionally preferencing embeds up to MEDIUM
-        int prefHops = curi.get(this, PREFERENCE_EMBED_HOPS);
+        int prefHops = getPreferenceEmbedHops();
         boolean prefEmbed = false;
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
@@ -389,8 +523,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         if(hq == null){
             // Need to create it.
-            int valence = HOST_VALENCE.getDefaultValue();
-            valence = curi.get(this, HOST_VALENCE);
+            int valence = getHostValence();
             hq = hostQueues.createHQ(curi.getClassKey(),valence);
         }
         return hq;
@@ -408,13 +541,13 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         Queue<CrawlURI> q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
             CrawlURI caUri = (CrawlURI)q.remove();
-            if(alreadyIncluded != null){
+            if(getUriUniqFilter() != null){
                 String cannon = canonicalize(caUri);
                 System.out.println("Cannon of " + caUri + " is " + cannon);
                 if (caUri.forceFetch()) {
-                    alreadyIncluded.addForce(cannon, caUri);
+                    getUriUniqFilter().addForce(cannon, caUri);
                 } else {
-                    alreadyIncluded.add(cannon, caUri);
+                    getUriUniqFilter().add(cannon, caUri);
                 }
             } else {
                 innerSchedule(caUri);
@@ -678,7 +811,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
                 delay = (Long)curi.getData().get(A_RETRY_DELAY);
             } else {
                 // use ARFrontier default
-                delay = curi.get(this, RETRY_DELAY); 
+                delay = getRetryDelaySeconds(); 
             }
         }
         
@@ -740,8 +873,8 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
         try {
             // No wait on failure. No contact was made with the server.
             boolean shouldForget = shouldBeForgotten(curi);
-            if(shouldForget && alreadyIncluded != null){
-                alreadyIncluded.forget(canonicalize(curi.getUURI()),curi);
+            if(shouldForget && getUriUniqFilter() != null){
+                getUriUniqFilter().forget(canonicalize(curi.getUURI()),curi);
             }
             hq.update(curi,false, 0, shouldForget); 
         } catch (IOException e) {
@@ -815,7 +948,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
      */
     protected boolean needsPromptRetry(CrawlURI curi)
             throws AttributeNotFoundException {
-        if (curi.getFetchAttempts() >= curi.get(this, MAX_RETRIES)) {
+        if (curi.getFetchAttempts() >= getMaxRetries()) {
             return false;
         }
 
@@ -853,7 +986,7 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
     protected boolean needsRetrying(CrawlURI curi)
             throws AttributeNotFoundException {
         // Check to see if maximum number of retries has been exceeded.
-        if (curi.getFetchAttempts() >= curi.get(this, MAX_RETRIES)) {
+        if (curi.getFetchAttempts() >= getMaxRetries()) {
             return false;
         } else {
             // Check if FetchStatus indicates that a delayed retry is needed.
@@ -903,34 +1036,34 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
                 long durationTaken = 
                     (completeTime - curi.getFetchBeginTime());
                 
-                durationToWait = (long)(curi.get(this, DELAY_FACTOR) * durationTaken);
+                durationToWait = (long)(getDelayFactor() * durationTaken);
     
-                long minDelay = curi.get(this, MIN_DELAY_MS);
+                long minDelay = getMinDelayMs();
                 
                 if (minDelay > durationToWait) {
                     // wait at least the minimum
                     durationToWait = minDelay;
                 }
     
-                long maxDelay = curi.get(this, MAX_DELAY_MS);
+                long maxDelay = getMaxDelayMs();
                 if (durationToWait > maxDelay) {
                     // wait no more than the maximum
                     durationToWait = maxDelay;
                 }
 
         }
-        long ret = durationToWait > MIN_DELAY_MS.getDefaultValue() ? 
-                durationToWait : MIN_DELAY_MS.getDefaultValue();
+        // FIXME? this seems to make it impossible to make min delay below default
+        long ret = durationToWait > 2000 ? durationToWait : 2000;
         logger.finest("Snooze time for " + curi.toString() + " = " + ret );
-        return ret;
+        return durationToWait;
     }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public synchronized long discoveredUriCount() {
-        return (this.alreadyIncluded != null) ? 
-                this.alreadyIncluded.count() : hostQueues.getSize();
+        return (getUriUniqFilter() != null) ? 
+                getUriUniqFilter().count() : hostQueues.getSize();
     }
 
     /* (non-Javadoc)
@@ -1132,9 +1265,9 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
      */
     public void crawlEnded(String sExitMessage) {
         // Cleanup!
-        if (this.alreadyIncluded != null) {
-            this.alreadyIncluded.close();
-            this.alreadyIncluded = null;
+        if (getUriUniqFilter() != null) {
+            getUriUniqFilter().close();
+            setUriUniqFilter(null);
         }
         hostQueues.close();
     }
@@ -1197,12 +1330,6 @@ implements Frontier, Serializable, CrawlStatusListener, CrawlUriReceiver {
     
     public long deepestUri() {
         return hostQueues.getDeepestQueueSize();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(AdaptiveRevisitFrontier.class);
     }
 
     public void requestState(State target) {
