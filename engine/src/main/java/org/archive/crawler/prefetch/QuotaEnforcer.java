@@ -22,13 +22,12 @@
  */
 package org.archive.crawler.prefetch;
 
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_QUOTA;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.Frontier;
 import org.archive.modules.ProcessResult;
@@ -39,10 +38,8 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.state.Immutable;
 import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * A simple quota enforcer. If the host, server, or frontier group
@@ -53,7 +50,6 @@ import org.archive.state.KeyManager;
  * @version $Date$, $Revision$
  */
 public class QuotaEnforcer extends Processor implements InitializingBean {
-
     private static final long serialVersionUID = 3L;
 
     private static final Logger LOGGER =
@@ -69,113 +65,22 @@ public class QuotaEnforcer extends Processor implements InitializingBean {
     protected static final int RESPONSES = 2;
     protected static final int RESPONSE_KB = 3;
     
-   // server quotas
-   // successes
+    private static final String SERVER_MAX_FETCH_SUCCESSES = "serverMaxFetchSuccesses";
+    private static final String SERVER_MAX_SUCCESS_KB = "serverMaxSuccessKb";
+    private static final String SERVER_MAX_FETCH_RESPONSES = "serverMaxFetchResponses";
+    private static final String SERVER_MAX_ALL_KB = "serverMaxAllKb";
 
-    /**
-     * Maximum number of fetch successes (e.g. 200 responses) to collect from
-     * one server. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> SERVER_MAX_FETCH_SUCCESSES = Key.make(-1L);
+    private static final String HOST_MAX_FETCH_SUCCESSES = "hostMaxFetchSuccesses";
+    private static final String HOST_MAX_SUCCESS_KB = "hostMaxSuccessKb";
+    private static final String HOST_MAX_FETCH_RESPONSES = "hostMaxFetchResponses";
+    private static final String HOST_MAX_ALL_KB = "hostMaxAllKb";
 
-
-    /**
-     * Maximum amount of fetch success content (e.g. 200 responses) in KB to
-     * collect from one server. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> SERVER_MAX_SUCCESS_KB = Key.make(-1L);
-
-
-    /**
-     * Maximum number of fetch responses (incl. error responses) to collect from
-     * one server. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> SERVER_MAX_FETCH_RESPONSES = Key.make(-1L);
-
-
-    /**
-     * Maximum amount of response content (incl. error responses) in KB to
-     * collect from one server. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> SERVER_MAX_ALL_KB = Key.make(-1L);
-
-
-    /**
-     * Maximum number of fetch successes (e.g. 200 responses) to collect from
-     * one host. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> HOST_MAX_FETCH_SUCCESSES = Key.make(-1L);
-
-
-    /**
-     * Maximum amount of fetch success content (e.g. 200 responses) in KB to
-     * collect from one host. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> HOST_MAX_SUCCESS_KB = Key.make(-1L);
-
-
-    /**
-     * Maximum number of fetch responses (incl. error responses) to collect from
-     * one host. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> HOST_MAX_FETCH_RESPONSES = Key.make(-1L);
-
-
-    /**
-     * Maximum amount of response content (incl. error responses) in KB to
-     * collect from one host. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> HOST_MAX_ALL_KB = Key.make(-1L);
-
-
-    /**
-     * Maximum number of fetch successes (e.g. 200 responses) to collect from
-     * one group. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> GROUP_MAX_FETCH_SUCCESSES = Key.make(-1L);
-
-
-    /**
-     * Maximum amount of fetch success content (e.g. 200 responses) in KB to
-     * collect from one group. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> GROUP_MAX_SUCCESS_KB = Key.make(-1L);
-
-
-    /**
-     * Maximum number of fetch responses (incl. error responses) to collect from
-     * one group. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> GROUP_MAX_FETCH_RESPONSES = Key.make(-1L);
-
-
-    /**
-     * Maximum amount of response content (incl. error responses) in KB to
-     * collect from one group. Default is -1, meaning no limit.
-     */
-    final public static Key<Long> GROUP_MAX_ALL_KB = Key.make(-1L);
-
-
-    /**
-     * Whether an over-quota situation should result in the containing queue
-     * being force-retired (if the Frontier supports this). Note that if your
-     * queues combine URIs that are different with regard to the quota category,
-     * the retirement may hold back URIs not in the same quota category. Default
-     * is false.
-     */
-    final public static Key<Boolean> FORCE_RETIRE = Key.make(true);
-
+    private static final String GROUP_MAX_FETCH_SUCCESSES = "groupMaxFetchSuccesses";
+    private static final String GROUP_MAX_SUCCESS_KB = "groupMaxSuccessKb";
+    private static final String GROUP_MAX_FETCH_RESPONSES = "groupMaxFetchResponses";
+    private static final String GROUP_MAX_ALL_KB = "groupMaxAllKb";
     
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = 
-        Key.makeAuto(ServerCache.class);
-    
-    
-    @Immutable
-    final public static Key<Frontier> FRONTIER =
-        Key.makeAuto(Frontier.class);
-    
-    protected static final Key<?>[][] keys = new Key<?>[][] {
+    protected static final String[][] keys = new String[][] {
         {
             //"server",
             SERVER_MAX_FETCH_SUCCESSES,
@@ -184,24 +89,228 @@ public class QuotaEnforcer extends Processor implements InitializingBean {
             SERVER_MAX_ALL_KB
         },
         {
+            //"host"
             HOST_MAX_FETCH_SUCCESSES,
             HOST_MAX_SUCCESS_KB,
             HOST_MAX_FETCH_RESPONSES,
             HOST_MAX_ALL_KB
-            //"host",
+            ,
         },
         {
+            //"group"
             GROUP_MAX_FETCH_SUCCESSES,
             GROUP_MAX_SUCCESS_KB,
             GROUP_MAX_FETCH_RESPONSES,
             GROUP_MAX_ALL_KB
-            //group",
         }
     };
 
+   // server quotas
+   // successes
+
+    /**
+     * Maximum number of fetch successes (e.g. 200 responses) to collect from
+     * one server. Default is -1, meaning no limit.
+     */
+    {
+        setServerMaxFetchSuccesses(-1L); // no limit
+    }
+    public long getServerMaxFetchSuccesses() {
+        return (Long) kp.get(SERVER_MAX_FETCH_SUCCESSES);
+    }
+    public void setServerMaxFetchSuccesses(long max) {
+        kp.put(SERVER_MAX_FETCH_SUCCESSES,max);
+    }
+
+
+    /**
+     * Maximum amount of fetch success content (e.g. 200 responses) in KB to
+     * collect from one server. Default is -1, meaning no limit.
+     */
+    {
+        setServerMaxSuccessKb(-1L); // no limit
+    }
+    public long getServerMaxSuccessKb() {
+        return (Long) kp.get(SERVER_MAX_SUCCESS_KB);
+    }
+    public void setServerMaxSuccessKb(long max) {
+        kp.put(SERVER_MAX_SUCCESS_KB,max);
+    }
+
+    /**
+     * Maximum number of fetch responses (incl. error responses) to collect from
+     * one server. Default is -1, meaning no limit.
+     */
+    {
+        setServerMaxFetchResponses(-1L); // no limit
+    }
+    public long getServerMaxFetchResponses() {
+        return (Long) kp.get(SERVER_MAX_FETCH_RESPONSES);
+    }
+    public void setServerMaxFetchResponses(long max) {
+        kp.put(SERVER_MAX_FETCH_RESPONSES,max);
+    }
+
+    /**
+     * Maximum amount of response content (incl. error responses) in KB to
+     * collect from one server. Default is -1, meaning no limit.
+     */
+    {
+        setServerMaxAllKb(-1L); // no limit
+    }
+    public long getServerMaxAllKb() {
+        return (Long) kp.get(SERVER_MAX_ALL_KB);
+    }
+    public void setServerMaxAllKb(long max) {
+        kp.put(SERVER_MAX_ALL_KB,max);
+    }
+
+    /**
+     * Maximum number of fetch successes (e.g. 200 responses) to collect from
+     * one host. Default is -1, meaning no limit.
+     */
+    {
+        setHostMaxFetchSuccesses(-1L); // no limit
+    }
+    public long getHostMaxFetchSuccesses() {
+        return (Long) kp.get(HOST_MAX_FETCH_SUCCESSES);
+    }
+    public void setHostMaxFetchSuccesses(long max) {
+        kp.put(HOST_MAX_FETCH_SUCCESSES,max);
+    }
+
+    /**
+     * Maximum amount of fetch success content (e.g. 200 responses) in KB to
+     * collect from one host. Default is -1, meaning no limit.
+     */
+    {
+        setHostMaxSuccessKb(-1L); // no limit
+    }
+    public long getHostMaxSuccessKb() {
+        return (Long) kp.get(HOST_MAX_SUCCESS_KB);
+    }
+    public void setHostMaxSuccessKb(long max) {
+        kp.put(HOST_MAX_SUCCESS_KB,max);
+    }
+
+    /**
+     * Maximum number of fetch responses (incl. error responses) to collect from
+     * one host. Default is -1, meaning no limit.
+     */
+    {
+        setHostMaxFetchResponses(-1L); // no limit
+    }
+    public long getHostMaxFetchResponses() {
+        return (Long) kp.get(HOST_MAX_FETCH_RESPONSES);
+    }
+    public void setHostMaxFetchResponses(long max) {
+        kp.put(HOST_MAX_FETCH_RESPONSES,max);
+    }
+
+    /**
+     * Maximum amount of response content (incl. error responses) in KB to
+     * collect from one host. Default is -1, meaning no limit.
+     */
+    {
+        setHostMaxAllKb(-1L); // no limit
+    }
+    public long getHostMaxAllKb() {
+        return (Long) kp.get(HOST_MAX_ALL_KB);
+    }
+    public void setHostMaxAllKb(long max) {
+        kp.put(HOST_MAX_ALL_KB,max);
+    }
+
+    /**
+     * Maximum number of fetch successes (e.g. 200 responses) to collect from
+     * one group. Default is -1, meaning no limit.
+     */
+    {
+        setGroupMaxFetchSuccesses(-1L); // no limit
+    }
+    public long getGroupMaxFetchSuccesses() {
+        return (Long) kp.get(GROUP_MAX_FETCH_SUCCESSES);
+    }
+    public void setGroupMaxFetchSuccesses(long max) {
+        kp.put(GROUP_MAX_FETCH_SUCCESSES,max);
+    }
+
+    /**
+     * Maximum amount of fetch success content (e.g. 200 responses) in KB to
+     * collect from one group. Default is -1, meaning no limit.
+     */
+    {
+        setGroupMaxSuccessKb(-1L); // no limit
+    }
+    public long getGroupMaxSuccessKb() {
+        return (Long) kp.get(GROUP_MAX_SUCCESS_KB);
+    }
+    public void setGroupMaxSuccessKb(long max) {
+        kp.put(GROUP_MAX_SUCCESS_KB,max);
+    }
+
+    /**
+     * Maximum number of fetch responses (incl. error responses) to collect from
+     * one group. Default is -1, meaning no limit.
+     */
+    {
+        setGroupMaxFetchResponses(-1L); // no limit
+    }
+    public long getGroupMaxFetchResponses() {
+        return (Long) kp.get(GROUP_MAX_FETCH_RESPONSES);
+    }
+    public void setGroupMaxFetchResponses(long max) {
+        kp.put(GROUP_MAX_FETCH_RESPONSES,max);
+    }
+
+    /**
+     * Maximum amount of response content (incl. error responses) in KB to
+     * collect from one group. Default is -1, meaning no limit.
+     */
+    {
+        setGroupMaxAllKb(-1L); // no limit
+    }
+    public long getGroupMaxAllKb() {
+        return (Long) kp.get(GROUP_MAX_ALL_KB);
+    }
+    public void setGroupMaxAllKb(long max) {
+        kp.put(GROUP_MAX_ALL_KB,max);
+    }
+
+    /**
+     * Whether an over-quota situation should result in the containing queue
+     * being force-retired (if the Frontier supports this). Note that if your
+     * queues combine URIs that are different with regard to the quota category,
+     * the retirement may hold back URIs not in the same quota category. Default
+     * is false.
+     */
+    {
+        setForceRetire(true);
+    }
+    public boolean getForceRetire() {
+        return (Boolean) kp.get("forceRetire");
+    }
+    public void setForceRetire(boolean force) {
+        kp.put("forceRetire",force);
+    }
     
-    private ServerCache serverCache;
-    private Frontier frontier;
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
+    
+    protected Frontier frontier;
+    public Frontier getFrontier() {
+        return this.frontier;
+    }
+    @Autowired
+    public void setFrontier(Frontier frontier) {
+        this.frontier = frontier;
+    }
     
     /**
      * Constructor.
@@ -272,10 +381,7 @@ public class QuotaEnforcer extends Processor implements InitializingBean {
                 substats.getTotalBytes()/1024,
         };
         for(int q=SUCCESSES; q<=RESPONSE_KB; q++) {
-            @SuppressWarnings("unchecked")
-            Key k = keys[CAT][q];
-            @SuppressWarnings("unchecked")
-            Key<Long> key = k;
+            String key = keys[CAT][q];
             if (applyQuota(curi, key, actuals[q])) {
                 return true; 
             }
@@ -294,22 +400,16 @@ public class QuotaEnforcer extends Processor implements InitializingBean {
      * @param actual current value to compare to quota 
      * @return true is CrawlURI is blocked by a quota, false otherwise
      */
-    protected boolean applyQuota(CrawlURI curi, Key<Long> key, long actual) {
-        long quota = curi.get(this, key);
+    protected boolean applyQuota(CrawlURI curi, String key, long actual) {
+        long quota = (Long)kp.get(key);
         if (quota >= 0 && actual >= quota) {
             curi.setFetchStatus(S_BLOCKED_BY_QUOTA);
-            curi.getAnnotations().add("Q:"+key.getFieldName());
-            if (curi.get(this, FORCE_RETIRE)) {
+            curi.getAnnotations().add("Q:"+key);
+            if (getForceRetire()) {
                 curi.setForceRetire(true);
             }
             return true;
         }
         return false; 
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(QuotaEnforcer.class);
     }
 }

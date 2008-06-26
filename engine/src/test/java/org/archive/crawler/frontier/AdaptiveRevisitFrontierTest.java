@@ -26,6 +26,7 @@
 
 package org.archive.crawler.frontier;
 
+import org.archive.crawler.extras.adaptive.AdaptiveRevisitFrontier;
 import org.archive.state.ModuleTestBase;
 
 /**

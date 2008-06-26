@@ -25,22 +25,17 @@
  */
 package org.archive.crawler.postprocessor;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Scoper;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.AcceptDecideRule;
 import org.archive.modules.deciderules.DecideResult;
-import org.archive.modules.deciderules.DecideRuleSequence;
-import org.archive.state.Expert;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.archive.modules.deciderules.DecideRule;
 
 
 /**
@@ -67,10 +62,15 @@ public class SupplementaryLinksScoper extends Scoper implements PostProcessor {
      * REJECT, cause the link to be ruled out-of-scope, even 
      * if it had previously been accepted by the main scope.
      */
-    @Expert
-    final public static Key<DecideRuleSequence> LINK_RULES = 
-        Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
-    
+    {
+        setSupplementaryRule(new AcceptDecideRule());
+    }
+    public DecideRule getSupplementaryRule() {
+        return (DecideRule) kp.get("supplementaryRule");
+    }
+    public void setSupplementaryRule(DecideRule rule) {
+        kp.put("supplementaryRule", rule);
+    }
     
     /**
      * @param name Name of this filter.
@@ -93,7 +93,7 @@ public class SupplementaryLinksScoper extends Scoper implements PostProcessor {
             return;
         }
         
-        Collection<CrawlURI> inScopeLinks = new HashSet<CrawlURI>();
+//        Collection<CrawlURI> inScopeLinks = new HashSet<CrawlURI>();
         Iterator<CrawlURI> iter = curi.getOutCandidates().iterator();
         while (iter.hasNext()) {
             CrawlURI cauri = iter.next();
@@ -117,7 +117,7 @@ public class SupplementaryLinksScoper extends Scoper implements PostProcessor {
             (CrawlURI)caUri:
             new CrawlURI(caUri.getUURI());
         boolean result = false;
-        DecideRuleSequence seq = curi.get(this, LINK_RULES);
+        DecideRule seq = getSupplementaryRule();
         if (seq.decisionFor(curi) == DecideResult.ACCEPT) {
             result = true;
             if (LOGGER.isLoggable(Level.FINER)) {
@@ -138,11 +138,5 @@ public class SupplementaryLinksScoper extends Scoper implements PostProcessor {
             return;
         }
         LOGGER.info(caUri.getUURI().toString());
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(SupplementaryLinksScoper.class);
     }
 }

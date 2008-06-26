@@ -22,6 +22,8 @@
  */
 package org.archive.crawler.processor;
 
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_CUSTOM_PROCESSOR;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,21 +33,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CrawlURI;
-
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
+import org.archive.modules.deciderules.AcceptDecideRule;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
-import org.archive.modules.deciderules.DecideRuleSequence;
-import org.archive.state.Immutable;
-import org.archive.state.Path;
-import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.Key;
+import org.archive.settings.JobHome;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import st.ata.util.FPGenerator;
 
@@ -91,46 +89,85 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
      * Whether to apply the mapping to a URI being processed itself, for example
      * early in processing (while its status is still 'unattempted').
      */
-    final public static Key<Boolean> CHECK_URI = Key.make(true);
-    
+    boolean checkUri = true;
+    public boolean getCheckUri() {
+        return this.checkUri;
+    }
+    public void setCheckUri(boolean check) {
+        this.checkUri = check;
+    }
 
     /**
      * Whether to apply the mapping to discovered outlinks, for example after
      * extraction has occurred.
      */
-    final public static Key<Boolean> CHECK_OUTLINKS = Key.make(true);
-
+    boolean checkOutlinks = true;
+    public boolean getCheckOutlinks() {
+        return this.checkOutlinks;
+    }
+    public void setCheckOutlinks(boolean check) {
+        this.checkOutlinks = check;
+    }
 
     /** 
      * Decide rules to determine if an outlink is subject to mapping.
      */ 
-    final public static Key<DecideRuleSequence> OUTLINK_DECIDE_RULES
-    = Key.make(DecideRuleSequence.class, DecideRuleSequence.class);
-
+    DecideRule outlinkRule = new AcceptDecideRule(); 
+    public DecideRule getOutlinkRule() {
+        return this.outlinkRule;
+    }
+    public void setOutlinkRule(DecideRule rule) {
+        this.outlinkRule = rule; 
+    }
 
     /**
      * Name of local crawler node; mappings to this name result in normal
      * processing (no diversion).
      */
-    final public static Key<String> LOCAL_NAME = Key.make(".");
+    String localName = ".";
+    public String getLocalName() {
+        return this.localName;
+    }
+    public void setLocalName(String name) {
+        this.localName = name; 
+    }
     
-
     /**
      * Directory to write diversion logs.
      */
-    @Immutable
-    final public static Key<Path> DIVERSION_DIR = 
-        Key.make(new Path("diversions"));
-
-
+    String diversionDir = "diversions";
+    public String getDiversionDir() {
+        return this.diversionDir;
+    }
+    public void setDiversionDir(String path) {
+        this.diversionDir = path; 
+    }
+    public File resolveDiversionDir() {
+        return jobHome.resolveToFile(diversionDir,null);
+    }
+    
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
+    
     /**
      * Number of timestamp digits to use as prefix of log names (grouping all
      * diversions from that period in a single log). Default is 10 (hourly log
      * rotation).
      * 
      */
-    final public static Key<Integer> ROTATION_DIGITS = Key.make(10); // hourly
-    
+    int rotationDigits = 10; 
+    public int getRotationDigits() {
+        return this.rotationDigits;
+    }
+    public void setRotationDigits(int digits) {
+        this.rotationDigits = digits; 
+    }
 
     /**
      * Mapping of target crawlers to logs (PrintWriters)
@@ -144,14 +181,9 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
      * current logs. 
      */
     String logGeneration = "";
-    
-    /** name of the enclosing crawler (URIs mapped here stay put) */
-    protected String localName;
-    
+        
     protected ArrayLongFPCache cache;
-
-    private Path diversionDir;
-    
+   
     /**
      * Constructor.
      * @param name Name of this processor.
@@ -177,13 +209,13 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
         String nowGeneration = 
             ArchiveUtils.get14DigitDate().substring(
                         0,
-                        curi.get(this, ROTATION_DIGITS));
+                        getRotationDigits());
         if(!nowGeneration.equals(logGeneration)) {
             updateGeneration(nowGeneration);
         }
         
         if (curi.getFetchStatus() <= 0  // unfetched/unsuccessful
-                && curi.get(this, CHECK_URI)) {
+                && getCheckUri()) {
             // apply mapping to the CrawlURI itself
             String target = map(curi);
             if(!localName.equals(target)) {
@@ -197,7 +229,7 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
             }
         }
         
-        if (curi.get(this, CHECK_OUTLINKS)) {
+        if (getCheckOutlinks()) {
             // consider outlinks for mapping
             Iterator<CrawlURI> iter = curi.getOutCandidates().iterator(); 
             while(iter.hasNext()) {
@@ -219,7 +251,7 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
     }
     
     protected boolean decideToMapOutlink(CrawlURI cauri) {
-        DecideRule rule = cauri.get(this, OUTLINK_DECIDE_RULES);
+        DecideRule rule = getOutlinkRule();
         boolean rejected = rule.decisionFor(cauri)
                 .equals(DecideResult.REJECT);
         return !rejected;
@@ -293,7 +325,7 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
     protected PrintWriter getDiversionLog(String target) {
         FilePrintWriter writer = (FilePrintWriter) diversionLogs.get(target);
         if(writer == null) {
-            File divertDir = this.diversionDir.toFile();
+            File divertDir = resolveDiversionDir();
             divertDir.mkdirs();
             File divertLog = 
                 new File(divertDir,
@@ -311,9 +343,8 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
     }
 
     public void afterPropertiesSet() {
-//        localName = context.get(this, LOCAL_NAME);
+        //TODO:SPRINGY move this to start
         cache = new ArrayLongFPCache();
-//        diversionDir = context.get(this, DIVERSION_DIR);
     }
 
 

@@ -27,10 +27,8 @@ import java.util.regex.Matcher;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
 import org.archive.net.PublicSuffixes;
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.util.TextUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import st.ata.util.FPGenerator;
 
@@ -45,38 +43,55 @@ public class HashCrawlMapper extends CrawlMapper {
 
     private static final long serialVersionUID = 2L;
     
-    
-    
-    @Immutable
-    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class);
-    
-    
+    protected Frontier frontier;
+    public Frontier getFrontier() {
+        return this.frontier;
+    }
+    @Autowired
+    public void setFrontier(Frontier frontier) {
+        this.frontier = frontier;
+    }
 
     /**
      * Number of crawlers among which to split up the URIs. Their names are
      * assumed to be 0..N-1.
      */
-    @Immutable
-    final public static Key<Long> CRAWLER_COUNT = Key.make(1L);
-
+    long crawlerCount = 1L; 
+    public long getCrawlerCount() {
+        return this.crawlerCount; 
+    }
+    public void setCrawlerCount(long count) {
+        this.crawlerCount = count;
+    }
 
     /**
      * Whether to use the PublicSuffixes-supplied reduce regex.
      * 
      */
-    final public static Key<Boolean> USE_PUBLICSUFFIXES_REGEX = 
-        Key.make(true);
+    {
+        setUsePublicSuffixesRegex(true);
+    }
+    public boolean getUsePublicSuffixesRegex() {
+        return (Boolean) kp.get("usePublicSuffixesRegex");
+    }
+    public void setUsePublicSuffixesRegex(boolean usePublicSuffixes) {
+        kp.put("usePublicSuffixesRegex",usePublicSuffixes);
+    }
     
     /**
      * A regex pattern to apply to the classKey, using the first match as the
      * mapping key. If empty (the default), use the full classKey.
      * 
      */
-    final public static Key<String> REDUCE_PREFIX_REGEX = 
-        Key.make("");
-    
-    long bucketCount = 1;
-    private Frontier frontier;
+    {
+        setReducePrefixRegex("");
+    }
+    public String getReducePrefixRegex() {
+        return (String) kp.get("reducePrefixRegex");
+    }
+    public void setReducePrefixRegex(String regex) {
+        kp.put("reducePrefixRegex",regex);
+    }
     
     /**
      * Constructor.
@@ -96,23 +111,16 @@ public class HashCrawlMapper extends CrawlMapper {
         // get classKey, via frontier to generate if necessary
         String key = frontier.getClassKey(cauri);
         String reduceRegex = getReduceRegex(cauri);
-        return mapString(key, reduceRegex, bucketCount); 
+        return mapString(key, reduceRegex, getCrawlerCount()); 
     }
 
     protected String getReduceRegex(CrawlURI cauri) {
-        if(cauri.get(this, USE_PUBLICSUFFIXES_REGEX)) {
+        if(getUsePublicSuffixesRegex()) {
             return PublicSuffixes.getTopmostAssignedSurtPrefixRegex();
         } else {
-            return cauri.get(this, REDUCE_PREFIX_REGEX);
+            return getReducePrefixRegex();
         }
     }
-
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
-//        this.frontier = context.get(this, FRONTIER);
-//        bucketCount = context.get(this, CRAWLER_COUNT);
-    }
-
 
     public static String mapString(String key, String reducePattern,
             long bucketCount) {
@@ -127,11 +135,5 @@ public class HashCrawlMapper extends CrawlMapper {
         long fp = FPGenerator.std64.fp(key);
         long bucket = fp % bucketCount;
         return Long.toString(bucket >= 0 ? bucket : -bucket);
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(HashCrawlMapper.class);
     }
 }

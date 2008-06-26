@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +48,6 @@ import org.archive.io.ReplayInputStream;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
-import org.archive.state.PatternConstraint;
 import org.archive.util.IoUtils;
 
 /**
@@ -84,9 +84,9 @@ import org.archive.util.IoUtils;
    @author Howard Lee Gayle
 */
 public class MirrorWriterProcessor extends Processor {
-
     private static final long serialVersionUID = 3L;
-
+    private static final Logger logger =
+        Logger.getLogger(MirrorWriterProcessor.class.getName());
 
     final public static String A_MIRROR_PATH = "mirror-path";
 
@@ -113,8 +113,13 @@ public class MirrorWriterProcessor extends Processor {
      * True if the file system is case-sensitive, like UNIX. False if the file
      * system is case-insensitive, like Macintosh HFS+ and Windows.
      */
-    public static final Key<Boolean> CASE_SENSITIVE = Key.make(true);
-
+    boolean caseSensitiveFilesystem = true; 
+    public boolean getCaseSensitiveFilesystem() {
+        return this.caseSensitiveFilesystem;
+    }
+    public void setCaseSensitiveFilesystem(boolean sensitive) {
+        this.caseSensitiveFilesystem = sensitive;
+    }
 
     /**
      * This list is grouped in pairs. The first string in each pair must have a
@@ -124,8 +129,13 @@ public class MirrorWriterProcessor extends Processor {
      * recommended value is [' ' %%20 &quot; %%22 * %%2A : %%3A < %%3C \\> %%3E ?
      * %%3F \\\\ %%5C ^ %%5E | %%7C].
      */
-    public static final Key<List<String>> CHARACTER_MAP = 
-        Key.makeList(String.class);
+    List<String> characterMap = new ArrayList<String>(); 
+    public List<String> getCharacterMap() {
+        return this.characterMap;
+    }
+    public void setCharacterMap(List<String> list) {
+        this.characterMap = list; 
+    }
 // FIXME: This probably wants to be a Map, and should have a sane default
     // based on auto-detected platform using system properties
 
@@ -137,37 +147,68 @@ public class MirrorWriterProcessor extends Processor {
      * the URI. For example, to force all HTML files to have the same suffix,
      * use [text/html html].
      */
-    public static final Key<List<String>> CONTENT_TYPE_MAP = 
-        Key.makeList(String.class);
+    List<String> contentTypeMap = new ArrayList<String>(); 
+    public List<String> getContentTypeMap() {
+        return this.contentTypeMap;
+    }
+    public void setContentTypeMap(List<String> list) {
+        this.contentTypeMap = list; 
+    }
 
     /**
      * If a segment starts with '.', the '.' is replaced by this.
      */
-    public static final Key<String> DOT_BEGIN = 
-        makePatterned("%2E", PATH_SEGMENT_RE);
+    String dotBegin = "%2E";
+    public String getDotBegin() {
+        return this.dotBegin;
+    }
+    public void setDotBegin(String s) {
+        validate(PATH_SEGMENT_RE,s);
+        this.dotBegin = s; 
+    }
 
+    protected void validate(Pattern pat, String s) {
+        if(!pat.matcher(s).matches()) {
+            throw new IllegalArgumentException("invalid value: "+s+" does not match "+pat.pattern());
+        }
+    }
 
     /**
      * If a directory name ends with '.' it is replaced by this. For all file
      * systems except Windows, '.' is recommended. For Windows, %%2E is
      * recommended.
      */
-    public static final Key<String> DOT_END = 
-        makePatterned(".", PATH_SEGMENT_RE);
-
-
+    String dotEnd = ".";
+    public String getDotEnd() {
+        return this.dotEnd;
+    }
+    public void setDotEnd(String s) {
+        validate(PATH_SEGMENT_RE,s);
+        this.dotEnd = s; 
+    }
+    
     /**
      * Implicitly append this to a URI ending with '/'.
      */
-    public static final Key<String> DIRECTORY_FILE = 
-        makePatterned("index.html", PATH_SEGMENT_RE);
-
+    String directoryFile = "index.html";
+    public String getDirectoryFile() {
+        return this.directoryFile;
+    }
+    public void setDirectoryFile(String s) {
+        validate(PATH_SEGMENT_RE,s);
+        this.directoryFile = s; 
+    }
 
     /**
      * Create a subdirectory named for the host in the URI.
      */
-    public static final Key<Boolean> HOST_DIRECTORY = Key.make(true);
-
+    boolean createHostDirectory = true; 
+    public boolean getCreateHostDirectory() {
+        return this.createHostDirectory;
+    }
+    public void setCreateHostDirectory(boolean hostDir) {
+        this.createHostDirectory = hostDir; 
+    }
 
     /**
      * This list is grouped in pairs. If a host name matches (case-insensitive)
@@ -175,20 +216,36 @@ public class MirrorWriterProcessor extends Processor {
      * pair. This can be used for consistency when several names are used for
      * one host, for example [12.34.56.78 www42.foo.com].
      */
-    public static final Key<List<String>> HOST_MAP = Key.makeList(String.class);
+    List<String> hostMap = new ArrayList<String>(); 
+    public List<String> getHostMap() {
+        return this.hostMap;
+    }
+    public void setHostMap(List<String> list) {
+        this.hostMap = list; 
+    }
 
 
     /**
      * Maximum file system path length.
      */
-    public static final Key<Integer> MAX_PATH_LENGTH = Key.make(1023);
-
+    int maxPathLength = 1023; 
+    public int getMaxPathLength() {
+        return maxPathLength;
+    }
+    public void setMaxPathLength(int max) {
+        this.maxPathLength = max;
+    }
 
     /**
      * Maximum file system path segment length.
      */
-    public static final Key<Integer> MAX_SEG_LEN = Key.make(255);
-
+    int maxSegLength = 255; 
+    public int getMaxSegLength() {
+        return maxSegLength;
+    }
+    public void setMaxSegLength(int max) {
+        this.maxSegLength = max;
+    }
     
     // TODO: Add a new Constraint subclass so ATTR_MAX_PATH_LEN and
     // ATTR_MAX_SEG_LEN can be constained to reasonable values.
@@ -197,30 +254,50 @@ public class MirrorWriterProcessor extends Processor {
     /**
      * Top-level directory for mirror files.
      */
-    public static final Key<String> PATH = Key.make("mirror");
-
-
+    String path = "mirror";
+    public String getPath() {
+        return this.path;
+    }
+    public void setPath(String s) {
+        this.path = s; 
+    }
+    
     /**
      * Create a subdirectory named for the port in the URI.
      */
-    public static final Key<Boolean> PORT_DIRECTORY = Key.make(false);
-
+    boolean createPortDirectory = false; 
+    public boolean getCreatePortDirectory() {
+        return this.createPortDirectory;
+    }
+    public void setCreatePortDirectory(boolean portDir) {
+        this.createPortDirectory = portDir; 
+    }
 
     /**
      * If true, the suffix is placed at the end of the path, after the query (if
      * any). If false, the suffix is placed before the query.
      */
-    public static final Key<Boolean> SUFFIX_AT_END = Key.make(true);
-
+    boolean suffixAtEnd = true; 
+    public boolean getSuffixAtEnd() {
+        return this.suffixAtEnd;
+    }
+    public void setSuffixAtEnd(boolean suffixAtEnd) {
+        this.suffixAtEnd = suffixAtEnd; 
+    }
 
     /**
      * If all the directories in the URI would exceed, or come close to
      * exceeding, the file system maximum path length, then they are all
      * replaced by this.
      */
-    public static final Key<String> TOO_LONG_DIRECTORY = 
-        makePatterned("LONG", TOO_LONG_DIRECTORY_RE);
-
+    String tooLongDirectory = "LONG";
+    public String getTooLongDirectory() {
+        return this.tooLongDirectory;
+    }
+    public void setTooLongDirectory(String s) {
+        validate(TOO_LONG_DIRECTORY_RE,s);
+        this.tooLongDirectory = s; 
+    }
 
     /**
      * If a directory name appears (case-insensitive) in this list then an
@@ -229,10 +306,13 @@ public class MirrorWriterProcessor extends Processor {
      * com4 com5 com6 com7 com8 com9 lpt1 lpt2 lpt3 lpt4 lpt5 lpt6 lpt7 lpt8
      * lpt9 con nul prn].
      */
-    public static final Key<List<String>> UNDERSCORE_SET = 
-        Key.makeList(String.class);
-
-
+    List<String> underscoreSet = new ArrayList<String>(); 
+    public List<String> getUnderscoreSet() {
+        return this.underscoreSet;
+    }
+    public void setUnderscoreSet(List<String> list) {
+        this.underscoreSet = list; 
+    }
 
     /** An empty Map.*/
     private static final Map<String,String> EMPTY_MAP
@@ -240,11 +320,7 @@ public class MirrorWriterProcessor extends Processor {
 
 
 
-    /**
-     * Logger.
-     */
-    private static final Logger logger =
-        Logger.getLogger(MirrorWriterProcessor.class.getName());
+
 
     /**
      * @param name Name of this processor.
@@ -275,7 +351,7 @@ public class MirrorWriterProcessor extends Processor {
         }
 
         String baseDir = null; // Base directory.
-        String baseSeg = curi.get(this, PATH);
+        String baseSeg = getPath();
 
         baseDir = new File(".").getPath();
             
@@ -407,10 +483,10 @@ public class MirrorWriterProcessor extends Processor {
         throws AttributeNotFoundException, IOException {
         UURI uuri = curi.getUURI(); // Current URI.
         String host = null;
-        boolean hd = curi.get(this, HOST_DIRECTORY);
+        boolean hd = getCreateHostDirectory();
         if (hd) {
             host = uuri.getHost();
-            List<String> hostMap = curi.get(this, HOST_MAP);
+            List<String> hostMap = getHostMap();
             if ((null != hostMap) && (hostMap.size() > 1)) {
                 ensurePairs(hostMap);
                 Iterator<String> i = hostMap.iterator();
@@ -427,10 +503,10 @@ public class MirrorWriterProcessor extends Processor {
             }
         }
 
-        int port = curi.get(this, PORT_DIRECTORY) ? uuri.getPort() : -1;
+        int port = getCreatePortDirectory() ? uuri.getPort() : -1;
 
         String suffix = null; // Replacement suffix.
-        List<String> ctm = curi.get(this, CONTENT_TYPE_MAP);
+        List<String> ctm = getContentTypeMap();
         if ((null != ctm) && (ctm.size() > 1)) {
             ensurePairs(ctm);
             String contentType = curi.getContentType().toLowerCase();
@@ -447,18 +523,18 @@ public class MirrorWriterProcessor extends Processor {
             }
         }
 
-        int maxSegLen = curi.get(this, MAX_SEG_LEN);
+        int maxSegLen = getMaxSegLength();
         if (maxSegLen < 2) {
-            maxSegLen = MAX_SEG_LEN.getDefaultValue();
+            maxSegLen = 2; // MAX_SEG_LEN.getDefaultValue();
         }
 
-        int maxPathLen = curi.get(this, MAX_PATH_LENGTH);
+        int maxPathLen = getMaxPathLength();
         if (maxPathLen < 2) {
-            maxPathLen = MAX_PATH_LENGTH.getDefaultValue();
+            maxPathLen = 2; // MAX_PATH_LENGTH.getDefaultValue();
         }
 
         Map<String,String> characterMap = Collections.emptyMap();
-        List<String> cm = curi.get(this, CHARACTER_MAP);
+        List<String> cm = getCharacterMap();
         if ((null != cm) && (cm.size() > 1)) {
             ensurePairs(cm);
             characterMap = new HashMap<String,String>(cm.size()); 
@@ -473,24 +549,24 @@ public class MirrorWriterProcessor extends Processor {
             }
         }
 
-        String dotBegin = curi.get(this, DOT_BEGIN);
+        String dotBegin = getDotBegin();
         if (".".equals(dotBegin)) {
             dotBegin = null;
         }
 
-        String dotEnd = curi.get(this, DOT_END);
+        String dotEnd = getDotEnd();
         if (".".equals(dotEnd)) {
             dotEnd = null;
         }
 
-        String tld = curi.get(this, TOO_LONG_DIRECTORY);
+        String tld = getTooLongDirectory();
         if ((null == tld) || (0 == tld.length())
                 || (-1 != tld.indexOf(File.separatorChar))) {
-            tld = TOO_LONG_DIRECTORY.getDefaultValue();
+            tld = "LONG"; // TOO_LONG_DIRECTORY.getDefaultValue();
         }
 
         Set<String> underscoreSet = null;
-        List<String> us = curi.get(this, UNDERSCORE_SET);
+        List<String> us = getUnderscoreSet();
         if ((null != us) && (0 != us.size())) {
             underscoreSet = new HashSet<String>(us.size(), 0.5F);
             for (String s: us) {
@@ -502,10 +578,10 @@ public class MirrorWriterProcessor extends Processor {
 
         return uriToFile(curi, host, port, uuri.getPath(), uuri.getQuery(),
             suffix, baseDir, maxSegLen, maxPathLen,
-            curi.get(this, CASE_SENSITIVE),
-            curi.get(this, DIRECTORY_FILE),
+            getCaseSensitiveFilesystem(),
+            getDirectoryFile(),
             characterMap, dotBegin, dotEnd, tld,
-            curi.get(this, SUFFIX_AT_END),
+            getSuffixAtEnd(),
             underscoreSet);
     }
 
@@ -1652,18 +1728,5 @@ public class MirrorWriterProcessor extends Processor {
                                       + " is not a directory.");
             }
         }
-    }
-    
-    
-    private static Key<String> makePatterned(String def, Pattern pattern) {
-        KeyMaker<String> km = KeyMaker.make(def);
-        km.addConstraint(new PatternConstraint(pattern));
-        return km.toKey();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(MirrorWriterProcessor.class);
     }
 }

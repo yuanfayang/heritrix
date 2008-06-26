@@ -26,6 +26,7 @@
 package org.archive.crawler.postprocessor;
 
 
+import org.archive.crawler.extras.adaptive.WaitEvaluator;
 import org.archive.modules.ProcessorTestBase;
 
 

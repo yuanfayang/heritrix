@@ -44,8 +44,8 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import static org.archive.crawler.datamodel.SchedulingConstants.*;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.*;
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
-import static org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants.*;
 
 import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.ProcessorURI;
