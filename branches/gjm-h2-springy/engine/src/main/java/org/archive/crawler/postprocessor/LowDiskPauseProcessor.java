@@ -26,6 +26,7 @@
 package org.archive.crawler.postprocessor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,9 +37,6 @@ import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Global;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.util.IoUtils;
 
 /**
@@ -62,26 +60,37 @@ public class LowDiskPauseProcessor extends Processor implements PostProcessor {
      * List of filessystem mounts whose 'available' space should be monitored
      * via 'df' (if available).
      */
-    final public static Key<List<String>> MONITOR_MOUNTS = 
-        Key.makeList(String.class);
-    
+    List<String> monitorMounts = new ArrayList<String>();
+    public List<String> getMonitorMounts() {
+        return this.monitorMounts;
+    }
+    public void setMonitorMounts(List<String> monitorMounts) {
+        this.monitorMounts = monitorMounts;
+    }
 
     /**
      * When available space on any monitored mounts falls below this threshold,
      * the crawl will be paused.
      */
-    final public static Key<Integer> PAUSE_THRESHOLD_KB = 
-        Key.make(500 * 1024); // 500MB
-
+    int pauseThresholdKb = 500*1024; // 500MB 
+    public int getPauseThresholdKb() {
+        return this.pauseThresholdKb;
+    }
+    public void setPauseThresholdKb(int pauseThresholdKb) {
+        this.pauseThresholdKb = pauseThresholdKb;
+    }
     
     /**
      * Available space via 'df' is rechecked after every increment of this much
      * content (uncompressed) is observed.
      */
-    @Global
-    final public static Key<Integer> RECHECK_THRESHOLD =
-        Key.make(200 * 1024);
-
+    int recheckThresholdKb = 200*1024; // 200MB 
+    public int getRecheckThresholdKb() {
+        return this.recheckThresholdKb;
+    }
+    public void setRecheckThresholdKb(int recheckThresholdKb) {
+        this.recheckThresholdKb = recheckThresholdKb;
+    }
     
     protected int contentSinceCheck = 0;
     
@@ -119,7 +128,7 @@ public class LowDiskPauseProcessor extends Processor implements PostProcessor {
     protected ProcessResult innerProcessResult(ProcessorURI curi) {
         synchronized (this) {
             contentSinceCheck += curi.getContentSize();
-            if (contentSinceCheck/1024 > curi.get(this, RECHECK_THRESHOLD)) {
+            if (contentSinceCheck/1024 > getRecheckThresholdKb()) {
                 ProcessResult r = checkAvailableSpace(curi);
                 contentSinceCheck = 0;
                 return r;
@@ -145,13 +154,13 @@ public class LowDiskPauseProcessor extends Processor implements PostProcessor {
                 logger.severe("'df -k' output unacceptable for low-disk checking");
                 return ProcessResult.PROCEED;
             }
-            List<String> monitoredMounts = curi.get(this, MONITOR_MOUNTS);
+            List<String> monitoredMounts = getMonitorMounts();
             matcher = AVAILABLE_EXTRACTOR.matcher(df);
             while (matcher.find()) {
                 String mount = matcher.group(2);
                 if (monitoredMounts.contains(mount)) {
                     long availKilobytes = Long.parseLong(matcher.group(1));
-                    int thresholdKilobytes = curi.get(this, PAUSE_THRESHOLD_KB);
+                    int thresholdKilobytes = getPauseThresholdKb();
                     if (availKilobytes < thresholdKilobytes ) {
                         logger.log(Level.SEVERE, "Low Disk Pause",
                                 availKilobytes + "K available on " + mount
@@ -165,11 +174,5 @@ public class LowDiskPauseProcessor extends Processor implements PostProcessor {
             curi.getNonFatalFailures().add(e);
         }
         return ProcessResult.PROCEED;
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(LowDiskPauseProcessor.class);
     }
 }

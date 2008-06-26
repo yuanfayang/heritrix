@@ -293,7 +293,7 @@ public abstract class AbstractFrontier
     
     /** maximum times to emit a CrawlURI without final disposition */
     {
-        setMaxRetries(30000);
+        setMaxRetries(30);
     }
     public int getMaxRetries() {
         return (Integer) kp.get("maxRetries");

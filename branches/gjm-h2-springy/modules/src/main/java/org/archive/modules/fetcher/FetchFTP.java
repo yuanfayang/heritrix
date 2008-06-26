@@ -80,50 +80,112 @@ public class FetchFTP extends Processor  {
      * The username to send to FTP servers. By convention, the default value of
      * "anonymous" is used for publicly available FTP sites.
      */
-    final public static Key<String> USERNAME = Key.make("anonymous");
-
+    {
+        setUsername("anonymous");
+    }
+    public String getUsername() {
+        return (String) kp.get("username");
+    }
+    public void setUsername(String username) {
+        kp.put("username",username);
+    }
 
     /**
      * The password to send to FTP servers. By convention, anonymous users send
      * their email address in this field.
      */
-    final public static Key<String> PASSWORD = Key.make("password");
-
+    {
+        setPassword("password");
+    }
+    public String getPassword() {
+        return (String) kp.get("password");
+    }
+    public void setPassword(String pw) {
+        kp.put("password",pw);
+    }
 
     /**
      * Set to true to extract further URIs from FTP directories. Default is
      * true.
      */
-    final public static Key<Boolean> EXTRACT_FROM_DIRS = Key.make(true);
-
+    {
+        setExtractFromDirs(true);
+    }
+    /**
+     * Returns the <code>extract.from.dirs</code> attribute for this
+     * <code>FetchFTP</code> and the given curi.
+     * 
+     * @param curi  the curi whose attribute to return
+     * @return  that curi's <code>extract.from.dirs</code>
+     */
+    public boolean getExtractFromDirs() {
+        return (Boolean) kp.get("extractFromDirs");
+    }
+    public void setExtractFromDirs(boolean extractFromDirs) {
+        kp.put("extractFromDirs",extractFromDirs);
+    }
     
-
     /**
      * Set to true to extract the parent URI from all FTP URIs. Default is true.
      */
-    final public static Key<Boolean> EXTRACT_PARENT = Key.make(true);
-
+    {
+        setExtractParent(true);
+    }
+    /**
+     * Returns the <code>extract.parent</code> attribute for this
+     * <code>FetchFTP</code> and the given curi.
+     * 
+     * @param curi  the curi whose attribute to return
+     * @return  that curi's <code>extract-parent</code>
+     */
+    public boolean getExtractParent() {
+        return (Boolean) kp.get("extractParent");
+    }
+    public void setExtractParent(boolean extractParent) {
+        kp.put("extractParent",extractParent);
+    }
 
     /**
      * Maximum length in bytes to fetch. Fetch is truncated at this length. A
      * value of 0 means no limit.
      */
-    final public static Key<Long> MAX_LENGTH_BYTES = Key.make(0L);
-
+    {
+        setMaxLengthBytes(0L); // no limit
+    }
+    public long getMaxLengthBytes() {
+        return (Long) kp.get("maxLengthBytes");
+    }
+    public void setMaxLengthBytes(long timeout) {
+        kp.put("maxLengthBytes",timeout);
+    }
     
     /**
      * The maximum KB/sec to use when fetching data from a server. The default
      * of 0 means no maximum.
      */
-    final public static Key<Integer> FETCH_BANDWIDTH = Key.make(0);
-    
+    {
+        setMaxFetchKBSec(0); // no limit
+    }
+    public int getMaxFetchKBSec() {
+        return (Integer) kp.get("maxFetchKBSec");
+    }
+    public void setMaxFetchKBSec(int rate) {
+        kp.put("maxFetchKBSec",rate);
+    }
     
     /**
      * If the fetch is not completed in this number of seconds, give up (and
      * retry later).
      */
-    final public static Key<Integer> TIMEOUT_SECONDS = Key.make(1200);
-    
+    {
+         setTimeoutSeconds(20*60); // 20 minutes
+     }
+     public int getTimeoutSeconds() {
+         return (Integer) kp.get("timeoutSeconds");
+     }
+     public void setTimeoutSeconds(Integer timeout) {
+         kp.put("timeoutSeconds",timeout);
+     }
 
     /**
      * Constructs a new <code>FetchFTP</code>.
@@ -275,9 +337,9 @@ public class FetchFTP extends Processor  {
 
         // Read the remote file/dir listing in its entirety.
         long softMax = 0;
-        long hardMax = getMaxLength(curi);
-        long timeout = (long)getTimeout(curi) * 1000;
-        int maxRate = getFetchBandwidth(curi);
+        long hardMax = getMaxLengthBytes();
+        long timeout = (long)getTimeoutSeconds() * 1000L;
+        int maxRate = getMaxFetchKBSec();
         RecordingInputStream input = recorder.getRecordedInput();
         input.setLimits(hardMax, timeout, maxRate); 
         input.readFullyOrUntil(softMax);
@@ -292,7 +354,7 @@ public class FetchFTP extends Processor  {
      * @param recorder  The recorder containing the directory listing
      */
     private void extract(ProcessorURI curi, Recorder recorder) {
-        if (!getExtractFromDirs(curi)) {
+        if (!getExtractFromDirs()) {
             return;
         }
         
@@ -373,7 +435,7 @@ public class FetchFTP extends Processor  {
      * @param curi  the curi whose parent to add
      */
     private void addParent(ProcessorURI curi) {
-        if (!getExtractParent(curi)) {
+        if (!getExtractParent()) {
             return;
         }
         UURI uuri = curi.getUURI();
@@ -394,67 +456,6 @@ public class FetchFTP extends Processor  {
             logger.log(Level.WARNING, "URI error during extraction.", e);
         }
     }
-    
-    
-    /**
-     * Returns the <code>extract.from.dirs</code> attribute for this
-     * <code>FetchFTP</code> and the given curi.
-     * 
-     * @param curi  the curi whose attribute to return
-     * @return  that curi's <code>extract.from.dirs</code>
-     */
-    public boolean getExtractFromDirs(ProcessorURI curi) {
-        return curi.get(this, EXTRACT_FROM_DIRS);
-    }
-    
-    
-    /**
-     * Returns the <code>extract.parent</code> attribute for this
-     * <code>FetchFTP</code> and the given curi.
-     * 
-     * @param curi  the curi whose attribute to return
-     * @return  that curi's <code>extract-parent</code>
-     */
-    public boolean getExtractParent(ProcessorURI curi) {
-        return curi.get(this, EXTRACT_PARENT);
-    }
-
-
-    /**
-     * Returns the <code>timeout-seconds</code> attribute for this
-     * <code>FetchFTP</code> and the given curi.
-     * 
-     * @param curi   the curi whose attribute to return
-     * @return   that curi's <code>timeout-seconds</code>
-     */
-    public int getTimeout(ProcessorURI curi) {
-        return curi.get(this, TIMEOUT_SECONDS);
-    }
-
-
-    /**
-     * Returns the <code>max-length-bytes</code> attribute for this
-     * <code>FetchFTP</code> and the given curi.
-     * 
-     * @param curi  the curi whose attribute to return
-     * @return  that curi's <code>max-length-bytes</code>
-     */
-    public long getMaxLength(ProcessorURI curi) {
-        return curi.get(this, MAX_LENGTH_BYTES);
-    }
-
-
-    /**
-     * Returns the <code>fetch-bandwidth</code> attribute for this
-     * <code>FetchFTP</code> and the given curi.
-     * 
-     * @param curi  the curi whose attribute to return
-     * @return  that curi's <code>fetch-bandwidth</code>
-     */
-    public int getFetchBandwidth(ProcessorURI curi) {
-        return curi.get(this, FETCH_BANDWIDTH);
-    }
-
 
     /**
      * Returns the username and password for the given URI.  This method
@@ -493,8 +494,8 @@ public class FetchFTP extends Processor  {
                 return result;
             }
         }
-        result[0] = curi.get(this, USERNAME);
-        result[1] = curi.get(this, PASSWORD);
+        result[0] = getUsername();
+        result[1] = getPassword();
         return result;
     }
     
@@ -549,11 +550,5 @@ public class FetchFTP extends Processor  {
                  + e.getMessage());
             }
         }        
-    }
-
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(FetchFTP.class);
     }
 }

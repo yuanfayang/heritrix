@@ -36,8 +36,7 @@ import org.archive.crawler.framework.StatisticsTracker;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -74,12 +73,6 @@ public class RuntimeLimitEnforcer extends Processor {
     protected static Logger logger = Logger.getLogger(
             RuntimeLimitEnforcer.class.getName());
 
-    
-    final public static Key<CrawlControllerImpl> CONTROLLER = 
-        Key.makeAuto(CrawlControllerImpl.class);
-    
-    final public static Key<StatisticsTracker> STATISTICS_TRACKER =
-        Key.makeAuto(StatisticsTracker.class);
 
     /**
      * The action that the processor takes once the runtime has elapsed.
@@ -112,8 +105,13 @@ public class RuntimeLimitEnforcer extends Processor {
      * The amount of time, in seconds, that the crawl will be allowed to run
      * before this processor performs it's 'end operation.'
      */
-    final public static Key<Long> RUNTIME_SECONDS = Key.make(86400L);
-
+    long runtimeSeconds = 24*60*60L; // 1 day
+    public long getRuntimeSeconds() {
+        return this.runtimeSeconds;
+    }
+    public void setRuntimeSeconds(long secs) {
+        this.runtimeSeconds = secs;
+    }
 
     /**
      * The action that the processor takes once the runtime has elapsed.
@@ -130,8 +128,31 @@ public class RuntimeLimitEnforcer extends Processor {
      * processor) fetch status code. This will cause all the URIs queued to wind
      * up in the crawl.log.
      */
-    final public static Key<Operation> END_OPERATION = Key.make(Operation.PAUSE);
+    Operation expirationOperation = Operation.PAUSE;
+    public Operation getExpirationOperation() {
+        return this.expirationOperation;
+    }
+    public void setExpirationOperation(Operation op) {
+        this.expirationOperation = op; 
+    }
 
+    protected CrawlControllerImpl controller;
+    public CrawlControllerImpl getCrawlController() {
+        return this.controller;
+    }
+    @Autowired
+    public void setCrawlController(CrawlControllerImpl controller) {
+        this.controller = controller;
+    }
+    
+    protected StatisticsTracker statisticsTracker;
+    public StatisticsTracker getStatisticsTracker() {
+        return this.statisticsTracker;
+    }
+    @Autowired
+    public void setStatisticsTracker(StatisticsTracker statisticsTracker) {
+        this.statisticsTracker = statisticsTracker;
+    }
     
     public RuntimeLimitEnforcer() {
         super();
@@ -152,12 +173,12 @@ public class RuntimeLimitEnforcer extends Processor {
     @Override
     protected ProcessResult innerProcessResult(ProcessorURI curi)
     throws InterruptedException {
-        CrawlControllerImpl controller = curi.get(this, CONTROLLER);
-        StatisticsTracker stats = curi.get(this, STATISTICS_TRACKER);
-        long allowedRuntime = getRuntime(curi);
-        long currentRuntime = stats.crawlDuration();
-        if(currentRuntime > allowedRuntime){
-            Operation op = curi.get(this, END_OPERATION);
+        CrawlControllerImpl controller = getCrawlController();
+        StatisticsTracker stats = getStatisticsTracker();
+        long allowedRuntimeMs = getRuntimeSeconds() * 1000L;
+        long currentRuntimeMs = stats.crawlDuration();
+        if(currentRuntimeMs > allowedRuntimeMs){
+            Operation op = getExpirationOperation();
             if(op != null){
                 if (op.equals(Operation.PAUSE)) {
                     controller.requestCrawlPause();
@@ -165,7 +186,7 @@ public class RuntimeLimitEnforcer extends Processor {
                     controller.requestCrawlStop(CrawlStatus.FINISHED_TIME_LIMIT);
                 } else if (op.equals(Operation.BLOCK_URIS)) {
                     curi.setFetchStatus(S_BLOCKED_BY_RUNTIME_LIMIT);
-                    curi.getAnnotations().add("Runtime exceeded " + allowedRuntime + 
+                    curi.getAnnotations().add("Runtime exceeded " + allowedRuntimeMs + 
                             "ms");
                     return ProcessResult.FINISH;
                 }
@@ -175,20 +196,5 @@ public class RuntimeLimitEnforcer extends Processor {
             }
         }
         return ProcessResult.PROCEED;
-    }
-    
-    /**
-     * Returns the amount of time to allow the crawl to run before this 
-     * processor interrupts.
-     * @return the amount of time in milliseconds.
-     */
-    protected long getRuntime(ProcessorURI curi){
-        return curi.get(this, RUNTIME_SECONDS) * 1000L;
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(RuntimeLimitEnforcer.class);
     }
 }

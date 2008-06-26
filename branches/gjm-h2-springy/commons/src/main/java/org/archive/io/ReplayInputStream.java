@@ -187,11 +187,17 @@ public class ReplayInputStream extends SeekInputStream
         }
     }
     
-    public void readContentTo(OutputStream os, int maxSize) throws IOException {
+    /**
+     * Convenience method to copy content out to target stream. 
+     * @param os stream to write content to
+     * @param maxSize maximum count of bytes to copy
+     * @throws IOException
+     */
+    public void readContentTo(OutputStream os, long maxSize) throws IOException {
         setToResponseBodyStart();
         byte[] buf = new byte[4096];
         int c = read(buf);
-        int tot = 0;
+        long tot = 0;
         while (c != -1 && tot < maxSize) {
             os.write(buf,0,c);
             c = read(buf);

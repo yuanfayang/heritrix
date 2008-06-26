@@ -37,8 +37,10 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
+import org.archive.settings.JobHome;
 import org.archive.state.Immutable;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.archive.state.Path;
 import org.archive.state.StateProvider;
 import org.archive.io.ReplayInputStream;
@@ -69,7 +71,7 @@ import static org.archive.modules.writer.Kw3Constants.*;
  * 
  * @author oskar
  */
-public class Kw3WriterProcessor extends Processor implements InitializingBean {
+public class Kw3WriterProcessor extends Processor {
 
 
   private static final long serialVersionUID = 3L;
@@ -88,29 +90,59 @@ public class Kw3WriterProcessor extends Processor implements InitializingBean {
   /**
    * Top-level directory for archive files.
    */
-  @Immutable
-  public static final Key<Path> PATH = Key.make(new Path("arcs"));
+  String path = "arcs";
+  public String getPath() {
+      return this.path;
+  }
+  public void setPath(String s) {
+      this.path = s; 
+  }
+  public File resolvePath() {
+      return jobHome.resolveToFile(getPath(),null);
+  }
   
-
+  protected JobHome jobHome;
+  public JobHome getJobHome() {
+      return jobHome;
+  }
+  @Autowired
+  public void setJobHome(JobHome home) {
+      this.jobHome = home;
+  }
+  
   /**
    * Max size for each file.
    */
-  @Immutable
-  final public static Key<Integer> MAX_SIZE_BYTES = Key.make(10000000);
-
+  long maxFileSizeBytes = 100000000L;
+  public long getMaxFileSizeBytes() {
+      return maxFileSizeBytes;
+  }
+  public void setMaxFileSizeBytes(long maxFileSizeBytes) {
+      this.maxFileSizeBytes = maxFileSizeBytes;
+  }
   
   /**
    * Should permissions be changed for the newly created dirs.
    */
-  @Immutable
-  final public static Key<Boolean> CHMOD = Key.make(true); 
-
+  boolean chmod = false; 
+  public boolean getChmod() {
+      return chmod;
+  }
+  public void setChmod(boolean chmod) {
+      this.chmod = chmod;
+  }
 
   /**
    * What should the permissions be set to. Given as three octal digits, as to
    * the UNIX 'chmod' command. Ex. 777 for all permissions to everyone.
    */
-  final public static Key<String> CHMOD_VALUE = Key.make("777");
+  String chmodValue = "777";
+  public String getChmodValue() {
+      return this.chmodValue;
+  }
+  public void setChmodValue(String s) {
+      this.chmodValue = s; 
+  }
 
 
   /**
@@ -122,64 +154,44 @@ public class Kw3WriterProcessor extends Processor implements InitializingBean {
   /**
    * Name of collection.
    */
-  @Immutable
-  final public static Key<String> COLLECTION = Key.make("kw3");
-
+  String collection = "kw3";
+  public String getCollection() {
+      return this.collection;
+  }
+  public void setCollection(String s) {
+      this.collection = s; 
+  }
 
   /**
    * Name of the harvester that is used for the web harvesting.
    */
-  @Immutable
-  final public static Key<String> HARVESTER = Key.make("heritrix");
-  
+  String harvester = "heritrix";
+  public String getHarvester() {
+      return this.harvester;
+  }
+  public void setHarvester(String s) {
+      this.harvester = s; 
+  }
   
   /**
    * The server cache to use.
    */
-  @Immutable
-  final public static Key<ServerCache> SERVER_CACHE = 
-      Key.makeAuto(ServerCache.class);
+  protected ServerCache serverCache;
+  public ServerCache getServerCache() {
+      return this.serverCache;
+  }
+  @Autowired
+  public void setServerCache(ServerCache serverCache) {
+      this.serverCache = serverCache;
+  }
 
   private static String BOUNDARY_START = "KulturArw3_";
   
-  /*
-   * Private members for settings
-   */
-  private File arcsDir;
-  
-  private boolean chmod;
-  
-  private String chmodValue;
-  
-  private int maxSize;
-  
-  private String collection;
-  
-  private String harvester;
-  
-  private ServerCache serverCache;
-
   /**
    * Constructor.
    */
   public Kw3WriterProcessor() {
   }
-
-  
-  
-  public void afterPropertiesSet() {
-      StateProvider global = null;
-      Path arcsDirPath = global.get(this, PATH);
-      
-      this.arcsDir = arcsDirPath.toFile();
-      this.collection = global.get(this, COLLECTION);
-      this.harvester = global.get(this, HARVESTER);
-      this.chmod = global.get(this, CHMOD);
-      this.chmodValue = global.get(this, CHMOD_VALUE);            
-      this.maxSize = global.get(this, MAX_SIZE_BYTES);          
-      this.serverCache = global.get(this, SERVER_CACHE);
-  }
-  
   
   protected boolean shouldProcess(ProcessorURI curi) {
       // Only successful fetches are written.
@@ -267,12 +279,12 @@ public class Kw3WriterProcessor extends Processor implements InitializingBean {
       long fetchTime = curi.getFetchBeginTime() / 1000;
              
       String md5 = stringToMD5(host);
-      File dir = new File(this.arcsDir, md5.substring(0, 2) + "/" + host +
+      File dir = new File(resolvePath(), md5.substring(0, 2) + "/" + host +
               "/current");
       if (!dir.exists()) {
           dir.mkdirs();
           if (this.chmod)
-              chmods(dir, this.arcsDir);
+              chmods(dir, resolvePath());
       }
       md5 = stringToMD5(uri);
       File arcFile = new File(dir, md5 + "." + fetchTime);
@@ -346,8 +358,8 @@ public class Kw3WriterProcessor extends Processor implements InitializingBean {
       buffer.append("HTTP-Part: Content" + LF + LF);
       out.write(buffer.toString().getBytes());
       
-      if (contentLength > this.maxSize) {
-          ris.readContentTo(out, this.maxSize);
+      if (contentLength > getMaxFileSizeBytes()) {
+          ris.readContentTo(out, getMaxFileSizeBytes());
           logger.info(" Truncated url: " + uri + ", Size: " + contentLength +
                   ", Content-type: " + contentType);
       } else {
