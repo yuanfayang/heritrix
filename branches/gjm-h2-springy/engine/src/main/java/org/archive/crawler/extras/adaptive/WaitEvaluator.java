@@ -22,18 +22,15 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.postprocessor;
+package org.archive.crawler.extras.adaptive;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
 /**
@@ -56,9 +53,15 @@ implements AdaptiveRevisitAttributeConstants, PostProcessor {
      * crawler experiance. I.e. shorter wait, visit more often, if document has
      * changed between visits, and vica versa.
      */
-    final public static Key<Long> INITIAL_WAIT_INTERVAL_SECONDS =
-        Key.make(86400L);
-
+    {
+        setInitialWaitIntervalSeconds(24*60*60L); // 1 day
+    }
+    public long getInitialWaitIntervalSeconds() {
+        return (Long) kp.get("initialWaitIntervalSeconds");
+    }
+    public void setInitialWaitIntervalSeconds(long secs) {
+        kp.put("initialWaitIntervalSeconds",secs);
+    }
     
     /**
      * The maximum settable wait time between revisits. Once a URIs wait time
@@ -68,25 +71,45 @@ implements AdaptiveRevisitAttributeConstants, PostProcessor {
      * forcing a URI to wait until other URIs, scheduled for earlier are
      * completed.
      */
-    final public static Key<Long> MAX_WAIT_INTERVAL_SECONDS =
-        Key.make(2419200L); // 4 weeks
-
+    {
+        setMaxWaitIntervalSeconds(4*7*24*60*60L); // 4 weeks
+    }
+    public long getMaxWaitIntervalSeconds() {
+        return (Long) kp.get("maxWaitIntervalSeconds");
+    }
+    public void setMaxWaitIntervalSeconds(long secs) {
+        kp.put("maxWaitIntervalSeconds",secs);
+    }
 
     /**
      * The minum settable wait time between revisits. Once a URIs wait time
      * reaches this value, it will not be shortened further, regardlesss of
      * subsequent visits that discover changes.
      */
-    final public static Key<Long> MIN_WAIT_INTERVAL_SECONDS =
-        Key.make(3600L); // 1 hour
-
+    {
+        setMinWaitIntervalSeconds(60*60L); // 1 hour
+    }
+    public long getMinWaitIntervalSeconds() {
+        return (Long) kp.get("minWaitIntervalSeconds");
+    }
+    public void setMinWaitIntervalSeconds(long secs) {
+        kp.put("minWaitIntervalSeconds",secs);
+    }
     
     /**
      * The factor by which a URIs wait time is increased when a revisit reveals
      * an unchanged document. A value of 1 will leave it unchanged, a value of 2
      * will double it etc.
      */
-    final public static Key<Double> UNCHANGED_FACTOR = Key.make(1.5);
+    {
+        setUnchangedFactor(1.5);
+    }
+    public double getUnchangedFactor() {
+        return (Long) kp.get("unchangedFactor");
+    }
+    public void setUnchangedFactor(double factor) {
+        kp.put("unchangedFactor",factor);
+    }
 
 
     /**
@@ -94,23 +117,43 @@ implements AdaptiveRevisitAttributeConstants, PostProcessor {
      * a changed document. A value of 1 will leave it unchanged, a value of two
      * will half it etc.
      */
-    final public static Key<Double> CHANGED_FACTOR = Key.make(1.5);
-
+    {
+        setChangedFactor(1.5);
+    }
+    public double getChangedFactor() {
+        return (Long) kp.get("changedFactor");
+    }
+    public void setChangedFactor(double factor) {
+        kp.put("changedFactor",factor);
+    }
 
     /**
      * Fixed wait time for 'unknown' change status. I.e. wait time for URIs
      * whose content change detection is not available.
      */    
-    final public static Key<Long> DEFAULT_WAIT_INTERVAL_SECONDS =
-        Key.make(259200L); // 3 days
-
-
+    {
+        setDefaultWaitIntervalSeconds(3*24*60*60L); // 3 days
+    }
+    public long getDefaultWaitIntervalSeconds() {
+        return (Long) kp.get("defaultWaitIntervalSeconds");
+    }
+    public void setDefaultWaitIntervalSeconds(long secs) {
+        kp.put("defaultWaitIntervalSeconds",secs);
+    }
+    
     /**
      * Indicates if the amount of time the URI was overdue should be added to
      * the wait time before the new wait time is calculated.
      */
-    final public static Key<Boolean> USE_OVERDUE_TIME = Key.make(false);
-
+    {
+        setUseOverdueTime(false);
+    }
+    public boolean getUseOverdueTime() {
+        return (Boolean) kp.get("useOverdueTime");
+    }
+    public void setUseOverdueTime(boolean digest) {
+        kp.put("useOverdueTime",digest);
+    }
 
     /**
      * Constructor.
@@ -141,22 +184,21 @@ implements AdaptiveRevisitAttributeConstants, PostProcessor {
             return;
         }
             
-        long min = curi.get(this, MIN_WAIT_INTERVAL_SECONDS) * 1000L;
-        long max = curi.get(this, MAX_WAIT_INTERVAL_SECONDS) * 1000L;        
+        long min = getMinWaitIntervalSeconds() * 1000L;
+        long max = getMaxWaitIntervalSeconds() * 1000L;        
         long waitInterval;
         if (curi.getContentState() == CrawlURI.ContentState.UNKNOWN) {
-            waitInterval = curi.get(this, DEFAULT_WAIT_INTERVAL_SECONDS) * 1000L;
+            waitInterval = getDefaultWaitIntervalSeconds() * 1000L;
         } else {
             /* Calculate curi's time of next processing */ 
-            waitInterval = INITIAL_WAIT_INTERVAL_SECONDS.getDefaultValue() 
-            * 1000L;
+            waitInterval = getInitialWaitIntervalSeconds() * 1000L;
 
             // Retrieve wait interval
             if(curi.containsDataKey(A_WAIT_INTERVAL)) {
                 waitInterval = (Long)curi.getData().get(A_WAIT_INTERVAL); 
 
                 // Should override time be taken into account?
-                boolean useOverrideTime = curi.get(this, USE_OVERDUE_TIME); 
+                boolean useOverrideTime = getUseOverdueTime(); 
                 if(useOverrideTime){
                     waitInterval += curi.getFetchOverdueTime();
                 }
@@ -164,17 +206,16 @@ implements AdaptiveRevisitAttributeConstants, PostProcessor {
                 // Revise the wait interval
                 if (curi.getContentState() == CrawlURI.ContentState.CHANGED) {
                     // Had changed. Decrease wait interval time.
-                    double factor = curi.get(this, CHANGED_FACTOR);
+                    double factor = getChangedFactor();
                     waitInterval = (long)(waitInterval / factor);
                 } else if (curi.getContentState() == CrawlURI.ContentState.UNCHANGED) {
                     // Had not changed. Increase wait interval time
-                    double factor = curi.get(this, UNCHANGED_FACTOR);
+                    double factor = getUnchangedFactor();
                     waitInterval = (long)(waitInterval*factor);
                 }
             } else {
                 // If wait element not found, use initial wait interval 
-                waitInterval = curi.get(this, INITIAL_WAIT_INTERVAL_SECONDS) 
-                    * 1000L;
+                waitInterval = getInitialWaitIntervalSeconds() * 1000L;
             }
         }
         
@@ -192,11 +233,5 @@ implements AdaptiveRevisitAttributeConstants, PostProcessor {
         // Update wait interval
         curi.setWaitInterval(waitInterval);
         curi.setWaitReevaluated(true);
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(WaitEvaluator.class);
     }
 }
