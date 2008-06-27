@@ -98,7 +98,7 @@ public class Kw3WriterProcessor extends Processor {
       this.path = s; 
   }
   public File resolvePath() {
-      return jobHome.resolveToFile(getPath(),null);
+      return JobHome.resolveToFile(jobHome,getPath(),null);
   }
   
   protected JobHome jobHome;

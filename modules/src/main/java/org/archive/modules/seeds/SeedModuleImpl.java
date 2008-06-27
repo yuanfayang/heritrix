@@ -91,7 +91,7 @@ public class SeedModuleImpl extends Bean implements
         this.seedsFile = seedsFile;
     }
     public File resolveSeedsFile() {
-        return jobHome.resolveToFile(seedsFile,null);
+        return JobHome.resolveToFile(jobHome,seedsFile,null);
     }
     /**
      * Whether to reread the seeds specification, whether it has changed or not,

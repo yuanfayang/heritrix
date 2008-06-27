@@ -40,7 +40,6 @@ import org.archive.modules.ProcessorURI;
  */
 public class AggressiveExtractorHTML
 extends ExtractorHTML {
-
     private static final long serialVersionUID = 3L;
 
     static Logger logger =

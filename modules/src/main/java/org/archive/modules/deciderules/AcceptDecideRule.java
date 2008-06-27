@@ -27,11 +27,6 @@ import org.archive.modules.ProcessorURI;
 
 
 public class AcceptDecideRule extends DecideRule {
-
-
-    /**
-     * 
-     */
     private static final long serialVersionUID = 3L;
 
 

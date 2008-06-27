@@ -38,7 +38,7 @@ public class LexicalCrawlMapperTest extends CrawlerProcessorTestBase {
 
     
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return LexicalCrawlMapper.class;
     }
     

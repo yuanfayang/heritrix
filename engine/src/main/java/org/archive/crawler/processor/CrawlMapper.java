@@ -143,7 +143,7 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
         this.diversionDir = path; 
     }
     public File resolveDiversionDir() {
-        return jobHome.resolveToFile(diversionDir,null);
+        return JobHome.resolveToFile(jobHome,diversionDir,null);
     }
     
     protected JobHome jobHome;

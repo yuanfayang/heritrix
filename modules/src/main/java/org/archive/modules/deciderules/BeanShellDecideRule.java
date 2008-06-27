@@ -75,7 +75,7 @@ implements InitializingBean, ApplicationContextAware {
         this.scriptFile = scriptFile;
     }
     public File resolveScriptFile() {
-        return jobHome.resolveToFile(scriptFile,null);
+        return JobHome.resolveToFile(jobHome,scriptFile,null);
     }
     
     protected JobHome jobHome;

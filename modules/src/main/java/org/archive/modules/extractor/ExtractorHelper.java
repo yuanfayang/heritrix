@@ -1,9 +1,13 @@
 package org.archive.modules.extractor;
 
+import java.io.Serializable;
+
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
 
-public class ExtractorHelper implements HasKeyedProperties {
+public class ExtractorHelper implements HasKeyedProperties, Serializable {
+    private static final long serialVersionUID = 1L;
+    
     KeyedProperties kp = new KeyedProperties();
     public KeyedProperties getKeyedProperties() {
         return kp;

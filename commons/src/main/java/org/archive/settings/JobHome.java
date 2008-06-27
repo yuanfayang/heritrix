@@ -54,7 +54,7 @@ public class JobHome implements ApplicationContextAware, InitializingBean {
         }
     }
 
-    public File resolveToFile(String path, String key) {
+    protected File resolveToFile(String path, String key) {
         File jobHomeDir = new File(new File(configPath).getParent(),this.path);
         File materialized = new File(jobHomeDir, path);
         if(key!=null && !materializedPaths.containsKey(key)) {
@@ -75,5 +75,10 @@ public class JobHome implements ApplicationContextAware, InitializingBean {
     }
 
 
-    
+    public static File resolveToFile(JobHome home,String path,String key) {
+        if(home==null) {
+            return new File(path); 
+        }
+        return home.resolveToFile(path, key);
+    }
 }

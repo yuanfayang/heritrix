@@ -98,7 +98,7 @@ public abstract class Scoper extends Processor implements InitializingBean {
         if (getLogToFile()) {
             // Set up logger for this instance.  May have special directives
             // since this class can log scope-rejected URLs.
-            LogUtils.createFileLogger(loggerModule.getLogsDir(),
+            LogUtils.createFileLogger(loggerModule.resolveLogsDir(),
                 this.getClass().getName(),
                 Logger.getLogger(this.getClass().getName()));
         }

@@ -31,14 +31,12 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.SerializationUtils;
 import org.archive.io.CrawlerJournal;
 import org.archive.modules.ProcessorURI;
-import org.archive.settings.Finishable;
+import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.archive.state.Immutable;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.Key;
-import org.archive.state.Path;
-import org.archive.state.StateProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -50,17 +48,33 @@ import org.archive.state.StateProvider;
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
 public class PersistLogProcessor extends PersistProcessor 
-implements Checkpointable, InitializingBean, Finishable {
+implements Checkpointable, InitializingBean, DisposableBean {
 
     private static final long serialVersionUID = 1678691994065439346L;
     
     protected CrawlerJournal log;
 
-    @Immutable
-    final public static Key<Path> LOG_FILE = 
-        Key.make(new Path("logs/persistlog.txtser.gz")); 
-    // description: "Filename to which to log URI persistence information. " +
+    //  description: "Filename to which to log URI persistence information. " +
     // "Default is 'logs/persistlog.txtser.gz'. "
+    String logFile = "logs/persistlog.txtser.gz";
+    public String getLogFile() {
+        return this.logFile;
+    }
+    public void setLogFile(String path) {
+        this.logFile = path; 
+    }
+    public File resolveLogFile() {
+        return JobHome.resolveToFile(jobHome, logFile, null);
+    }
+    
+    protected JobHome jobHome;
+    public JobHome getJobHome() {
+        return jobHome;
+    }
+    @Autowired
+    public void setJobHome(JobHome home) {
+        this.jobHome = home;
+    }
     
 //    class description: "PersistLogProcessor. Logs CrawlURI attributes " +
 //    "from latest fetch for consultation by a later recrawl."
@@ -70,18 +84,17 @@ implements Checkpointable, InitializingBean, Finishable {
 
 
     public void afterPropertiesSet() {
-        LOG_FILE.getClass();
-//      try {
-//            File logFile = provider.get(this, LOG_FILE).toFile();
-//            log = new CrawlerJournal(logFile);
-//        } catch (IOException e) {
-//            // TODO Auto-generated catch block
-//            throw new RuntimeException(e);
-//        }
+      try {
+            File logFile = resolveLogFile();
+            log = new CrawlerJournal(logFile);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException(e);
+        }
     }
     
 
-    public void finalTasks(StateProvider provider) {
+    public void destroy() {
         log.close();
     }
 

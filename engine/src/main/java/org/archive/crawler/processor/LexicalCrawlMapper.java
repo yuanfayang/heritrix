@@ -36,12 +36,11 @@ import java.util.TreeMap;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
-import org.archive.state.Immutable;
-import org.archive.state.Key;
-import org.archive.state.Path;
+import org.archive.settings.JobHome;
 import org.archive.state.StateProvider;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -95,9 +94,16 @@ public class LexicalCrawlMapper extends CrawlMapper {
      * range, the second the crawler node to which URIs in the key range should
      * be mapped.  This setting is ignored if MAP_URI is specified.
      */
-    @Immutable
-    final public static Key<Path> MAP_PATH = Key.make(new Path("."));
-
+    String mapPath = ".";
+    public String getMapPath() {
+        return this.mapPath;
+    }
+    public void setMapPath(String path) {
+        this.mapPath = path; 
+    }
+    public File resolveMapPath() {
+        return JobHome.resolveToFile(jobHome, mapPath, null);
+    }
 
     /**
      * URI to map specification file. Each line should include 2
@@ -106,21 +112,28 @@ public class LexicalCrawlMapper extends CrawlMapper {
      * be mapped.  This setting takes precedence over MAP_PATH; if both are
      * specified, then MAP_PATH is ignored.
      */
-    @Immutable
-    final public static Key<String> MAP_URI = Key.make("");
+    String mapUri = "";
+    public String getMapUri() {
+        return this.mapUri;
+    }
+    public void setMapUri(String uri) {
+        this.mapUri = uri; 
+    }
 
-    @Immutable
-    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class); 
-    
+    protected Frontier frontier;
+    public Frontier getFrontier() {
+        return this.frontier;
+    }
+    @Autowired
+    public void setFrontier(Frontier frontier) {
+        this.frontier = frontier;
+    }
 
     /**
      * Mapping of classKey ranges (as represented by their start) to 
      * crawlers (by abstract name/filename)
      */
     TreeMap<String, String> map = new TreeMap<String, String>();
-
-    private Frontier frontier;
-
     
     /**
      * Constructor.
@@ -169,11 +182,10 @@ public class LexicalCrawlMapper extends CrawlMapper {
      */
     protected void loadMap(StateProvider context) throws IOException {
         map.clear();
-        String uri = context.get(this, MAP_URI);
+        String uri = getMapUri();
         Reader reader = null;
         if (uri.trim().length() == 0) {
-            Path path = context.get(this, MAP_PATH);
-            File source = path.toFile();
+            File source = resolveMapPath();
             reader = new FileReader(source);
         } else {
             URLConnection conn = (new URL(uri)).openConnection();

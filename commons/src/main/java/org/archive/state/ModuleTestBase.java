@@ -29,12 +29,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import org.apache.commons.lang.SerializationUtils;
 
 import junit.framework.TestCase;
 
@@ -223,20 +226,18 @@ public abstract class ModuleTestBase extends TestCase {
      */
     public void testSerialization() throws Exception {
         Object first = makeModule();
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream output = new ObjectOutputStream(bout);
-        output.writeObject(first);
+        byte[] firstBytes = SerializationUtils.serialize((Serializable)first); 
+         
+        Object second = SerializationUtils.deserialize(firstBytes);
+        byte[] secondBytes = SerializationUtils.serialize((Serializable)second);
         
-        ByteArrayInputStream binp = new ByteArrayInputStream(bout.toByteArray());
-        ObjectInputStream input = new ObjectInputStream(binp);
-        Object second = input.readObject();
+        Object third = SerializationUtils.deserialize(secondBytes);
+        byte[] thirdBytes = SerializationUtils.serialize((Serializable)third);
         
-        ByteArrayOutputStream bout2 = new ByteArrayOutputStream();
-        output = new ObjectOutputStream(bout2);
-        output.writeObject(second);
-        
-        verifySerialization(first, 
-                bout.toByteArray(), second, bout2.toByteArray());
+        // HashMap serialization reverses order of items in linked buckets 
+        // each roundtrip -- so don't check one roundtrip, check two
+//        verifySerialization(first, firstBytes, second, secondBytes);
+        verifySerialization(first, firstBytes, third, thirdBytes);
     }
     
 
