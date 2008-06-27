@@ -24,7 +24,6 @@ package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.canonicalize.StripWWWRule;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
 
@@ -47,26 +46,25 @@ public class StripWWWRuleTest extends ModuleTestBase {
     }
 
     public void testCanonicalize() throws URIException {
-        ExampleStateProvider context = new ExampleStateProvider();
         String url = "http://WWW.aRchive.Org/index.html";
         String expectedResult = "http://aRchive.Org/index.html";
         String result = (new StripWWWRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://wWWW.aRchive.Org/index.html";
         expectedResult = "http://wWWW.aRchive.Org/index.html";
         result = (new StripWWWRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://ww.aRchive.Org/index.html";
         expectedResult = "http://ww.aRchive.Org/index.html";
         result = (new StripWWWRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://www001.aRchive.Org/index.html";
         expectedResult = "http://www001.aRchive.Org/index.html";
         result = (new StripWWWRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Failed " + result, expectedResult.equals(result));
     }
 }

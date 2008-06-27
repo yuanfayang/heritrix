@@ -29,18 +29,16 @@ package org.archive.modules.fetcher;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.FetchHTTP;
-import org.archive.state.ExampleStateProvider;
 
 
 /**
- * @author pjack
  *
  */
 public class FetchHTTPTest extends ProcessorTestBase {
 
     
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return FetchHTTP.class;
     }
     
@@ -49,10 +47,9 @@ public class FetchHTTPTest extends ProcessorTestBase {
     protected Processor makeModule() {
         FetchHTTP result = new FetchHTTP();
         // FIXME: Set up server cache, credential store...
-        ExampleStateProvider esp = new ExampleStateProvider();
         // Use SimpleCookieStorage for FetchHTTP test, even though BDB is 
         // actual default
-        esp.set(result, FetchHTTP.COOKIE_STORAGE, new SimpleCookieStorage());
+        result.setCookieStorage(new SimpleCookieStorage());
         result.afterPropertiesSet();
         return result;
     }

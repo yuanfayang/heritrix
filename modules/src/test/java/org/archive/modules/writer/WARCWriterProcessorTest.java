@@ -95,13 +95,10 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
         tmp = new File(tmp, "ARCWriterProcessTest");
         tmp.mkdirs();
 
-        ExampleStateProvider sp = new ExampleStateProvider();
-        Path dir = new Path(tmp.getAbsolutePath());
-
         WARCWriterProcessor result = new WARCWriterProcessor();
-        sp.set(result, WriterPoolProcessor.DIRECTORY, dir);
-        sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
-        sp.set(result, WriterPoolProcessor.METADATA_PROVIDER, new DummyMetadataProvider());
+        result.setDirectory(tmp.getAbsolutePath());
+        result.setServerCache(new DefaultServerCache());
+        result.setMetadataProvider(new DummyMetadataProvider());
         result.afterPropertiesSet();
         return result;
     }

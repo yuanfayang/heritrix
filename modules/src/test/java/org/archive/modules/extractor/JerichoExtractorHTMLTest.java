@@ -30,7 +30,6 @@ import org.archive.modules.DefaultProcessorURI;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.ExampleStateProvider;
 
 
 /**
@@ -46,8 +45,7 @@ public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
     protected Extractor makeExtractor() {
         JerichoExtractorHTML result = new JerichoExtractorHTML();
         UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();
-        ExampleStateProvider dsp = new ExampleStateProvider();
-        dsp.set(result, Extractor.URI_ERROR_LOGGER_MODULE, ulm);
+        result.setLoggerModule(ulm);
         result.afterPropertiesSet();
         return result;
     }
@@ -130,7 +128,7 @@ public class JerichoExtractorHTMLTest extends ExtractorHTMLTest {
             "  <input type=\"submit\" name=\"test\" value=\"Go\">" +
             "</form>";   
         JerichoExtractorHTML ex = (JerichoExtractorHTML)makeExtractor();
-        curi.set(ex, ExtractorHTML.EXTRACT_ONLY_FORM_GETS, Boolean.FALSE);
+        ex.setExtractOnlyFormGets(false);
         ex.extract(curi, cs);
         curi.getOutLinks();
         assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {

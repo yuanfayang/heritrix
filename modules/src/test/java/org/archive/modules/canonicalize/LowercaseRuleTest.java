@@ -23,8 +23,6 @@
 package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.modules.canonicalize.LowercaseRule;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
 
@@ -50,6 +48,6 @@ public class LowercaseRuleTest extends ModuleTestBase {
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Didn't lowercase" + url,
             url.toLowerCase().equals((new LowercaseRule()).
-                canonicalize(url, new ExampleStateProvider())));
+                canonicalize(url)));
     }
 }
