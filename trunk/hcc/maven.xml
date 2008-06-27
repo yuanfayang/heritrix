@@ -27,7 +27,7 @@
 
 <goal name="start-crawler">
 	<exec executable="/bin/bash" dir="${env.HERITRIX_HOME}" >
-	  <arg line="./bin/heritrix --port=9080"/>
+	  <arg line="./bin/heritrix --port=9080 --admin=controlRole:letmein"/>
 	  
 	</exec>
 
