@@ -74,7 +74,7 @@ implements CookieStorage, InitializingBean, Closeable, Serializable {
         this.cookiesLoadFile = cookiesLoadFile;
     }
     public File resolveCookiesLoadFile() {
-        return jobHome.resolveToFile(cookiesLoadFile,null);
+        return JobHome.resolveToFile(jobHome,cookiesLoadFile,null);
     }
 
     
@@ -86,7 +86,7 @@ implements CookieStorage, InitializingBean, Closeable, Serializable {
         this.cookiesSaveFile = cookiesSaveFile;
     }
     public File resolveCookiesSaveFile() {
-        return jobHome.resolveToFile(cookiesSaveFile,null);
+        return JobHome.resolveToFile(jobHome,cookiesSaveFile,null);
     }
 
     public void afterPropertiesSet() {

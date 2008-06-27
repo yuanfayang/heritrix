@@ -222,7 +222,7 @@ implements InitializingBean, Closeable {
         this.directory = directory;
     }
     public File resolveDirectory() {
-        return jobHome.resolveToFile(directory,null);
+        return JobHome.resolveToFile(jobHome,directory,null);
     }
     
     /**

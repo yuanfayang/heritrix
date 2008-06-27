@@ -191,7 +191,7 @@ public abstract class AbstractFrontier
         this.recoveryDir = recoveryDir;
     }
     public File resolveRecoveryDir() {
-        return jobHome.resolveToFile(recoveryDir,null);
+        return JobHome.resolveToFile(jobHome,recoveryDir,null);
     }
 
     /**
@@ -503,7 +503,7 @@ public abstract class AbstractFrontier
         seeds.addSeedRefreshListener(this);
         
         if (getRecoveryLogEnabled()) try {
-            initJournal(loggerModule.getLogsDir().getAbsolutePath());
+            initJournal(loggerModule.resolveLogsDir().getAbsolutePath());
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -1481,7 +1481,7 @@ public abstract class AbstractFrontier
         boolean recoveryLogEnabled = getRecoveryLogEnabled();
         out.writeBoolean(recoveryLogEnabled);
         if (recoveryLogEnabled) {
-            out.writeUTF(loggerModule.getLogsDir().getAbsolutePath());
+            out.writeUTF(loggerModule.resolveLogsDir().getAbsolutePath());
         }
     }
     

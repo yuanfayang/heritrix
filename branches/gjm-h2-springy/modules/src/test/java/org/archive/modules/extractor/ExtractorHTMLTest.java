@@ -52,7 +52,7 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
     }
 
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return ExtractorHTML.class;
     }
 

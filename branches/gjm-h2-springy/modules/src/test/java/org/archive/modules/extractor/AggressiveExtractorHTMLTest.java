@@ -39,7 +39,7 @@ public class AggressiveExtractorHTMLTest extends ProcessorTestBase {
 
     
     @Override
-    protected Class getModuleClass() {
+    protected Class<?> getModuleClass() {
         return AggressiveExtractorHTML.class;
     }
     

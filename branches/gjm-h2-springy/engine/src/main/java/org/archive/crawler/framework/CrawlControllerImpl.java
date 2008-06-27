@@ -121,7 +121,7 @@ public class CrawlControllerImpl extends Bean implements
         this.scratchDir = scratchDir;
     }
     public File resolveScratchDir() {
-        return jobHome.resolveToFile(scratchDir,null);
+        return JobHome.resolveToFile(jobHome,scratchDir,null);
     }
 
 
@@ -136,7 +136,7 @@ public class CrawlControllerImpl extends Bean implements
         this.checkpointsDir = checkpointsDir;
     }
     public File resolveCheckpointsDir() {
-        return jobHome.resolveToFile(checkpointsDir,null);
+        return JobHome.resolveToFile(jobHome,checkpointsDir,null);
     }
 
     /**

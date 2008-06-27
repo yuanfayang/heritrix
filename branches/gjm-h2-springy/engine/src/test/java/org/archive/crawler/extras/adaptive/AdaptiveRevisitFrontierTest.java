@@ -24,7 +24,7 @@
  * $Id:$
  */
 
-package org.archive.crawler.frontier;
+package org.archive.crawler.extras.adaptive;
 
 import org.archive.crawler.extras.adaptive.AdaptiveRevisitFrontier;
 import org.archive.state.ModuleTestBase;

@@ -169,7 +169,7 @@ implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable 
 
     
     public void afterPropertiesSet() {
-        getLogsDir().mkdirs();
+        resolveLogsDir().mkdirs();
         this.atg = AlertThreadGroup.current();
         try {
             setupLogs();
@@ -180,7 +180,7 @@ implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable 
     
     
     private void setupLogs() throws IOException {
-        String logsPath = getLogsDir().getAbsolutePath() + File.separatorChar;
+        String logsPath = resolveLogsDir().getAbsolutePath() + File.separatorChar;
         uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
         runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
             logsPath);
@@ -321,8 +321,8 @@ implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable 
     }
 
 
-    public File getLogsDir() {
-        return jobHome.resolveToFile(path,EngineImpl.LOGS_DIR_PATH);
+    public File resolveLogsDir() {
+        return JobHome.resolveToFile(jobHome,path,EngineImpl.LOGS_DIR_PATH);
     }
 
 
@@ -394,7 +394,7 @@ implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable 
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         loggers = new HashMap<String,Logger>();
-        getLogsDir().mkdirs();
+        resolveLogsDir().mkdirs();
         this.atg = AlertThreadGroup.current();
         this.setupLogs();
     }

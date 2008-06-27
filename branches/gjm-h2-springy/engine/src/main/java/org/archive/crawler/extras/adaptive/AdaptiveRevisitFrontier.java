@@ -177,7 +177,7 @@ InitializingBean, HasKeyedProperties {
         this.dir = dir; 
     }
     public File resolveDir() {
-        return jobHome.resolveToFile(getDir(), null);
+        return JobHome.resolveToFile(jobHome,getDir(), null);
     }
     
     protected JobHome jobHome;

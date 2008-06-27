@@ -193,7 +193,7 @@ Serializable, Closeable {
         this.dir = dir;
     }
     public File resolveDir() {
-        return jobHome.resolveToFile(dir,null);
+        return JobHome.resolveToFile(jobHome,dir,null);
     }
     
     int cachePercent = 60;

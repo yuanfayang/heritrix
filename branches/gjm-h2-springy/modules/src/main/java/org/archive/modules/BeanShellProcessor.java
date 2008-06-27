@@ -73,7 +73,7 @@ public class BeanShellProcessor extends Processor {
         this.scriptFile = file; 
     }
     public File resolveScriptFile() {
-        return jobHome.resolveToFile(getScriptFile(),null); 
+        return JobHome.resolveToFile(jobHome,getScriptFile(),null); 
     }
     
     protected JobHome jobHome;

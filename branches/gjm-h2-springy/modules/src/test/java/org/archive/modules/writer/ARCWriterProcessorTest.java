@@ -28,6 +28,7 @@ package org.archive.modules.writer;
 
 import java.io.File;
 
+import org.archive.modules.DummyMetadataProvider;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.modules.writer.ARCWriterProcessor;
@@ -57,6 +58,7 @@ public class ARCWriterProcessorTest extends ProcessorTestBase {
         ARCWriterProcessor result = new ARCWriterProcessor();
         result.setDirectory(tmp.getAbsolutePath());
         result.setServerCache(new DefaultServerCache());
+        result.setMetadataProvider(new DummyMetadataProvider());
         result.afterPropertiesSet();
         return result;
     }

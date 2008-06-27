@@ -162,6 +162,9 @@ implements CrawlURIDispositionListener, Serializable {
     public void setReportsDir(String reportsDir) {
         this.reportsDir = reportsDir;
     }
+    public File resolveReportsDir() {
+        return JobHome.resolveToFile(jobHome,getReportsDir(),EngineImpl.REPORTS_DIR_KEY); 
+    }
     
     protected ServerCache serverCache;
     public ServerCache getServerCache() {
@@ -1186,7 +1189,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeReportFile(String reportName, String filename) {
-        File f = new File(jobHome.resolveToFile(reportsDir,EngineImpl.REPORTS_DIR_KEY), filename);
+        File f = new File(resolveReportsDir(), filename);
         try {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
             writeReportTo(reportName, bw);

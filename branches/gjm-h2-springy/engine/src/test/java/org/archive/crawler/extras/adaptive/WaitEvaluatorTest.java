@@ -23,7 +23,7 @@
  *
  * $Id:$
  */
-package org.archive.crawler.postprocessor;
+package org.archive.crawler.extras.adaptive;
 
 
 import org.archive.crawler.extras.adaptive.WaitEvaluator;

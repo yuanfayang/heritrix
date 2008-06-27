@@ -28,13 +28,9 @@ package org.archive.modules.writer;
 
 import java.io.File;
 
+import org.archive.modules.DummyMetadataProvider;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.DefaultServerCache;
-import org.archive.modules.writer.WARCWriterProcessor;
-import org.archive.modules.writer.MetadataProvider;
-import org.archive.modules.writer.WriterPoolProcessor;
-import org.archive.state.ExampleStateProvider;
-import org.archive.state.Path;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -44,45 +40,6 @@ import org.archive.util.TmpDirTestCase;
  * @author pjack
  */
 public class WARCWriterProcessorTest extends ProcessorTestBase {
-    public class DummyMetadataProvider implements MetadataProvider {
-        public String getAudience() {
-            return null;
-        }
-
-        public String getFrom() {
-            return null;
-        }
-
-        public String getDescription() {
-            return null;
-        }
-
-        public String getJobName() {
-            return null;
-        }
-
-        public String getOperator() {
-            return null;
-        }
-        
-        public String getOperatorFrom() {
-            return null;
-        }
-
-        public String getOrganization() {
-            return null;
-        }
-
-        public String getRobotsPolicyName() {
-            return null;
-        }
-
-        public String getUserAgent() {
-            return null;
-        }
-    }
-
-
     @Override
     protected Class<?> getModuleClass() {
         return WARCWriterProcessor.class;
