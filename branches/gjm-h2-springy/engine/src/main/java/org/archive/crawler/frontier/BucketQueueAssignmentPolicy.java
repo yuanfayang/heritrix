@@ -29,10 +29,8 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
-import org.archive.state.Immutable;
 import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Uses the target IPs as basis for queue-assignment,
@@ -48,11 +46,14 @@ implements InitializingBean {
     private static final int DEFAULT_NOIP_BITMASK = 1023;
     private static final int DEFAULT_QUEUES_HOSTS_MODULO = 1021;
 
-    @Immutable
-    final public static Key<ServerCache> SERVER_CACHE =
-        Key.makeAuto(ServerCache.class);
-    
-    private ServerCache serverCache;
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
+    }
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
 
     
     public void afterPropertiesSet() {
@@ -83,11 +84,5 @@ implements InitializingBean {
 
     public int maximumNumberOfKeys() {
         return DEFAULT_NOIP_BITMASK + DEFAULT_QUEUES_HOSTS_MODULO + 2;
-    }
-    
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(BucketQueueAssignmentPolicy.class);
     }
 }

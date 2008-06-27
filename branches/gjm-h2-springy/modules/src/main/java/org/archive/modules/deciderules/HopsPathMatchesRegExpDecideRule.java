@@ -25,8 +25,6 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.KeyManager;
-
 
 /**
  * Rule applies configured decision to any CrawlURIs whose 'hops-path'
@@ -48,9 +46,5 @@ public class HopsPathMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
     @Override
     protected String getString(ProcessorURI uri) {
         return uri.getPathFromSeed();
-    }
-    
-    static {
-        KeyManager.addKeys(HopsPathMatchesRegExpDecideRule.class);
     }
 }

@@ -35,7 +35,6 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.state.KeyManager;
 
 /**
  * UriUniqFilter based on an underlying UriSet (essentially a Set).
@@ -53,7 +52,6 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter, Serializab
     
     public SetBasedUriUniqFilter() {
         super();
-        KeyManager.addKeys(getClass());
         String profileLogFile = 
             System.getProperty(SetBasedUriUniqFilter.class.getName()
                 + ".profileLogFile");

@@ -33,7 +33,6 @@ import org.archive.io.SeekReaderCharSequence;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.KeyManager;
 import org.archive.util.ms.Doc;
 
 /**
@@ -138,11 +137,5 @@ public class ExtractorDOC extends ContentExtractor {
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorDOC.class);
     }
 }

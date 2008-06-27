@@ -23,8 +23,6 @@
 package org.archive.modules.recrawl;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.KeyManager;
-
 /**
  * Store CrawlURI attributes from latest fetch to persistent storage for
  * consultation by a later recrawl. 
@@ -55,9 +53,4 @@ public class PersistStoreProcessor extends PersistOnlineProcessor
     protected boolean shouldProcess(ProcessorURI uri) {
         return shouldStore(uri);
     }
-    
-    static {
-        KeyManager.addKeys(PersistStoreProcessor.class);
-    }
-
 }

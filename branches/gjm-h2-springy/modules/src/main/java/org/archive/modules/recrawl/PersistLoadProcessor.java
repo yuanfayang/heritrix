@@ -25,7 +25,6 @@ package org.archive.modules.recrawl;
 import java.util.Map;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.KeyManager;
 
 /**
  * Loads CrawlURI attributes from previous fetch from persistent storage for
@@ -57,9 +56,4 @@ public class PersistLoadProcessor extends PersistOnlineProcessor {
     protected boolean shouldProcess(ProcessorURI uri) {
         return shouldLoad(uri);
     }
-
-    static {
-        KeyManager.addKeys(PersistLoadProcessor.class);
-    }
-	
 }
