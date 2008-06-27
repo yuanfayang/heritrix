@@ -25,9 +25,6 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.KeyManager;
-
-
 
 /**
  * Rule applies the configured decision for any URI which has a 'via' 
@@ -53,9 +50,5 @@ public class HasViaDecideRule extends PredicatedDecideRule {
     @Override
     protected boolean evaluate(ProcessorURI uri) {
         return uri.getVia() != null;
-    }
-    
-    static {
-        KeyManager.addKeys(HasViaDecideRule.class);
     }
 }

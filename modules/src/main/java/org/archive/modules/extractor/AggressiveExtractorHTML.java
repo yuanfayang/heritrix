@@ -29,7 +29,6 @@ package org.archive.modules.extractor;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.state.KeyManager;
 
 /**
  * Extended version of ExtractorHTML with more aggressive javascript link
@@ -70,11 +69,5 @@ extends ExtractorHTML {
         ret.append("  ProcessorURRIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(AggressiveExtractorHTML.class);
     }
 }

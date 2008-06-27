@@ -25,10 +25,6 @@ package org.archive.crawler.util;
 
 import java.io.Serializable;
 
-import org.archive.state.Immutable;
-import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.LongFPSet;
 
@@ -44,7 +40,7 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  */
 public class FPUriUniqFilter extends SetBasedUriUniqFilter 
-implements InitializingBean, Serializable {
+implements Serializable {
     // Be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class, 1);
@@ -52,19 +48,16 @@ implements InitializingBean, Serializable {
 //    private static Logger logger =
 //        Logger.getLogger(FPUriUniqFilter.class.getName());
     
-    private LongFPSet fpset;
     private transient FPGenerator fpgen = FPGenerator.std64;
     
-    
-    @Immutable
-    final public static Key<LongFPSet> LONG_FP_SET = 
-        Key.makeAuto(LongFPSet.class);
-
-
-    static {
-        KeyManager.addKeys(FPUriUniqFilter.class);
+    LongFPSet fpset;
+    public LongFPSet getFpset() {
+        return this.fpset;
     }
-
+    public void setFpset(LongFPSet fpset) {
+        this.fpset = fpset; 
+    }
+    
     /**
      * Create FPUriUniqFilter wrapping given long set
      * 
@@ -76,11 +69,6 @@ implements InitializingBean, Serializable {
     
     
     public FPUriUniqFilter() {
-    }
-    
-    
-    public void afterPropertiesSet() {
-//        this.fpset = provider.get(this, LONG_FP_SET);
     }
     
     private long getFp(CharSequence canonical) {

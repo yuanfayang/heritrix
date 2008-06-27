@@ -30,7 +30,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.frontier.WorkQueue;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats.Stage;
-import org.archive.state.KeyManager;
 import org.archive.util.Histotable;
 
 /**
@@ -127,11 +126,5 @@ public class HighestUriQueuePrecedencePolicy extends BaseQueuePrecedencePolicy {
             }
         }
 
-    }
-
-    // good to keep at end of source: must run after all per-Key
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(HighestUriQueuePrecedencePolicy.class);
     }
 }

@@ -36,7 +36,6 @@ import java.util.logging.Logger;
 import org.archive.modules.ProcessorURI;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.KeyManager;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;
 
@@ -94,7 +93,6 @@ public class CredentialStore implements Module, Serializable, HasKeyedProperties
         // Array of all known credential types.
         Class [] tmp = {HtmlFormCredential.class, Rfc2617Credential.class};
         credentialTypes = Collections.unmodifiableList(Arrays.asList(tmp));
-        KeyManager.addKeys(CredentialStore.class);
     }
 
     /**

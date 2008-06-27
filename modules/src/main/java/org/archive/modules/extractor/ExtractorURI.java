@@ -39,7 +39,6 @@ import org.archive.modules.ProcessorURI;
 import org.archive.net.LaxURLCodec;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.KeyManager;
 import org.archive.util.TextUtils;
 
 /**
@@ -188,11 +187,5 @@ public class ExtractorURI extends Extractor {
         ret.append("  Links extracted:   " + linksExtracted + "\n\n");
 
         return ret.toString();
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
-    // initialization values are set.
-    static {
-        KeyManager.addKeys(ExtractorURI.class);
     }
 }
