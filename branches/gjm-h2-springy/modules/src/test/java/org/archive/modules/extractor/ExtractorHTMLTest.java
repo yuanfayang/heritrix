@@ -8,7 +8,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.modules.DefaultProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.ExampleStateProvider;
 import org.archive.util.Recorder;
 
 public class ExtractorHTMLTest extends StringExtractorTestBase {
@@ -60,9 +59,8 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
     @Override
     protected Extractor makeExtractor() {
         ExtractorHTML result = new ExtractorHTML();
-        UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();
-        ExampleStateProvider dsp = new ExampleStateProvider();
-        dsp.set(result, Extractor.URI_ERROR_LOGGER_MODULE, ulm);
+        UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();   
+        result.setLoggerModule(ulm);
         result.afterPropertiesSet();
         return result;
     }

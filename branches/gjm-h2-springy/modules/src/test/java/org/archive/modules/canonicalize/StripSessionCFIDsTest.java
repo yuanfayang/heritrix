@@ -2,7 +2,6 @@ package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.canonicalize.StripSessionCFIDs;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
 public class StripSessionCFIDsTest extends ModuleTestBase {
@@ -40,10 +39,9 @@ public class StripSessionCFIDsTest extends ModuleTestBase {
     };
 
     public void testCanonicalize() throws URIException {
-        ExampleStateProvider context = new ExampleStateProvider();
         for (int i = 0; i < INPUTS.length; i++) {
             String result = (new StripSessionCFIDs().
-                canonicalize(INPUTS[i], context));
+                canonicalize(INPUTS[i]));
             assertEquals(result, OUTPUTS[i]);
         }
     }

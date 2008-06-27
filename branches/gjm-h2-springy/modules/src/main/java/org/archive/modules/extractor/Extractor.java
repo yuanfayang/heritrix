@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
@@ -52,17 +51,17 @@ public abstract class Extractor extends Processor implements InitializingBean {
     private static final Logger logger = 
         Logger.getLogger(Extractor.class.getName());
 
-    protected CrawlerLoggerModule loggerModule;
-    public CrawlerLoggerModule getLoggerModule() {
+    protected UriErrorLoggerModule loggerModule;
+    public UriErrorLoggerModule getLoggerModule() {
         return this.loggerModule;
     }
     @Autowired
-    public void setLoggerModule(CrawlerLoggerModule loggerModule) {
+    public void setLoggerModule(UriErrorLoggerModule loggerModule) {
         this.loggerModule = loggerModule;
     }
     
     public void afterPropertiesSet() {
-//        this.uriErrors = global.get(this, URI_ERROR_LOGGER_MODULE);    
+        // be default do nothing
     }
     
     ExtractorHelper extractorHelper = new ExtractorHelper();

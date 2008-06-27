@@ -24,7 +24,6 @@ package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.canonicalize.StripUserinfoRule;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
 
@@ -47,26 +46,25 @@ public class StripUserinfoRuleTest extends ModuleTestBase {
     }
 
     public void testCanonicalize() throws URIException {
-        ExampleStateProvider context = new ExampleStateProvider();
         String url = "http://WWW.aRchive.Org/index.html";
         final String expectedResult = url;
         String result = (new StripUserinfoRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Mangled no userinfo " + result,
             url.equals(result));
         url = "http://stack:password@WWW.aRchive.Org/index.html";
         result = (new StripUserinfoRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Didn't strip userinfo " + result,
             expectedResult.equals(result));
         url = "http://stack:pass@@@@@@word@WWW.aRchive.Org/index.html";
         result = (new StripUserinfoRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Didn't get to last @ " + result,
             expectedResult.equals(result));
         url = "ftp://stack:pass@@@@@@word@archive.org/index.html";
         result = (new StripUserinfoRule()).
-            canonicalize(url, context);
+            canonicalize(url);
         assertTrue("Didn't get to last @ " + result,
             "ftp://archive.org/index.html".equals(result));
     }

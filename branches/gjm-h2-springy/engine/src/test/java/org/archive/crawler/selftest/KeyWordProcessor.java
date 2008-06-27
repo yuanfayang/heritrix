@@ -5,8 +5,6 @@ import java.util.regex.Pattern;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
 /**
@@ -32,41 +30,52 @@ import org.archive.state.KeyManager;
  * @author pjack
  */
 public class KeyWordProcessor extends Processor {
-
-
+    private static final long serialVersionUID = 1L;
     /**
      * Regular expression used to detect the presence of a keyword.
      */
-    final public static Key<Pattern> PATTERN = 
-        Key.make(Pattern.compile("\\bkeyword\\b"));
+    Pattern pattern = Pattern.compile("\\bkeyword\\b");
+    public Pattern getPattern() {
+        return this.pattern;
+    }
+    public void setPattern(Pattern pattern) {
+        this.pattern = pattern; 
+    }
 
     /**
      * Precedence value to assign to discovered links of URIs that match
      * the pattern.
      */
-    final public static Key<Integer> FOUND_PRECEDENCE =
-        Key.make(1);
+    int foundPrecedence = 1; 
+    public int getFoundPrecedence() {
+        return this.foundPrecedence;
+    }
+    public void setFoundPrecedence(int prec) {
+        this.foundPrecedence = prec; 
+    }
 
-    
     /**
      * Precedence value to assign to discovered links of URIs that do not
      * match the pattern.
      */
-    final public static Key<Integer> NOT_FOUND_PRECEDENCE =
-        Key.make(10);
+    int notFoundPrecedence = 10; 
+    public int getNotFoundPrecedence() {
+        return this.foundPrecedence;
+    }
+    public void setNotFoundPrecedence(int prec) {
+        this.foundPrecedence = prec; 
+    }
 
-    
     @Override
     protected void innerProcess(ProcessorURI uri) throws InterruptedException {
         CrawlURI curi = (CrawlURI)uri;
         try {
-            Pattern pattern = uri.get(this, PATTERN);
             CharSequence seq = uri.getRecorder().getReplayCharSequence();
             int precedence;
-            if (pattern.matcher(seq).find()) {
-                precedence = uri.get(this, FOUND_PRECEDENCE);
+            if (getPattern().matcher(seq).find()) {
+                precedence = getFoundPrecedence();
             } else {
-                precedence = uri.get(this, NOT_FOUND_PRECEDENCE);
+                precedence = getNotFoundPrecedence();
             }
             for (CrawlURI c: curi.getOutCandidates()) {
                 c.setPrecedence(precedence);
@@ -83,10 +92,4 @@ public class KeyWordProcessor extends Processor {
         }
         return uri instanceof CrawlURI;
     }
-
-    
-    static {
-        KeyManager.addKeys(KeyWordProcessor.class);
-    }
-    
 }

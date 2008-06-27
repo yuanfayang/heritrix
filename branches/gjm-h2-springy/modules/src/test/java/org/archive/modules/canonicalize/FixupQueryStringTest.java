@@ -23,8 +23,6 @@
 package org.archive.modules.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.modules.canonicalize.FixupQueryString;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.ModuleTestBase;
 
 /**
@@ -45,27 +43,26 @@ public class FixupQueryStringTest extends ModuleTestBase {
     }
 
     public void testCanonicalize() throws URIException {
-        ExampleStateProvider context = new ExampleStateProvider();
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Mangled " + url,
             url.equals((new FixupQueryString()).
-                canonicalize(url, context)));
+                canonicalize(url)));
         assertTrue("Failed to strip '?' " + url,
             url.equals((new FixupQueryString()).
-                canonicalize(url + "?", context)));
+                canonicalize(url + "?")));
         assertTrue("Failed to strip '?&' " + url,
             url.equals((new FixupQueryString()).
-                canonicalize(url + "?&", context)));
+                canonicalize(url + "?&")));
         assertTrue("Failed to strip extraneous '&' " + url,
             (url + "?x=y").equals((new FixupQueryString()).
-                canonicalize(url + "?&x=y", context)));
+                canonicalize(url + "?&x=y")));
         String tmp = url + "?x=y";
         assertTrue("Mangled x=y " + tmp,
             tmp.equals((new FixupQueryString()).
-                canonicalize(tmp, context)));
+                canonicalize(tmp)));
         String tmp2 = tmp + "&";
         String fixed = new FixupQueryString().
-            canonicalize(tmp2, context);
+            canonicalize(tmp2);
         assertTrue("Mangled " + tmp2, tmp.equals(fixed));
     }
 }

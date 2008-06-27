@@ -75,22 +75,21 @@ public class CanonicalizerTest extends TmpDirTestCase {
     }
     
     public void testCanonicalize() throws URIException {
-        ExampleStateProvider context = new ExampleStateProvider();
         final String scheme = "http://";
         final String nonQueryStr = "archive.org/index.html";
         final String result = scheme + nonQueryStr;
         assertTrue("Mangled original", result.equals(
-            Canonicalizer.canonicalize(context, result, rules)));
+            Canonicalizer.canonicalize(result, rules)));
         String tmp = scheme + "www." + nonQueryStr;
         assertTrue("Mangled www", result.equals(
-            Canonicalizer.canonicalize(context, tmp, rules)));
+            Canonicalizer.canonicalize(tmp, rules)));
         tmp = scheme + "www." + nonQueryStr +
             "?jsessionid=01234567890123456789012345678901";
         assertTrue("Mangled sessionid", result.equals(
-            Canonicalizer.canonicalize(context, tmp, rules)));
+            Canonicalizer.canonicalize(tmp, rules)));
         tmp = scheme + "www." + nonQueryStr +
             "?jsessionid=01234567890123456789012345678901";
         assertTrue("Mangled sessionid", result.equals(
-             Canonicalizer.canonicalize(context, tmp, rules)));
+             Canonicalizer.canonicalize(tmp, rules)));
     }
 }

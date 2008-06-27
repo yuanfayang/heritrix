@@ -28,12 +28,9 @@ package org.archive.modules.writer;
 
 import java.io.File;
 
-import org.archive.state.Path;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.modules.writer.ARCWriterProcessor;
-import org.archive.modules.writer.WriterPoolProcessor;
-import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -56,13 +53,10 @@ public class ARCWriterProcessorTest extends ProcessorTestBase {
         File tmp = TmpDirTestCase.tmpDir();
         tmp = new File(tmp, "ARCWriterProcessTest");
         tmp.mkdirs();
-
-        ExampleStateProvider sp = new ExampleStateProvider();
-        Path path = new Path(tmp.getAbsolutePath());
         
         ARCWriterProcessor result = new ARCWriterProcessor();
-        sp.set(result, WriterPoolProcessor.DIRECTORY, path);
-        sp.set(result, WriterPoolProcessor.SERVER_CACHE, new DefaultServerCache());
+        result.setDirectory(tmp.getAbsolutePath());
+        result.setServerCache(new DefaultServerCache());
         result.afterPropertiesSet();
         return result;
     }
