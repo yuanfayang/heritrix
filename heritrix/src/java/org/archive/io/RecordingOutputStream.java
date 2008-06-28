@@ -530,7 +530,7 @@ public class RecordingOutputStream extends OutputStream {
             characterEncoding = Charset.defaultCharset().name();
         // TODO: handled transfer-encoding: chunked content-bodies properly
         if (canonicalLatin1.equals(Charset.forName(characterEncoding).name())) {
-            return new ByteReplayCharSequence(
+            return new Latin1ByteReplayCharSequence(
                     this.buffer, 
                     this.size, 
                     startOffset,
@@ -539,7 +539,7 @@ public class RecordingOutputStream extends OutputStream {
             // multibyte 
             if(this.size <= this.buffer.length) {
                 // raw data is all in memory; do in memory
-                return new MultiByteReplayCharSequence(
+                return new GenericReplayCharSequence(
                         this.buffer, 
                         this.size, 
                         startOffset,
@@ -548,7 +548,7 @@ public class RecordingOutputStream extends OutputStream {
             } else {
                 // raw data overflows to disk; use temp file
                 ReplayInputStream ris = getReplayInputStream(startOffset);
-                ReplayCharSequence rcs = new MultiByteReplayCharSequence(
+                ReplayCharSequence rcs = new GenericReplayCharSequence(
                         ris, 
                         this.backingFilename,
                         characterEncoding);

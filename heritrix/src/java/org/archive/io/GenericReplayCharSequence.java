@@ -47,8 +47,8 @@ import java.util.logging.Logger;
  * buffer and overflow backing file) that can handle streams of multibyte
  * characters.
  *
- * If possible, use {@link ByteReplayCharSequence}.  It performs better even
- * for the single byte case (Decoding is an expensive process).
+ * For better performance on ISO-8859-1 text, use 
+ * {@link Latin1ByteReplayCharSequence}.
  *
  * <p>Call close on this class when done so can clean up resources.
  *
@@ -82,10 +82,10 @@ import java.util.logging.Logger;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class MultiByteReplayCharSequence implements ReplayCharSequence {
+public class GenericReplayCharSequence implements ReplayCharSequence {
 
     protected static Logger logger =
-        Logger.getLogger(MultiByteReplayCharSequence.class.getName());
+        Logger.getLogger(GenericReplayCharSequence.class.getName());
     
     /**
      * Name of the encoding we use writing out concatenated decoded prefix
@@ -134,7 +134,7 @@ public class MultiByteReplayCharSequence implements ReplayCharSequence {
      *
      * @throws IOException
      */
-    public MultiByteReplayCharSequence(byte[] buffer, long size,
+    public GenericReplayCharSequence(byte[] buffer, long size,
             long responseBodyStart, String encoding)
         throws IOException {
         super();
@@ -153,7 +153,7 @@ public class MultiByteReplayCharSequence implements ReplayCharSequence {
      *
      * @throws IOException
      */
-    public MultiByteReplayCharSequence(
+    public GenericReplayCharSequence(
             ReplayInputStream contentReplayInputStream,
             String backingFilename,
             String characterEncoding)

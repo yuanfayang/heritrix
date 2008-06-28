@@ -34,7 +34,9 @@ import org.archive.util.DevUtils;
  * Provides a (Replay)CharSequence view on recorded stream bytes (a prefix
  * buffer and overflow backing file).
  *
- * Treats the byte stream as 8-bit.
+ * Assumes the byte stream is ISO-8859-1 text, taking advantage of the fact 
+ * that each byte in the stream corresponds to a single unicode character with
+ * the same numerical value as the byte. 
  *
  * <p>Uses a wraparound rolling buffer of the last windowSize bytes read
  * from disk in memory; as long as the 'random access' of a CharSequence
@@ -65,10 +67,10 @@ import org.archive.util.DevUtils;
  * @author Gordon Mohr
  * @version $Revision$, $Date$
  */
-class ByteReplayCharSequence implements ReplayCharSequence {
+class Latin1ByteReplayCharSequence implements ReplayCharSequence {
 
     protected static Logger logger =
-        Logger.getLogger(ByteReplayCharSequence.class.getName());
+        Logger.getLogger(Latin1ByteReplayCharSequence.class.getName());
 
     /**
      * Buffer that holds the first bit of content.
@@ -148,7 +150,7 @@ class ByteReplayCharSequence implements ReplayCharSequence {
      *
      * @throws IOException
      */
-    public ByteReplayCharSequence(byte[] buffer, long size,
+    public Latin1ByteReplayCharSequence(byte[] buffer, long size,
             long responseBodyStart, String backingFilename)
         throws IOException {
 
