@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -57,5 +58,10 @@ extends MatchesFilePatternDecideRule {
     @Override
     protected boolean evaluate(ProcessorURI uri) {
         return ! super.evaluate(uri);
+    }
+    
+    // subclass needs its own addKeys step
+    static {
+        KeyManager.addKeys(NotMatchesFilePatternDecideRule.class);
     }
 }
