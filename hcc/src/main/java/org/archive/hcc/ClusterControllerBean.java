@@ -1336,6 +1336,8 @@ public class ClusterControllerBean implements
      * @param c Container to check.
      */
     protected void synchronizeContainer(ObjectName c) {
+        log.info("synchonizing container:" + c.toString());
+    	
         InetSocketAddress address = JmxUtils.extractAddress(c);
         MBeanServerConnection mbc = this.connections.get(address);
 
@@ -1368,6 +1370,7 @@ public class ClusterControllerBean implements
     protected void synchronizeMBean(ObjectName name) {
         String theType = name.getKeyProperty(JmxUtils.TYPE);
         if (JmxUtils.SERVICE.equals(theType)) {
+           log.info("crawler service found:" + name.toString());
             handleCrawlerCreated(name);
         }
     }
@@ -1654,7 +1657,7 @@ public class ClusterControllerBean implements
                 .currentTimeMillis());
         n.setUserData(name);
         fireNotificationEvent(n);
-        if (log.isLoggable(Level.FINE)) {
+        if (log.isLoggable(Level.INFO)) {
             log.info("name=" + name + "; type=" + type);
         }
     }
