@@ -123,6 +123,10 @@
 	            <phase>pre-integration-test</phase>
 	            <configuration>
 	              <tasks>
+					<exec executable="/bin/chmod" dir="${basedir}" >
+					  <arg line="go-rwx jmxremote.password"/>
+					</exec>
+
 					<echo message="starting heritrix..."/>
 					<exec executable="/bin/bash" dir="${heritrix.home}" >
 					  <arg line="./bin/heritrix --port=9080 --admin=controlRole:letmein"/>
@@ -172,7 +176,7 @@
 		          </additionalClasspathElements>
 		        
 		            <includes>
-		                <include>**/*BeanSelfTest.java</include>
+		                <include>**/*Test.java</include>
 		                <include>**/*.properties</include>
 		            </includes>
 		          </configuration>

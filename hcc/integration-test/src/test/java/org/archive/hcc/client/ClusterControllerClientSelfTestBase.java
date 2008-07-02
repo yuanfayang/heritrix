@@ -45,13 +45,16 @@ public class ClusterControllerClientSelfTestBase
         new ClusterControllerBean().init();
         ClusterControllerClientManager.resetDefaultClient();
         cc = ClusterControllerClientManager.getDefaultClient();
-        setMaxCrawlersTo(20);
+        setMaxCrawlersTo(10);
+        Thread.sleep(3*1000);
     }
 
     protected void tearDown() throws Exception {
         super.tearDown();
         //cc.destroyAllCrawlers();
         cc.destroy();
+        Thread.sleep(10*1000);
+
     }
     
     public File getTestJar() {
