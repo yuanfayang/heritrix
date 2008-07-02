@@ -1,0 +1,7 @@
+org.archive.modules.ProcessStatus
+org.archive.modules.ProcessorURI$FetchType
+org.archive.modules.deciderules.DecideResult
+org.archive.modules.deciderules.MatchesFilePatternDecideRule$Preset
+org.archive.modules.extractor.Hop
+org.archive.modules.net.RobotsExclusionPolicy$Type
+org.archive.modules.net.RobotsHonoringPolicy$Type
