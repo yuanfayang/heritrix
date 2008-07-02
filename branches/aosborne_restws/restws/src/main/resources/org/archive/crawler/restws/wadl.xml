@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xml-stylesheet type="text/xsl" href="wadl_documentation.xsl"?>
+<application xmlns="http://research.sun.com/wadl/2006/10"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:html="http://www.w3.org/1999/xhtml"
+	xsi:schemaLocation="http://research.sun.com/wadl/2006/10 https://wadl.dev.java.net/wadl20061109.xsd
+						http://www.w3.org/1999/xhtml http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
+	<doc title="Heritrix REST Web Service">
+    The REST web service allows you to control one or more 
+    <html:a href="http://crawler.archive.org/">Heritrix</html:a> web crawlers.
+    Note that not all functionality is currently available via
+    the REST service, you may have to resort to using the JMX API for some
+    operations. 
+  </doc>
+	<resources base="">
+		<resource id="org.archive.crawler.restws.CrawlersResource"
+			path="/">
+			<method name="GET">
+				<doc>List the crawlers available through this service.</doc>
+				<response>
+					<representation mediaType="text/plain" />
+				</response>
+			</method>
+			<method name="POST">
+				<doc>Register a new crawler with the service.</doc>
+			</method>
+			<method name="DELETE">
+				<doc>Unregister a crawler from the service.</doc>
+			</method>
+		</resource>
+		<resource id="org.archive.crawler.restws.WadlResource" path="/wadl.xml">
+			<method name="GET">
+				<doc>Return <html:a href="https://wadl.dev.java.net/">WADL</html:a> 
+			documentation for the service—an online version of
+			this document.  Error messages link to this.</doc>
+			</method>
+		</resource>
+		<resource id="org.archive.crawler.restws.WadlXslResource"
+			path="/wadl_documentation.xsl">
+			<method name="GET">
+				<doc>Return an XSLT stylesheet for styling the WADL documentation as XHTML.
+			</doc>
+			</method>
+		</resource>
+		<resource id="org.archive.crawler.restws.CrawlerResource"
+			path="/{crawler}">
+			<method name="GET">
+				<request>
+					<param style="template" name="crawler">
+						<doc>The id (<html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em>) of the crawler.</doc>
+					</param>
+				</request>
+				<response>
+					<!-- TODO: something -->
+					<fault status="404">
+						<doc title="Unknown crawler">The specified crawler is unknown to the service.</doc>
+					</fault>
+					<fault status="400">
+						<doc title="Malformed crawler id">The specified crawler id is not in the required <html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em> form.</doc>
+					</fault>
+				</response>
+			</method>
+			<resource id="org.archive.crawler.restws.JobsResource" path="jobs">
+				<method name="GET">
+					<doc>List all crawl jobs and profiles.</doc>
+				</method>
+				<resource id="org.archive.crawler.restws.JobResource" path="{job}">
+					<method name="GET">
+						<doc>Get the stage of the job.</doc>
+						<response>
+							<fault status="404">
+								<doc title="Job not found">
+									The job does not exist or has already been deleted.
+								</doc>
+							</fault>
+						</response>
+					</method>
+					<method name="POST">
+						<doc>Copy this job to create a new job or profile.</doc>
+						<request>
+							<representation mediaType="multipart/form-data">
+								<doc title="Copy job request"/>
+								<param style="plain" name="name">
+									<doc>The name of the new job</doc>
+								</param>
+								<param style="plain" name="stage">
+									<doc>The type of job: a normal job <html:em>ready</html:em> to be launched or
+									a <html:em>profile</html:em>.</doc>
+									<option value="ready"></option>
+									<option value="profile"></option>
+								</param>
+							</representation>
+						</request>
+						<response>
+							<representation status="201">
+								<doc title="Job created">
+									The job was created successfully.
+								</doc>
+								<param style="header" name="Location">
+									<doc>URL of the created job.</doc>
+								</param>
+							</representation>
+							<fault status="409">
+								<doc title="Target already exists">
+									A job with the name you specified already exists.  Try a different name.
+								</doc>
+							</fault>
+						</response>
+					</method>
+					<method name="DELETE">
+						<doc>Delete the job.</doc>
+						<response>
+							<representation status="204">
+								<doc title="Job deleted">
+									The job was deleted successfully.
+								</doc>
+							</representation>
+						</response>
+					</method>
+					<resource id="org.archive.crawler.restws.SeedsResource"
+						path="seeds">
+					</resource>
+					<resource id="org.archive.crawler.restws.SheetsResource"
+						path="sheets">
+						<resource id="org.archive.crawler.restws.SheetResource"
+							path="{sheet}">
+							<resource id="org.archive.crawler.restws.SheetSurtsResource"
+								path="surts">
+							</resource>
+						</resource>
+					</resource>
+					<resource id="org.archive.crawler.restws.JobStatusResource"
+						path="status">
+					</resource>
+					<resource id="org.archive.crawler.restws.ReportsResource"
+						path="reports">
+						<resource id="org.archive.crawler.restws.ReportResource"
+							path="{report}" />
+					</resource>
+				</resource>
+			</resource>
+		</resource>
+	</resources>
+</application>
