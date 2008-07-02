@@ -22,7 +22,16 @@ public class ClusterControllerBeanSelfTest
     protected void setMaxCrawlersTo(int max){
     	try{
     		ObjectName[] list = ccBean.listCrawlers();
-    		InetSocketAddress a  = org.archive.hcc.util.JmxUtils.extractRemoteAddress(list[0]);
+    		ObjectName name;
+    		if(list.length == 0){
+    			name = ccBean.createCrawler();
+    			 
+    		}else{
+    			name = list[0];
+    		}
+    		
+    		
+    		InetSocketAddress a  = org.archive.hcc.util.JmxUtils.extractRemoteAddress(name);
     		ccBean.setMaxInstances(a.getHostName(), a.getPort(), max);
     	}catch(Exception e){
             e.printStackTrace();
