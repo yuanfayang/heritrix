@@ -53,7 +53,7 @@ public class ClusterControllerClientSelfTestBase
         super.tearDown();
         //cc.destroyAllCrawlers();
         cc.destroy();
-        Thread.sleep(3*1000);
+        Thread.sleep(6*1000);
 
     }
     
