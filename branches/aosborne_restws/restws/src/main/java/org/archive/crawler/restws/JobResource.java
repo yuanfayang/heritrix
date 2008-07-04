@@ -91,7 +91,7 @@ public class JobResource extends CrawlerResource {
 
 	private String validateJobName(Form form) throws ResourceException {
 		String name = form.getFirstValue("name");
-		if (name == null || name.isEmpty()) {
+		if (name == null || name.length() == 0) {
 			throw new ResourceException(400, null,
 					"Argument 'name' must be specified",
 					getApiUrl(JobResource.class));
