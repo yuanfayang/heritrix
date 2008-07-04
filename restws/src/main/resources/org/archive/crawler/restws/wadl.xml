@@ -13,9 +13,14 @@
   </doc>
 	<resources base="">
 		<resource id="org.archive.crawler.restws.CrawlersResource"
-			path="/">
+			path="crawlers">
 			<method name="GET">
 				<doc>List the crawlers available through this service.</doc>
+				<request>
+					<param style="query" name="version">
+						<doc>Filter by crawlers running a particular software version, eg <html:tt>Heritrix 2.0.1</html:tt></doc>
+					</param>
+				</request>
 				<response>
 					<representation mediaType="text/plain" />
 				</response>
@@ -26,6 +31,276 @@
 			<method name="DELETE">
 				<doc>Unregister a crawler from the service.</doc>
 			</method>
+			<resource path="available">
+				<method name="POST">
+					<doc>Find a crawler that is currently available to take on more jobs.  A reference to the crawler
+					will be returned in the Location header.  The returned crawler will locked so that it will
+					not be returned in subsequent requests to this action for a short period of time.  This
+					gives the consumer of the service a period of exclusive access so that it can create and start a
+					job without conflicting with other consumers.</doc>
+					<request>
+						<param style="query" name="version">
+							<doc>Filter by crawlers running a particular software version, eg <html:tt>Heritrix 2.0.1</html:tt></doc>
+						</param>
+						<param style="query" name="locktime" default="10">
+							<doc>Number of seconds the crawler will be locked for.</doc>
+						</param>
+					</request>
+				</method>
+			</resource>
+			<resource id="org.archive.crawler.restws.CrawlerResource"
+				path="{crawler}">
+				<param style="template" name="crawler">
+					<doc>The id (<html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em>) of a crawler.</doc>
+				</param>
+				<method name="GET">
+					<response>
+					<!-- TODO: something -->
+						<fault status="404">
+							<doc title="Unknown crawler">The specified crawler is unknown to the service.</doc>
+						</fault>
+						<fault status="400">
+							<doc title="Malformed crawler id">The specified crawler id is not in the required <html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em> form.</doc>
+						</fault>
+					</response>
+				</method>
+				<resource id="org.archive.crawler.restws.JobsResource"
+					path="jobs">
+					<method name="GET">
+						<doc>List all crawl jobs and profiles.</doc>
+					</method>
+					<resource id="org.archive.crawler.restws.JobResource"
+						path="{job}">
+						<param style="template" name="job">
+							<doc>The name of a job.</doc>
+						</param>
+						<method name="GET">
+							<doc>Get the stage of the job.</doc>
+							<response>
+								<fault status="404">
+									<doc title="Job not found">
+									The job does not exist or has already been deleted.
+								</doc>
+								</fault>
+							</response>
+						</method>
+						<method name="POST">
+							<doc>Copy this job to create a new job or profile.</doc>
+							<request>
+								<representation mediaType="multipart/form-data">
+									<doc title="Copy job request" />
+									<param style="plain" name="name">
+										<doc>The name of the new job</doc>
+									</param>
+									<param style="plain" name="stage">
+										<doc>The type of job: a normal job <html:em>ready</html:em> to be launched or
+									a <html:em>profile</html:em>.</doc>
+										<option value="ready"></option>
+										<option value="profile"></option>
+									</param>
+								</representation>
+							</request>
+							<response>
+								<representation status="201">
+									<doc title="Job created">
+									The job was created successfully.
+								</doc>
+									<param style="header" name="Location">
+										<doc>URL of the created job.</doc>
+									</param>
+								</representation>
+								<fault status="409">
+									<doc title="Target already exists">
+									A job with the name you specified already exists.  Try a different name.
+								</doc>
+								</fault>
+							</response>
+						</method>
+						<method name="DELETE">
+							<doc>Delete the job.</doc>
+							<response>
+								<representation status="204">
+									<doc title="Job deleted">
+									The job was deleted successfully.
+								</doc>
+								</representation>
+							</response>
+						</method>
+						<resource id="org.archive.crawler.restws.SeedsResource"
+							path="seeds">
+							<doc>
+							The seed list is the initial set of URLs that crawling will begin from.
+						</doc>
+							<method name="GET">
+								<doc>Get the list of seed URLs.</doc>
+								<response>
+									<representation status="200" mediaType="text/plain">
+										<doc title="Seeds list">
+										<html:p>The list of seeds is simply plain text URLs delimited by linefeeds.</html:p>
+										<html:p>Example:
+										<html:pre>http://www.archive.org/
+http://www.example.com/
+http://example.org/mypage.html</html:pre></html:p>
+									</doc>
+									</representation>
+								</response>
+							</method>
+							<method name="POST">
+								<doc>Append some new seed URLs.</doc>
+								<request>
+									<representation mediaType="text/plain">
+										<doc title="Append seeds request">
+										The seed URL desired to be appended should be delimited by linefeeds as above and POSTed as text/plain.
+									</doc>
+									</representation>
+								</request>
+							</method>
+							<method name="PUT">
+								<doc>Replace the list of seed URLs.</doc>
+								<request>
+									<representation mediaType="text/plain">
+										<doc title="Replace seeds request">
+										The seed list should be delimited by linefeeds as above and PUT as text/plain.
+									</doc>
+									</representation>
+								</request>
+							</method>
+						</resource>
+						<resource id="org.archive.crawler.restws.SheetsResource"
+							path="sheets">
+							<doc><html:p>A configuration sheet is a list of settings that control the crawl. By default, there is only one 
+						sheet, the global sheet. The global sheet is consulted when no URL-specific configuration information is needed.
+						Other sheets of settings can be created, and these extra sheets can be associated with URLs to provide crawl
+						configuration specific to those URLs.</html:p>
+							<html:p>Some crawlers may only support the global sheet.</html:p>
+						</doc>
+							<method name="GET">
+								<doc>List the available sheets.</doc>
+								<response>
+									<representation status="200" mediaType="text/plain"></representation>
+									<representation status="200" mediaType="application/xml"></representation>
+								</response>
+							</method>
+							<resource id="org.archive.crawler.restws.SheetResource"
+								path="{sheet}">
+								<doc><html:p>The actual configuration format is specific to different crawlers and even different versions of crawlers.</html:p>
+							<html:p>In Heritrix 2.0, sheets are plain text files that look like this:</html:p>
+							<html:code><html:pre>root=map, java.lang.Object
+root:metadata=primary, org.archive.modules.writer.DefaultMetadataProvider
+root:metadata:robots-honoring-policy=primary, org.archive.modules.net.RobotsHonoringPolicy
+root:metadata:robots-honoring-policy:user-agents=list, java.lang.String
+root:metadata:description=string, Broad but shallow crawl.
+root:loggerModule=primary, org.archive.crawler.framework.CrawlerLoggerModule
+[...]</html:pre></html:code>
+<html:p>In future versions, beginning with Heritrix 2.2, the configuration system is being redesigned to use Spring XML bean configuration.  
+How this will work has not been finalized, but it is likely the REST service will just be able to return chunks of bean XML for each sheet.</html:p>
+							</doc>
+								<param style="template" name="sheet">
+									<doc>The name of a configuration sheet.</doc>
+								</param>
+								<method name="GET">
+									<doc>Get the sheet's configuration.</doc>
+								</method>
+								<method name="PUT">
+									<doc>Set the sheet's configuration.  If the sheet did not previously exist, it will be created.</doc>
+								</method>
+								<method name="DELETE">
+									<doc>Delete the sheet.</doc>
+								</method>
+								<resource id="org.archive.crawler.restws.SheetSurtsResource"
+									path="surts">
+									<doc><html:p>Associated with each sheet can be a list of <html:a
+										href="http://crawler.archive.org/articles/user_manual/glossary.html#surtprefix">SURT prefixes</html:a>
+									which define the URLs the sheet applies to.</html:p></doc>
+									<method name="GET">
+										<doc>Return the list of SURT prefixes associated with this sheet.</doc>
+									</method>
+									<method name="POST">
+										<doc>Append some new SURT prefixes to this sheet.</doc>
+									</method>
+									<method name="PUT">
+										<doc>Replace the list of SURT prefixes associated with this sheet.</doc>
+									</method>
+								</resource>
+							</resource>
+						</resource>
+						<resource id="org.archive.crawler.restws.JobStatusResource"
+							path="status">
+							<doc>The status of the job.  Possible values include:
+						<html:ul>
+						  <html:li>NASCENT</html:li>
+						  <html:li>PREPARING</html:li>
+						  <html:li>RUNNING</html:li>
+						  <html:li>PAUSING</html:li>
+						  <html:li>PAUSED</html:li>
+						  <html:li>CHECKPOINTING</html:li>
+						  <html:li>STOPPING</html:li>
+						  <html:li>FINISHED</html:li>
+						  </html:ul>
+        				</doc>
+							<method name="GET">
+								<doc>Get the current status of the job.</doc>
+							</method>
+							<method name="PUT">
+								<doc>
+        				<html:p>Change the status of the job.  Only some status transitions are valid, others will return an error.</html:p>
+        				<html:p>To launch a NASCENT job, set the status to PREPARING.</html:p>
+        				<html:p>To pause a RUNNING or CHECKPOINTING job, set the status to PAUSING.</html:p>
+        				<html:p>To resume a PAUSING, PAUSED or CHECKPOINTING job, set the status to RUNNING.</html:p>
+        				<html:p>To <html:a
+									href="http://crawler.archive.org/articles/user_manual/outside.html#checkpoint">checkpoint</html:a>
+        								a RUNNING, PAUSING or PAUSED job, set the status to CHECKPOINTING.</html:p>
+        				<html:p>To stop a job with any status, set the status to STOPPING.</html:p>    					
+        				</doc>
+								<response>
+									<fault status="400">
+										<doc title="Unknown status">You attempted to assign the job
+        						a status which this crawler does not understand.</doc>
+									</fault>
+									<fault status="409">
+										<doc title="Invalid status transition">The job cannot transition
+        						directly from its current status to the one you requested.</doc>
+									</fault>
+								</response>
+							</method>
+						</resource>
+						<resource id="org.archive.crawler.restws.ReportsResource"
+							path="reports">
+							<doc>Some crawlers provide reports while the crawl is ongoing on more commonly once is has finished.  These
+						reports often include statistics about the types of files downloaded.</doc>
+							<method name="GET">
+								<doc>List the available reports.</doc>
+							</method>
+							<method name="POST">
+								<doc>Trigger report regeneration.  This action may not be supported by all crawlers and if it
+							is supported it may be valid only when the job is in a particular state.</doc>
+							</method>
+							<resource id="org.archive.crawler.restws.ReportResource"
+								path="{report}">
+								<param style="template" name="report">
+									<doc>The filename of a report.</doc>
+								</param>
+								<method name="GET">
+									<doc>Retrieve the contents of the report.</doc>
+								</method>
+							</resource>
+						</resource>
+					</resource>
+				</resource>
+				<resource path="profiles">
+					<doc>Profiles act as templates for jobs.  New jobs are created by copying their configuration from an
+				existing profile.</doc>
+					<method name="GET">
+						<doc>List the profiles known to this crawler.</doc>
+					</method>
+					<resource path="{profile}">
+						<doc>See <html:a href="##org.archive.crawler.restws.JobResource">job</html:a>.</doc>
+						<param style="template" name="profile">
+							<doc>The name of a profile.</doc>
+						</param>
+					</resource>
+				</resource>
+			</resource>
 		</resource>
 		<resource id="org.archive.crawler.restws.WadlResource" path="/wadl.xml">
 			<method name="GET">
@@ -40,104 +315,6 @@
 				<doc>Return an XSLT stylesheet for styling the WADL documentation as XHTML.
 			</doc>
 			</method>
-		</resource>
-		<resource id="org.archive.crawler.restws.CrawlerResource"
-			path="/{crawler}">
-			<method name="GET">
-				<request>
-					<param style="template" name="crawler">
-						<doc>The id (<html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em>) of the crawler.</doc>
-					</param>
-				</request>
-				<response>
-					<!-- TODO: something -->
-					<fault status="404">
-						<doc title="Unknown crawler">The specified crawler is unknown to the service.</doc>
-					</fault>
-					<fault status="400">
-						<doc title="Malformed crawler id">The specified crawler id is not in the required <html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em> form.</doc>
-					</fault>
-				</response>
-			</method>
-			<resource id="org.archive.crawler.restws.JobsResource" path="jobs">
-				<method name="GET">
-					<doc>List all crawl jobs and profiles.</doc>
-				</method>
-				<resource id="org.archive.crawler.restws.JobResource" path="{job}">
-					<method name="GET">
-						<doc>Get the stage of the job.</doc>
-						<response>
-							<fault status="404">
-								<doc title="Job not found">
-									The job does not exist or has already been deleted.
-								</doc>
-							</fault>
-						</response>
-					</method>
-					<method name="POST">
-						<doc>Copy this job to create a new job or profile.</doc>
-						<request>
-							<representation mediaType="multipart/form-data">
-								<doc title="Copy job request"/>
-								<param style="plain" name="name">
-									<doc>The name of the new job</doc>
-								</param>
-								<param style="plain" name="stage">
-									<doc>The type of job: a normal job <html:em>ready</html:em> to be launched or
-									a <html:em>profile</html:em>.</doc>
-									<option value="ready"></option>
-									<option value="profile"></option>
-								</param>
-							</representation>
-						</request>
-						<response>
-							<representation status="201">
-								<doc title="Job created">
-									The job was created successfully.
-								</doc>
-								<param style="header" name="Location">
-									<doc>URL of the created job.</doc>
-								</param>
-							</representation>
-							<fault status="409">
-								<doc title="Target already exists">
-									A job with the name you specified already exists.  Try a different name.
-								</doc>
-							</fault>
-						</response>
-					</method>
-					<method name="DELETE">
-						<doc>Delete the job.</doc>
-						<response>
-							<representation status="204">
-								<doc title="Job deleted">
-									The job was deleted successfully.
-								</doc>
-							</representation>
-						</response>
-					</method>
-					<resource id="org.archive.crawler.restws.SeedsResource"
-						path="seeds">
-					</resource>
-					<resource id="org.archive.crawler.restws.SheetsResource"
-						path="sheets">
-						<resource id="org.archive.crawler.restws.SheetResource"
-							path="{sheet}">
-							<resource id="org.archive.crawler.restws.SheetSurtsResource"
-								path="surts">
-							</resource>
-						</resource>
-					</resource>
-					<resource id="org.archive.crawler.restws.JobStatusResource"
-						path="status">
-					</resource>
-					<resource id="org.archive.crawler.restws.ReportsResource"
-						path="reports">
-						<resource id="org.archive.crawler.restws.ReportResource"
-							path="{report}" />
-					</resource>
-				</resource>
-			</resource>
 		</resource>
 	</resources>
 </application>
