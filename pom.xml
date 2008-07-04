@@ -129,6 +129,11 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
              <artifactId>webui</artifactId>
              <version>${project.version}</version>
           </dependency>
+		  <dependency>
+			  <groupId>org.archive.heritrix</groupId>
+			  <artifactId>restws</artifactId>
+			  <version>${project.version}</version>
+		  </dependency>
        </dependencies>
     </dependencyManagement>
 
@@ -137,6 +142,7 @@ Heritrix is the Internet Archive's open-source, extensible, web-scale,
     <module>modules</module>
     <module>engine</module>
     <module>webui</module>
+    <module>restws</module>
     <module>dist</module>
   </modules>
 

@@ -15,6 +15,8 @@
 	<classpathentry kind="src" path="webui/src/test/java"/>
 	<classpathentry kind="src" path="webui/src/test/resources"/>
 	<classpathentry kind="src" path="dist/src/test/java"/>
+	<classpathentry kind="src" path="restws/src/main/java"/>
+	<classpathentry kind="src" path="restws/src/main/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="M2_REPO/org/beanshell/bsh/2.0b4/bsh-2.0b4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/jetty/jetty/6.0.2/jetty-6.0.2.jar"/>
@@ -54,5 +56,8 @@
 	<classpathentry kind="var" path="M2_REPO/commons-el/commons-el/1.0/commons-el-1.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.4/servlet-api-2.4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/javax/servlet/jsp-api/2.0/jsp-api-2.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/restlet/org.restlet/1.1-M4/org.restlet-1.1-M4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/restlet/org.restlet.ext.wadl/1.1-M4/org.restlet.ext.wadl-1.1-M4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/noelios/restlet/com.noelios.restlet/1.1-M4/com.noelios.restlet-1.1-M4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
