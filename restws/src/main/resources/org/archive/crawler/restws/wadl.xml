@@ -4,12 +4,13 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:html="http://www.w3.org/1999/xhtml"
 	xsi:schemaLocation="http://research.sun.com/wadl/2006/10 https://wadl.dev.java.net/wadl20061109.xsd
 						http://www.w3.org/1999/xhtml http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
-	<doc title="Heritrix REST Web Service">
-    The REST web service allows you to control one or more 
+	<doc title="Heritrix REST Web Service (draft)">
+    <html:p>The REST web service allows you to control one or more 
     <html:a href="http://crawler.archive.org/">Heritrix</html:a> web crawlers.
     Note that not all functionality is currently available via
     the REST service, you may have to resort to using the JMX API for some
-    operations. 
+    operations.</html:p>
+     
   </doc>
 	<resources base="">
 		<resource id="org.archive.crawler.restws.CrawlersResource"
@@ -22,7 +23,37 @@
 					</param>
 				</request>
 				<response>
-					<representation mediaType="text/plain" />
+					<representation mediaType="text/plain">
+						<doc title="Crawler list">Example:<html:pre>c01.example.org:1234:0
+c01.example.org:1234:1
+c14.example.org:7000:0
+...</html:pre></doc>
+					</representation>
+					<representation mediaType="application/atom+xml">
+						<doc title="Crawler list">Example:
+							<html:code><html:pre>&lt;feed xmlns="http://www.w3.org/2005/Atom" 
+      xml:base="http://example.org/crawlers"&gt;
+  &lt;id&gt;http://example.org/crawlers&lt;/id&gt;
+  &lt;title&gt;Crawlers known to example.org&lt;/title&gt;
+  &lt;updated&gt;2008-08-12T13:40:03Z&lt;/updated&gt;
+  &lt;author&gt;&lt;name&gt;Heritrix REST-WS 2.0.1&lt;/name&gt;&lt;/author&gt;
+  &lt;entry&gt;
+    &lt;id&gt;http://example.org/crawlers/c01.example.org:1234:0&lt;/id&gt;
+    &lt;title&gt;c01.example.org:1234:0&lt;/title&gt;
+    &lt;link rel="alternate" href="c01.example.org:1234:0"/&gt;
+    &lt;link rel="jobs" href="c01.example.org:1234:0/jobs" /&gt;
+    &lt;link rel="profiles" href="c01.example.org:1234:0/profiles" /&gt;
+    &lt;author&gt;&lt;name&gt;Heritrix 2.2.0&lt;/name&gt;&lt;/author&gt;
+    &lt;updated&gt;2006-08-12T13:40:03Z&lt;/updated&gt;
+    &lt;summary&gt;2 active jobs: awesomejob, someotherjob. Combined rate: 40kb/s. 
+    Uptime: 20 minutes.&lt;/summary&gt;
+  &lt;/entry&gt;
+  &lt;entry&gt;
+     ...
+  &lt;/entry&gt;
+  ...
+&lt;/feed&gt;</html:pre></html:code></doc>
+					</representation>
 				</response>
 			</method>
 			<method name="POST">
@@ -67,7 +98,40 @@
 				<resource id="org.archive.crawler.restws.JobsResource"
 					path="jobs">
 					<method name="GET">
-						<doc>List all crawl jobs and profiles.</doc>
+						<doc>List all crawl jobs.
+						
+						
+						</doc>
+						<response>
+							<representation mediaType="text/plain">
+								<doc title="Job list">Example:<html:pre>awesomejob
+anotherjob
+someotherjob
+...</html:pre></doc>
+							</representation>
+							<representation mediaType="application/atom+xml">
+								<doc title="Job list">Example:
+							<html:code><html:pre>&lt;feed xmlns="http://www.w3.org/2005/Atom" 
+      xml:base="http://example.org/crawlers/c01.example.org:1234:0/jobs"&gt;
+  &lt;id&gt;http://example.org/crawlers/c01.example.org:1234:0/jobs&lt;/id&gt;
+  &lt;title&gt;Jobs on c01.example.org&lt;/title&gt;
+  &lt;updated&gt;2008-08-12T13:40:03Z&lt;/updated&gt;
+  &lt;author&gt;&lt;name&gt;Heritrix 2.0.1&lt;/name&gt;&lt;/author&gt;
+  &lt;entry&gt;
+    &lt;id&gt;http://example.org/crawlers/c01.example.org:1234:0/jobs/awesomejob&lt;/id&gt;
+    &lt;title&gt;awesomejob&lt;/title&gt;
+    &lt;link rel="alternate" href="awesomejob"/&gt;
+    &lt;link rel="seeds" href="awesomejob/seeds" /&gt;
+    &lt;link rel="sheets" href="awesomejob/sheets" /&gt;
+    &lt;updated&gt;2006-08-12T13:40:03Z&lt;/updated&gt;
+    &lt;summary&gt;My awesome job. [20s elapsed. 208 KB received.]&lt;/summary&gt;
+  &lt;/entry&gt;
+  &lt;entry&gt;
+     ...
+  &lt;/entry&gt;
+  ...
+&lt;/feed&gt;</html:pre></html:code></doc></representation>
+						</response>
 					</method>
 					<resource id="org.archive.crawler.restws.JobResource"
 						path="{job}">
@@ -75,8 +139,28 @@
 							<doc>The name of a job.</doc>
 						</param>
 						<method name="GET">
-							<doc>Get the stage of the job.</doc>
+							<doc>Get information about the job.<html:p>Retrieve an XML or JSON document with the 
+							status of the job and crawl statistics.</html:p>
+							</doc>
 							<response>
+								<representation mediaType="application/xml">
+									<doc title="Job">
+									<html:p>Example:</html:p>
+							<html:code><html:pre>&lt;job&gt;
+  &lt;name&gt;testjob-20080702&lt;/name&gt;
+  &lt;status&gt;RUNNING&lt;/status&gt;
+  &lt;stats&gt;
+    &lt;elapsedMillis&gt;40202&lt;/elapsedMillis&gt;
+    &lt;totalBytes&gt;2033211&lt;/totalBytes&gt;
+    &lt;bytesPerSecond&gt;202&lt;/bytesPerSecond&gt;
+    ...  
+  &lt;/stats&gt;
+
+&lt;job&gt;
+					  
+							</html:pre></html:code>
+									</doc>
+								</representation>
 								<fault status="404">
 									<doc title="Job not found">
 									The job does not exist or has already been deleted.
