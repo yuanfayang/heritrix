@@ -326,11 +326,11 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
                             }
                         } catch (URIException e) {
                             LOGGER.log(Level.WARNING, "bad URI during " +
-                                "log-recovery of queue contents ",e);
+                                "log-recovery of queue contents: "+read,e);
                             // and continue...
                         } catch (RuntimeException e) {
                             LOGGER.log(Level.SEVERE, "exception during " +
-                                    "log-recovery of queue contents ",e);
+                                    "log-recovery of queue contents: "+read,e);
                             // and continue, though this may be risky
                             // if the exception wasn't a trivial NPE 
                             // or wrapped interrupted-exception...
