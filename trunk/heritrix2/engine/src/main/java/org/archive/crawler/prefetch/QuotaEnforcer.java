@@ -267,7 +267,6 @@ public class QuotaEnforcer extends Processor implements Initializable {
         }
         FetchStats substats = hasStats.getSubstats();
         long[] actuals = new long[] {
-                -1, // dummy
                 substats.getFetchSuccesses(),
                 substats.getSuccessBytes()/1024,
                 substats.getFetchResponses(),
