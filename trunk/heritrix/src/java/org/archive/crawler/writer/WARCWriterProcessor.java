@@ -379,6 +379,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 ris.close();
             }
         }
+        curi.addAnnotation("warcRevisit:digest"); 
         return baseid;
     }
     
@@ -410,6 +411,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 ris.close();
             }
         }
+        curi.addAnnotation("warcRevisit:notModified"); 
         return baseid;
     }
     
