@@ -336,7 +336,7 @@
          </dependency>
         <dependency>
             <id>je</id>
-            <version>3.2.74</version>
+            <version>3.3.62</version>
             <url>http://www.oracle.com/technology/products/berkeley-db/je/index.html</url>
             <properties>
                 <war.bundle>true</war.bundle>
