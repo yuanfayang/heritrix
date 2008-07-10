@@ -207,7 +207,7 @@ public class QuotaEnforcer extends Processor implements Initializable {
     /**
      * Constructor.
      */
-    public QuotaEnforcer(CrawlControllerImpl controller) {
+    public QuotaEnforcer() {
         super();
     }
     
