@@ -28,6 +28,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +53,7 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.io.IOUtils;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -221,6 +223,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         logger.fine("Writing " + filename.getAbsolutePath());
         filename.getParentFile().mkdirs();
 
+        FileOutputStream fos = null;
         try {
             long lastSaved = 0L;
             File backup = null;
@@ -235,9 +238,10 @@ public class XMLSettingsHandler extends SettingsHandler {
                 FileUtils.copyFiles(filename, backup);
             }
 
+            fos = new FileOutputStream(filename);
             StreamResult result =
                 new StreamResult(
-                    new BufferedOutputStream(new FileOutputStream(filename)));
+                    new BufferedOutputStream(fos));
             Transformer transformer =
                 TransformerFactory.newInstance().newTransformer();
             Source source = new CrawlSettingsSAXSource(settings);
@@ -252,6 +256,8 @@ public class XMLSettingsHandler extends SettingsHandler {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            IOUtils.closeQuietly(fos);
         }
     }
 
@@ -459,11 +465,15 @@ public class XMLSettingsHandler extends SettingsHandler {
         File settingsDirectory = getSettingsDirectory();
         File settingsFile = settingsToFilename(settings);
 
-        settingsFile.delete();
+        if(!settingsFile.delete()) {
+            throw new RuntimeException("Could not delete: "+settingsFile);
+        }
         settingsFile = settingsFile.getParentFile();
         while (settingsFile.isDirectory() && settingsFile.list().length == 0
                 && !settingsFile.equals(settingsDirectory)) {
-            settingsFile.delete();
+            if(!settingsFile.delete()) {
+                logger.warning("Could not delete: "+settingsFile);
+            }
             settingsFile = settingsFile.getParentFile();
         }
     }
