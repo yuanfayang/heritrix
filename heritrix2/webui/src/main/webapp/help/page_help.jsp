@@ -1,3 +1,4 @@
+<%@ page import="org.archive.util.ArchiveUtils" %>
 <html>
 <head>
     <%@include file="/include/header.jsp"%>
@@ -41,7 +42,7 @@
     This reference details what each of the fetch status codes assigned to URIs means.
 </p>
 <hr />
-<font size="-1">Heritrix version @VERSION@ (Web UI)</font>
+<font size="-1">Heritrix version <%=ArchiveUtils.VERSION %> (Web UI)</font>
 </div>
 </body>
 </html>
