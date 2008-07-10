@@ -42,6 +42,8 @@ import java.nio.charset.CodingErrorAction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.util.FileUtils;
+
 /**
  * Provides a (Replay)CharSequence view on recorded streams (a prefix
  * buffer and overflow backing file) that can handle streams of multibyte
@@ -198,19 +200,11 @@ public class GenericReplayCharSequence implements ReplayCharSequence {
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(inStream,encoding));
         
-        this.decodedFile = new File(backingFilename + "." + WRITE_ENCODING);
+        File backingFile = new File(backingFilename);
+        this.decodedFile = File.createTempFile(backingFile.getName(), WRITE_ENCODING, backingFile.getParentFile());
         FileOutputStream fos;
-        try {
-            fos = new FileOutputStream(this.decodedFile);
-        } catch (FileNotFoundException e) {
-            // Windows workaround attempt
-            System.gc();
-            System.runFinalization();
-            logger.info("Windows 'file with a user-mapped section open' "+
-                    "workaround gc-finalization performed.");
-            // try again 
-            fos = new FileOutputStream(this.decodedFile);
-        }
+        fos = new FileOutputStream(this.decodedFile);
+
         BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(
                         fos, 
@@ -308,7 +302,7 @@ public class GenericReplayCharSequence implements ReplayCharSequence {
                 + e.toString());
         }
         if (fileToDelete != null && fileToDelete.exists()) {
-            fileToDelete.delete();
+            FileUtils.deleteSoonerOrLater(fileToDelete); 
         }
     }
 
