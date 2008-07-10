@@ -391,6 +391,7 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
                 ris.close();
             }
         }
+        curi.getAnnotations().add("warcRevisit:digest");
         return baseid;
     }
     
@@ -422,6 +423,7 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
                 ris.close();
             }
         }
+        curi.getAnnotations().add("warcRevisit:notModified");
         return baseid;
     }
     
