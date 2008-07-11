@@ -44,8 +44,9 @@ import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
 /**
+ * A suitable standard set of crawl metadata. 
+ * 
  * @author pjack
- *
  */
 public class DefaultMetadataProvider implements 
     Initializable, 
