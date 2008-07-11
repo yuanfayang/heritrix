@@ -28,8 +28,6 @@ import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,14 +37,10 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.Frontier;
 import org.archive.io.CrawlerJournal;
-import org.archive.modules.DefaultProcessorURI;
 import org.archive.modules.deciderules.DecideRule;
-import org.archive.modules.extractor.HTMLLinkContext;
-import org.archive.modules.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.settings.file.Checkpointable;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -94,10 +88,13 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
         timestamp_interval = 10000;
     } 
 
-
-    public synchronized void added(CrawlURI curi) {
+    public void added(CrawlURI curi) {
+        writeLongUriLine(F_ADD, curi);
+    }
+    
+    public synchronized void writeLongUriLine(String tag, CrawlURI curi) {
         accumulatingBuffer.length(0);
-        this.accumulatingBuffer.append(F_ADD).
+        this.accumulatingBuffer.append(tag).
             append(curi.toString()).
             append(" "). 
             append(curi.getPathFromSeed()).
@@ -107,15 +104,7 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
     }
 
     public void finishedSuccess(CrawlURI curi) {
-        finishedSuccess(curi.toString());
-    }
-    
-    public void finishedSuccess(UURI uuri) {
-        finishedSuccess(uuri.toString());
-    }
-    
-    protected void finishedSuccess(String uuri) {
-        writeLine(F_SUCCESS, uuri);
+        writeLongUriLine(F_SUCCESS, curi);
     }
 
     public void emitted(CrawlURI curi) {
@@ -124,19 +113,11 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
     }
 
     public void finishedFailure(CrawlURI curi) {
-        finishedFailure(curi.toString());
+        writeLongUriLine(F_FAILURE,curi);
     }
     
     public void finishedDisregard(CrawlURI curi) {
         writeLine(F_DISREGARD, curi.toString());
-    }
-    
-    public void finishedFailure(UURI uuri) {
-        finishedFailure(uuri.toString());
-    }
-    
-    public void finishedFailure(String u) {
-        writeLine(F_FAILURE, u);
     }
 
     public void rescheduled(CrawlURI curi) {
@@ -240,7 +221,8 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
                         }
                         frontier.considerIncluded(u);
                         if (newJournal != null) {
-                            newJournal.writeLine(lineType, u.toString());
+                            // write same line as read
+                            newJournal.writeLine(read);
                         }
                     } catch (URIException e) {
                         e.printStackTrace();
@@ -358,34 +340,4 @@ public class FrontierJournal extends CrawlerJournal implements Checkpointable {
                 +qLines+" lines processed");
         enough.countDown();
     }
-
-    /**
-     * Return an array of the subsequences of the passed-in sequence,
-     * split on space runs. 
-     * 
-     * @param read
-     * @return CharSequence.
-     */
-    private static CharSequence[] splitOnSpaceRuns(CharSequence read) {
-        int lastStart = 0;
-        ArrayList<CharSequence> segs = new ArrayList<CharSequence>(5);
-        int i;
-        for(i=0;i<read.length();i++) {
-            if (read.charAt(i)==' ') {
-                segs.add(read.subSequence(lastStart,i));
-                i++;
-                while(i < read.length() && read.charAt(i)==' ') {
-                    // skip any space runs
-                    i++;
-                }
-                lastStart = i;
-            }
-        }
-        if(lastStart<read.length()) {
-            segs.add(read.subSequence(lastStart,i));
-        }
-        return (CharSequence[]) segs.toArray(new CharSequence[segs.size()]);        
-    }
-
-
 }
