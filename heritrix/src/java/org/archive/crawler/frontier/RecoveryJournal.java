@@ -30,23 +30,18 @@ import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.io.CrawlerJournal;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.net.UURI;
-import org.archive.net.UURIFactory;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
@@ -92,9 +87,13 @@ implements FrontierJournal {
         timestamp_interval = 10000; // write timestamp lines occasionally
     }
     
-    public synchronized void added(CrawlURI curi) {
+    public  void added(CandidateURI curi) {
+        writeLongUriLine(F_ADD, curi);
+    }
+    
+    public synchronized void writeLongUriLine(String tag, CandidateURI curi) {
         accumulatingBuffer.length(0);
-        this.accumulatingBuffer.append(F_ADD).
+        this.accumulatingBuffer.append(tag).
             append(curi.toString()).
             append(" "). 
             append(curi.getPathFromSeed()).
@@ -103,39 +102,23 @@ implements FrontierJournal {
         writeLine(accumulatingBuffer);
     }
 
-    public void finishedSuccess(CrawlURI curi) {
-        finishedSuccess(curi.toString());
-    }
-    
-    public void finishedSuccess(UURI uuri) {
-        finishedSuccess(uuri.toString());
-    }
-    
-    protected void finishedSuccess(String uuri) {
-        writeLine(F_SUCCESS, uuri);
+    public void finishedSuccess(CandidateURI curi) {
+        writeLongUriLine(F_SUCCESS, curi);
     }
 
-    public void emitted(CrawlURI curi) {
+    public void emitted(CandidateURI curi) {
         writeLine(F_EMIT, curi.toString());
 
     }
-    public void finishedDisregard(CrawlURI curi) {
+    public void finishedDisregard(CandidateURI curi) {
         writeLine(F_DISREGARD, curi.toString());
     }
     
-    public void finishedFailure(CrawlURI curi) {
-        finishedFailure(curi.toString());
-    }
-    
-    public void finishedFailure(UURI uuri) {
-        finishedFailure(uuri.toString());
-    }
-    
-    public void finishedFailure(String u) {
-        writeLine(F_FAILURE, u);
+    public void finishedFailure(CandidateURI curi) {
+        writeLongUriLine(F_FAILURE,curi);
     }
 
-    public void rescheduled(CrawlURI curi) {
+    public void rescheduled(CandidateURI curi) {
         writeLine(F_RESCHEDULE, curi.toString());
     }
 
@@ -213,28 +196,27 @@ implements FrontierJournal {
                 boolean wasSuccess = read.startsWith(F_SUCCESS);
                 if (wasSuccess
 						|| (retainFailures && read.startsWith(F_FAILURE))) {
-                    // retrieve first (only) URL on line 
-                    String s = read.subSequence(3,read.length()).toString();
                     try {
-                        UURI u = UURIFactory.getInstance(s);
+                        CandidateURI cauri = CandidateURI.fromString(
+                                read.substring(F_SUCCESS.length()).toString());
                         if(checkScope) {
-                            if(!scope.accepts(u)) {
+                            if(!scope.accepts(cauri)) {
                                 // skip out-of-scope URIs.
                                 continue;
                             }
                         }
-                        frontier.considerIncluded(u);
+                        frontier.considerIncluded(cauri.getUURI());
                         if(wasSuccess) {
                             if (frontier.getFrontierJournal() != null) {
                                 frontier.getFrontierJournal().
-                                    finishedSuccess(u);
+                                    finishedSuccess(cauri);
                             }
                         } else {
                             // carryforward failure, in case future recovery
                             // wants to no retain them as finished 
                             if (frontier.getFrontierJournal() != null) {
                                 frontier.getFrontierJournal().
-                                    finishedFailure(u);
+                                    finishedFailure(cauri);
                             }
                         }
                     } catch (URIException e) {
@@ -321,19 +303,9 @@ implements FrontierJournal {
                 while (readLine(is,read)) {
                     qLines++;
                     if (read.startsWith(F_ADD)) {
-                        UURI u;
-                        CharSequence args[] = splitOnSpaceRuns(read);
                         try {
-                            u = UURIFactory.getInstance(args[1].toString());
-                            String pathFromSeed = (args.length > 2)?
-                                args[2].toString() : "";
-                            UURI via = (args.length > 3)?
-                                UURIFactory.getInstance(args[3].toString()):
-                                null;
-                            String viaContext = (args.length > 4)?
-                                    args[4].toString(): "";
-                            CandidateURI caUri = new CandidateURI(u, 
-                                    pathFromSeed, via, viaContext);
+                            CandidateURI caUri = CandidateURI.fromString(
+                                    read.substring(F_ADD.length()).toString());
                             if(checkScope) {
                                 if(!scope.accepts(caUri)) {
                                     // skip out-of-scope URIs.
@@ -375,39 +347,11 @@ implements FrontierJournal {
             	    is.close(); 
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            // serious -- but perhaps ignorable? -- error
+            LOGGER.log(Level.SEVERE, "problem importing queues", e);
         }
         LOGGER.info("finished recovering frontier from "+source+" "
                 +qLines+" lines processed");
         enough.countDown();
-    }
-
-    /**
-     * Return an array of the subsequences of the passed-in sequence,
-     * split on space runs. 
-     * 
-     * @param read
-     * @return CharSequence.
-     */
-    private static CharSequence[] splitOnSpaceRuns(CharSequence read) {
-        int lastStart = 0;
-        ArrayList<CharSequence> segs = new ArrayList<CharSequence>(5);
-        int i;
-        for(i=0;i<read.length();i++) {
-            if (read.charAt(i)==' ') {
-                segs.add(read.subSequence(lastStart,i));
-                i++;
-                while(i < read.length() && read.charAt(i)==' ') {
-                    // skip any space runs
-                    i++;
-                }
-                lastStart = i;
-            }
-        }
-        if(lastStart<read.length()) {
-            segs.add(read.subSequence(lastStart,i));
-        }
-        return (CharSequence[]) segs.toArray(new CharSequence[segs.size()]);        
     }
 }
