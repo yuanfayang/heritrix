@@ -1,0 +1,51 @@
+description:
+A suitable standard set of crawl metadata.
+
+
+audience-description:
+The intended audience of the crawl (such as a person, project, or 
+organization). Optional and default is blank. 
+
+description-description:
+A plain-language description of the crawl. Optional and default is blank.  
+
+http-user-agent-description:
+The HTTP User-Agent value to use in the crawl (unless overriden by 
+other configuration). The usual default begins with Mozilla/5.0, 
+identifies the crawler as Heritrix, and includes two strings, 
+@VERSION@ and @OPERATOR_CONTACT_URL@, which are replaced with other 
+values to create the User-Agent value actually used during the crawl. 
+@VERSION@ will reflect the current software numerical version, and
+@OPERATOR_CONTACT_URL@ the value operator-contact-url also defined in
+this module. 
+
+operator-contact-url-description:
+An URL which should contain additional information about your crawl and
+how to contact the operator. By default, this is included in the crawl's
+User-Agent, so webmasters of crawled sites know who to contact in the 
+event of problems. The default is blank but this must be changed, as 
+Heritrix requires a reasonable-looking contact URL in your User-Agent
+before it will launch a crawl.  
+
+operator-name-description:
+Name of the crawl operator. Optional and default is blank.
+
+operator-from-description:
+Email address of the crawl operator. If present, will be sent as the
+HTTP 'From' header on requests. However, most website logs do not 
+capture this information, so it is far more important to include 
+a contact-information URL on your User-Agent. Optional and default is 
+blank.
+
+organization-description:
+Organization performing the crawl. Optional and default is blank. 
+
+robots-honoring-policy-description:
+The general policy of fully honoring, conditionally honoring, or not
+honoring site robots directives (in robots.txt and in-page markup). 
+
+sheet-manager-description:
+The sheet manager used to configure the crawl controlled by this 
+controller.
+. 
+
