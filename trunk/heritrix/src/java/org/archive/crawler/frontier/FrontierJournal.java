@@ -25,8 +25,7 @@ package org.archive.crawler.frontier;
 import java.io.File;
 import java.io.IOException;
 
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.net.UURI;
+import org.archive.crawler.datamodel.CandidateURI;
 
 /**
  * Record of key Frontier happenings.
@@ -40,17 +39,12 @@ public interface FrontierJournal {
      * @param curi CrawlURI that has been scheduled to be added to the
      * Frontier.
      */
-    public abstract void added(CrawlURI curi);
+    public abstract void added(CandidateURI curi);
 
     /**
      * @param curi CrawlURI that finished successfully.
      */
-    public abstract void finishedSuccess(CrawlURI curi);
-
-    /**
-     * @param uuri UURI that finished successfully.
-     */
-    public abstract void finishedSuccess(UURI uuri);
+    public abstract void finishedSuccess(CandidateURI curi);
 
     /**
      * Note that a CrawlURI was emitted for processing.
@@ -59,28 +53,24 @@ public interface FrontierJournal {
      * 
      * @param curi CrawlURI emitted.
      */
-    public abstract void emitted(CrawlURI curi);
+    public abstract void emitted(CandidateURI curi);
 
-    /**
-     * @param u UURI that finished unsuccessfully 
-     */
-    public abstract void finishedFailure(UURI u);
     
     /**
      * @param curi CrawlURI finished unsuccessfully.
      */
-    public abstract void finishedFailure(CrawlURI curi);
+    public abstract void finishedFailure(CandidateURI curi);
 
     /**
      * @param curi CrawlURI finished disregarded (uncounted failure).
      */
-    public abstract void finishedDisregard(CrawlURI curi);
+    public abstract void finishedDisregard(CandidateURI curi);
     
     /**
      * @param curi CrawlURI that was returned to the Frontier for 
      * another try.
      */
-    public abstract void rescheduled(CrawlURI curi);
+    public abstract void rescheduled(CandidateURI curi);
 
     /**
      *  Flush and close any held objects.
