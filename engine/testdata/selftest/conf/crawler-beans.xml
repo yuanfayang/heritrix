@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:context="http://www.springframework.org/schema/context"
+	     xmlns:aop="http://www.springframework.org/schema/aop"
+	     xmlns:tx="http://www.springframework.org/schema/tx"
+	     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
+           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+ 
+ <context:annotation-config/>
+
+ <bean id="jobHome" class="org.archive.settings.JobHome">
+  <property name="path" value="."/>
+  <property name="name" value="dummy-name"/>
+ </bean>
+ 
+ <!-- Shared BDB Crawler State -->
+ <!-- TODO: move to an include? -->
+ <bean id="bdb" class="org.archive.settings.file.BdbModule" autowire="byName">
+  <!--  default values: ->
+  <property name="cachePercent" value="60"/>
+  <property name="checkpointCopyLogs" value="true"/>
+  <property name="path" value="state"/>
+  <!-  -->
+  <!-- autowired homeDirectory reference -->
+ </bean>
+ 
+ <!-- Policy to use when deciding to honor robots.txt and similar -->
+ <!-- TODO: move to an include? -->
+ <bean id="robotsHonoringPolicy" class="org.archive.modules.net.RobotsHonoringPolicy">
+  <!-- default values: ->
+  <property name="customRobots">
+  </property>
+  <property name="masquerade" value="false"/>
+  <property name="type" value="CLASSIC"/>
+  <property name="userAgents">
+   <list>
+   </list>
+  </property>
+  <!-  -->
+ </bean>
+ 
+ <!-- Crawl metadata, including identification of crawler/operator -->
+ <!-- TODO: move to an include? -->
+ <bean id="metadata" class="org.archive.modules.writer.DefaultMetadataProvider" autowire="byName">
+  <property name="description" value="Basic seed sites crawl."/>
+  <property name="operatorContactUrl" value="http://fake.example.com/crawlerselftest/"/>
+  <!-- default values: ->
+  <property name="audience" value=""/>
+  <property name="httpUserAgent" value="Mozilla/5.0 (compatible; heritrix/@VERSION@ +@OPERATOR_CONTACT_URL@)"/>
+  <property name="operatorFrom" value=""/>
+  <property name="operatorName" value=""/>
+  <property name="operatorOrganization" value=""/> 
+  <!-  -->
+  <!-- autowired robots-honoring-policy reference -->
+  <!-- autowired job-home reference -->
+ </bean>
+ 
+ <!-- Shared logging facility -->
+ <!-- TODO: move to an include? comment out defaults? -->
+ <bean id="loggerModule" class="org.archive.crawler.framework.CrawlerLoggerModule">
+  <property name="path" value="logs"/> 
+  <!-- autowired job-home reference -->
+ </bean>
+ 
+  <!-- Shared extractor settings -->
+ <!-- TODO: move to an include? comment out defaults? -->
+ <bean id="extractorHelper" class="org.archive.modules.extractor.ExtractorHelper">
+  <property name="maxOutlinks" value="6000"/>
+ </bean>
+ 
+ <!-- Seeds: crawl starting points -->
+ <!-- TODO: move to an include? -->
+ <bean id="seeds" class="org.archive.modules.seeds.SeedModuleImpl">
+  <!-- default values: ->
+  <property name="seedsFile" value="seeds.txt"/>
+  <property name="rereadSeedsOnConfig" value="true"/>
+  <!-  -->
+ </bean>
+ 
+ <!-- TODO: move to an include? comment out defaults? -->
+ <bean id="scope" class="org.archive.modules.deciderules.DecideRuleSequence">
+  <!-- default values: ->
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <!- -->
+  <property name="rules">
+   <list>
+    <bean class="org.archive.modules.deciderules.RejectDecideRule">
+    <!-- default values: ->
+     <property name="comment" value=""/>
+     <property name="enabled" value="true"/>
+     <!-  -->
+    </bean>
+    <bean class="org.archive.modules.deciderules.surt.SurtPrefixedDecideRule" autowire="byName">
+     <!-- default values: ->
+     <property name="comment" value=""/>
+     <property name="enabled" value="true"/>
+     <property name="also-check-via" value="false"/>
+     <property name="decision" value="ACCEPT"/>
+     <property name="rebuild-on-reconfig" value="true"/>
+     <property name="seeds-as-surt-prefixes" value="true"/>
+     <property name="surts-source-file" value=""/>
+     <property name="surts-dump-file" value=""/>
+     <!-  -->
+     <!-- autowired seeds reference -->
+    </bean>
+    <bean class="org.archive.modules.deciderules.TooManyHopsDecideRule">
+     <!-- default values: ->
+     <property name="comment" value=""/>
+     <property name="enabled" value="true"/>
+     <property name="decision" value="REJECT"/>
+     <property name="max-hops" value="20"/>
+     <!-  -->
+    </bean>
+    <bean class="org.archive.modules.deciderules.TransclusionDecideRule">
+     <!-- default values: ->
+     <property name="comment" value=""/>
+     <property name="enabled" value="true"/>
+     <property name="decision" value="ACCEPT"/>
+     <property name="max-trans-hops" value="2"/>
+     <property name="max-speculative-hops" value="1"/>
+     <!-  -->
+    </bean>
+    <bean class="org.archive.modules.deciderules.PathologicalPathDecideRule">
+     <!-- default values: ->
+     <property name="comment" value=""/>
+     <property name="enabled" value="true"/>
+     <property name="max-repetitions" value="2"/>
+     <!-  -->
+    </bean>
+    <bean class="org.archive.modules.deciderules.TooManyPathSegmentsDecideRule">
+     <!-- default values: ->
+     <property name="comment" value=""/>
+     <property name="enabled" value="true"/>
+     <property name="decision" value="ACCEPT"/>
+     <property name="max-path-depth" value="20"/>
+     <!-  -->
+    </bean>
+    <bean class="org.archive.modules.deciderules.PrerequisiteAcceptDecideRule">
+     <!-- default values: ->
+     <property name="comment" value=""/>
+     <property name="enabled" value="true"/>
+     <!-  -->
+    </bean>
+   </list>
+  </property>
+ </bean>
+ 
+ <bean id="uriUniqFilter" class="org.archive.crawler.util.BdbUriUniqFilter" autowire="byName">
+  <!--  autowired BDB reference?  -->
+ </bean>
+ 
+ <bean id="queueAssignmentPolicy" class="org.archive.crawler.frontier.SurtAuthorityQueueAssignmentPolicy">
+ </bean>
+ 
+ <bean id="serverCache" class="org.archive.modules.net.BdbServerCache" autowire="byName">
+  <!--  autowired BDB reference?  -->
+ </bean>
+ 
+ <bean id="credentialStore" class="org.archive.modules.credential.CredentialStore">
+  <!-- default values: ->
+  <property name="credentials">
+   <map>
+   </map>
+  </property>
+  <!-  -->
+ </bean>
+ 
+ <bean id="crawlController" class="org.archive.crawler.framework.CrawlControllerImpl" autowire="byName">
+  <!-- default values: ->
+  <property name="pause-at-start" value="false"/>
+  <property name="pause-at-finish" value="false"/>
+  <property name="checkpointer-period" value="-1"/>
+  <property name="checkpoints-dir" value="checkpoints"/>
+  <property name="max-bytes-download" value=""/>
+  <property name="max-document-download" value=""/>
+  <property name="max-time-sec" value=""/>
+  <property name="max-toe-threads" value="25"/>
+  <property name="recorder-in-buffer-bytes" value="65536"/>
+  <property name="recorder-out-buffer-bytes" value="4096"/>
+  <property name="scratch-dir" value="scratch"/>
+  <!-  -->
+  <!-- autowired frontier reference -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired processorChain reference -->
+  <!-- autowired server-cache reference -->
+  <!-- autowired statistics-tracker reference -->
+ </bean>
+ 
+ <bean id="statisticsTracker" class="org.archive.crawler.framework.StatisticsTrackerImpl" autowire="byName">
+  <!-- default values: ->
+  <property name="interval-seconds" value="20"/>
+  <property name="live-host-report-size" value="20"/>
+  <property name="reports-dir" value="."/>
+  <!-  -->
+  <!-- autowired BDB reference -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired seeds reference -->
+  <!-- autowired serverCache reference -->
+ </bean>
+ 
+ <bean id="frontier" class="org.archive.crawler.frontier.BdbFrontier" autowire="byName">
+  <!-- quick, impolite values for fast selftests: -->
+  <property name="delayFactor" value="0.0"/>
+  <property name="minDelayMs" value="0"/>
+  <property name="maxDelayMs" value="0"/>
+  
+  <property name="retryDelaySeconds" value="10"/>
+  <property name="maxRetries" value="3"/>
+  <!-- default values: ->
+  <property name="delay-factor" value="5.0"/>
+  <property name="min-delay-ms" value="3000"/>
+  <property name="max-delay-ms" value="30000"/>
+  <property name="respect-crawl-delay" value="true"/>
+  
+  <property name="retry-delay-seconds" value="900"/>
+  <property name="max-retries" value="30"/>
+  
+  <property name="source-tag-seeds" value="false"/>
+  <property name="preference-embed-hops" value="1"/>
+  <property name="dump-pending-at-close" value="false"/>
+  
+  <property name="cost-policy">
+   <bean class="org.archive.crawler.frontier.UnitCostAssignmentPolicy" />
+  </property>
+  <property name="budget-replenish-amount" value="3000"/>
+  <property name="queue-total-budget" value="-1"/>
+  <property name="error-penalty-amount" value="100"/>
+  
+  <property name="force-queue-assignment" value=""/>
+
+  <property name="hold-queues" value="true"/>
+  <property name="outbound-queue-capacity" value="50"/>
+  <property name="inbound-queue-multiple" value="3"/>
+  <property name="snooze-long-ms" value="300000"/>
+  
+  <property name="total-bandwidth-usage-kb-sec" value="0"/>
+  <property name="max-per-host-bandwidth-usage-kb-sec" value="0"/>
+  
+  <property name="precedence-floor" value="255"/>
+  <property name="queuePrecedencePolicy">
+   <bean class="org.archive.crawler.frontier.BaseQueuePrecedencePolicy">
+    <property name="base-precedence" value="1"/>
+   </bean>
+  </property>
+  <property name="uriPrecedencePolicy">
+   <bean class="org.archive.crawler.frontier.CostUriPrecedencePolicy"/>
+  </property>
+  
+  <property name="recovery-dir" value="logs"/>
+  <property name="recovery-log-enabled" value="true"/>
+  <!-  -->
+  
+  <property name="canonicalizationRules">
+   <list>
+    <bean class="org.archive.modules.canonicalize.LowercaseRule"/>
+    <bean class="org.archive.modules.canonicalize.StripUserinfoRule"/>
+    <bean class="org.archive.modules.canonicalize.StripWWWNRule"/>
+    <bean class="org.archive.modules.canonicalize.StripSessionIDs"/>
+    <bean class="org.archive.modules.canonicalize.StripSessionCFIDs"/>
+    <bean class="org.archive.modules.canonicalize.FixupQueryString"/>
+   </list>
+  </property>
+  
+  <!-- autowired queueAssignmentPolicy reference -->
+  <!-- autowired uriUniqFilter reference -->
+  <!-- autowired bdb reference -->
+  <!-- autowired controller reference -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired scope reference -->
+  <!-- autowired seeds reference -->
+  <!-- autowired serverCache reference -->
+  <!-- autowired metadata (user-agent-provider) reference -->
+ </bean>
+ 
+ <bean id="processors" class="org.archive.modules.ProcessorChain">
+  <property name="processors">
+   <list>
+    <ref bean="preselector"/>
+    <ref bean="preconditionEnforcer"/>
+    <ref bean="fetchDns"/>
+    <ref bean="fetchHttp"/>
+    <ref bean="extractorHttp"/>
+    <ref bean="extractorHtml"/>
+    <ref bean="extractorCss"/>
+    <ref bean="extractorJs"/>
+    <ref bean="extractorSwf"/>
+    <ref bean="arcWriterProcessor"/>
+    <ref bean="crawlStateUpdater"/>
+    <ref bean="linksScoper"/>
+    <ref bean="frontierScheduler"/>
+   </list>
+  </property>
+ </bean>
+ 
+ <bean id="preselector" class="org.archive.crawler.prefetch.Preselector">
+  <!-- default values: ->
+  <property name="name" value="Preselector"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  
+  <property name="recheck-scope" value="false"/>
+ 
+  <property name="allow-by-regexp" value=""/>
+  <property name="block-all" value="false"/>
+  <property name="block-by-regexp" value=""/>
+  
+  <property name="override-logger" value="false"/>
+  <!-  -->
+  <!-- autowired scope reference -->
+  <!-- autowired loggerModule reference -->
+ </bean>
+    
+ <bean id="preconditionEnforcer" class="org.archive.crawler.prefetch.PreconditionEnforcer">
+  <!-- default values: ->
+  <property name="name" value="PreconditionEnforcer"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <property name="calculate-robots-only" value="false"/>
+  <property name="ip-validity-duration-seconds" value="21600"/>
+  <property name="robots-validity-duration-seconds" value="86400"/>
+  <!-  -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired credentialStore reference -->
+ </bean>
+ 
+ <bean id="fetchDns" class="org.archive.modules.fetcher.FetchDNS">
+  <!-- default values: ->
+  <property name="name" value="FetchDNS"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <property name="acceptNonDnsResolves" value="false"/>
+  <property name="digestAlgorithm" value="sha1"/>
+  <property name="digestContent" value="true"/>
+  <!-  -->
+  <!-- autowired serverCache reference -->
+ </bean>
+ 
+ <bean id="fetchHttp" class="org.archive.modules.fetcher.FetchHTTP">
+  <!-- default values: ->
+  <property name="name" value="FetchHTTP"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  
+  <property name="acceptHeaders">
+   <list>
+   </list>
+  </property>
+  
+  <property name="digestAlgorithm" value="sha1"/>
+  <property name="digestContent" value="true"/>
+  <property name="default-encoding" value="ISO-8859-1"/>
+  <property name="fetch-bandwidth" value="0"/>
+  <property name="http-bind-address" value=""/>
+  <property name="http-proxy-host" value=""/>
+  <property name="http-proxy-port" value="0"/>
+  <property name="ignore-cookies" value="false"/>
+  <property name="max-length-bytes" value=""/>
+  <property name="send-connection-close" value="true"/>
+  <property name="send-if-modified-since" value="true"/>
+  <property name="send-if-none-match" value="true"/>
+  <property name="send-range" value="false"/>
+  <property name="send-referer" value="false"/>
+  <property name="midfetch-rules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  
+  <property name="sotimeout-ms" value="20000"/>
+  <property name="timeout-seconds" value="1200"/>
+  <property name="trust-level" value="open"/>
+  <!-  -->
+  
+  <property name="cookieStorage">
+   <bean class="org.archive.modules.fetcher.BdbCookieStorage">
+    <!--  autowired bdbModule reference -->
+    <!-- default values: ->
+    <property name="loadCookiesFromFile" value=""/>
+    <property name="saveCookiesToFile" value=""/>
+    <!-  -->
+   </bean>
+  </property>
+  
+  <!-- autowired credentialStore reference -->
+  <!-- autowired serverCache reference -->
+  <!-- autowired metadata reference -->
+ </bean>
+ 
+ <bean id="extractorHttp" class="org.archive.modules.extractor.ExtractorHTTP">
+  <!-- default values: ->
+  <property name="name" value="ExtractorHTTP"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <!-  -->
+  <!-- autowired loggerModule reference -->
+ </bean>
+ 
+ <bean id="extractorHtml" class="org.archive.modules.extractor.ExtractorHTML">
+  <!-- default values: ->
+  <property name="name" value="ExtractorHTML"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  
+  <property name="extractJavascript" value="true"/>
+  <property name="extractOnlyFormGets" value="true"/>
+  <property name="extractValueAttributes" value="true"/>
+  <property name="ignoreFormActionUrls" value="false"/>
+  <property name="ignoreUnexpectedHtml" value="true"/>
+  <property name="treatFramesAsEmbedLinks" value="true"/>
+  
+  <property name="max-attr-name-length" value="1024"/>
+  <property name="max-attr-val-length" value="16384"/>
+  <property name="max-element-length" value="1024"/>
+  <!-  -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired robotsHonoringPolicy reference -->
+ </bean>
+ 
+ <bean id="extractorCss" class="org.archive.modules.extractor.ExtractorCSS">
+ <!-- default values: ->
+  <property name="name" value="ExtractorCSS"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <!-  -->
+  <!-- autowired loggerModule reference -->
+ </bean>
+ 
+ <bean id="extractorJs" class="org.archive.modules.extractor.ExtractorJS">
+  <!-- default values: ->
+  <property name="name" value="ExtractorJS"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <!-  -->
+  <!-- autowired loggerModule reference -->
+ </bean>
+ 
+ <bean id="extractorSwf" class="org.archive.modules.extractor.ExtractorSWF">
+  <!-- default values: ->
+  <property name="name" value="ExtractorSWF"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <!-  -->
+  <!-- autowired loggerModule reference -->
+ </bean>
+ 
+ <bean id="arcWriterProcessor" class="org.archive.modules.writer.ARCWriterProcessor">
+  <!-- default values: ->
+  <property name="name" value="ARCWriterProcessor"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  
+  <property name="compressed" value="true"/>
+  <property name="directory" value=""/>
+  <property name="max-size-bytes" value="100000000"/>
+  <property name="path">
+   <list>
+    <value>arcs</value>
+   </list>
+  </property>
+  <property name="pool-max-active" value="5"/>
+  <property name="pool-max-wait-ms" value="300000"/>
+  <property name="prefix" value="IAH"/>
+  <property name="skip-identical-digests" value="false"/>
+  <property name="suffix" value="${HOSTNAME}"/>
+  <property name="total-bytes-to-write" value="0"/>
+  <!-  -->
+  <!-- autowired serverCache reference -->
+  <!-- autowired metadata reference -->
+ </bean>
+ 
+ <bean id="crawlStateUpdater" class="org.archive.crawler.postprocessor.CrawlStateUpdater">
+  <!-- default values: ->
+  <property name="name" value="CrawlStateUpdater"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <!-  -->
+  <!-- autowired serverCache reference -->
+  <!-- autowired robotsHonoringPolicy reference -->
+ </bean>
+ 
+ <bean id="linksScoper" class="org.archive.crawler.postprocessor.LinksScoper">
+  <!-- default values: ->
+  <property name="name" value="LinkScoper"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  
+  <property name="overrideLogger" value="false"/>
+  <property name="preference-depth-hops" value="-1"/>
+  <property name="seed-redirects-new-seed" value="true"/>
+  
+  <property name="logRejectsRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <!-  -->
+  <!-- autowired scope reference -->
+  <!-- autowired loggerModule reference -->
+ </bean>
+ 
+ <bean id="frontierScheduler" class="org.archive.crawler.postprocessor.FrontierScheduler">
+  <!-- default values: ->
+  <property name="name" value="FrontierScheduler"/>
+  <property name="comment" value=""/>
+  <property name="enabled" value="true"/>
+  <property name="decideRules">
+   <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+    <property name="comment" value=""/>
+    <property name="enabled" value="true"/>
+    <property name="rules">
+     <list>
+     </list>
+    </property>
+   </bean>
+  </property>
+  <!-  -->
+  <!-- autowired frontier reference -->
+ </bean>
+
+</beans>
