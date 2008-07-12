@@ -228,11 +228,6 @@ implements Serializable, Checkpointable {
     public BdbFrontier() {
         super();
     }
-
-    
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
-    }
     
     public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
     throws IOException {

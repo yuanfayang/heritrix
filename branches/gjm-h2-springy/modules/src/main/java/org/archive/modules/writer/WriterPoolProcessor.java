@@ -27,7 +27,6 @@ package org.archive.modules.writer;
 import static org.archive.modules.ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_DNS_SUCCESS;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -52,9 +51,8 @@ import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
-import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.StateProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 /**
  * Abstract implementation of a file pool processor.
@@ -63,7 +61,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author stack
  */
 public abstract class WriterPoolProcessor extends Processor 
-implements InitializingBean, Closeable {
+implements Lifecycle {
     
     
     private static final Logger logger = 
@@ -248,11 +246,19 @@ implements InitializingBean, Closeable {
     }
 
 
-    public synchronized void afterPropertiesSet() {
+    public synchronized void start() {
         this.settings = makeWriterPoolSettings();
         setupPool(serial);
     }
     
+    public boolean isRunning() {
+        return this.settings != null;
+    }
+    
+    public void stop() {
+        this.pool.close();
+        this.settings = null; 
+    }
     
     
     protected AtomicInteger getSerialNo() {
@@ -405,7 +411,7 @@ implements InitializingBean, Closeable {
         List<String> list = getStorePaths();
         ArrayList<File> results = new ArrayList<File>();
         for (String path: list) {
-            File f = new File(directory, path);
+            File f = new File(resolveDirectory(), path);
             if (!f.exists()) {
                 try {
                     f.mkdirs();
@@ -458,12 +464,6 @@ implements InitializingBean, Closeable {
 
     @Override
     protected abstract ProcessResult innerProcessResult(ProcessorURI uri);
-
-    
-    public void close() {
-        this.pool.close();
-    }
-
 
     protected boolean shouldProcess(ProcessorURI uri) {
         if (!(uri instanceof ProcessorURI)) {

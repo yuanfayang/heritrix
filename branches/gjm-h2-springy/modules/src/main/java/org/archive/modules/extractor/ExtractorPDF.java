@@ -33,7 +33,6 @@ import org.archive.io.SinkHandlerLogThread;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Allows the caller to process a CrawlURI representing a PDF
@@ -42,7 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Parker Thompson
  *
  */
-public class ExtractorPDF extends ContentExtractor implements InitializingBean {
+public class ExtractorPDF extends ContentExtractor {
 
     private static final long serialVersionUID = 3L;
 
@@ -78,12 +77,6 @@ public class ExtractorPDF extends ContentExtractor implements InitializingBean {
     }
 
     public ExtractorPDF() {
-    }
-
-    
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
-//        this.tempDirProvider = p.get(this, TEMP_DIR_PROVIDER);
     }
     
     @Override

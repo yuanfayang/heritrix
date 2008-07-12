@@ -44,15 +44,18 @@ import org.apache.commons.lang.StringUtils;
 import org.archive.settings.JobHome;
 import org.archive.state.StateProvider;
 import org.archive.util.IoUtils;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 /**
  * @author pjack
  *
  */
 public abstract class AbstractCookieStorage 
-implements CookieStorage, InitializingBean, Closeable, Serializable {
+    implements CookieStorage, 
+               Lifecycle, // InitializingBean, 
+               Closeable, 
+               Serializable {
 
     final private static Logger LOGGER = 
         Logger.getLogger(AbstractCookieStorage.class.getName());
@@ -89,13 +92,21 @@ implements CookieStorage, InitializingBean, Closeable, Serializable {
         return JobHome.resolveToFile(jobHome,cookiesSaveFile,null);
     }
 
-    public void afterPropertiesSet() {
+    public void start() {
         SortedMap<String,Cookie> cookies = prepareMap();
         if (!StringUtils.isEmpty(getCookiesLoadFile())) {
             loadCookies(resolveCookiesLoadFile().getAbsolutePath(), cookies);
         }
     }
 
+    public boolean isRunning() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    public void stop() {
+        // TODO Auto-generated method stub
+        
+    }
     /* (non-Javadoc)
      * @see org.archive.modules.fetcher.CookieStorage#finalTasks(org.archive.state.StateProvider)
      */

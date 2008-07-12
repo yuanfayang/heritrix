@@ -1146,7 +1146,7 @@ InitializingBean, HasKeyedProperties {
     }
 
     
-    public void start() {
+    public void run() {
         unpause(); 
     }
     

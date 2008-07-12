@@ -88,11 +88,9 @@ import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.JobHome;
-import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.iterator.LineReadingIterator;
@@ -100,6 +98,7 @@ import org.archive.util.iterator.RegexpLineIterator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 /**
  * Shared facilities for Frontier implementations.
@@ -111,11 +110,10 @@ public abstract class AbstractFrontier
     implements CrawlStatusListener, 
                Frontier, 
                Serializable, 
-               InitializingBean, 
+               Lifecycle, // InitializingBean, 
                SeedRefreshListener, 
                HasKeyedProperties {
     private static final long serialVersionUID = 555881755284996860L;
-
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
@@ -124,6 +122,16 @@ public abstract class AbstractFrontier
         return kp;
     }
     
+    
+    public boolean isRunning() {
+        return managerThread!=null && managerThread.isAlive();
+    }
+    
+    public void stop() {
+        terminate();
+    }
+
+
     protected CrawlControllerImpl controller;
     public CrawlControllerImpl getCrawlController() {
         return this.controller;
@@ -499,7 +507,7 @@ public abstract class AbstractFrontier
         managerThread.start();
     }
     
-    public void afterPropertiesSet() {
+    public void start() {
         seeds.addSeedRefreshListener(this);
         
         if (getRecoveryLogEnabled()) try {
@@ -760,7 +768,7 @@ public abstract class AbstractFrontier
         }
     }
 
-    public void start() {
+    public void run() {
         requestState(State.RUN);
     }
     
@@ -1373,7 +1381,7 @@ public abstract class AbstractFrontier
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        Sheet global = null; // manager.getGlobalSheet(); //TODO:SPRINGY overrides
+        //Sheet global = null; // manager.getGlobalSheet(); //TODO:SPRINGY overrides
         List<CanonicalizationRule> rules = getCanonicalizationRules();
         return Canonicalizer.canonicalize(uuri.toString(), rules);
     }

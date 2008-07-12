@@ -25,9 +25,8 @@ package org.archive.modules.recrawl;
 import java.util.Map;
 
 import org.archive.settings.file.BdbModule;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -42,7 +41,7 @@ import com.sleepycat.je.DatabaseException;
  * @author gojomo
  */
 public abstract class PersistOnlineProcessor extends PersistProcessor 
-implements InitializingBean, DisposableBean {
+implements Lifecycle {
     
     private static final long serialVersionUID = -666479480942267268L;
     
@@ -67,7 +66,8 @@ implements InitializingBean, DisposableBean {
     }
 
 
-    public void afterPropertiesSet() {
+    @SuppressWarnings("unchecked")
+    public void start() {
         // TODO: share single store instance between Load and Store processors
         // (shared context? EnhancedEnvironment?)
 
@@ -85,9 +85,12 @@ implements InitializingBean, DisposableBean {
         }
         store =  historyMap;
     }
+    
+    public boolean isRunning() {
+        return historyDb != null; 
+    }
 
-
-    public void destroy() {
+    public void stop() {
     	// TODO leave this cleanup to BdbModule?
         try {
             historyDb.sync();
@@ -95,6 +98,8 @@ implements InitializingBean, DisposableBean {
         } catch (DatabaseException e) {
             // TODO Auto-generated catch block
             throw new RuntimeException(e);
+        } finally {
+            historyDb = null; 
         }
     }
 
