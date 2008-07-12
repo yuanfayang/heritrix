@@ -39,11 +39,8 @@ public class PersistStoreProcessor extends PersistOnlineProcessor
 
     public PersistStoreProcessor() {
     }
-
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
-    }
     
+    @SuppressWarnings("unchecked")
     @Override
     protected void innerProcess(ProcessorURI curi) throws InterruptedException {
         store.put(persistKeyFor(curi),curi.getPersistentDataMap());

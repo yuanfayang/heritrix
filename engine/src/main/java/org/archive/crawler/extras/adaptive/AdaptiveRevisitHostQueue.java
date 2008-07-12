@@ -179,6 +179,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      * @throws IOException if an error occurs opening/creating the 
      *         database
      */
+    @SuppressWarnings("unchecked")
     public AdaptiveRevisitHostQueue(String hostName, BdbModule env,
             StoredClassCatalog catalog, int valence)
     throws IOException {
@@ -367,6 +368,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      * 
      * @throws DatabaseException
      */
+    @SuppressWarnings("unchecked")
     protected OperationStatus strictAdd(CrawlURI curi,
         boolean overrideDuplicates)
     throws DatabaseException{
@@ -544,6 +546,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      *             if the CrawlURI is already in the list of URIs being
      *             processed.
      */
+    @SuppressWarnings("unchecked")
     protected void addInProcessing(CrawlURI curi) throws DatabaseException,
             IllegalStateException {
         DatabaseEntry keyEntry = new DatabaseEntry();
@@ -582,6 +585,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      * @throws DatabaseException
      *             if a errors occurs reading the database
      */
+    @SuppressWarnings("unchecked")
     protected CrawlURI getCrawlURI(String uri) throws DatabaseException{
         DatabaseEntry keyEntry = new DatabaseEntry();
         DatabaseEntry dataEntry = new DatabaseEntry();
@@ -710,6 +714,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      *         ready {@link AdaptiveRevisitHostQueue#HQSTATE_READY ready}
      * @throws IOException if an error occurs reading from the database
      */
+    @SuppressWarnings("unchecked")
     public CrawlURI next() throws IllegalStateException, IOException{
         try{
             // Ok, lets issue a URI, first check state and reserve slot.
@@ -1122,6 +1127,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
          *                     StoredClassCatalog.
          * @param dataClass is the CrawlURI class. 
          */
+        @SuppressWarnings("unchecked")
         public OrderOfProcessingKeyCreator(ClassCatalog classCatalog, 
                 Class dataClass) {
             super(classCatalog, dataClass);

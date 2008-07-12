@@ -34,7 +34,6 @@ import java.util.logging.LogRecord;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Base32;
 import org.archive.util.MimetypeUtils;
 
 /**

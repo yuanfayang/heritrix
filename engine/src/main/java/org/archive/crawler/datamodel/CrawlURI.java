@@ -23,6 +23,47 @@
  */
 package org.archive.crawler.datamodel;
 
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_ANNOTATIONS;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_CREDENTIAL_AVATARS_KEY;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_DNS_SERVER_IP_LABEL;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_COMPLETED_TIME;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIRE;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_HERITABLE_KEYS;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_HTML_BASE;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_NONFATAL_ERRORS;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_PREREQUISITE_URI;
+import static org.archive.crawler.datamodel.CoreAttributeConstants.A_SOURCE_TAG;
+import static org.archive.crawler.datamodel.SchedulingConstants.NORMAL;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_CONTENT_STATE_KEY;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_FETCH_OVERDUE;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_TIME_OF_NEXT_PROCESSING;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_WAIT_INTERVAL;
+import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_WAIT_REEVALUATED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_CUSTOM_PROCESSOR;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_USER;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_FAILED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_LOST;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DEEMED_CHAFF;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DELETED_BY_USER;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DNS_SUCCESS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DOMAIN_PREREQUISITE_FAILURE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_DOMAIN_UNRESOLVABLE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_OTHER_PREREQUISITE_FAILURE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_OUT_OF_SCOPE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_PREREQUISITE_UNSCHEDULABLE_FAILURE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_PROCESSING_THREAD_KILLED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_ROBOTS_PRECLUDED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_ROBOTS_PREREQUISITE_FAILURE;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_SERIOUS_ERROR;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TIMEOUT;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TOO_MANY_EMBED_HOPS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TOO_MANY_LINK_HOPS;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_TOO_MANY_RETRIES;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_UNATTEMPTED;
+import static org.archive.modules.fetcher.FetchStatusCodes.S_UNFETCHABLE_URI;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -43,10 +84,6 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import static org.archive.crawler.datamodel.SchedulingConstants.*;
-import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.*;
-import static org.archive.modules.fetcher.FetchStatusCodes.*;
-
 import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.credential.CredentialAvatar;
@@ -58,13 +95,11 @@ import org.archive.modules.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.settings.SheetManager;
-import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
 import org.archive.util.Reporter;
-import org.archive.util.SURT;
 
 
 /**

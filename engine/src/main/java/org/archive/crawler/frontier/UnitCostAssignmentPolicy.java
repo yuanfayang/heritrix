@@ -32,6 +32,7 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author gojomo
  */
 public class UnitCostAssignmentPolicy extends CostAssignmentPolicy {
+    private static final long serialVersionUID = 1L;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.CostAssignmentPolicy#costOf(org.archive.crawler.datamodel.CrawlURI)

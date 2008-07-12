@@ -33,7 +33,8 @@ package org.archive.crawler.util;
  */
 public class NoopUriUniqFilter
 extends SetBasedUriUniqFilter {
-    
+    private static final long serialVersionUID = 1L;
+
     protected synchronized boolean setAdd(CharSequence uri) {
         return true; // always consider as new
     }

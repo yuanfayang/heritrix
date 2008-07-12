@@ -42,6 +42,7 @@ public class PersistLoadProcessor extends PersistOnlineProcessor {
     public PersistLoadProcessor() {
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void innerProcess(ProcessorURI curi) throws InterruptedException {
         Map<String, Object> prior = 

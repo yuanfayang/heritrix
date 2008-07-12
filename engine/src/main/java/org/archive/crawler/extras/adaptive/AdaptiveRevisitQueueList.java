@@ -171,6 +171,7 @@ public class AdaptiveRevisitQueueList implements Reporter {
      * @return the newly created HQ
      * @throws IOException
      */
+    @SuppressWarnings("unchecked")
     public AdaptiveRevisitHostQueue createHQ(String hostName, int valence)
             throws IOException{
         AdaptiveRevisitHostQueueWrapper hqw = hostQueues.get(hostName);

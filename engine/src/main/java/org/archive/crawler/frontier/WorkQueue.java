@@ -18,8 +18,6 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.settings.SheetManager;
-import org.archive.state.Key;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -95,8 +93,6 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
 
     private boolean retired;
 
-    transient protected StateProvider provider;
-    
     public WorkQueue(final String pClassKey) {
         this.classKey = pClassKey;
     }
@@ -662,11 +658,12 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     }
     
     public void setStateProvider(SheetManager manager) {
-        if(provider!=null) {
-            // no need to reset
-            return; 
-        }
-        this.provider = null; // manager.findConfig(getClassKey()); // TODO:SPRINGY adapt
+//      TODO:SPRINGY adapt for overrides
+//        if(provider!=null) {
+//            // no need to reset
+//            return; 
+//        }
+//        this.provider = null; // manager.findConfig(getClassKey()); 
     }
 
 //    public <T> T get(Object module, Key<T> key) {
