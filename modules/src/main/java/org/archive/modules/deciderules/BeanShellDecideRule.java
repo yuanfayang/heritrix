@@ -35,7 +35,6 @@ import java.util.logging.Logger;
 import org.archive.modules.ProcessorURI;
 import org.archive.settings.JobHome;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -59,7 +58,7 @@ import bsh.Interpreter;
  * @author gojomo
  */
 public class BeanShellDecideRule extends DecideRule 
-implements InitializingBean, ApplicationContextAware {
+implements ApplicationContextAware {
 
     private static final long serialVersionUID = 3L;
 
@@ -114,13 +113,6 @@ implements InitializingBean, ApplicationContextAware {
     
     public BeanShellDecideRule() {
     }
-    
-    
-    public void afterPropertiesSet() {
-//        this.scriptFile = context.get(this, SCRIPT_FILE);
-//        this.manager = context.get(this, MANAGER);
-    }
-
     
     @Override
     public synchronized DecideResult innerDecide(ProcessorURI uri) {

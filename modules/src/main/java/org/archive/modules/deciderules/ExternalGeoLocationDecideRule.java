@@ -34,7 +34,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xbill.DNS.Address;
 
@@ -53,8 +52,7 @@ import org.xbill.DNS.Address;
  * 
  * @author Igor Ranitovic
  */
-public class ExternalGeoLocationDecideRule extends PredicatedDecideRule 
-implements InitializingBean {
+public class ExternalGeoLocationDecideRule extends PredicatedDecideRule {
 
     private static final long serialVersionUID = 3L;
 
@@ -90,10 +88,6 @@ implements InitializingBean {
     }
     
     public ExternalGeoLocationDecideRule() {
-    }
-
-    public void afterPropertiesSet() {
-//        this.serverCache = provider.get(this, SERVER_CACHE);
     }
     
     @Override

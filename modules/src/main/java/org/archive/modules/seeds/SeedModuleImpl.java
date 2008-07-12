@@ -60,7 +60,6 @@ import org.archive.util.FileUtils;
  */
 public class SeedModuleImpl extends Bean implements 
     SeedModule, 
-    InitializingBean, 
     Serializable, 
     KeyChangeListener,
     Checkpointable {
@@ -118,11 +117,6 @@ public class SeedModuleImpl extends Bean implements
      */
     public SeedModuleImpl() {
         super(SeedModule.class);
-    }
-
-
-    public void afterPropertiesSet() {
-
     }
 
     /**

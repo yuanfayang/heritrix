@@ -92,14 +92,14 @@ public class CrawlControllerImplTest extends ModuleTestBase {
         BdbModule bdb = new BdbModule();
         bdb.setDir(state.getAbsolutePath());
 //        def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
-        bdb.afterPropertiesSet();
+        bdb.start();
         
         String cp = checkpoints.getAbsolutePath();
         
         CrawlControllerImpl controller = new CrawlControllerImpl();
         controller.setServerCache(new BdbServerCache());
         controller.setCheckpointsDir(cp);
-        controller.afterPropertiesSet();
+        controller.start();
         return controller;
     }
 

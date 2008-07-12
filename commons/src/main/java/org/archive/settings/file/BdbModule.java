@@ -49,13 +49,12 @@ import java.util.logging.Logger;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
-import org.archive.state.Immutable;
-import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Module;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.bdbje.EnhancedEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
@@ -71,10 +70,9 @@ import com.sleepycat.je.SecondaryKeyCreator;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
-public class BdbModule implements Module, InitializingBean, Checkpointable, 
+public class BdbModule implements Module, Lifecycle, Checkpointable, 
 Serializable, Closeable {
-
-
+    private static final long serialVersionUID = 1L;
     final private static Logger LOGGER = 
         Logger.getLogger(BdbModule.class.getName()); 
 
@@ -99,7 +97,6 @@ Serializable, Closeable {
      *
      */
     public static class BdbConfig implements Serializable {
-
         private static final long serialVersionUID = 1L;
 
         boolean allowCreate;
@@ -152,7 +149,6 @@ Serializable, Closeable {
     
     
     public static class  SecondaryBdbConfig extends BdbConfig {
-
         private static final long serialVersionUID = 1L;
         
         private SecondaryKeyCreator keyCreator;
@@ -179,11 +175,6 @@ Serializable, Closeable {
         }
         
     }
-    
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
 
     protected String dir = "state";
     public String getDir() {
@@ -238,7 +229,7 @@ Serializable, Closeable {
     }
 
     
-    public void afterPropertiesSet() {
+    public void start() {
         try {
             setUp(resolveDir(), getCachePercent(), true);
         } catch (DatabaseException e) {
@@ -246,6 +237,14 @@ Serializable, Closeable {
         }
         shutdownHook = new BdbShutdownHook(this);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+    }
+    
+    public boolean isRunning() {
+        return shutdownHook!=null;
+    }
+
+    public void stop() {
+        close();
     }
     
     private void setUp(File f, int cachePercent, boolean create) 
@@ -553,6 +552,7 @@ Serializable, Closeable {
     public void close() {
         close2();
         Runtime.getRuntime().removeShutdownHook(shutdownHook);
+        shutdownHook = null; 
     }
     
     void close2() {

@@ -55,7 +55,7 @@ implements AdaptiveRevisitAttributeConstants {
         ExampleStateProvider dsp = new ExampleStateProvider();
         bdb.setDir(dir);
 //        dsp.set(bdb, BdbModule.DIR, dir);
-        bdb.afterPropertiesSet();
+        bdb.start();
 
         /*
         EnvironmentConfig envConfig = new EnvironmentConfig();

@@ -52,7 +52,6 @@ import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -63,7 +62,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author gojomo
  */
-public class PreconditionEnforcer extends Processor implements InitializingBean {
+public class PreconditionEnforcer extends Processor  {
 
     private static final long serialVersionUID = 3L;
 
@@ -153,11 +152,6 @@ public class PreconditionEnforcer extends Processor implements InitializingBean 
     public PreconditionEnforcer() {
         super();
     }
-    
-    public void afterPropertiesSet() {
-
-    }
-
     
     @Override
     protected boolean shouldProcess(ProcessorURI puri) {

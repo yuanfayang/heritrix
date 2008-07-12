@@ -240,13 +240,13 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
 //        reload();
     }
 
-    public PathSharingContext start() {
-        File config = new File(mainDir,BEANS_CONFIG);
-        PathSharingContext ac = new PathSharingContext(config.getAbsolutePath());
-       
-        ac.start();
-        return ac; 
-    }
+//    public PathSharingContext start() {
+//        File config = new File(mainDir,BEANS_CONFIG);
+//        PathSharingContext ac = new PathSharingContext(config.getAbsolutePath());
+//       
+//        ac.start();
+//        return ac; 
+//    }
     
     private static List<ModuleListener> emptyList() {
         return Collections.emptyList();

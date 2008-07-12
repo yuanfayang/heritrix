@@ -264,8 +264,8 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     @Override
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
+    public void start() {
+        super.start();
         try {
             this.sourceHostDistribution = bdb.getBigMap("sourceHostDistribution",
             	    false, String.class, HashMap.class);

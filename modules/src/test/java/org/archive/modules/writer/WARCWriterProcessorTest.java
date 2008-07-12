@@ -56,7 +56,7 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
         result.setDirectory(tmp.getAbsolutePath());
         result.setServerCache(new DefaultServerCache());
         result.setMetadataProvider(new DummyMetadataProvider());
-        result.afterPropertiesSet();
+        result.start();
         return result;
     }
 

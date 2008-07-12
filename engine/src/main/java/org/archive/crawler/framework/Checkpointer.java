@@ -226,7 +226,7 @@ public class Checkpointer implements Serializable {
         private synchronized boolean waitOnPaused() {
             // If we're paused we can exit but also exit if the crawl has been
             // resumed by the operator.
-            while(!getController().isPaused() && !getController().isRunning()) {
+            while(!getController().isPaused() && !getController().isStateRunning()) {
                 try {
                     wait(1000 * 3);
                 } catch (InterruptedException e) {
