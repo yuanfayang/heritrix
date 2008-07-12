@@ -51,7 +51,7 @@ public class LogUtils {
      * @param logger Logger whose handler we'll replace with the
      * file handler created herein.
      */
-    public static void createFileLogger(File logsDir, String baseName,
+    public static FileHandler createFileLogger(File logsDir, String baseName,
             Logger logger) {
         int limit =
             PropertyUtils.getIntProperty("java.util.logging.FileHandler.limit",
@@ -75,8 +75,10 @@ public class LogUtils {
             }
             logger.addHandler(fh);
             logger.setUseParentHandlers(false);
+            return fh; 
         } catch (Exception e) {
             logger.severe("Failed customization of logger: " + e.getMessage());
+            return null; 
         }
     }
 }

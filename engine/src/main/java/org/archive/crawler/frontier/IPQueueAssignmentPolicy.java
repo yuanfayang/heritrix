@@ -28,9 +28,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.state.Immutable;
-import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.Key;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 /**
  * Uses target IP as basis for queue-assignment, unless it is unavailable,
@@ -39,22 +38,17 @@ import org.archive.state.Key;
  * @author gojomo
  */
 public class IPQueueAssignmentPolicy
-extends HostnameQueueAssignmentPolicy implements InitializingBean {
-    
-
+    extends HostnameQueueAssignmentPolicy {
     private static final long serialVersionUID = 3L;
 
-    @Immutable
-    final private static Key<ServerCache> SERVER_CACHE =
-        Key.makeAuto(ServerCache.class);
-    
-    private ServerCache serverCache;
-
-    
-    public void afterPropertiesSet() {
-
+    protected ServerCache serverCache;
+    public ServerCache getServerCache() {
+        return this.serverCache;
     }
-
+    @Autowired
+    public void setServerCache(ServerCache serverCache) {
+        this.serverCache = serverCache;
+    }
     
     public String getClassKey(CrawlURI cauri) {
         CrawlHost host = ServerCacheUtil.getHostFor(serverCache, 

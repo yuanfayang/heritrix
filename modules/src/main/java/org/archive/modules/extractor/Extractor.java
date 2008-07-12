@@ -32,7 +32,6 @@ import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -44,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * 
  * @author pjack
  */
-public abstract class Extractor extends Processor implements InitializingBean {
+public abstract class Extractor extends Processor {
 
 
     /** Logger. */
@@ -58,10 +57,6 @@ public abstract class Extractor extends Processor implements InitializingBean {
     @Autowired
     public void setLoggerModule(UriErrorLoggerModule loggerModule) {
         this.loggerModule = loggerModule;
-    }
-    
-    public void afterPropertiesSet() {
-        // be default do nothing
     }
     
     ExtractorHelper extractorHelper = new ExtractorHelper();

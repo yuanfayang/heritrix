@@ -107,12 +107,10 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.net.UURI;
-import org.archive.settings.Finishable;
-import org.springframework.beans.factory.InitializingBean;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 /**
  * HTTP fetcher that uses <a
@@ -124,7 +122,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author others
  * @version $Id$
  */
-public class FetchHTTP extends Processor implements InitializingBean, Finishable {
+public class FetchHTTP extends Processor implements Lifecycle {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(FetchHTTP.class, 1);
@@ -1260,7 +1258,7 @@ public class FetchHTTP extends Processor implements InitializingBean, Finishable
         return result;
     }
 
-    public void afterPropertiesSet() {
+    public void start() {
         configureHttp();
 
         if (cookieStorage != null) {        
@@ -1270,6 +1268,26 @@ public class FetchHTTP extends Processor implements InitializingBean, Finishable
         setSSLFactory();
     }
     
+    public boolean isRunning() {
+        return this.http != null; 
+    }
+    
+    public void stop() {
+        // At the end save cookies to the file specified in the order file.
+        if (cookieStorage != null) {
+            @SuppressWarnings("unchecked")
+            Map<String, Cookie> map = http.getState().getCookiesMap();
+            cookieStorage.saveCookiesMap(map);
+        }
+        cleanupHttp();
+    }
+
+    /**
+     * Perform any final cleanup related to the HttpClient instance.
+     */
+    protected void cleanupHttp() {
+        this.http = null; 
+    }
     
     private void setSSLFactory() {
         // I tried to get the default KeyManagers but doesn't work unless you
@@ -1289,21 +1307,7 @@ public class FetchHTTP extends Processor implements InitializingBean, Finishable
     }
 
 
-    public void finalTasks(StateProvider defaults) {
-        // At the end save cookies to the file specified in the order file.
-        if (cookieStorage != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, Cookie> map = http.getState().getCookiesMap();
-            cookieStorage.saveCookiesMap(map);
-        }
-        cleanupHttp();
-    }
 
-    /**
-     * Perform any final cleanup related to the HttpClient instance.
-     */
-    protected void cleanupHttp() {
-    }
 
     protected void configureHttp() {
         int soTimeout = getSoTimeoutMs();

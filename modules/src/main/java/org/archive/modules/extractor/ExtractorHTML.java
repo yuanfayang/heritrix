@@ -313,11 +313,7 @@ public class ExtractorHTML extends ContentExtractor implements InitializingBean 
     public ExtractorHTML() {
     }
 
-    
-    @Override
     public void afterPropertiesSet() {
-        super.afterPropertiesSet();
-
         String regex = RELEVANT_TAG_EXTRACTOR;
         regex = regex.replace(MAX_ELEMENT_REPLACE, 
                     Integer.toString(getMaxElementLength()));

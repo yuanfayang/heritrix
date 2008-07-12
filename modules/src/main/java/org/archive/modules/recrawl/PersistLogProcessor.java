@@ -34,9 +34,8 @@ import org.archive.modules.ProcessorURI;
 import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 
 /**
@@ -48,7 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
 public class PersistLogProcessor extends PersistProcessor 
-implements Checkpointable, InitializingBean, DisposableBean {
+implements Checkpointable, Lifecycle {
 
     private static final long serialVersionUID = 1678691994065439346L;
     
@@ -83,7 +82,7 @@ implements Checkpointable, InitializingBean, DisposableBean {
     }
 
 
-    public void afterPropertiesSet() {
+    public void start() {
       try {
             File logFile = resolveLogFile();
             log = new CrawlerJournal(logFile);
@@ -93,9 +92,13 @@ implements Checkpointable, InitializingBean, DisposableBean {
         }
     }
     
+    public boolean isRunning() {
+        return log != null; 
+    }
 
-    public void destroy() {
+    public void stop() {
         log.close();
+        log = null; 
     }
 
     @Override

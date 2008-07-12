@@ -44,7 +44,6 @@ import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
-import org.springframework.beans.factory.InitializingBean;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.InetAddressUtil;
 import org.archive.util.Recorder;
@@ -65,7 +64,7 @@ import org.xbill.DNS.Type;
  *
  * @author multiple
  */
-public class FetchDNS extends Processor implements InitializingBean {
+public class FetchDNS extends Processor {
 
     private static final long serialVersionUID = 3L;
 
@@ -134,11 +133,6 @@ public class FetchDNS extends Processor implements InitializingBean {
     public FetchDNS() {
     }
 
-    
-    public void afterPropertiesSet() {
-
-    }
-    
     protected boolean shouldProcess(ProcessorURI curi) {
         return curi.getUURI().getScheme().equals("dns");
     }

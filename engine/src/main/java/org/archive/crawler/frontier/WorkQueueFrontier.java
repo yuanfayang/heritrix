@@ -54,7 +54,6 @@ import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
-import org.archive.crawler.framework.StatisticsTracker;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy;
 import org.archive.crawler.frontier.precedence.CostUriPrecedencePolicy;
@@ -248,8 +247,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         super();
     }
     
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
+    public void start() {
+        super.start();
         uriUniqFilter.setDestination(this);
         
         try {

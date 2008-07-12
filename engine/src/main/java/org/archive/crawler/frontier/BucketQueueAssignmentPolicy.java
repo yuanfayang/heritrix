@@ -29,7 +29,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -38,8 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * 
  * @author Christian Kohlschuetter
  */
-public class BucketQueueAssignmentPolicy extends QueueAssignmentPolicy 
-implements InitializingBean {
+public class BucketQueueAssignmentPolicy extends QueueAssignmentPolicy {
 
     private static final long serialVersionUID = 3L;
 
@@ -53,11 +51,6 @@ implements InitializingBean {
     @Autowired
     public void setServerCache(ServerCache serverCache) {
         this.serverCache = serverCache;
-    }
-
-    
-    public void afterPropertiesSet() {
-
     }
     
     public String getClassKey(final CrawlURI curi) {
