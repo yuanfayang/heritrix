@@ -25,13 +25,10 @@
 package org.archive.crawler;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +54,6 @@ import org.archive.crawler.framework.EngineConfig;
 import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.framework.JobStage;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.IoUtils;
 import org.archive.util.JndiUtils;
 
 

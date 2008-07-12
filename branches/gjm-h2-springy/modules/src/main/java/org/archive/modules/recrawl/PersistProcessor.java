@@ -159,6 +159,7 @@ public abstract class PersistProcessor extends Processor {
      * @throws UnsupportedEncodingException
      * @throws IOException
      */
+    @SuppressWarnings("unchecked")
     private static void main2args(String[] args) throws DatabaseException, FileNotFoundException, UnsupportedEncodingException, IOException {
         File source = new File(args[0]);
         File env = new File(args[1]);
@@ -240,6 +241,7 @@ public abstract class PersistProcessor extends Processor {
      * @throws UnsupportedEncodingException
      * @throws IOException
      */
+    @SuppressWarnings("unchecked")
     private static void main1arg(String[] args) throws DatabaseException, FileNotFoundException, UnsupportedEncodingException, IOException {
         File source = new File(args[0]);
         

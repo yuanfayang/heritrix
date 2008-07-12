@@ -19,6 +19,16 @@
 
 package org.archive.modules.writer;
 
+import static org.archive.modules.writer.Kw3Constants.ARCHIVE_TIME_KEY;
+import static org.archive.modules.writer.Kw3Constants.COLLECTION_KEY;
+import static org.archive.modules.writer.Kw3Constants.CONTENT_LENGTH_KEY;
+import static org.archive.modules.writer.Kw3Constants.CONTENT_MD5_KEY;
+import static org.archive.modules.writer.Kw3Constants.HARVESTER_KEY;
+import static org.archive.modules.writer.Kw3Constants.HEADER_LENGTH_KEY;
+import static org.archive.modules.writer.Kw3Constants.HEADER_MD5_KEY;
+import static org.archive.modules.writer.Kw3Constants.IP_ADDRESS_KEY;
+import static org.archive.modules.writer.Kw3Constants.STATUS_CODE_KEY;
+import static org.archive.modules.writer.Kw3Constants.URL_KEY;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.ByteArrayOutputStream;
@@ -32,20 +42,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.io.ReplayInputStream;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.settings.JobHome;
-import org.archive.state.Immutable;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.archive.state.Path;
-import org.archive.state.StateProvider;
-import org.archive.io.ReplayInputStream;
-
-import static org.archive.modules.writer.Kw3Constants.*;
 
 /**
  * Processor module that writes the results of successful fetches to

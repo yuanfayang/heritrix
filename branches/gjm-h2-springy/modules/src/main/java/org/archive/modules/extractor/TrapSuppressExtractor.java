@@ -21,10 +21,7 @@
  */
 package org.archive.modules.extractor;
 
-import java.util.logging.Logger;
-
 import org.archive.modules.ProcessorURI;
-
 
 /** 
  * Pseudo-extractor that suppresses link-extraction of likely trap pages,
@@ -35,9 +32,6 @@ import org.archive.modules.ProcessorURI;
  */
 public class TrapSuppressExtractor extends ContentExtractor  {
     private static final long serialVersionUID = -1028783453022579530L;
-
-    private static final Logger LOGGER =
-        Logger.getLogger(TrapSuppressExtractor.class.getName());
 
     /** ALIst attribute key for carrying-forward content-digest from 'via'*/
     public static String A_VIA_DIGEST = "via-digest";

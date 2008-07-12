@@ -34,6 +34,7 @@ import org.archive.net.UURI;
  * @author gojomo
  */
 public class WagCostAssignmentPolicy extends CostAssignmentPolicy {
+    private static final long serialVersionUID = 1L;
 
     /**
      * Add constant penalties for certain features of URI (and

@@ -26,7 +26,6 @@
 
 package org.archive.modules.fetcher;
 
-import org.archive.state.StateProvider;
 
 /**
  * @author pjack

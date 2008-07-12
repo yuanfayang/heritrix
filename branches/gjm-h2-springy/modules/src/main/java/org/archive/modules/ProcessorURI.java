@@ -33,7 +33,6 @@ import org.archive.modules.credential.CredentialAvatar;
 import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
 import org.archive.net.UURI;
-import org.archive.state.StateProvider;
 import org.archive.util.Recorder;
 
 

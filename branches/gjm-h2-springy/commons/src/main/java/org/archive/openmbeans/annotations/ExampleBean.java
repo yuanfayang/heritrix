@@ -31,8 +31,9 @@ import javax.management.Notification;
 
 @Header(desc="The example bean for unit testing purposes.")
 public class ExampleBean extends Bean {
-    
-    
+    private static final long serialVersionUID = 1L;
+
+
     @Operation(desc="Performs a logical AND on two booleans.", impact=ACTION)
     public boolean and(
             

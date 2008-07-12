@@ -22,12 +22,6 @@
  */
 package org.archive.modules.writer;
 
-import static org.archive.modules.ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
-import static org.archive.modules.ModuleAttributeConstants.A_HTTP_TRANSACTION;
-import static org.archive.modules.ModuleAttributeConstants.A_SOURCE_TAG;
-import static org.archive.modules.ModuleAttributeConstants.HEADER_TRUNC;
-import static org.archive.modules.ModuleAttributeConstants.LENGTH_TRUNC;
-import static org.archive.modules.ModuleAttributeConstants.TIMER_TRUNC;
 import static org.archive.io.warc.WARCConstants.HEADER_KEY_CONCURRENT_TO;
 import static org.archive.io.warc.WARCConstants.HEADER_KEY_ETAG;
 import static org.archive.io.warc.WARCConstants.HEADER_KEY_IP;
@@ -45,6 +39,12 @@ import static org.archive.io.warc.WARCConstants.PROFILE_REVISIT_IDENTICAL_DIGEST
 import static org.archive.io.warc.WARCConstants.PROFILE_REVISIT_NOT_MODIFIED;
 import static org.archive.io.warc.WARCConstants.REQUEST;
 import static org.archive.io.warc.WARCConstants.TYPE;
+import static org.archive.modules.ModuleAttributeConstants.A_DNS_SERVER_IP_LABEL;
+import static org.archive.modules.ModuleAttributeConstants.A_HTTP_TRANSACTION;
+import static org.archive.modules.ModuleAttributeConstants.A_SOURCE_TAG;
+import static org.archive.modules.ModuleAttributeConstants.HEADER_TRUNC;
+import static org.archive.modules.ModuleAttributeConstants.LENGTH_TRUNC;
+import static org.archive.modules.ModuleAttributeConstants.TIMER_TRUNC;
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_ETAG_HEADER;
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_LAST_MODIFIED_HEADER;
 
@@ -77,8 +77,6 @@ import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.modules.extractor.Link;
-
-import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;

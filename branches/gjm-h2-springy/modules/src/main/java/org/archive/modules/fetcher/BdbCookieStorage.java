@@ -31,7 +31,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
 import org.archive.settings.file.BdbModule;
@@ -52,9 +51,6 @@ import com.sleepycat.je.DatabaseException;
  */
 public class BdbCookieStorage extends AbstractCookieStorage {
     private static final long serialVersionUID = 1L;
-
-    final private static Logger LOGGER = 
-        Logger.getLogger(BdbCookieStorage.class.getName()); 
     
     protected BdbModule bdb;
     @Autowired
@@ -71,6 +67,7 @@ public class BdbCookieStorage extends AbstractCookieStorage {
     }
 
 
+    @SuppressWarnings("unchecked")
     protected SortedMap<String,Cookie> prepareMap() {
         try {
             StoredClassCatalog classCatalog = bdb.getClassCatalog();
@@ -112,6 +109,7 @@ public class BdbCookieStorage extends AbstractCookieStorage {
         }
     }
     
+    @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
