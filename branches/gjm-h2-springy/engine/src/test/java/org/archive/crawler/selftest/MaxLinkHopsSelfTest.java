@@ -46,17 +46,19 @@ public class MaxLinkHopsSelfTest
     @Override
     protected void verify() throws Exception {
         Set<String> files = filesInArcs();
-        assertTrue(EXPECTED.equals(files));
+        assertEquals("ARC contents not as expected",EXPECTED,files);
     }
     
     @Override
     protected String changeGlobalConfig(String config) {
-        String token = "root:scope:rules:2:max-hops=int, 20\n";
-        int p = config.indexOf(token);
-        String result = config.substring(0, p) + 
-            "root:scope:rules:2:max-hops=int, 3\n" +
-            config.substring(p + token.length());
-        return result;
+        String replacement = 
+            "<bean class=\"org.archive.modules.deciderules.TooManyHopsDecideRule\">\n" + 
+            "     <property name=\"maxHops\" value=\"3\"/>\n" + 
+            "    </bean>";
+        String retVal = config.replaceFirst(
+                "(?s)<bean class=\"org.archive.modules.deciderules.TooManyHopsDecideRule\".*?</bean>", 
+                replacement);
+        return retVal;
     }
 }
 
