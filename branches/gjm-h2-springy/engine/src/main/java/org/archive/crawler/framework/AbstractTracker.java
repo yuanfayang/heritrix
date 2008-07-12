@@ -27,12 +27,12 @@ import java.util.logging.Level;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Finishable;
-import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -55,9 +55,14 @@ import org.xbill.DNS.Lookup;
  * @see org.archive.crawler.framework.StatisticsTracker
  * @see org.archive.crawler.admin.StatisticsTrackerImpl
  */
-public abstract class AbstractTracker extends Bean 
-implements StatisticsTracker, CrawlStatusListener, Serializable, Module, 
-InitializingBean, Finishable {
+public abstract class AbstractTracker 
+    extends Bean 
+    implements StatisticsTracker, 
+               CrawlStatusListener, 
+               Serializable, 
+               Module, 
+               Lifecycle, // InitializingBean, 
+               Finishable {
     /**
      * The interval between writing progress information to log.
      */
@@ -106,11 +111,18 @@ InitializingBean, Finishable {
         super(StatisticsTracker.class);
     }
 
-    
-    public void afterPropertiesSet() {
-
+    public boolean isRunning() {
+        // TODO Auto-generated method stub
+        return false;
     }
-    
+    public void start() {
+        // TODO Auto-generated method stub
+        
+    }
+    public void stop() {
+        // TODO Auto-generated method stub
+        
+    }
     /**
      * Start thread.  Will call logActivity() at intervals specified by
      * logInterval

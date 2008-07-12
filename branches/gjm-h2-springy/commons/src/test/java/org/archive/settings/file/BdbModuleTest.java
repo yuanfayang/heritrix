@@ -84,7 +84,7 @@ public class BdbModuleTest extends TmpDirTestCase {
         mgr.getRoot().put("module", bdb);
         bdb.setDir(firstState.getAbsolutePath());
 //        mgr.getGlobalSheet().set(bdb, BdbModule.DIR, firstState.getAbsolutePath());
-        bdb.afterPropertiesSet();
+        bdb.start();
         
         BdbModule.BdbConfig config = new BdbModule.BdbConfig();
         config.setAllowCreate(true);
@@ -99,7 +99,7 @@ public class BdbModuleTest extends TmpDirTestCase {
         File checkpointDir = new File(getTmpDir(), "checkpoint");
         checkpointDir.mkdirs();
         Checkpointer.checkpoint(mgr, checkpointDir);        
-        bdb.close();
+        bdb.stop();
     }
     
     private Map<String,String> dump(Map<String,String> src) {

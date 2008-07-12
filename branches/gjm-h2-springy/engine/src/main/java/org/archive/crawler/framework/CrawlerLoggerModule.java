@@ -52,16 +52,18 @@ import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.springframework.beans.factory.InitializingBean;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 /**
  * @author pjack
  *
  */
-public class CrawlerLoggerModule extends Bean  
-implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable {
+public class CrawlerLoggerModule 
+    extends Bean  
+    implements 
+        UriErrorLoggerModule, AlertTracker, Lifecycle, Checkpointable {
     private static final long serialVersionUID = 1L;
 
     protected String path = "logs"; 
@@ -150,25 +152,18 @@ implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable 
      */
     transient private Map<Logger,FileHandler> fileHandlers;
 
-    
     transient private Map<String,Logger> loggers = new HashMap<String,Logger>();
 
-
-
-    
     private StringBuffer manifest = new StringBuffer();
     
     private transient AlertThreadGroup atg;
-
-
-
 
     public CrawlerLoggerModule() {
         super(AlertTracker.class);
     }
 
     
-    public void afterPropertiesSet() {
+    public void start() {
         resolveLogsDir().mkdirs();
         this.atg = AlertThreadGroup.current();
         try {
@@ -176,8 +171,18 @@ implements UriErrorLoggerModule, AlertTracker, InitializingBean, Checkpointable 
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+        isRunning = true; 
     }
     
+    boolean isRunning = false; 
+    public boolean isRunning() {
+        return this.isRunning; 
+    }
+    
+    public void stop() {
+        closeLogFiles();
+        isRunning = false; 
+    }
     
     private void setupLogs() throws IOException {
         String logsPath = resolveLogsDir().getAbsolutePath() + File.separatorChar;

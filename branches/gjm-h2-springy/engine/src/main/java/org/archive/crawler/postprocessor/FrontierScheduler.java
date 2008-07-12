@@ -35,7 +35,6 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -48,7 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author stack
  */
 public class FrontierScheduler extends Processor 
-implements PostProcessor, InitializingBean {
+implements PostProcessor {
 
     private static final long serialVersionUID = -3L;
 
@@ -69,10 +68,6 @@ implements PostProcessor, InitializingBean {
     /**
      */
     public FrontierScheduler() {
-    }
-
-    public void afterPropertiesSet() {
-
     }
     
     protected boolean shouldProcess(ProcessorURI puri) {

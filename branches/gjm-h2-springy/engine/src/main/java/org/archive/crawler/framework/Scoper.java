@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,8 +31,8 @@ import org.archive.crawler.util.LogUtils;
 import org.archive.modules.Processor;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 /**
  * Base class for Scopers.
@@ -40,9 +41,11 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author stack
  * @version $Date$, $Revision$
  */
-public abstract class Scoper extends Processor implements InitializingBean {
+public abstract class Scoper extends Processor implements Lifecycle {
     private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
+    
+    FileHandler fileLogger = null; 
     
     /**
      * If enabled, override default logger for this class (Default logger writes
@@ -94,14 +97,26 @@ public abstract class Scoper extends Processor implements InitializingBean {
         super();
     }
 
-    public void afterPropertiesSet() {
+    boolean isRunning = false; 
+    public void start() {
         if (getLogToFile()) {
             // Set up logger for this instance.  May have special directives
             // since this class can log scope-rejected URLs.
-            LogUtils.createFileLogger(loggerModule.resolveLogsDir(),
+            fileLogger = LogUtils.createFileLogger(loggerModule.resolveLogsDir(),
                 this.getClass().getName(),
                 Logger.getLogger(this.getClass().getName()));
         }
+        isRunning = true; 
+    }
+    
+    public boolean isRunning() {
+        return this.isRunning;
+    }
+    public void stop() {
+        if(fileLogger!=null) {
+            fileLogger.close();
+        }
+        isRunning = false; 
     }
 
     /**

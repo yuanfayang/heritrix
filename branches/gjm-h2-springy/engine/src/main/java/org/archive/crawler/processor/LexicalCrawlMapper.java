@@ -37,7 +37,6 @@ import java.util.TreeMap;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
 import org.archive.settings.JobHome;
-import org.archive.state.StateProvider;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,10 +82,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Date$, $Revision$
  */
 public class LexicalCrawlMapper extends CrawlMapper {
-    
-    
     private static final long serialVersionUID = 2L;
-
 
     /**
      * Path to map specification file. Each line should include 2
@@ -162,12 +158,10 @@ public class LexicalCrawlMapper extends CrawlMapper {
         return (String) tail.get(tail.firstKey());
     }
 
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
-//        this.frontier = context.get(this, FRONTIER);
-
+    public void start() {
+        super.start();
         try {
-            loadMap(null);//FIXME
+            loadMap();
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -180,7 +174,7 @@ public class LexicalCrawlMapper extends CrawlMapper {
      * 
      * @throws IOException
      */
-    protected void loadMap(StateProvider context) throws IOException {
+    protected void loadMap() throws IOException {
         map.clear();
         String uri = getMapUri();
         Reader reader = null;

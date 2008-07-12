@@ -82,7 +82,6 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -725,7 +724,9 @@ public class EngineImpl extends Bean implements Engine {
             fsm = new FileSheetManager(dest, name, true, list);
             
             // actually builds crawler from config: 
-            PathSharingContext ac = fsm.start();
+            File config = new File(dest,"crawler-beans.xml");
+            PathSharingContext ac = new PathSharingContext(config.getAbsolutePath());
+            ac.start();
             
             // trigger registration of all DynamicMBean modules
             for(Object bean : ac.getBeansOfType(DynamicMBean.class).values()) {

@@ -42,8 +42,8 @@ import org.archive.modules.deciderules.DecideRule;
 import org.archive.settings.JobHome;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 import st.ata.util.FPGenerator;
 
@@ -68,7 +68,7 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public abstract class CrawlMapper extends Processor implements InitializingBean {
+public abstract class CrawlMapper extends Processor implements Lifecycle {
 
     /**
      * PrintWriter which remembers the File to which it writes. 
@@ -342,10 +342,15 @@ public abstract class CrawlMapper extends Processor implements InitializingBean 
         return writer;
     }
 
-    public void afterPropertiesSet() {
-        //TODO:SPRINGY move this to start
+    public void start() {
         cache = new ArrayLongFPCache();
     }
-
-
+    
+    public boolean isRunning() {
+        return cache != null;
+    }
+    
+    public void stop() {
+        cache = null; 
+    }
 }

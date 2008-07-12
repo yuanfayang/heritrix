@@ -40,8 +40,8 @@ import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.util.SurtPrefixSet;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 
 
@@ -60,7 +60,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author gojomo
  */
 public class SurtPrefixedDecideRule extends PredicatedDecideRule 
-        implements SeedListener, InitializingBean, KeyChangeListener {
+        implements SeedListener, Lifecycle, KeyChangeListener {
 
     private static final long serialVersionUID = 3L;
 
@@ -154,8 +154,16 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
     }
 
     
-    public void afterPropertiesSet() {
+    public void start() {
         this.readPrefixes();
+    }
+    
+    public boolean isRunning() {
+        return surtPrefixes != null; 
+    }
+    
+    public void stop() {
+        surtPrefixes = null; 
     }
 
     /**

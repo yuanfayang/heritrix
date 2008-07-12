@@ -55,11 +55,11 @@ import org.archive.settings.JobHome;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.Lifecycle;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -76,17 +76,17 @@ import org.xbill.DNS.Lookup;
 public class CrawlControllerImpl extends Bean implements 
     Serializable, 
     Reporter, 
-    InitializingBean,
+    Lifecycle,
     CrawlController,
-    BeanFactoryAware {
+    ApplicationContextAware {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlControllerImpl.class,1);
 
-    ListableBeanFactory beanFactory; 
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = (ListableBeanFactory)beanFactory;
+    AbstractApplicationContext appCtx;
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.appCtx = (AbstractApplicationContext)applicationContext;
     }
     
     protected ServerCache serverCache;
@@ -361,7 +361,7 @@ public class CrawlControllerImpl extends Bean implements
         super(CrawlController.class);
     }
     
-    public void afterPropertiesSet() {        
+    public void start() {        
         this.checkpointer = new Checkpointer(
                 this, resolveCheckpointsDir());
 
@@ -372,9 +372,6 @@ public class CrawlControllerImpl extends Bean implements
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
         // also cap size at 1 (we never wanta cached value; 0 is non-operative)
         Lookup.getDefaultCache(DClass.IN).setMaxEntries(1);
-        //dns.getRecords("localhost", Type.A, DClass.IN);
-        
-        // setupToePool();
         
         reserveMemory = new LinkedList<char[]>();
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
@@ -386,7 +383,15 @@ public class CrawlControllerImpl extends Bean implements
         // it later.
         alertThreadGroup = Thread.currentThread().getThreadGroup();
     }
+    
+    public boolean isRunning() {
+        return alertThreadGroup != null; 
+    }
 
+    public void stop() {
+        // TODO Auto-generated method stub
+        
+    }
     /**
      * Register for CrawlURIDisposition events.
      *
@@ -539,7 +544,7 @@ public class CrawlControllerImpl extends Bean implements
     protected void sendCrawlStateChangeEvent(State newState, 
             CrawlStatus status) {
         this.state = newState; 
-        Map registeredCrawlStatusListeners = beanFactory.getBeansOfType(CrawlStatusListener.class);
+        Map registeredCrawlStatusListeners = appCtx.getBeansOfType(CrawlStatusListener.class);
         for (CrawlStatusListener l: (Collection<CrawlStatusListener>)registeredCrawlStatusListeners.values()) {
             switch (newState) {
                 case PAUSED:
@@ -602,7 +607,7 @@ public class CrawlControllerImpl extends Bean implements
         if (getPauseAtStart()) {
             requestCrawlPause();
         } else {
-            getFrontier().start();
+            getFrontier().run();
         }
     }
 
@@ -641,7 +646,7 @@ public class CrawlControllerImpl extends Bean implements
 
         LOGGER.fine("Finished crawl.");
 
-
+        appCtx.stop(); 
         // Ok, now we are ready to exit.
         sendCrawlStateChangeEvent(State.FINISHED, this.sExit);
 //        this.sheetManager = null;
@@ -767,7 +772,7 @@ public class CrawlControllerImpl extends Bean implements
         return state == State.PAUSING;
     }
     
-    public boolean isRunning() {
+    public boolean isStateRunning() {
         return state == State.RUNNING;
     }
 

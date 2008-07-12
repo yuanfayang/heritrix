@@ -510,7 +510,7 @@ public interface Frontier extends Module, Reporter {
      * Request that Frontier allow crawling to begin. Usually
      * just unpauses Frontier, if paused. 
      */
-    public void start();
+    public void run();
 
     /**
      * Get the 'frontier group' (usually queue) for the given 

@@ -38,7 +38,6 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -49,7 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class QuotaEnforcer extends Processor implements InitializingBean {
+public class QuotaEnforcer extends Processor {
     private static final long serialVersionUID = 3L;
 
     private static final Logger LOGGER =
@@ -319,11 +318,6 @@ public class QuotaEnforcer extends Processor implements InitializingBean {
         super();
     }
     
-    
-    public void afterPropertiesSet() {
-
-    }
-    
     protected boolean shouldProcess(ProcessorURI puri) {
         return puri instanceof CrawlURI;
     }
@@ -374,7 +368,6 @@ public class QuotaEnforcer extends Processor implements InitializingBean {
         }
         FetchStats substats = hasStats.getSubstats();
         long[] actuals = new long[] {
-                -1, // dummy
                 substats.getFetchSuccesses(),
                 substats.getSuccessBytes()/1024,
                 substats.getFetchResponses(),

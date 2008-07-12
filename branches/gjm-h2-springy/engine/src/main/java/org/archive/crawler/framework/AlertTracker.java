@@ -1,13 +1,8 @@
 package org.archive.crawler.framework;
 import java.io.IOException;
 
-import org.archive.modules.LoggerModule;
 import org.archive.openmbeans.annotations.Attribute;
 import org.archive.openmbeans.annotations.Operation;
-
-/**
- * 
- */
 
 /**
  * @author pjack

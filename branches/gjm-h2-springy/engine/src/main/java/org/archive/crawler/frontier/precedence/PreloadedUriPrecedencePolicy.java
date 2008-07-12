@@ -31,8 +31,8 @@ import java.util.Map;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.recrawl.PersistProcessor;
 import org.archive.settings.file.BdbModule;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.Lifecycle;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -46,7 +46,7 @@ import com.sleepycat.je.DatabaseException;
  * was preloaded for them into the uri-history database. 
  */
 public class PreloadedUriPrecedencePolicy extends BaseUriPrecedencePolicy 
-implements InitializingBean {
+implements Lifecycle {
     private static final long serialVersionUID = -1474685153995064123L;
     
     /** Backup URI precedence assignment policy to use. */
@@ -70,7 +70,8 @@ implements InitializingBean {
     protected StoredSortedMap store;
     protected Database historyDb;
     
-    public void afterPropertiesSet() {
+    @SuppressWarnings("unchecked")
+    public void start() {
 
         String dbName = PersistProcessor.URI_HISTORY_DBNAME;
         StoredSortedMap historyMap;
@@ -85,9 +86,20 @@ implements InitializingBean {
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
         }
-        store =  historyMap;
+        store = historyMap;
     }
     
+    public boolean isRunning() {
+        return historyDb != null; 
+    }
+    public void stop() {
+        try {
+            historyDb.close();
+        } catch (DatabaseException e) {
+            // silent
+        }
+        historyDb = null; 
+    }
     
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy#uriScheduled(org.archive.crawler.datamodel.CrawlURI)
