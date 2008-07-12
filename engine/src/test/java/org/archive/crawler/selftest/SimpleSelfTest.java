@@ -50,10 +50,4 @@ public class SimpleSelfTest extends SelfTestBase {
         Set<String> files = filesInArcs();
         assertTrue(EXPECTED.equals(files));
     }
-
-    
-    @Override
-    protected String changeGlobalConfig(String text) {
-        return text;
-    }
 }

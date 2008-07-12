@@ -109,13 +109,19 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         File srcConf = new File(src.getParentFile(), "conf");
         FileUtils.copyFiles(srcConf, tmpConfDir);
 
-        String globalSheetText = FileUtils.readFileAsString(
-                new File(srcConf, "global.sheet"));
-        globalSheetText = changeGlobalConfig(globalSheetText);
-        File sheets = new File(tmpDefProfile, "sheets");
-        File globalSheet = new File(sheets, "global.sheet");
-        FileWriter fw = new FileWriter(globalSheet);
-        fw.write(globalSheetText);
+//        String globalSheetText = FileUtils.readFileAsString(
+//                new File(srcConf, "global.sheet"));
+//        globalSheetText = changeGlobalConfig(globalSheetText);
+//        File sheets = new File(tmpDefProfile, "sheets");
+//        File globalSheet = new File(sheets, "global.sheet");
+//        FileWriter fw = new FileWriter(globalSheet);
+//        fw.write(globalSheetText);
+        String crawlerBeansText = FileUtils.readFileAsString(
+                new File(srcConf, "crawler-beans.xml"));
+        crawlerBeansText = changeGlobalConfig(crawlerBeansText);
+        File crawlerBeans = new File(tmpDefProfile, "crawler-beans.xml");
+        FileWriter fw = new FileWriter(crawlerBeans);
+        fw.write(crawlerBeansText);
         fw.close();
         
         startHeritrix(tmpTestDir.getAbsolutePath());
@@ -388,14 +394,15 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         int count = 0;
         ObjectName name = new ObjectName(query);
         Set set = server.queryNames(null, name);
+        int secondsToWait = 600; 
         while (set.isEmpty() == exist) {
             count++;
-            if (count > 40) {
+            if (count > secondsToWait) {
                 throw new IllegalStateException("Could not find " + 
-                        name + " after 20 seconds.");
+                        name + " after "+secondsToWait+" seconds.");
             }
             try {
-                Thread.sleep(500);
+                Thread.sleep(1000);
             } catch (InterruptedException ie) {
                 System.err.println("SelfTestBase.waitFor() sleep interrupted");
             }

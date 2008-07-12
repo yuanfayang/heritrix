@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
@@ -44,7 +45,6 @@ import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.IoUtils;
 
@@ -233,6 +233,7 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
     }
 
     private static String replace(String meta, String find, String replace) {
+        replace = StringUtils.defaultString(replace);
         replace = StringEscapeUtils.escapeXml(replace);
         return meta.replace(find, replace);
     }

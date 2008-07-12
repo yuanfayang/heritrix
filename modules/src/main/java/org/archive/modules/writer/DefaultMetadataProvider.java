@@ -34,23 +34,22 @@ import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.settings.JobHome;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.springframework.beans.factory.InitializingBean;
 import org.archive.state.Key;
 import org.archive.state.Module;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author pjack
  */
 public class DefaultMetadataProvider implements 
-    InitializingBean, 
     MetadataProvider, 
     UserAgentProvider, 
     Serializable, 
     Module,
-    HasKeyedProperties {
+    HasKeyedProperties,
+    InitializingBean {
 
     private static final long serialVersionUID = 1L;
 
@@ -143,11 +142,6 @@ public class DefaultMetadataProvider implements
         this.organization = organization;
     }
     final public static Key<String> ORGANIZATION = Key.make("");
-
-
-    public void afterPropertiesSet() {
-
-    }
     
     public String getUserAgent() {
         String userAgent = getUserAgentTemplate();
@@ -177,5 +171,10 @@ public class DefaultMetadataProvider implements
 
     public String getFrom() {
         return getOperatorFrom();
+    }
+
+    public void afterPropertiesSet() throws Exception {
+        // force revalidation, throwing exception if invalid
+        setOperatorContactUrl(getOperatorContactUrl());
     } 
 }
