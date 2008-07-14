@@ -5,9 +5,13 @@
 	xsi:schemaLocation="http://research.sun.com/wadl/2006/10 https://wadl.dev.java.net/wadl20061109.xsd
 						http://www.w3.org/1999/xhtml http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd">
 	<doc title="Heritrix REST Web Service (draft)">
-    <html:p>The REST web service allows you to control one or more 
-    <html:a href="http://crawler.archive.org/">Heritrix</html:a> web crawlers.
-    Note that not all functionality is currently available via
+    <html:p>The REST web service allows you to control a cluster of web crawlers.  It is primarily designed
+    with <html:a href="http://crawler.archive.org/">Heritrix 2.0</html:a> in mind but a cluster could
+    potentially containing variety of different crawling software as long as it followed this interface.
+    This document describes the interface as coherent whole from the clients perspective.  An
+    actual server implementation may consist of a gateway module which redirects requests to a crawler-specific service
+    running on another host.  This should be basically transparent for client, as long as they follow redirects correctly.</html:p> 
+    <html:p>Not all Heritrix functionality is currently available via
     the REST service, you may have to resort to using the JMX API for some
     operations.</html:p>
     <html:p><html:strong>Note:</html:strong> This is a draft, check <html:a href="http://archive-crawler.svn.sourceforge.net/viewvc/*checkout*/archive-crawler/branches/aosborne_restws/restws/src/main/resources/org/archive/crawler/restws/wadl.xml">SVN</html:a>
@@ -58,10 +62,16 @@ http://example.org/crawlers/c14.example.org:7000:0
 				</response>
 			</method>
 			<method name="POST">
-				<doc>Register a new crawler with the service.</doc>
-			</method>
-			<method name="DELETE">
-				<doc>Unregister a crawler from the service.</doc>
+				<doc><html:p>Register a remote crawler with the service.</html:p>
+				<html:p>Heritrix instances known to the service via JMX will be automatically registered with an id of the form
+				<html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em>.</html:p></doc>
+				<request>
+					<representation mediaType="multipart/form-data">
+						<doc title="Register crawler request"/>
+						<param style="plain" name="id" required="true"><doc>Id of the crawler.  Must be alphanumeric plus dashes and underscores.</doc></param>
+						<param style="plain" name="uri" required="true"><doc>URI of the crawler.</doc></param>
+					</representation>
+				</request>
 			</method>
 			<resource path="available">
 				<method name="POST">
@@ -83,7 +93,7 @@ http://example.org/crawlers/c14.example.org:7000:0
 			<resource id="org.archive.crawler.restws.CrawlerResource"
 				path="{crawler}">
 				<param style="template" name="crawler">
-					<doc>The id (<html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em>) of a crawler.</doc>
+					<doc>The id of a crawler.</doc>
 				</param>
 				<method name="GET">
 					<response>
@@ -91,11 +101,12 @@ http://example.org/crawlers/c14.example.org:7000:0
 						<fault status="404">
 							<doc title="Unknown crawler">The specified crawler is unknown to the service.</doc>
 						</fault>
-						<fault status="400">
-							<doc title="Malformed crawler id">The specified crawler id is not in the required <html:em>host</html:em>:<html:em>port</html:em>:<html:em>identifier</html:em> form.</doc>
-						</fault>
 					</response>
 				</method>
+	<method name="DELETE">
+		<doc>Unregister the crawler from this service.</doc>
+	</method>
+
 				<resource id="org.archive.crawler.restws.JobsResource"
 					path="jobs">
 					<method name="GET">
