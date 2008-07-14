@@ -10,7 +10,8 @@
     Note that not all functionality is currently available via
     the REST service, you may have to resort to using the JMX API for some
     operations.</html:p>
-     
+    <html:p><html:strong>Note:</html:strong> This is a draft, check <html:a href="http://archive-crawler.svn.sourceforge.net/viewvc/*checkout*/archive-crawler/branches/aosborne_restws/restws/src/main/resources/org/archive/crawler/restws/wadl.xml">SVN</html:a>
+    for the latest version of this document.  Please email comments to aosborne <html:span>at nla dot</html:span> gov dot au.</html:p>
   </doc>
 	<resources base="">
 		<resource id="org.archive.crawler.restws.CrawlersResource"
@@ -23,15 +24,9 @@
 					</param>
 				</request>
 				<response>
-					<representation mediaType="text/plain">
-						<doc title="Crawler list">Example:<html:pre>c01.example.org:1234:0
-c01.example.org:1234:1
-c14.example.org:7000:0
-...</html:pre></doc>
-					</representation>
 					<representation mediaType="application/atom+xml">
 						<doc title="Crawler list">Example:
-							<html:code><html:pre>&lt;feed xmlns="http://www.w3.org/2005/Atom" 
+							<html:pre><html:code>&lt;feed xmlns="http://www.w3.org/2005/Atom" 
       xml:base="http://example.org/crawlers"&gt;
   &lt;id&gt;http://example.org/crawlers&lt;/id&gt;
   &lt;title&gt;Crawlers known to example.org&lt;/title&gt;
@@ -52,7 +47,13 @@ c14.example.org:7000:0
      ...
   &lt;/entry&gt;
   ...
-&lt;/feed&gt;</html:pre></html:code></doc>
+&lt;/feed&gt;</html:code></html:pre></doc>
+					</representation>
+					<representation mediaType="text/plain">
+						<doc title="Crawler list">Example:<html:pre>http://example.org/crawlers/c01.example.org:1234:0
+http://example.org/crawlers/c01.example.org:1234:1
+http://example.org/crawlers/c14.example.org:7000:0
+...</html:pre></doc>
 					</representation>
 				</response>
 			</method>
@@ -103,15 +104,9 @@ c14.example.org:7000:0
 						
 						</doc>
 						<response>
-							<representation mediaType="text/plain">
-								<doc title="Job list">Example:<html:pre>awesomejob
-anotherjob
-someotherjob
-...</html:pre></doc>
-							</representation>
 							<representation mediaType="application/atom+xml">
 								<doc title="Job list">Example:
-							<html:code><html:pre>&lt;feed xmlns="http://www.w3.org/2005/Atom" 
+							<html:pre><html:code>&lt;feed xmlns="http://www.w3.org/2005/Atom" 
       xml:base="http://example.org/crawlers/c01.example.org:1234:0/jobs"&gt;
   &lt;id&gt;http://example.org/crawlers/c01.example.org:1234:0/jobs&lt;/id&gt;
   &lt;title&gt;Jobs on c01.example.org&lt;/title&gt;
@@ -122,7 +117,7 @@ someotherjob
     &lt;title&gt;awesomejob&lt;/title&gt;
     &lt;link rel="alternate" href="awesomejob"/&gt;
     &lt;link rel="seeds" href="awesomejob/seeds" /&gt;
-    &lt;link rel="sheets" href="awesomejob/sheets" /&gt;
+    &lt;link rel="config" href="awesomejob/config" /&gt;
     &lt;updated&gt;2006-08-12T13:40:03Z&lt;/updated&gt;
     &lt;summary&gt;My awesome job. [20s elapsed. 208 KB received.]&lt;/summary&gt;
   &lt;/entry&gt;
@@ -130,9 +125,50 @@ someotherjob
      ...
   &lt;/entry&gt;
   ...
-&lt;/feed&gt;</html:pre></html:code></doc></representation>
+&lt;/feed&gt;</html:code></html:pre></doc></representation>
+							<representation mediaType="text/plain">
+								<doc title="Job list">Example:<html:pre>http://example.org/crawlers/c01.example.org:1234:0/jobs/awesomejob
+http://example.org/crawlers/c01.example.org:1234:0/jobs/anotherjob
+http://example.org/crawlers/c01.example.org:1234:0/jobs/someotherjob
+...</html:pre></doc>
+							</representation>
 						</response>
 					</method>
+	<method name="POST">
+		<doc>Create a new job.</doc>
+		<request>
+			<representation mediaType="multipart/form-data">
+				<doc title="Create job request" />
+				<param style="plain" name="name" required="true">
+					<doc>The name of the new job</doc>
+				</param>
+				<param style="plain" name="template">
+					<doc>The name of an existing job or profile to create this job from.</doc>
+				</param>
+			</representation>
+			<representation mediaType="application/xml">
+				<doc title="Create job from specification">
+					Creates a new job from a specification.  See the application/xml representation of a
+					<html:a href="##JobResource">job</html:a> for details. 
+				</doc>
+			</representation>
+		</request>
+		<response>
+			<representation status="201">
+				<doc title="Job created">
+									The job was created successfully.
+								</doc>
+				<param style="header" name="Location">
+					<doc>URL of the created job.</doc>
+				</param>
+			</representation>
+			<fault status="409">
+				<doc title="Target already exists">
+									A job with the name you specified already exists.  Try a different name.
+								</doc>
+			</fault>
+		</response>
+	</method>
 					<resource id="org.archive.crawler.restws.JobResource"
 						path="{job}">
 						<param style="template" name="job">
@@ -145,57 +181,57 @@ someotherjob
 							<response>
 								<representation mediaType="application/xml">
 									<doc title="Job">
+									<html:p>Modeled after the format CDL uses for their Heritrix 1 web service.</html:p>
 									<html:p>Example:</html:p>
-							<html:code><html:pre>&lt;job&gt;
-  &lt;name&gt;testjob-20080702&lt;/name&gt;
-  &lt;status&gt;RUNNING&lt;/status&gt;
-  &lt;stats&gt;
-    &lt;elapsedMillis&gt;40202&lt;/elapsedMillis&gt;
-    &lt;totalBytes&gt;2033211&lt;/totalBytes&gt;
-    &lt;bytesPerSecond&gt;202&lt;/bytesPerSecond&gt;
-    ...  
-  &lt;/stats&gt;
-
-&lt;job&gt;
-					  
-							</html:pre></html:code>
+							<html:pre><html:code><![CDATA[<crawl-job>
+  <name>somejob</name>
+  <start-time>2008-02-15T20:54:25.857Z</start-time>
+  <end-time>2008-02-15T20:54:30.127Z</end-time>
+  <status uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/status">finished</status>
+  <read-only>true</read-only>
+  <running>false</running>
+  <documents-crawled>3</documents-crawled>
+  <bytes-downloaded>953</bytes-downloaded>
+  <duration>4</duration>
+  <documents-per-second>0.75</documents-per-second>
+  <kilobytes-per-second>0</kilobytes-per-second>
+  <total-hosts-crawled>1</total-hosts-crawled>
+  <seed-list uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/seeds">
+    <seed status="crawled">http://gales.cdlib.org/test?key=val&amp;amp;key2=val</seed>
+  </seed-list>
+  <artifact-list>
+    <artifact type="application/arc" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/arcs/IAH-20080708013806-00001-c01.example.org.arc.gz"/>
+    <artifact type="application/warc" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/warcs/IAH-20080708013806-00001-c01.example.org.warc.gz"/>
+  </artifact-list>
+  <log-list>
+    <log name="alerts" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/logs/alert.log"/>
+    <log name="crawl" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/logs/crawl.log"/>
+    <log name="progress-statistics" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/logs/progress-statistics.log"/>
+  </log-list>
+  <report-list>
+    <report name="hosts" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/reports/hosts-report.txt"/>
+    <report name="mimetype" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/reports/mimetype-report.txt"/>
+    <report name="responsecode" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/reports/responsecode-report.txt"/>
+    <report name="seeds" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/reports/seeds-report.txt"/>
+    <report name="crawl" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/reports/crawl-report.txt"/>
+    <report name="processors" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/reports/processors-report.txt"/>
+    <report name="frontier" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/reports/frontier-report.txt"/>
+  </report-list>
+  <configuration uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/config">
+    <sheet name="global" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/config/global">
+      ...
+    </sheet>
+    <sheet name="someoverride" uri="http://example.org/crawlers/c01.example.org:1234:0/jobs/somejob/config/someoverride">
+      ...
+    </sheet>
+  </configuration>
+</crawl-job>]]>				  
+							</html:code></html:pre>
 									</doc>
 								</representation>
 								<fault status="404">
 									<doc title="Job not found">
 									The job does not exist or has already been deleted.
-								</doc>
-								</fault>
-							</response>
-						</method>
-						<method name="POST">
-							<doc>Copy this job to create a new job or profile.</doc>
-							<request>
-								<representation mediaType="multipart/form-data">
-									<doc title="Copy job request" />
-									<param style="plain" name="name">
-										<doc>The name of the new job</doc>
-									</param>
-									<param style="plain" name="stage">
-										<doc>The type of job: a normal job <html:em>ready</html:em> to be launched or
-									a <html:em>profile</html:em>.</doc>
-										<option value="ready"></option>
-										<option value="profile"></option>
-									</param>
-								</representation>
-							</request>
-							<response>
-								<representation status="201">
-									<doc title="Job created">
-									The job was created successfully.
-								</doc>
-									<param style="header" name="Location">
-										<doc>URL of the created job.</doc>
-									</param>
-								</representation>
-								<fault status="409">
-									<doc title="Target already exists">
-									A job with the name you specified already exists.  Try a different name.
 								</doc>
 								</fault>
 							</response>
@@ -221,10 +257,10 @@ someotherjob
 									<representation status="200" mediaType="text/plain">
 										<doc title="Seeds list">
 										<html:p>The list of seeds is simply plain text URLs delimited by linefeeds.</html:p>
-										<html:p>Example:
+										<html:p>Example:</html:p>
 										<html:pre>http://www.archive.org/
 http://www.example.com/
-http://example.org/mypage.html</html:pre></html:p>
+http://example.org/mypage.html</html:pre>
 									</doc>
 									</representation>
 								</response>
@@ -251,8 +287,8 @@ http://example.org/mypage.html</html:pre></html:p>
 							</method>
 						</resource>
 						<resource id="org.archive.crawler.restws.SheetsResource"
-							path="sheets">
-							<doc><html:p>A configuration sheet is a list of settings that control the crawl. By default, there is only one 
+							path="config">
+							<doc><html:p>The crawler's confiured is specified via one or more sheets, list of settings that control the crawl. By default, there is only one 
 						sheet, the global sheet. The global sheet is consulted when no URL-specific configuration information is needed.
 						Other sheets of settings can be created, and these extra sheets can be associated with URLs to provide crawl
 						configuration specific to those URLs.</html:p>
@@ -269,13 +305,13 @@ http://example.org/mypage.html</html:pre></html:p>
 								path="{sheet}">
 								<doc><html:p>The actual configuration format is specific to different crawlers and even different versions of crawlers.</html:p>
 							<html:p>In Heritrix 2.0, sheets are plain text files that look like this:</html:p>
-							<html:code><html:pre>root=map, java.lang.Object
+							<html:pre><html:code>root=map, java.lang.Object
 root:metadata=primary, org.archive.modules.writer.DefaultMetadataProvider
 root:metadata:robots-honoring-policy=primary, org.archive.modules.net.RobotsHonoringPolicy
 root:metadata:robots-honoring-policy:user-agents=list, java.lang.String
 root:metadata:description=string, Broad but shallow crawl.
 root:loggerModule=primary, org.archive.crawler.framework.CrawlerLoggerModule
-[...]</html:pre></html:code>
+[...]</html:code></html:pre>
 <html:p>In future versions, beginning with Heritrix 2.2, the configuration system is being redesigned to use Spring XML bean configuration.  
 How this will work has not been finalized, but it is likely the REST service will just be able to return chunks of bean XML for each sheet.</html:p>
 							</doc>
@@ -377,6 +413,35 @@ How this will work has not been finalized, but it is likely the REST service wil
 					<method name="GET">
 						<doc>List the profiles known to this crawler.</doc>
 					</method>
+						<method name="POST">
+		<doc>Create a new profile.</doc>
+		<request>
+			<representation mediaType="multipart/form-data">
+				<doc title="Create profile request" />
+				<param style="plain" name="name" required="true">
+					<doc>The name of the new profile</doc>
+				</param>
+				<param style="plain" name="template">
+					<doc>The name of an existing job or profile to create this job from.</doc>
+				</param>
+			</representation>
+		</request>
+		<response>
+			<representation status="201">
+				<doc title="Profile created">
+									The profile was created successfully.
+								</doc>
+				<param style="header" name="Location">
+					<doc>URL of the created profile.</doc>
+				</param>
+			</representation>
+			<fault status="409">
+				<doc title="Target already exists">
+									A profile or job with the name you specified already exists.  Try a different name.
+								</doc>
+			</fault>
+		</response>
+	</method>
 					<resource path="{profile}">
 						<doc>See <html:a href="##org.archive.crawler.restws.JobResource">job</html:a>.</doc>
 						<param style="template" name="profile">
