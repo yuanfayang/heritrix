@@ -141,10 +141,10 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
     final public static Key<Integer> MIN_DELAY_MS = Key.make(3000);
     
     /**
-     * Whether to respect a 'Crawl-Delay' (in seconds) given in a site's
-     * robots.txt
+     * Respect a 'Crawl-Delay' given in a site's robots.txt up to a value
+     * of this many seconds
      */
-    final public static Key<Boolean> RESPECT_CRAWL_DELAY = Key.make(true);
+    final public static Key<Integer> RESPECT_CRAWL_DELAY_UP_TO_SECS = Key.make(300);
 
     /** never wait more than this long, regardless of multiple */
     final public static Key<Integer> MAX_DELAY_MS = Key.make(30000);
@@ -1019,7 +1019,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                 durationToWait = maxDelay;
             }
             
-            if (curi.get(this,RESPECT_CRAWL_DELAY)) {
+            long respectThreshold = curi.get(this,RESPECT_CRAWL_DELAY_UP_TO_SECS)*1000; 
+            if (durationToWait<respectThreshold) {
+                // may need to extend wait
                 CrawlServer s = ServerCacheUtil.getServerFor(
                         getServerCache(),curi.getUURI());
                 UserAgentProvider uap = curi.get(this, USER_AGENT_PROVIDER);
@@ -1029,7 +1031,11 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                 }
                 RobotsExclusionPolicy rep = s.getRobots();
                 if (rep != null) {
-                    long crawlDelay = 1000 * s.getRobots().getCrawlDelay(ua);
+                    long crawlDelay = (long)(1000 * s.getRobots().getCrawlDelay(ua));
+                    crawlDelay = 
+                        (crawlDelay > respectThreshold) 
+                            ? respectThreshold 
+                            : crawlDelay; 
                     if (crawlDelay > durationToWait) {
                         // wait at least the directive crawl-delay
                         durationToWait = crawlDelay;
