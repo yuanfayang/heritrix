@@ -114,10 +114,12 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * Whether to respect a 'Crawl-Delay' (in seconds) given in a site's
      * robots.txt
      */
-    public final static String ATTR_RESPECT_CRAWL_DELAY = "respect-crawl-delay";
+    public final static String 
+        ATTR_RESPECT_CRAWL_DELAY_UP_TO_SECS = "respect-crawl-delay-up-to-secs";
 
-    // by default, respect any robots.txt-provided Crawl-Delay
-    protected final static Boolean DEFAULT_RESPECT_CRAWL_DELAY = true;
+    // by default, respect robots.txt-provided Crawl-Delay up to 300 secs
+    protected final static Integer 
+        DEFAULT_RESPECT_CRAWL_DELAY_UP_TO_SECS = 300; // 5 minutes
     
     /** never wait more than this long, regardless of multiple */
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
@@ -242,10 +244,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         addElementToDefinition(new SimpleType(ATTR_MIN_DELAY,
                 "Always wait this long after one completion before recontacting "
                         + "same server.", DEFAULT_MIN_DELAY));
-        addElementToDefinition(new SimpleType(ATTR_RESPECT_CRAWL_DELAY,
-                "Whether to respect a Crawl-Delay directive in a " +
-                "site's robots.txt. Default is true.", 
-                DEFAULT_RESPECT_CRAWL_DELAY));
+        addElementToDefinition(new SimpleType(ATTR_RESPECT_CRAWL_DELAY_UP_TO_SECS,
+                "Respect a Crawl-Delay directive in a site's robots.txt "
+                +"up to this value in seconds. (If longer, simply "
+                +"respect this value.) Default is 300 seconds (5 minutes).", 
+                DEFAULT_RESPECT_CRAWL_DELAY_UP_TO_SECS));
         addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
                 "How often to retry fetching a URI that failed to be retrieved. "
                         + "If zero, the crawler will get the robots.txt only.",
@@ -803,7 +806,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                 durationToWait = maxDelay;
             }
 
-            if(((Boolean)getUncheckedAttribute(curi, ATTR_RESPECT_CRAWL_DELAY))) {
+            long respectThreshold = ((Integer)getUncheckedAttribute(curi,
+                    ATTR_RESPECT_CRAWL_DELAY_UP_TO_SECS)).longValue()*1000;
+            
+            if(durationToWait<respectThreshold) {
+                // may need to extend wait
                 CrawlServer s = controller.getServerCache().getServerFor(curi);
                 String ua = curi.getUserAgent();
                 if(ua==null) {
@@ -811,7 +818,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                 }
                 RobotsExclusionPolicy rep = s.getRobots(); 
                 if (rep!=null) {
-                    long crawlDelay = 1000 * s.getRobots().getCrawlDelay(ua);
+                    long crawlDelay = (long)(1000 * s.getRobots().getCrawlDelay(ua));
+                    crawlDelay = 
+                        (crawlDelay > respectThreshold) 
+                            ? respectThreshold 
+                            : crawlDelay; 
                     if (crawlDelay > durationToWait) {
                         // wait at least the directive crawl-delay
                         durationToWait = crawlDelay;
