@@ -257,7 +257,7 @@ public class RobotsExclusionPolicy implements Serializable {
      * @param userAgent
      * @return int Crawl-Delay value, or -1 if non available
      */
-    public int getCrawlDelay(String userAgent) {
+    public float getCrawlDelay(String userAgent) {
         if (robotstxt==null) {
             return -1;
         }
