@@ -21,6 +21,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -35,9 +36,12 @@ public class ContentTypeMatchesRegExpDecideRule extends MatchesRegExpDecideRule{
     public ContentTypeMatchesRegExpDecideRule() {
     }
 
-
     @Override
     protected String getString(ProcessorURI uri) {
         return uri.getContentType();
+    }
+    
+    static {
+        KeyManager.addKeys(ContentTypeMatchesRegExpDecideRule.class);
     }
 }

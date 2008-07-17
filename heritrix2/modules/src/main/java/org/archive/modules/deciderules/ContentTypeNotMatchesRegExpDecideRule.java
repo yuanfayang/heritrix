@@ -22,6 +22,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 /**
  * DecideRule whose decision is applied if the URI's content-type 
@@ -48,4 +49,7 @@ public class ContentTypeNotMatchesRegExpDecideRule extends
         return !super.evaluate(o);
     }
     
+    static {
+        KeyManager.addKeys(ContentTypeNotMatchesRegExpDecideRule.class);
+    }
 }
