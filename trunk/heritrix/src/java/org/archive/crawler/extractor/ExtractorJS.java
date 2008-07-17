@@ -24,15 +24,19 @@
 package org.archive.crawler.extractor;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.io.ReplayCharSequence;
+import org.archive.net.LaxURLCodec;
 import org.archive.net.UURI;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -151,7 +155,7 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
                 TextUtils.getMatcher(STRING_URI_DETECTOR, subsequence);
             if(uri.matches()) {
                 String string = uri.group();
-                string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
+                string = speculativeFixup(string);
                 foundLinks++;
                 try {
                     if (handlingJSFile) {
@@ -179,6 +183,48 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
         }
         TextUtils.recycleMatcher(strings);
         return foundLinks;
+    }
+
+    /**
+     * Perform additional fixup of likely-URI Strings
+     * 
+     * @param string detected candidate String
+     * @return String changed/decoded to increase liklihood it is a 
+     * meaningful non-404 URI
+     */
+    protected static String speculativeFixup(String string) {
+        String retVal = string;
+        
+        // unescape ampersands
+        retVal = TextUtils.replaceAll(ESCAPED_AMP, retVal, AMP);
+        
+        // uri-decode if begins with encoded 'http(s)?%3A'
+        Matcher m = TextUtils.getMatcher("(?i)^https?%3A.*",retVal); 
+        if(m.matches()) {
+            try {
+                retVal = LaxURLCodec.DEFAULT.decode(retVal);
+            } catch (DecoderException e) {
+                LOGGER.log(Level.INFO,"unable to decode",e);
+            }
+        }
+        TextUtils.recycleMatcher(m);
+        
+        // TODO: more URI-decoding if there are %-encoded parts?
+        
+//      detect scheme-less intended-absolute-URI
+        // intent: "opens with what looks like a dotted-domain, and 
+        // last segment is a top-level-domain (eg "com", "org", etc)" 
+        m = TextUtils.getMatcher(
+                "^[^\\./:\\s%]+\\.[^/:\\s%]+\\.([^\\./:\\s%]+)(/.*|)$", 
+                retVal);
+        if(m.matches()) {
+            if(ArchiveUtils.isTld(m.group(1))) { 
+                retVal = "http://" + retVal; 
+            }
+        }
+        TextUtils.recycleMatcher(m);
+        
+        return retVal; 
     }
 
     /* (non-Javadoc)
