@@ -857,7 +857,8 @@ public class ArchiveUtils {
     }
 
     public static Set<String> TLDS;
-    {
+    
+    static {
         TLDS = new HashSet<String>();
         // from http://data.iana.org/TLD/tlds-alpha-by-domain.txt
         // # Version 2008071601, Last Updated Thu Jul 17 08:07:01 2008 UTC
