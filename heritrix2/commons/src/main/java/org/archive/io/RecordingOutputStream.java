@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
@@ -514,7 +515,9 @@ public class RecordingOutputStream extends OutputStream {
     throws IOException {
         return getReplayCharSequence(characterEncoding, this.contentBeginMark);
     }
-    
+
+    private static final String canonicalLatin1 = Charset.forName("iso8859-1").name();
+
     /**
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call
@@ -523,11 +526,10 @@ public class RecordingOutputStream extends OutputStream {
      */
     public ReplayCharSequence getReplayCharSequence(String characterEncoding, 
             long startOffset) throws IOException {
+        if (characterEncoding == null)
+            characterEncoding = Charset.defaultCharset().name();
         // TODO: handled transfer-encoding: chunked content-bodies properly
-        float maxBytesPerChar = IoUtils.encodingMaxBytesPerChar(characterEncoding);
-        if(maxBytesPerChar<=1) {
-            // single
-            // TODO: take into account single-byte encoding may be non-default
+        if (canonicalLatin1.equals(Charset.forName(characterEncoding).name())) {
             return new ByteReplayCharSequence(
                     this.buffer, 
                     this.size, 
