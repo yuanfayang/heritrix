@@ -199,7 +199,7 @@ public class ExtractorJS extends ContentExtractor {
      * @return String changed/decoded to increase liklihood it is a 
      * meaningful non-404 URI
      */
-    protected static String speculativeFixup(String string) {
+    public static String speculativeFixup(String string) {
         String retVal = string;
         
         // unescape ampersands
