@@ -30,12 +30,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.archive.util.IoUtils;
 
 
 /**
@@ -526,10 +525,19 @@ public class RecordingOutputStream extends OutputStream {
      */
     public ReplayCharSequence getReplayCharSequence(String characterEncoding, 
             long startOffset) throws IOException {
-        if (characterEncoding == null)
-            characterEncoding = Charset.defaultCharset().name();
+        if (characterEncoding == null) {
+            // in absence of other info, assume iso8859-1 on all JVMs
+            characterEncoding = canonicalLatin1;
+        }
+        try {
+            // ensure name is canonical 
+            characterEncoding = Charset.forName(characterEncoding).name();
+        } catch (IllegalArgumentException iae) {
+            // revert to single-byte for unknown encodings
+            characterEncoding = canonicalLatin1;
+        }
         // TODO: handled transfer-encoding: chunked content-bodies properly
-        if (canonicalLatin1.equals(Charset.forName(characterEncoding).name())) {
+        if (canonicalLatin1.equals(characterEncoding)) {
             return new Latin1ByteReplayCharSequence(
                     this.buffer, 
                     this.size, 
