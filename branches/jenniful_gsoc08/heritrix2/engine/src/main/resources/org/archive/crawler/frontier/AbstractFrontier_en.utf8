@@ -25,9 +25,9 @@ force-queue-assignment-description:
 queue assignment to force onto CrawlURIs; intended to be overridden 
 
 
-respect-crawl-delay-description:
-Whether to respect a 'Crawl-Delay' (in seconds) given in a site's
-robots.txt; default is true
+respect-crawl-delay-up-to-secs-description:
+Respect a 'Crawl-Delay' given in a site's robots.txt up to a value
+of this many seconds. Default is 300 seconds (5 minutes). 
 
 max-delay-ms-description:
 never wait more than this long, regardless of multiple 
