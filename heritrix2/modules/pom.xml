@@ -51,6 +51,17 @@ be used in applications other than Heritrix, however.
               <version>2.0b4</version>
               <scope>compile</scope>
         </dependency>
+        <dependency>
+        	<groupId>rhino</groupId>
+        	<artifactId>js</artifactId>
+        	<version>1.6R5</version>
+        	<scope>compile</scope>
+        </dependency>
+        <dependency>
+        	<groupId>lobo</groupId>
+        	<artifactId>cobra</artifactId>
+        	<version>0.98.2</version>
+        	<scope>compile</scope></dependency>
   </dependencies>
   <build>
     <plugins>
