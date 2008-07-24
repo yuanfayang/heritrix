@@ -52,6 +52,6 @@ public class RsyncURLConnection extends DownloadURLConnection {
     protected String[] getCommand(final URL thisUrl,
     		final File downloadFile) {
     	return new String[] {getScript(), "--timeout=" + RSYNC_TIMEOUT,
-    		this.url.getPath(), downloadFile.getAbsolutePath()};  
+    		this.url.toExternalForm(), downloadFile.getAbsolutePath()};  
     }
 }
