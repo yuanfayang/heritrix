@@ -65,11 +65,10 @@ public class Handler extends URLStreamHandler {
         byte [] buffer = new byte [bufferlength];
         InputStream is = connect.getInputStream();
         try {
-            for (int count = is.read(buffer, 0, bufferlength);
-                    (count = is.read(buffer, 0, bufferlength)) != -1;) {
-                System.out.write(buffer, 0, count);
+            for (int count = 0; (count = is.read(buffer, 0, bufferlength)) != -1;) {
+              System.out.write(buffer, 0, count);
             }
-            System.out.flush();
+          System.out.flush();
         } finally {
             is.close();
         }
