@@ -54,7 +54,7 @@ public interface WARCConstants extends ArchiveFileConstants {
      * Setting to 0.10 because differs from 0.9 spec.  See accompanying
      * package documentation.
      */
-	public static final String WARC_VERSION = "0.17";
+	public static final String WARC_VERSION = "0.18";
     
     /**
      * Assumed maximum size of a Header Line.
