@@ -193,8 +193,13 @@ public class OrderJarFactory {
 
             //if a settings directory defaults has been specified,
             //add the contents of the settings directory defaults
-            Properties p =
-                SmartPropertiesResolver.getProperties("hcc.properties");
+            Properties p =null;
+            try{
+            	p = SmartPropertiesResolver.getProperties("hcc.properties");
+
+            }catch(RuntimeException ex){
+            	log.info("hcc.properties not found");
+            }
             
             if(p != null){
                 String defaultSettingsDirectoryRoot = p.getProperty(SETTINGS_DIRECTORY_PROPERTY);
