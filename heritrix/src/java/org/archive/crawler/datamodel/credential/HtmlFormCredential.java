@@ -37,6 +37,7 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
@@ -227,8 +228,11 @@ public class HtmlFormCredential extends Credential {
             String currentQuery = hmb.getQueryString();
             hmb.setQueryString(data);
             String newQuery = hmb.getQueryString();
-            hmb.setQueryString(((currentQuery != null)? currentQuery: "") +
-            		"&" + newQuery);
+            hmb.setQueryString(
+                    ((StringUtils.isNotEmpty(currentQuery))
+                            ? currentQuery + "&"
+                            : "")
+            		+ newQuery);
             result = true;
         } else {
             logger.severe("Unknown method type: " + method);
