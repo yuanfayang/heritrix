@@ -109,6 +109,12 @@ public class LinksScoper extends Scoper implements PostProcessor {
     
     @Override
     protected boolean shouldProcess(ProcessorURI puri) {
+        // Added by Ping Wang 07/27/08
+        if (puri.getUURI().toString().startsWith("x-jseval")) {
+            return true;
+        }
+        // End
+        
         if (!(puri instanceof CrawlURI)) {
             return false;
         }

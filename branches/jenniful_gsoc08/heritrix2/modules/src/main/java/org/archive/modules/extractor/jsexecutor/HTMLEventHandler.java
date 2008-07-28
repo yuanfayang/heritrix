@@ -20,8 +20,7 @@ import org.w3c.dom.NodeList;
 
 /**
  * Handle HTML events
- * 
- * @author Ping
+ * @author ping
  *
  */
 

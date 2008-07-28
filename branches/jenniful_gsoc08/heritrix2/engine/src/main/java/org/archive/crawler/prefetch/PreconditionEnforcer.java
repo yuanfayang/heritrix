@@ -147,6 +147,14 @@ public class PreconditionEnforcer extends Processor implements Initializable {
     @Override
     protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
+
+        // Added by Ping Wang 07/18/2008
+        String scheme1 = curi.getUURI().getScheme();
+        if (scheme1.equals("x-jseval")) {
+            return ProcessResult.PROCEED;
+        }
+        // End
+        
         if (considerDnsPreconditions(curi)) {
             return ProcessResult.FINISH;
         }
