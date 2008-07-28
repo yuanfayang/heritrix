@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -37,12 +38,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OrderJarFactory {
+	public static String SETTINGS_DIRECTORY_PROPERTY= OrderJarFactory.class.getName() + ".settingsDefaultsDir";
     private static Logger log =
         Logger.getLogger(OrderJarFactory.class.getName());
     public static final String NAME_KEY = "name";
@@ -70,7 +73,8 @@ public class OrderJarFactory {
 
     public static File createOrderJar(Map parameters) {
         try {
-
+        	
+        	//read in order xml prototype to string buffer
             Map<String, InputStream> map = new HashMap<String, InputStream>();
             InputStream orderPrototype = OrderJarFactory.class
                     .getResourceAsStream("/order.xml");
@@ -82,12 +86,17 @@ public class OrderJarFactory {
                 b.append(cbuf, 0, read);
             }
 
+            //replace values
             String order = b.toString();
             String date = new SimpleDateFormat("yyyyMMddhhmmss")
                     .format(new Date());
 
             order = order.replace("$name", parameters.get(NAME_KEY).toString());
-            order = order.replace("$operator", parameters.get(OPERATOR_KEY).toString());
+            Object operator = parameters.get(OPERATOR_KEY);
+            if(operator == null){
+            	operator = "No Operator Specified";
+            }
+            order = order.replace("$operator", operator.toString());
 
             order = order.replace("$arcPrefix", parameters
                     .get(NAME_KEY)
@@ -150,9 +159,6 @@ public class OrderJarFactory {
             
             order = order.replace("$description", description);
             
-            
-            
-            
             ByteArrayOutputStream orderFileOs = new ByteArrayOutputStream();
             orderFileOs.write(order.getBytes());
             map.put("order.xml", new ByteArrayInputStream(orderFileOs
@@ -184,14 +190,34 @@ public class OrderJarFactory {
                     jarFile));
             byte[] buf = new byte[1024];
             
+
+            //if a settings directory defaults has been specified,
+            //add the contents of the settings directory defaults
+            Properties p =
+                SmartPropertiesResolver.getProperties("hcc.properties");
             
+            if(p != null){
+                String defaultSettingsDirectoryRoot = p.getProperty(SETTINGS_DIRECTORY_PROPERTY);
+                addFilesFromSettingsDirectory(map, defaultSettingsDirectoryRoot);
+            }            
+            
+            
+            //create a unique temp work directory for crawlSettings
+            File tempCrawlSettingsDirectoryRoot = 
+            	new File(System.getProperty("java.io.tmpdir") + File.separator + new Date().getTime());
+            
+            tempCrawlSettingsDirectoryRoot.deleteOnExit();
             //create hostConstraints hierarchy
             Map<String,InputStream> files = 
             	writeHostConstraints(
-            			(List<HostConstraint>)parameters.get(HOST_CONSTRAINTS_KEY));
+            			(List<HostConstraint>)parameters.get(HOST_CONSTRAINTS_KEY),
+            			tempCrawlSettingsDirectoryRoot);
             
-            //add files to map
+            //add files to map - any name clashes with the defaults will be overwritten by
+            //the user specified constrants.
             map.putAll(files);
+
+
             
             // for each map entry
             for (String filename : map.keySet()) {
@@ -230,14 +256,14 @@ public class OrderJarFactory {
     }
     
     
-    protected static Map<String, InputStream> writeHostConstraints(List<HostConstraint> hostConstraints) throws IOException{
+    protected static Map<String, InputStream> writeHostConstraints(List<HostConstraint> hostConstraints, File crawlSettingsDirectoryRoot) throws IOException{
     		
     	Map<String, InputStream> files = new HashMap<String, InputStream>();
     	if(hostConstraints != null){
     		//for each constraint
     		for(HostConstraint hc : hostConstraints){
     			//put filename path into list.
-    			File file = writeSettingsFile(hc);
+    			File file = writeSettingsFile(hc, crawlSettingsDirectoryRoot);
     			files.put(hc.getSettingsFilePath(), new FileInputStream(file));
     			
     			
@@ -248,9 +274,9 @@ public class OrderJarFactory {
     
     }
     
-    protected static File writeSettingsFile(HostConstraint hc) throws IOException{
+    protected static File writeSettingsFile(HostConstraint hc, File crawlSettingsDirectoryRoot) throws IOException{
 		//create directory hierarchy if doesn't exist
-		File directory = new File(hc.getSettingsFileDirectory());
+		File directory = new File(crawlSettingsDirectoryRoot, hc.getSettingsFileDirectory());
 		directory.mkdirs();
 		File file = File.createTempFile("order", "xml", directory);
 		file.deleteOnExit();
@@ -302,4 +328,47 @@ public class OrderJarFactory {
 
 		return file;
     }
+    
+    protected static void addFilesFromSettingsDirectory(Map<String,InputStream> files, String settingsDirectoryRoot) throws IOException{
+        if(settingsDirectoryRoot != null){
+            File settingsDirectory = new File(settingsDirectoryRoot);
+            if(settingsDirectory.exists()){
+            	log.info("Settings directory parameter specified: " + settingsDirectoryRoot);
+                recursivelyAddChildren(files, settingsDirectory, null);
+            }else{
+            	log.warning("Settings directory parameter points to a non-existent directory: " + settingsDirectoryRoot);
+            }
+        }else{
+        	log.info("Settings directory property is null: no settings directory specified.");
+        }
+    }
+    
+    protected static void recursivelyAddChildren(
+    						Map<String,InputStream> files, 
+    						File settingDirectoryRoot, 
+    						String path) throws IOException{
+		File file;
+		if(path == null){
+			file = settingDirectoryRoot;
+		}else{
+			file = new File(path);
+		}
+		if(file.exists()){
+			if(file.isFile()){
+				FileInputStream fis = new FileInputStream(file);
+				String filePath = settingDirectoryRoot.getCanonicalPath();
+				
+				String key = file.getCanonicalPath().replace(filePath + File.separator, "");
+				log.fine("adding file to settings map: " + file.getCanonicalPath() + " keyed as " + key);
+				files.put(key, fis);
+			}else{
+				String[] children = file.list();
+				if(children != null){
+					for(String child : children){
+						recursivelyAddChildren(files, settingDirectoryRoot, file.getCanonicalPath() + File.separator + child);
+					}
+				}
+			}
+		}
+	}
 }
