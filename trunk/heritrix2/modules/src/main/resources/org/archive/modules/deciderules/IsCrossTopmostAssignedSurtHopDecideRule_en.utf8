@@ -1,0 +1,4 @@
+description:
+IsCrossTopmostAssignedSurtHopDecideRule. Applies the configured decision 
+if the registrar-assigned portion of a URI's hostname (AKA 'topmost 
+assigned SURT') differs from that of its referring 'via' URI. 
