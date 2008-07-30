@@ -56,9 +56,13 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
      * can be used to calculate 'average cost'. */
     private long costCount = 0;
 
-    /** Running tally of total expenditures on this queue */
+    /** Running tally of total expenditures out of this queue;
+     * tallied only as a URI is finished or retried */
     private long totalExpenditure = 0;
 
+    /** Net cost of all currently-enqueued URIs. */
+    private long pendingExpenditure = 0;
+    
     /** Total to spend on this queue over its lifetime */
     private long totalBudget = 0;
 
@@ -122,6 +126,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
         }
         count++;
         enqueueCount++;
+        pendingExpenditure += curi.getHolderCost();
     }
 
     /**
@@ -164,6 +169,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+        pendingExpenditure -= peekItem.getHolderCost();
         unpeek();
         count--;
         lastDequeueTime = System.currentTimeMillis();
@@ -198,6 +204,15 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
     }
 
     /**
+     * Retrieve the total expenditure level allowed by this queue.
+     * 
+     * @return the queues total budget
+     */
+    public long getTotalBudget() {
+        return this.totalBudget;
+    }
+    
+    /**
      * Check whether queue has temporarily or permanently exceeded
      * its budget. 
      * 
@@ -211,12 +226,22 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
     }
 
     /**
-     * Return the tally of all expenditures on this queue
+     * Return the tally of all expenditures from this queue (dequeued 
+     * items)
      * 
      * @return total amount expended on this queue
      */
     public long getTotalExpenditure() {
         return totalExpenditure;
+    }
+    
+    /**
+     * Return the tally of all URI costs currently inside this queue
+     * 
+     * @return total amount expended on this queue
+     */
+    public long getPendingExpenditure() {
+        return pendingExpenditure;
     }
 
     /**
