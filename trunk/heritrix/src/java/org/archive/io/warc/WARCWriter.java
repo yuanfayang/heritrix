@@ -41,10 +41,10 @@ import org.archive.util.anvl.ANVLRecord;
 
 
 /**
- * <b>Experimental</b> WARC implementation.
+ * WARC implementation.
  *
  * <p>Assumption is that the caller is managing access to this
- * ExperimentalWARCWriter ensuring only one thread accessing this WARC instance
+ * WARCWriter ensuring only one thread accessing this WARC instance
  * at any one time.
  * 
  * <p>While being written, WARCs have a '.open' suffix appended.

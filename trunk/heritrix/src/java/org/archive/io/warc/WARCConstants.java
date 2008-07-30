@@ -32,7 +32,7 @@ import org.archive.io.ArchiveFileConstants;
 
 /**
  * WARC Constants used by WARC readers and writers.
- * Below constants are used by version 0.10 and 0.12 of WARC Reader/Writer.
+ * Below constants are used WARC Reader/Writer.
  * @author stack
  * @version $Revision$ $Date$
  */
