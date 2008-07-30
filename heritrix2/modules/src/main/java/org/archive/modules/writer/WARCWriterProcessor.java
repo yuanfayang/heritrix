@@ -86,9 +86,11 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
 
 /**
- * Experimental WARCWriterProcessor.
- * Goes against the 0.17 WARC specification.
- * 
+ * WARCWriterProcessor.
+ * Goes against the 0.18 version of the WARC specification (which
+ * is functionally identical to 0.17 except in the protocol 
+ * identifier string). 
+ * See http://archive-access.sourceforge.net/warc/  
  * 
  * <p>TODO: Remove ANVLRecord. Rename NameValue or use RFC822
  * (commons-httpclient?) or find something else.
