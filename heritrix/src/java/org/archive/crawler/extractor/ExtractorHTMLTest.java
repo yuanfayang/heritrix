@@ -333,6 +333,39 @@ implements CoreAttributeConstants {
         assertTrue("incorrect number of links found",links.length==3);
     }
     
+    /**
+     * Test that relative URIs with late colons aren't misinterpreted
+     * as absolute URIs with long, illegal scheme components. 
+     * 
+     * See http://webteam.archive.org/jira/browse/HER-1268
+     * 
+     * @throws URIException
+     */
+    public void testBadRelativeLinks() throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory
+                .getInstance("http://www.example.com"));
+        CharSequence cs = "<a href=\"example.html;jsessionid=deadbeef:deadbeed?parameter=this:value\"/>"
+                + "<a href=\"example.html?parameter=this:value\"/>";
+        this.extractor.extract(curi, cs);
+
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object)
+                        .getDestination()
+                        .toString()
+                        .indexOf(
+                                "/example.html;jsessionid=deadbeef:deadbeed?parameter=this:value") >= 0;
+            }
+        }));
+
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object).getDestination().toString().indexOf(
+                        "/example.html?parameter=this:value") >= 0;
+            }
+        }));
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length != 1 && args.length != 2) {
             System.err.println("Usage: " + ExtractorHTMLTest.class.getName() +
