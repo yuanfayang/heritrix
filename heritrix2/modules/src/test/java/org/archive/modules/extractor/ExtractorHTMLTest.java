@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.DefaultProcessorURI;
 import org.archive.net.UURI;
@@ -53,7 +55,7 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
     }
 
     @Override
-    protected Class getModuleClass() {
+    protected Class<ExtractorHTML> getModuleClass() {
         return ExtractorHTML.class;
     }
 
@@ -187,5 +189,39 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
                 puri.getData().get(ExtractorHTML.A_META_ROBOTS));
         Link[] links = puri.getOutLinks().toArray(new Link[0]);
         assertTrue("link extracted despite meta robots",links.length==0);
+    }
+    
+    /**
+     * Test that relative URIs with late colons aren't misinterpreted
+     * as absolute URIs with long, illegal scheme components. 
+     * 
+     * See http://webteam.archive.org/jira/browse/HER-1268
+     * 
+     * @throws URIException
+     */
+    public void testBadRelativeLinks() throws URIException {
+        DefaultProcessorURI curi = new DefaultProcessorURI(UURIFactory
+                .getInstance("http://www.example.com"), null);
+        CharSequence cs = "<a href=\"example.html;jsessionid=deadbeef:deadbeed?parameter=this:value\"/>"
+                + "<a href=\"example.html?parameter=this:value\"/>";
+        ExtractorHTML extractor = (ExtractorHTML)makeExtractor();
+        extractor.extract(curi, cs);
+
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object)
+                        .getDestination()
+                        .toString()
+                        .indexOf(
+                                "/example.html;jsessionid=deadbeef:deadbeed?parameter=this:value") >= 0;
+            }
+        }));
+
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object).getDestination().toString().indexOf(
+                        "/example.html?parameter=this:value") >= 0;
+            }
+        }));
     }
 }
