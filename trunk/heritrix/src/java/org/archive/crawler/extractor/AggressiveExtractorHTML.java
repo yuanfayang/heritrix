@@ -70,7 +70,7 @@ extends ExtractorHTML {
      */
     public String report() {
         StringBuffer ret = new StringBuffer(256);
-        ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML2\n");
+        ret.append("Processor: org.archive.crawler.extractor.AggressiveExtractorHTML\n");
         ret.append("  Function:          Link extraction on HTML documents " +
             "(including embedded CSS)\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
