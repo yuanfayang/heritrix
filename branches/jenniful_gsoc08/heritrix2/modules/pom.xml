@@ -58,7 +58,7 @@ be used in applications other than Heritrix, however.
         	<scope>compile</scope>
         </dependency>
         <dependency>
-        	<groupId>lobo</groupId>
+        	<groupId>org.lobobrowser</groupId>
         	<artifactId>cobra</artifactId>
         	<version>0.98.2</version>
         	<scope>compile</scope></dependency>
