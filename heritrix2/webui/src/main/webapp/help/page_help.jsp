@@ -16,18 +16,18 @@
 </p>
 <p>
     <b><a target="_blank" 
-        href="<%=request.getContextPath()%>/docs/articles/releasenotes/index.html">Release Notes</a></b><br>
+        href="http://webteam.archive.org/confluence/display/Heritrix/2.0.0+Release+Notes">Release Notes</a></b><br>
 </p>
 <p>
     <b><a href="<%=request.getContextPath()%>/help/do_show_webui-prefs.jsp">Change the Web UI Password</a></b>
 </p>
 <p>
 	<b><a href="http://crawler.archive.org/issue-tracking.html" target="_blank">Issue Tracking</a></b><br />
-	If you have found a bug or would like to see new features in Heritrix, check the following links:
-	<ul>
-		<li><a href="http://sourceforge.net/tracker/?atid=539099&amp;group_id=73833&amp;func=browse" target="_blank">Bugs</a></li>
-		<li><a href="http://sourceforge.net/tracker/?atid=539102&amp;group_id=73833&amp;func=browse" target="_blank">Feature Requests</a></li>
-	</ul>
+	If you have found a bug or would like to see new features in 
+	Heritrix, you can report, discuss, and vote on outstanding issues
+	in our <a href="http://webteam.archive.org/jira/browse/HER">Heritrix 
+	JIRA issue tracker</a>.
+
 </p>
 <p>
     <b><a href="http://crawler.archive.org/mail-lists.html" target="_blank">Mailing Lists</a></b><br />
