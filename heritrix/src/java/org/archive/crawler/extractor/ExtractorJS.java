@@ -155,7 +155,7 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
                 TextUtils.getMatcher(STRING_URI_DETECTOR, subsequence);
             if(uri.matches()) {
                 String string = uri.group();
-                string = speculativeFixup(string);
+                string = speculativeFixup(string, curi);
                 foundLinks++;
                 try {
                     if (handlingJSFile) {
@@ -192,7 +192,7 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
      * @return String changed/decoded to increase liklihood it is a 
      * meaningful non-404 URI
      */
-    public static String speculativeFixup(String string) {
+    public static String speculativeFixup(String string, CrawlURI curi) {
         String retVal = string;
         
         // unescape ampersands
@@ -211,7 +211,7 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
         
         // TODO: more URI-decoding if there are %-encoded parts?
         
-//      detect scheme-less intended-absolute-URI
+        // detect scheme-less intended-absolute-URI
         // intent: "opens with what looks like a dotted-domain, and 
         // last segment is a top-level-domain (eg "com", "org", etc)" 
         m = TextUtils.getMatcher(
@@ -219,7 +219,16 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
                 retVal);
         if(m.matches()) {
             if(ArchiveUtils.isTld(m.group(1))) { 
-                retVal = "http://" + retVal; 
+                String schemePlus = "http://";       
+                // if on exact same host preserve scheme (eg https)
+                try {
+                    if (retVal.startsWith(curi.getUURI().getHost())) {
+                        schemePlus = curi.getUURI().getScheme() + "://";
+                    }
+                } catch (URIException e) {
+                    // error retrieving source host - ignore it
+                }
+                retVal = schemePlus + retVal; 
             }
         }
         TextUtils.recycleMatcher(m);
@@ -227,7 +236,9 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
         return retVal; 
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.framework.Processor#report()
      */
     public String report() {
