@@ -44,15 +44,10 @@ public class FetchCache implements Closeable, Serializable {
         this.candidates = candidates;
     }
     
-    /*public void updateResourceStatus(ProcessorURI puri) {
-        
-        // TODO: the second param should be resource location object
-        String uriStr = puri.getUURI().toString();
-        addAvailableEntry(uriStr, puri);
-        updateResourceStatus(uriStr);
-    }*/
-    
-    //public synchronized void updateResourceStatus(String urikey) {
+    /**
+     * Update map resources and dependents, when a new resource is available.
+     * @param puri the ProcessorURI of this new resource.
+     */
     public synchronized void updateResourceStatus(ProcessorURI puri) {
         String urikey = puri.getUURI().toString();
         
@@ -83,16 +78,12 @@ public class FetchCache implements Closeable, Serializable {
         
         return;
     }
-    
-    /*public void updateDependentStatus(ProcessorURI puri,
-            Collection<String> resources) {
-        String uriStr = puri.getUURI().toString();
-        addAvailableEntry(uriStr, puri);
-        updateDependentStatus(uriStr, resources);
-    }*/
-    
-    //public synchronized void updateDependentStatus(String urikey, 
-            //Collection<String> resources) {
+    /**
+     * Update map dependents, candidates and resources, when a new HTML document 
+     * is available.
+     * @param puri the ProcessorURI of this new HTML document.
+     * @param resources the list of required resources of this HTML document.
+     */
     public synchronized void updateDependentStatus(ProcessorURI puri, 
             Collection<String> resources) {
         String urikey = puri.getUURI().toString();
@@ -125,7 +116,28 @@ public class FetchCache implements Closeable, Serializable {
         return;
     }
     
-    public Collection<String> getResourceEntry(String urikey) {
+    /**
+     * Pass the uris of the HTML documents which are ready to be parsed.
+     * to other object and clear the map.
+     * @return
+     */
+    public synchronized Map<String, Collection<String>> getNClearReadyURIs() {
+        Map<String, Collection<String>> tmpCollection = waitToSchedule;
+         waitToSchedule = null;
+         return tmpCollection;
+    }
+    
+    public Object getContentLocation(String urikey) {
+        return availables.get(urikey);
+    }
+    
+    /**
+     * Get uris of HTML documents which depend on the resource.
+     * @param urikey uri of the resource.
+     * @return a list of dependent uris, if map resources contains urikey, 
+     * otherwise an empty list.
+     */
+    private Collection<String> getResourceEntry(String urikey) {
         Collection<String> depList = resources.get(urikey);
         
         if (depList != null) {
@@ -137,7 +149,13 @@ public class FetchCache implements Closeable, Serializable {
         return depList;
     }
     
-    public Collection<String> getDependentEntry(String urikey) {
+    /**
+     * Get uris of unavailable resources on which the HTML document depends on.
+     * @param urikey uri of the HTML document.
+     * @return a list of resource uris, if map dependents contains urikey,
+     * otherwise an empty list.
+     */
+    private Collection<String> getDependentEntry(String urikey) {
         Collection<String> resList = dependents.get(urikey);
         if (resList != null) {
             return resList;
@@ -148,7 +166,13 @@ public class FetchCache implements Closeable, Serializable {
         return resList;
     }
     
-    public Collection<String> getCandidateEntry(String urikey) {
+    /**
+     * Get uris of available resources on which the HTML document depends on.
+     * @param urikey uri of the HTML document.
+     * @return a list of resource uris, if map cadidates contains urikey,
+     * otherwise an empty list.
+     */
+    private Collection<String> getCandidateEntry(String urikey) {
         Collection<String> resList = candidates.get(urikey);
         if (resList != null) {
             return resList;
@@ -159,7 +183,12 @@ public class FetchCache implements Closeable, Serializable {
         return resList;
     }
     
-    public Map<String, Collection<String>> getWaitToScheduleURIs() {
+    /**
+     * Return or Create a map to store the uris of the HTML documents.
+     * which are ready to be parsed.
+     * @return a map.
+     */
+    private Map<String, Collection<String>> getWaitToScheduleURIs() {
         if (waitToSchedule == null) {
             waitToSchedule = new Hashtable<String, Collection<String>>();
         }
@@ -167,21 +196,21 @@ public class FetchCache implements Closeable, Serializable {
         return waitToSchedule;
     }
     
-    public synchronized Map<String, Collection<String>> getNClearReadyURIs() {
-        Map<String, Collection<String>> tmpCollection = waitToSchedule;
-         waitToSchedule = null;
-         return tmpCollection;
-    }
-    
-    public Object getContentLocation(String urikey) {
-        return availables.get(urikey);
-    }
-    
-    protected void addResourceEntry(String urikey, String dependent) {
+    /**
+     * Add a new dependent of a resource in map resources.
+     * @param urikey the uri of the resource.
+     * @param dependent the uri of the dependent.
+     */
+    private void addResourceEntry(String urikey, String dependent) {
         getResourceEntry(urikey).add(dependent);
     }
     
-    protected void addDependentEntry(String urikey, Collection<String> resources) {
+    /**
+     * Add a new entry in map dependents.
+     * @param urikey the uri of the HTML document.
+     * @param resources the list of requried resources of the HTML document.
+     */
+    private void addDependentEntry(String urikey, Collection<String> resources) {
         Collection<String> resList = getDependentEntry(urikey);
         if (resList.size() != 0) {
             for (String resUri : resources) {
@@ -194,13 +223,23 @@ public class FetchCache implements Closeable, Serializable {
         }
     }
     
-    protected void addAvailableEntry(String urikey, Object location) {
+    /**
+     * Add a new entry in map availables.
+     * @param urikey the uri of the available document or resource.
+     * @param location the content location.
+     */
+    private void addAvailableEntry(String urikey, Object location) {
         if (! availables.containsKey(urikey)) {
             availables.put(urikey, location);
         }
     }
     
-    protected void addCandidateEntry(String urikey, Collection<String> resources) {
+    /**
+     * Add an entry in map candidates when an HTML document is ready.
+     * @param urikey the uri of the HTML document.
+     * @param resources the list of required resources.
+     */
+    private void addCandidateEntry(String urikey, Collection<String> resources) {
         Collection<String> resList = getCandidateEntry(urikey);
         if (resList.size() != 0) {
             for (String resUri : resources) {
@@ -213,15 +252,15 @@ public class FetchCache implements Closeable, Serializable {
         }
     }
     
-    public boolean isResourceAvailable(String urikey) {
+    /**
+     * Test is a document or resource is available.
+     * @param urikey the uri of the document or resource.
+     * @return true if available, otherwise false.
+     */
+    private boolean isResourceAvailable(String urikey) {
         return availables.containsKey(urikey);
     }
 
-    private String magicValue = "This is a magic value for testing!";
-    public void test() {
-        System.out.println(magicValue);
-    }
-    
     public void close() {
         
     }
