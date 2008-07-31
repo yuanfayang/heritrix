@@ -224,4 +224,37 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
             }
         }));
     }
+    
+    /**
+     * Test if scheme is maintained by speculative hops onto exact 
+     * same host
+     * 
+     * [HER-1524] speculativeFixup in ExtractorJS should maintain URL scheme
+     */
+    public void testSpeculativeLinkExtraction() throws URIException {
+        DefaultProcessorURI curi = new DefaultProcessorURI(UURIFactory
+                .getInstance("https://www.example.com"), null);
+        CharSequence cs = 
+            "<script type=\"text/javascript\">_parameter=\"www.anotherexample.com\";"
+                + "_anotherparameter=\"www.example.com/index.html\""
+                + ";</script>";
+        ExtractorHTML extractor = (ExtractorHTML)makeExtractor();
+        extractor.extract(curi, cs);
+
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                System.err.println("comparing: "
+                        + ((Link) object).getDestination().toString()
+                        + " and https://www.anotherexample.com/");
+                return ((Link) object).getDestination().toString().equals(
+                        "http://www.anotherexample.com/");
+            }
+        }));
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object).getDestination().toString().equals(
+                        "https://www.example.com/index.html");
+            }
+        }));
+    }
 }

@@ -23,6 +23,9 @@
  */
 package org.archive.modules.extractor;
 
+import static org.archive.modules.extractor.Hop.SPECULATIVE;
+import static org.archive.modules.extractor.LinkContext.JS_MISC;
+
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,12 +38,8 @@ import org.archive.modules.ProcessorURI;
 import org.archive.net.LaxURLCodec;
 import org.archive.net.UURI;
 import org.archive.state.KeyManager;
-import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
-
-import static org.archive.modules.extractor.Hop.SPECULATIVE;
-import static org.archive.modules.extractor.LinkContext.JS_MISC;
 
 /**
  * Processes Javascript files for strings that are likely to be
@@ -168,7 +167,7 @@ public class ExtractorJS extends ContentExtractor {
                 TextUtils.getMatcher(STRING_URI_DETECTOR, subsequence);
             if(uri.matches()) {
                 String string = uri.group();
-                string = speculativeFixup(string);
+                string = speculativeFixup(string, curi);
                 foundLinks++;
                 try {
                     int max = uriErrors.getMaxOutlinks(curi);
@@ -199,7 +198,7 @@ public class ExtractorJS extends ContentExtractor {
      * @return String changed/decoded to increase liklihood it is a 
      * meaningful non-404 URI
      */
-    public static String speculativeFixup(String string) {
+    public static String speculativeFixup(String string, ProcessorURI puri) {
         String retVal = string;
         
         // unescape ampersands
@@ -225,9 +224,16 @@ public class ExtractorJS extends ContentExtractor {
                 "^[^\\./:\\s%]+\\.[^/:\\s%]+\\.([^\\./:\\s%]+)(/.*|)$", 
                 retVal);
         if(m.matches()) {
-            if(ArchiveUtils.isTld(m.group(1))) { 
-                retVal = "http://" + retVal; 
+            String schemePlus = "http://";       
+            // if on exact same host preserve scheme (eg https)
+            try {
+                if (retVal.startsWith(puri.getUURI().getHost())) {
+                    schemePlus = puri.getUURI().getScheme() + "://";
+                }
+            } catch (URIException e) {
+                // error retrieving source host - ignore it
             }
+            retVal = schemePlus + retVal; 
         }
         TextUtils.recycleMatcher(m);
         
