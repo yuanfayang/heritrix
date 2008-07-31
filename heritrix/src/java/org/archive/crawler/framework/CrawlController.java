@@ -698,7 +698,7 @@ public class CrawlController implements Serializable, Reporter {
         }
         File f = new File(recoverPath);
         if (!f.exists()) {
-            LOGGER.severe("Recover file does not exist " + recoverPath);
+            LOGGER.severe("Recover file does not exist " + f.getAbsolutePath());
             return;
         }
         if (!f.isFile()) {
@@ -708,7 +708,7 @@ public class CrawlController implements Serializable, Reporter {
         boolean retainFailures = ((Boolean)order.
           getAttribute(CrawlOrder.ATTR_RECOVER_RETAIN_FAILURES)).booleanValue();
         try {
-            frontier.importRecoverLog(recoverPath, retainFailures);
+            frontier.importRecoverLog(f.getAbsolutePath(), retainFailures);
         } catch (IOException e) {
             e.printStackTrace();
             throw (FatalConfigurationException) new FatalConfigurationException(
