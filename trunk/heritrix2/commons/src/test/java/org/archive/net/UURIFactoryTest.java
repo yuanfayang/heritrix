@@ -1124,4 +1124,17 @@ public class UURIFactoryTest extends TestCase {
 //        uuri2 = UURIFactory.getInstance(uuri.toCustomString());
 //        assertEquals("Not equal", uuri.toString(), uuri2.toString());
     }
+    
+    /**
+     * Test bad port throws URIException not NumberFormatException
+     */
+    public void testExtremePort() {
+        try {
+            UURI uuri = UURIFactory.getInstance("http://Tel.:016099117464");
+            System.out.println(uuri); 
+            fail("expected exception not thrown");
+        } catch (URIException ue){
+            // expected
+        }
+    }
 }
