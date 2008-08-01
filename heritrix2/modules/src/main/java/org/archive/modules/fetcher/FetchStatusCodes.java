@@ -114,6 +114,10 @@ public interface FetchStatusCodes {
     public static final int S_DNS_SUCCESS = 1;
     /** InetAddress.getByName success */
     public static final int S_GETBYNAME_SUCCESS = 1001;
+    
+    // Added by Ping Wang 08/01/2008
+    public static final int S_SPECIAL_URI_PROCESS_SUCCESS = 1002; 
+    // End
 }
 
 

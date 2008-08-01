@@ -127,7 +127,7 @@ public class FetchCache implements Closeable, Serializable {
          return tmpCollection;
     }
     
-    public Object getContentLocation(String urikey) {
+    public synchronized Object getContentLocation(String urikey) {
         return availables.get(urikey);
     }
     

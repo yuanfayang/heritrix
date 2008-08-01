@@ -30,6 +30,7 @@ import org.archive.modules.extractor.HTMLLinkContext;
 import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.UriErrorLoggerModule;
+import org.archive.modules.fetcher.FetchStatusCodes;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.settings.Finishable;
@@ -109,6 +110,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
             for (Link wref: uri.getOutLinks()) {
                 System.out.println(wref.getDestination());
             }
+        	uri.setFetchStatus(FetchStatusCodes.S_SPECIAL_URI_PROCESS_SUCCESS);
         }
     }
 

@@ -109,12 +109,6 @@ public class LinksScoper extends Scoper implements PostProcessor {
     
     @Override
     protected boolean shouldProcess(ProcessorURI puri) {
-        // Added by Ping Wang 07/27/08
-        if (puri.getUURI().toString().startsWith("x-jseval")) {
-            return true;
-        }
-        // End
-        
         if (!(puri instanceof CrawlURI)) {
             return false;
         }
@@ -127,7 +121,9 @@ public class LinksScoper extends Scoper implements PostProcessor {
         }
         
         // Don't extract links of error pages.
-        if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
+        // Modified by Ping Wang 08/01/2008
+        if ((curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) 
+        		&& curi.getFetchStatus() != S_SPECIAL_URI_PROCESS_SUCCESS) {
             curi.getOutLinks().clear();
             return false;
         }
