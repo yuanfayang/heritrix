@@ -16,7 +16,7 @@
 </p>
 <p>
     <b><a target="_blank" 
-        href="http://webteam.archive.org/confluence/display/Heritrix/2.0.0+Release+Notes">Release Notes</a></b><br>
+        href="http://webteam.archive.org/confluence/display/Heritrix/2.0.1+Release+Notes">Release Notes</a></b><br>
 </p>
 <p>
     <b><a href="<%=request.getContextPath()%>/help/do_show_webui-prefs.jsp">Change the Web UI Password</a></b>
