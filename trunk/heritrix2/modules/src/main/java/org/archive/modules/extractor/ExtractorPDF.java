@@ -32,11 +32,9 @@ import org.archive.io.SinkHandlerLogThread;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Immutable;
 import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 
 /** Allows the caller to process a CrawlURI representing a PDF
@@ -61,25 +59,7 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
 
     final private AtomicLong numberOfLinksExtracted = new AtomicLong(0);
 
-    private TempDirProvider tempDirProvider;
-    
-    
-    /**
-     * Provides the location for temporary PDF files to be written.
-     */
-    @Immutable
-    final public static Key<TempDirProvider> TEMP_DIR_PROVIDER =
-        Key.makeAuto(TempDirProvider.class);
-    
-    
-
     public ExtractorPDF() {
-    }
-
-    
-    public void initialTasks(StateProvider p) {
-        super.initialTasks(p);
-        this.tempDirProvider = p.get(this, TEMP_DIR_PROVIDER);
     }
     
     @Override
@@ -98,14 +78,17 @@ public class ExtractorPDF extends ContentExtractor implements Initializable {
         File tempFile;
 
         int sn;
-	Thread thread = Thread.currentThread();
+        Thread thread = Thread.currentThread();
         if (thread instanceof SinkHandlerLogThread) {
             sn = ((SinkHandlerLogThread)thread).getSerialNumber();
         } else {
             sn = System.identityHashCode(thread);
         }
-        File tempDir = tempDirProvider.getScratchDisk();
-        tempFile = new File(tempDir, "tt" + sn + "tmp.pdf");
+        try {
+            tempFile = File.createTempFile("tt" + sn , "tmp.pdf");
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
 
         PDFParser parser;
         ArrayList<String> uris;
