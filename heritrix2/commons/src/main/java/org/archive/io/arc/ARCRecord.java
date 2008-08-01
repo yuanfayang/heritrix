@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 
@@ -523,8 +522,9 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         byte [] statusBytes = HttpParser.readRawLine(getIn());
         int eolCharCount = getEolCharsCount(statusBytes);
         if (eolCharCount <= 0) {
-            throw new RecoverableIOException("Failed to read http status where one " +
-                " was expected: " + new String(statusBytes));
+            throw new RecoverableIOException(
+                "Failed to read http status where one was expected: " 
+                + ((statusBytes == null) ? "" : new String(statusBytes)));
         }
         String statusLine = EncodingUtil.getString(statusBytes, 0,
             statusBytes.length - eolCharCount, ARCConstants.DEFAULT_ENCODING);
