@@ -383,9 +383,6 @@ implements CoreAttributeConstants {
 
         assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
             public boolean evaluate(Object object) {
-                System.err.println("comparing: "
-                        + ((Link) object).getDestination().toString()
-                        + " and https://www.anotherexample.com/");
                 return ((Link) object).getDestination().toString().equals(
                         "http://www.anotherexample.com/");
             }
