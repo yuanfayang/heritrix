@@ -110,10 +110,10 @@ public class Preselector extends Scoper {
         CrawlURI curi = (CrawlURI)puri;
         
         //added by Ping Wang 07/18/2008
-        String scheme = curi.getUURI().getScheme();
+        /*String scheme = curi.getUURI().getScheme();
         if (scheme.equals("x-jseval")) {
             return ProcessResult.PROCEED;
-        }
+        }*/
         //end
         
         // Check if uris should be blocked

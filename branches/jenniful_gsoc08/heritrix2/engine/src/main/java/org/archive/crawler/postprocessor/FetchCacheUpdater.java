@@ -14,6 +14,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
+import org.archive.modules.extractor.Link;
 import org.archive.modules.fetchcache.FetchCache;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -90,6 +91,19 @@ Initializable, PostProcessor{
     protected void updateHTMLStatus(CrawlURI curi) {
         
         Collection<String> resURIs = new HashSet<String>();
+        for (Link link : curi.getOutLinks()) {
+            String uri = link.getDestination().toString().toLowerCase();
+            if (uri.endsWith(".js")) {
+                resURIs.add(uri);
+            }
+        }
+        
+        fetchCache.updateDependentStatus(curi, resURIs);
+    }
+    
+    /*protected void updateHTMLStatus(CrawlURI curi) {
+        
+        Collection<String> resURIs = new HashSet<String>();
         for (CrawlURI link : curi.getOutCandidates()) {
             String uri = link.getUURI().toString().toLowerCase();
             if (uri.endsWith(".js")) {
@@ -98,7 +112,7 @@ Initializable, PostProcessor{
         }
         
         fetchCache.updateDependentStatus(curi, resURIs);
-    }
+    }*/
     
     protected void updateResourceStatus(CrawlURI curi) {
         fetchCache.updateResourceStatus(curi);
