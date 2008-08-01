@@ -101,8 +101,36 @@ public class RobotstxtTest extends TestCase {
         assertTrue(r.getDirectivesFor("Mozilla anonbot 99.9").allows("/path"));
         assertFalse(r.getDirectivesFor("Mozilla anonbot 99.9").allows("/cgi-bin/foo.pl"));
         // no crawl-delay
-        assertEquals(r.getDirectivesFor("Mozilla denybot 99.9").getCrawlDelay(),-1f);
+        assertEquals(-1f,r.getDirectivesFor("Mozilla denybot 99.9").getCrawlDelay());
         // with crawl-delay 
-        assertEquals(r.getDirectivesFor("Mozilla delaybot 99.9").getCrawlDelay(),20f);
+        assertEquals(20f,r.getDirectivesFor("Mozilla delaybot 99.9").getCrawlDelay());
+    }
+    
+    Robotstxt htmlMarkupRobots() throws IOException {
+        BufferedReader reader = new BufferedReader(
+            new StringReader(
+                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\"><HTML>\n"
+                +"<HEAD>\n"
+                +"<TITLE>/robots.txt</TITLE>\n"
+                +"<HEAD>\n"
+                +"<BODY>\n"
+                +"User-agent: *<BR>\n"
+                +"Disallow: /<BR>\n"
+                +"Crawl-Delay: 30<BR>\n"
+                +"\n"
+                +"</BODY>\n"
+                +"</HTML>\n"
+            ));
+        return new Robotstxt(reader); 
+    }
+    
+    /**
+     * Test handling of a robots.txt with extraneous HTML markup
+     * @throws IOException
+     */
+    public void testHtmlMarkupRobots() throws IOException {
+        Robotstxt r = htmlMarkupRobots();
+        assertFalse(r.getDirectivesFor("anybot").allows("/index.html"));
+        assertEquals(30f,r.getDirectivesFor("anybot").getCrawlDelay());
     }
 }
