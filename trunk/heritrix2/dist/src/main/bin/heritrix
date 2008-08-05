@@ -101,7 +101,13 @@ then
   JAVA_OPTS=" -Xmx256m"
 fi
 
-if [ -z "${JMX_OFF}" ]
+# Main heritrix class.
+if [ -z "$CLASS_MAIN" ]
+then
+  CLASS_MAIN='org.archive.crawler.Heritrix'
+fi
+
+if [ -z "${JMX_OFF}" ] && [ $CLASS_MAIN = 'org.archive.crawler.Heritrix' ]
 then
   if [ -z "${JMX_PORT}" ]
   then
@@ -121,12 +127,6 @@ then
       JMX_OPTS="-Dcom.sun.management.jmxremote"
     fi
   fi
-fi
-
-# Main heritrix class.
-if [ -z "$CLASS_MAIN" ]
-then
-  CLASS_MAIN='org.archive.crawler.Heritrix'
 fi
 
 # A bit of a hack to ensure that if the user puts -h/--help on the
