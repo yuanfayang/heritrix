@@ -99,7 +99,14 @@ then
   JAVA_OPTS=" -Xmx256m"
 fi
 
-if [ -z "${JMX_OFF}" ]
+
+# Main heritrix class.
+if [ -z "$CLASS_MAIN" ]
+then
+  CLASS_MAIN='org.archive.crawler.Heritrix'
+fi
+
+if [ -z "${JMX_OFF}" ] && [ $CLASS_MAIN = 'org.archive.crawler.Heritrix' ]
 then
   if [ -z "${JMX_PORT}" ]
   then
@@ -132,12 +139,6 @@ then
       "${HERITRIX_HOME}/conf/jmxremote.password.template" > "${JMX_PWORD_FILE}"
     chmod 600 "${JMX_PWORD_FILE}"
     fi
-fi
-
-# Main heritrix class.
-if [ -z "$CLASS_MAIN" ]
-then
-  CLASS_MAIN='org.archive.crawler.Heritrix'
 fi
 
 # heritrix_dmesg.log contains startup output from the crawler main class. 
