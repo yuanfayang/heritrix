@@ -1353,8 +1353,9 @@ public class HTMLParser {
         try {
             String codeText = "";
             if (resLocation.containsKey(urlStr)) {
-                Recorder recorder = (Recorder) resLocation.get(urlStr);
-                codeText = recorder.getReplayCharSequence().toString();
+                //Recorder recorder = (Recorder) resLocation.get(urlStr);
+                //codeText = recorder.getReplayCharSequence().toString();
+            	codeText = (String) resLocation.get(urlStr);
             }
             element.setText(codeText);
             element.removeAttribute("src");

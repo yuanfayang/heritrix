@@ -54,7 +54,7 @@
 	<classpathentry kind="var" path="M2_REPO/commons-el/commons-el/1.0/commons-el-1.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.4/servlet-api-2.4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/javax/servlet/jsp-api/2.0/jsp-api-2.0.jar"/>
-	<classpathentry kind="lib" path="/cobra/lib/cobra.jar" sourcepath="/cobra/src/"/>
-	<classpathentry kind="lib" path="/cobra/lib/js.jar"/>
+	<classpathentry kind="var" path="M2_REPO/rhino/js/1.6R5/js-1.6R5.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/lobobrowser/cobra/0.98.2/cobra-0.98.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

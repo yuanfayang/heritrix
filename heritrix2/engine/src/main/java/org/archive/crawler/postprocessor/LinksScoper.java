@@ -25,6 +25,8 @@
  */
 package org.archive.crawler.postprocessor;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -122,8 +124,8 @@ public class LinksScoper extends Scoper implements PostProcessor {
         
         // Don't extract links of error pages.
         // Modified by Ping Wang 08/01/2008
-        if ((curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) 
-        		&& curi.getFetchStatus() != S_SPECIAL_URI_PROCESS_SUCCESS) {
+        if ((curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) && 
+        		!curi.getUURI().getScheme().equalsIgnoreCase("x-jseval")){
             curi.getOutLinks().clear();
             return false;
         }
@@ -144,6 +146,8 @@ public class LinksScoper extends Scoper implements PostProcessor {
                 SEED_REDIRECTS_NEW_SEEDS); 
         int preferenceDepthHops = curi.get(this, PREFERENCE_DEPTH_HOPS); 
         
+        // Modified by Ping Wang 08/03/2008
+        Collection<CrawlURI> outScopeURIs = new HashSet<CrawlURI>();
         for (Link wref: curi.getOutLinks()) try {
             int directive = getSchedulingFor(curi, wref, preferenceDepthHops);
             CrawlURI caURI = curi.createCrawlURI(curi.getBaseURI(), 
@@ -151,11 +155,17 @@ public class LinksScoper extends Scoper implements PostProcessor {
                     considerAsSeed(curi, wref, redirectsNewSeeds));
             if (isInScope(caURI)) {
                 curi.getOutCandidates().add(caURI);
+            } else {
+            	outScopeURIs.add(caURI);
             }
         } catch (URIException e) {
             loggerModule.logUriError(e, curi.getUURI(), 
                     wref.getDestination().toString());
         }
+        if (outScopeURIs.size() > 0) {
+        	curi.getData().put("out-of-scope-uris", outScopeURIs);
+        }
+        // End
         curi.getOutLinks().clear();
         
 //        Collection<CrawlURI> inScopeLinks = new HashSet<CrawlURI>();
