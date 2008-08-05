@@ -156,7 +156,7 @@ implements WARCConstants {
      * Uncompressed WARC file reader.
      * @author stack
      */
-    private class UncompressedWARCReader extends WARCReader {
+    public class UncompressedWARCReader extends WARCReader {
         /**
          * Constructor.
          * @param f Uncompressed arcfile to read.
@@ -200,7 +200,7 @@ implements WARCConstants {
      * 
      * @author stack
      */
-    private class CompressedWARCReader extends WARCReader {
+    public class CompressedWARCReader extends WARCReader {
         /**
          * Constructor.
          * 
