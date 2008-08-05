@@ -1,6 +1,7 @@
 package org.archive.modules.fetchcache;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
@@ -44,6 +45,25 @@ public class FetchCache implements Closeable, Serializable {
         this.candidates = candidates;
     }
     
+    public synchronized void removeResource(String urikey) {
+        Collection<String> depList = getResourceEntry(urikey);
+
+        if (depList.size() > 0) {
+            for (String dependent : depList) {
+                Collection<String> unavailResList = 
+                    getDependentEntry(dependent);
+                unavailResList.remove(urikey);
+                
+                if (unavailResList.size() == 0) {
+                    Collection<String> availResList = getCandidateEntry(dependent);
+                    getWaitToScheduleURIs().put(dependent, availResList);
+                    dependents.remove(dependent);
+                }
+            }
+        }
+        resources.remove(urikey);
+    }
+    
     /**
      * Update map resources and dependents, when a new resource is available.
      * @param puri the ProcessorURI of this new resource.
@@ -55,7 +75,14 @@ public class FetchCache implements Closeable, Serializable {
             return;
         }
         
-        addAvailableEntry(urikey, puri.getRecorder());
+        //addAvailableEntry(urikey, puri.getRecorder());
+        try {
+        	addAvailableEntry(urikey, 
+        			puri.getRecorder().getReplayCharSequence().toString());
+        } catch (IOException e) {
+            logger.severe("Failed getting ReplayCharSequence: " + 
+            		e.getMessage());
+        }
         
         Collection<String> depList = getResourceEntry(urikey);
         
@@ -92,7 +119,14 @@ public class FetchCache implements Closeable, Serializable {
             return;
         }
         
-        addAvailableEntry(urikey, puri.getRecorder());
+        //addAvailableEntry(urikey, puri.getRecorder());
+        try {
+	        addAvailableEntry(urikey, 
+	        		puri.getRecorder().getReplayCharSequence().toString());
+        } catch (IOException e) {
+            logger.severe("Failed getting ReplayCharSequence: " + 
+            		e.getMessage());
+        }
         
         Collection<String> unavailResList = new HashSet<String>();
         Collection<String> availResList = new HashSet<String>();

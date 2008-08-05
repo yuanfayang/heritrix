@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.archive.crawler.datamodel.SchedulingConstants.*;
+import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -59,10 +60,6 @@ Initializable, PostProcessor{
             return false;
         }
         
-        if (puri.getFetchStatus() < 200 || puri.getFetchStatus() >= 400) {
-            return false;
-        }
-        
         if (! isProperURI(puri)) {
             return false;
         }
@@ -74,8 +71,38 @@ Initializable, PostProcessor{
         //fetchCache.test();
         
         CrawlURI curi = (CrawlURI) puri;
-        updateStatus(curi);
+        if (puri.getFetchStatus() < 200 || puri.getFetchStatus() >= 400) {
+            if (puri.getUURI().toString().toLowerCase().endsWith(".js")) {
+                handleFailedURI(puri);
+            }
+        } else {
+	        updateStatus(curi);
+        }
         scheduleAnalysisURI(curi);
+    }
+    
+    protected void handleFailedURI(ProcessorURI puri) {
+    	int fetchStatus = puri.getFetchStatus();
+    	
+    	switch (fetchStatus) {
+	    	case S_BLOCKED_BY_USER:
+	    	case S_OUT_OF_SCOPE:
+	    	case S_ROBOTS_PRECLUDED:
+	    	case S_ROBOTS_PREREQUISITE_FAILURE:
+	    	case S_UNFETCHABLE_URI:
+	    	case S_DOMAIN_PREREQUISITE_FAILURE:
+	    		updateFailedURIStatus(puri);
+	    		logger.warning(puri.getUURI().toString() + "is " + 
+	    		        CrawlURI.fetchStatusCodesToString(fetchStatus));
+	    		break;
+	    	default:
+	    		break;
+    	}
+    }
+    
+    protected void updateFailedURIStatus(ProcessorURI puri) {
+    	String uriStr = puri.getUURI().toString().toLowerCase();
+    	fetchCache.removeResource(uriStr);
     }
     
     protected void updateStatus(CrawlURI curi) {
@@ -88,7 +115,7 @@ Initializable, PostProcessor{
         }
     }
     
-    protected void updateHTMLStatus(CrawlURI curi) {
+    /*protected void updateHTMLStatus(CrawlURI curi) {
         
         Collection<String> resURIs = new HashSet<String>();
         for (Link link : curi.getOutLinks()) {
@@ -99,9 +126,9 @@ Initializable, PostProcessor{
         }
         
         fetchCache.updateDependentStatus(curi, resURIs);
-    }
+    }*/
     
-    /*protected void updateHTMLStatus(CrawlURI curi) {
+    protected void updateHTMLStatus(CrawlURI curi) {
         
         Collection<String> resURIs = new HashSet<String>();
         for (CrawlURI link : curi.getOutCandidates()) {
@@ -112,7 +139,34 @@ Initializable, PostProcessor{
         }
         
         fetchCache.updateDependentStatus(curi, resURIs);
-    }*/
+        
+        Collection<CrawlURI> outScopeURIs = 
+        	(Collection<CrawlURI>) curi.getData().get("out-of-scope-uris");
+        
+        if (outScopeURIs != null && outScopeURIs.size() > 0) {
+        	for (CrawlURI link : outScopeURIs) {
+        		String uri = link.getUURI().toString().toLowerCase();
+        		if (uri.endsWith(".js")) {
+        			logger.info("Required resource " + 
+        					uri + " is out of scope.");
+        		}
+        	}
+        }
+    }
+    
+    /*protected void updateHTMLStatus(CrawlURI curi) {
+    
+    Collection<String> resURIs = new HashSet<String>();
+    for (CrawlURI link : curi.getOutCandidates()) {
+        String uri = link.getUURI().toString().toLowerCase();
+        if (uri.endsWith(".js")) {
+            resURIs.add(uri);
+        }
+    }
+    
+    fetchCache.updateDependentStatus(curi, resURIs);
+	}*/
+
     
     protected void updateResourceStatus(CrawlURI curi) {
         fetchCache.updateResourceStatus(curi);

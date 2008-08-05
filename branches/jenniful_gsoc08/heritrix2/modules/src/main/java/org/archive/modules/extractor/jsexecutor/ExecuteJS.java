@@ -2,6 +2,7 @@ package org.archive.modules.extractor.jsexecutor;
 
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -110,7 +111,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
             for (Link wref: uri.getOutLinks()) {
                 System.out.println(wref.getDestination());
             }
-        	uri.setFetchStatus(FetchStatusCodes.S_SPECIAL_URI_PROCESS_SUCCESS);
+        	//uri.setFetchStatus(200);
         }
     }
 
@@ -142,14 +143,19 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
         try {
             String uriStr = uri.getUURI().getPath();
             Object docLocation = getContentLocation(this.fetchCache, uriStr);
-            Recorder recorder = (Recorder) docLocation;
-            ReplayInputStream replayIn = recorder.getReplayInputStream();
-            replayIn.skip(replayIn.getHeaderSize());
+            //Recorder recorder = (Recorder) docLocation;
+            //String chacacterEncoding = recorder.getCharacterEncoding();            
+            //ReplayInputStream replayIn = recorder.getReplayInputStream();
+            //replayIn.skip(replayIn.getHeaderSize());
+            
+            String content = (String) docLocation;
 
             UserAgentContext uContext = new SimpleUserAgentContext();
-            String chacacterEncoding = recorder.getCharacterEncoding();            
-            WritableLineReader wis = new WritableLineReader(
-                    new InputStreamReader(replayIn, chacacterEncoding));
+            //WritableLineReader wis = new WritableLineReader(
+            //        new InputStreamReader(replayIn, chacacterEncoding));
+            WritableLineReader wis = 
+            	new WritableLineReader(new StringReader(content));
+
             document = new HTMLDocumentImpl(uContext, null, wis, uriStr);
             
             String systemId = uriStr;
@@ -249,10 +255,10 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
                 }
 
                 // Simulate a click on an anchor tag
-                curDocument = getDocument(uri);
-                nodeList = getNodeList(HREF_REG_EXPR, curDocument);
+                nodeList = getNodeList(HREF_REG_EXPR, document);
                 if (nodeList != null && 
-                        (listSize = nodeList.getLength()) != 0) {                    
+                        (listSize = nodeList.getLength()) != 0) {
+                	curDocument = getDocument(uri);
                     for (int j = 0; j < listSize; ++ j) {
                         Element el = (Element)nodeList.item(j);
                         onMouseClick(el);
