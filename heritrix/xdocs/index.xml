@@ -3,7 +3,7 @@
 <document>
   <properties>
     <title>Home Page</title>
-    <author email="stack at archive dot org">St.Ack</author>
+    <author>Internet Archive Heritrix Team</author>
     <revision>$Id$</revision>
   </properties>
 
@@ -13,7 +13,7 @@
         	web-scale, archival-quality web crawler project.</p>
         	
         <p><em>Heritrix</em> (sometimes spelled <em>heretrix</em>, or 
-        misspelled or missaid as <em>heratrix</em>/<em>heritix</em>/
+        misspelled or mis-said as <em>heratrix</em>/<em>heritix</em>/
         <em>heretix</em>/<em>heratix</em>) is an 
         archaic word for <em>heiress</em> (woman who inherits). Since our 
         crawler seeks to collect and <i>preserve</i> the digital
@@ -43,6 +43,35 @@
         <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Releases 1.14.1 and 2.0.1 available 2008-08-07">
+    <p>Heritrix releases 1.14.1 and 2.0.1 are now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.1">
+1.14.1 Release Notes</a></p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.1+Release+Notes">
+1.14.1 Release Notes</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833">
+Download from Sourceforge files area</a></p>
+
+<p>These are both primarily bugfix releases, with a few additional small 
+features based on requests or contributions.</p>
+
+<p>The next major release will be 2.2 later this year, which is planned to 
+include updates to the Heritrix 2 configuration system and checkpointing 
+functionality, and tools easing transition from 1.14.1 to Heritrix 2.</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
+    
     <subsection name="Release 1.14.0 available 2008-04-27">
     <p>The official Heritrix 1.14.0 release is now available.</p>
 
