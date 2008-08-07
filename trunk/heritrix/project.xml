@@ -48,7 +48,7 @@
     be picked up and appended to the currentVersion.  Handy for continuous
     builds if the version.build.suffix holds time of build.
     -->
-  <currentVersion>1.15.1${version.build.suffix}</currentVersion>
+  <currentVersion>1.14.1</currentVersion>
   
   <!-- Details about the organization that 'owns' the project -->
   <organization>
@@ -203,6 +203,14 @@
         <name>Paul Jack</name>
         <id>paul_jack</id>
         <email>pjack at archive dot org</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
+         <timezone>-8</timezone>
+    </developer>
+    <developer>
+        <name>Noah Levitt</name>
+        <id>nlevitt</id>
+        <email>nlevitt at archive</email>
          <organization>Internet Archive</organization>
          <url>http://www.archive.org</url>
          <timezone>-8</timezone>
