@@ -4,12 +4,11 @@
 <parent>
   <groupId>org.archive</groupId>
   <artifactId>heritrix</artifactId>
-  <version>2.0.1</version>
+  <version>2.0.2-SNAPSHOT</version>
 </parent>
   <groupId>org.archive.heritrix</groupId>
   <artifactId>webui</artifactId>
   <packaging>war</packaging>
-  <version>2.0.1</version>
   <name>Heritrix: 'webui' subproject (crawler admin via web)</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -46,7 +45,7 @@
     <dependency>
       <groupId>org.archive.heritrix</groupId>
       <artifactId>engine</artifactId>
-      <version>2.0.1</version>
+      <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
