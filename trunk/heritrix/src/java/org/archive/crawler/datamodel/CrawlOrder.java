@@ -455,8 +455,8 @@ public class CrawlOrder extends ModuleType implements Serializable {
         String from = this.getFrom(null);
         if (!(userAgent.matches(ACCEPTABLE_USER_AGENT)
             && from.matches(ACCEPTABLE_FROM))) {
-            throw new FatalConfigurationException("unacceptable user-agent " +
-                    " or from (Reedit your order file).");
+            throw new FatalConfigurationException("unacceptable 'user-agent' " +
+                    " or 'from' (correct your configuration).");
         }
     }
 
