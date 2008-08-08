@@ -23,6 +23,7 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.commons.httpclient.URIException;
 //import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.fetchcache.FetchCache;
+import org.archive.modules.fetchcache.FetchCacheUtil;
 import org.archive.io.ReplayInputStream;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
@@ -134,15 +135,19 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
             (Collection<String>) uri.getData().get("js-required-resources");
 
         for (String resURIStr : resources) {
-            Object location = getContentLocation(this.fetchCache, resURIStr);
-            if (location != null) {            
+            //Object location = getContentLocation(this.fetchCache, resURIStr);
+            Object location = 
+                FetchCacheUtil.getContentLocation(this.fetchCache, resURIStr);
+            if (location != null) {
                 resourceLocation.put(resURIStr, location);
             }
         }
         
         try {
             String uriStr = uri.getUURI().getPath();
-            Object docLocation = getContentLocation(this.fetchCache, uriStr);
+            //Object docLocation = getContentLocation(this.fetchCache, uriStr);
+            Object docLocation = 
+                FetchCacheUtil.getContentLocation(this.fetchCache, uriStr);
             //Recorder recorder = (Recorder) docLocation;
             //String chacacterEncoding = recorder.getCharacterEncoding();            
             //ReplayInputStream replayIn = recorder.getReplayInputStream();
