@@ -112,7 +112,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
             for (Link wref: uri.getOutLinks()) {
                 System.out.println(wref.getDestination());
             }
-        	//uri.setFetchStatus(200);
+        	//uri.setFetchStatus(251);
         }
     }
 

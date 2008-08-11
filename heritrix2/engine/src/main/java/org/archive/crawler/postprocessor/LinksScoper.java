@@ -124,6 +124,7 @@ public class LinksScoper extends Scoper implements PostProcessor {
         
         // Don't extract links of error pages.
         // Modified by Ping Wang 08/01/2008
+        //if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
         if ((curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) && 
         		!curi.getUURI().getScheme().equalsIgnoreCase("x-jseval")){
             curi.getOutLinks().clear();
