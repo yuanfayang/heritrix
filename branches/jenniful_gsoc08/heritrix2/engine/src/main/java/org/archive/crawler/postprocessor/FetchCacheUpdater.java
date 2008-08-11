@@ -64,6 +64,10 @@ Initializable, PostProcessor{
             return false;
         }
         
+        if (puri.forceFetch()) {
+            return false;
+        }
+        
         return true;
     }
     
