@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.postprocessor.FetchCacheUpdater;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.HTMLLinkContext;
@@ -68,7 +69,9 @@ public class DetectCloaking extends Processor
     final protected boolean shouldProcess(ProcessorURI uri) {
         String scheme = uri.getUURI().getScheme(); 
         String uriStr = uri.getUURI().toString();
-        if (uriStr.endsWith(".html") || uriStr.endsWith("htm")) {
+        //if (uriStr.endsWith(".html") || uriStr.endsWith("htm") 
+        		//|| uriStr.endsWith(".php")) {
+        if (FetchCacheUpdater.isHTMLDocument(uri)) {
             if (uri.getContentSize() > 0) {
                 return true;
             }

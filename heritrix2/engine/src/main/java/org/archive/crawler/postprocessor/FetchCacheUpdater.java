@@ -16,6 +16,7 @@ import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.Link;
+import org.archive.modules.extractor.LinkContext;
 import org.archive.modules.fetchcache.FetchCache;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -76,7 +77,8 @@ Initializable, PostProcessor{
         
         CrawlURI curi = (CrawlURI) puri;
         if (puri.getFetchStatus() < 200 || puri.getFetchStatus() >= 400) {
-            if (puri.getUURI().toString().toLowerCase().endsWith(".js")) {
+            //if (puri.getUURI().toString().toLowerCase().endsWith(".js")) {
+        	if (isScriptDocument(puri)) {
                 handleFailedURI(puri);
             }
         } else {
@@ -112,9 +114,16 @@ Initializable, PostProcessor{
     protected void updateStatus(CrawlURI curi) {
         String uriStr = curi.getUURI().toString().toLowerCase();
         
-        if (uriStr.endsWith(".html") || uriStr.endsWith(".htm")) {
+/*        if (uriStr.endsWith(".html") || uriStr.endsWith(".htm") 
+        		|| uriStr.endsWith(".php")) {
             updateHTMLStatus(curi);
         } else if (uriStr.endsWith(".js")) {
+            updateResourceStatus(curi);
+        }*/
+        
+        if (isHTMLDocument(curi)) {
+            updateHTMLStatus(curi);
+        } else if (isScriptDocument(curi)) {
             updateResourceStatus(curi);
         }
     }
@@ -231,13 +240,46 @@ Initializable, PostProcessor{
     
     
     protected boolean isProperURI(ProcessorURI puri) {
-        String uriStr = puri.getUURI().toString().toLowerCase();
-        
-        if (uriStr.endsWith(".html") || uriStr.endsWith(".htm") 
-                || uriStr.endsWith(".js")) {
+    	return (isHTMLDocument(puri) || isScriptDocument(puri));
+    }
+    
+    public static boolean isHTMLDocument(ProcessorURI puri) {
+        String mime = puri.getContentType().toLowerCase();
+        if (mime.startsWith("text/html")) {
             return true;
         }
-        return false;
+        if (mime.startsWith("application/xhtml")) {
+            return true;
+        }
+        
+    	return false;
+    }
+    
+    public static boolean isScriptDocument(ProcessorURI puri) {
+        String contentType = puri.getContentType();
+        // If the content-type indicates js, we should process it.
+        if (contentType.indexOf("javascript") >= 0) {
+            return true;
+        }
+        if (contentType.indexOf("jscript") >= 0) {
+            return true;
+        }
+        if (contentType.indexOf("ecmascript") >= 0) {
+            return true;
+        }
+        
+        // If the filename indicates js, we should process it.
+        if (puri.toString().toLowerCase().endsWith(".js")) {
+            return true;
+        }
+        
+        // If the viaContext indicates a script, we should process it.
+        LinkContext context = puri.getViaContext();
+        if (context == null) {
+            return false;
+        }
+        String s = context.toString().toLowerCase();
+        return s.startsWith("script");
     }
 
     static {
