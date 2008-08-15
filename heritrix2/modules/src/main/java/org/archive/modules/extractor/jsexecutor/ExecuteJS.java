@@ -1,13 +1,11 @@
 package org.archive.modules.extractor.jsexecutor;
 
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.xml.transform.OutputKeys;
@@ -24,7 +22,6 @@ import org.apache.commons.httpclient.URIException;
 //import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.fetchcache.FetchCache;
 import org.archive.modules.fetchcache.FetchCacheUtil;
-import org.archive.io.ReplayInputStream;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.ExtractorHTML;
@@ -32,7 +29,6 @@ import org.archive.modules.extractor.HTMLLinkContext;
 import org.archive.modules.extractor.Hop;
 import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.UriErrorLoggerModule;
-import org.archive.modules.fetcher.FetchStatusCodes;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.settings.Finishable;
@@ -41,7 +37,6 @@ import org.archive.state.Initializable;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
-import org.archive.util.Recorder;
 import org.lobobrowser.html.UserAgentContext;
 import org.lobobrowser.html.domimpl.HTMLAbstractUIElement;
 import org.lobobrowser.html.domimpl.HTMLDocumentImpl;
@@ -83,7 +78,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
     }
 
     final protected boolean shouldProcess(ProcessorURI uri) {
-        String scheme = uri.getUURI().getScheme(); 
+        String scheme = uri.getUURI().getScheme();
         if (! scheme.equals("x-jseval")) {
             return false;
         }
@@ -91,28 +86,27 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
     }
     
     protected void innerProcess(ProcessorURI uri) {
-        System.out.println(uri.getUURI().toString());
-        
-        /*Collection<String> resources = 
-            (Collection<String>) uri.getData().get("js-required-resources");
-        for (String resURIStr : resources) {
-            System.out.println(resURIStr);
-        }*/
+        System.out.println("ExecuteJS: " + uri.getUURI().toString());
         
         HashSet<String> handledUris = new HashSet<String>();
+        HashMap<String, String> contents = null;
         
-        Document document = parse(uri);
+        contents = getContent(uri, fetchCache);
+        
+        Document document = parse(uri, contents);
         if (document != null) {
             discoverNewLinks(uri, document, handledUris);
             
             if (shouldSimHTMLEvents()) {
-                handleHTMLEvents1(uri, document, handledUris);
+                handleHTMLEvents1(uri, document, handledUris, contents);
             }
             
             for (Link wref: uri.getOutLinks()) {
                 System.out.println(wref.getDestination());
             }
         	//uri.setFetchStatus(251);
+            uri.getData().put("ExecuteJS", "done");
+            logger.info("ExecuteJS: " + uri.getUURI().toString());
         }
     }
 
@@ -127,51 +121,32 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
      * @param uri
      * @return
      */
-    protected Document parse(ProcessorURI uri) {
-        HTMLDocumentImpl document = null;
-        Map<String, Object> resourceLocation = new Hashtable<String, Object>();
+    public static Document parse(ProcessorURI uri, 
+            HashMap<String, String> contents) {
         
-        Collection<String> resources = 
-            (Collection<String>) uri.getData().get("js-required-resources");
-
-        for (String resURIStr : resources) {
-            //Object location = getContentLocation(this.fetchCache, resURIStr);
-            Object location = 
-                FetchCacheUtil.getContentLocation(this.fetchCache, resURIStr);
-            if (location != null) {
-                resourceLocation.put(resURIStr, location);
-            }
-        }
+        HTMLDocumentImpl document = null;
+        String content = null;
         
         try {
             String uriStr = uri.getUURI().getPath();
-            //Object docLocation = getContentLocation(this.fetchCache, uriStr);
-            Object docLocation = 
-                FetchCacheUtil.getContentLocation(this.fetchCache, uriStr);
-            //Recorder recorder = (Recorder) docLocation;
-            //String chacacterEncoding = recorder.getCharacterEncoding();            
-            //ReplayInputStream replayIn = recorder.getReplayInputStream();
-            //replayIn.skip(replayIn.getHeaderSize());
             
-            String content = (String) docLocation;
+            content = contents.get(uriStr);
 
             UserAgentContext uContext = new SimpleUserAgentContext();
-            //WritableLineReader wis = new WritableLineReader(
-            //        new InputStreamReader(replayIn, chacacterEncoding));
             WritableLineReader wis = 
-            	new WritableLineReader(new StringReader(content));
+                new WritableLineReader(new StringReader(content));
 
             document = new HTMLDocumentImpl(uContext, null, wis, uriStr);
             
             String systemId = uriStr;
             String publicId = systemId;
             HTMLParser parser = new HTMLParser(uContext,document, null, 
-                    publicId, systemId,resourceLocation);
+                    publicId, systemId, contents);
             
             parser.parse(wis);
 
             // For testing
-            saveHtml(document, "1.html");
+            //saveHtml(document, "1.html");
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -180,8 +155,36 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
         return document;
     }
     
-    protected Object getContentLocation(FetchCache fetchCache, String uriStr) {
-        return fetchCache.getContentLocation(uriStr);
+    public static HashMap<String, String> getContent(ProcessorURI uri, 
+            FetchCache fetchCache) {
+        HashMap<String, String> contents = new HashMap<String, String>();
+        String content = null;
+        
+        // Get contents of resources
+        Collection<String> resources = 
+            (Collection<String>) uri.getData().get("js-required-resources");
+
+        for (String resURIStr : resources) {
+            content = (String) FetchCacheUtil.getContentLocation(fetchCache, 
+                    resURIStr);
+            if (content != null) {
+                contents.put(resURIStr, content);
+            }
+        }
+
+        // Get contents of HTML document to be parsed
+        try {
+            String uriStr = uri.getUURI().getPath();
+            content = 
+                (String) FetchCacheUtil.getContentLocation(fetchCache, uriStr);
+            if (content != null) {
+                contents.put(uriStr, content);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return contents;
     }
     
     /**
@@ -220,10 +223,10 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
         }
     }
 
-    private static String HREF_REG_EXPR = "html//a";
-    private static String ONCLICK_REG_EXPR = "//*[@" + "onclick" + "]";
-    private static String ONMOUSEOVER_REG_EXPR = "//*[@" + "onmouseover" + "]";
-    private static String ONMOUSEOUT_REG_EXPR = "//*[@" + "onmouseout" + "]";
+    final public static String HREF_REG_EXPR = "html//a";
+    final public static String ONCLICK_REG_EXPR = "//*[@" + "onclick" + "]";
+    final public static String ONMOUSEOVER_REG_EXPR = "//*[@" + "onmouseover" + "]";
+    final public static String ONMOUSEOUT_REG_EXPR = "//*[@" + "onmouseout" + "]";
 
     /**
      * Simulate each HTML event from a fresh start, 
@@ -233,7 +236,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
      * @param handledUris
      */
     protected void handleHTMLEvents1(ProcessorURI uri, Document document, 
-            HashSet<String> handledUris) {
+            HashSet<String> handledUris, HashMap<String, String> contents) {
         ArrayList<String> eventsToSim = null;
         if ((eventsToSim = getEventsToSim()) == null)
             return;
@@ -250,7 +253,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
                 if (nodeList != null && 
                         (listSize = nodeList.getLength()) != 0) {
                     for (int j = 0; j < listSize; ++ j) {
-                        curDocument = getDocument(uri);
+                        curDocument = getDocument(uri, contents);
                         nodeList = 
                             getNodeList(ONCLICK_REG_EXPR, curDocument);
                         Element el = (Element)nodeList.item(j);
@@ -263,7 +266,8 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
                 nodeList = getNodeList(HREF_REG_EXPR, document);
                 if (nodeList != null && 
                         (listSize = nodeList.getLength()) != 0) {
-                	curDocument = getDocument(uri);
+                	curDocument = getDocument(uri, contents);
+                	nodeList = getNodeList(HREF_REG_EXPR, curDocument);
                     for (int j = 0; j < listSize; ++ j) {
                         Element el = (Element)nodeList.item(j);
                         onMouseClick(el);
@@ -277,7 +281,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
                 if (nodeList != null && 
                         (listSize = nodeList.getLength()) != 0) {
                     for (int j = 0; j < listSize; ++ j) {
-                        curDocument = getDocument(uri);
+                        curDocument = getDocument(uri, contents);
                         nodeList = 
                             getNodeList(ONMOUSEOVER_REG_EXPR, curDocument);
                         Element el = (Element)nodeList.item(j);
@@ -292,7 +296,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
                 if (nodeList != null && 
                         (listSize = nodeList.getLength()) != 0) {
                     for (int j = 0; j < listSize; ++ j) {
-                        curDocument = getDocument(uri);
+                        curDocument = getDocument(uri, contents);
                         nodeList = 
                             getNodeList(ONMOUSEOUT_REG_EXPR, curDocument);
                         Element el = (Element)nodeList.item(j);
@@ -304,11 +308,11 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
         }
     }
     
-    Document getDocument(ProcessorURI uri) {
-        return parse(uri);
+    Document getDocument(ProcessorURI uri, HashMap<String, String> contents) {
+        return parse(uri, contents);
     }
     
-    private void onMouseClick(Element el) {
+    public static void onMouseClick(Element el) {
         if (el instanceof HTMLAbstractUIElement) {
             HTMLAbstractUIElement uiElement = 
                 (HTMLAbstractUIElement) el;
@@ -317,7 +321,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
         }
     }
     
-    public void onMouseOver(Element el) {
+    public static void onMouseOver(Element el) {
         if (el instanceof HTMLAbstractUIElement) {
             HTMLAbstractUIElement uiElement = 
                 (HTMLAbstractUIElement) el;
@@ -326,7 +330,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
         }
     }
 
-    public void onMouseOut(Element el) {
+    public static void onMouseOut(Element el) {
         if (el instanceof HTMLAbstractUIElement) {
             HTMLAbstractUIElement uiElement = 
                 (HTMLAbstractUIElement) el;
@@ -368,7 +372,7 @@ public class ExecuteJS extends Processor implements Initializable, Finishable{
      * @param document
      * @return uri of JS redirection, return null if no redirection
      */
-    protected String getJSRedirection(HTMLDocumentImpl document) {
+    public static String getJSRedirection(HTMLDocumentImpl document) {
         
         Window window = (Window) document.getDefaultView();
         String locationHref = window.getLocation().getLocationHref();

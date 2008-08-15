@@ -5,7 +5,7 @@ import static org.archive.crawler.datamodel.SchedulingConstants.HIGH;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -69,15 +69,15 @@ public class DetectCloaking extends Processor
     final protected boolean shouldProcess(ProcessorURI uri) {
         String scheme = uri.getUURI().getScheme(); 
         String uriStr = uri.getUURI().toString();
-        //if (uriStr.endsWith(".html") || uriStr.endsWith("htm") 
-        		//|| uriStr.endsWith(".php")) {
         if (FetchCacheUpdater.isHTMLDocument(uri)) {
-            if (uri.getContentSize() > 0) {
+            if (uri.getFetchStatus() >= 200 && uri.getFetchStatus() < 400) {
+                //System.out.println("Cloaking detection: " + uriStr);
                 return true;
             }
         }
         
         if (scheme.equals("x-jseval")) {
+            //System.out.println("Cloaking detection: " + uriStr);
             return true;
         }
         
@@ -87,7 +87,7 @@ public class DetectCloaking extends Processor
     protected void innerProcess(ProcessorURI uri) {
         try {
             updatePrerequisitesCache(uri);
-            boolean hasCloaking = cloakingDetection(uri);
+            cloakingDetection(uri);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -110,8 +110,8 @@ public class DetectCloaking extends Processor
                 cloakingCache.addPrerequisite(uriStr, 
                         "wreferrer", content);
                 if (! prerequisites.containsKey("woreferrer")) {
-                    HTMLLinkContext hc = new HTMLLinkContext(uriStr);
-                    caURI = createDuplicateURI(uri, null);
+                    HTMLLinkContext hc = null;
+                    caURI = createDuplicateURI(uri, hc);
                     ((CrawlURI) uri).getOutCandidates().add(caURI);
                 }
             } else {
@@ -162,24 +162,45 @@ public class DetectCloaking extends Processor
         Collection<String> resources = 
             (Collection<String>) prerequisites.get("resources");
         
+        HashMap<String, String> contents = new HashMap<String, String>();
+        String content;
+        
+        for (String resURIStr : resources) {
+            content = 
+                (String) FetchCacheUtil.getContentLocation(fetchCache, 
+                        resURIStr);
+            
+            if (content != null) {
+                contents.put(resURIStr, content);
+            }
+        }
+        
+        content = (String) FetchCacheUtil.getContentLocation(fetchCache, key);
+        if (content != null) {
+            contents.put(key, content);
+        }
+
+        
         String referrer = "";
-        Document document = parse(key, referrer, resources);
+        Document document = parse(key, referrer, contents);
         String woReferrer = DOMUtil.transfomToString(document);
         
         referrer = (String) prerequisites.get("referrer");
-        document = parse(key, referrer, resources);
+        document = parse(key, referrer, contents);
         String wReferrer = DOMUtil.transfomToString(document);
-        System.out.println(woReferrer);
-        System.out.println(wReferrer);
+        //System.out.println(woReferrer);
+        //System.out.println(wReferrer);
         
         if (! wReferrer.equals(woReferrer)) {
             clientCloaking = true;
+            logger.warning("Client side cloaking: " + key);
         }
         
         woReferrer = (String) prerequisites.get("woreferrer");
         wReferrer = (String) prerequisites.get("wreferrer");
         if (! wReferrer.equals(woReferrer)) {
             serverCloaking = true;
+            logger.warning("Server side cloaking: " + key);
         }
         
         cloakingCache.removeEntry(key);
@@ -188,24 +209,13 @@ public class DetectCloaking extends Processor
     }
     
     protected Document parse(String uristr, String referrer, 
-            Collection<String> resources) {
+            HashMap<String, String> contents) {
         HTMLDocumentImpl document = null;
-        Map<String, Object> resourceLocation = new Hashtable<String, Object>();
         String uriStr = uristr;
-        
-        for (String resURIStr : resources) {
-            Object location = 
-                FetchCacheUtil.getContentLocation(this.fetchCache, resURIStr);
-            if (location != null) {
-                resourceLocation.put(resURIStr, location);
-            }
-        }
-        
+
+        String content = null;
         try {
-            Object docLocation = 
-                FetchCacheUtil.getContentLocation(this.fetchCache, uriStr);
-            
-            String content = (String) docLocation;
+            content = contents.get(uriStr);
 
             UserAgentContext uContext = new SimpleUserAgentContext();
             WritableLineReader wis = 
@@ -216,7 +226,7 @@ public class DetectCloaking extends Processor
             String systemId = uriStr;
             String publicId = systemId;
             HTMLParser parser = new HTMLParser(uContext,document, null, 
-                    publicId, systemId,resourceLocation);
+                    publicId, systemId, contents);
             
             if (! referrer.equals("")) {
                 Context ctx = 
