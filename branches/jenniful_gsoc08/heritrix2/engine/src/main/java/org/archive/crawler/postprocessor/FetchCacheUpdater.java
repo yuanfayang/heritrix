@@ -11,11 +11,10 @@ import static org.archive.modules.fetcher.FetchStatusCodes.*;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlerLoggerModule;
-import org.archive.crawler.framework.Frontier;
+//import org.archive.crawler.framework.Frontier;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
 import org.archive.modules.fetchcache.FetchCache;
 import org.archive.net.UURI;
@@ -34,8 +33,8 @@ Initializable, PostProcessor{
         Logger.getLogger(FetchCacheUpdater.class.getName());
 
 
-    @Immutable
-    final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class);
+    //@Immutable
+    //final public static Key<Frontier> FRONTIER = Key.makeAuto(Frontier.class);
 
     @Immutable
     final public static Key<FetchCache> FETCH_CACHE = 
@@ -45,14 +44,14 @@ Initializable, PostProcessor{
     final public static Key<CrawlerLoggerModule> LOGGER_MODULE = 
         Key.makeAuto(CrawlerLoggerModule.class);
     
-    private Frontier frontier;
+    //private Frontier frontier;
     private FetchCache fetchCache;
     
     protected CrawlerLoggerModule loggerModule;
 
     public void initialTasks(StateProvider global) {
         this.fetchCache = global.get(this, FETCH_CACHE);
-        this.frontier = global.get(this, FRONTIER);
+        //this.frontier = global.get(this, FRONTIER);
         this.loggerModule = global.get(this, LOGGER_MODULE);
     }
     

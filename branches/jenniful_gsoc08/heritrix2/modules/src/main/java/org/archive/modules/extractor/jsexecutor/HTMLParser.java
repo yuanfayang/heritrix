@@ -440,16 +440,16 @@ public class HTMLParser {
     }
 
     // Added by Ping Wang 07/18/2008
-    private Map<String, Object> resLocation = null;
+    private HashMap<String, String> resLocation = null;
     public HTMLParser(UserAgentContext ucontext, Document document, 
-            Map<String, Object> reslocation) {
+            HashMap<String, String> reslocation) {
         this(ucontext, document);
         this.resLocation = reslocation;
     }
 
     public HTMLParser(UserAgentContext ucontext, Document document, 
             ErrorHandler errorHandler, String publicId, String systemId, 
-            Map<String, Object> reslocation) {
+            HashMap<String, String> reslocation) {
         this(ucontext, document, errorHandler, publicId, systemId);
         this.resLocation = reslocation;
     }
@@ -1355,7 +1355,7 @@ public class HTMLParser {
             if (resLocation.containsKey(urlStr)) {
                 //Recorder recorder = (Recorder) resLocation.get(urlStr);
                 //codeText = recorder.getReplayCharSequence().toString();
-            	codeText = (String) resLocation.get(urlStr);
+            	codeText = resLocation.get(urlStr);
             }
             element.setText(codeText);
             element.removeAttribute("src");
