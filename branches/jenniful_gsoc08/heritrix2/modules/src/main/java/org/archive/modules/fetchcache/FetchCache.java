@@ -165,6 +165,14 @@ public class FetchCache implements Closeable, Serializable {
         return availables.get(urikey);
     }
     
+    public synchronized boolean setContentLocation(String urikey, Object loc) {
+        if (loc != null && availables.containsKey(urikey)) {
+            availables.put(urikey, loc);
+            return true;
+        }
+        return false;
+    }
+    
     /**
      * Get uris of HTML documents which depend on the resource.
      * @param urikey uri of the resource.
