@@ -19,8 +19,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * Handle HTML events
- * @author ping
+ * Handle HTML events.
+ * @author Ping Wang
  *
  */
 
@@ -83,7 +83,6 @@ public class HTMLEventHandler {
                         (HTMLAbstractUIElement) el;
                     HtmlController.getInstance().onMouseOver(uiElement, 
                             null, 0, 0, null);
-                    //transDOM2HTML(Integer.toString(++count) + ".html");
                 }
             }
         }
@@ -104,7 +103,6 @@ public class HTMLEventHandler {
                         (HTMLAbstractUIElement) el;
                     HtmlController.getInstance().onMouseOut(uiElement, 
                             null, 0, 0, null);
-                    //transDOM2HTML(Integer.toString(++count) + ".html");
                 }
             }
         }
@@ -129,36 +127,5 @@ public class HTMLEventHandler {
             e.printStackTrace();
         }        
         return nodeList;
-    }
-
-    /**
-     * Transfer a DOM to an HTML document. This is for debugging and testing
-     * @param fileName the name of output HTML document
-     * @return true if success, otherwise return false
-     */
-    public boolean transDOM2HTML(String fileName) {
-        if (htmlDocument != null) {
-            try {          
-                Transformer transformer = 
-                    TransformerFactory.newInstance().newTransformer();
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                transformer.setOutputProperty(OutputKeys.METHOD, "html");
-                //transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, 
-                        //"-//W3C//DTD HTML 4.0 Transitional//EN");
-                
-                DOMSource dSource = new DOMSource(htmlDocument);
-                FileOutputStream fos = new FileOutputStream(fileName);
-                Result out = new StreamResult(fos);
-                transformer.transform(dSource, out);
-                fos.close();
-                
-            } catch(Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-        } else
-            return false;
-        
-        return true;
     }
 }

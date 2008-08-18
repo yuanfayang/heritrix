@@ -13,6 +13,11 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 
+/**
+ * This class provides some methods to transform a DOM to other forms.
+ * @author Ping Wang
+ *
+ */
 public class DOMUtil {
     private static Logger logger =
         Logger.getLogger(DOMUtil.class.getName());
@@ -20,22 +25,30 @@ public class DOMUtil {
     private DOMUtil() {
     }
 
+    /**
+     * Transform a DOM to an HTML document and save it.
+     * @param document DOM
+     * @param name the name of the file you want to save the HTML document as.
+     */
     public static void saveHtml(Document document, String name) {
         try {
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty(OutputKeys.METHOD, "html");
-            //transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "-//W3C//DTD HTML 4.0 Transitional//EN");
             DOMSource dSource = new DOMSource(document);
             FileOutputStream fos = new FileOutputStream(name);
             Result out = new StreamResult(fos);
             transformer.transform(dSource, out);
-            //System.out.println(fos.getFD().toString());
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
     
+    /**
+     * Transform a DOM to a string.
+     * @param document DOM
+     * @return the resulting string
+     */
     public static String transfomToString(Document document) {
         StringWriter output = new StringWriter();
         try {
@@ -49,5 +62,4 @@ public class DOMUtil {
 
         return output.toString();
     }
-
 }

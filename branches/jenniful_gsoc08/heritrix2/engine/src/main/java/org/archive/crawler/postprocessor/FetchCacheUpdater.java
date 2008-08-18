@@ -25,8 +25,14 @@ import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
-public class FetchCacheUpdater extends Processor implements 
-Initializable, PostProcessor{
+/**
+ * Update fetch cache after a document has been successfully fetched.
+ * @author Ping Wang
+ *
+ */
+public class FetchCacheUpdater extends Processor
+implements Initializable, PostProcessor{
+	
     private static final long serialVersionUID = 1L;
 
     private static final Logger logger =
@@ -72,11 +78,9 @@ Initializable, PostProcessor{
     }
     
     protected void innerProcess(ProcessorURI puri) {
-        //fetchCache.test();
         
         CrawlURI curi = (CrawlURI) puri;
         if (puri.getFetchStatus() < 200 || puri.getFetchStatus() >= 400) {
-            //if (puri.getUURI().toString().toLowerCase().endsWith(".js")) {
         	if (isScriptDocument(puri)) {
                 handleFailedURI(puri);
             }
@@ -85,7 +89,12 @@ Initializable, PostProcessor{
         }
         scheduleAnalysisURI(curi);
     }
-    
+
+    /**
+     * If the fetch for a resource failed, then remove its information 
+     * in fetch cache.  
+     * @param puri
+     */
     protected void handleFailedURI(ProcessorURI puri) {
     	int fetchStatus = puri.getFetchStatus();
     	
@@ -97,6 +106,8 @@ Initializable, PostProcessor{
 	    	case S_UNFETCHABLE_URI:
 	    	case S_DOMAIN_PREREQUISITE_FAILURE:
 	    		updateFailedURIStatus(puri);
+	        	String uriStr = puri.getUURI().toString().toLowerCase();
+	        	fetchCache.removeResource(uriStr);
 	    		logger.warning(puri.getUURI().toString() + "is " + 
 	    		        CrawlURI.fetchStatusCodesToString(fetchStatus));
 	    		break;
@@ -113,13 +124,6 @@ Initializable, PostProcessor{
     protected void updateStatus(CrawlURI curi) {
         String uriStr = curi.getUURI().toString().toLowerCase();
         
-/*        if (uriStr.endsWith(".html") || uriStr.endsWith(".htm") 
-        		|| uriStr.endsWith(".php")) {
-            updateHTMLStatus(curi);
-        } else if (uriStr.endsWith(".js")) {
-            updateResourceStatus(curi);
-        }*/
-        
         if (isHTMLDocument(curi)) {
             updateHTMLStatus(curi);
         } else if (isScriptDocument(curi)) {
@@ -127,19 +131,10 @@ Initializable, PostProcessor{
         }
     }
     
-    /*protected void updateHTMLStatus(CrawlURI curi) {
-        
-        Collection<String> resURIs = new HashSet<String>();
-        for (Link link : curi.getOutLinks()) {
-            String uri = link.getDestination().toString().toLowerCase();
-            if (uri.endsWith(".js")) {
-                resURIs.add(uri);
-            }
-        }
-        
-        fetchCache.updateDependentStatus(curi, resURIs);
-    }*/
-    
+    /**
+     * Update fetch cache when an HTML document is available.
+     * @param curi
+     */
     protected void updateHTMLStatus(CrawlURI curi) {
         
         Collection<String> resURIs = new HashSet<String>();
@@ -166,24 +161,20 @@ Initializable, PostProcessor{
         }
     }
     
-    /*protected void updateHTMLStatus(CrawlURI curi) {
-    
-    Collection<String> resURIs = new HashSet<String>();
-    for (CrawlURI link : curi.getOutCandidates()) {
-        String uri = link.getUURI().toString().toLowerCase();
-        if (uri.endsWith(".js")) {
-            resURIs.add(uri);
-        }
-    }
-    
-    fetchCache.updateDependentStatus(curi, resURIs);
-	}*/
-
-    
+    /**
+     * Update fetch cache when a resource is available.
+     * @param curi
+     */
     protected void updateResourceStatus(CrawlURI curi) {
         fetchCache.updateResourceStatus(curi);
     }
     
+    /**
+     * If there are HTML documents whose resources are all available, then
+     * create special CrawlURI (scheme: x-jseval), and add them to
+     * outCandidates - waiting to be scheduled.
+     * @param curi
+     */
     protected void scheduleAnalysisURI(CrawlURI curi) {
         Map<String, Collection<String>> uris = fetchCache.getNClearReadyURIs();
         
@@ -198,28 +189,17 @@ Initializable, PostProcessor{
             caURI.setForceFetch(true);
             curi.getOutCandidates().add(caURI);
             //frontier.schedule(caURI);
-            System.out.print(urikey + ": ");
-            for (String tmpStr : resList) {
-                System.out.print(tmpStr + " ");
-            }
-            System.out.println();
         }
     }
     
-/*    protected AnalysisURI createAnalysisURI(String uristr, 
-            Collection<String> resources) {
-        AnalysisURI aURI = null;
-        UURI uuri = null;
-        try {
-            uuri = UURIFactory.getInstance(uristr);
-            aURI = new AnalysisURI(uuri);
-            aURI.setResourceUris(resources);
-        } catch (URIException e) {
-            loggerModule.logUriError(e, uuri, uristr);
-        }
-        return aURI;
-    }*/
-    
+    /**
+     * Create a special CrawlURI instance, whose scheme is "x-jseval".
+     * @param curi current normal uri (HTML document).
+     * @param uristr the string representation of current uri.
+     * @param resources (script document) the list of uris 
+     * (string representation) on which the HTML document depends.
+     * @return 
+     */
     protected CrawlURI createAnalysisURI(CrawlURI curi, String uristr, 
             Collection<String> resources) {
         CrawlURI caURI = null;
@@ -237,11 +217,21 @@ Initializable, PostProcessor{
         return caURI;
     }
     
-    
+    /**
+     * This processor only handle HTML document and script document 
+     * (for JavaScript execution purpose).
+     * @param puri
+     * @return
+     */
     protected boolean isProperURI(ProcessorURI puri) {
     	return (isHTMLDocument(puri) || isScriptDocument(puri));
     }
     
+    /**
+     * Check if a document is an HTML document.
+     * @param puri
+     * @return
+     */
     public static boolean isHTMLDocument(ProcessorURI puri) {
         String mime = puri.getContentType().toLowerCase();
         if (mime.startsWith("text/html")) {
@@ -254,6 +244,11 @@ Initializable, PostProcessor{
     	return false;
     }
     
+    /**
+     * Check if a document is a script document
+     * @param puri
+     * @return
+     */
     public static boolean isScriptDocument(ProcessorURI puri) {
         String contentType = puri.getContentType();
         // If the content-type indicates js, we should process it.
