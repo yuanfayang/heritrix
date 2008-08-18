@@ -46,6 +46,7 @@ root:controller:processors:ExtractorHTML=object, org.archive.modules.extractor.E
 root:controller:processors:ExtractorCSS=object, org.archive.modules.extractor.ExtractorCSS
 root:controller:processors:ExtractorJS=object, org.archive.modules.extractor.ExtractorJS
 root:controller:processors:ExtractorSWF=object, org.archive.modules.extractor.ExtractorSWF
+root:controller:processors:ExecuteJS=object, org.archive.modules.extractor.jsexecutor.ExecuteJS
 root:controller:processors:Archiver=object, org.archive.modules.writer.ARCWriterProcessor
 root:controller:processors:Updater=object, org.archive.crawler.postprocessor.CrawlStateUpdater
 root:controller:processors:DetectJSRedirection=object, org.archive.crawler.spamdetection.DetectJSRedirection
