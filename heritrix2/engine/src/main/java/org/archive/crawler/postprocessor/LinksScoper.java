@@ -131,6 +131,10 @@ public class LinksScoper extends Scoper implements PostProcessor {
             return false;
         }
         
+        if ((curi.forceFetch())) {
+        	return false;
+        }
+        
         if (curi.getOutLinks().isEmpty()) {
             // No outlinks to process.
             return false;

@@ -11,20 +11,50 @@ import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
 
+/**
+ * Fetch cache stores dependent relationships between HTML and script 
+ * documents, and also contents of all available documents, i.e. those
+ * have been successfully fetched.
+ *  
+ * @author Ping Wang
+ *
+ */
 public class FetchCache implements Closeable, Serializable {
     private static final long serialVersionUID = 1L;
     
     private static Logger logger = 
         Logger.getLogger(FetchCache.class.getName());
     
+    /**
+     * Resource map: the key is the uri of a resource, and the value is the 
+     * list of uris of HTML documents which depend on this resource. 
+     */
     protected Map<String, Collection<String>> resources = null;
     
+    /**
+     * Dependent map: the key is the uri of a HTML document, and the value is 
+     * the list of uris of unavailabe resources on which the HTML document 
+     * depends on.
+     */
     protected Map<String, Collection<String>> dependents = null;
     
+    /**
+     * Available document map: the key is the uri of a document, and the value
+     * is the content or the content location of the document.
+     */
     protected Map<String, Object> availables = null;
     
+    /**
+     * Candidate map: the key is the uri of a HTML document, and the value is a 
+     * list of uris of available resources on which the HTML document depends.
+     */
     protected Map<String, Collection<String>> candidates = null;
     
+    /**
+     * WaitToSchedule map: the key is the uri of a HTML document, and the value 
+     * is the list of uris of resources on which the HTML document depends on, 
+     * and all the resources are available.
+     */
     private Map<String, Collection<String>> waitToSchedule = null;
     
     public FetchCache() {
@@ -34,7 +64,6 @@ public class FetchCache implements Closeable, Serializable {
                 new Hashtable<String, Collection<String>>());
     }
     
-    // TODO: need to change class Object to class defined for resource location
     public FetchCache(Map<String, Collection<String>> resources,
             Map<String, Collection<String>> dependents,
             Map<String, Object> availables,
@@ -45,6 +74,10 @@ public class FetchCache implements Closeable, Serializable {
         this.candidates = candidates;
     }
     
+    /**
+     * Remove info of a resource uri from resource map and dependent map.
+     * @param urikey the uri of the resource
+     */
     public synchronized void removeResource(String urikey) {
         Collection<String> depList = getResourceEntry(urikey);
 
@@ -55,7 +88,8 @@ public class FetchCache implements Closeable, Serializable {
                 unavailResList.remove(urikey);
                 
                 if (unavailResList.size() == 0) {
-                    Collection<String> availResList = getCandidateEntry(dependent);
+                    Collection<String> availResList = 
+                    	getCandidateEntry(dependent);
                     getWaitToScheduleURIs().put(dependent, availResList);
                     dependents.remove(dependent);
                 }
@@ -75,7 +109,6 @@ public class FetchCache implements Closeable, Serializable {
             return;
         }
         
-        //addAvailableEntry(urikey, puri.getRecorder());
         try {
         	addAvailableEntry(urikey, 
         			puri.getRecorder().getReplayCharSequence().toString());
@@ -106,8 +139,8 @@ public class FetchCache implements Closeable, Serializable {
         return;
     }
     /**
-     * Update map dependents, candidates and resources, when a new HTML document 
-     * is available.
+     * Update map dependents, candidates and resources, when a new HTML 
+     * document is available.
      * @param puri the ProcessorURI of this new HTML document.
      * @param resources the list of required resources of this HTML document.
      */
@@ -119,7 +152,6 @@ public class FetchCache implements Closeable, Serializable {
             return;
         }
         
-        //addAvailableEntry(urikey, puri.getRecorder());
         try {
 	        addAvailableEntry(urikey, 
 	        		puri.getRecorder().getReplayCharSequence().toString());
@@ -161,10 +193,21 @@ public class FetchCache implements Closeable, Serializable {
          return tmpCollection;
     }
     
+    /**
+     * Get content or content location of a uri.
+     * @param urikey
+     * @return
+     */
     public synchronized Object getContentLocation(String urikey) {
         return availables.get(urikey);
     }
     
+    /**
+     * Set content or content location of a uri.
+     * @param urikey
+     * @param loc
+     * @return
+     */
     public synchronized boolean setContentLocation(String urikey, Object loc) {
         if (loc != null && availables.containsKey(urikey)) {
             availables.put(urikey, loc);
@@ -252,7 +295,9 @@ public class FetchCache implements Closeable, Serializable {
      * @param urikey the uri of the HTML document.
      * @param resources the list of requried resources of the HTML document.
      */
-    private void addDependentEntry(String urikey, Collection<String> resources) {
+    private void addDependentEntry(String urikey, 
+    		Collection<String> resources) {
+    	
         Collection<String> resList = getDependentEntry(urikey);
         if (resList.size() != 0) {
             for (String resUri : resources) {
@@ -281,7 +326,9 @@ public class FetchCache implements Closeable, Serializable {
      * @param urikey the uri of the HTML document.
      * @param resources the list of required resources.
      */
-    private void addCandidateEntry(String urikey, Collection<String> resources) {
+    private void addCandidateEntry(String urikey, 
+    		Collection<String> resources) {
+    	
         Collection<String> resList = getCandidateEntry(urikey);
         if (resList.size() != 0) {
             for (String resUri : resources) {

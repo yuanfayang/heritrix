@@ -22,6 +22,13 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+/**
+ * This processor is used to detect JavaScript redirection by evaluating
+ * JavaScrip code (internal or external).
+ * It only accepts special CrawlURI - scheme: x-jseval.
+ * @author Ping Wang
+ *
+ */
 public class DetectJSRedirection extends Processor 
 implements Initializable, Finishable{
 
@@ -41,7 +48,6 @@ implements Initializable, Finishable{
         
         eventsToSim.add("onmouseover");
         eventsToSim.add("onmouseout");
-        eventsToSim.add("onclick");
     }
     
     private FetchCache fetchCache;
@@ -72,6 +78,10 @@ implements Initializable, Finishable{
         }
         
         boolean hasJSRedirection = false;
+        
+        // If ExecuteJS appears before this processor, only take advantage 
+        // of the result it generated, else JS code has to been evaluated in
+        // order to check JS redirection.
         if (uri.getData().containsKey("ExecuteJS")) {
             hasJSRedirection = simpleDetection(uri);
         } else {
@@ -84,6 +94,11 @@ implements Initializable, Finishable{
         }
     }
     
+    /**
+     * Only need to check if there is one "JSRedirection" link in out links.
+     * @param uri
+     * @return
+     */
     protected boolean simpleDetection(ProcessorURI uri) {
         Collection<Link> outLinks = uri.getOutLinks();
         if (outLinks != null && outLinks.size() > 0) {
@@ -97,15 +112,24 @@ implements Initializable, Finishable{
         return false;
     }
     
+    /**
+     * Evaluate JS code within the HTML document in order to check 
+     * JS redirection.
+     * @param uri
+     * @return true if JS redirection happened, otherwise false.
+     */
     protected boolean complexDetection(ProcessorURI uri) {
         HashMap<String, String> contents = 
             ExecuteJS.getContent(uri, fetchCache);
         
+        // Parse the HTML document, and evaluate JS code 
+        // triggered by onload event.
         Document document = ExecuteJS.parse(uri, contents);
         if (hasJSRedirection(uri, document)) {
             return true;
         }
         
+        // Simulate some HTML events, try to detect hidden JS redirection.
         if (simHTMLEvents(uri, document, contents)) {
             return true;
         }
@@ -119,6 +143,17 @@ implements Initializable, Finishable{
         return false;
     }
     
+    /**
+     * Simulate some HTML events: onmouseover and onmouseout.
+     * Trigger each HTML event from a fresh DOM, once JS redirection is 
+     * detected, stop simulation.
+     * @param uri current uri.
+     * @param doc DOM created by HTML parser (JS code triggered by onload
+     * event have been evaluated).
+     * @param contents contents of current HTML document and requried 
+     * resources for JS evaluation.
+     * @return true if JS redirection happened, otherwise false.
+     */
     protected boolean simHTMLEvents(ProcessorURI uri, Document doc, 
             HashMap<String, String> contents) {
         int numOfEventsToSim = eventsToSim.size();
@@ -127,46 +162,7 @@ implements Initializable, Finishable{
         Document curDoc;
         int listSize;
         for (int i = 0; i < numOfEventsToSim; ++ i) {
-            if (eventsToSim.get(i).equalsIgnoreCase("onclick")) {
-                // Simulate common onclick event
-                nodeList = 
-                    ExecuteJS.getNodeList(ExecuteJS.ONCLICK_REG_EXPR, doc);
-                
-                if (nodeList != null && 
-                        (listSize = nodeList.getLength()) != 0) {
-                    for (int j = 0; j < listSize; ++ j) {
-                        curDoc = ExecuteJS.parse(uri, contents);
-                        
-                        nodeList = 
-                            ExecuteJS.getNodeList(ExecuteJS.ONCLICK_REG_EXPR, 
-                                    curDoc);
-                        
-                        Element el = (Element)nodeList.item(j);
-                        ExecuteJS.onMouseClick(el);
-                        if (hasJSRedirection(uri, curDoc)) {
-                            return true;
-                        }
-                    }
-                }
-
-                // Simulate a click on an anchor tag
-                nodeList = 
-                    ExecuteJS.getNodeList(ExecuteJS.HREF_REG_EXPR, doc);
-                if (nodeList != null && 
-                        (listSize = nodeList.getLength()) != 0) {
-                    curDoc = ExecuteJS.parse(uri, contents);
-                    nodeList = 
-                        ExecuteJS.getNodeList(ExecuteJS.HREF_REG_EXPR, curDoc);
-                    for (int j = 0; j < listSize; ++ j) {
-                        Element el = (Element)nodeList.item(j);
-                        ExecuteJS.onMouseClick(el);
-                        if (hasJSRedirection(uri, curDoc)) {
-                            return true;
-                        }
-                    }
-                }
-                
-            } else if (eventsToSim.get(i).equalsIgnoreCase("onmouseover")) {
+            if (eventsToSim.get(i).equalsIgnoreCase("onmouseover")) {
                 // Simulate onmouseover event
                 nodeList = 
                     ExecuteJS.getNodeList(ExecuteJS.ONMOUSEOVER_REG_EXPR, doc);

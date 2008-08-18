@@ -18,11 +18,17 @@ import org.lobobrowser.html.io.*;
 import org.lobobrowser.html.parser.*;
 
 /**
- * The <code>HTMLParser</code> class is an HTML DOM parser.
+ * HTMLParser is adapted from HtmlParser in 
+ * <a href="http://lobobrowser.org/cobra.jsp">Cobra HTML 
+ * renderer and parser</a>. Small modification has been done, 
+ * which is the external JS code is provided instead of 
+ * fetching it during parsing.
+ *
+ * <p>The <code>HTMLParser</code> class is an HTML DOM parser.
  * This parser provides the functionality for
  * the standard DOM parser implementation {@link org.lobobrowser.html.parser.DocumentBuilderImpl}.
  * This parser class may be used directly when a different DOM
- * implementation is preferred.
+ * implementation is preferred.</p>
  */
 
 public class HTMLParser {
