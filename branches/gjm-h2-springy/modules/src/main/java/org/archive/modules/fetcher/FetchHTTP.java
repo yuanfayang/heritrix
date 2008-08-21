@@ -1261,7 +1261,8 @@ public class FetchHTTP extends Processor implements Lifecycle {
     public void start() {
         configureHttp();
 
-        if (cookieStorage != null) {        
+        if (cookieStorage != null) {     
+            cookieStorage.start(); 
             http.getState().setCookiesMap(cookieStorage.getCookiesMap());
         }
 
@@ -1278,6 +1279,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
             @SuppressWarnings("unchecked")
             Map<String, Cookie> map = http.getState().getCookiesMap();
             cookieStorage.saveCookiesMap(map);
+            cookieStorage.stop();
         }
         cleanupHttp();
     }

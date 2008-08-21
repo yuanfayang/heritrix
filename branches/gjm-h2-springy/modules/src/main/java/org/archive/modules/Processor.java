@@ -38,6 +38,7 @@ import org.archive.net.UURI;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
 import org.archive.state.Module;
+import org.springframework.context.Lifecycle;
 
 
 /**
@@ -46,7 +47,8 @@ import org.archive.state.Module;
  * 
  * @author pjack
  */
-public abstract class Processor implements Module, Serializable, HasKeyedProperties {
+public abstract class Processor 
+implements Module, Serializable, HasKeyedProperties, Lifecycle {
     protected KeyedProperties kp = new KeyedProperties();
     public KeyedProperties getKeyedProperties() {
         return kp;
@@ -243,5 +245,18 @@ public abstract class Processor implements Module, Serializable, HasKeyedPropert
     // FIXME: Pass in PrintWriter instead creating large in-memory strings
     public String report() {
         return "";
+    }
+    
+    boolean isRunning = false; 
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public void start() {
+        isRunning = true; 
+    }
+
+    public void stop() {
+        isRunning = false; 
     }
 }

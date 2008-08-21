@@ -92,26 +92,21 @@ public abstract class AbstractCookieStorage
         return JobHome.resolveToFile(jobHome,cookiesSaveFile,null);
     }
 
+    boolean isRunning = false; 
     public void start() {
         SortedMap<String,Cookie> cookies = prepareMap();
         if (!StringUtils.isEmpty(getCookiesLoadFile())) {
             loadCookies(resolveCookiesLoadFile().getAbsolutePath(), cookies);
         }
+        isRunning = true; 
     }
 
     public boolean isRunning() {
-        // TODO Auto-generated method stub
-        return false;
+        return isRunning;
     }
+    
     public void stop() {
-        // TODO Auto-generated method stub
-        
-    }
-    /* (non-Javadoc)
-     * @see org.archive.modules.fetcher.CookieStorage#finalTasks(org.archive.state.StateProvider)
-     */
-    public void finalTasks(StateProvider defaults) {
-        // subclasses may do something        
+        isRunning = false; 
     }
 
     protected abstract SortedMap<String,Cookie> prepareMap();
