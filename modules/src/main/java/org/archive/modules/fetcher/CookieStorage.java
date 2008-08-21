@@ -28,8 +28,9 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import org.apache.commons.httpclient.Cookie;
+import org.springframework.context.Lifecycle;
 
-public interface CookieStorage {
+public interface CookieStorage extends Lifecycle {
 
     SortedMap<String,Cookie> getCookiesMap();
 
