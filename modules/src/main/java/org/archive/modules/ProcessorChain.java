@@ -49,18 +49,18 @@ implements Iterable<Processor>, HasKeyedProperties, Lifecycle {
 
     public void start() {
         for(Processor p : getProcessors()) {
-            if(!p.isRunning()) {
-                p.start(); 
-            }
+            // relies on each Processor's start() being ok to call if 
+            // already running, which is part of the Lifecycle contract
+            p.start(); 
         }
         isRunning = true; 
     }
 
     public void stop() {
         for(Processor p : getProcessors()) {
-            if(p.isRunning()) {
-                p.stop(); 
-            }
+            // relies on each Processor's stop() being ok to call if 
+            // not running, which is part of the Lifecycle contract
+            p.stop(); 
         }
         isRunning = false; 
     }

@@ -71,6 +71,9 @@ implements Lifecycle {
         // TODO: share single store instance between Load and Store processors
         // (shared context? EnhancedEnvironment?)
 
+        if (isRunning()) {
+            return;
+        }
         StoredSortedMap historyMap;
         try {
             StoredClassCatalog classCatalog = bdb.getClassCatalog();
@@ -92,6 +95,9 @@ implements Lifecycle {
 
     public void stop() {
     	// TODO leave this cleanup to BdbModule?
+        if (!isRunning()) {
+            return;
+        }
         try {
             historyDb.sync();
             historyDb.close();

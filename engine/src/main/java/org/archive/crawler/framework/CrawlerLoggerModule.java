@@ -164,6 +164,9 @@ public class CrawlerLoggerModule
 
     
     public void start() {
+        if(isRunning) {
+            return; 
+        }
         resolveLogsDir().mkdirs();
         this.atg = AlertThreadGroup.current();
         try {

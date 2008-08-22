@@ -155,6 +155,9 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
 
     
     public void start() {
+        if(isRunning()) {
+            return;
+        }
         this.readPrefixes();
     }
     

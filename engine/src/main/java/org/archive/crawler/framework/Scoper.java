@@ -99,6 +99,9 @@ public abstract class Scoper extends Processor implements Lifecycle {
 
     boolean isRunning = false; 
     public void start() {
+        if(isRunning) {
+            return; 
+        }
         if (getLogToFile()) {
             // Set up logger for this instance.  May have special directives
             // since this class can log scope-rejected URLs.

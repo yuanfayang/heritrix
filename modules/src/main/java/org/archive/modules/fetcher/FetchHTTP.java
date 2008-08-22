@@ -1259,6 +1259,11 @@ public class FetchHTTP extends Processor implements Lifecycle {
     }
 
     public void start() {
+        if(isRunning()) {
+            return; 
+        }
+        super.start();
+        
         configureHttp();
 
         if (cookieStorage != null) {     
@@ -1274,6 +1279,10 @@ public class FetchHTTP extends Processor implements Lifecycle {
     }
     
     public void stop() {
+        if(!isRunning()) {
+            return; 
+        }
+        super.stop();
         // At the end save cookies to the file specified in the order file.
         if (cookieStorage != null) {
             @SuppressWarnings("unchecked")

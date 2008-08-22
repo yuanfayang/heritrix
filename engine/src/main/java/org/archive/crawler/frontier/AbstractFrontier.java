@@ -508,6 +508,9 @@ public abstract class AbstractFrontier
     }
     
     public void start() {
+        if(isRunning()) {
+            return; 
+        }
         seeds.addSeedRefreshListener(this);
         
         if (getRecoveryLogEnabled()) try {

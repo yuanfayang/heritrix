@@ -33,7 +33,7 @@ import java.util.Set;
 
 
 /**
- * @author pjack
+ * @contributor pjack
  *
  */
 public class SimpleSelfTest extends SelfTestBase {

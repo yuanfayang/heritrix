@@ -247,12 +247,18 @@ implements Lifecycle {
 
 
     public synchronized void start() {
+        if (isRunning()) {
+            return;
+        }
         super.start(); 
         this.settings = makeWriterPoolSettings();
         setupPool(serial);
     }
     
     public void stop() {
+        if (!isRunning()) {
+            return;
+        }
         super.stop(); 
         this.pool.close();
         this.settings = null; 

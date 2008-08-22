@@ -361,7 +361,10 @@ public class CrawlControllerImpl extends Bean implements
         super(CrawlController.class);
     }
     
-    public void start() {        
+    public void start() {
+        if(isRunning) {
+            return; 
+        }
         this.checkpointer = new Checkpointer(
                 this, resolveCheckpointsDir());
 
@@ -382,15 +385,17 @@ public class CrawlControllerImpl extends Bean implements
         // So, remember current ThreadGroup so we can create the ToePool in 
         // it later.
         alertThreadGroup = Thread.currentThread().getThreadGroup();
+        isRunning = true; 
     }
     
+    boolean isRunning = false; 
     public boolean isRunning() {
-        return alertThreadGroup != null; 
+        return isRunning; 
     }
 
     public void stop() {
-        // TODO Auto-generated method stub
-        
+        // TODO: more stop/cleanup?
+        isRunning = false; 
     }
     /**
      * Register for CrawlURIDisposition events.
