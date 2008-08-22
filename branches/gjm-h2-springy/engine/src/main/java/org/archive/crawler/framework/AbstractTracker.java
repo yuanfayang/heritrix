@@ -111,18 +111,17 @@ public abstract class AbstractTracker
         super(StatisticsTracker.class);
     }
 
+    boolean isRunning = false; 
     public boolean isRunning() {
-        // TODO Auto-generated method stub
-        return false;
+        return isRunning;
     }
     public void start() {
-        // TODO Auto-generated method stub
-        
+        isRunning = true; 
     }
     public void stop() {
-        // TODO Auto-generated method stub
-        
+        isRunning = false; 
     }
+    
     /**
      * Start thread.  Will call logActivity() at intervals specified by
      * logInterval

@@ -24,22 +24,26 @@ implements Lifecycle {
     
 
     public void start() {
+        if(isRunning()) {
+            return;
+        }
         try {
             this.servers = bdb.getBigMap("servers", false, String.class, CrawlServer.class);
             this.hosts = bdb.getBigMap("hosts", false, String.class, CrawlHost.class);
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
+        isRunning = true;
     }
 
+    boolean isRunning = false; 
     public boolean isRunning() {
-        // TODO Auto-generated method stub
-        return false;
+        return isRunning;
     }
 
     public void stop() {
-        // TODO Auto-generated method stub
-        
+        isRunning = false; 
+        // TODO: release bigmaps? 
     }
     
     

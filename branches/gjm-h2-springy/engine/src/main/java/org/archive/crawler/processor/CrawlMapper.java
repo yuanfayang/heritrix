@@ -343,6 +343,9 @@ public abstract class CrawlMapper extends Processor implements Lifecycle {
     }
 
     public void start() {
+        if(isRunning()) {
+            return; 
+        }
         cache = new ArrayLongFPCache();
     }
     

@@ -95,8 +95,11 @@ implements Lifecycle, Serializable {
     public BdbUriUniqFilter() {
     }
     
-    
+    boolean isRunning = false; 
     public void start() {
+        if(isRunning()) {
+            return; 
+        }
         try {
             BdbModule.BdbConfig config = getDatabaseConfig();
             config.setAllowCreate(true);
@@ -107,13 +110,14 @@ implements Lifecycle, Serializable {
     }
     
     public boolean isRunning() {
-        // TODO Auto-generated method stub
-        return false;
+        return isRunning;
     }
 
     public void stop() {
-        // TODO Auto-generated method stub
-        
+        if(!isRunning()) {
+            return; 
+        }
+        // TODO: close DB? 
     }
     
     /**

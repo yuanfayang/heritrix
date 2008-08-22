@@ -230,6 +230,9 @@ Serializable, Closeable {
 
     
     public void start() {
+        if (isRunning()) {
+            return;
+        }
         try {
             setUp(resolveDir(), getCachePercent(), true);
         } catch (DatabaseException e) {
@@ -244,6 +247,9 @@ Serializable, Closeable {
     }
 
     public void stop() {
+        if (!isRunning()) {
+            return;
+        }
         close();
     }
     

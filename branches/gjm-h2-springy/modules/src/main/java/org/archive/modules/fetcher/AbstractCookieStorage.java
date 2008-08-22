@@ -94,6 +94,9 @@ public abstract class AbstractCookieStorage
 
     boolean isRunning = false; 
     public void start() {
+        if(isRunning()) {
+            return;
+        }
         SortedMap<String,Cookie> cookies = prepareMap();
         if (!StringUtils.isEmpty(getCookiesLoadFile())) {
             loadCookies(resolveCookiesLoadFile().getAbsolutePath(), cookies);

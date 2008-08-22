@@ -83,7 +83,10 @@ implements Checkpointable, Lifecycle {
 
 
     public void start() {
-      try {
+        if (isRunning()) {
+            return;
+        }
+        try {
             File logFile = resolveLogFile();
             log = new CrawlerJournal(logFile);
         } catch (IOException e) {
@@ -97,6 +100,9 @@ implements Checkpointable, Lifecycle {
     }
 
     public void stop() {
+        if(!isRunning()) {
+            return;
+        }
         log.close();
         log = null; 
     }

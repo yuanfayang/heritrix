@@ -72,7 +72,9 @@ implements Lifecycle {
     
     @SuppressWarnings("unchecked")
     public void start() {
-
+        if(isRunning()) {
+            return;
+        }
         String dbName = PersistProcessor.URI_HISTORY_DBNAME;
         StoredSortedMap historyMap;
         try {
@@ -93,6 +95,9 @@ implements Lifecycle {
         return historyDb != null; 
     }
     public void stop() {
+        if(!isRunning()) {
+            return;
+        }
         try {
             historyDb.close();
         } catch (DatabaseException e) {
