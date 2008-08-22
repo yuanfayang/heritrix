@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -463,45 +465,87 @@ public class ClusterControllerBean implements
      * @throws MBeanException
      */
     public ObjectName createCrawler() throws MBeanException {
-        Container c = resolveLeastLoadedContainer();
+        List<Container> containers = resolveLeastLoadedContainers();
 
-        if (c == null) {
-            MBeanException e =  new MBeanException(
-                    new Exception(
-                    "No space available in remote"+
-                    " containers for new crawler " + "instances."),
-                    "insufficent crawler resources"
-            );
+        if (containers != null) {
+            for(Container container : containers){
+                try {
+                	log.info("attempting to create crawler on container: " + container.getName());
+                    return createCrawlerIn(container);
+                } catch (Exception e) {
+                	log.warning("unexpected error!!! failed to create crawler as expected on " + container.getName());
+                	e.printStackTrace();
+                }
+            	
+            }
             
-            throw e;
+            log.severe("unable to start any crawlers on container due to communication " +
+            		"failure with all available containers.");
         }
 
-        try {
-            return createCrawlerIn(c);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new MBeanException(e);
-        }
+        MBeanException e =  new MBeanException(
+                new Exception(
+                "No space available in remote"+
+                " containers for new crawler " + "instances."),
+                "insufficent crawler resources"
+        );
+        
+        throw e;
+
     }
 
+//    /**
+//     * @return Currently returns the least loaded going by a dumb count.
+//     */
+//    protected Container resolveLeastLoadedContainer() {
+//
+//        Container leastLoaded = null;
+//
+//        for (Container n : this.containers.values()) {
+//            if (n.getCrawlers().size() >= n.getMaxInstances()) {
+//                continue;
+//            }
+//            if (leastLoaded == null) {
+//                leastLoaded = n;
+//            }
+//
+//            if (n.getCrawlers().size() < leastLoaded.getCrawlers().size()) {
+//                leastLoaded = n;
+//            }
+//        }
+//
+//        return leastLoaded;
+//    }
+
     /**
-     * @return Currently returns the least loaded going by a dumb count.
+     * @return A list of available (ie not fully loaded) containers sorted from least loaded to most loaded. If no
+     * containers are available, returns null.
      */
-    protected Container resolveLeastLoadedContainer() {
+    protected List<Container> resolveLeastLoadedContainers() {
 
-        Container leastLoaded = null;
+        List<Container>leastLoaded = null;
+        Container last = null;
+        
+        List<Container> currentContainers = new LinkedList<Container>(this.containers.values());
+        
+        Collections.sort(currentContainers, new Comparator(){
+        	public int compare(Object o1, Object o2) {
+        		Container c1 = (Container)o1;
+        		Container c2 = (Container)o2;
+        		return new Integer(c1.getCrawlers().size()).compareTo(new Integer(c2.getCrawlers().size()));
+        	}
+        });
 
-        for (Container n : this.containers.values()) {
+        for (Container n : currentContainers) {
             if (n.getCrawlers().size() >= n.getMaxInstances()) {
                 continue;
             }
-            if (leastLoaded == null) {
-                leastLoaded = n;
+            
+            if(leastLoaded == null){
+            	leastLoaded = new LinkedList<Container>();
             }
-
-            if (n.getCrawlers().size() < leastLoaded.getCrawlers().size()) {
-                leastLoaded = n;
-            }
+           
+            leastLoaded.add(n);
         }
 
         return leastLoaded;

@@ -68,7 +68,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         super(name, connection);
     }
 
-    public boolean isCrawling() {
+    public boolean isCrawling(){
         try {
             return this.connection
                     .getAttribute(this.name, "Status")
