@@ -168,8 +168,8 @@ public class Settings {
      */
     public Setting getElementPrototype(String path) {
         Setting setting = getSetting(path);
-        if (setting.getType() != PathChanger.MAP_TAG 
-                && setting.getType() != PathChanger.LIST_TAG) {
+        if (!setting.getType().equals(PathChanger.MAP_TAG) 
+                && !setting.getType().equals(PathChanger.LIST_TAG)) {
             return setting;
         }
         
