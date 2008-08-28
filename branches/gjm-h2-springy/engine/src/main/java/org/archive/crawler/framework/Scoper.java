@@ -105,7 +105,7 @@ public abstract class Scoper extends Processor implements Lifecycle {
         if (getLogToFile()) {
             // Set up logger for this instance.  May have special directives
             // since this class can log scope-rejected URLs.
-            fileLogger = LogUtils.createFileLogger(loggerModule.resolveLogsDir(),
+            fileLogger = LogUtils.createFileLogger(loggerModule.getPath().getFile(),
                 this.getClass().getName(),
                 Logger.getLogger(this.getClass().getName()));
         }

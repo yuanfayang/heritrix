@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
 import java.util.HashSet;
@@ -42,13 +43,14 @@ import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.JobHome;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.archive.spring.ConfigFile;
+import org.archive.spring.ConfigPath;
+import org.archive.spring.ReadSource;
+import org.archive.spring.WriteTarget;
 import org.archive.util.DevUtils;
 import org.archive.util.FileUtils;
 
@@ -60,6 +62,7 @@ import org.archive.util.FileUtils;
  */
 public class SeedModuleImpl extends Bean implements 
     SeedModule, 
+    ReadSource,
     Serializable, 
     KeyChangeListener,
     Checkpointable {
@@ -69,29 +72,18 @@ public class SeedModuleImpl extends Bean implements
     private static final Logger logger =
         Logger.getLogger(SeedModuleImpl.class.getName());
 
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
-    }
-    
     /**
      * File from which to extract seeds.
      */
-    protected String seedsFile = "seeds.txt";
-    public String getSeedsFile() {
-        return seedsFile;
+    protected ReadSource seedsSource = 
+        (ReadSource) new ConfigFile("seeds file","seeds.txt");
+    public ReadSource getSeedsSource() {
+        return seedsSource;
     }
-    public void setSeedsFile(String seedsFile) {
-        this.seedsFile = seedsFile;
+    public void setSeedsSource(ReadSource seedsSource) {
+        this.seedsSource = seedsSource;
     }
-    public File resolveSeedsFile() {
-        return JobHome.resolveToFile(jobHome,seedsFile,null);
-    }
+
     /**
      * Whether to reread the seeds specification, whether it has changed or not,
      * every time any configuration change occurs. If true, seeds are reread
@@ -169,16 +161,6 @@ public class SeedModuleImpl extends Bean implements
         return isSameHost;
     }
 
-
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
-     */
-    public void listUsedFiles(List<String> list) {
-        File file = resolveSeedsFile();
-        list.add(file.getAbsolutePath());
-    }
-
     /**
      * Take note of a situation (such as settings edit) where
      * involved reconfiguration (such as reading from external
@@ -213,13 +195,7 @@ public class SeedModuleImpl extends Bean implements
      * @return Iterator, perhaps over a disk file, of seeds
      */
     public Iterator<UURI> seedsIterator(Writer ignoredItemWriter) {
-        BufferedReader br;
-        File seeds = resolveSeedsFile();
-        try {
-            br = new BufferedReader(new FileReader(seeds));
-        } catch (IOException e) {
-            throw new RuntimeException(seeds.getAbsolutePath(),e);
-        }
+        BufferedReader br = new BufferedReader(seedsSource.getReader());
         return new SeedFileIterator(br,ignoredItemWriter);
     }
     
@@ -247,10 +223,12 @@ public class SeedModuleImpl extends Bean implements
      * @return true if successful, false if add failed for any reason
      */
     public boolean addSeed(final ProcessorURI curi) {
-        File f = resolveSeedsFile();
-        if (f != null) {
+        if(!(seedsSource instanceof WriteTarget)) {
+            // TODO: do something else to log seed update
+            
+        } else {
             try {
-                FileWriter fw = new FileWriter(f, true);
+                Writer fw = ((WriteTarget)seedsSource).getWriter(true);
                 // Write to new (last) line the URL.
                 fw.write("\n");
                 fw.write("# Heritrix added seed " +
@@ -284,8 +262,9 @@ public class SeedModuleImpl extends Bean implements
             throws IOException {
         int id = System.identityHashCode(this);
         String backup = "seeds" + id + " .txt";
-        FileUtils.copyFile(resolveSeedsFile(), new File(dir, backup));
-        actions.add(new SeedModuleRecoverAction(backup, resolveSeedsFile()));
+        //TODO:SPRINGY
+//        FileUtils.copyFile(getSeedsFile().getFile(), new File(dir, backup));
+//        actions.add(new SeedModuleRecoverAction(backup, getSeedsFile().getFile()));
     }
 
     
@@ -309,4 +288,7 @@ public class SeedModuleImpl extends Bean implements
         
     }
 
+    public Reader getReader() {
+        return seedsSource.getReader();
+    }
 }

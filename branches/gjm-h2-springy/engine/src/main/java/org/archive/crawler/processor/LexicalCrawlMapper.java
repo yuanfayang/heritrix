@@ -36,7 +36,7 @@ import java.util.TreeMap;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
-import org.archive.settings.JobHome;
+import org.archive.spring.ConfigPath;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,16 +90,14 @@ public class LexicalCrawlMapper extends CrawlMapper {
      * range, the second the crawler node to which URIs in the key range should
      * be mapped.  This setting is ignored if MAP_URI is specified.
      */
-    String mapPath = ".";
-    public String getMapPath() {
+    ConfigPath mapPath = new ConfigPath("map specification file","lexicalcrawlmapper.config");
+    public ConfigPath getMapPath() {
         return this.mapPath;
     }
-    public void setMapPath(String path) {
+    public void setMapPath(ConfigPath path) {
         this.mapPath = path; 
     }
-    public File resolveMapPath() {
-        return JobHome.resolveToFile(jobHome, mapPath, null);
-    }
+
 
     /**
      * URI to map specification file. Each line should include 2
@@ -179,7 +177,7 @@ public class LexicalCrawlMapper extends CrawlMapper {
         String uri = getMapUri();
         Reader reader = null;
         if (uri.trim().length() == 0) {
-            File source = resolveMapPath();
+            File source = getMapPath().getFile();
             reader = new FileReader(source);
         } else {
             URLConnection conn = (new URL(uri)).openConnection();

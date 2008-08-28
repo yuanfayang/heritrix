@@ -40,11 +40,8 @@ import java.util.SortedMap;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
-import org.apache.commons.lang.StringUtils;
-import org.archive.settings.JobHome;
-import org.archive.state.StateProvider;
+import org.archive.spring.ConfigPath;
 import org.archive.util.IoUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
 
 /**
@@ -59,37 +56,22 @@ public abstract class AbstractCookieStorage
 
     final private static Logger LOGGER = 
         Logger.getLogger(AbstractCookieStorage.class.getName());
-
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
-    }
     
-    protected String cookiesLoadFile = "";
-    public String getCookiesLoadFile() {
+    protected ConfigPath cookiesLoadFile = null;
+    public ConfigPath getCookiesLoadFile() {
         return cookiesLoadFile;
     }
-    public void setCookiesLoadFile(String cookiesLoadFile) {
+    public void setCookiesLoadFile(ConfigPath cookiesLoadFile) {
         this.cookiesLoadFile = cookiesLoadFile;
-    }
-    public File resolveCookiesLoadFile() {
-        return JobHome.resolveToFile(jobHome,cookiesLoadFile,null);
     }
 
     
-    protected String cookiesSaveFile = "";
-    public String getCookiesSaveFile() {
+    protected ConfigPath cookiesSaveFile = null;
+    public ConfigPath getCookiesSaveFile() {
         return cookiesSaveFile;
     }
-    public void setCookiesSaveFile(String cookiesSaveFile) {
+    public void setCookiesSaveFile(ConfigPath cookiesSaveFile) {
         this.cookiesSaveFile = cookiesSaveFile;
-    }
-    public File resolveCookiesSaveFile() {
-        return JobHome.resolveToFile(jobHome,cookiesSaveFile,null);
     }
 
     boolean isRunning = false; 
@@ -98,8 +80,8 @@ public abstract class AbstractCookieStorage
             return;
         }
         SortedMap<String,Cookie> cookies = prepareMap();
-        if (!StringUtils.isEmpty(getCookiesLoadFile())) {
-            loadCookies(resolveCookiesLoadFile().getAbsolutePath(), cookies);
+        if (getCookiesLoadFile()!=null) {
+            loadCookies(getCookiesLoadFile().getFile().getAbsolutePath(), cookies);
         }
         isRunning = true; 
     }
@@ -234,8 +216,8 @@ public abstract class AbstractCookieStorage
 
     public void saveCookiesMap(Map<String, Cookie> map) {
         innerSaveCookiesMap(map);
-        if (!StringUtils.isEmpty(getCookiesSaveFile())) {
-            saveCookies(resolveCookiesSaveFile().getAbsolutePath(), map);
+        if (getCookiesSaveFile()!=null) {
+            saveCookies(getCookiesSaveFile().getFile().getAbsolutePath(), map);
         }
     }
     

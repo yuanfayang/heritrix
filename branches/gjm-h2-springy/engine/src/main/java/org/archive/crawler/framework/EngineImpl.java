@@ -77,11 +77,15 @@ import org.archive.settings.jmx.JMXModuleListener;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.settings.jmx.JMXSheetManagerImpl;
 import org.archive.settings.jmx.LoggingDynamicMBean;
+import org.archive.spring.ConfigPath;
 import org.archive.spring.PathSharingContext;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.beans.BeansException;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -114,10 +118,9 @@ public class EngineImpl extends Bean implements Engine {
         "";
 //        CONTROLLER_PATH + ":" + CrawlControllerImpl.CHECKPOINTS_DIR.getFieldName();
     
-    final public static String LOGS_DIR_PATH =
-        CONTROLLER_PATH + ":logger-module:dir";
+    final public static String LOGS_DIR_NAME = "logs subdirectory";
 
-    public static final String REPORTS_DIR_KEY = "root:controller:statistics-tracker:reports-dir";
+    public static final String REPORTS_DIR_NAME = "reports subdirectory";
 
     final private static Logger LOGGER = 
         Logger.getLogger(EngineImpl.class.getName()); 
@@ -137,7 +140,8 @@ public class EngineImpl extends Bean implements Engine {
     
     private HashMap<String, LogRemoteAccessImpl> logRemoteAccess;
     
-    private Map<String, SheetManager> sheetManagers;
+    protected Map<String, PathSharingContext> jobContexts;
+//    private Map<String, SheetManager> sheetManagers;
 
 
     
@@ -164,7 +168,8 @@ public class EngineImpl extends Bean implements Engine {
         Map<String,SheetManager> sm = new ReferenceMap(
                 ReferenceMap.HARD, ReferenceMap.WEAK);
         register(this, oname);
-        this.sheetManagers = sm;
+//        this.sheetManagers = sm;
+        jobContexts = new HashMap<String,PathSharingContext>();
         this.heritrixThread = config.getHeritrixThread();
     }
     
@@ -304,46 +309,46 @@ public class EngineImpl extends Bean implements Engine {
     }
 
 
-    public synchronized ObjectName getSheetManagerStub(String job) 
-    throws IOException {
-        validateJobName(job);
-        if (job.startsWith(ACTIVE.getPrefix())) {
-            throw new IllegalArgumentException("Can't get stub for active job: "
-                    + job);
-        }
-
-        String name = getJobName(job);
-
-        Set<ObjectName> set = getSheetManagers(name);
-        if (set.size() == 1) {
-            return set.iterator().next();
-        }
-        if (set.size() > 1) {
-            throw new IllegalStateException("Found more than one " +
-                        "JMXSheetManager for " + job);
-        }
-        
-        // Not already open. Open it and return object name.
-        File src = new File(getJobsDir(), job);
-        
-        if (!src.exists()) {
-            throw new IllegalArgumentException("No such profile: " + job);
-        }
-
-//        File bootstrap = new File(src, BOOTSTRAP);
-        FileSheetManager fsm;
-        try {
-            fsm = new FileSheetManager(src, name, false);
-            sheetManagers.put(job, fsm);
-        } catch (DatabaseException e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
-        }
-
-        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, name, DOMAIN, fsm);
-        return jmx.getObjectName();
-    }
+//    public synchronized ObjectName getSheetManagerStub(String job) 
+//    throws IOException {
+//        validateJobName(job);
+//        if (job.startsWith(ACTIVE.getPrefix())) {
+//            throw new IllegalArgumentException("Can't get stub for active job: "
+//                    + job);
+//        }
+//
+//        String name = getJobName(job);
+//
+//        Set<ObjectName> set = getSheetManagers(name);
+//        if (set.size() == 1) {
+//            return set.iterator().next();
+//        }
+//        if (set.size() > 1) {
+//            throw new IllegalStateException("Found more than one " +
+//                        "JMXSheetManager for " + job);
+//        }
+//        
+//        // Not already open. Open it and return object name.
+//        File src = new File(getJobsDir(), job);
+//        
+//        if (!src.exists()) {
+//            throw new IllegalArgumentException("No such profile: " + job);
+//        }
+//
+////        File bootstrap = new File(src, BOOTSTRAP);
+//        FileSheetManager fsm;
+//        try {
+//            fsm = new FileSheetManager(src, name, false);
+//            sheetManagers.put(job, fsm);
+//        } catch (DatabaseException e) {
+//            IOException io = new IOException();
+//            io.initCause(e);
+//            throw io;
+//        }
+//
+//        JMXSheetManagerImpl jmx = new JMXSheetManagerImpl(server, name, DOMAIN, fsm);
+//        return jmx.getObjectName();
+//    }
 
 
     public synchronized ObjectName getLogs(String job) throws IOException {
@@ -356,7 +361,7 @@ public class EngineImpl extends Bean implements Engine {
             throw new IllegalArgumentException("No such job: " + job);
         }
 
-        String logsPath = this.getFilePath(job, LOGS_DIR_PATH);
+        String logsPath = this.getFilePath(job, "loggerModule.path");
         LogRemoteAccessImpl lra = new LogRemoteAccessImpl(
                 job, DOMAIN, logsPath);
         register(lra, lra.getObjectName());
@@ -615,16 +620,32 @@ public class EngineImpl extends Bean implements Engine {
     }
 
     
-    public synchronized String getFilePath(String job, String settingPath) {
-        File jobDir = new File(getJobsDir(), job);
-        Properties p;
+    public synchronized String getFilePath(String job, String pathToConfigPath) {
+        PathSharingContext ac = getJobContext(job);
+        int index = pathToConfigPath.indexOf('.');
         try {
-            p = FileUtils.loadProperties(new File(jobDir,JobHome.PATHS_PROPERTIES_FILE));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            BeanWrapper bw = new BeanWrapperImpl(ac.getBean(pathToConfigPath.substring(0,index))); 
+            ConfigPath cp = (ConfigPath) bw.getPropertyValue(pathToConfigPath.substring(index+1));
+            if(cp==null) {
+                return null;
+            }
+            return cp.getFile().getAbsolutePath();
+        } catch (BeansException e) {
+            return null; 
+        } catch (ClassCastException cce) {
+            return null;
         }
-        return p.getProperty(settingPath);
         
+        
+//        File jobDir = new File(getJobsDir(), job);
+//        Properties p;
+//        try {
+//            p = FileUtils.loadProperties(new File(jobDir,""));
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return p.getProperty(settingPath);
+//        
 //        String jobName = JobStage.getJobName(job);
 //        JobStage stage = JobStage.getJobStage(job);
 //
@@ -680,9 +701,9 @@ public class EngineImpl extends Bean implements Engine {
     }
     
     
-    public SheetManager getSheetManager(String job) {
-        return sheetManagers.get(job);
-    }
+//    public SheetManager getSheetManager(String job) {
+//        return sheetManagers.get(job);
+//    }
 
     
     public synchronized long getFileSize(String job, String settingsPath) {
@@ -690,6 +711,13 @@ public class EngineImpl extends Bean implements Engine {
         return new File(filePath).length();
     }
 
+    protected PathSharingContext getJobContext(String jobName) {
+        File dest = new File(getJobsDir(), jobName);
+        File config = new File(dest,"crawler-beans.xml");
+        PathSharingContext ac = new PathSharingContext(config.getAbsolutePath());
+        jobContexts.put(jobName,ac);
+        return ac; 
+    }
 
     class JobLauncher extends Thread {
         
@@ -724,8 +752,8 @@ public class EngineImpl extends Bean implements Engine {
             fsm = new FileSheetManager(dest, name, true, list);
             
             // actually builds crawler from config: 
-            File config = new File(dest,"crawler-beans.xml");
-            PathSharingContext ac = new PathSharingContext(config.getAbsolutePath());
+            
+            PathSharingContext ac = getJobContext(job);
             ac.start();
             
             // trigger registration of all DynamicMBean modules
@@ -733,7 +761,8 @@ public class EngineImpl extends Bean implements Engine {
                 jmxListener.moduleChanged(null, bean);
             }
             
-            sheetManagers.put(job, fsm);
+
+//            sheetManagers.put(job, fsm);
 
             final ObjectName smName = createJMXSheetManager(name, fsm);
             final ObjectName ccName = findCrawlController(name);

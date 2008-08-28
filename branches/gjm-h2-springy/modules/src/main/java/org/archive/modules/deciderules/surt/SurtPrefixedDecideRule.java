@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -246,7 +247,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      */
     protected void buildSurtPrefixSet() {
         SurtPrefixSet newSurtPrefixes = new SurtPrefixSet();
-        FileReader fr = null;
+        Reader fr = null;
 
         // read SURTs from file, if appropriate
         String sourcePath = getSurtsSourceFile();        
@@ -268,16 +269,15 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         // interpret seeds as surts, if appropriate
         boolean deduceFromSeeds = getSeedsAsSurtPrefixes();
         if(deduceFromSeeds) {
-            File seeds = getSeedfile();
             try {
-                fr = new FileReader(seeds);
+                fr = seeds.getReader();
                 try {
                     newSurtPrefixes.importFromMixed(fr, deduceFromSeeds);
                 } finally {
                     fr.close();
                 }
             } catch (IOException e) {
-                logger.log(Level.SEVERE,"Problem reading seeds file: "+seeds.getAbsolutePath(),e);
+                logger.log(Level.SEVERE,"Problem reading seeds via: "+seeds,e);
                 // continue: operator will see severe log message or alert
             }
         }
@@ -302,9 +302,9 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      * 
      * @return Seed list file
      */
-    protected File getSeedfile() {
+    protected Reader getSeedfile() {
         seeds.addSeedListener(this);
-        return seeds.resolveSeedsFile();
+        return seeds.getReader();
     }
 
     public synchronized void addedSeed(final ProcessorURI curi) {

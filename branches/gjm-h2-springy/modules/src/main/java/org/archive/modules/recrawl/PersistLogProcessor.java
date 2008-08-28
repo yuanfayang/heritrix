@@ -31,10 +31,9 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.SerializationUtils;
 import org.archive.io.CrawlerJournal;
 import org.archive.modules.ProcessorURI;
-import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.archive.spring.ConfigPath;
 import org.springframework.context.Lifecycle;
 
 
@@ -55,24 +54,12 @@ implements Checkpointable, Lifecycle {
 
     //  description: "Filename to which to log URI persistence information. " +
     // "Default is 'logs/persistlog.txtser.gz'. "
-    String logFile = "logs/persistlog.txtser.gz";
-    public String getLogFile() {
+    ConfigPath logFile = new ConfigPath("URI persistence log file","logs/persistlog.txtser.gz");
+    public ConfigPath getLogFile() {
         return this.logFile;
     }
-    public void setLogFile(String path) {
+    public void setLogFile(ConfigPath path) {
         this.logFile = path; 
-    }
-    public File resolveLogFile() {
-        return JobHome.resolveToFile(jobHome, logFile, null);
-    }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
     
 //    class description: "PersistLogProcessor. Logs CrawlURI attributes " +
@@ -87,7 +74,7 @@ implements Checkpointable, Lifecycle {
             return;
         }
         try {
-            File logFile = resolveLogFile();
+            File logFile = getLogFile().getFile();
             log = new CrawlerJournal(logFile);
         } catch (IOException e) {
             // TODO Auto-generated catch block

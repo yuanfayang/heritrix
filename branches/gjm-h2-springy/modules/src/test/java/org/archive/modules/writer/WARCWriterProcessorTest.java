@@ -31,6 +31,7 @@ import java.io.File;
 import org.archive.modules.DummyMetadataProvider;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.DefaultServerCache;
+import org.archive.spring.ConfigPath;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -53,7 +54,7 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
         tmp.mkdirs();
 
         WARCWriterProcessor result = new WARCWriterProcessor();
-        result.setDirectory(tmp.getAbsolutePath());
+        result.setDirectory(new ConfigPath("test",tmp.getAbsolutePath()));
         result.setServerCache(new DefaultServerCache());
         result.setMetadataProvider(new DummyMetadataProvider());
         result.start();

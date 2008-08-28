@@ -225,7 +225,7 @@ public class Console {
             String source = request.getParameter("source");
             if(!source.equals("file")) {
                 // use prior job's recovery ;
-                String path = cjm.getFilePath(source, EngineImpl.LOGS_DIR_PATH);
+                String path = cjm.getFilePath(source, EngineImpl.LOGS_DIR_NAME);
                 // FIXME: this will break when WUI is on different platform than engine
                 path = path + File.separator + "recover.gz";
                 params.put("path",path);

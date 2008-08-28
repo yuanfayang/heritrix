@@ -66,15 +66,15 @@ public interface Engine extends Closeable {
             String profile) throws Exception;
 
     
-    @Operation(desc="Loads a SheetManager for editing.  If a SheetManager " +
-                "for the given job already exists, it will be re-used.")
-    public ObjectName getSheetManagerStub(
-            
-            @Parameter(name="job", desc="The stage-name of the job whose " +
-                        "SheetManager to load and return.")
-            String profile
-            
-            ) throws IOException;
+//    @Operation(desc="Loads a SheetManager for editing.  If a SheetManager " +
+//                "for the given job already exists, it will be re-used.")
+//    public ObjectName getSheetManagerStub(
+//            
+//            @Parameter(name="job", desc="The stage-name of the job whose " +
+//                        "SheetManager to load and return.")
+//            String profile
+//            
+//            ) throws IOException;
 
     
     
@@ -199,13 +199,13 @@ public interface Engine extends Closeable {
              @Parameter(name="settingsPath", desc="The settings path to a file setting for that job.")
              String settingsPath);
      
-     /**
-      * Returns the SheetManager for the given job.  Useful for applications
-      * that embed Heritrix.
-      * 
-      * @param job   the stage-name of the job whose sheet manager to return
-      * @return   that SheetMangaer, or null if the job does not exist
-      */
-     SheetManager getSheetManager(String job);
+//     /**
+//      * Returns the SheetManager for the given job.  Useful for applications
+//      * that embed Heritrix.
+//      * 
+//      * @param job   the stage-name of the job whose sheet manager to return
+//      * @return   that SheetMangaer, or null if the job does not exist
+//      */
+//     SheetManager getSheetManager(String job);
 
 }

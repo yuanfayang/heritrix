@@ -52,6 +52,7 @@ import org.archive.modules.net.ServerCache;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Emitter;
 import org.archive.settings.JobHome;
+import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 import org.springframework.beans.BeansException;
@@ -113,30 +114,25 @@ public class CrawlControllerImpl extends Bean implements
     /**
      * Scratch directory for temporary overflow-to-disk
      */
-    protected String scratchDir = "scratch";
-    public String getScratchDir() {
+    protected ConfigPath scratchDir = 
+        new ConfigPath("scratch subdirectory","scratch");
+    public ConfigPath getScratchDir() {
         return scratchDir;
     }
-    public void setScratchDir(String scratchDir) {
+    public void setScratchDir(ConfigPath scratchDir) {
         this.scratchDir = scratchDir;
     }
-    public File resolveScratchDir() {
-        return JobHome.resolveToFile(jobHome,scratchDir,null);
-    }
-
 
     /**
      * Checkpoints directory
      */
-    protected String checkpointsDir = "checkpoints";
-    public String getCheckpointsDir() {
+    protected ConfigPath checkpointsDir = 
+        new ConfigPath("checkpoints subdirectory","checkpoints");
+    public ConfigPath getCheckpointsDir() {
         return checkpointsDir;
     }
-    public void setCheckpointsDir(String checkpointsDir) {
+    public void setCheckpointsDir(ConfigPath checkpointsDir) {
         this.checkpointsDir = checkpointsDir;
-    }
-    public File resolveCheckpointsDir() {
-        return JobHome.resolveToFile(jobHome,checkpointsDir,null);
     }
 
     /**
@@ -366,7 +362,7 @@ public class CrawlControllerImpl extends Bean implements
             return; 
         }
         this.checkpointer = new Checkpointer(
-                this, resolveCheckpointsDir());
+                this, getCheckpointsDir().getFile());
 
         this.singleThreadLock = new ReentrantLock();
         sExit = null;

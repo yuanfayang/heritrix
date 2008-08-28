@@ -49,8 +49,8 @@ import org.archive.modules.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
+import org.archive.spring.ConfigPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
 
@@ -202,25 +202,13 @@ implements Lifecycle {
     public void setServerCache(ServerCache serverCache) {
         this.serverCache = serverCache;
     }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
-    }
 
-    protected String directory = ".";
-    public String getDirectory() {
+    protected ConfigPath directory = new ConfigPath("writer sbudirectory", ".");
+    public ConfigPath getDirectory() {
         return directory;
     }
-    public void setDirectory(String directory) {
+    public void setDirectory(ConfigPath directory) {
         this.directory = directory;
-    }
-    public File resolveDirectory() {
-        return JobHome.resolveToFile(jobHome,directory,null);
     }
     
     /**
@@ -415,7 +403,7 @@ implements Lifecycle {
         List<String> list = getStorePaths();
         ArrayList<File> results = new ArrayList<File>();
         for (String path: list) {
-            File f = new File(resolveDirectory(), path);
+            File f = new File(getDirectory().getFile(), path);
             if (!f.exists()) {
                 try {
                     f.mkdirs();

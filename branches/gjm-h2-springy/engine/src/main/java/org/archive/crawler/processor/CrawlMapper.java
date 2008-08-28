@@ -39,10 +39,9 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.AcceptDecideRule;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRule;
-import org.archive.settings.JobHome;
+import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
 
 import st.ata.util.FPGenerator;
@@ -135,24 +134,13 @@ public abstract class CrawlMapper extends Processor implements Lifecycle {
     /**
      * Directory to write diversion logs.
      */
-    String diversionDir = "diversions";
-    public String getDiversionDir() {
+    ConfigPath diversionDir = 
+        new ConfigPath("diverted URIs subdirectory","diversions");
+    public ConfigPath getDiversionDir() {
         return this.diversionDir;
     }
-    public void setDiversionDir(String path) {
+    public void setDiversionDir(ConfigPath path) {
         this.diversionDir = path; 
-    }
-    public File resolveDiversionDir() {
-        return JobHome.resolveToFile(jobHome,diversionDir,null);
-    }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
     
     /**
@@ -325,7 +313,7 @@ public abstract class CrawlMapper extends Processor implements Lifecycle {
     protected PrintWriter getDiversionLog(String target) {
         FilePrintWriter writer = (FilePrintWriter) diversionLogs.get(target);
         if(writer == null) {
-            File divertDir = resolveDiversionDir();
+            File divertDir = getDiversionDir().getFile();
             divertDir.mkdirs();
             File divertLog = 
                 new File(divertDir,

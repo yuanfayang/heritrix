@@ -47,13 +47,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
+import org.archive.spring.ConfigPath;
 import org.archive.state.Module;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.bdbje.EnhancedEnvironment;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -176,15 +175,12 @@ Serializable, Closeable {
         
     }
 
-    protected String dir = "state";
-    public String getDir() {
+    protected ConfigPath dir = new ConfigPath("state subdirectory","state");
+    public ConfigPath getDir() {
         return dir;
     }
-    public void setDir(String dir) {
+    public void setDir(ConfigPath dir) {
         this.dir = dir;
-    }
-    public File resolveDir() {
-        return JobHome.resolveToFile(jobHome,dir,null);
     }
     
     int cachePercent = 60;
@@ -202,15 +198,6 @@ Serializable, Closeable {
     }
     public void setCheckpointCopyLogs(boolean checkpointCopyLogs) {
         this.checkpointCopyLogs = checkpointCopyLogs;
-    }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
     
     private transient EnhancedEnvironment bdbEnvironment;
@@ -234,7 +221,7 @@ Serializable, Closeable {
             return;
         }
         try {
-            setUp(resolveDir(), getCachePercent(), true);
+            setUp(getDir().getFile(), getCachePercent(), true);
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
@@ -373,7 +360,7 @@ Serializable, Closeable {
 //            cr.setState(this, DIR, path);
         }
         try {
-            setUp(resolveDir(), getCachePercent(), false);
+            setUp(getDir().getFile(), getCachePercent(), false);
             for (CachedBdbMap map: bigMaps.values()) {
                 map.initialize(
                         this.bdbEnvironment, 
@@ -408,7 +395,7 @@ Serializable, Closeable {
     public void checkpoint(File dir, List<RecoverAction> actions) 
     throws IOException {
         if (checkpointCopyLogs) {
-            actions.add(new BdbRecover(getDir()));
+            actions.add(new BdbRecover(getDir().getFile().getAbsolutePath()));
         }
         // First sync bigMaps
         for (Map.Entry<String,CachedBdbMap> me: bigMaps.entrySet()) {
@@ -499,7 +486,7 @@ Serializable, Closeable {
                 };
 
                 srcFilenames =
-                    new HashSet<String>(Arrays.asList(resolveDir().list(filter)));
+                    new HashSet<String>(Arrays.asList(getDir().getFile().list(filter)));
                 List tgtFilenames = Arrays.asList(bdbDir.list(filter));
                 if (tgtFilenames != null && tgtFilenames.size() > 0) {
                     srcFilenames.removeAll(tgtFilenames);
@@ -512,7 +499,7 @@ Serializable, Closeable {
                             i.hasNext() && !pastLastLogFile;) {
                         String name = (String) i.next();
                         if (this.checkpointCopyLogs) {
-                            FileUtils.copyFiles(new File(resolveDir(), name),
+                            FileUtils.copyFiles(new File(getDir().getFile(), name),
                                 new File(bdbDir, name));
                         }
                         pw.println(name);

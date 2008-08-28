@@ -60,6 +60,7 @@ import org.archive.net.UURI;
 import org.archive.settings.JobHome;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.jmx.Types;
+import org.archive.spring.ConfigPath;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
@@ -155,15 +156,12 @@ implements CrawlURIDispositionListener, Serializable {
         this.jobHome = home;
     }
 
-    protected String reportsDir = ".";
-    public String getReportsDir() {
+    protected ConfigPath reportsDir = new ConfigPath(EngineImpl.REPORTS_DIR_NAME,".");
+    public ConfigPath getReportsDir() {
         return reportsDir;
     }
-    public void setReportsDir(String reportsDir) {
+    public void setReportsDir(ConfigPath reportsDir) {
         this.reportsDir = reportsDir;
-    }
-    public File resolveReportsDir() {
-        return JobHome.resolveToFile(jobHome,getReportsDir(),EngineImpl.REPORTS_DIR_KEY); 
     }
     
     protected ServerCache serverCache;
@@ -1189,7 +1187,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeReportFile(String reportName, String filename) {
-        File f = new File(resolveReportsDir(), filename);
+        File f = new File(getReportsDir().getFile(), filename);
         try {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
             writeReportTo(reportName, bw);

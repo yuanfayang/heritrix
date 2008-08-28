@@ -34,8 +34,8 @@ import java.io.FileWriter;
 
 import org.archive.modules.net.BdbServerCache;
 import org.archive.settings.MemorySheetManager;
-import org.archive.settings.SingleSheet;
 import org.archive.settings.file.BdbModule;
+import org.archive.spring.ConfigPath;
 import org.archive.state.ModuleTestBase;
 import org.archive.util.IoUtils;
 
@@ -90,7 +90,7 @@ public class CrawlControllerImplTest extends ModuleTestBase {
         checkpoints.mkdirs();
         
         BdbModule bdb = new BdbModule();
-        bdb.setDir(state.getAbsolutePath());
+        bdb.setDir(new ConfigPath("test",state.getAbsolutePath()));
 //        def.set(bdb, BdbModule.DIR, state.getAbsolutePath());
         bdb.start();
         
@@ -98,7 +98,7 @@ public class CrawlControllerImplTest extends ModuleTestBase {
         
         CrawlControllerImpl controller = new CrawlControllerImpl();
         controller.setServerCache(new BdbServerCache());
-        controller.setCheckpointsDir(cp);
+        controller.setCheckpointsDir(new ConfigPath("test",cp));
         controller.start();
         return controller;
     }

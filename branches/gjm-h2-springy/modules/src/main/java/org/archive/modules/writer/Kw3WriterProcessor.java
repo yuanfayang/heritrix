@@ -48,7 +48,7 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.settings.JobHome;
+import org.archive.spring.ConfigPath;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -94,24 +94,12 @@ public class Kw3WriterProcessor extends Processor {
   /**
    * Top-level directory for archive files.
    */
-  String path = "arcs";
-  public String getPath() {
+  ConfigPath path = new ConfigPath("Kw3Writer subdirectory","arcs");
+  public ConfigPath getPath() {
       return this.path;
   }
-  public void setPath(String s) {
+  public void setPath(ConfigPath s) {
       this.path = s; 
-  }
-  public File resolvePath() {
-      return JobHome.resolveToFile(jobHome,getPath(),null);
-  }
-  
-  protected JobHome jobHome;
-  public JobHome getJobHome() {
-      return jobHome;
-  }
-  @Autowired
-  public void setJobHome(JobHome home) {
-      this.jobHome = home;
   }
   
   /**
@@ -283,12 +271,12 @@ public class Kw3WriterProcessor extends Processor {
       long fetchTime = curi.getFetchBeginTime() / 1000;
              
       String md5 = stringToMD5(host);
-      File dir = new File(resolvePath(), md5.substring(0, 2) + "/" + host +
+      File dir = new File(getPath().getFile(), md5.substring(0, 2) + "/" + host +
               "/current");
       if (!dir.exists()) {
           dir.mkdirs();
           if (this.chmod)
-              chmods(dir, resolvePath());
+              chmods(dir, getPath().getFile());
       }
       md5 = stringToMD5(uri);
       File arcFile = new File(dir, md5 + "." + fetchTime);

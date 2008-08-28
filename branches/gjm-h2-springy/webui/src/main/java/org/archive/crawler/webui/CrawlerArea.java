@@ -116,36 +116,36 @@ public class CrawlerArea {
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
         
-        Remote<JMXSheetManager> remoteSheetManager = Sheets.getSheetManager(request);
-        JMXSheetManager sheetManager = remoteSheetManager.getObject();
-        // ensure no uncommitted checked-out sheets before launch
-        String[] checkouts = sheetManager.getCheckedOutSheets();
-        if(checkouts.length>0) {
-            StringBuilder builder = new StringBuilder("Job may not be " +
-                    "launched until the following sheets are committed: <br/>");
-            for(String s: checkouts) {
-                builder.append(s);
-                builder.append("<br/>");
-            }
-            new Flash(Flash.Kind.NACK,builder.toString()).addToSession(request);
-            CrawlerArea.showCrawler(sc, request, response);
-            return;
-        }
-        
-        // ensure no problem (unvalidatable) sheets before launch
-        String[] problems = sheetManager.getProblemSingleSheetNames();
-        if(problems.length>0) {
-            StringBuilder builder = new StringBuilder("Job may not be " +
-                    "launched until the following sheets are corrected: <br/>");
-            for(String s: problems) {
-                builder.append(s);
-                builder.append("<br/>");
-            }
-            new Flash(Flash.Kind.NACK,builder.toString()).addToSession(request);
-            CrawlerArea.showCrawler(sc, request, response);
-            return;
-        }
-        // TODO: check for pending config errors before attempting launch
+//        Remote<JMXSheetManager> remoteSheetManager = Sheets.getSheetManager(request);
+//        JMXSheetManager sheetManager = remoteSheetManager.getObject();
+//        // ensure no uncommitted checked-out sheets before launch
+//        String[] checkouts = sheetManager.getCheckedOutSheets();
+//        if(checkouts.length>0) {
+//            StringBuilder builder = new StringBuilder("Job may not be " +
+//                    "launched until the following sheets are committed: <br/>");
+//            for(String s: checkouts) {
+//                builder.append(s);
+//                builder.append("<br/>");
+//            }
+//            new Flash(Flash.Kind.NACK,builder.toString()).addToSession(request);
+//            CrawlerArea.showCrawler(sc, request, response);
+//            return;
+//        }
+//        
+//        // ensure no problem (unvalidatable) sheets before launch
+//        String[] problems = sheetManager.getProblemSingleSheetNames();
+//        if(problems.length>0) {
+//            StringBuilder builder = new StringBuilder("Job may not be " +
+//                    "launched until the following sheets are corrected: <br/>");
+//            for(String s: problems) {
+//                builder.append(s);
+//                builder.append("<br/>");
+//            }
+//            new Flash(Flash.Kind.NACK,builder.toString()).addToSession(request);
+//            CrawlerArea.showCrawler(sc, request, response);
+//            return;
+//        }
+//        // TODO: check for pending config errors before attempting launch
         
         Remote<Engine> remote = open(request);
         Engine manager = remote.getObject();

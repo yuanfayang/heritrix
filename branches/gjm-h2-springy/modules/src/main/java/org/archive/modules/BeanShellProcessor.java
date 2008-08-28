@@ -30,9 +30,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.settings.JobHome;
+import org.archive.spring.ConfigPath;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.ApplicationContext;
 
 import bsh.EvalError;
@@ -65,24 +65,13 @@ public class BeanShellProcessor extends Processor {
     /**
      *  BeanShell script file.
      */
-    String scriptFile = "";
-    public String getScriptFile() {
+    ConfigPath scriptFile = null;
+    public ConfigPath getScriptFile() {
         return this.scriptFile;
     }
-    public void setScriptFile(String file) {
+    @Required
+    public void setScriptFile(ConfigPath file) {
         this.scriptFile = file; 
-    }
-    public File resolveScriptFile() {
-        return JobHome.resolveToFile(jobHome,getScriptFile(),null); 
-    }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
 
     /**
@@ -172,7 +161,7 @@ public class BeanShellProcessor extends Processor {
             interpreter.set("self", this);
             interpreter.set("context", appCtx);
 
-            File file = resolveScriptFile();
+            File file = getScriptFile().getFile();
             try {
                 interpreter.source(file.getPath());
             } catch (IOException e) {
