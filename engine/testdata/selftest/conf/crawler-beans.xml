@@ -12,10 +12,16 @@
  
  <context:annotation-config/>
 
+<!-- -->
  <bean id="jobHome" class="org.archive.settings.JobHome">
   <property name="path" value="."/>
   <property name="name" value="dummy-name"/>
  </bean>
+<!-- -->
+ 
+ <!--
+ <bean id="configPathFixup" class="org.archive.spring.ConfigPathFixupBeanPostProcessor"/>
+ -->
  
  <!-- Shared BDB Crawler State -->
  <!-- TODO: move to an include? -->

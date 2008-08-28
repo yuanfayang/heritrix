@@ -87,15 +87,15 @@ import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
-import org.archive.settings.JobHome;
 import org.archive.settings.file.BdbModule;
+import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Immutable;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 
 
 /**
@@ -168,25 +168,13 @@ InitializingBean, HasKeyedProperties {
         this.uriUniqFilter = uriUniqFilter;
     }
     
-    @Immutable
-    String dir = "";
-    public String getDir() {
+    ConfigPath dir = null;
+    public ConfigPath getDir() {
         return this.dir;
     }
-    public void setDir(String dir) {
+    @Required
+    public void setDir(ConfigPath dir) {
         this.dir = dir; 
-    }
-    public File resolveDir() {
-        return JobHome.resolveToFile(jobHome,getDir(), null);
-    }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
     
     /** How many multiples of last fetch elapsed time to wait before recontacting
@@ -382,7 +370,7 @@ InitializingBean, HasKeyedProperties {
         // save ignored items (if any) where they can be consulted later
         AbstractFrontier.saveIgnoredItems(
                 ignoredWriter.toString(), 
-                resolveDir());
+                getDir().getFile());
     }
     
     public String getClassKey(CrawlURI cauri) {

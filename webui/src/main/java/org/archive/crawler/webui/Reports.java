@@ -263,7 +263,7 @@ public class Reports {
         CrawlJob job = CrawlJob.fromRequest(request, remote.getJMXConnector());
         try {
             String[] reports = cjm.listFiles(job.encode(), 
-                    EngineImpl.REPORTS_DIR_KEY, 
+                    EngineImpl.REPORTS_DIR_NAME, 
                     "^.*-report\\.txt");
             request.setAttribute("reports", Arrays.asList(reports));
         } finally {
@@ -288,7 +288,7 @@ public class Reports {
             String lines;
             do {
                 lines = cjm.readFile(job.encode(),
-                        EngineImpl.REPORTS_DIR_KEY,
+                        EngineImpl.REPORTS_DIR_NAME,
                         report,
                         start,
                         CHUNK_SIZE);

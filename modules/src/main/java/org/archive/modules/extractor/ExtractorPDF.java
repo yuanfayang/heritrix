@@ -101,7 +101,7 @@ public class ExtractorPDF extends ContentExtractor {
         } else {
             sn = System.identityHashCode(thread);
         }
-        File tempDir = getCrawlController().resolveScratchDir();
+        File tempDir = getCrawlController().getScratchDir().getFile();
         tempFile = new File(tempDir, "tt" + sn + "tmp.pdf");
 
         PDFParser parser;

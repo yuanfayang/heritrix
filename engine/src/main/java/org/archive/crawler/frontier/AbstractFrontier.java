@@ -89,6 +89,7 @@ import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.JobHome;
 import org.archive.settings.SheetManager;
+import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
 import org.archive.state.StateProvider;
@@ -191,15 +192,12 @@ public abstract class AbstractFrontier
         this.jobHome = home;
     }
     
-    protected String recoveryDir = new String("logs");
-    public String getRecoveryDir() {
+    protected ConfigPath recoveryDir = new ConfigPath("recovery subdirectory","logs");
+    public ConfigPath getRecoveryDir() {
         return recoveryDir;
     }
-    public void setRecoveryDir(String recoveryDir) {
+    public void setRecoveryDir(ConfigPath recoveryDir) {
         this.recoveryDir = recoveryDir;
-    }
-    public File resolveRecoveryDir() {
-        return JobHome.resolveToFile(jobHome,recoveryDir,null);
     }
 
     /**
@@ -514,7 +512,7 @@ public abstract class AbstractFrontier
         seeds.addSeedRefreshListener(this);
         
         if (getRecoveryLogEnabled()) try {
-            initJournal(loggerModule.resolveLogsDir().getAbsolutePath());
+            initJournal(loggerModule.getPath().getFile().getAbsolutePath());
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -1011,7 +1009,7 @@ public abstract class AbstractFrontier
             }
         }
         // save ignored items (if any) where they can be consulted later
-        saveIgnoredItems(ignoredWriter.toString(), resolveRecoveryDir());
+        saveIgnoredItems(ignoredWriter.toString(), getRecoveryDir().getFile());
         logger.info("finished");        
     }
 
@@ -1492,7 +1490,7 @@ public abstract class AbstractFrontier
         boolean recoveryLogEnabled = getRecoveryLogEnabled();
         out.writeBoolean(recoveryLogEnabled);
         if (recoveryLogEnabled) {
-            out.writeUTF(loggerModule.resolveLogsDir().getAbsolutePath());
+            out.writeUTF(loggerModule.getPath().getFile().getAbsolutePath());
         }
     }
     

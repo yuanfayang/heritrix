@@ -78,6 +78,9 @@ public class PathListerTest extends PathTestBase {
         System.out.println(sw.toString());
     }
 
+    public void testDummy() {
+        // suppress 'no tests found' warning
+    }
 
     /**
      * Runs the test.

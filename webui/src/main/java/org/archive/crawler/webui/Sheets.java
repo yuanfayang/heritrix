@@ -747,7 +747,7 @@ public class Sheets {
                     + JMXSheetManager.class.getName() + ",name=" + job.getName();
                 name = Misc.findUnique(jmxc, query);
             } else {
-                name = manager.getObject().getSheetManagerStub(job.encode());
+                name = null; // manager.getObject().getSheetManagerStub(job.encode());
             }
             return Remote.make(jmxc, name, JMXSheetManager.class);
         } catch (RuntimeException e) {

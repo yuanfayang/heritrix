@@ -30,6 +30,7 @@ import org.archive.crawler.extras.adaptive.AdaptiveRevisitHostQueue;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.settings.file.BdbModule;
+import org.archive.spring.ConfigPath;
 import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 
@@ -53,7 +54,7 @@ implements AdaptiveRevisitAttributeConstants {
         String dir = new File(getTmpDir(), "AR").getAbsolutePath();
         BdbModule bdb = new BdbModule();
         ExampleStateProvider dsp = new ExampleStateProvider();
-        bdb.setDir(dir);
+        bdb.setDir(new ConfigPath("test",dir));
 //        dsp.set(bdb, BdbModule.DIR, dir);
         bdb.start();
 

@@ -32,6 +32,7 @@ import org.archive.modules.DummyMetadataProvider;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.modules.writer.ARCWriterProcessor;
+import org.archive.spring.ConfigPath;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -56,7 +57,7 @@ public class ARCWriterProcessorTest extends ProcessorTestBase {
         tmp.mkdirs();
         
         ARCWriterProcessor result = new ARCWriterProcessor();
-        result.setDirectory(tmp.getAbsolutePath());
+        result.setDirectory(new ConfigPath("test",tmp.getAbsolutePath()));
         result.setServerCache(new DefaultServerCache());
         result.setMetadataProvider(new DummyMetadataProvider());
         result.start();

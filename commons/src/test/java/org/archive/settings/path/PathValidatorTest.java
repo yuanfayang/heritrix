@@ -44,6 +44,9 @@ import org.archive.state.KeyManager;
  */
 public class PathValidatorTest extends PathTestBase {
 
+    public void testDummy() {
+        // suppress 'no tests found' warning
+    }
 
     /**
      * Validate every path in every sheet in both stub and live mode.

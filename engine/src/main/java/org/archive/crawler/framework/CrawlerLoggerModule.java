@@ -44,16 +44,17 @@ import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
+import org.archive.crawler.util.Logs;
 import org.archive.io.GenerationFileHandler;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.openmbeans.annotations.Bean;
-import org.archive.settings.JobHome;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
+import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.Lifecycle;
 
 /**
@@ -63,24 +64,16 @@ import org.springframework.context.Lifecycle;
 public class CrawlerLoggerModule 
     extends Bean  
     implements 
-        UriErrorLoggerModule, AlertTracker, Lifecycle, Checkpointable {
+        UriErrorLoggerModule, AlertTracker, Lifecycle, InitializingBean,
+        Checkpointable {
     private static final long serialVersionUID = 1L;
 
-    protected String path = "logs"; 
-    public String getPath() {
+    protected ConfigPath path = new ConfigPath(EngineImpl.LOGS_DIR_NAME,"logs"); 
+    public ConfigPath getPath() {
         return path;
     }
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
+    public void setPath(ConfigPath path) {
+        this.path = path.merge(this.path);
     }
     
     // manifest support
@@ -93,16 +86,71 @@ public class CrawlerLoggerModule
 
     
     // key log names
+    private static final String LOGNAME_CRAWL = "crawl";
+    private static final String LOGNAME_ALERTS = "alerts";
     private static final String LOGNAME_PROGRESS_STATISTICS =
         "progress-statistics";
     private static final String LOGNAME_URI_ERRORS = "uri-errors";
     private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
     private static final String LOGNAME_NONFATAL_ERRORS = "nonfatal-errors";
-    private static final String LOGNAME_CRAWL = "crawl";
-    private static final String LOGNAME_ALERTS = "alerts";
 
+
+    protected ConfigPath crawlLogPath = 
+        new ConfigPath(Logs.CRAWL.getFilename(),Logs.CRAWL.getFilename()); 
+    public ConfigPath getCrawlLogPath() {
+        return crawlLogPath;
+    }
+    public void setCrawlLogPath(ConfigPath cp) {
+        this.crawlLogPath = cp.merge(this.crawlLogPath);
+    }
+    
+    protected ConfigPath alertsLogPath = 
+        new ConfigPath(Logs.ALERTS.getFilename(),Logs.ALERTS.getFilename()); 
+    public ConfigPath getAlertsLogPath() {
+        return alertsLogPath;
+    }
+    public void setAlertsLogPath(ConfigPath cp) {
+        this.alertsLogPath = cp.merge(this.alertsLogPath);
+    }
+    
+    protected ConfigPath progressLogPath = 
+        new ConfigPath(Logs.PROGRESS_STATISTICS.getFilename(),Logs.PROGRESS_STATISTICS.getFilename()); 
+    public ConfigPath getProgressLogPath() {
+        return progressLogPath;
+    }
+    public void setProgressLogPath(ConfigPath cp) {
+        this.progressLogPath = cp.merge(this.progressLogPath);
+    }
+    
+    protected ConfigPath uriErrorsLogPath = 
+        new ConfigPath(Logs.URI_ERRORS.getFilename(),Logs.URI_ERRORS.getFilename()); 
+    public ConfigPath getUriErrorsLogPath() {
+        return uriErrorsLogPath;
+    }
+    public void setUriErrorsLogPath(ConfigPath cp) {
+        this.uriErrorsLogPath = cp.merge(this.uriErrorsLogPath);
+    }
+    
+    protected ConfigPath runtimeErrorsLogPath = 
+        new ConfigPath(Logs.RUNTIME_ERRORS.getFilename(),Logs.RUNTIME_ERRORS.getFilename()); 
+    public ConfigPath getRuntimeErrorsLogPath() {
+        return runtimeErrorsLogPath;
+    }
+    public void setRuntimeErrorsLogPath(ConfigPath cp) {
+        this.runtimeErrorsLogPath = cp.merge(this.runtimeErrorsLogPath);
+    }
+    
+    protected ConfigPath nonfatalErrorsLogPath = 
+        new ConfigPath(Logs.NONFATAL_ERRORS.getFilename(),Logs.NONFATAL_ERRORS.getFilename()); 
+    public ConfigPath getNonfatalErrorsLogPath() {
+        return nonfatalErrorsLogPath;
+    }
+    public void setNonfatalErrorsLogPath(ConfigPath cp) {
+        this.nonfatalErrorsLogPath = cp.merge(this.nonfatalErrorsLogPath);
+    }
+    
     /** suffix to use on active logs */
-    public static final String CURRENT_LOG_SUFFIX = ".log";
+//    public static final String CURRENT_LOG_SUFFIX = ".log";
     
     /**
      * Crawl progress logger.
@@ -167,7 +215,7 @@ public class CrawlerLoggerModule
         if(isRunning) {
             return; 
         }
-        resolveLogsDir().mkdirs();
+        getPath().getFile().mkdirs();
         this.atg = AlertThreadGroup.current();
         try {
             setupLogs();
@@ -188,7 +236,7 @@ public class CrawlerLoggerModule
     }
     
     private void setupLogs() throws IOException {
-        String logsPath = resolveLogsDir().getAbsolutePath() + File.separatorChar;
+        String logsPath = getPath().getFile().getAbsolutePath() + File.separatorChar;
         uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
         runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
             logsPath);
@@ -199,23 +247,23 @@ public class CrawlerLoggerModule
 
         this.fileHandlers = new HashMap<Logger,FileHandler>();
         setupLogFile(uriProcessing,
-            logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
+            getCrawlLogPath().getFile().getAbsolutePath(),
             new UriProcessingFormatter(), true);
 
         setupLogFile(runtimeErrors,
-            logsPath + LOGNAME_RUNTIME_ERRORS + CURRENT_LOG_SUFFIX,
+            getRuntimeErrorsLogPath().getFile().getAbsolutePath(),
             new RuntimeErrorFormatter(), true);
 
         setupLogFile(nonfatalErrors,
-            logsPath + LOGNAME_NONFATAL_ERRORS + CURRENT_LOG_SUFFIX,
+            getNonfatalErrorsLogPath().getFile().getAbsolutePath(),
             new NonFatalErrorFormatter(), true);
 
         setupLogFile(uriErrors,
-            logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
+            getUriErrorsLogPath().getFile().getAbsolutePath(),
             new UriErrorFormatter(), true);
 
         setupLogFile(progressStats,
-            logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
+            getProgressLogPath().getFile().getAbsolutePath(),
             new StatisticsLogFormatter(), true);
 
         setupAlertLog(logsPath);
@@ -236,7 +284,7 @@ public class CrawlerLoggerModule
     
     private void setupAlertLog(String logsPath) throws IOException {
         Logger logger = Logger.getLogger(LOGNAME_ALERTS + "." + logsPath);
-        String filename = logsPath + LOGNAME_ALERTS + CURRENT_LOG_SUFFIX;
+        String filename = getAlertsLogPath().getFile().getAbsolutePath();
         GenerationFileHandler fh = new GenerationFileHandler(filename, true, 
                 true);
         fh.setFormatter(new SimpleFormatter());
@@ -254,7 +302,7 @@ public class CrawlerLoggerModule
 
     
     public void rotateLogFiles() throws IOException {
-        rotateLogFiles(CURRENT_LOG_SUFFIX + "." + ArchiveUtils.get14DigitDate());
+        rotateLogFiles("." + ArchiveUtils.get14DigitDate());
     }
     
     protected void rotateLogFiles(String generationSuffix)
@@ -263,7 +311,7 @@ public class CrawlerLoggerModule
             GenerationFileHandler gfh =
                 (GenerationFileHandler)fileHandlers.get(l);
             GenerationFileHandler newGfh =
-                gfh.rotate(generationSuffix, CURRENT_LOG_SUFFIX);
+                gfh.rotate(generationSuffix, "");
             if (gfh.shouldManifest()) {
                 addToManifest((String) newGfh.getFilenameSeries().get(1),
                     MANIFEST_LOG_FILE, newGfh.shouldManifest());
@@ -317,7 +365,7 @@ public class CrawlerLoggerModule
     public void checkpoint(File checkpointDir, List<RecoverAction> actions) 
     throws IOException {
         // Rotate off crawler logs.
-        rotateLogFiles(CURRENT_LOG_SUFFIX + "." + checkpointDir.getName());
+        rotateLogFiles("." + checkpointDir.getName());
 //            this.checkpointer.getNextCheckpointName());
     }
 
@@ -326,11 +374,6 @@ public class CrawlerLoggerModule
     
     public Logger getLogger(String name) {
         return loggers.get(name);
-    }
-
-
-    public File resolveLogsDir() {
-        return JobHome.resolveToFile(jobHome,path,EngineImpl.LOGS_DIR_PATH);
     }
 
 
@@ -402,8 +445,20 @@ public class CrawlerLoggerModule
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         loggers = new HashMap<String,Logger>();
-        resolveLogsDir().mkdirs();
+        getPath().getFile().mkdirs();
         this.atg = AlertThreadGroup.current();
         this.setupLogs();
+    }
+    
+    
+    public void afterPropertiesSet() throws Exception {
+        ConfigPath[] paths = { 
+                crawlLogPath, alertsLogPath, progressLogPath, 
+                uriErrorsLogPath, runtimeErrorsLogPath, nonfatalErrorsLogPath };
+        for(ConfigPath cp : paths) {
+            if(cp.getBase()==null) {
+                cp.setBase(getPath());
+            }
+        }
     }
 }

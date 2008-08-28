@@ -33,9 +33,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.settings.JobHome;
+import org.archive.spring.ConfigPath;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -66,24 +66,13 @@ implements ApplicationContextAware {
         Logger.getLogger(BeanShellDecideRule.class.getName());
     
     /** BeanShell script file. */
-    protected String scriptFile = "";
-    public String getScriptFile() {
+    protected ConfigPath scriptFile = null;
+    public ConfigPath getScriptFile() {
         return scriptFile;
     }
-    public void setScriptFile(String scriptFile) {
+    @Required
+    public void setScriptFile(ConfigPath scriptFile) {
         this.scriptFile = scriptFile;
-    }
-    public File resolveScriptFile() {
-        return JobHome.resolveToFile(jobHome,scriptFile,null);
-    }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
 
     /**
@@ -168,7 +157,7 @@ implements ApplicationContextAware {
             interpreter.set("self", this);
             interpreter.set("context", appCtx);
             
-            File file = resolveScriptFile();
+            File file = getScriptFile().getFile();
             try {
                 interpreter.source(file.getPath());
             } catch (IOException e) {

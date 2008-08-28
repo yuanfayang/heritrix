@@ -867,15 +867,13 @@ public class LogReader
         int seriesNumber = 1;
         NumberFormat fmt = new DecimalFormat("00000");
         String predecessorFilename =
-            fileName.substring(0,fileName.length() 
-            - CrawlerLoggerModule.CURRENT_LOG_SUFFIX.length())
+            fileName
             + fmt.format(seriesNumber);
         while((new File(predecessorFilename)).exists()) {
             filenames.add(new File(predecessorFilename));
             seriesNumber++;
             predecessorFilename =
-                fileName.substring(0,fileName.length()
-                - CrawlerLoggerModule.CURRENT_LOG_SUFFIX.length())
+                fileName
                 + fmt.format(seriesNumber);
         }
         filenames.add(new File(fileName)); // add current file

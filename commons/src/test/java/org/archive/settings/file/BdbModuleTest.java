@@ -34,6 +34,7 @@ import org.archive.settings.Checkpointer;
 import org.archive.settings.DefaultCheckpointRecovery;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SheetManager;
+import org.archive.spring.ConfigPath;
 import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 
@@ -82,7 +83,7 @@ public class BdbModuleTest extends TmpDirTestCase {
         
         BdbModule bdb = new BdbModule();
         mgr.getRoot().put("module", bdb);
-        bdb.setDir(firstState.getAbsolutePath());
+        bdb.setDir(new ConfigPath("test",firstState.getAbsolutePath()));
 //        mgr.getGlobalSheet().set(bdb, BdbModule.DIR, firstState.getAbsolutePath());
         bdb.start();
         
