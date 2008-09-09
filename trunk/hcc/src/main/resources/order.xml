@@ -292,7 +292,7 @@
           <map name="rules">
           </map>
         </newObject>
-        <string name="script-file">youtube-watch-get_video.bsh</string>
+        <string name="script-file">settings/com/youtube/youtube-watch-get_video.bsh</string>
         <boolean name="isolate-threads">true</boolean>
       </newObject>
       <newObject name="BeanShellProcessorExtractEmbed" class="org.archive.crawler.processor.BeanShellProcessor">
@@ -301,7 +301,7 @@
           <map name="rules">
           </map>
         </newObject>
-        <string name="script-file">youtube-extractor-embed.bsh</string>
+        <string name="script-file">settings/com/youtube/youtube-extractor-embed.bsh</string>
         <boolean name="isolate-threads">true</boolean>
       </newObject>
     </map>
@@ -353,7 +353,7 @@
           <map name="rules">
           </map>
         </newObject>
-        <string name="script-file">youtube-e08.bsh</string>
+        <string name="script-file">settings/com/youtube/youtube.bsh</string>
         <boolean name="isolate-threads">true</boolean>
       </newObject>
       <newObject name="Scheduler" class="org.archive.crawler.postprocessor.FrontierScheduler">
