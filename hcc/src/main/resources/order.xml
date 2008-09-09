@@ -266,6 +266,44 @@
           </map>
         </newObject>
       </newObject>
+      <newObject name="ExtractorImpliedURI2" class="org.archive.crawler.extractor.ExtractorImpliedURI">
+        <boolean name="enabled">true</boolean>
+        <newObject name="ExtractorImpliedURI2#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <string name="trigger-regexp">^(?i)(https?://[\w\.:@]*youtube\.com)/(?:jp|p|swf/(?:l|cpb|cps))\.swf\?.*(video_id=[^&amp;]+&amp;).*(t=[^&amp;]+).*$</string>
+        <string name="build-pattern">$1/player2.swf</string>
+        <boolean name="remove-trigger-uris">false</boolean>
+      </newObject>
+      <newObject name="ExtractorImpliedURI3" class="org.archive.crawler.extractor.ExtractorImpliedURI">
+        <boolean name="enabled">true</boolean>
+        <newObject name="ExtractorImpliedURI3#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <string name="trigger-regexp">^(?i)(https?://[\w\.:@]*youtube\.com)/(?:jp|p|swf/(?:l|cpb|cps))\.swf\?.*(video_id=[^&amp;]+&amp;).*(t=[^&amp;]+).*$</string>
+        <string name="build-pattern">$1/swf/cps.swf</string>
+        <boolean name="remove-trigger-uris">false</boolean>
+      </newObject>
+      <newObject name="BeanShellProcessorExtract" class="org.archive.crawler.processor.BeanShellProcessor">
+        <boolean name="enabled">false</boolean>
+        <newObject name="BeanShellProcessorExtract#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <string name="script-file">youtube-watch-get_video.bsh</string>
+        <boolean name="isolate-threads">true</boolean>
+      </newObject>
+      <newObject name="BeanShellProcessorExtractEmbed" class="org.archive.crawler.processor.BeanShellProcessor">
+        <boolean name="enabled">false</boolean>
+        <newObject name="BeanShellProcessorExtractEmbed#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <string name="script-file">youtube-extractor-embed.bsh</string>
+        <boolean name="isolate-threads">true</boolean>
+      </newObject>
     </map>
     <map name="write-processors">
       <newObject name="Archiver" class="org.archive.crawler.writer.ARCWriterProcessor">
@@ -308,6 +346,15 @@
           <map name="rules">
           </map>
         </newObject>
+      </newObject>
+      <newObject name="BeanShellProcessor" class="org.archive.crawler.processor.BeanShellProcessor">
+        <boolean name="enabled">false</boolean>
+        <newObject name="BeanShellProcessor#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <string name="script-file">youtube-e08.bsh</string>
+        <boolean name="isolate-threads">true</boolean>
       </newObject>
       <newObject name="Scheduler" class="org.archive.crawler.postprocessor.FrontierScheduler">
         <boolean name="enabled">true</boolean>
