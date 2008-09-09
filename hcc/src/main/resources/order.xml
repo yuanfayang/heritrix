@@ -41,6 +41,14 @@
           <newObject name="rejectIfTooManyHops" class="org.archive.crawler.deciderules.TooManyHopsDecideRule">
             <integer name="max-hops">25</integer>
           </newObject>
+          <newObject name="acceptIfYoutube" class="org.archive.crawler.deciderules.MatchesRegExpDecideRule">
+            <string name="decision">ACCEPT</string>
+            <string name="regexp">^https?://.*(youtube|googlevideo)\.com/(swf|get_video\?video_id=|v\/).*$</string>
+          </newObject>
+          <newObject name="acceptIfYoutubeImages" class="org.archive.crawler.deciderules.MatchesRegExpDecideRule">
+            <string name="decision">ACCEPT</string>
+            <string name="regexp">^https?://.*ytimg\.com/.*$</string>
+          </newObject>
           <newObject name="acceptIfTranscluded" class="org.archive.crawler.deciderules.TransclusionDecideRule">
             <integer name="max-trans-hops">1</integer>
             <integer name="max-speculative-hops">1</integer>
