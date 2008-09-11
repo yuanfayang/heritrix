@@ -14,7 +14,8 @@
     <html:p>Not all Heritrix functionality is currently available via
     the REST service, you may have to resort to using the JMX API for some
     operations.</html:p>
-    <html:p><html:strong>Note:</html:strong> This is a draft, check <html:a href="http://archive-crawler.svn.sourceforge.net/viewvc/*checkout*/archive-crawler/branches/aosborne_restws/restws/src/main/resources/org/archive/crawler/restws/wadl.xml">SVN</html:a>
+    <html:p><html:strong>Note:</html:strong> This is a draft, check <html:a
+		href="http://archive-crawler.svn.sourceforge.net/viewvc/*checkout*/archive-crawler/branches/aosborne_restws/restws/src/main/resources/org/archive/crawler/restws/wadl.xml">SVN</html:a>
     for the latest version of this document.  Please email comments to aosborne <html:span>at nla dot</html:span> gov dot au.</html:p>
   </doc>
 	<resources base="">
@@ -73,23 +74,6 @@ http://example.org/crawlers/c14.example.org:7000:0
 					</representation>
 				</request>
 			</method>
-			<resource path="available">
-				<method name="POST">
-					<doc>Find a crawler that is currently available to take on more jobs.  A reference to the crawler
-					will be returned in the Location header.  The returned crawler will locked so that it will
-					not be returned in subsequent requests to this action for a short period of time.  This
-					gives the consumer of the service a period of exclusive access so that it can create and start a
-					job without conflicting with other consumers.</doc>
-					<request>
-						<param style="query" name="version">
-							<doc>Filter by crawlers running a particular software version, eg <html:tt>Heritrix 2.0.1</html:tt></doc>
-						</param>
-						<param style="query" name="locktime" default="10">
-							<doc>Number of seconds the crawler will be locked for.</doc>
-						</param>
-					</request>
-				</method>
-			</resource>
 			<resource id="org.archive.crawler.restws.CrawlerResource"
 				path="{crawler}">
 				<param style="template" name="crawler">
@@ -106,6 +90,18 @@ http://example.org/crawlers/c14.example.org:7000:0
 	<method name="DELETE">
 		<doc>Unregister the crawler from this service.</doc>
 	</method>
+	
+				<resource id="org.archive.crawler.restws.CrawlerOwnerResource" path="owner">
+					<method name="GET">
+						<doc>Retrieve the current owner of this crawler.</doc>
+					</method>
+					<method name="POST">
+						<doc>Take ownership of this crawler.</doc> 
+					</method>
+					<method name="DELETE">
+						<doc>Release the crawler.</doc>
+					</method>
+				</resource>
 
 				<resource id="org.archive.crawler.restws.JobsResource"
 					path="jobs">
@@ -416,48 +412,6 @@ How this will work has not been finalized, but it is likely the REST service wil
 								</method>
 							</resource>
 						</resource>
-					</resource>
-				</resource>
-				<resource path="profiles">
-					<doc>Profiles act as templates for jobs.  New jobs are created by copying their configuration from an
-				existing profile.</doc>
-					<method name="GET">
-						<doc>List the profiles known to this crawler.</doc>
-					</method>
-						<method name="POST">
-		<doc>Create a new profile.</doc>
-		<request>
-			<representation mediaType="multipart/form-data">
-				<doc title="Create profile request" />
-				<param style="plain" name="name" required="true">
-					<doc>The name of the new profile</doc>
-				</param>
-				<param style="plain" name="template">
-					<doc>The name of an existing job or profile to create this job from.</doc>
-				</param>
-			</representation>
-		</request>
-		<response>
-			<representation status="201">
-				<doc title="Profile created">
-									The profile was created successfully.
-								</doc>
-				<param style="header" name="Location">
-					<doc>URL of the created profile.</doc>
-				</param>
-			</representation>
-			<fault status="409">
-				<doc title="Target already exists">
-									A profile or job with the name you specified already exists.  Try a different name.
-								</doc>
-			</fault>
-		</response>
-	</method>
-					<resource path="{profile}">
-						<doc>See <html:a href="##org.archive.crawler.restws.JobResource">job</html:a>.</doc>
-						<param style="template" name="profile">
-							<doc>The name of a profile.</doc>
-						</param>
 					</resource>
 				</resource>
 			</resource>
