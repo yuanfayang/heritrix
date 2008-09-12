@@ -42,7 +42,8 @@ public class RestWSTest extends TestCase {
 		restws.start();
 
 		crawlerId = cluster.getCrawlers().iterator().next().getId();
-
+		// FIXME: workaround for "Channel closed, may be due to thread interrupt"
+		try {Thread.sleep(1);} catch (InterruptedException e) {}
 	}
 
 	public void tearDown() {
@@ -55,7 +56,7 @@ public class RestWSTest extends TestCase {
 		 * give it a chance to clean up.
 		 */
 		try {
-			Thread.sleep(0);
+			Thread.sleep(1);
 		} catch (InterruptedException e) {
 		}
 
@@ -106,23 +107,23 @@ public class RestWSTest extends TestCase {
 	}
 
 	public void testCrawlerStatus() {
-		assertEquals(404, restws.get("/nonExistantCrawler:1.17").getStatus()
+		assertEquals(404, restws.get("/crawlers/nonExistantCrawler:1.17").getStatus()
 				.getCode());
-		assertEquals(400, restws.get("/bogus").getStatus().getCode());
-		assertEquals(400, restws.get("/bogus!!!::::::...").getStatus()
+		assertEquals(400, restws.get("/crawlers/bogus").getStatus().getCode());
+		assertEquals(400, restws.get("/crawlers/bogus!!!::::::...").getStatus()
 				.getCode());
-		assertEquals(400, restws.get("/bogus:foo.bar").getStatus().getCode());
-		assertEquals(200, restws.get("/" + crawlerId).getStatus().getCode());
+		assertEquals(400, restws.get("/crawlers/bogus:foo.bar").getStatus().getCode());
+		assertEquals(200, restws.get("/crawlers/" + crawlerId).getStatus().getCode());
 	}
 
 	public void testJobsList() throws Exception {
-		Response response = restws.get("/" + crawlerId + "/jobs");
+		Response response = restws.get("/crawlers/" + crawlerId + "/jobs");
 		assertEquals(200, response.getStatus().getCode());
 
 		assertEquals("check bogus job not found", 404, restws.get(
-				"/" + crawlerId + "/jobs/bogus_job").getStatus().getCode());
+				"/crawlers/" + crawlerId + "/jobs/bogus_job").getStatus().getCode());
 		assertEquals("check real job found", 200, restws.get(
-				"/" + crawlerId + "/jobs/empty_profile").getStatus().getCode());
+				"/crawlers/" + crawlerId + "/jobs/empty_profile").getStatus().getCode());
 
 	}
 
@@ -130,7 +131,7 @@ public class RestWSTest extends TestCase {
 		Form form = new Form();
 		form.add("name", "copied_profile");
 		form.add("stage", "profile");
-		Request req = new Request(Method.POST, "/" + crawlerId
+		Request req = new Request(Method.POST, "/crawlers/" + crawlerId
 				+ "/jobs/empty_profile");
 		req.setEntity(form.getWebRepresentation());
 		req.setRootRef(new Reference(""));
@@ -143,7 +144,7 @@ public class RestWSTest extends TestCase {
 				resp.getLocationRef()).getStatus().getCode());
 
 		// try overwriting our copy
-		req = new Request(Method.POST, "/" + crawlerId + "/jobs/empty_profile");
+		req = new Request(Method.POST, "/crawlers/" + crawlerId + "/jobs/empty_profile");
 		req.setEntity(form.getWebRepresentation());
 		req.setRootRef(new Reference(""));
 		assertEquals("make sure we can't overwrite jobs", 409, restws.handle(
@@ -151,11 +152,11 @@ public class RestWSTest extends TestCase {
 
 		// now lets delete it
 		assertEquals("delete bogus job", 404, restws.delete(
-				"/" + crawlerId + "/jobs/bogus_job").getStatus().getCode());
+				"/crawlers/" + crawlerId + "/jobs/bogus_job").getStatus().getCode());
 		assertEquals("delete real job", 204, restws.delete(
-				"/" + crawlerId + "/jobs/empty_profile").getStatus().getCode());
+				"/crawlers/" + crawlerId + "/jobs/empty_profile").getStatus().getCode());
 		assertEquals("make sure it is gone", 404, restws.get(
-				"/" + crawlerId + "/jobs/empty_profile").getStatus().getCode());
+				"/crawlers/" + crawlerId + "/jobs/empty_profile").getStatus().getCode());
 
 	}
 
@@ -172,26 +173,26 @@ public class RestWSTest extends TestCase {
 
 	public void testSeeds() throws Exception {
 		assertEquals("should start empty", "", restws.get(
-				"/" + crawlerId + "/jobs/empty_profile/seeds").getEntity()
+				"/crawlers/" + crawlerId + "/jobs/empty_profile/seeds").getEntity()
 				.getText());
 		assertEquals("now add some seeds", 204, restws.post(
-				"/" + crawlerId + "/jobs/empty_profile/seeds",
+				"/crawlers/" + crawlerId + "/jobs/empty_profile/seeds",
 				new StringRepresentation("http://seed1/\nhttp://seed2/"))
 				.getStatus().getCode());
 		assertEquals("check added ok", "http://seed1/\nhttp://seed2/\n", slurp(restws
-				.get("/" + crawlerId + "/jobs/empty_profile/seeds")));
-		assertEquals("add some more seeds", 204, restws.post("/" + crawlerId
+				.get("/crawlers/" + crawlerId + "/jobs/empty_profile/seeds")));
+		assertEquals("add some more seeds", 204, restws.post("/crawlers/" + crawlerId
 				+ "/jobs/empty_profile/seeds", new StringRepresentation(
 				"http://seed3/\n")));
 		assertEquals("check added more ok",
 				"http://seed1/\nhttp://seed2/\nhttp://seed3/\n", slurp(restws.get(
-						"/" + crawlerId + "/jobs/empty_profile/seeds")));
+						"/crawlers/" + crawlerId + "/jobs/empty_profile/seeds")));
 		assertEquals("replace the lot", 204, restws.put(
-				"/" + crawlerId + "/jobs/empty_profile/seeds",
+				"/crawlers/" + crawlerId + "/jobs/empty_profile/seeds",
 				new StringRepresentation("http://prime.master.seed/\n"))
 				.getStatus().getCode());
 		assertEquals("check replaced ok", "http://prime.master.seed/\n", slurp(restws
-				.get("/" + crawlerId + "/jobs/empty_profile/seeds")));
+				.get("/crawlers/" + crawlerId + "/jobs/empty_profile/seeds")));
 	}
 
 }

@@ -67,7 +67,7 @@ public class JobResource extends CrawlerResource {
 		Representation rep = new StringRepresentation("Job created",
 				MediaType.TEXT_PLAIN);
 		Reference url = new Reference(getRequest().getRootRef().toString()
-				+ "/" + getCrawler().getId()).addSegment("jobs").addSegment(
+				+ "/crawlers/" + getCrawler().getId()).addSegment("jobs").addSegment(
 				target.getName());
 		rep.setIdentifier(url);
 		getResponse().setEntity(rep);
