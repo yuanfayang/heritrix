@@ -20,7 +20,7 @@
   </doc>
 	<resources base="">
 		<resource id="org.archive.crawler.restws.CrawlersResource"
-			path="crawlers">
+			path="/crawlers">
 			<method name="GET">
 				<doc>List the crawlers available through this service.</doc>
 				<request>

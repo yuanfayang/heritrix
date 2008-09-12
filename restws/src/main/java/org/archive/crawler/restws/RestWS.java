@@ -5,6 +5,7 @@ import java.io.InputStream;
 import org.archive.crawler.client.CrawlerCluster;
 import org.restlet.Component;
 import org.restlet.Context;
+import org.restlet.Route;
 import org.restlet.data.MediaType;
 import org.restlet.data.Protocol;
 import org.restlet.ext.wadl.WadlApplication;
@@ -17,7 +18,12 @@ public class RestWS extends WadlApplication {
 		super(context, new InputRepresentation(getWadlStream(),
 				MediaType.APPLICATION_WADL_XML));
 		
-		//getRouter().attach("/doc", WadlResource.class);
+		// XXX: debug code
+		System.out.println("Defined routes:");
+		for (Route r: getRouter().getRoutes()) {
+			System.out.println(r.getTemplate().getPattern());	
+		}
+		
 	}
 
     
