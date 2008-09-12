@@ -183,7 +183,7 @@ public class RestWSTest extends TestCase {
 				.get("/crawlers/" + crawlerId + "/jobs/empty_profile/seeds")));
 		assertEquals("add some more seeds", 204, restws.post("/crawlers/" + crawlerId
 				+ "/jobs/empty_profile/seeds", new StringRepresentation(
-				"http://seed3/\n")));
+				"http://seed3/\n")).getStatus().getCode());
 		assertEquals("check added more ok",
 				"http://seed1/\nhttp://seed2/\nhttp://seed3/\n", slurp(restws.get(
 						"/crawlers/" + crawlerId + "/jobs/empty_profile/seeds")));
