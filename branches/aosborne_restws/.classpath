@@ -17,6 +17,7 @@
 	<classpathentry kind="src" path="dist/src/test/java"/>
 	<classpathentry kind="src" path="restws/src/main/java"/>
 	<classpathentry kind="src" path="restws/src/main/resources"/>
+	<classpathentry kind="src" path="restws/src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="M2_REPO/org/beanshell/bsh/2.0b4/bsh-2.0b4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/jetty/jetty/6.0.2/jetty-6.0.2.jar"/>
@@ -59,5 +60,6 @@
 	<classpathentry kind="var" path="M2_REPO/org/restlet/org.restlet/1.1-M4/org.restlet-1.1-M4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/restlet/org.restlet.ext.wadl/1.1-M4/org.restlet.ext.wadl-1.1-M4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/noelios/restlet/com.noelios.restlet/1.1-M4/com.noelios.restlet-1.1-M4.jar"/>
+	<classpathentry kind="var" path="M2_REPO"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

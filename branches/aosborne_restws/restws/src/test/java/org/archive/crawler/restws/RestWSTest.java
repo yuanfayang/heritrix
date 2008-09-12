@@ -100,7 +100,7 @@ public class RestWSTest extends TestCase {
 	}
 
 	public void testCrawlerList() throws ResourceException, IOException {
-		Response response = restws.get("/");
+		Response response = restws.get("/crawlers/");
 		assertEquals(200, response.getStatus().getCode());
 		assertEquals(crawlerId + "\r\n", response.getEntity().getText());
 	}
