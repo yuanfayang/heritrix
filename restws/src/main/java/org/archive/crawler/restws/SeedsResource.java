@@ -11,6 +11,7 @@ import org.restlet.data.Status;
 import org.restlet.resource.ReaderRepresentation;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
+import org.restlet.resource.StringRepresentation;
 import org.restlet.resource.Variant;
 
 public class SeedsResource extends JobResource {
@@ -24,10 +25,13 @@ public class SeedsResource extends JobResource {
 	 */
 	@Override
 	public Representation represent(Variant variant) throws ResourceException {
-		Representation rep = new ReaderRepresentation(getJob().getSeedsReader(),
-				MediaType.TEXT_PLAIN, getJob().getSeedsSize());
-		rep.setCharacterSet(CharacterSet.UTF_8);
-		return rep;
+		char[] buf = new char[(int) getJob().getSeedsSize()];
+		try {
+			getJob().getSeedsReader().read(buf, 0, buf.length);
+		} catch (IOException e) {
+			throw new ResourceException(500, e);
+		};
+		return new StringRepresentation(new String(buf));
 	}
 
 	/**
