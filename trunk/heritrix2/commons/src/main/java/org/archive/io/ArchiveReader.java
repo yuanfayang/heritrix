@@ -46,7 +46,9 @@ import org.archive.util.MimetypeUtils;
  * @author stack
  * @version $Date$ $Version$
  */
-public abstract class ArchiveReader implements ArchiveFileConstants {    
+public abstract class ArchiveReader 
+implements ArchiveFileConstants,Iterable<ArchiveRecord> 
+{    
     /**
      * Is this Archive file compressed?
      */
