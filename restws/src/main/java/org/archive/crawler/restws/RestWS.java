@@ -3,6 +3,8 @@ package org.archive.crawler.restws;
 import java.io.InputStream;
 
 import org.archive.crawler.client.CrawlerCluster;
+import org.archive.crawler.framework.EngineConfig;
+import org.archive.crawler.framework.EngineImpl;
 import org.restlet.Component;
 import org.restlet.Context;
 import org.restlet.Route;
@@ -12,7 +14,8 @@ import org.restlet.ext.wadl.WadlApplication;
 import org.restlet.resource.InputRepresentation;
 
 public class RestWS extends WadlApplication {
-	private CrawlerCluster cluster = new CrawlerCluster();
+	private CrawlerCluster cluster;
+	private EngineImpl manager;
 	
     public RestWS(Context context) {
 		super(context, new InputRepresentation(getWadlStream(),
@@ -24,6 +27,11 @@ public class RestWS extends WadlApplication {
 			System.out.println(r.getTemplate().getPattern());	
 		}
 		
+		//EngineConfig config = new EngineConfig();
+		//config.setJobsDirectory("/tmp/tmp_heritrix_unit_test_/jobs/");
+		//this.manager = new EngineImpl(config);
+		
+		cluster = new CrawlerCluster();		
 	}
 
     

@@ -10,6 +10,8 @@ import javax.management.ObjectName;
 
 import org.archive.crawler.framework.Engine;
 import org.archive.crawler.framework.JobStage;
+import org.archive.crawler.webui.CrawlerArea;
+import org.archive.crawler.webui.Flash;
 import org.archive.settings.jmx.JMXSheetManager;
 
 public class Job {
@@ -151,5 +153,34 @@ public class Job {
 	
 	public String toString() {
 		return "<Job: " + getJobId() + ">";
+	}
+	
+	/**
+	 * Return a list of sheets which do not validate.
+	 */
+	public String[] getProblemSheets() {
+		return getJMXSheetManager().getProblemSingleSheetNames();
+	}
+	
+	/**
+	 * Launch the job.
+	 * 
+	 * @throws Exception
+	 * @throws InvalidSheetsException one or more configured sheets did not validate.
+	 */
+	public void launch() throws Exception, InvalidSheetsException {
+	    // ensure no problem (unvalidatable) sheets before launch
+        String[] problems = getProblemSheets();
+        if(problems.length>0) {
+            StringBuilder builder = new StringBuilder("Job may not be " +
+                    "launched until the following sheets are corrected:");
+            for(String s: problems) {
+                builder.append(s);
+                builder.append(", ");
+            }
+            throw new InvalidSheetsException(builder.toString(), problems);
+        }
+        
+        getCrawler().getEngine().launchJob(getJobId());		
 	}
 }
