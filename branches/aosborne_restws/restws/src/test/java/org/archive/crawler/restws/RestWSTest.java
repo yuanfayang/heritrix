@@ -1,5 +1,6 @@
 package org.archive.crawler.restws;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -86,11 +87,16 @@ public class RestWSTest extends TestCase {
 		File sheetsDir = new File(profileDir, "sheets");
 		sheetsDir.mkdirs();
 		FileWriter writer = new FileWriter(new File(sheetsDir, "global.sheet"));
-		writer.append("root=map, java.lang.Object\n");
-		writer
-				.append("root:seeds=primary, org.archive.modules.seeds.SeedModuleImpl\n");
+		
+		BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("global.sheet")));		
+		
+		while (true) {
+			String line = reader.readLine();
+			if (line == null) break;
+			writer.append(line + "\n");
+		}
 		writer.close();
-
+		reader.close();
 		return jobsDir;
 	}
 
@@ -193,6 +199,32 @@ public class RestWSTest extends TestCase {
 				.getStatus().getCode());
 		assertEquals("check replaced ok", "http://prime.master.seed/\n", slurp(restws
 				.get("/crawlers/" + crawlerId + "/jobs/empty_profile/seeds")));
+	}
+	
+	public void testRunCrawl() throws Exception {
+		Form form = new Form();
+		form.add("name", "newjob");
+		form.add("stage", "ready");
+		Request req = new Request(Method.POST, "/crawlers/" + crawlerId
+				+ "/jobs/empty_profile");
+		req.setEntity(form.getWebRepresentation());
+		req.setRootRef(new Reference(""));
+		Response resp = restws.handle(req);
+
+		System.out.println(resp.getStatus().getDescription());
+		assertEquals("check correct response code", 201, resp.getStatus()
+				.getCode());
+		
+		
+		assertEquals("now add some seeds", 204, restws.post(
+				"/crawlers/" + crawlerId + "/jobs/newjob/seeds",
+				new StringRepresentation("http://www-test.nla.gov.au/xinq/\n"))
+				.getStatus().getCode());
+		
+		assertEquals("launch crawl", 204, restws.put("/crawlers/" + crawlerId + "/jobs/newjob/status", new StringRepresentation("preparing")).getStatus().getCode());
+		//assertEquals("check running status", "RUNNING", slurp(restws
+		//		.get("/crawlers/" + crawlerId + "/jobs/newjob/status")));
+
 	}
 
 }
