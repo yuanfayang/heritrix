@@ -49,7 +49,7 @@ import org.archive.io.UTF8Bytes;
 public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
 	private static final long serialVersionUID = -4610638888453052958L;
 	
-	public static final String MIMETYPE = "text/anvl";
+	public static final String MIMETYPE = "application/warc-fields";
 	
 	public static final ANVLRecord EMPTY_ANVL_RECORD = new ANVLRecord();
     
