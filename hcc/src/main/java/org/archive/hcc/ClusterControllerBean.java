@@ -102,7 +102,7 @@ import org.archive.util.JndiUtils;
 /**
  * As the main workhorse of the package, the <code>ClusterControllerBean</code>
  * provides a unified view of any number of Heritrix instances and all related
- * objects within a JNDI scope.
+ * objects defined within the hcc-configuration.xml file.
  * 
  * @author Daniel Bernstein (dbernstein@archive.org)
  */
@@ -123,9 +123,9 @@ public class ClusterControllerBean implements
             .getName());
 
     /**
-     * A timer thread that polls the jndi for new containers.
+     * A timer thread that polls the nodes for new containers.
      */
-    private Timer jndiPoller;
+    private Timer nodePoller;
 
     /**
      * A single instance of notification listener that simply forwards messages
@@ -134,10 +134,15 @@ public class ClusterControllerBean implements
     private NotificationDelegator remoteNotificationDelegator;
 
     /**
+     * default poll period in seconds.
+     */
+    private static final int DEFAULT_POLL_PERIOD_IN_SECONDS = 60;
+
+    /**
      * poll period in seconds.
      */
-    private static final int JNDI_POLL_PERIOD_IN_SECONDS = 60;
 
+    private int pollPeriodInSeconds = DEFAULT_POLL_PERIOD_IN_SECONDS;
     /**
      * A map of mbean server connections mapped by address. TODO make
      * configuratable
@@ -148,7 +153,7 @@ public class ClusterControllerBean implements
     /**
      * A list of remote container references
      */
-    private Map<ObjectName, Container> containers;
+    private List<Container> containers;
 
     private NotificationBroadcasterSupport broadCaster;
 
@@ -197,12 +202,12 @@ public class ClusterControllerBean implements
      */
     public ClusterControllerBean() {
         this.remoteNotificationDelegator = buildRemoteNotificationDelegator();
-        jndiPoller = new Timer();
+        nodePoller = new Timer();
         this.broadCaster = new NotificationBroadcasterSupport();
         this.invocationManager = new OpenMBeanInvocationManager();
         this.info = buildOpenMBeanInfo();
         this.mbeanServer = createMBeanServer();
-        this.containers = new HashMap<ObjectName, Container>();
+        this.containers = new LinkedList<Container>();
         this.spyListener = new NotificationListener() {
             public void handleNotification(
                     Notification notification,
@@ -252,7 +257,6 @@ public class ClusterControllerBean implements
 	    }
     	@Override
     	public int hashCode() {
-    		// TODO Auto-generated method stub
     		return id.hashCode();
     	}
     }
@@ -422,17 +426,22 @@ public class ClusterControllerBean implements
      */
     public int getMaxInstances(String hostname, Integer port){
     	Collection<Container> list = 
-    		new LinkedList<Container>(this.containers.values());
+    		new LinkedList<Container>(this.containers);
     	
     	for(Container c : list){
-    		InetSocketAddress a = JmxUtils.extractAddress(c.getName());
-    		if(a.getHostName().equals(hostname) && port == a.getPort()){
+    		InetSocketAddress a = c.getAddress();
+    		
+    		if(addressMatches(hostname, port, a)){
     			return c.getMaxInstances();
     		}
     	}
     	
     	return -1;
     }
+
+	private boolean addressMatches(String hostname, Integer port, InetSocketAddress a) {
+		return a.getHostName().equals(hostname) && port == a.getPort();
+	}
 
     /**
      * Sets the maximum number of instances that may run on a 
@@ -443,15 +452,15 @@ public class ClusterControllerBean implements
      */
     public void setMaxInstances(String hostname, Integer port, Integer maxInstances){
     	Collection<Container> list = 
-    		new LinkedList<Container>(this.containers.values());
+    		new LinkedList<Container>(this.containers);
     	
     	if(maxInstances < -1){
     		maxInstances = -1;
     	}
     	
     	for(Container c : list){
-    		InetSocketAddress a = JmxUtils.extractAddress(c.getName());
-    		if(a.getHostName().equals(hostname) && port == a.getPort()){
+    		InetSocketAddress a = c.getAddress();
+    		if(addressMatches(hostname, port, a)){
     			c.setMaxInstances(maxInstances);
     			break;
     		}
@@ -470,10 +479,10 @@ public class ClusterControllerBean implements
         if (containers != null) {
             for(Container container : containers){
                 try {
-                	log.info("attempting to create crawler on container: " + container.getName());
+                	log.info("attempting to create crawler on container: " + container.getAddress());
                     return createCrawlerIn(container);
                 } catch (Exception e) {
-                	log.warning("unexpected error!!! failed to create crawler as expected on " + container.getName());
+                	log.warning("unexpected error!!! failed to create crawler as expected on " + container.getAddress());
                 	e.printStackTrace();
                 }
             	
@@ -526,7 +535,7 @@ public class ClusterControllerBean implements
         List<Container>leastLoaded = null;
         Container last = null;
         
-        List<Container> currentContainers = new LinkedList<Container>(this.containers.values());
+        List<Container> currentContainers = new LinkedList<Container>(this.containers);
         
         Collections.sort(currentContainers, new Comparator(){
         	public int compare(Object o1, Object o2) {
@@ -837,26 +846,13 @@ public class ClusterControllerBean implements
      */
     public void init() {
         try {
-            Properties p =
-                SmartPropertiesResolver.getProperties("hcc.properties");
-            this.defaultMaxPerContainer = Integer.parseInt(
-                p.getProperty(ClusterControllerBean.class.getName() +
-                    ".maxPerContainer", "1"));
-            log.info("maxPerContainer setting: " + this.defaultMaxPerContainer);
+        	initializeConfig();
             
-            context = JndiUtils.getSubContext("org.archive.crawler");
-            this.name = new ObjectName("org.archive.hcc:"
-                    + "type=ClusterControllerBean"
-                    + ",host="
-                    + System.getenv("HOSTNAME")
-                    + ",jmxport="
-                    + System.getProperty(
-                            "com.sun.management.jmxremote.port",
-                            "8849"));
+        	initializeContext();
 
             refreshRegistry();
 
-            initializeJndiPoller();
+            initializePoller();
 
             registerMBean();
 
@@ -871,7 +867,24 @@ public class ClusterControllerBean implements
             throw new RuntimeException(e);
         }
     }
+    
+    private void initializeConfig(){
+    	Config.instance();
+    }
 
+    
+    private void initializeContext() throws MalformedObjectNameException, NamingException{
+        context = JndiUtils.getSubContext("org.archive.crawler");
+        this.name = new ObjectName("org.archive.hcc:"
+                + "type=ClusterControllerBean"
+                + ",host="
+                + System.getenv("HOSTNAME")
+                + ",jmxport="
+                + System.getProperty(
+                        "com.sun.management.jmxremote.port",
+                        "8849"));
+
+    }
     private void registerMBean() {
         try {
             this.mbeanServer.registerMBean(this, this.name);
@@ -897,18 +910,18 @@ public class ClusterControllerBean implements
                 log.info("destroying cluster controller.");
             }
 
-            jndiPoller.cancel();
+            nodePoller.cancel();
 
             if (log.isLoggable(Level.INFO)) {
                 log.info("cancelled jndi poller");
             }
 
-            jndiPoller = null;
+            nodePoller = null;
 
             this.broadCaster = null;
 
             List<Container> containers = new LinkedList<Container>(
-                    this.containers.values());
+                    this.containers);
             for (Container container : containers) {
                 dereferenceContainer(container);
             }
@@ -1180,10 +1193,11 @@ public class ClusterControllerBean implements
         return va.equals(vb);
     }
 
-    protected void handleContainerRemoved(ObjectName name) {
+    protected void handleContainerRemoved(Object name) {
 
-        for (Container c : new LinkedList<Container>(containers.values())) {
-            if (c.getName().equals(name)) {
+        for (Container c : new LinkedList<Container>(containers)) {
+            InetSocketAddress a = JmxUtils.extractAddress((ObjectName)name);
+        	if (c.getAddress().equals(a)) {
                 for (Crawler crawler : c.getCrawlers()) {
                     removeCrawlerAndNotify(crawler);
                 }
@@ -1205,77 +1219,77 @@ public class ClusterControllerBean implements
         }
     }
 
-    /**
-     * @return Returns a list of containers registered with the jndi service.
-     */
-    protected final List<ObjectName> retrieveContainerListFromJndi() {
-        List<ObjectName> list = new LinkedList<ObjectName>();
-
-        try {
-            NamingEnumeration<NameClassPair> e = context.list("");
-            while (e.hasMore()) {
-                NameClassPair ncp = e.next();
-                String jndiName = ncp.getName();
-                
-                try {
-                    ObjectName on = new ObjectName(":" + jndiName);
-                    Hashtable ht = on.getKeyPropertyList();
-                    if (ht.get("type").equals("container")) {
-                        list.add(on);
-                    }
-
-                } catch (MalformedObjectNameException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
-            }
-
-        } catch (NamingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        return list;
-    }
+//    /**
+//     * @return Returns a list of containers registered with the jndi service.
+//     */
+//    protected final List<ObjectName> retrieveContainerListFromJndi() {
+//        List<ObjectName> list = new LinkedList<ObjectName>();
+//
+//        try {
+//            NamingEnumeration<NameClassPair> e = context.list("");
+//            while (e.hasMore()) {
+//                NameClassPair ncp = e.next();
+//                String jndiName = ncp.getName();
+//                
+//                try {
+//                    ObjectName on = new ObjectName(":" + jndiName);
+//                    Hashtable ht = on.getKeyPropertyList();
+//                    if (ht.get("type").equals("container")) {
+//                        list.add(on);
+//                    }
+//
+//                } catch (MalformedObjectNameException e1) {
+//                    e1.printStackTrace();
+//                }
+//            }
+//
+//        } catch (NamingException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return list;
+//    }
     
     protected final void refreshRegistry() {
-        List<ObjectName> containerNameList = this
-                .retrieveContainerListFromJndi();
+        List<Container> containerNameList = retrieveContainerListFromXml();
         this.containers = synchronizeContainers(
                 this.containers,
                 containerNameList);
     }
 
+    private List<Container> retrieveContainerListFromXml(){
+    	return Config.instance().getContainers();
+    	
+    }
+
     /**
      * Synchronizes the container list with the fresh list (fresh meaning, last
-     * polled from jndi), removing those that went away, and adding any newly
-     * discovered containers.
-     * 
+     * polled from hcc-configuration.xml), removing those that went away, and adding any newly
+     * adding containers(jvms).
      * @param containers
      * @param freshContainers
      * @return Map of container object names.
      */
-    protected final Map<ObjectName, Container> synchronizeContainers(
-            Map<ObjectName, Container> containers,
-            List<ObjectName> freshContainers) {
+    protected final List<Container> synchronizeContainers(
+            List<Container> containers,
+            List<Container> freshContainers) {
 
-        Map<ObjectName, Container> staleContainers = new HashMap<ObjectName, Container>(
-                containers);
+        List<Container> staleContainers= new LinkedList<Container>(containers);
 
         // remove and destroy all containers not in the new list.
-        for (ObjectName n : staleContainers.keySet()) {
-            if (!freshContainers.contains(n)) {
-                handleContainerRemoved(n);
+        for (Container c: staleContainers) {
+            if (!freshContainers.contains(c)) {
+                handleContainerRemoved(c);
             }
         }
 
         // add new containers not in the old list.
-        for (ObjectName n : freshContainers) {
-            if (!containers.keySet().contains(n)) {
+        for (Container c: freshContainers) {
+            if (!containers.contains(c)) {
                 try {
-                    InetSocketAddress address = JmxUtils.extractAddress(n);
+                    InetSocketAddress address = c.getAddress();
                     registerAddress(address);
-                    synchronizeContainer(n);
+                    synchronizeContainer(c);
                     
                     attachMBeanServerDelegateNotificationListener(
                             address,
@@ -1287,7 +1301,50 @@ public class ClusterControllerBean implements
         }
 
         return containers;
-    }
+    }    
+    
+//    /**
+//     * Synchronizes the container list with the fresh list (fresh meaning, last
+//     * polled from jndi), removing those that went away, and adding any newly
+//     * discovered containers.
+//     * 
+//     * @param containers
+//     * @param freshContainers
+//     * @return Map of container object names.
+//     */
+//    protected final Map<ObjectName, Container> synchronizeContainers(
+//            Map<ObjectName, Container> containers,
+//            List<ObjectName> freshContainers) {
+//
+//        Map<ObjectName, Container> staleContainers = new HashMap<ObjectName, Container>(
+//                containers);
+//
+//        // remove and destroy all containers not in the new list.
+//        for (ObjectName n : staleContainers.keySet()) {
+//            if (!freshContainers.contains(n)) {
+//                handleContainerRemoved(n);
+//            }
+//        }
+//
+//        // add new containers not in the old list.
+//        for (ObjectName n : freshContainers) {
+//            if (!containers.keySet().contains(n)) {
+//                try {
+//                    InetSocketAddress address = JmxUtils.extractAddress(n);
+//                    registerAddress(address);
+//                    synchronizeContainer(n);
+//                    
+//                    attachMBeanServerDelegateNotificationListener(
+//                            address,
+//                            this.remoteNotificationDelegator);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//
+//        return containers;
+//    }
 
     /**
      * Attaches a notification listener to the remote mbean server delegate at
@@ -1334,9 +1391,9 @@ public class ClusterControllerBean implements
      * @param c Container to remove.
      */
     protected void dereferenceContainer(Container c) {
-        Container removed = containers.remove(c.getName());
-        if (removed != null) {
-            InetSocketAddress address = JmxUtils.extractAddress(c.getName());
+        boolean removed = containers.remove(c);
+        if (removed) {
+            InetSocketAddress address = c.getAddress();
             for (Crawler b : new LinkedList<Crawler>(c.getCrawlers())) {
                 dereferenceCrawler(b);
             }
@@ -1379,19 +1436,18 @@ public class ClusterControllerBean implements
      * 
      * @param c Container to check.
      */
-    protected void synchronizeContainer(ObjectName c) {
+    protected void synchronizeContainer(Container c) {
         log.info("synchonizing container:" + c.toString());
     	
-        InetSocketAddress address = JmxUtils.extractAddress(c);
+        InetSocketAddress address = c.getAddress();
         MBeanServerConnection mbc = this.connections.get(address);
 
         if (mbc == null) {
             throw new NullPointerException(
                     "no mbean server connection found on " + address);
         }
-        Container container = new Container(c, this.defaultMaxPerContainer);
 
-        this.containers.put(c, container);
+        this.containers.add(c);
         try {
             // TODO - this should be filtering crawlers and current jobs.
             Set<ObjectName> names = mbc.queryNames(null, null);
@@ -1420,10 +1476,10 @@ public class ClusterControllerBean implements
     }
 
     /**
-     * defines and starts the jndi poller timer task
+     * defines and starts the poller timer task
      */
-    private void initializeJndiPoller() {
-        this.jndiPoller.schedule(
+    private void initializePoller() {
+        this.nodePoller.schedule(
         // define the timer task
                 new TimerTask() {
                     public void run() {
@@ -1431,7 +1487,7 @@ public class ClusterControllerBean implements
                             log.info("running poll task...");
                         }
 
-                        if (jndiPoller == null) {
+                        if (nodePoller == null) {
                             return;
                         }
 
@@ -1444,7 +1500,7 @@ public class ClusterControllerBean implements
                 },
 
                 new Date(), // start it now
-                JNDI_POLL_PERIOD_IN_SECONDS * 1000); // poll interval
+                pollPeriodInSeconds * 1000); // poll interval
     }
 
     public Object getAttribute(String attribute)
@@ -1529,8 +1585,9 @@ public class ClusterControllerBean implements
 
     private ObjectName createServiceBeanName(
             String name,
-            InetSocketAddress address,
-            String guiPort) {
+            InetSocketAddress address
+//            ,String guiPort
+            ) {
         try {
             Hashtable<String, String> ht = new Hashtable<String, String>();
 
@@ -1538,9 +1595,9 @@ public class ClusterControllerBean implements
             ht.put(JmxUtils.TYPE, JmxUtils.SERVICE);
             ht.put(JmxUtils.NAME, name);
             ht.put(JmxUtils.JMX_PORT, String.valueOf(address.getPort()));
-            if(guiPort != null){
-                ht.put(JmxUtils.GUI_PORT, guiPort);
-            }
+//            if(guiPort != null){
+//                ht.put(JmxUtils.GUI_PORT, guiPort);
+//            }
 
             return new ObjectName("org.archive.crawler", ht);
         } catch (Exception e) {
@@ -1551,8 +1608,7 @@ public class ClusterControllerBean implements
 
 
     private ObjectName createCrawlerIn(Container container) throws Exception {
-        InetSocketAddress address = JmxUtils
-                .extractAddress(container.getName());
+        InetSocketAddress address = container.getAddress();
         MBeanServerConnection c = this.connections.get(address);
         if (c == null) {
             throw new Exception("No connection found on " + address);
@@ -1563,8 +1619,7 @@ public class ClusterControllerBean implements
             String newBeanName = "h" + System.currentTimeMillis();
             final ObjectName beanName = createServiceBeanName(
                     newBeanName,
-                    address,
-                    container.getName().getKeyProperty(JmxUtils.GUI_PORT));
+                    address);
 
             t = new MBeanFutureTask("create crawler:" + address) {
                 public boolean isNotificationEnabled(Notification notification) {
@@ -1599,9 +1654,9 @@ public class ClusterControllerBean implements
     }
 
     private Container getContainerOn(InetSocketAddress address) {
-        for (ObjectName n : this.containers.keySet()) {
-            if (address.equals(JmxUtils.extractAddress(n))) {
-                return this.containers.get(n);
+        for (Container n : this.containers) {
+            if (address.equals(n.getAddress())) {
+                return n;
             }
         }
         return null;

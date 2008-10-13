@@ -10,6 +10,7 @@ public class TestUtils  {
 
 	public static void setupConfigFile() throws Exception{
 		InputStream is = TestUtils.class.getResourceAsStream("/hcc-config.xml");
+		
 		File tmp = File.createTempFile("test", ".xml");
 		tmp.deleteOnExit();
 		FileOutputStream os = new FileOutputStream(tmp);

@@ -22,6 +22,7 @@
  */
 package org.archive.hcc;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -33,25 +34,29 @@ import javax.management.ObjectName;
  * @author Daniel Bernstein (dbernstein@archive.org)
  */
 class Container {
-    private ObjectName name;
+//    private ObjectName name;
 
     private Collection<Crawler> crawlers = new LinkedList<Crawler>();
     
     private int maxInstances = 1;
-
-    public Container(ObjectName name, int maxInstances) {
-        super();
-        this.name = name;
-        this.maxInstances = maxInstances;
+    private InetSocketAddress address = null;
+    public Container(InetSocketAddress address, Integer maxInstances){
+    	this.address = address;
     }
+    
+//    public Container(ObjectName name, int maxInstances) {
+//        super();
+//        this.name = name;
+//        this.maxInstances = maxInstances;
+//    }
 
     public Collection<Crawler> getCrawlers() {
         return crawlers;
     }
 
-    public ObjectName getName() {
-        return name;
-    }
+//    public ObjectName getName() {
+//        return name;
+//    }
 
     public void addCrawler(Crawler crawler) {
         crawler.removeFromParent();
@@ -65,5 +70,21 @@ class Container {
 
 	public void setMaxInstances(int maxInstances) {
 		this.maxInstances = maxInstances;
+	}
+	
+	public InetSocketAddress getAddress(){
+		return this.address;
+	}
+	
+	public boolean equals(Object o){
+		if(!(o instanceof Container)){
+			return false;
+		}
+		
+		Container c = (Container)o;
+		
+		return c.address.equals(address);
+		
+		
 	}
 }
