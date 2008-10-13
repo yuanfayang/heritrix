@@ -1,5 +1,8 @@
 package org.archive.hcc;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
@@ -11,12 +14,13 @@ import javax.management.ObjectName;
 import junit.framework.TestCase;
 
 import org.archive.util.JmxUtils;
+import org.archive.hcc.client.ClusterControllerClientSelfTestBase;
 import org.archive.hcc.client.Crawler;
+import org.archive.hcc.client.TestUtils;
 import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
 
 public class ClusterControllerBeanSelfTest
-        extends
-            TestCase {
+        extends TestCase {
     private ClusterControllerBean ccBean;
 
     protected void setMaxCrawlersTo(int max){
@@ -39,9 +43,12 @@ public class ClusterControllerBeanSelfTest
     	}
 
     }
-    
+
+
+	
     protected void setUp() throws Exception {
         super.setUp();
+        TestUtils.setupConfigFile();
         this.ccBean = new ClusterControllerBean();
         this.ccBean.init();
         setMaxCrawlersTo(5);

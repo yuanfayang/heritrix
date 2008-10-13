@@ -1,13 +1,6 @@
 package org.archive.hcc.client;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import org.archive.hcc.util.OrderJarFactory;
 
 public class CrawlerImplSelfTest
         extends
