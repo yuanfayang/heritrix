@@ -88,6 +88,10 @@
 					</exec>
 
 					<echo message="starting heritrix..."/>
+					<exec executable="/usr/bin/pkill" dir="${basedir}" >
+					  <arg line="-9 -f port=9090"/>
+					</exec>
+
 					<exec executable="/bin/bash" dir="${heritrix.home}" >
 					  <arg line="./bin/heritrix --port=9090 --admin=controlRole:letmein"/>
 					</exec>
@@ -104,15 +108,6 @@
 	            <configuration>
 	              <tasks>
 					<echo message="Killing heritrix..."/>
-				   <!-- 
-				   <java  fork="true" jar="${heritrix.home}/bin/cmdline-jmxclient-0.10.5.jar">
-						<arg line="controlRole:letmein"/>
-						<arg line="localhost:8849"/>
-						<arg line="org.archive.crawler:guiport=9080,host=${host},jmxport=8849,name=Heritrix,type=CrawlService"/>
-						<arg line="shutdown"/>
-					</java>
-					 -->
-							              
 					<exec executable="/usr/bin/pkill" dir="${basedir}" >
 					  <arg line="-9 -f port=9090"/>
 					</exec>

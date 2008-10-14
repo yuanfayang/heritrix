@@ -24,7 +24,9 @@ package org.archive.hcc;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,7 +37,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -81,14 +82,10 @@ import javax.management.openmbean.OpenMBeanParameterInfo;
 import javax.management.openmbean.OpenMBeanParameterInfoSupport;
 import javax.management.openmbean.SimpleType;
 import javax.management.openmbean.TabularData;
-import javax.naming.Context;
-import javax.naming.NameClassPair;
-import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
 import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegator;
-import org.archive.hcc.util.SmartPropertiesResolver;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
 import org.archive.hcc.util.jmx.MBeanFutureTask;
 import org.archive.hcc.util.jmx.MBeanOperation;
@@ -97,7 +94,6 @@ import org.archive.hcc.util.jmx.OpenMBeanInvocationManager;
 import org.archive.hcc.util.jmx.RegistrationNotificationHandler;
 import org.archive.hcc.util.jmx.SimpleReflectingMBeanOperation;
 import org.archive.util.JmxUtils;
-import org.archive.util.JndiUtils;
 
 /**
  * As the main workhorse of the package, the <code>ClusterControllerBean</code>
@@ -111,10 +107,10 @@ public class ClusterControllerBean implements
         NotificationEmitter,
         MBeanRegistration {
 
-    /**
-     * The Jndi context
-     */
-    private Context context;
+//    /**
+//     * The Jndi context
+//     */
+//    private Context context;
 
     /**
      * logger
@@ -503,28 +499,7 @@ public class ClusterControllerBean implements
 
     }
 
-//    /**
-//     * @return Currently returns the least loaded going by a dumb count.
-//     */
-//    protected Container resolveLeastLoadedContainer() {
-//
-//        Container leastLoaded = null;
-//
-//        for (Container n : this.containers.values()) {
-//            if (n.getCrawlers().size() >= n.getMaxInstances()) {
-//                continue;
-//            }
-//            if (leastLoaded == null) {
-//                leastLoaded = n;
-//            }
-//
-//            if (n.getCrawlers().size() < leastLoaded.getCrawlers().size()) {
-//                leastLoaded = n;
-//            }
-//        }
-//
-//        return leastLoaded;
-//    }
+
 
     /**
      * @return A list of available (ie not fully loaded) containers sorted from least loaded to most loaded. If no
@@ -865,6 +840,9 @@ public class ClusterControllerBean implements
         } catch (NamingException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
+        }catch (UnknownHostException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
     
@@ -873,12 +851,17 @@ public class ClusterControllerBean implements
     }
 
     
-    private void initializeContext() throws MalformedObjectNameException, NamingException{
-        context = JndiUtils.getSubContext("org.archive.crawler");
-        this.name = new ObjectName("org.archive.hcc:"
+    private void initializeContext() throws MalformedObjectNameException, NamingException, UnknownHostException{
+        //context = JndiUtils.getSubContext("org.archive.crawler");
+        String hostName = System.getenv("HOSTNAME");
+        if(hostName == null){
+        		hostName = InetAddress.getLocalHost().getHostName();
+        }
+    	
+    	this.name = new ObjectName("org.archive.hcc:"
                 + "type=ClusterControllerBean"
                 + ",host="
-                + System.getenv("HOSTNAME")
+                + hostName
                 + ",jmxport="
                 + System.getProperty(
                         "com.sun.management.jmxremote.port",
@@ -926,10 +909,12 @@ public class ClusterControllerBean implements
                 dereferenceContainer(container);
             }
 
-            context.close();
-        } catch (NamingException e) {
-            e.printStackTrace();
-        } finally {
+           //context.close();
+        } 
+//        catch (NamingException e) {
+//            e.printStackTrace();
+//        } 
+        finally {
             try {
                 this.mbeanServer.unregisterMBean(this.name);
             } catch (InstanceNotFoundException e) {
