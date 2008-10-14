@@ -1,0 +1,5 @@
+<hcc-config maxInstances="1" defaultSettingsDirectory="" >
+	<host name="localhost">
+		<container jmxPort="9090" maxInstances="0"/>
+	</host>
+</hcc-config>

@@ -1,23 +1,12 @@
 package org.archive.hcc;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.util.Collection;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
 import junit.framework.TestCase;
 
-import org.archive.util.JmxUtils;
-import org.archive.hcc.client.ClusterControllerClientSelfTestBase;
-import org.archive.hcc.client.Crawler;
 import org.archive.hcc.client.TestUtils;
-import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
 
 public class ClusterControllerBeanSelfTest
         extends TestCase {
