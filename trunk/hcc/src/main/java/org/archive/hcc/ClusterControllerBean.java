@@ -1243,6 +1243,8 @@ public class ClusterControllerBean implements
     }
 
     private List<Container> retrieveContainerListFromXml(){
+    	Config c = Config.instance();
+    	c.refresh();
     	return Config.instance().getContainers();
     	
     }
@@ -1271,8 +1273,9 @@ public class ClusterControllerBean implements
         // add new containers not in the old list.
         for (Container c: freshContainers) {
             if (!containers.contains(c)) {
-                try {
-                    InetSocketAddress address = c.getAddress();
+                InetSocketAddress address = c.getAddress();
+
+            	try {
                     registerAddress(address);
                     synchronizeContainer(c);
                     
@@ -1280,6 +1283,8 @@ public class ClusterControllerBean implements
                             address,
                             this.remoteNotificationDelegator);
                 } catch (IOException e) {
+                	log.warning("unabled to synchronize container on " + 
+                			address.getHostName()+":" + address.getPort());
                     e.printStackTrace();
                 }
             }
@@ -1417,7 +1422,10 @@ public class ClusterControllerBean implements
     /**
      * Synchronizes the state of an individual container. This means that the
      * container is polled for instances of mbeans, listeners are attached, to
-     * the remote mbeans,
+     * the remote mbeans.  If an mbean server connection cannot be created on the remote
+     * address that fact is logged, but no action is taken.  This situation might arise if
+     * a crawler goes down unexpectedly.   Since the list of available containers is managed
+     * manually, it is possible for this list to go out of sync with reality. 
      * 
      * @param c Container to check.
      */
@@ -1428,8 +1436,8 @@ public class ClusterControllerBean implements
         MBeanServerConnection mbc = this.connections.get(address);
 
         if (mbc == null) {
-            throw new NullPointerException(
-                    "no mbean server connection found on " + address);
+        	log.warning("unable to synchronize container: no mbean server connection found on " + address);
+        	return;
         }
 
         this.containers.add(c);
@@ -1441,7 +1449,7 @@ public class ClusterControllerBean implements
             }
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+        	log.warning(e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1468,8 +1476,8 @@ public class ClusterControllerBean implements
         // define the timer task
                 new TimerTask() {
                     public void run() {
-                        if (log.isLoggable(Level.INFO)) {
-                            log.info("running poll task...");
+                        if (log.isLoggable(Level.FINE)) {
+                            log.fine("running poll task...");
                         }
 
                         if (nodePoller == null) {
@@ -1477,8 +1485,8 @@ public class ClusterControllerBean implements
                         }
 
                         refreshRegistry();
-                        if (log.isLoggable(Level.INFO)) {
-                            log.info("poll task done.");
+                        if (log.isLoggable(Level.FINE)) {
+                            log.fine("poll task done.");
                         }
                     }
 
