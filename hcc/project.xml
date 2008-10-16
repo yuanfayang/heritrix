@@ -55,6 +55,14 @@
             <distribution>repo</distribution>
        </license>
     </licenses>
+    
+    	
+	<repository>
+	  <id>repository.jboss.org</id>
+	  <name>JBoss Maven Repository</name>
+	  <url>http://www.reverse.net/pub/apache</url>
+	</repository>
+		
     <dependencies>
         <dependency>
             <id>MirrorJNDI</id>
