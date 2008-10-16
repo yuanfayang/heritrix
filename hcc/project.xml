@@ -94,6 +94,12 @@
             </properties>
         </dependency>
 
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>1.6.1</version>
+
+	    </dependency>    
     </dependencies>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
