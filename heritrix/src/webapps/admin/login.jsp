@@ -11,7 +11,7 @@
             href="<%=request.getContextPath()%>/css/heritrix.css">
     </head>
 
-    <body>
+    <body onload='document.loginForm.j_username.focus()'>
         <table border="0" cellspacing="0" cellpadding="0" height="100%">
             <tr>
                 <td width="155" height="60" valign="top" nowrap>
