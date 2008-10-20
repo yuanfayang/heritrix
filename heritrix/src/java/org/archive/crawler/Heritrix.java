@@ -1409,10 +1409,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 FileUtils.copyFiles(seedsFile, new File(job.getDirectory(),
                     seedsFile.getName()));
             }
-            File settingsDir = new File(dir, "settings");
-            if (settingsDir.exists()) {
-                FileUtils.copyFiles(settingsDir, job.getDirectory());
-            }
             addCrawlJob(job);
             return job.getUID();
          } finally {
