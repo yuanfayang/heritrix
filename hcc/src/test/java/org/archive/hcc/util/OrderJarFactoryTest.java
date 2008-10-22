@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -17,8 +18,14 @@ import java.util.jar.JarInputStream;
 
 import junit.framework.TestCase;
 
-public class OrderJarFactoryTest extends TestCase{
+import org.archive.hcc.Config;
+import org.archive.hcc.ConfigTest;
 
+public class OrderJarFactoryTest extends TestCase{
+	public OrderJarFactoryTest() throws Exception{
+		ConfigTest.setupConfigFile();
+	}
+	
 	public void testWriteOrderFile(){
 		try {
 			HostConstraint hc = new HostConstraint("www.test.com");
@@ -96,26 +103,16 @@ public class OrderJarFactoryTest extends TestCase{
 
 	public void testCreateOrderJar(){
 		try {
-			Map p = new HashMap(); 
-			p.put(OrderJarFactory.NAME_KEY, "12345");
-			p.put(OrderJarFactory.USER_AGENT_KEY, "user agent info");
-			p.put(OrderJarFactory.FROM_EMAIL_KEY, "test@archiveit.org");
-
-			
 			List<String> seeds = new LinkedList<String>();
 			seeds.add("http://www.test.com");
 			seeds.add("http://www.test.com/hidden");
-			
-			p.put(OrderJarFactory.SEEDS_KEY, seeds);
-			
-
+			OrderJarFactory f = new OrderJarFactory("1234", "userAgentInfo", "test@archive-it.org", "description here", "my org", seeds);
 			HostConstraint hc = new HostConstraint("www.test.com");
 			List<HostConstraint> hostConstraints = new LinkedList<HostConstraint>();
 			hostConstraints.add(hc);
-
-			p.put(OrderJarFactory.HOST_CONSTRAINTS_KEY, hostConstraints);
+			f.setHostConstraints(hostConstraints);
 			
-            File jar = OrderJarFactory.createOrderJar(p);
+            File jar = f.createOrderJar();
 			
 			JarInputStream jis = new JarInputStream(new FileInputStream(jar));
 			

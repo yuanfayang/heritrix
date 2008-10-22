@@ -26,7 +26,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -44,199 +43,149 @@ import java.util.jar.JarOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.hcc.Config;
+
 public class OrderJarFactory {
 	public static String SETTINGS_DIRECTORY_PROPERTY= OrderJarFactory.class.getName() + ".settingsDefaultsDir";
     private static Logger log =
         Logger.getLogger(OrderJarFactory.class.getName());
-    public static final String NAME_KEY = "name";
-    public static final String OPERATOR_KEY = "operator";
+    private String name;
+    private String description;
+    private String userAgent;
+    private String fromEmail;
+    private String organization;
+    private Long durationLimit = 60*60*24*3l;
+    private Long documentLimit = 0l;
+    private List<String> seeds;
+    private List<HostConstraint> hostConstraints = null;
+    private String diskPath = null;
+    private boolean test = false;
+    private boolean oneHopOff = false;
+    private String operator = null;
     
-    public static final String DURATION_KEY = "duration";
-    public static final String TEST_CRAWL_KEY = "isTest";
-    public static final String ONE_HOP_OFF_KEY = "oneHopOff";
-
-    public static final String DOCUMENT_LIMIT_KEY = "documentLimitKey";
-    public static final String USER_AGENT_KEY = "userAgent";
-    public static final String FROM_EMAIL_KEY = "fromEmail";
-    public static final String DISK_PATH_KEY = "diskPath";
-    public static final String DESCRIPTION = "description";
-    public static final String ORGANIZATION = "organization";
-    
-    public static final String SEEDS_KEY = "seeds";
-    public static final String HOST_CONSTRAINTS_KEY = "hostConstraints";
-    
-
-    public OrderJarFactory() {
-        super();
-        // TODO Auto-generated constructor stub
+    public OrderJarFactory(String name, String userAgent, String fromEmail, String description, String organization, List<String> seeds) {
+    	assert name != null;
+    	assert userAgent != null;
+    	assert fromEmail != null;
+    	assert description != null;
+    	assert organization != null;
+    	assert seeds != null;
+    	assert seeds.size() > 0;
+    	
+    	this.name = name;
+    	this.description = description;
+    	this.userAgent = userAgent;
+    	this.fromEmail = fromEmail;
+    	this.organization = organization;
+    	this.seeds = seeds;
     }
 
-    public static File createOrderJar(Map parameters) {
-        try {
-        	
-        	//read in order xml prototype to string buffer
-            Map<String, InputStream> map = new HashMap<String, InputStream>();
-            InputStream orderPrototype = OrderJarFactory.class
-                    .getResourceAsStream("/order.xml");
-            InputStreamReader reader = new InputStreamReader(orderPrototype);
-            char[] cbuf = new char[1024];
-            int read = -1;
-            StringBuffer b = new StringBuffer();
-            while ((read = reader.read(cbuf)) > -1) {
-                b.append(cbuf, 0, read);
-            }
-
-            //replace values
-            String order = b.toString();
-            String date = new SimpleDateFormat("yyyyMMddhhmmss")
-                    .format(new Date());
-
-            order = order.replace("$name", parameters.get(NAME_KEY).toString());
-            Object operator = parameters.get(OPERATOR_KEY);
-            if(operator == null){
-            	operator = "No Operator Specified";
-            }
-            order = order.replace("$operator", operator.toString());
-
-            order = order.replace("$arcPrefix", parameters
-                    .get(NAME_KEY)
-                    .toString());
-            order = order.replace("$date", date);
-            Object isTest = parameters.get(TEST_CRAWL_KEY);
+    private String readOrderFileContentsIntoString() throws IOException{
+    	//read in order xml prototype to string buffer
+        InputStream orderPrototype = OrderJarFactory.class
+                .getResourceAsStream("/order.xml");
+        InputStreamReader reader = new InputStreamReader(orderPrototype);
+        char[] cbuf = new char[1024];
+        int read = -1;
+        StringBuffer b = new StringBuffer();
+        while ((read = reader.read(cbuf)) > -1) {
+            b.append(cbuf, 0, read);
+        }
+        return b.toString();
+        
+    }
     
-            boolean isTestFlag = isTest != null && new Boolean(isTest.toString()).booleanValue();
-            order = order.replace("$writeEnabled", String.valueOf(!isTestFlag));
-	        
-            Object oneHopOff = parameters.get(ONE_HOP_OFF_KEY);
-            
-            order = order.replace(
-            			"$oneHopOff", 
-            			String.valueOf(
-            					oneHopOff != null && new Boolean(oneHopOff.toString())));
-	       
-            
-            order = order.replace("$date", date);
+    private String buildOrderFileContents() throws IOException{
+    	String order = readOrderFileContentsIntoString();
+        
+    	order = replaceKey(order, "$name", name);
+    	order = replaceKey(order, "$arcPrefix", name);
+    	order = replaceKey(order, "$date", new SimpleDateFormat("yyyyMMddhhmmss").format(new Date()));
+    	order = replaceKey(order, "$operator", operator, "No Operator Specified");
+        order = replaceKey(order, "$writeEnabled", !isTest());
+        order = replaceKey(order, "$oneHopOff", isOneHopOff());
+        order = replaceKey(order, "$duration", new Long(this.durationLimit/1000)); //order file is in seconds.
+        order = replaceKey(order, "$documentLimit", documentLimit);
+        order = replaceKey(order, "$userAgent", userAgent);
+        order = replaceKey(order, "$fromEmail", fromEmail);
+        order = replaceKey(order, "$diskPath", diskPath, "");
+        order = replaceKey(order, "$organization", organization);
+        order = replaceKey(order, "$description", description);
+        return order;
+    }
 
-            int duration = 60*60*24*3;
-            Object durationStr = parameters.get(DURATION_KEY);
-            if(durationStr != null){
-                duration = Integer.parseInt(durationStr.toString())/1000;
+    private String replaceKey(String string, String key, Object value){
+    	return replaceKey(string, key, value, null);
+    }
+    
+    private String replaceKey(String string, String key, Object value, Object defaultValue){
+    	return string.replace(key, value != null?value.toString():defaultValue.toString());
+    }
+    
+    private InputStream createInputStreamFromString(String s) throws IOException{
+        ByteArrayOutputStream orderFileOs = new ByteArrayOutputStream();
+        orderFileOs.write(s.getBytes());
+        InputStream is = new ByteArrayInputStream(orderFileOs.toByteArray());
+        orderFileOs.close();
+        return is;
+    }
+    
+    private InputStream createSeedsInputStream(Collection<String> seeds) throws IOException{
+        // write seeds
+        StringBuffer b = new StringBuffer();
+        int count = 0;
+        for (String seed : seeds) {
+            if (count++ > 0) {
+            	b.append("\n");
             }
-            
-            order = order.replace("$duration", duration +"");
-            
-            int documentLimit = 0;
-            
-            Object documentLimitStr = parameters.get(DOCUMENT_LIMIT_KEY);
-            if(documentLimitStr != null){
-                documentLimit = Integer.parseInt(documentLimitStr.toString());
-            }
-            order = order.replace("$documentLimit", documentLimit+"");
+            b.append(seed);
+        }
+        return createInputStreamFromString(b.toString());
+    }
+    
+    private Map<String, InputStream> prepareInputStreamMap() throws IOException {
+    	String order = buildOrderFileContents();
+        Map<String, InputStream> map = new HashMap<String, InputStream>();
+        map.put("order.xml", createInputStreamFromString(order));
+        map.put("seeds.txt", createSeedsInputStream(seeds));
 
-            order = order.replace("$userAgent", parameters.get(USER_AGENT_KEY).toString());
-            order = order.replace("$fromEmail", parameters.get(FROM_EMAIL_KEY).toString());
-
-            String diskPath = (String)parameters.get(DISK_PATH_KEY);
-            if(diskPath == null){
-            	diskPath = "";
-            }
-            
-            order = order.replace("$diskPath", diskPath);
-
-            String organization = (String)parameters.get(ORGANIZATION);
-            
-            if(organization == null){
-            	organization = "";
-            }
-            
-            order = order.replace("$organization", organization);
-
-            String description = (String)parameters.get(DESCRIPTION);
-            
-            if(description == null){
-            	description = "";
-            }
-            
-            order = order.replace("$description", description);
-            
-            ByteArrayOutputStream orderFileOs = new ByteArrayOutputStream();
-            orderFileOs.write(order.getBytes());
-            map.put("order.xml", new ByteArrayInputStream(orderFileOs
-                    .toByteArray()));
-            orderFileOs.close();
-
-            // write seeds
-            ByteArrayOutputStream seedsOs = new ByteArrayOutputStream();
-            int count = 0;
-            Collection<String> seeds = (Collection<String>) parameters
-                    .get(SEEDS_KEY);
-            for (String seed : seeds) {
-                if (count++ > 0) {
-                    seedsOs.write("\n".getBytes());
-                }
-                seedsOs.write(seed.getBytes());
-
-            }
-
-            seedsOs.flush();
-            map.put(
-                    "seeds.txt",
-                    new ByteArrayInputStream(seedsOs.toByteArray()));
-            seedsOs.close();
-
+        //if a settings directory defaults has been specified,
+        //add the contents of the settings directory defaults
+        addFilesFromSettingsDirectory(map, Config.instance().getDefaultSettingsDirectory());
+        
+        
+        //create a unique temp work directory for crawlSettings
+        File tempCrawlSettingsDirectoryRoot = 
+        	new File(System.getProperty("java.io.tmpdir") + File.separator + new Date().getTime());
+        
+        tempCrawlSettingsDirectoryRoot.deleteOnExit();
+        //create hostConstraints hierarchy
+        Map<String,InputStream> files = writeHostConstraints(hostConstraints,tempCrawlSettingsDirectoryRoot);
+        
+        //add files to map - any name clashes with the defaults will be overwritten by
+        //the user specified constrants.
+        map.putAll(files);
+        return map;
+    }
+    
+    public File createOrderJar() {
+        try {
+        	Map<String,InputStream> map = prepareInputStreamMap();
             // write jar file.
             File jarFile = File.createTempFile("order", ".jar");
             JarOutputStream jos = new JarOutputStream(new FileOutputStream(
                     jarFile));
-            byte[] buf = new byte[1024];
-            
-
-            //if a settings directory defaults has been specified,
-            //add the contents of the settings directory defaults
-            Properties p =null;
-            try{
-            	p = SmartPropertiesResolver.getProperties("hcc.properties");
-
-            }catch(RuntimeException ex){
-            	log.info("hcc.properties not found");
-            }
-            
-            if(p != null){
-                String defaultSettingsDirectoryRoot = p.getProperty(SETTINGS_DIRECTORY_PROPERTY);
-                addFilesFromSettingsDirectory(map, defaultSettingsDirectoryRoot);
-            }            
-            
-            
-            //create a unique temp work directory for crawlSettings
-            File tempCrawlSettingsDirectoryRoot = 
-            	new File(System.getProperty("java.io.tmpdir") + File.separator + new Date().getTime());
-            
-            tempCrawlSettingsDirectoryRoot.deleteOnExit();
-            //create hostConstraints hierarchy
-            Map<String,InputStream> files = 
-            	writeHostConstraints(
-            			(List<HostConstraint>)parameters.get(HOST_CONSTRAINTS_KEY),
-            			tempCrawlSettingsDirectoryRoot);
-            
-            //add files to map - any name clashes with the defaults will be overwritten by
-            //the user specified constrants.
-            map.putAll(files);
-
-
-            
+            byte[] buf = new byte[1024];            
             // for each map entry
             for (String filename : map.keySet()) {
                 // Add ZIP entry to output stream.
                 jos.putNextEntry(new JarEntry(filename));
-
                 // Transfer bytes from the file to the jar file
                 InputStream in = map.get(filename);
-
                 int len;
                 while ((len = in.read(buf)) > 0) {
                     jos.write(buf, 0, len);
                 }
-
                 // Complete the entry
                 jos.closeEntry();
                 in.close();
@@ -270,8 +219,6 @@ public class OrderJarFactory {
     			//put filename path into list.
     			File file = writeSettingsFile(hc, crawlSettingsDirectoryRoot);
     			files.put(hc.getSettingsFilePath(), new FileInputStream(file));
-    			
-    			
     		}
     	}
     	
@@ -290,16 +237,7 @@ public class OrderJarFactory {
 		
 		w.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		w.append("<crawl-settings xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"heritrix_settings.xsd\">");
-		/*
-		w.append("<meta>");
-		w.append("<name></name>");
-		w.append("<description></description>");
-		w.append("<operator>Admin</operator>");
-		w.append("<audience></audience>");
-		w.append("<organization></organization>");
-		w.append("<date></date>");
-		w.append("</meta>");
-		*/
+
 		if(hc.getIgnoreRobots() != null && hc.getIgnoreRobots()){
 			w.append("<object name=\"robots-honoring-policy\"><string name=\"type\">ignore</string></object>");
 		}
@@ -375,5 +313,62 @@ public class OrderJarFactory {
 				}
 			}
 		}
+	}
+
+	public Long getDurationLimit() {
+		return durationLimit;
+	}
+
+	public void setDurationLimit(Long durationLimit) {
+		this.durationLimit = durationLimit;
+	}
+
+	public Long getDocumentLimit() {
+		return documentLimit;
+	}
+
+	public void setDocumentLimit(Long documentLimit) {
+		this.documentLimit = documentLimit;
+	}
+
+
+	public List<HostConstraint> getHostConstraints() {
+		return hostConstraints;
+	}
+
+	public void setHostConstraints(List<HostConstraint> hostConstraints) {
+		this.hostConstraints = hostConstraints;
+	}
+
+	public String getDiskPath() {
+		return diskPath;
+	}
+
+	public void setDiskPath(String diskPath) {
+		this.diskPath = diskPath;
+	}
+
+	public boolean isTest() {
+		return test;
+	}
+
+	public void setTest(boolean test) {
+		this.test = test;
+	}
+
+	public boolean isOneHopOff() {
+		return oneHopOff;
+	}
+
+	public void setOneHopOff(boolean oneHopOff) {
+		this.oneHopOff = oneHopOff;
+	}
+
+	public String getOperator() {
+		return operator;
+	}
+
+	public void setOperator(String operator) {
+		this.operator = operator;
 	}
 }
