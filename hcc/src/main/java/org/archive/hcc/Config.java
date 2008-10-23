@@ -19,6 +19,8 @@ public class Config {
 	private List<Container> containers = null;
 	private String defaultSettingsDirectory = null;
 	private File configFile = null;
+	private String heritrixJmxUsername = "controlRole";
+	private String heritrixJmxPassword = "letmein";
 	public static void init(){
 		init(true);
 	}
@@ -86,6 +88,8 @@ public class Config {
 		}
 		ConfigXmlConverter c = new ConfigXmlConverter(this.configFile);
 		this.defaultSettingsDirectory = c.getDefaultSettingsDirectory();
+		this.heritrixJmxUsername = c.getHeritrixJmxUsername();
+		this.heritrixJmxPassword = c.getHeritrixJmxPassword();
 		this.containers = c.getContainers();
 	}
 
@@ -95,6 +99,14 @@ public class Config {
 	
 	public void addContainer(String hostname, int jmxPort, int maxInstances){
 		this.containers.add(new Container(new InetSocketAddress(hostname, jmxPort), maxInstances));
+	}
+
+	public String getHeritrixJmxUsername() {
+		return heritrixJmxUsername;
+	}
+
+	public String getHeritrixJmxPassword() {
+		return heritrixJmxPassword;
 	}
 
 }
