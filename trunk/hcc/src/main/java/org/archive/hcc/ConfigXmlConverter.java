@@ -22,6 +22,8 @@ public class ConfigXmlConverter {
 	private static final String HOST_NAME_ATTRIBUTE = "name";
 	private static final String CONTAINER_ELEMENT = "container";
 	private static final String JMX_PORT_ATTRIBUTE = "jmxPort";
+	private static final String HERITRIX_JMX_USERNAME = "heritrixJmxUsername";
+	private static final String HERITRIX_JMX_PASSWORD = "heritrixJmxPassword";
 	
 	
 	public ConfigXmlConverter(File file){
@@ -35,15 +37,29 @@ public class ConfigXmlConverter {
 	}
 	
 	public String getDefaultSettingsDirectory(){
-	    try {
-			return getElementStringAttribute(getRoot(), DEFAULT_SETTINGS_DIRECTORY_ATTRIBUTE);
-		} catch (DocumentException e) {
-	        throw new RuntimeException("Error reading file " +
-	  	          configFile.getAbsolutePath() + ".", e);
-		}
+		return getRootAttribute(DEFAULT_SETTINGS_DIRECTORY_ATTRIBUTE);
 	}
 	
 	
+	public String getHeritrixJmxUsername(){
+		return getRootAttribute(HERITRIX_JMX_USERNAME);
+	}
+	
+	public String getHeritrixJmxPassword(){
+		return getRootAttribute(HERITRIX_JMX_PASSWORD);
+	}
+
+	private String getRootAttribute(String attributeName){
+	    try {
+			return getElementStringAttribute(getRoot(), attributeName);
+		} catch (DocumentException e) {
+	        throw new RuntimeException("Error reading file " +
+	  	          configFile.getAbsolutePath() + ". trying to get attribute[" +attributeName+"]", e);
+		}
+	}
+
+
+
 	
 	public List<Container> getContainers(){
 	    try {

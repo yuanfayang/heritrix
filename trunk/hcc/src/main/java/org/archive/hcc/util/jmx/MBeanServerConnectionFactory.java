@@ -27,7 +27,6 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,23 +35,11 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.archive.hcc.util.SmartPropertiesResolver;
+import org.archive.hcc.Config;
 
 public class MBeanServerConnectionFactory {
   
     private static Logger log = Logger.getLogger(MBeanServerConnectionFactory.class.getName());
-    private static Properties properties = null;
-    static {
-        try{
-        	properties = SmartPropertiesResolver.getProperties("hcc.properties");
-        }catch(Throwable t){
-        	log.warning("hcc.properties not found.");
-        	properties = new Properties();
-        }
-        
-        
-
-    }
     /**
      * Creates a new MBeanServerConnection on the specified port.
      * 
@@ -65,8 +52,8 @@ public class MBeanServerConnectionFactory {
         JMXConnector jmxc = JMXConnectorFactory.connect(
                 createJMXServiceUrl(address),
                 formatCredentials(
-            		properties.getProperty("heritrix.jmx.username", "controlRole"), 
-            		properties.getProperty("heritrix.jmx.password", "letmein")));
+                	Config.instance().getHeritrixJmxUsername(), 
+            		Config.instance().getHeritrixJmxPassword()));
 
         MBeanServerConnection mbeanServerConnection = jmxc
                 .getMBeanServerConnection();

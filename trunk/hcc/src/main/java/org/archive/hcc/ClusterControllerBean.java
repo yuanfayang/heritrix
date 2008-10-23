@@ -1284,8 +1284,9 @@ public class ClusterControllerBean implements
                             this.remoteNotificationDelegator);
                 } catch (IOException e) {
                 	log.warning("unabled to synchronize container on " + 
-                			address.getHostName()+":" + address.getPort());
-                    e.printStackTrace();
+                			address.getHostName()+":" + address.getPort() + 
+                			" - message: " + e.getMessage());
+                    
                 }
             }
         }
