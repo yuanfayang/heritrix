@@ -772,6 +772,7 @@ implements CrawlURIDispositionListener, Serializable {
                 sourceHostDistribution.get(source);
             if (hostUriCount == null) {
                 hostUriCount = new HashMap<String,LongWrapper>();
+                sourceHostDistribution.put(source, hostUriCount);
             }
             // TODO: Dan suggests we don't need a hashtable value.  Might
             // be faster if we went without. Could just have keys of:
@@ -779,7 +780,6 @@ implements CrawlURIDispositionListener, Serializable {
             // and values of: 
             //  #urls
             incrementMapCount(hostUriCount, hostname);
-            sourceHostDistribution.put(source, hostUriCount);
         }
     }
     
