@@ -200,8 +200,9 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
                 WriterPoolMember.DEFAULT_PREFIX));
         e = addElementToDefinition(
             new SimpleType(ATTR_SUFFIX, "Suffix to tag onto " +
-                "files. If value is '${HOSTNAME}', will use hostname for " +
-                "suffix. If empty, no suffix will be added.",
+                "files. '${HOSTNAME}' in the suffix will be " +
+                "replaced with the local hostname. If empty, " +
+                "no suffix will be added.",
                 WriterPoolMember.DEFAULT_SUFFIX));
         e.setOverrideable(false);
         e = addElementToDefinition(
@@ -446,15 +447,15 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         Object obj = getAttributeUnchecked(ATTR_SUFFIX);
         String sfx = (obj == null)?
             WriterPoolMember.DEFAULT_SUFFIX: (String)obj;
-        if (sfx != null && sfx.trim().
-                equals(WriterPoolMember.HOSTNAME_VARIABLE)) {
+        sfx = sfx.trim(); 
+        if (sfx.contains(WriterPoolMember.HOSTNAME_VARIABLE)) {
             String str = "localhost.localdomain";
             try {
                 str = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException ue) {
                 logger.severe("Failed getHostAddress for this host: " + ue);
             }
-            sfx = str;
+            sfx = sfx.replace(WriterPoolMember.HOSTNAME_VARIABLE, str);
         }
         return sfx;
     }
