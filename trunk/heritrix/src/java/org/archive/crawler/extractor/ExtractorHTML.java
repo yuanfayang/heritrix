@@ -730,16 +730,19 @@ implements CoreAttributeConstants {
                 return true;
             }
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
-            String refreshUri = content.substring(content.indexOf("=") + 1);
-            try {
-                curi.createAndAddLinkRelativeToBase(refreshUri, "meta",
-                    Link.REFER_HOP);
-            } catch (URIException e) {
-                if (getController() != null) {
-                    getController().logUriError(e, curi.getUURI(), refreshUri);
-                } else {
-                    logger.info("Failed createAndAddLinkRelativeToBase " +
-                        curi + ", " + cs + ", " + refreshUri + ": " + e);
+            int urlIndex = content.indexOf("=") + 1;
+            if(urlIndex>0) {
+                String refreshUri = content.substring(urlIndex);
+                try {
+                    curi.createAndAddLinkRelativeToBase(refreshUri, "meta",
+                        Link.REFER_HOP);
+                } catch (URIException e) {
+                    if (getController() != null) {
+                        getController().logUriError(e, curi.getUURI(), refreshUri);
+                    } else {
+                        logger.info("Failed createAndAddLinkRelativeToBase " +
+                            curi + ", " + cs + ", " + refreshUri + ": " + e);
+                    }
                 }
             }
         }
