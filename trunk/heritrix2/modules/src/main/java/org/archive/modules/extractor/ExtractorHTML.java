@@ -760,13 +760,16 @@ public class ExtractorHTML extends ContentExtractor implements Initializable {
                 return true;
             }
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
-            String refreshUri = content.substring(content.indexOf("=") + 1);
-            try {
-                int max = uriErrors.getMaxOutlinks(curi);
-                Link.addRelativeToBase(curi, max, refreshUri, 
-                        HTMLLinkContext.META, Hop.REFER);
-            } catch (URIException e) {
-                logUriError(e, curi, refreshUri);
+            int urlIndex = content.indexOf("=") + 1;
+            if(urlIndex>0) {
+                String refreshUri = content.substring(urlIndex);
+                try {
+                    int max = uriErrors.getMaxOutlinks(curi);
+                    Link.addRelativeToBase(curi, max, refreshUri, 
+                            HTMLLinkContext.META, Hop.REFER);
+                } catch (URIException e) {
+                    logUriError(e, curi, refreshUri);
+                }
             }
         }
         return false;
