@@ -406,14 +406,15 @@ implements Initializable, Closeable {
         result.setPrefix(context.get(this, PREFIX));
         
         String sfx = context.get(this, SUFFIX);
-        if (sfx.trim().equals(WriterPoolMember.HOSTNAME_VARIABLE)) {
+        sfx = sfx.trim();
+        if (sfx.contains(WriterPoolMember.HOSTNAME_VARIABLE)) {
             String str = "localhost.localdomain";
             try {
                 str = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException ue) {
                 logger.severe("Failed getHostAddress for this host: " + ue);
             }
-            sfx = str;
+            sfx = sfx.replace(WriterPoolMember.HOSTNAME_VARIABLE, str);
         }
         
         result.setSuffix(sfx);
