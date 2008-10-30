@@ -573,6 +573,27 @@
             </properties>
         </dependency>
         <dependency>
+            <id>jswiff</id>
+			<version>8.0-beta-2</version>
+			<url>http://www.jswiff.com/index.jsp</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <ear.bundle>true</ear.bundle>
+                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+				<description>
+					The aim of the JSwiff project is to create an open source,
+					pure Java framework for Macromedia Flash file creation and
+					manipulation. 
+				</description>
+				<license>
+					"you have two licensing options: use, modify and distribute
+					the software freely under the terms of the GNU General
+					Public License (GPL), or purchase a commercial license"
+					http://www.jswiff.com/licensing/
+				</license>
+            </properties>
+        </dependency>
+        <dependency>
             <id>itext</id>
             <version>1.2</version>
             <url>http://www.lowagie.com/iText/</url>

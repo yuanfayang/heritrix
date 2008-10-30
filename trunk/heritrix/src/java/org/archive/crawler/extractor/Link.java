@@ -75,7 +75,7 @@ public class Link implements Serializable {
      * values, or one of the stand-in constants when other context is 
      * unavailable */
     private CharSequence context;
-    /** hop-type, as character abbrieviation */
+    /** hop-type, as character abbreviation */
     private char hopType;
     
     /**
@@ -136,4 +136,13 @@ public class Link implements Serializable {
     public String toString() {
         return this.destination + " " + this.hopType + " " + this.context;
     }
+    
+    public int hashCode() {
+    	return context.hashCode() + destination.hashCode() + source.hashCode() + hopType;
+    }
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Link && obj.hashCode() == hashCode();
+	}
 }
