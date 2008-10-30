@@ -73,6 +73,12 @@ public class ExtractorSWFTest extends TmpDirTestCase implements
 		super.tearDown();
 	}
 
+	// junit requires there be at least one test in a test case, but all
+	// our tests require external resources
+	public void testNothing() {
+		logger.info("Not testing SWF extractors. To enable these tests, rename the xest* methods in ExtractorSWFTest.java");
+	}
+
 	public void xestHer1509() throws IOException {
 		// url -> link to find
 		HashMap<String, String> testUrls = new HashMap<String, String>();
