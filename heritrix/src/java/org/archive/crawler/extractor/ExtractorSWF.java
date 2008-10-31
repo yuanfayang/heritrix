@@ -28,7 +28,6 @@ package org.archive.crawler.extractor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
@@ -84,7 +83,6 @@ public class ExtractorSWF extends Extractor implements CoreAttributeConstants {
 	public ExtractorSWF(String name) {
 		super(name, "Flash extractor. Extracts URIs from SWF "
 				+ "(flash/shockwave) files.");
-		logger.setLevel(Level.ALL);
 	}
 
 	@Override
