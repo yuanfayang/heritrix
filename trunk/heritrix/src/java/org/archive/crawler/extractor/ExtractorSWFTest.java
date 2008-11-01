@@ -191,6 +191,15 @@ public class ExtractorSWFTest extends TmpDirTestCase implements
 		 * "http://wayback.archive-it.org/461/20070203222149/http://static.filmloop.com/looplets/flash/v2/looplet.swf",
 		 * "http://wayback.archive-it.org/1042/20080408200548/http://testiflashs.googlepages.com/dragonball_clock_2.swf",
 		 */
+		
+		/* 
+		 * This one is 104M. Had to add "rec.markContentBegin()" to 
+		 * HttpRecorder.wrapInputStreamWithHttpRecord() to prevent big 
+		 * swf's from causing this exception:
+		 * SEVERE: unable to open url, skipping: org.archive.io.RecorderTooMuchHeaderException
+		 * 
+		 * "http://wayback.archive-it.org/414/20080821223340/http://ericdavis.info/mrr_demo.swf",
+		 */
 	};
 
 	public void xestForRegression() throws IOException {
