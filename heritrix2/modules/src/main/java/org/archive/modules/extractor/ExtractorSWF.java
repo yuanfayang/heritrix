@@ -30,33 +30,49 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.KeyManager;
+import org.archive.util.TextUtils;
 
-import com.anotherbigidea.flash.interfaces.SWFTagTypes;
-import com.anotherbigidea.flash.readers.SWFReader;
-import com.anotherbigidea.flash.readers.TagParser;
-import com.anotherbigidea.io.InStream;
+import com.jswiff.SWFReader;
+import com.jswiff.listeners.SWFListener;
+import com.jswiff.swfrecords.ButtonCondAction;
+import com.jswiff.swfrecords.ClipActionRecord;
+import com.jswiff.swfrecords.ClipActions;
+import com.jswiff.swfrecords.SWFHeader;
+import com.jswiff.swfrecords.actions.ActionBlock;
+import com.jswiff.swfrecords.actions.ConstantPool;
+import com.jswiff.swfrecords.actions.DefineFunction;
+import com.jswiff.swfrecords.actions.DefineFunction2;
+import com.jswiff.swfrecords.actions.GetURL;
+import com.jswiff.swfrecords.actions.Push;
+import com.jswiff.swfrecords.tags.DefineButton;
+import com.jswiff.swfrecords.tags.DefineButton2;
+import com.jswiff.swfrecords.tags.DefineSprite;
+import com.jswiff.swfrecords.tags.DoAction;
+import com.jswiff.swfrecords.tags.DoInitAction;
+import com.jswiff.swfrecords.tags.PlaceObject2;
+import com.jswiff.swfrecords.tags.PlaceObject3;
+import com.jswiff.swfrecords.tags.Tag;
+import com.jswiff.swfrecords.tags.TagHeader;
 
 /**
  * Extracts URIs from SWF (flash/shockwave) files.
  * 
- * To test, here is a link to an swf that has links
- * embedded inside of it: http://www.hitspring.com/index.swf.
- *
  * @author Igor Ranitovic
+ * @author Noah Levitt
  */
 public class ExtractorSWF extends ContentExtractor {
 
     private static final long serialVersionUID = 3L;
 
-    private static Logger logger =
-        Logger.getLogger(ExtractorSWF.class.getName());
+    private static Logger logger = Logger.getLogger(ExtractorSWF.class
+            .getName());
 
     protected AtomicLong linksExtracted = new AtomicLong(0);
-
-    private static final int MAX_READ_SIZE = 1024 * 1024; // 1MB
 
     /**
      * @param name
@@ -64,7 +80,6 @@ public class ExtractorSWF extends ContentExtractor {
     public ExtractorSWF() {
     }
 
-    
     @Override
     protected boolean shouldExtract(ProcessorURI uri) {
         String contentType = uri.getContentType();
@@ -78,61 +93,25 @@ public class ExtractorSWF extends ContentExtractor {
         return true;
     }
 
-    
     @Override
     protected boolean innerExtract(ProcessorURI curi) {
         InputStream documentStream = null;
         // Get the SWF file's content stream.
         try {
-            documentStream = curi.getRecorder().getRecordedInput().
-                getContentReplayInputStream();
+            documentStream = curi.getRecorder().getRecordedInput()
+                    .getContentReplayInputStream();
             if (documentStream == null) {
                 return false;
             }
 
-            // Create SWF action that will add discoved URIs to CrawlURI
-            // alist(s).
-            CrawlUriSWFAction curiAction = new CrawlUriSWFAction(uriErrors, 
+            SWFReader swfReader = new SWFReader(documentStream);
+            ExtractorSWFListener listener = new ExtractorSWFListener(uriErrors,
                     curi);
+            swfReader.addListener(listener);
+            swfReader.read();
 
-            // Overwrite parsing of specific tags that might have URIs.
-            CustomSWFTags customTags = new CustomSWFTags(curiAction);
-            // Get a SWFReader instance.
-            SWFReader reader =
-                new SWFReader(getTagParser(customTags), documentStream) {
-                /**
-                 * Override because a corrupt SWF file can cause us to try
-                 * read lengths that are hundreds of megabytes in size
-                 * causing us to OOME.
-                 * 
-                 * Below is copied from SWFReader parent class.
-                 */
-                public int readOneTag() throws IOException {
-                    int header = mIn.readUI16();
-                    int  type   = header >> 6;    //only want the top 10 bits
-                    int  length = header & 0x3F;  //only want the bottom 6 bits
-                    boolean longTag = (length == 0x3F);
-                    if(longTag) {
-                        length = (int)mIn.readUI32();
-                    }
-                    // Below test added for Heritrix use.
-                    if (length > MAX_READ_SIZE) {
-                        // skip to next, rather than throw IOException ending
-                        // processing
-                        mIn.skipBytes(length);
-                        logger.info("oversized SWF tag (type=" + type
-                                + ";length=" + length + ") skipped");
-                    } else {
-                        byte[] contents = mIn.read(length);
-                        mConsumer.tag(type, longTag, contents);
-                    }
-                    return type;
-                }
-            };
-            
-            reader.readFile();
-            linksExtracted.addAndGet(curiAction.getLinkCount());
-            logger.fine(curi + " has " + curiAction.getLinkCount() + " links.");
+            linksExtracted.addAndGet(listener.getLinkCount());
+            logger.fine(curi + " has " + listener.getLinkCount() + " links.");
         } catch (IOException e) {
             curi.getNonFatalFailures().add(e);
         } finally {
@@ -143,94 +122,173 @@ public class ExtractorSWF extends ContentExtractor {
             }
         }
 
-
         // Set flag to indicate that link extraction is completed.
         return true;
     }
-    
+
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorSWF\n");
-        ret.append("  Function:          Link extraction on Shockwave Flash " +
-            "documents (.swf)\n");
+        ret.append("  Function:          Link extraction on Shockwave Flash "
+                + "documents (.swf)\n");
 
         ret.append("  CrawlURIs handled: " + getURICount() + "\n");
         ret.append("  Links extracted:   " + linksExtracted + "\n\n");
         return ret.toString();
     }
-    
-    
-    /**
-     * Get a TagParser
-     * 
-     * A custom ExtractorTagParser which ignores all the big binary image/
-     * sound/font types which don't carry URLs is used, to avoid the 
-     * occasionally fatal (OutOfMemoryError) memory bloat caused by the
-     * all-in-memory SWF library handling. 
-     * 
-     * @param customTags A custom tag parser.
-     * @return An SWFReader.
-     */
-    private TagParser getTagParser(CustomSWFTags customTags) {
-        return new ExtractorTagParser(customTags);
-    }
-    
-    /**
-     * TagParser customized to ignore SWFTags that 
-     * will never contain extractable URIs. 
-     */
-    protected class ExtractorTagParser extends TagParser {
 
-        protected ExtractorTagParser(SWFTagTypes tagtypes) {
-            super(tagtypes);
+    private class ExtractorSWFListener extends SWFListener {
+        private static final String JSSTRING = "javascript:";
+
+        private ProcessorURI curi;
+
+        private long linkCount;
+
+        private UriErrorLoggerModule uriErrors;
+
+        public ExtractorSWFListener(UriErrorLoggerModule uriErrors,
+                ProcessorURI curi) {
+            super();
+            assert (curi != null) : "CrawlURI should not be null";
+            this.curi = curi;
+            this.linkCount = 0;
+            this.uriErrors = uriErrors;
         }
 
-        protected void parseDefineBits(InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in bits
+        public long getLinkCount() {
+            return this.linkCount;
         }
 
-        protected void parseDefineBitsJPEG3(InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in bits
+        /**
+         * @param e
+         *            the exception which occurred during tag header parsing
+         */
+        public void processTagHeaderReadError(Exception e) {
+            logger.warning("tag header read error (parsing aborted?): " + e);
         }
 
-        protected void parseDefineBitsLossless(InStream in, int length, boolean hasAlpha) throws IOException {
-            // DO NOTHING - no URLs to be found in bits
+        /**
+         * @param tagHeader
+         *            header of the malformed tag
+         * @param tagData
+         *            the tag data as byte array
+         * @param e
+         *            the exception which occurred while parsing the tag
+         * 
+         * @return <code>false</code>, i.e. the reader continues reading further
+         *         tags after error processing
+         */
+        @Override
+        public boolean processTagReadError(TagHeader tagHeader, byte[] tagData,
+                Exception e) {
+            logger.warning("tag read error: tagHeader.getCode()="
+                    + tagHeader.getCode() + " tagData.length=" + tagData.length
+                    + ": " + e);
+            return false;
         }
 
-        protected void parseDefineButtonSound(InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in sound
+        private void considerStringAsUri(String str) {
+            Matcher uri = TextUtils.getMatcher(ExtractorJS.STRING_URI_DETECTOR,
+                    str);
+            if (uri.matches()) {
+                addLink(uri.group(), LinkContext.EMBED_MISC, Hop.EMBED);
+            }
+            TextUtils.recycleMatcher(uri);
         }
 
-        protected void parseDefineFont(InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in font
+        private void processURIString(String url) {
+            if (url.startsWith(JSSTRING)) {
+                linkCount += ExtractorJS.considerStrings(uriErrors, curi, url,
+                        false);
+            } else {
+                addLink(url, LinkContext.EMBED_MISC, Hop.EMBED);
+            }
         }
 
-        protected void parseDefineJPEG2(InStream in, int length) throws IOException {
-            // DO NOTHING - no URLs to be found in jpeg
+        private void addLink(String url, LinkContext linkContext, Hop hop) {
+            logger.fine("found link: " + url);
+            try {
+                int max = uriErrors.getMaxOutlinks(curi);
+                Link.addRelativeToVia(curi, max, url, linkContext, hop);
+                linkCount++;
+            } catch (URIException e) {
+                logger.warning("exception adding link url=" + url + ": " + e);
+            }
         }
 
-        protected void parseDefineJPEGTables(InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in jpeg
+        @Override
+        public void processHeader(SWFHeader header) {
+            logger.fine("header=" + header);
         }
 
-        protected void parseDefineShape(int type, InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in shape
+        @Override
+        public void processTag(Tag tag, long streamOffset) {
+            logger.fine("streamOffset=" + streamOffset + " tag=" + tag);
+            if (tag instanceof DefineButton2) {
+                ButtonCondAction[] actions = ((DefineButton2) tag).getActions();
+                if (actions != null) {
+                    for (ButtonCondAction action : actions) {
+                        processActionBlock(action.getActions());
+                    }
+                }
+            } else if (tag instanceof DoAction) {
+                processActionBlock(((DoAction) tag).getActions());
+            } else if (tag instanceof DefineSprite) {
+                for (Object to : ((DefineSprite) tag).getControlTags()) {
+                    // must explicitly processTag() on nested tags
+                    processTag((Tag) to, -1);
+                }
+            } else if (tag instanceof PlaceObject2) {
+                ClipActions ca = ((PlaceObject2) tag).getClipActions();
+                if (ca != null) {
+                    for (Object caro : ca.getClipActionRecords()) {
+                        processActionBlock(((ClipActionRecord) caro)
+                                .getActions());
+                    }
+                }
+            } else if (tag instanceof DefineButton) {
+                processActionBlock(((DefineButton) tag).getActions());
+            } else if (tag instanceof DoInitAction) {
+                processActionBlock(((DoInitAction) tag).getInitActions());
+            } else if (tag instanceof PlaceObject3) {
+                ClipActions ca = ((PlaceObject3) tag).getClipActions();
+                if (ca != null) {
+                    for (Object caro : ca.getClipActionRecords()) {
+                        processActionBlock(((ClipActionRecord) caro)
+                                .getActions());
+                    }
+                }
+            }
         }
 
-        protected void parseDefineSound(InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in sound
+        private void processActionBlock(ActionBlock actionBlock) {
+            for (Object o : actionBlock.getActions()) {
+                if (o instanceof GetURL) {
+                    processURIString(((GetURL) o).getURL());
+                } else if (o instanceof Push) {
+                    for (Object svo : ((Push) o).getValues()) {
+                        Push.StackValue sv = ((Push.StackValue) svo);
+                        if (sv.getType() == Push.StackValue.TYPE_STRING) {
+                            considerStringAsUri(sv.getString());
+                        }
+                    }
+                } else if (o instanceof ConstantPool) {
+                    for (Object value : ((ConstantPool) o).getConstants()) {
+                        logger
+                                .fine("considering ConstantPool/LookupTable value: "
+                                        + value);
+                        considerStringAsUri(value.toString());
+                    }
+                } else if (o instanceof DefineFunction) {
+                    processActionBlock(((DefineFunction) o).getBody());
+                } else if (o instanceof DefineFunction2) {
+                    processActionBlock(((DefineFunction2) o).getBody());
+                }
+            }
         }
+    };
 
-        protected void parseFontInfo(InStream in, int length, boolean isFI2) throws IOException {
-            // DO NOTHING - no URLs to be found in font info
-        }
-
-        protected void parseDefineFont2(InStream in) throws IOException {
-            // DO NOTHING - no URLs to be found in bits
-        }
-    }
-    
-    // good to keep at end of source: must run after all per-Key 
+    // good to keep at end of source: must run after all per-Key
     // initialization values are set.
     static {
         KeyManager.addKeys(ExtractorSWF.class);
