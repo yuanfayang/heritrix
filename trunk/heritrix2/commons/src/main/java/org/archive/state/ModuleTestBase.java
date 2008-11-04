@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.archive.util.TmpDirTestCase;
+
 import junit.framework.TestCase;
 
 
@@ -44,7 +46,7 @@ import junit.framework.TestCase;
  * 
  * @author pjack
  */
-public abstract class ModuleTestBase extends TestCase {
+public abstract class ModuleTestBase extends TmpDirTestCase {
 
 
     /**
