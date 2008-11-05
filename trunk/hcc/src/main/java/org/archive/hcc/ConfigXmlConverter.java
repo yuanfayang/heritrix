@@ -99,7 +99,7 @@ public class ConfigXmlConverter {
 	  private String getElementStringAttribute(Element element, String attributeName){
 	  		Attribute attribute = element.attribute(attributeName);
 	  		if(attribute != null){
-	  			return attribute.toString();
+	  			return attribute.getValue();
 	  		}
 	  		return null;
 	  }

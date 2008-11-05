@@ -132,7 +132,7 @@ public class ClusterControllerBean implements
     /**
      * default poll period in seconds.
      */
-    private static final int DEFAULT_POLL_PERIOD_IN_SECONDS = 60;
+    private static final int DEFAULT_POLL_PERIOD_IN_SECONDS = 15;
 
     /**
      * poll period in seconds.
@@ -209,8 +209,8 @@ public class ClusterControllerBean implements
                     Notification notification,
                     Object handback) {
 
-                if (log.isLoggable(Level.FINER)) {
-                    log.finer(">>>>>>>>>spyListener: notification="
+                if (log.isLoggable(Level.INFO)) {
+                    log.info(">>>>>>>>>spyListener: notification="
                             + notification);
                 }
 

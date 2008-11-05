@@ -22,7 +22,6 @@
  */
 package org.archive.hcc.util;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -31,9 +30,7 @@ abstract public class DelegatableBase implements Delegatable {
         Logger.getLogger(DelegatableBase.class.getName());
 
     public final boolean delegate(Object object) {
-        if (log.isLoggable(Level.FINEST)) {
-            log.finest("object=" + object);
-        }
+        log.info("object=" + object);
         return delegateImpl(object);
     }
 
