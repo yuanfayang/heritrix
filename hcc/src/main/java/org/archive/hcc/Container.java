@@ -83,8 +83,7 @@ class Container {
 		
 		Container c = (Container)o;
 		
-		return c.address.equals(address);
-		
-		
+		return c.address.getHostName().equals(address.getHostName())
+				&& ((Integer)c.address.getPort()).equals(address.getPort());
 	}
 }

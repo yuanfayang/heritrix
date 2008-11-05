@@ -104,7 +104,7 @@ public class OrderJarFactory {
     	order = replaceKey(order, "$operator", operator, "No Operator Specified");
         order = replaceKey(order, "$writeEnabled", !isTest());
         order = replaceKey(order, "$oneHopOff", isOneHopOff());
-        order = replaceKey(order, "$duration", new Long(this.durationLimit/1000)); //order file is in seconds.
+        order = replaceKey(order, "$duration", new Long(this.durationLimit)); //order file is in seconds.
         order = replaceKey(order, "$documentLimit", documentLimit);
         order = replaceKey(order, "$userAgent", userAgent);
         order = replaceKey(order, "$fromEmail", fromEmail);
