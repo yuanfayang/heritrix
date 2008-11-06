@@ -55,10 +55,8 @@ public abstract class ContentExtractorTestBase extends ProcessorTestBase {
      * Sets up the {@link #extractor} and 
      * {@link ModuleTestBase#processorClass}
      * fields.
-     * @throws Exception 
      */
-    final public void setUp() throws Exception {
-        super.setUp();
+    final public void setUp() {
         extractor = makeExtractor();
     }
     
