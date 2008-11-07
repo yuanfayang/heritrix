@@ -12,11 +12,28 @@
     </authorgroup>
   </articleinfo>
 
+  <sect1 id="1_14_2">
+    <title>Release 1.14.2 - 2008-08-06</title>
+
+    <abstract>
+      <para>Release 1.14.2 is a bugfix release with 6 tracked 
+      fixes.</para>
+    </abstract>
+
+ <para>Other details on this release, including a list of all 
+ tracked issues addressed, are available at:
+ <ulink
+        url="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.2">
+        Release Notes - Heritrix 1.14.2 at project wiki</ulink>
+    </para>
+ 
+  </sect1>
+  
   <sect1 id="1_14_1">
     <title>Release 1.14.1 - 2008-08-06</title>
 
     <abstract>
-      <para>Release 1.14.0 is a bugfix release with 25 tracked 
+      <para>Release 1.14.1 is a bugfix release with 25 tracked 
       fixes and small requested/contributed features.</para>
     </abstract>
 
@@ -24,7 +41,7 @@
  tracked issues addressed, are available at:
  <ulink
         url="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.1">
-        Release Notes - Heritrix 1.14.0 at project wiki</ulink>
+        Release Notes - Heritrix 1.14.1 at project wiki</ulink>
     </para>
  
   </sect1>
