@@ -1,0 +1,8 @@
+org.archive.modules.deciderules.ContentTypeMatchesRegExpDecideRule
+org.archive.modules.deciderules.ContentTypeNotMatchesRegExpDecideRule
+org.archive.modules.deciderules.FetchStatusMatchesRegExpDecideRule
+org.archive.modules.deciderules.FetchStatusNotMatchesRegExpDecideRule
+org.archive.modules.deciderules.HopsPathMatchesRegExpDecideRule
+org.archive.modules.deciderules.MatchesFilePatternDecideRule
+org.archive.modules.deciderules.NotMatchesFilePatternDecideRule
+org.archive.modules.deciderules.NotMatchesRegExpDecideRule
