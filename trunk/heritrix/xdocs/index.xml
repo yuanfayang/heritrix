@@ -44,19 +44,18 @@
     </section>
     <section name="News and Status">
     <subsection name="Releases 1.14.1 and 2.0.1 available 2008-08-07">
-    <p>Heritrix releases 1.14.1 and 2.0.1 are now available.</p>
+    <p>Heritrix releases 1.14.2 and 2.0.2 are now available.</p>
 
-<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.1">
-1.14.1 Release Notes</a></p>
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.2">
+1.14.2 Release Notes</a></p>
 
-<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.1+Release+Notes">
-2.0.1 Release Notes</a></p>
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.2+Release+Notes">
+2.0.2 Release Notes</a></p>
 
 <p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833">
 Download from Sourceforge files area</a></p>
 
-<p>These are both primarily bugfix releases, with a few additional small 
-features based on requests or contributions.</p>
+<p>These are both small bugfix releases.</p>
 
 <p>The next major release will be 2.2 later this year, which is planned to 
 include updates to the Heritrix 2 configuration system and checkpointing 
@@ -70,6 +69,22 @@ project discussion list.</a></p>
 <a href="http://webteam.archive.org/jira/browse/HER">
 JIRA project issue tracker.</a>
     </p>
+    </subsection>
+    
+    <subsection name="Releases 1.14.1 and 2.0.1 available 2008-08-07">
+    <p>Heritrix releases 1.14.1 and 2.0.1 are now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.1">
+1.14.1 Release Notes</a></p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.1+Release+Notes">
+2.0.1 Release Notes</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833">
+Download from Sourceforge files area</a></p>
+
+<p>These are both primarily bugfix releases, with a few additional small 
+features based on requests or contributions.</p>
     </subsection>
     
     <subsection name="Release 1.14.0 available 2008-04-27">
