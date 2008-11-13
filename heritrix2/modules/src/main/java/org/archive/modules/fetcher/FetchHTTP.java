@@ -85,6 +85,7 @@ import org.archive.modules.credential.CredentialStore;
 import org.archive.modules.credential.Rfc2617Credential;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.deciderules.DecideRuleSequence;
+import org.archive.modules.extractor.LinkContext;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
@@ -758,7 +759,7 @@ public class FetchHTTP extends Processor implements Initializable, Finishable {
             method.addRequestHeader(HEADER_SEND_CONNECTION_CLOSE);
         }
 
-        if (curi.get(this, SEND_REFERER)) {
+        if (curi.get(this, SEND_REFERER) && !LinkContext.PREREQ_MISC.equals(curi.getViaContext())) {
             // RFC2616 says no referer header if referer is https and the url
             // is not
             String via = flattenVia(curi);
