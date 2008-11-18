@@ -508,7 +508,10 @@ implements CoreAttributeConstants {
     public void extract(CrawlURI curi) {
         if (!isHttpTransactionContentToProcess(curi) ||
                 ! (isExpectedMimeType(curi.getContentType(), "text/html")
-                   || isExpectedMimeType(curi.getContentType(), "application/xhtml"))) {
+                   || isExpectedMimeType(curi.getContentType(), "application/xhtml")
+                   || isExpectedMimeType(curi.getContentType(), "text/vnd.wap.wml")
+                   || isExpectedMimeType(curi.getContentType(), "application/vnd.wap.wml")
+                   || isExpectedMimeType(curi.getContentType(), "application/vnd.wap.xhtml"))) {
             return;
         }
 
