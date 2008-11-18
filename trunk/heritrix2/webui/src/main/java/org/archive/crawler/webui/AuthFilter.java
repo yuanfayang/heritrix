@@ -23,6 +23,7 @@
 package org.archive.crawler.webui;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -33,54 +34,109 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  * Filter requiring simple authentication. 
  */
 public class AuthFilter implements Filter {
-    public static final String CONTINUE_URL = "continueUrl";
-    public static final String IS_AUTHORIZED = "isAuthorized";
+    private static final Logger logger =
+        Logger.getLogger(AuthFilter.class.getName());
+
+    private static final String IS_AUTHORIZED = "isAuthorized";
+    private static final String LOGIN_FAILURES = "loginFailures";
+    private static final String LAST_ATTEMPT = "lastAttempt";
+    private static final int MIN_MS_BETWEEN_ATTEMPTS = 3000;
     
     private static String uiPassword;
     
-    private FilterConfig filterConfig = null;
+    private String authUrl;
 
     public void init(FilterConfig config) {
-        this.filterConfig = config;
+        this.authUrl = config.getInitParameter("authUrl");
+        if (this.authUrl == null) {
+            this.authUrl = "/auth.jsp";
+            logger.info("parameter authUrl not provided in AuthFilter config "
+                    + "in web.xml, using default: " + this.authUrl);
+        }
     }
 
     public void doFilter(ServletRequest req, ServletResponse res,
             FilterChain chain)
     throws IOException, ServletException {
-        if (this.filterConfig == null) {
+        if (!(req instanceof HttpServletRequest)
+                || !(res instanceof HttpServletResponse)) {
+            chain.doFilter(req, res);
             return;
         }
-        if (req instanceof HttpServletRequest) {
-            HttpServletRequest httpReq = (HttpServletRequest)req;
-            String path = httpReq.getRequestURI();
-            String authUrl = httpReq.getContextPath() +
-                this.filterConfig.getInitParameter("authUrl");
-            boolean isAuth = Boolean.TRUE.equals(httpReq.getSession(true).getAttribute(IS_AUTHORIZED));
-            if (!isAuth && !authUrl.equals(path)) {
-              // If there is a queryString, we need to append "?" +
-              // queryString to the redir path.  Otherwise leave it
-              // alone.
-              if (httpReq.getQueryString() != null) {
-                  StringBuffer pathBuf = new StringBuffer(path);
-                  pathBuf.append("?").append( httpReq.getQueryString());
-                  path = pathBuf.toString();
-              }
-              httpReq.getSession(true).setAttribute(CONTINUE_URL, path);
-              // direct all requests that are unauth to auth
-              ((HttpServletResponse)res).sendRedirect(authUrl);
-              return;
-            }
+        
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
+        
+        HttpSession session = request.getSession(true); 
+        ServletContext sc = session.getServletContext(); 
+        
+        if (Boolean.TRUE.equals(session.getAttribute(IS_AUTHORIZED))) {
+            // already logged in
+            chain.doFilter(req, res);
+            return;
         }
-        chain.doFilter(req, res);
+
+        String enteredPassword = request.getParameter("enteredPassword");
+        if (enteredPassword != null && !enteredPassword.equals("")) {
+
+            // throttle
+            synchronized (sc) {
+                // XXX can an attacker keep getting the lock and prevent another
+                // user from logging in?
+                Long lastAttempt = (Long) sc.getAttribute(LAST_ATTEMPT);
+                if (lastAttempt == null) {
+                    lastAttempt = 0l;
+                }
+
+                long now = System.currentTimeMillis();
+                if (now - lastAttempt < MIN_MS_BETWEEN_ATTEMPTS) {
+                    long sleepMs = MIN_MS_BETWEEN_ATTEMPTS - (now - lastAttempt);
+                    logger.info("only " + (now - lastAttempt)
+                            + "ms since last login attempt, sleeping for "
+                            + sleepMs + "ms");
+                    try {
+                        Thread.sleep(sleepMs);
+                    } catch (InterruptedException e) {
+                    }
+                }
+
+                sc.setAttribute(LAST_ATTEMPT, System.currentTimeMillis());
+            }
+
+            if (enteredPassword.equals(getUIPassword(sc))) {
+                // login success
+                session.setAttribute(AuthFilter.IS_AUTHORIZED, true);
+                chain.doFilter(req, res);
+                return;
+            } else {
+                // login failure
+                Integer failures = (Integer) sc.getAttribute(LOGIN_FAILURES);
+                if (failures == null) {
+                    failures = 0;
+                }
+                failures++;
+
+                if (failures > 5) {
+                    logger.warning(failures + " failed login attempts");
+                }
+                sc.setAttribute(LOGIN_FAILURES, failures);
+                request.getRequestDispatcher(authUrl).forward(request, response);
+                return;
+            }
+        } else {
+            // no password supplied
+            request.getRequestDispatcher(authUrl).forward(request, response);
+            return;
+        }
     }
 
     public void destroy() {
-        this.filterConfig = null;
     }
     
     /**
@@ -92,9 +148,10 @@ public class AuthFilter implements Filter {
      * @param sc  The servlet context containing the initial configuration
      * @return   the current UI password
      */
+    /* XXX why does it work like this with the ServletContext? */
     public static String getUIPassword(ServletContext sc) {
         if (uiPassword == null) {
-            uiPassword = (String)sc.getAttribute("uiPassword");
+            uiPassword = (String) sc.getAttribute("uiPassword");
         }
         return uiPassword;
     }
