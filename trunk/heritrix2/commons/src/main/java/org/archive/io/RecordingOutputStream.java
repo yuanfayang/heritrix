@@ -35,8 +35,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.util.IoUtils;
-
 
 /**
  * An output stream that records all writes to wrapped output
@@ -516,8 +514,6 @@ public class RecordingOutputStream extends OutputStream {
         return getReplayCharSequence(characterEncoding, this.contentBeginMark);
     }
 
-    private static final String canonicalLatin1 = Charset.forName("iso8859-1").name();
-
     /**
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call
@@ -528,36 +524,25 @@ public class RecordingOutputStream extends OutputStream {
             long startOffset) throws IOException {
         if (characterEncoding == null)
             characterEncoding = Charset.defaultCharset().name();
-        // TODO: handled transfer-encoding: chunked content-bodies properly
-        if (canonicalLatin1.equals(Charset.forName(characterEncoding).name())) {
-            return new Latin1ByteReplayCharSequence(
+        logger.info("this.size=" + this.size + " this.buffer.length=" + this.buffer.length);
+        if (this.size <= this.buffer.length) {
+            logger.fine("using InMemoryReplayCharSequence");
+            // raw data is all in memory; do in memory
+            return new InMemoryReplayCharSequence(
                     this.buffer, 
                     this.size, 
                     startOffset,
-                    this.backingFilename);
-        } else {
-            // multibyte 
-            if(this.size <= this.buffer.length) {
-                // raw data is all in memory; do in memory
-                return new GenericReplayCharSequence(
-                        this.buffer, 
-                        this.size, 
-                        startOffset,
-                        characterEncoding);
-                
-            } else {
-                // raw data overflows to disk; use temp file
-                ReplayInputStream ris = getReplayInputStream(startOffset);
-                ReplayCharSequence rcs = new GenericReplayCharSequence(
-                        ris, 
-                        this.backingFilename,
-                        characterEncoding);
-                ris.close(); 
-                return rcs;
-            }
-            
+                    characterEncoding);
         }
-        
+        else {
+            logger.fine("using GenericReplayCharSequence");
+            // raw data overflows to disk; use temp file
+            ReplayInputStream ris = getReplayInputStream(startOffset);
+            return new GenericReplayCharSequence(
+                    ris,
+                    this.backingFilename,
+                    characterEncoding);
+        }
     }
 
     public long getResponseContentLength() {
