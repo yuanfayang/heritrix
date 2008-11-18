@@ -34,9 +34,14 @@ import java.util.logging.Logger;
 import org.archive.modules.ProcessorURI;
 import org.archive.state.KeyManager;
 
+import com.anotherbigidea.flash.interfaces.SWFActions;
 import com.anotherbigidea.flash.interfaces.SWFTagTypes;
+import com.anotherbigidea.flash.interfaces.SWFTags;
+import com.anotherbigidea.flash.readers.ActionParser;
 import com.anotherbigidea.flash.readers.SWFReader;
 import com.anotherbigidea.flash.readers.TagParser;
+import com.anotherbigidea.flash.structs.AlphaTransform;
+import com.anotherbigidea.flash.structs.Matrix;
 import com.anotherbigidea.io.InStream;
 
 /**
@@ -99,36 +104,7 @@ public class ExtractorSWF extends ContentExtractor {
             CustomSWFTags customTags = new CustomSWFTags(curiAction);
             // Get a SWFReader instance.
             SWFReader reader =
-                new SWFReader(getTagParser(customTags), documentStream) {
-                /**
-                 * Override because a corrupt SWF file can cause us to try
-                 * read lengths that are hundreds of megabytes in size
-                 * causing us to OOME.
-                 * 
-                 * Below is copied from SWFReader parent class.
-                 */
-                public int readOneTag() throws IOException {
-                    int header = mIn.readUI16();
-                    int  type   = header >> 6;    //only want the top 10 bits
-                    int  length = header & 0x3F;  //only want the bottom 6 bits
-                    boolean longTag = (length == 0x3F);
-                    if(longTag) {
-                        length = (int)mIn.readUI32();
-                    }
-                    // Below test added for Heritrix use.
-                    if (length > MAX_READ_SIZE) {
-                        // skip to next, rather than throw IOException ending
-                        // processing
-                        mIn.skipBytes(length);
-                        logger.info("oversized SWF tag (type=" + type
-                                + ";length=" + length + ") skipped");
-                    } else {
-                        byte[] contents = mIn.read(length);
-                        mConsumer.tag(type, longTag, contents);
-                    }
-                    return type;
-                }
-            };
+                new ExtractorSWFReader(new ExtractorTagParser(customTags), documentStream);
             
             reader.readFile();
             linksExtracted.addAndGet(curiAction.getLinkCount());
@@ -159,25 +135,53 @@ public class ExtractorSWF extends ContentExtractor {
         return ret.toString();
     }
     
-    
-    /**
-     * Get a TagParser
-     * 
-     * A custom ExtractorTagParser which ignores all the big binary image/
-     * sound/font types which don't carry URLs is used, to avoid the 
-     * occasionally fatal (OutOfMemoryError) memory bloat caused by the
-     * all-in-memory SWF library handling. 
-     * 
-     * @param customTags A custom tag parser.
-     * @return An SWFReader.
-     */
-    private TagParser getTagParser(CustomSWFTags customTags) {
-        return new ExtractorTagParser(customTags);
+    class ExtractorSWFReader extends SWFReader 
+    {
+        public ExtractorSWFReader(SWFTags consumer, InputStream inputstream) {
+            super(consumer, inputstream);
+        }
+
+        public ExtractorSWFReader(SWFTags consumer, InStream instream) {
+            super(consumer, instream);
+        }    
+
+        /**
+         * Override because a corrupt SWF file can cause us to try read lengths
+         * that are hundreds of megabytes in size causing us to OOME.
+         * 
+         * Below is copied from SWFReader parent class.
+         */
+        public int readOneTag() throws IOException {
+            int header = mIn.readUI16();
+            int type = header >> 6; // only want the top 10 bits
+            int length = header & 0x3F; // only want the bottom 6 bits
+            boolean longTag = (length == 0x3F);
+            if (longTag) {
+                length = (int) mIn.readUI32();
+            }
+            // Below test added for Heritrix use.
+            if (length > MAX_READ_SIZE) {
+                // skip to next, rather than throw IOException ending
+                // processing
+                mIn.skipBytes(length);
+                logger.info("oversized SWF tag (type=" + type + ";length="
+                        + length + ") skipped");
+            } else {
+                byte[] contents = mIn.read(length);
+                mConsumer.tag(type, longTag, contents);
+            }
+            return type;
+        }
     }
     
     /**
-     * TagParser customized to ignore SWFTags that 
-     * will never contain extractable URIs. 
+     * TagParser customized to do the following:
+     *  - ignore swf tags that will never contain extractable URIs, including 
+     *    all the big binary image/sound/font types, to avoid the 
+     *    occasionally fatal (OutOfMemoryError) memory bloat caused by the
+     *    all-in-memory SWF library handling
+     *  - correctly handle clip event flags inside PlaceObject2 tags (HER-1509)
+     *  - use our javaswf subclasses when parsing tags that contain other tags 
      */
     protected class ExtractorTagParser extends TagParser {
 
@@ -228,6 +232,79 @@ public class ExtractorSWF extends ContentExtractor {
         protected void parseDefineFont2(InStream in) throws IOException {
             // DO NOTHING - no URLs to be found in bits
         }
+        
+        // heritrix: Overridden to use our TagParser and SWFReader. The rest of
+        // the code is the same.
+        @Override
+        protected void parseDefineSprite(InStream in) throws IOException {
+            int id = in.readUI16();
+            in.readUI16(); // frame count
+
+            SWFTagTypes sstt = mTagtypes.tagDefineSprite(id);
+
+            if (sstt == null)
+                return;
+
+            // heritrix: only these two lines differ from
+            // super.parseDefineSprite()
+            TagParser parser = new ExtractorTagParser(sstt);
+            SWFReader reader = new ExtractorSWFReader(parser, in);
+
+            reader.readTags();
+        }
+        
+        // Overridden to read 32 bit clip event flags when flash version >= 6.
+        // All the rest of the code is copied directly. Fixes HER-1509.
+        @Override
+        protected void parsePlaceObject2( InStream in ) throws IOException
+        {
+            boolean hasClipActions    = in.readUBits(1) != 0;
+            boolean hasClipDepth      = in.readUBits(1) != 0;
+            boolean hasName           = in.readUBits(1) != 0;
+            boolean hasRatio          = in.readUBits(1) != 0;
+            boolean hasColorTransform = in.readUBits(1) != 0;
+            boolean hasMatrix         = in.readUBits(1) != 0;
+            boolean hasCharacter      = in.readUBits(1) != 0;
+            boolean isMove            = in.readUBits(1) != 0;
+
+            int depth = in.readUI16();
+
+            int            charId    = hasCharacter      ? in.readUI16()            : 0;
+            Matrix         matrix    = hasMatrix         ? new Matrix( in )         : null;
+            AlphaTransform cxform    = hasColorTransform ? new AlphaTransform( in ) : null;
+            int            ratio     = hasRatio          ? in.readUI16()            : -1;        
+            String         name      = hasName           ? in.readString(mStringEncoding)  : null;  
+            int            clipDepth = hasClipDepth      ? in.readUI16()            : 0;
+
+            int clipEventFlags = 0;
+
+            if (hasClipActions) {
+                in.readUI16(); // reserved
+
+                // heritrix: flags size changed in swf version 6
+                clipEventFlags = mFlashVersion < 6 ? in.readUI16() : in.readSI32();
+            }
+
+            SWFActions actions = mTagtypes.tagPlaceObject2(isMove, clipDepth,
+                    depth, charId, matrix, cxform, ratio, name, clipEventFlags);
+
+            if (hasClipActions && actions != null) {
+                int flags = 0;
+
+                // heritrix: flags size changed in swf version 6
+                while ((flags = mFlashVersion < 6 ? in.readUI16() : in.readSI32()) != 0) {
+                    in.readUI32(); // length
+
+                    actions.start(flags);
+                    ActionParser parser = new ActionParser(actions, mFlashVersion);
+
+                    parser.parse(in);
+                }
+
+                actions.done();
+            }
+        }
+
     }
     
     // good to keep at end of source: must run after all per-Key 
