@@ -27,8 +27,10 @@
 package org.archive.modules.extractor;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.util.TextUtils;
 
 import com.anotherbigidea.flash.writers.SWFActionsImpl;
 
@@ -66,18 +68,38 @@ extends SWFActionsImpl {
      */
     public void getURL(String url, String target)
     throws IOException {
-        // I have done tests on a few tens of swf files and have not seen a need
-        // to use 'target.' Most of the time 'target' is not set, or it is set
-        // to '_self' or '_blank'.
         if (url.startsWith(JSSTRING)) {
             linkCount =+ ExtractorJS.considerStrings(uriErrors, curi, url, 
                     false);
         } else {
             int max = uriErrors.getMaxOutlinks(curi);
-            Link.addRelativeToVia(curi, max, url, LinkContext.EMBED_MISC, 
+            Link.addRelativeToVia(curi, max, url, LinkContext.EMBED_MISC,
                     Hop.EMBED);
             linkCount++;
         }
+    }
+
+    public void considerStringAsUri(String str) throws IOException {
+        Matcher uri = TextUtils.getMatcher(ExtractorJS.STRING_URI_DETECTOR,
+                str);
+
+        if (uri.matches()) {
+            int max = uriErrors.getMaxOutlinks(curi);
+            Link.addRelativeToVia(curi, max, uri.group(), LinkContext.SPECULATIVE_MISC, Hop.SPECULATIVE);
+            linkCount++;
+        }
+        TextUtils.recycleMatcher(uri);
+    }
+
+
+    public void lookupTable(String[] strings) throws IOException {
+        for (String str : strings) {
+            considerStringAsUri(str);
+        }
+    }
+
+    public void push(String value) throws IOException {
+        considerStringAsUri(value);
     }
     
     /**

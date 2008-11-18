@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.util.Vector;
 
 import com.anotherbigidea.flash.interfaces.SWFActions;
+import com.anotherbigidea.flash.interfaces.SWFTagTypes;
+import com.anotherbigidea.flash.structs.AlphaTransform;
+import com.anotherbigidea.flash.structs.Matrix;
 import com.anotherbigidea.flash.writers.SWFTagTypesImpl;
 
 /**
@@ -48,17 +51,29 @@ public class CustomSWFTags extends SWFTagTypesImpl {
 
     public SWFActions tagDefineButton(int id, Vector buttonRecords)
             throws IOException {
-
         return actions;
     }
 
     public SWFActions tagDefineButton2(int id, boolean trackAsMenu,
             Vector buttonRecord2s) throws IOException {
-
         return actions;
     }
 
     public SWFActions tagDoAction() throws IOException {
+        return actions;
+    }
+
+    public SWFActions tagDoInActions(int spriteId) throws IOException {
+        return actions;
+    }
+
+    public SWFTagTypes tagDefineSprite(int id) throws IOException {
+        return this;
+    }
+
+    public SWFActions tagPlaceObject2(boolean isMove, int clipDepth,
+            int depth, int charId, Matrix matrix, AlphaTransform cxform,
+            int ratio, String name, int clipActionFlags) throws IOException {
         return actions;
     }
 }
