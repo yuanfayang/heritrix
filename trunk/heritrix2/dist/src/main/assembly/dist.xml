@@ -18,6 +18,12 @@
      <includes>
       <include>README.txt</include>
       <include>LICENSE.txt</include>
+     </includes>
+    </fileSet>
+    <fileSet>
+     <directory>target</directory>
+     <outputDirectory>/</outputDirectory>
+     <includes>
       <include>HOWTO-Launch-Heritrix.txt</include>
      </includes>
     </fileSet>
