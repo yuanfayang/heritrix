@@ -37,9 +37,11 @@ public class WebUIConfig {
 
     
     private Set<String> hosts = new HashSet<String>();
-    private int port = 8080;
+    private int port;
     private String pathToWAR = null;
     private String uiPassword = null;
+    private String keystore = null;
+    private boolean ssl = false;
     
     public WebUIConfig() {
     }
@@ -96,4 +98,23 @@ public class WebUIConfig {
         return sb.toString();
     }
 
+    public void setKeystore(String keystore) {
+        this.keystore  = keystore;
+    }
+
+    public String getKeystore() {
+        return keystore;
+    }
+
+    public void setSsl(boolean ssl) {
+        this.ssl  = ssl;
+    }
+
+    public boolean isSsl() {
+        return this.ssl;
+    }
+    
+    public boolean getSsl() {
+        return this.ssl;
+    }
 }

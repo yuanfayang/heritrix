@@ -25,13 +25,10 @@
 package org.archive.crawler;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +54,6 @@ import org.archive.crawler.framework.EngineConfig;
 import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.framework.JobStage;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.IoUtils;
 import org.archive.util.JndiUtils;
 
 
@@ -141,9 +137,15 @@ public class Heritrix {
                 "A comma-separated list of hostnames for the " +
                 "webui to bind to.");
         options.addOption("p", "webui-port", true, "The port the webui " +
-                "should listen on.");
+                "should listen on. Defaults to 8443 with SSL enabled or " + 
+                "8080 otherwise.");
         options.addOption("w", "webui-war-path", true, "The path to the " +
                 "Heritrix webui WAR.");
+        options.addOption("k", "keystore", true, "Path to keystore with " + 
+                 "private key and certificate for webui running behind " + 
+                 "https.");
+        options.addOption("x", "no-ssl", false, "Use plain http and not " +
+                 "https for the webui.");
         options.addOption("n", "no-web-ui", false, "Do not run the admin web " +
                 "user interface; only run the crawl engine.  If set, the " +
         	"crawl engine will need to be controlled via JMX or a remote " +
@@ -220,24 +222,31 @@ public class Heritrix {
         CommandLine cl = getCommandLine(out, args);
         if (cl == null) return;
 
-        if (cl.hasOption('h')) {
+        if (cl.hasOption("help")) {
           usage(out);
           return ;
         }
 
-        if (cl.hasOption('n') && cl.hasOption('u')) {
-            out.println("Only one of -n or -u may be specified.");
+        if (cl.hasOption("no-web-ui") && cl.hasOption("no-engine")) {
+            out.println("Only one of --no-web-ui or --no-engine may be specified.");
             usage(out);
             System.exit(1);
         }
         
-        if (cl.hasOption('n')
+        if (cl.hasOption("no-web-ui")
                 && (System.getProperty(
                         "com.sun.management.jmxremote.port") == null)) {
             out.println("The crawl engine is inaccessible.  You "
                     + "must specify the system property "
                     + "com.sun.management.jmxremote.port if you disable "
-                    + "the web UI with -n.");
+                    + "the web UI with --no-web-ui.");
+            System.exit(1);
+        }
+
+        if (cl.hasOption("no-ssl") && cl.hasOption("keystore")) {
+            System.err.println("Only one of --no-ssl and --keystore may be "
+                    + "specified.");
+            usage(out);
             System.exit(1);
         }
 
@@ -245,26 +254,26 @@ public class Heritrix {
         WebUIConfig webConfig = new WebUIConfig();
         File properties = getDefaultPropertiesFile();
 
-        if (!cl.hasOption('n')) {
-            if (cl.hasOption('a')) {
-                webConfig.setUiPassword(cl.getOptionValue('a'));
+        if (!cl.hasOption("no-web-ui")) {
+            if (cl.hasOption("webui-admin")) {
+                webConfig.setUiPassword(cl.getOptionValue("webui-admin"));
             } else {
-                System.err.println("Unless -n is specified, you must specify " +
-                	"an admin password for the web UI using -a.");
+                System.err.println("Unless --no-web-ui is specified, you must specify " +
+                	"an admin password for the web UI using --webui-admin.");
                 System.exit(1);
             }
         }
         
-        if (cl.hasOption('j')) {
-            config.setJobsDirectory(cl.getOptionValue('j'));
+        if (cl.hasOption("jobs-dir")) {
+            config.setJobsDirectory(cl.getOptionValue("jobs-dir"));
         }
                 
-        if (cl.hasOption('l')) {
-            properties = new File(cl.getOptionValue('l'));
+        if (cl.hasOption("logging-properties")) {
+            properties = new File(cl.getOptionValue("logging-properties"));
         }
 
-        if (cl.hasOption('b')) {
-            String hosts = cl.getOptionValue('b');
+        if (cl.hasOption("webui-bind-hosts")) {
+            String hosts = cl.getOptionValue("webui-bind-hosts");
             List<String> list;
             if("/".equals(hosts)) {
                 list = new ArrayList<String>(); 
@@ -272,16 +281,29 @@ public class Heritrix {
                 list = Arrays.asList(hosts.split(","));
             }
             webConfig.getHosts().addAll(list);
+            webConfig.setSsl(true);
         } else {
-            // default: only localhost
+            // default: only localhost -- no need for ssl
             webConfig.getHosts().add("localhost");
+            webConfig.setSsl(false);
         }
-        if (cl.hasOption('p')) {
-            int port = Integer.parseInt(cl.getOptionValue('p'));
+        if (cl.hasOption("no-ssl")) {
+            webConfig.setSsl(false);
+        }
+        if (cl.hasOption("keystore")) {
+            webConfig.setKeystore(cl.getOptionValue("keystore"));
+            webConfig.setSsl(true);
+        }
+        if (cl.hasOption("webui-port")) {
+            int port = Integer.parseInt(cl.getOptionValue("webui-port"));
             webConfig.setPort(port);
+        } else if (webConfig.isSsl()) {
+            webConfig.setPort(8443);
+        } else {
+            webConfig.setPort(8080);
         }
-        if (cl.hasOption('w')) {
-            webConfig.setPathToWAR(cl.getOptionValue('w'));
+        if (cl.hasOption("webui-war-path")) {
+            webConfig.setPathToWAR(cl.getOptionValue("webui-war-path"));
         }
 
         if (properties.exists()) {
@@ -290,7 +312,6 @@ public class Heritrix {
             finp.close();
         }
         
-        
         // Set timezone here.  Would be problematic doing it if we're running
         // inside in a container.
         TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
@@ -298,20 +319,20 @@ public class Heritrix {
         // Start Heritrix.
         WebUI webui = null;
         try {
-            if (cl.hasOption('u')) {
+            if (cl.hasOption("no-engine")) {
                 out.println("Not running crawl engine.");
             } else {
                 EngineImpl cjm = new EngineImpl(config);
                 registerJndi(cjm.getObjectName(), out);
                 out.println("Engine registered at " 
                         + cjm.getObjectName());
-                if (cl.hasOption('r')) {
-                    launch(cjm, cl.getOptionValue('r'));
+                if (cl.hasOption("run-job")) {
+                    launch(cjm, cl.getOptionValue("run-job"));
                 }
             }
             
             // Start WebUI, if desired.
-            if (cl.hasOption('n')) {
+            if (cl.hasOption("no-web-ui")) {
                 out.println("Not running web UI.");
             } else {
                 webui = new WebUI(webConfig);
@@ -443,6 +464,4 @@ public class Heritrix {
         }
         throw new IllegalStateException("No such job: " + job);
     }
-
-
 }
