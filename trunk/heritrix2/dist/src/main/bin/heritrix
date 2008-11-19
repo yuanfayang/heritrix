@@ -134,7 +134,7 @@ fi
 # to the terminal.
 for i in "$@"
 do
-    if [ "$i" == "-h" ] || [ "$i" == "--help" ]
+    if [ "$i" = "-h" ] || [ "$i" = "--help" ]
     then
         FOREGROUND="true"
         break
