@@ -35,6 +35,7 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.bio.SocketConnector;
 import org.mortbay.jetty.handler.DefaultHandler;
 import org.mortbay.jetty.handler.HandlerList;
+import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 /**
@@ -43,12 +44,15 @@ import org.mortbay.jetty.webapp.WebAppContext;
  */
 public class WebUI {
 
+    public static final String KEYSTORE_PASSWORD = "heritrix";
     
     private Set<String> hosts;
     private int port;
     private String pathToWAR;
     private String uiPassword; 
     private Server server;
+    private String keystore;
+    private boolean ssl;
     
     public WebUI(WebUIConfig config) {
         this.hosts = new HashSet<String>(config.getHosts());
@@ -58,15 +62,17 @@ public class WebUI {
             this.pathToWAR = getDefaultPathToWAR();
         }
         this.uiPassword = config.getUiPassword();
+        this.keystore = config.getKeystore();
+        this.ssl = config.isSsl();
     }
 
     
     private String getDefaultPathToWAR() {
         File file = new File("lib");
         if (!file.isDirectory()) {
-            throw new IllegalStateException("No path to WAR specified, and no " +
-                    "WAR found in ./lib.  Use -w to specify a path to " +
-                    "the Heritrix WAR file.");
+            throw new IllegalStateException("No path to webapp specified, and no " +
+                    "WAR found in ./lib.  Use --webui-war-path to specify a path to " +
+                    "the Heritrix WAR file or uncompressed webapp directory.");
         }
         for (String filename: file.list()) {
             if (filename.endsWith(".war")) {
@@ -78,25 +84,51 @@ public class WebUI {
                         "the Heritrix WAR file.");
     }
 
+    private SocketConnector makeConnector(String host) throws Exception {
+        SocketConnector sc;
+        if (ssl && keystore != null) {
+            SslSocketConnector ssc = new SslSocketConnector();
+            ssc.setKeystore(keystore);
+            ssc.setTruststore(keystore);
+            ssc.setKeyPassword(KEYSTORE_PASSWORD);
+            ssc.setTrustPassword(KEYSTORE_PASSWORD);
+            ssc.setPassword(KEYSTORE_PASSWORD);
+            sc = ssc;
+        } else if (ssl) {
+            try {
+                // parameter sets the CN on the temporary certificate
+                sc = new TempCertSslSocketConnector(host);
+            } catch (Exception e) {
+                throw new Exception("There was a problem initializing the " + 
+                        "SSL web service with a temporary certificate. You " + 
+                        "should try creating a keystore using the java " + 
+                        "keytool and pass it to heritrix with --keystore. " + 
+                        "Alternatively, you can run heritrix with --no-ssl. " +
+                        e);
+            }
+        } else {
+            sc = new SocketConnector();
+        }
+        
+        sc.setHost(host);
+        sc.setPort(port);
+        
+        return sc;
+    }
+
     public void start() throws Exception {
         this.server = new Server();
         
         for (String host: hosts) {
-            SocketConnector sc = new SocketConnector();
-            sc.setHost(host);
-            sc.setPort(port);
-            server.addConnector(sc);
+            server.addConnector(makeConnector(host));
         }
-        
-        if(hosts.isEmpty()) {
-            // wildcard connector
-            SocketConnector sc = new SocketConnector();
-            sc.setPort(port);
-            server.addConnector(sc);
+        if (hosts.isEmpty()) {
+            // listen on "any"
+            server.addConnector(makeConnector(null));
         }
 
         WebAppContext webapp = new WebAppContext(pathToWAR, "/");
-        webapp.setAttribute("uiPassword",uiPassword);
+        webapp.setAttribute("uiPassword", uiPassword);
 
         // Make sure classes on the system classpath take precedence over 
         // classes in the webapp classpath.
@@ -110,8 +142,7 @@ public class WebUI {
         
         server.start();
     }
-    
-    
+ 
     public void stop() {
         try {
             this.server.stop();
@@ -119,5 +150,4 @@ public class WebUI {
             e.printStackTrace();
         }
     }
-
 }
