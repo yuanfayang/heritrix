@@ -64,7 +64,7 @@ public class OneLineSimpleLogger extends SimpleFormatter {
      * MessageFormatter for date.
      */
     private SimpleDateFormat formatter =
-        new SimpleDateFormat("MM/dd/yyyy HH:mm:ss Z");
+        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
     /**
      * Persistent buffer in which we conjure the log.
@@ -83,18 +83,20 @@ public class OneLineSimpleLogger extends SimpleFormatter {
         this.formatter.format(this.date, buffer, this.position);
         buffer.append(' ');
         buffer.append(record.getLevel().getLocalizedName());
+        buffer.append(" thread:");
+        buffer.append(record.getThreadID());
         buffer.append(' ');
         if (record.getSourceClassName() != null) {
             buffer.append(record.getSourceClassName());
         } else {
             buffer.append(record.getLoggerName());
         }
-        buffer.append(' ');
+        buffer.append('.');
         String methodName = record.getSourceMethodName();
         methodName = (methodName == null || methodName.length() <= 0)?
             "-": methodName;
         buffer.append(methodName);
-        buffer.append(' ');
+        buffer.append("() ");
         buffer.append(formatMessage(record));
         buffer.append(System.getProperty("line.separator"));
         if (record.getThrown() != null) {
@@ -113,11 +115,9 @@ public class OneLineSimpleLogger extends SimpleFormatter {
     
     public static Logger setConsoleHandler() {
         Logger logger = Logger.getLogger("");
-        Handler [] hs = logger.getHandlers();
-        for (int i = 0; i < hs.length; i++) {
-            Handler h = hs[0];
-            if (h instanceof ConsoleHandler) {
-                h.setFormatter(new OneLineSimpleLogger());
+        for (Handler handler: logger.getHandlers()) {
+            if (handler instanceof ConsoleHandler) {
+                handler.setFormatter(new OneLineSimpleLogger());
             }
         }
         return logger;
