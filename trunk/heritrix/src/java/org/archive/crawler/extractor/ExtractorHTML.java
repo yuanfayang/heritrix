@@ -704,6 +704,7 @@ implements CoreAttributeConstants {
                 (attr.start(14) > -1) ? 14 : (attr.start(15) > -1) ? 15 : 16;
             CharSequence value =
                 cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
+            value = TextUtils.unescapeHtml(value);
             if (attr.group(1).equalsIgnoreCase("name")) {
                 name = value.toString();
             } else if (attr.group(1).equalsIgnoreCase("http-equiv")) {
