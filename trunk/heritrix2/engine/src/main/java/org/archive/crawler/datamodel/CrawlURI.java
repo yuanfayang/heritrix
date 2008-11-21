@@ -885,7 +885,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     	
     	if (containsDataKey(A_HERITABLE_KEYS)) {
     	    @SuppressWarnings("unchecked")
-            List<String> heritable = (List<String>)getData().get(A_HERITABLE_KEYS);
+            HashSet<String> heritable = (HashSet<String>)getData().get(A_HERITABLE_KEYS);
             retain.addAll(heritable);
     	}
     	
@@ -1614,9 +1614,10 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      */
     public void makeHeritable(String key) {
         @SuppressWarnings("unchecked")
-        List<String> heritableKeys = (List<String>)data.get(A_HERITABLE_KEYS);
+        HashSet<String> heritableKeys = (HashSet<String>)data.get(A_HERITABLE_KEYS);
         if (heritableKeys == null) {
-            heritableKeys = new ArrayList<String>();
+            heritableKeys = new HashSet<String>();
+            heritableKeys.add(A_HERITABLE_KEYS);
             data.put(A_HERITABLE_KEYS, heritableKeys);
         }
         heritableKeys.add(key);
@@ -1629,7 +1630,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      * @param key to make non-heritable
      */
     public void makeNonHeritable(String key) {
-        List heritableKeys = (List)data.get(A_HERITABLE_KEYS);
+        HashSet heritableKeys = (HashSet)data.get(A_HERITABLE_KEYS);
         if(heritableKeys == null) {
             return;
         }
@@ -1722,7 +1723,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     protected void inheritFrom(CrawlURI ancestor) {
         Map<String,Object> adata = ancestor.getData();
         @SuppressWarnings("unchecked")
-        List<String> heritableKeys = (List<String>)adata.get(A_HERITABLE_KEYS);
+        HashSet<String> heritableKeys = (HashSet<String>)adata.get(A_HERITABLE_KEYS);
         Map<String,Object> thisData = getData();
         if (heritableKeys != null) {
             for (String key: heritableKeys) {
