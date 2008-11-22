@@ -56,6 +56,15 @@ public class ExtractorCSSTest extends StringExtractorTestBase {
         "@import url(http://www.archive.org)", 
         "http://www.archive.org",
 
+        "@import \"http://www.archive.org\";", 
+        "http://www.archive.org",
+
+        // this one, identical to the last minus trailing semicolon, fails
+        /*
+        "@import \"http://www.archive.org\"", 
+        "http://www.archive.org",
+        */
+
         "@import url('http://www.archive.org')", 
         "http://www.archive.org",
 
@@ -65,6 +74,20 @@ public class ExtractorCSSTest extends StringExtractorTestBase {
         "table { border: solid black 1px}\n@import url(style.css)", 
         "http://www.archive.org/start/style.css",
 
+        "@import \"http://www.archive.org/index-new(2).css\";",
+        "http://www.archive.org/index-new(2).css",
+        
+        // these fail currently, see http://webteam.archive.org/jira/browse/HER-1578
+        /*
+        "@import url(http://www.archive.org/index-new(2).css);",
+        "http://www.archive.org/index-new(2).css",
+
+        "@import url(http://www.archive.org/index-new(2).css)",
+        "http://www.archive.org/index-new(2).css",
+
+        "@import url(\"http://www.archive.org/index-new(2).css\")",
+        "http://www.archive.org/index-new(2).css",
+        */
     };
     
     @Override
