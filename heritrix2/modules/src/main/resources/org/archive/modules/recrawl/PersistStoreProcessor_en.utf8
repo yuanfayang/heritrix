@@ -1,3 +1,0 @@
-description:
-PersistStoreProcessor. Stores CrawlURI attributes from latest fetch for 
-consultation by a later recrawl.
