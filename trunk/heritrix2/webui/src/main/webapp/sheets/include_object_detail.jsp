@@ -35,6 +35,9 @@ if (type.equals("auto")) {
     }
 } else if (type.equals("object") || type.equals("primary")) {
     createValue = the_setting.getValue();
+    if(request.getParameter("create_manual")!=null) {
+        createValue = request.getParameter("create_manual");
+    }
     if (createOptions.contains(the_setting.getValue())) {
         createKnown = "checked";
     } else {
