@@ -227,8 +227,6 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
      */
     protected long totalProcessedBytes = 0;
 
-    private transient long nextURIEmitTime = 0;
-
     protected long processedBytesAfterLastEmittedURI = 0;
     
     protected int lastMaxBandwidthKB = 0;
