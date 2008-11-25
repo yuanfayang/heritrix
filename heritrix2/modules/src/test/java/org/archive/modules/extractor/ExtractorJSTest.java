@@ -36,13 +36,11 @@ import org.archive.modules.extractor.ExtractorJS;
  * @author pjack
  */
 public class ExtractorJSTest extends ProcessorTestBase {
-
-    
+ 
     @Override
-    protected Class getModuleClass() {
+    protected Class<ExtractorJS> getModuleClass() {
         return ExtractorJS.class;
     }
-    
     
     @Override
     protected Object makeModule() {

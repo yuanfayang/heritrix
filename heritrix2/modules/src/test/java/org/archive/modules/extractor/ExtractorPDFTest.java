@@ -37,18 +37,15 @@ import org.archive.modules.extractor.ExtractorPDF;
  */
 public class ExtractorPDFTest extends ProcessorTestBase {
 
-    
     @Override
-    protected Class getModuleClass() {
+    protected Class<ExtractorPDF> getModuleClass() {
         return ExtractorPDF.class;
     }
-    
     
     @Override
     protected Object makeModule() {
         return new ExtractorPDF();
     }
-    
     
     // TODO TESTME!
     
