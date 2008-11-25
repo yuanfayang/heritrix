@@ -254,12 +254,13 @@ public class Settings {
             String value)
     throws IOException {
         out.print("<input class=\"textbox\" type=\"text\" name=\"");
-        out.print(Text.attr(name));
+        if (isEnabled(setting)) {
+            out.print(Text.attr(name));
+        } else {
+            out.print("\" readonly=\"readonly");
+        }
         out.print("\" value=\"");
         out.print(Text.attr(value));
-        if (!isEnabled(setting)) {
-            out.print("\" disabled=\"disabled");
-        }
         out.println("\">");
     }
 
