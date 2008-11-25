@@ -157,14 +157,16 @@ public class WebUIJUnit extends TmpDirTestCase {
         // maven doesn't run this class because of the class name, but
         // an Eclipse 'run all tests' job will, and will run into
         // classloader errors causing a failure. 
-        
+    
         // suppress no-tests warning until xestWebui can be fixed
         // (and renamed testWebui)
 
     }
     
     /**
-     * Tests the webui.
+     * Tests the webui. Renamed to prevent from running 
+     * because classpath issues are currently causing 
+     * failure in Eclipse JUnit runs. 
      */
     public void xestWebui() throws Exception  {
         
@@ -434,6 +436,7 @@ public class WebUIJUnit extends TmpDirTestCase {
         System.out.println("full url: " + url);
         HttpURLConnection conn = (HttpURLConnection)(url.openConnection());
         setCookie(conn);
+        conn.setFollowRedirects(false);
         InputStream input = null;
         try {
             input = conn.getInputStream();
