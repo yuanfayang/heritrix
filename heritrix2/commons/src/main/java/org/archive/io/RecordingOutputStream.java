@@ -524,7 +524,7 @@ public class RecordingOutputStream extends OutputStream {
             long startOffset) throws IOException {
         if (characterEncoding == null)
             characterEncoding = Charset.defaultCharset().name();
-        logger.info("this.size=" + this.size + " this.buffer.length=" + this.buffer.length);
+        logger.fine("this.size=" + this.size + " this.buffer.length=" + this.buffer.length);
         if (this.size <= this.buffer.length) {
             logger.fine("using InMemoryReplayCharSequence");
             // raw data is all in memory; do in memory
