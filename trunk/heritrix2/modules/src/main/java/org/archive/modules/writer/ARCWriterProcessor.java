@@ -29,18 +29,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.archive.modules.ProcessorURI;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
@@ -247,16 +242,6 @@ public class ARCWriterProcessor extends WriterPoolProcessor {
         // ${ROBOTS}
 
     }
-
-    
-    private String GMT() {
-        TimeZone gmt = TimeZone.getTimeZone("GMT+00:00");
-        Calendar calendar = Calendar.getInstance(gmt);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
-        Date date = calendar.getTime();
-        return sdf.format(date) + "+00:00";
-    }
-    
     
     private static String replace(String meta, String find, String replace) {
         replace = StringEscapeUtils.escapeXml(replace);
