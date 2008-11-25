@@ -63,7 +63,6 @@ for (Setting setting: settings.getSettings()) {
         sheets = new String[] { "foo" };
     }
     String error = setting.getErrorMessage();
-    String disabled = sheets[0].equals(editedSheet) ? "" : "disabled=\"disabled\"";
     String qs = Text.sheetQueryString(request) + "&path=" + path + "&type=" + type + "&value=" + Text.query(value);
     row = -row + 1;
     count++;
