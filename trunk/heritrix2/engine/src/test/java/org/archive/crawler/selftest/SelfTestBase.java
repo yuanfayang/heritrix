@@ -251,6 +251,7 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // By interrupting the thread, we can gracefully clean up the test.
         String[] args = { "-j", path + "/jobs", "-n" };
         heritrixThread = new HeritrixThread(args);
+        heritrixThread.setName("test HeritrixThread");
         heritrixThread.start();
         
         configureHeritrix();
