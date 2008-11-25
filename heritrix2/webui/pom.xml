@@ -89,7 +89,7 @@
       </plugin>
 
 
-<!-- Uncomment below to actually compile all the JSP. -->
+<!-- Comment-out below to suppress JSP precompilation and WAR build -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>jspc-maven-plugin</artifactId>
@@ -113,6 +113,7 @@
                     <webXml>${basedir}/target/jspweb.xml</webXml>
                 </configuration>
             </plugin>
+<!-- end area to comment-out -->          
     </plugins>
 
   </build>
