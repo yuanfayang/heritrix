@@ -233,8 +233,9 @@ public class GenericReplayCharSequence implements ReplayCharSequence {
             // Windows workaround attempt
             System.gc();
             System.runFinalization();
+            this.decodedFile = new File(decodedFile.getAbsolutePath()+".win");
             logger.info("Windows 'file with a user-mapped section open' "
-                    + "workaround gc-finalization performed.");
+                    + "workaround gc/finalization/name-extension performed.");
             // try again
             fos = new FileOutputStream(this.decodedFile);
         }
