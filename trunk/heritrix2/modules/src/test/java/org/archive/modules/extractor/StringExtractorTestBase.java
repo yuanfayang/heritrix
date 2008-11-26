@@ -62,7 +62,7 @@ public abstract class StringExtractorTestBase extends ContentExtractorTestBase {
      * @param expectedURL   the URL that should be extracted from the text
      * @throws Exception  just in case
      */
-    private void testOne(String text, String expectedURL) throws Exception {
+    protected void testOne(String text, String expectedURL) throws Exception {
         Collection<TestData> testDataCol = makeData(text, expectedURL);
         for (TestData testData: testDataCol) {
             Extractor extractor = makeExtractor();
