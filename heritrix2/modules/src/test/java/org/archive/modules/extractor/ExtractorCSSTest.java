@@ -47,51 +47,84 @@ import static org.archive.modules.extractor.LinkContext.NAVLINK_MISC;
  * @author pjack
  */
 public class ExtractorCSSTest extends StringExtractorTestBase {
+    
+    public void testUrlNoQuotes() throws Exception {
+        testOne("@import url(http://www.archive.org)", 
+                "http://www.archive.org");
+    }
+
+    public void testImportQuotedUrl() throws Exception {
+        testOne("@import \"http://www.archive.org\";", 
+                "http://www.archive.org");
+    }
+    
+    /**
+     * this one, identical to the last minus trailing semicolon, fails
+     * TODO: should it succeed by spec or what browsers do?  
+     */
+    public void xestImportQuotedUrlNoSemicolon() throws Exception {
+        testOne("@import \"http://www.archive.org\"", 
+                "http://www.archive.org");
+    }
+    
+    public void testImportSingleQuoteUrl() throws Exception {
+        testOne("@import url('http://www.archive.org')", 
+                "http://www.archive.org");
+    }
+    
+    public void testImportSpaceDoubleQuotesUrl() throws Exception {
+        testOne("@import url(    \"  http://www.archive.org  \"   )", 
+                "http://www.archive.org");
+    }
+    
+    public void testRelative() throws Exception {
+        // FIXME: I don't think this is legal CSS
+        testOne("table { border: solid black 1px}\n@import url(style.css)", 
+                "http://www.archive.org/start/style.css");
+    }
+    
+    public void testParensInQuotedUrl() throws Exception {
+        testOne("@import \"http://www.archive.org/index-new(2).css\";",
+                "http://www.archive.org/index-new(2).css");
+    }
+    
+    public void testParensInUrlUnquotedUrl() throws Exception {
+        testOne("@import \"http://www.archive.org/index-new(2).css\";",
+                "http://www.archive.org/index-new(2).css");
+    }
+    public void testParensInUrlQuotedUrl() throws Exception {
+        testOne("@import url(\"http://www.archive.org/index-new(2).css\")",
+                "http://www.archive.org/index-new(2).css");
+    }
+    
+    /**
+     * Fails currently, see http://webteam.archive.org/jira/browse/HER-1578
+     */  
+    public void xestParensInUrlUnquotedUrlNoSemicolon() throws Exception {
+        testOne("@import url(http://www.archive.org/index-new(2).css)",
+                "http://www.archive.org/index-new(2).css");
+    }
 
     
     /**
-     * Test data. a[n] is sample CSS input, a[n + 1] is expected extracted URI
+     * Currently fails; see [HER-1537]
+     */
+    public void xestInlineComment() throws Exception {
+        testOne("@import /**/\"http://www.archive.org\";", 
+                "http://www.archive.org");
+    }
+    
+    // TODO: add test of url() inside styles, not with @import
+
+    /**
+     * Test data. a[n] is sample input, a[n + 1] is expected extracted URI
      */
     final public static String[] VALID_TEST_DATA = new String[] {
-        "@import url(http://www.archive.org)", 
-        "http://www.archive.org",
-
-        "@import \"http://www.archive.org\";", 
-        "http://www.archive.org",
-
-        // this one, identical to the last minus trailing semicolon, fails
-        /*
-        "@import \"http://www.archive.org\"", 
-        "http://www.archive.org",
-        */
-
-        "@import url('http://www.archive.org')", 
-        "http://www.archive.org",
-
-        "@import url(    \"  http://www.archive.org  \"   )", 
-        "http://www.archive.org",
-
-        "table { border: solid black 1px}\n@import url(style.css)", 
-        "http://www.archive.org/start/style.css",
-
-        "@import \"http://www.archive.org/index-new(2).css\";",
-        "http://www.archive.org/index-new(2).css",
-        
-        // these fail currently, see http://webteam.archive.org/jira/browse/HER-1578
-        /*
-        "@import url(http://www.archive.org/index-new(2).css);",
-        "http://www.archive.org/index-new(2).css",
-
-        "@import url(http://www.archive.org/index-new(2).css)",
-        "http://www.archive.org/index-new(2).css",
-
-        "@import url(\"http://www.archive.org/index-new(2).css\")",
-        "http://www.archive.org/index-new(2).css",
-        */
+        /// replaced with named per-method tests
     };
-    
+
     @Override
-    protected Class getModuleClass() {
+    protected Class<ExtractorCSS> getModuleClass() {
         return ExtractorCSS.class;
     }
     
