@@ -10,7 +10,8 @@ import java.util.Map;
 public class ArcWarc 
 {
 	private String jobParam = "completed-basic_seed_sites-20080909192242";
-	private String arcParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.arc.gz","24830"};
+	private String arcParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.arc","24830"};
+	private String arcGzParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.arc.gz","24830"};
 	private String warcParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.warc","82491"};
 	private String warcGzParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.warc.gz","26302"};
 	private Map<String,String[]> jobParams = new HashMap<String,String[]>();
@@ -49,33 +50,41 @@ public class ArcWarc
 
 	public long randomIndices[] = {3,7,31,127};
 
-	public ArcWarc(String arcType)
+	public ArcWarc()
     throws IOException
     {
-      this.setParams(arcType);
-      this.setArcFile();
-      this.setArchiveFormat();
+    }
+        
+    void setArcFile(String arcFile) 
+    {
+    	this.arcFile = arcFile;
     }
     
-    void setParams(String arcType) {
+    void setParams(String job, String arc, Integer offset) {
+    	this.job = "N/A";
+    	this.arc = "N/A";
+    	this.offset = offset;
+    }
+        
+    void setDefaultParams(String arcType) {
     	this.jobParams.put("arc", arcParams);
+    	this.jobParams.put("arcgz", arcGzParams);
     	this.jobParams.put("warc", warcParams);
     	this.jobParams.put("warcgz", warcGzParams);
     	this.job = this.jobParams.get(arcType)[0];
     	this.arc = this.jobParams.get(arcType)[1];
     	this.offset = (Long.valueOf(jobParams.get(arcType)[2])).longValue();
     }
-    
-    void setArcFile() 
-    {
-    	this.heritrix = "/Users/steve/Documents/dist/heritrix-2.0.1-dist";
-        this.arcReader = this.heritrix + "/bin/arcreader";
-        this.jobs = this.heritrix + "/jobs";
-        this.arcs = this.jobs + "/" + this.job + "/arcs";
-        this.arcFile = this.arcs + "/" + this.arc;
+
+    void setDefaultArcFile() {
+    	this.heritrix  = "/Users/steve/Documents/dist/heritrix-2.0.1-dist";
+    	this.arcReader = this.heritrix + "/bin/arcreader";
+    	this.jobs      = this.heritrix + "/jobs";
+    	this.arcs      = this.jobs + "/" + this.job + "/arcs";
+    	this.arcFile   = this.arcs + "/" + this.arc;
     }
 
-    private void setArchiveFormat() 
+    void setArchiveFormat() 
     throws IOException {
     	String arcFileFmt = getArchiveFileFormat();
     	this.format = arcFileFmt;
@@ -171,6 +180,7 @@ public class ArcWarc
 		System.out.println("ArcWarcTests");
 		System.out.println("  job:     " + this.job);
 		System.out.println("  archive: " + this.arc);
+		System.out.println("  file:    " + this.arcFile);
 		System.out.println("  format:  " + this.format);
 		System.out.println("  mode:    " + this.mode);
 		if (this.mode.equals("filter"))
