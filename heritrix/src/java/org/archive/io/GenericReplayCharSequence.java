@@ -206,8 +206,8 @@ public class GenericReplayCharSequence implements ReplayCharSequence {
         FileOutputStream fos;
         fos = new FileOutputStream(this.decodedFile);
 
-		IOUtils.copy(reader, fos, WRITE_ENCODING);
-		fos.close();
+        IOUtils.copy(reader, fos, WRITE_ENCODING);
+        fos.close();
         
         charBuffer = getReadOnlyMemoryMappedBuffer(this.decodedFile).
             asCharBuffer();
@@ -266,11 +266,11 @@ public class GenericReplayCharSequence implements ReplayCharSequence {
             in = new FileInputStream(file);
             c = in.getChannel();
 
-			int mapSize = (int)Math.min(c.size(), (long)Integer.MAX_VALUE);
-			if (mapSize < c.size()) {
-				logger.log(Level.WARNING, "only first 2GiB of temp file mapped, thread=" 
-				        + Thread.currentThread().getName() + " file=" + file);
-			}
+            int mapSize = (int)Math.min(c.size(), (long)Integer.MAX_VALUE);
+            if (mapSize < c.size()) {
+                logger.log(Level.WARNING, "only first 2GiB of temp file mapped, thread=" 
+                        + Thread.currentThread().getName() + " file=" + file);
+            }
 
             // TODO: Confirm the READ_ONLY works.  I recall it not working.
             // The buffers seem to always say that the buffer is writeable.
