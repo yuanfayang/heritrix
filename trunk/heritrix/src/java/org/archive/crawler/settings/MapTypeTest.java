@@ -45,20 +45,6 @@ import org.archive.crawler.prefetch.Preselector;
  */
 public class MapTypeTest extends SettingsFrameworkTestCase {
 
-    /*
-     * @see TmpDirTestCase#setUp()
-     */
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    /*
-     * @see TmpDirTestCase#tearDown()
-     */
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
-
     /** Test different aspects of manipulating a MapType for the global
      * settings.
      *
