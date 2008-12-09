@@ -42,6 +42,7 @@ import java.nio.charset.CodingErrorAction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.IOUtils;
 import org.archive.util.FileUtils;
 
 /**
@@ -205,16 +206,8 @@ public class GenericReplayCharSequence implements ReplayCharSequence {
         FileOutputStream fos;
         fos = new FileOutputStream(this.decodedFile);
 
-        BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(
-                        fos, 
-                        WRITE_ENCODING)); 
-
-        int c;
-        while((c = reader.read())>=0) {
-            writer.write(c);
-        }
-        writer.close();
+		IOUtils.copy(reader, fos, WRITE_ENCODING);
+		fos.close();
         
         charBuffer = getReadOnlyMemoryMappedBuffer(this.decodedFile).
             asCharBuffer();
@@ -272,13 +265,18 @@ public class GenericReplayCharSequence implements ReplayCharSequence {
         try {
             in = new FileInputStream(file);
             c = in.getChannel();
+
+			int mapSize = (int)Math.min(c.size(), (long)Integer.MAX_VALUE);
+			if (mapSize < c.size()) {
+				logger.log(Level.WARNING, "only first 2GiB of temp file mapped, thread=" 
+				        + Thread.currentThread().getName() + " file=" + file);
+			}
+
             // TODO: Confirm the READ_ONLY works.  I recall it not working.
             // The buffers seem to always say that the buffer is writeable.
-            bb = c.map(FileChannel.MapMode.READ_ONLY, 0, c.size()).
+            bb = c.map(FileChannel.MapMode.READ_ONLY, 0, mapSize).
                 asReadOnlyBuffer();
-        }
-
-        finally {
+        } finally {
             if (c != null && c.isOpen()) {
                 c.close();
             }
