@@ -273,4 +273,9 @@ public class ReplayInputStream extends SeekInputStream
     public long position() throws IOException {
         return position;
     }
+
+    // package private
+    byte[] getBuffer() {
+        return buffer;
+    }
 }

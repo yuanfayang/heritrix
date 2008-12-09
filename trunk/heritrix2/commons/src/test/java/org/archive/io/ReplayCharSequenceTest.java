@@ -216,14 +216,24 @@ public class ReplayCharSequenceTest extends TmpDirTestCase
     }
     
     public void testReplayCharSequenceByteToStringOverflow() throws IOException {
-        String fileContent = "Some file content. ";
+        String fileContent = "Some file content. "; // ascii
         byte [] buffer = fileContent.getBytes();
         RecordingOutputStream ros = writeTestStream(
                 buffer,1,
-                "testReplayCharSequenceByteToString.txt",1);
+                "testReplayCharSequenceByteToStringOverflow.txt",1);
         String expectedContent = fileContent+fileContent;
-        ReplayCharSequence rcs = ros.getReplayCharSequence();
-        String result = rcs.toString();
+        
+        // The string is ascii which is a subset of both these encodings. Use
+        // both encodings because they exercise different code paths. UTF-8 is
+        // decoded to UTF-16 while windows-1252 is memory mapped directly. See
+        // GenericReplayCharSequence
+        ReplayCharSequence rcsUtf8 = ros.getReplayCharSequence("UTF-8");
+        ReplayCharSequence rcs1252 = ros.getReplayCharSequence("windows-1252");
+
+        String result = rcsUtf8.toString();
+        assertEquals("Strings don't match", expectedContent, result);
+
+        result = rcs1252.toString();
         assertEquals("Strings don't match", expectedContent, result);
     }
     
