@@ -697,11 +697,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             }
             status = selftest(selfTestName, Heritrix.guiPort);
         } else {
-			if (!isValidLoginPasswordString(adminLoginPassword)) {
-				clp.usage("Invalid admin login:password value, or none "
-						+ "specified. ", 1);
-			}
-			
 			if (!Heritrix.gui) {
 				if (options.length > 1) {
 					// If more than just '--nowui' passed, then there is
@@ -712,6 +707,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
 				Heritrix h = new Heritrix(true);
 				status = h.doOneCrawl(crawlOrderFile);
 			} else {
+                if (!isValidLoginPasswordString(adminLoginPassword)) {
+                    // exit printing usage info if no webui login:password given
+                    clp.usage("Invalid admin login:password value, or none "
+                            + "specified. ", 1);
+                }
 				status = startEmbeddedWebserver(
                         Heritrix.guiHosts, Heritrix.guiPort,
 						adminLoginPassword);
