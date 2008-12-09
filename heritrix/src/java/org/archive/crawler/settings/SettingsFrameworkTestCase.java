@@ -57,6 +57,7 @@ public abstract class SettingsFrameworkTestCase extends TmpDirTestCase implement
      */
     protected void setUp() throws Exception {
         super.setUp();
+        cleanUpOldFiles("SETTINGS"); // preemptive cleanup just in case
         orderFile = new File(getTmpDir(), "SETTINGS_order.xml");
         String settingsDirName = "SETTINGS_per_host_settings";
         settingsDir = new File(orderFile, settingsDirName);
