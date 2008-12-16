@@ -542,7 +542,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
     
     /**
          * Read http header if present. Technique borrowed from HttpClient HttpParse
-         * class.
+         * class. set errors when found.
          * 
          * @return ByteArrayInputStream with the http header in it or null if no
          *         http header.
