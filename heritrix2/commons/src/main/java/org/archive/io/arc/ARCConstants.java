@@ -226,7 +226,7 @@ public interface ARCConstants extends ArchiveFileConstants {
         GzipHeader.MINIMAL_GZIP_HEADER_LENGTH;
     
     /**
-     * set of errors encountered by ARCRecord
+     * set of known errors encountered reading ARCs
      */
     public enum ArcRecordErrors {
     	HTTP_HEADER_TRUNCATED,
