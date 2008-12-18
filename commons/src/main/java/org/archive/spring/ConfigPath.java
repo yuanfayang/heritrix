@@ -32,6 +32,8 @@ import java.io.Serializable;
  * See also ConfigPath
  */
 public class ConfigPath implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     String name; 
     String path; 
     ConfigPath base; 
