@@ -28,12 +28,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.io.SinkHandlerLogThread;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /** Allows the caller to process a CrawlURI representing a PDF
  *  for the purpose of extracting URIs
@@ -64,18 +62,6 @@ public class ExtractorPDF extends ContentExtractor {
 
     final private AtomicLong numberOfLinksExtracted = new AtomicLong(0);
 
-    /**
-     * Provides the location for temporary PDF files to be written.
-     */
-    protected CrawlControllerImpl controller;
-    public CrawlControllerImpl getCrawlController() {
-        return this.controller;
-    }
-    @Autowired
-    public void setCrawlController(CrawlControllerImpl controller) {
-        this.controller = controller;
-    }
-
     public ExtractorPDF() {
     }
     
@@ -101,8 +87,11 @@ public class ExtractorPDF extends ContentExtractor {
         } else {
             sn = System.identityHashCode(thread);
         }
-        File tempDir = getCrawlController().getScratchDir().getFile();
-        tempFile = new File(tempDir, "tt" + sn + "tmp.pdf");
+        try {
+            tempFile = File.createTempFile("tt" + sn , "tmp.pdf");
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
 
         PDFParser parser;
         ArrayList<String> uris;
