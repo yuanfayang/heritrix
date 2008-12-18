@@ -32,13 +32,16 @@ import java.util.regex.Matcher;
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.settings.JobHome;
+import org.archive.spring.BeanFieldsPatternValidator;
 import org.archive.spring.HasKeyedProperties;
+import org.archive.spring.HasValidator;
 import org.archive.spring.KeyedProperties;
 import org.archive.state.Key;
 import org.archive.state.Module;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.Validator;
 
 /**
  * @author pjack
@@ -49,6 +52,7 @@ public class DefaultMetadataProvider implements
     Serializable, 
     Module,
     HasKeyedProperties,
+    HasValidator,
     InitializingBean {
 
     private static final long serialVersionUID = 1L;
@@ -90,9 +94,9 @@ public class DefaultMetadataProvider implements
     }
     public void setUserAgentTemplate(String template) {
         // TODO compile pattern outside method
-        if(!template.matches("^.*\\+@OPERATOR_CONTACT_URL@.*$")) {
-            throw new IllegalArgumentException("bad user-agent: "+template);
-        }
+//        if(!template.matches("^.*\\+@OPERATOR_CONTACT_URL@.*$")) {
+//            throw new IllegalArgumentException("bad user-agent: "+template);
+//        }
         kp.put("userAgentTemplate",template);
     }
     
@@ -104,9 +108,9 @@ public class DefaultMetadataProvider implements
     }
     public void setOperatorFrom(String operatorFrom) {
         // TODO compile pattern outside method
-        if(!operatorFrom.matches("^(\\s*|\\S+@[-\\w]+\\.[-\\w\\.]+)$")) {
-            throw new IllegalArgumentException("bad operatorFrom: "+operatorFrom);
-        }
+//        if(!operatorFrom.matches("^(\\s*|\\S+@[-\\w]+\\.[-\\w\\.]+)$")) {
+//            throw new IllegalArgumentException("bad operatorFrom: "+operatorFrom);
+//        }
         kp.put("operatorFrom",operatorFrom);
     }
     
@@ -119,9 +123,9 @@ public class DefaultMetadataProvider implements
     }
     public void setOperatorContactUrl(String operatorContactUrl) {
         // TODO compile pattern outside method
-        if(!operatorContactUrl.matches("^https?://.*$")) {
-            throw new IllegalArgumentException("bad operatorContactUrl: "+operatorContactUrl);
-        }
+//        if(!operatorContactUrl.matches("^https?://.*$")) {
+//            throw new IllegalArgumentException("bad operatorContactUrl: "+operatorContactUrl);
+//        }
         kp.put("operatorContactUrl",operatorContactUrl);
     }
 
@@ -176,5 +180,28 @@ public class DefaultMetadataProvider implements
     public void afterPropertiesSet() throws Exception {
         // force revalidation, throwing exception if invalid
         setOperatorContactUrl(getOperatorContactUrl());
+    }
+
+    static Validator VALIDATOR = new BeanFieldsPatternValidator(
+            DefaultMetadataProvider.class,
+            "userAgentTemplate", 
+            "^.*\\+@OPERATOR_CONTACT_URL@.*$", 
+            "You must supply a userAgentTemplate value that includes " +
+            "the string \"@OPERATOR_CONTACT_URL@\" where your crawl" +
+            "contact URL will appear.",
+            
+            "operatorContactUrl", 
+            "^https?://.*$", 
+            "You must supply an HTTP(S) URL which will be included " +
+            "in your user-agent and should explain the purpose of your " +
+            "crawl and how to contact the crawl operator in the event " +
+            "of webmaster issues.",
+            
+            "operatorFrom", 
+            "^(\\s*|\\S+@[-\\w]+\\.[-\\w\\.]+)|()$",
+            "If not blank, operatorFrom must be an email address.");
+    
+    public Validator getValidator() {
+        return VALIDATOR;
     } 
 }
