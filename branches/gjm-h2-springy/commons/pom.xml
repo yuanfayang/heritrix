@@ -4,7 +4,7 @@
 <parent>
   <groupId>org.archive</groupId>
   <artifactId>heritrix</artifactId>
-  <version>2.0.1-SNAPSHOT</version>
+  <version>2.2.0-SNAPSHOT</version>
 </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.archive.heritrix</groupId>
@@ -17,6 +17,23 @@
   </description>
 
     <repositories>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>warn</checksumPolicy>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+        <checksumPolicy>fail</checksumPolicy>
+      </snapshots>
+      <id>oracleReleases</id>
+      <name>Oracle Released Java Packages</name>
+      <url>http://download.oracle.com/maven</url>
+      <layout>default</layout>
+    </repository>
+    
     <repository>
       <releases>
         <enabled>true</enabled>
@@ -85,9 +102,9 @@
   
         <!-- These are normal dependencies. -->  
         <dependency>
-              <groupId>berkeleydb</groupId>
+              <groupId>com.sleepycat</groupId>
               <artifactId>je</artifactId>
-              <version>3.2.44</version>
+              <version>3.3.74</version>
         </dependency> 
         <dependency>
              <groupId>commons-lang</groupId>
@@ -128,13 +145,13 @@
         <dependency>
              <groupId>commons-cli</groupId>
              <artifactId>commons-cli</artifactId>
-             <version>1.0</version>
+             <version>1.1</version>
              <scope>compile</scope>
         </dependency>
         <dependency>
-              <groupId>net.htmlparser</groupId>
+              <groupId>net.htmlparser.jericho</groupId>
               <artifactId>jericho-html</artifactId>
-              <version>2.3</version>
+              <version>2.5</version>
               <scope>compile</scope>
         </dependency>
         <dependency>  
@@ -208,17 +225,17 @@
         <dependency>
               <groupId>org.springframework</groupId>
               <artifactId>spring-core</artifactId>
-              <version>2.5.1</version>
+              <version>2.5.6</version>
         </dependency>
         <dependency>
               <groupId>org.springframework</groupId>
               <artifactId>spring-beans</artifactId>
-              <version>2.5.1</version>
+              <version>2.5.6</version>
         </dependency>
         <dependency>
               <groupId>org.springframework</groupId>
               <artifactId>spring-context</artifactId>
-              <version>2.5.1</version>
+              <version>2.5.6</version>
         </dependency>
   </dependencies>
   <build>
