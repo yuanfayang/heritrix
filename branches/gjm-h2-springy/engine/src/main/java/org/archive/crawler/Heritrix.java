@@ -140,7 +140,7 @@ public class Heritrix {
                 "should listen on.");
         options.addOption("w", "webui-war-path", true, "The path to the " +
                 "Heritrix webui WAR.");
-        options.addOption("n", "no-web-ui", false, "Do not run the admin web " +
+        options.addOption("n", "no-webui", false, "Do not run the admin web " +
                 "user interface; only run the crawl engine.  If set, the " +
         	"crawl engine will need to be controlled via JMX or a remote " +
         	"web UI.");
