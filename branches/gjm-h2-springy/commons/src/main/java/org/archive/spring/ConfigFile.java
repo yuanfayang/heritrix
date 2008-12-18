@@ -32,6 +32,8 @@ import java.io.Writer;
  * readable/writable File. 
  */
 public class ConfigFile extends ConfigPath implements ReadSource, WriteTarget {
+    private static final long serialVersionUID = 1L;
+
     public ConfigFile(String name, String path) {
         super(name, path);
     }
