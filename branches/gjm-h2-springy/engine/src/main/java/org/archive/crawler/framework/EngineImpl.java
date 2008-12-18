@@ -173,7 +173,6 @@ public class EngineImpl extends Bean implements Engine {
         this.heritrixThread = config.getHeritrixThread();
     }
     
-    
     private String changeState(String job, JobStage newState) {
         String name = getJobName(job);
         String newJob = newState.getPrefix() + name;
@@ -715,6 +714,7 @@ public class EngineImpl extends Bean implements Engine {
         File dest = new File(getJobsDir(), jobName);
         File config = new File(dest,"crawler-beans.xml");
         PathSharingContext ac = new PathSharingContext(config.getAbsolutePath());
+        ac.validate(); 
         jobContexts.put(jobName,ac);
         return ac; 
     }

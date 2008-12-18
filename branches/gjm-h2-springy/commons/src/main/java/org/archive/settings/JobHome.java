@@ -22,25 +22,28 @@ package org.archive.settings;
 
 import java.beans.PropertyDescriptor;
 import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 import org.archive.spring.ConfigPath;
+import org.archive.spring.HasValidator;
 import org.archive.spring.PathSharingContext;
 import org.archive.spring.ReadSource;
-import org.archive.util.FileUtils;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
 
 /**
  * JobHome represents certain once-per-job information, such as job
  * name and home directory. As a BeanPostProcessor, it also fixes 
  * any configured beans' ConfigPath instances with empty base paths
  * to use the job's base path. 
+ * 
+ * TODO: rename or merge with something else? it's become an central 
+ * part of any spring-configured crawl
  */
 public class JobHome implements ApplicationContextAware, BeanPostProcessor {
     
@@ -92,6 +95,24 @@ public class JobHome implements ApplicationContextAware, BeanPostProcessor {
      */
     public Object postProcessAfterInitialization(Object bean, String beanName)
     throws BeansException {
+        fixupPaths(bean, beanName);
+//        performValidation(bean,beanName); 
+        return bean;
+        
+    }
+//    protected void performValidation(Object bean, String beanName) {
+//        if(bean instanceof HasValidator) {
+//            Validator v = ((HasValidator)bean).getValidator(); 
+//            v.validate(bean, getErrors());
+//        }
+//    }
+//    
+//    protected Errors getErrors() {
+//        // TODO Auto-generated method stub
+//        return null;
+//    }
+    
+    protected Object fixupPaths(Object bean, String beanName) {
         BeanWrapperImpl wrapper = new BeanWrapperImpl(bean);
         for(PropertyDescriptor d : wrapper.getPropertyDescriptors()) {
             if(ConfigPath.class.isAssignableFrom(d.getPropertyType())
@@ -112,7 +133,7 @@ public class JobHome implements ApplicationContextAware, BeanPostProcessor {
                 }
             }
         }
-    return bean;
+        return bean;
     }
 
     // noop

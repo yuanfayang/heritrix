@@ -12,6 +12,10 @@ import org.springframework.context.Lifecycle;
 import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
 
 public class PathSharingContext extends FileSystemXmlApplicationContext {
 
@@ -105,6 +109,24 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
             }
         }
         return beans;
+    }
+
+    Errors errors = null;
+    public void validate() {
+        errors = new BeanPropertyBindingResult(this,"");
+        for(Object entry : getBeansOfType(HasValidator.class).entrySet()) {
+            String name = (String) ((Map.Entry)entry).getKey();
+            HasValidator hv = (HasValidator) ((Map.Entry)entry).getValue();
+            Validator v = hv.getValidator();
+            Errors tempErrors = new BeanPropertyBindingResult(hv,"");
+            v.validate(hv, tempErrors);
+            errors.addAllErrors(tempErrors);
+        }
+        System.err.println("===errors===");
+        for(Object err : errors.getAllErrors()) {
+            System.err.println(err);
+        }
+        System.err.println("============");
     }
 
     
