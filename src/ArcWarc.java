@@ -3,20 +3,19 @@ import java.text.NumberFormat;
 import org.archive.io.*;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
+import org.archive.io.arc.ARCRecord;
+import org.archive.io.arc.ARCRecordMetaData;
+import org.archive.io.warc.WARCReader;
 import org.archive.io.warc.WARCReaderFactory;
+import org.archive.io.warc.WARCRecord;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class ArcWarc 
 {
-	private String jobParam = "completed-basic_seed_sites-20080909192242";
-	private String arcParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.arc","24830"};
-	private String arcGzParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.arc.gz","24830"};
-	private String warcParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.warc","82491"};
-	private String warcGzParams[] = {jobParam,"IAH-20080909203837-00001-takomaki.local.warc.gz","26302"};
-	private Map<String,String[]> jobParams = new HashMap<String,String[]>();
-	
-    public String heritrix;
+	public String heritrix;
     public String arcReader;
     public String job;
     public String jobs;
@@ -24,14 +23,18 @@ public class ArcWarc
     public String arc;
     public String arcs;
     public String arcFile;
+	public String arcType;
 
     public String mode;
     public String filter;
     public long offset;
 	private int recordStartIndex;
 	private int recordEndIndex;
+	private Logger logger;
 	
-    public static String[] modes = {"fetch","dump","cdx","filter"};
+    public static String[] modes = {"index","replay","dump","cdx","filter"};
+
+    public static final int BUFFER_SIZE = 1024;
     
 	public static String[] mimeTypes = 
 	{
@@ -48,12 +51,9 @@ public class ArcWarc
 			"text/plain"
 	};
 
-	public long randomIndices[] = {3,7,31,127};
-
-	public ArcWarc()
-    throws IOException
-    {
-    }
+	public ArcWarc() throws IOException {
+        this.logger = Logger.getLogger(this.getClass().getName());
+	}
         
     void setArcFile(String arcFile) 
     {
@@ -61,33 +61,20 @@ public class ArcWarc
     }
     
     void setParams(String job, String arc, Integer offset) {
-    	this.job = "N/A";
-    	this.arc = "N/A";
+    	this.job = null;
+    	this.arc = null;
     	this.offset = offset;
     }
         
-    void setDefaultParams(String arcType) {
-    	this.jobParams.put("arc", arcParams);
-    	this.jobParams.put("arcgz", arcGzParams);
-    	this.jobParams.put("warc", warcParams);
-    	this.jobParams.put("warcgz", warcGzParams);
-    	this.job = this.jobParams.get(arcType)[0];
-    	this.arc = this.jobParams.get(arcType)[1];
-    	this.offset = (Long.valueOf(jobParams.get(arcType)[2])).longValue();
-    }
-
-    void setDefaultArcFile() {
-    	this.heritrix  = "/Users/steve/Documents/dist/heritrix-2.0.1-dist";
-    	this.arcReader = this.heritrix + "/bin/arcreader";
-    	this.jobs      = this.heritrix + "/jobs";
-    	this.arcs      = this.jobs + "/" + this.job + "/arcs";
-    	this.arcFile   = this.arcs + "/" + this.arc;
-    }
-
     void setArchiveFormat() 
     throws IOException {
     	String arcFileFmt = getArchiveFileFormat();
     	this.format = arcFileFmt;
+    	if (this.isARCFormat()) {
+    		this.arcType = "ARC"; 
+    	} else {
+    		this.arcType = "WARC";
+    	}
    	}
     
     public void setFilter(String filter) { this.filter = filter; }
@@ -103,6 +90,14 @@ public class ArcWarc
 		this.recordEndIndex = end;
 	}
 
+	private boolean isARCFormat() {
+		if (this.format.equals("arc") || this.format.equals("arcGz")) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+    
 	String getArchiveFileFormat()
 	throws IOException {
 		int l = this.arcFile.length();
@@ -128,19 +123,13 @@ public class ArcWarc
 	private ArchiveReader getReader() 
 	throws IOException 
 	{
-		if (this.format.equals("arc") || this.format.equals("arcGzip")) {
-			return ArchiveReaderFactory.get(this.arcFile);
-		} else if (this.format.equals("warc") || this.format.equals("warcGzip")) {
-			return WARCReaderFactory.get(this.arcFile);
+		if (this.isARCFormat()) {
+			return ARCReaderFactory.get(this.arcFile);
 		} else {
-			throw new IOException("unknown format: " + this.format);
-		}
+			return WARCReaderFactory.get(this.arcFile);
+		}  
 	}
 
-	private long getRandomOffset() {
-		return this.randomIndices[0];
-	}
-	
 	private boolean inRecordRange(long index) {
     	if (index >= this.recordStartIndex && index <= this.recordEndIndex)
     		return true;
@@ -157,13 +146,28 @@ public class ArcWarc
 			return false;
 	}
 
+	private void logRecordErrors(ArchiveRecord record) {
+        Logger logger = Logger.getLogger(this.getClass().getName());
+        if (this.isARCFormat()) {
+        	ARCRecord arcRecord = (ARCRecord) record;
+        	if (arcRecord.hasErrors()) {
+        		ArchiveRecordHeader header = record.getHeader();
+        		logger.warning("record at offset: " + header.getOffset()
+        				+ " has errors: " + arcRecord.getErrors());
+        	}
+        } else {
+        	WARCRecord warcRecord = (WARCRecord) record;
+        	warcRecord.getHeader();
+        }
+	}
+	
 	private static void outputCdx(ArchiveRecordHeader h) 
 	{ 
 		Long rl = h.getLength();
 		Long ro = h.getOffset();
 		String[] hdr = { 
 				h.getDate(),
-				"-", // Ip4
+				"-", // Ip
 				h.getUrl(),
 				h.getMimetype(),
 				"-", // status code
@@ -176,10 +180,34 @@ public class ArcWarc
 		System.out.println();
 	}
 
+	public void printMetadata(ARCRecord record, ArchiveRecordHeader header) {
+		System.out.print( "  Date  : " + header.getDate() + "\n"
+				+ "  IP    : " + ((ARCRecordMetaData)header).getIp()  + "\n"
+				+ "  URL   : " + header.getUrl() + "\n"
+				+ "  MIME  : " + header.getMimetype()   + "\n"
+				+ "  Status: " + ((ARCRecordMetaData)header).getStatusCode() + "\n"
+				+ "  Digest: " + record.getDigestStr() + "\n"
+				+ "  Offset: " + header.getOffset() + "\n"
+				+ "  Length: " + header.getLength() + "\n");
+	}
+	
+	public void printMetadata(WARCRecord record, ArchiveRecordHeader header) {
+		System.out.print( "  Date  : " + header.getDate() + "\n"
+				+ "  IP    : " + header.getHeaderValue("WARC-IP-Address") + "\n"
+				+ "  URL   : " + header.getUrl() + "\n"
+				+ "  MIME  : " + header.getMimetype() + "\n"
+				+ "  Status: " + "-" + "\n"
+				+ "  Digest: " + header.getHeaderValue("WARC-Payload-Digest") + "\n"
+				+ "  Offset: " + header.getOffset() + "\n"
+				+ "  Length: " + header.getLength() + "\n");
+	}
+	
 	public void printInfo() {
-		System.out.println("ArcWarcTests");
-		System.out.println("  job:     " + this.job);
-		System.out.println("  archive: " + this.arc);
+		System.out.println(this.getClass().getName());
+		if (this.job != null) 
+			System.out.println("  job:     " + this.job);
+		if (this.arc != null) 
+			System.out.println("  archive: " + this.arc);
 		System.out.println("  file:    " + this.arcFile);
 		System.out.println("  format:  " + this.format);
 		System.out.println("  mode:    " + this.mode);
@@ -191,74 +219,157 @@ public class ArcWarc
 			System.out.println("  range:   " + "[" + this.recordStartIndex + "," + this.recordEndIndex + "]");
 	}
 
-	public void testArc()
+	public void readArchive()
 	throws IOException {
 
-        String  recordFormat = ArchiveReader.DUMP;
-        boolean strict = false;
-        boolean parse = false;
+        long j = 0;
+        long filterCount = 0;
+    	ArchiveReader reader = this.getReader();
 
-        long    j = 0;
-        long    filterCount = 0;
-
-        ArchiveReader a = getReader();
-        
-        if (this.mode == "fetch") { // fetch single record
-			System.out.println("fetching record at offset: " + offset + "");
-			strict = true;
-			parse = true;
-			ARCReader r = ARCReaderFactory.get(this.arcFile,this.offset);
-			r.setStrict(strict);
-			r.setParseHttpHeaders(parse);
-			r.outputRecord(recordFormat);
+        if (this.mode.equals("index")) {
+        	// operates on a record, parse HTTP header only
+			System.out.println("INDEX " + this.arcType 
+					+ " record at offset: " + offset);
+			if (this.isARCFormat()) {
+				this.indexRecord((ARCReader)reader);
+			} else {
+				this.indexRecord((WARCReader)reader);
+			}
+        } else if (this.mode.equals("replay")) {
+        	// operates on a record, skip header and read  
+        	System.out.println("REPLAY " + this.arcType 
+        			+ " record at offset: " + offset + "");
+        	if (this.isARCFormat()) {
+        		this.replayRecord((ARCReader)reader);
+        	} else {
+        		this.replayRecord((WARCReader)reader);
+        	}
         } else if (this.mode.equals("dump")) { // dump each record - messy!
-			for (ArchiveRecord r : a) {
+			System.out.println("DUMP record at offset: " + offset);
+        	for (ArchiveRecord record : reader) {
 				j++;
 				if (inRecordRange(j)) {
 					System.out.println(mode + " [" + j + "] ");
-					r.dump();
-				}
+					record.dump();
+				} 
+	    		if (j > this.recordEndIndex)
+	    			break;
 			}
         } else if (this.mode.equals("cdx")) { // output CDX
-			for (ArchiveRecord r : a) {
+			for (ArchiveRecord record : reader) {
 				j++;
 				if (inRecordRange(j)) {
 					System.out.print(mode + " [" + j + "] ");
-					outputCdx(r.getHeader());
+					logRecordErrors(record);
+					outputCdx(record.getHeader());
 				}
+	    		if (j > this.recordEndIndex)
+	    			break;
 			}
         } else if (this.mode.equals("filter")) { // filter MIME type
-        	for (ArchiveRecord r : a) {
+        	// ARCReader reader = (ARCReader)ArchiveReaderFactory.get(this.arcFile);
+        	for (ArchiveRecord record : reader) {
         		j++;
         		if (inRecordRange(j)) {
-        			if (filterMimeType(r,this.filter)==true) {
+        			if (filterMimeType(record,this.filter)==true) {
         				System.out.print(mode + " [" + j + "] ");
-        				outputCdx(r.getHeader());
+        				outputCdx(record.getHeader());
         				filterCount++;
         			}
         		}
+        		if (j > this.recordEndIndex)
+        			break;
         	}
         	double filterPercent = (double)filterCount/j;
         	NumberFormat filterPercentFmt = NumberFormat.getPercentInstance();
         	filterPercentFmt.setMinimumFractionDigits(2);
-        	System.out.println("found (" 
+        	System.out.println("\n========== found: " 
         			+ filterCount + "/" + j + " = " 
         			+ filterPercentFmt.format(filterPercent)
-        			+ ") mimetype=" + filter 
+        			+ " mimetype=" + filter 
         			+ " records. ");
-        } else { // do nothing, but count iterations 
-        	for (ArchiveRecord r : a) {
+        } else { // do nothing, but count iterations
+        	System.out.println();
+        	for (ArchiveRecord record : reader) {
         		j++;
-        		r.getHeader();
+        		logRecordErrors(record);
         		System.out.print(".");
         		if ((j % 100) == 0) 
         			System.out.print("[" + j+ "]\n");
         	}
         }
-        if (! this.mode.equals("filter"))
-        	System.out.println("found (" + j + ") records. ");
-		System.out.println("Done.");
+        if (this.offset == -1) {
+        	System.out.println("\n========== found: " + j + " records. ");
+        }
+		System.out.println("\n========== Done.");
+	}
+
+	private void replayRecord(ARCReader arcReader) throws IOException {
+    	arcReader.setStrict(true);
+    	ARCRecord arcRecord = (ARCRecord) arcReader.get();
+    	arcRecord.skipHttpHeader();
+    	if (arcRecord.hasErrors()) {
+    		logger.warning("record has errors: " + arcRecord.getErrors());
+    	}
+    	byte[] buffer = new byte[BUFFER_SIZE];
+    	if (arcRecord.available() > 0) {
+    		// for (int r = -1; (r = arcRecord.read(buffer, 0, BUFFER_SIZE)) != -1;) {
+    		int r = -1;
+    		while((r = arcRecord.read(buffer, 0, BUFFER_SIZE)) != -1) {
+    			// os.write(buffer, 0, r);
+    			System.out.write(buffer, 0, r);
+    		}
+    	} else {
+    		System.out.println("record bytes available: " 
+    				+ arcRecord.available());
+    	}
 	}
 	
-	
+	private void replayRecord(WARCReader warcReader) throws IOException {
+		warcReader.setStrict(true);
+		WARCRecord warcRecord = (WARCRecord) warcReader.get();
+    	byte[] buffer = new byte[BUFFER_SIZE];
+    	if (warcRecord.available() > 0) {
+    		int r = -1;
+    		while((r = warcRecord.read(buffer, 0, BUFFER_SIZE)) != -1) {
+    			System.out.write(buffer, 0, r);
+    		}
+    	}
+		System.out.println("record bytes available: "
+				+ warcRecord.available());
+	}
+
+	private void indexRecord(ARCReader arcReader) throws IOException {
+		arcReader.setStrict(true);
+		arcReader.setParseHttpHeaders(true);
+		ARCRecord arcRecord = (ARCRecord) arcReader.get();
+		ArchiveRecordHeader header = arcRecord.getHeader();
+		if (arcRecord.hasErrors()) 
+			logger.warning("========== record has errors: " 
+					+ arcRecord.getErrors());
+		System.out.println("========== dumping HTTP header:");
+		arcRecord.dumpHttpHeader();
+		System.out.println("========== selected metadata:");
+		arcRecord.close(); // must close record to get digest
+		printMetadata(arcRecord,header);
+		System.out.println("========== getting metadata:");
+		System.out.println(arcRecord.getMetaData());
+		System.out.println("\n"
+				+ "record length declared: " 
+				+ header.getLength()
+				+ "header bytes read     : " 
+				+ arcRecord.httpHeaderBytesRead);
+	}
+
+	private void indexRecord(WARCReader warcReader) throws IOException {
+		warcReader.setStrict(true);
+		// warcReader.setParseHttpHeaders(true);
+		WARCRecord warcRecord = (WARCRecord)warcReader.get(this.offset);
+		ArchiveRecordHeader header = warcRecord.getHeader();
+		System.out.println("========== selected metadata:");
+		warcRecord.close(); // must close record to get digest
+		printMetadata(warcRecord,header);
+		System.out.println("========== header: \n" + header);
+	}
+
 }

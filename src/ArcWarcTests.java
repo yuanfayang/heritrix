@@ -1,43 +1,30 @@
-// args[0] = arc
-//     [1] = offset
-//     [2] = mode    = [filter,fetch,cdx,dump]
-//     [3] = record_range_start
-//     [4] = record_range_end
-//     [5] = filter  = [text/html, etc.]
 import java.io.IOException;
 public abstract class ArcWarcTests 
 {
 	public static void main(String[] args) 
 	{
 		try {
-			if (args.length > 0) {
+			if (args.length > 1) {
+				int offset    = Integer.valueOf(args[1]); 
+				String mode   = (args.length>2) ? args[2] : "count";
+				int start     = (args.length>3) ? Integer.valueOf(args[3]) : 0;
+				int end       = (args.length>4) ? Integer.valueOf(args[4]) : 100;
+				String filter = (args.length>5) ? args[5] : null;
 				ArcWarc aw = new ArcWarc();
 				aw.setArcFile(args[0]);
 				aw.setParams(null,null,Integer.valueOf(args[1]));
 				aw.setArchiveFormat();
-				aw.setOffset(Integer.valueOf(args[1]));
-				aw.setMode(args[2]);
-				if (args.length > 3) { 
-					aw.setRecordRange(Integer.valueOf(args[3]),
-							Integer.valueOf(args[4]));
-				} else {
-					aw.setRecordRange(1,100);
-				}
-				if (args.length > 5) { 
-					aw.setFilter(args[5]);
-				}
+				aw.setOffset(offset);
+				aw.setMode(mode);
+				aw.setRecordRange(start,end);
+				aw.setFilter(filter);
 				aw.printInfo();
-				aw.testArc();
+				aw.readArchive();
 			} else {
-				ArcWarc aw = new ArcWarc();
-			    aw.setDefaultParams("arcgz");
-				aw.setDefaultArcFile();
-				aw.setArchiveFormat();
-				aw.setMode("cdx");
-				aw.setFilter("text/html");
-				aw.setRecordRange(1000,1100);
-				aw.printInfo();
-				aw.testArc();
+				String usage = "ArcWarcTests.java arc_file offset " 
+					+ "[ [count | cdx | index | replay | dump ] " 
+					+ "record_range_start record_range_end filter]";
+				System.out.println(usage);
 			}
 		} catch(IOException e) {
 			System.err.println("Caught IOException: " 
