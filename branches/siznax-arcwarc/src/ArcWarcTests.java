@@ -6,7 +6,7 @@ public abstract class ArcWarcTests
 		try {
 			if (args.length > 1) {
 				int offset    = Integer.valueOf(args[1]); 
-				String mode   = (args.length>2) ? args[2] : "count";
+				String mode   = (args.length>2) ? args[2] : "scan";
 				int start     = (args.length>3) ? Integer.valueOf(args[3]) : 0;
 				int end       = (args.length>4) ? Integer.valueOf(args[4]) : 100;
 				String filter = (args.length>5) ? args[5] : null;

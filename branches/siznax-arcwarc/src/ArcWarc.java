@@ -9,8 +9,6 @@ import org.archive.io.warc.WARCReader;
 import org.archive.io.warc.WARCReaderFactory;
 import org.archive.io.warc.WARCRecord;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
 public class ArcWarc 
@@ -28,11 +26,14 @@ public class ArcWarc
     public String mode;
     public String filter;
     public long offset;
+    
 	private int recordStartIndex;
 	private int recordEndIndex;
-	private Logger logger;
+	private int recordCount;
+	private int filterCount;
 	
-    public static String[] modes = {"index","replay","dump","cdx","filter"};
+	private Logger logger;
+	public static String[] modes = {"index","replay","dump","cdx","filter"};
 
     public static final int BUFFER_SIZE = 1024;
     
@@ -91,7 +92,7 @@ public class ArcWarc
 	}
 
 	private boolean isARCFormat() {
-		if (this.format.equals("arc") || this.format.equals("arcGz")) {
+		if (this.format.equals("arc") || this.format.equals("arcGzip")) {
 			return true;
 		} else {
 			return false;
@@ -222,12 +223,10 @@ public class ArcWarc
 	public void readArchive()
 	throws IOException {
 
-        long j = 0;
-        long filterCount = 0;
     	ArchiveReader reader = this.getReader();
 
         if (this.mode.equals("index")) {
-        	// operates on a record, parse HTTP header only
+        	// parse HTTP header only
 			System.out.println("INDEX " + this.arcType 
 					+ " record at offset: " + offset);
 			if (this.isARCFormat()) {
@@ -236,7 +235,7 @@ public class ArcWarc
 				this.indexRecord((WARCReader)reader);
 			}
         } else if (this.mode.equals("replay")) {
-        	// operates on a record, skip header and read  
+        	// skip header and read  
         	System.out.println("REPLAY " + this.arcType 
         			+ " record at offset: " + offset + "");
         	if (this.isARCFormat()) {
@@ -244,64 +243,80 @@ public class ArcWarc
         	} else {
         		this.replayRecord((WARCReader)reader);
         	}
-        } else if (this.mode.equals("dump")) { // dump each record - messy!
-			System.out.println("DUMP record at offset: " + offset);
-        	for (ArchiveRecord record : reader) {
-				j++;
-				if (inRecordRange(j)) {
-					System.out.println(mode + " [" + j + "] ");
-					record.dump();
-				} 
-	    		if (j > this.recordEndIndex)
-	    			break;
-			}
-        } else if (this.mode.equals("cdx")) { // output CDX
-			for (ArchiveRecord record : reader) {
-				j++;
-				if (inRecordRange(j)) {
-					System.out.print(mode + " [" + j + "] ");
-					logRecordErrors(record);
-					outputCdx(record.getHeader());
-				}
-	    		if (j > this.recordEndIndex)
-	    			break;
-			}
+        } else if (this.mode.equals("dump")) { 
+        	this.dumpArchive(reader);
+        } else if (this.mode.equals("cdx")) { 
+        	this.outputArchiveCDX(reader);
         } else if (this.mode.equals("filter")) { // filter MIME type
-        	// ARCReader reader = (ARCReader)ArchiveReaderFactory.get(this.arcFile);
-        	for (ArchiveRecord record : reader) {
-        		j++;
-        		if (inRecordRange(j)) {
-        			if (filterMimeType(record,this.filter)==true) {
-        				System.out.print(mode + " [" + j + "] ");
-        				outputCdx(record.getHeader());
-        				filterCount++;
-        			}
-        		}
-        		if (j > this.recordEndIndex)
-        			break;
-        	}
-        	double filterPercent = (double)filterCount/j;
-        	NumberFormat filterPercentFmt = NumberFormat.getPercentInstance();
-        	filterPercentFmt.setMinimumFractionDigits(2);
-        	System.out.println("\n========== found: " 
-        			+ filterCount + "/" + j + " = " 
-        			+ filterPercentFmt.format(filterPercent)
-        			+ " mimetype=" + filter 
-        			+ " records. ");
-        } else { // do nothing, but count iterations
-        	System.out.println();
-        	for (ArchiveRecord record : reader) {
-        		j++;
-        		logRecordErrors(record);
-        		System.out.print(".");
-        		if ((j % 100) == 0) 
-        			System.out.print("[" + j+ "]\n");
-        	}
+        	this.filterArchive(reader);
+        } else { // scan; do nothing, but count iterations
+        	this.scanArchive(reader);
         }
         if (this.offset == -1) {
-        	System.out.println("\n========== found: " + j + " records. ");
+        	System.out.println("\n========== found: " 
+        			+ this.recordCount + " records. ");
         }
 		System.out.println("\n========== Done.");
+	}
+
+	private void scanArchive(ArchiveReader reader) {
+    	System.out.println();
+    	for (ArchiveRecord record : reader) {
+    		this.recordCount++;
+    		logRecordErrors(record);
+    		System.out.print(".");
+    		if ((this.recordCount % 100) == 0) 
+    			System.out.print("[" + this.recordCount+ "]\n");
+    	}
+	}
+
+	private void filterArchive(ArchiveReader reader) {
+    	for (ArchiveRecord record : reader) {
+    		recordCount++;
+    		if (inRecordRange(recordCount)) {
+    			if (filterMimeType(record,this.filter)==true) {
+    				System.out.print(mode + " [" + recordCount + "] ");
+    				outputCdx(record.getHeader());
+    				filterCount++;
+    			}
+    		}
+    		if (recordCount > this.recordEndIndex)
+    			break;
+    	}
+    	double filterPercent = (double)filterCount/recordCount;
+    	NumberFormat filterPercentFmt = NumberFormat.getPercentInstance();
+    	filterPercentFmt.setMinimumFractionDigits(2);
+    	System.out.println("\n========== found: " 
+    			+ filterCount + "/" + recordCount + " = " 
+    			+ filterPercentFmt.format(filterPercent)
+    			+ " mimetype=" + filter 
+    			+ " records. ");
+	}
+
+	private void outputArchiveCDX(ArchiveReader reader) {
+		for (ArchiveRecord record : reader) {
+			recordCount++;
+			if (inRecordRange(recordCount)) {
+				System.out.print(mode + " [" + recordCount + "] ");
+				logRecordErrors(record);
+				outputCdx(record.getHeader());
+			}
+    		if (recordCount > this.recordEndIndex)
+    			break;
+		}
+	}
+
+	private void dumpArchive(ArchiveReader reader) throws IOException {
+		System.out.println("DUMP record at offset: " + offset);
+    	for (ArchiveRecord record : reader) {
+			recordCount++;
+			if (inRecordRange(recordCount)) {
+				System.out.println(mode + " [" + recordCount + "] ");
+				record.dump();
+			} 
+    		if (recordCount > this.recordEndIndex)
+    			break;
+		}
 	}
 
 	private void replayRecord(ARCReader arcReader) throws IOException {
