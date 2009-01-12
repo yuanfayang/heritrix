@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.util.ArchiveUtils"%>
 <%@ page import="java.util.Properties"%>
 <%@ page import="java.lang.management.ManagementFactory"%>

@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -26,7 +27,7 @@ the implied prefix, and plain hosts/domains will be changed to the implied
 HTTP URI then converted as above. (If unchecked, all strings are accepted
 literally.)
 
-<form method="post" action="do_associate.jsp">
+<form method="post" action="do_associate.jsp" accept-charset='UTF-8'>
 <% Text.printSheetFormFields(request, out); %>
 <input type="hidden" name="add" value="<%=Text.attr(add)%>">
 

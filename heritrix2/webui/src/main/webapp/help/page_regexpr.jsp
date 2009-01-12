@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@page import="java.util.ArrayList,java.util.regex.PatternSyntaxException"%>
 <%@page import="org.archive.util.TextUtils"%>
 
@@ -41,7 +42,7 @@
     </tr>
     <tr>
         <td nowrap>
-            <form method="Post">
+            <form method="Post" accept-charset='UTF-8'>
 	            Test reg.expr.: <input name="regexpr" size="78" value="<%=regexpr==null?"":regexpr%>"><br>
 	            <textarea name="testLines" rows="10" cols="70"><% 
 	               if(testLines != null){

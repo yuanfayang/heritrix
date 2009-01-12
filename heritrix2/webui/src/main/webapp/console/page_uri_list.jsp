@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
@@ -31,7 +32,7 @@ String checked = (verbose) ? " checked" : "";
 
 <h1>List Frontier URIs</h1>
 
-<form method="get" action="do_update_uri_list.jsp">
+<form method="get" action="do_update_uri_list.jsp" accept-charset='UTF-8'>
 <% Text.printJobFormFields(request, out); %>
 <input type="hidden" name="marker" value="<%=marker%>">
 

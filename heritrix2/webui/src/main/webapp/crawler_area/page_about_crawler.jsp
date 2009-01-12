@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="javax.management.openmbean.TabularData"%>
 <%@ page import="javax.management.openmbean.CompositeData"%>
 <%@ page import="java.util.Collection"%>

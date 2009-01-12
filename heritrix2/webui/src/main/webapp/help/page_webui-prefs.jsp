@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.Heritrix" %>
 <html>
 <head>
@@ -10,7 +11,7 @@
 
 <h1>Change Password</h1>
 
-<form method="POST" action="do_change_password.jsp">
+<form method="POST" action="do_change_password.jsp" accept-charset='UTF-8'>
     
 Enter the current password:<br/>
 <input type="password" name="old" value="">

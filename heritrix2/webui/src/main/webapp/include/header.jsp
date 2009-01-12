@@ -1,3 +1,5 @@
+<%@ page pageEncoding="UTF-8" %> 
+
 <%
 String favicon = (String)application.getAttribute("favicon");
 if ((favicon == null) || (favicon.length() == 0)) {
