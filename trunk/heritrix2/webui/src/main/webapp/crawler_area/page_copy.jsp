@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.List" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -24,7 +25,7 @@ String error = (String)request.getAttribute("error");
 <font color="red"><%=Text.html(error)%></font>
 <% } %>
 
-<form class="nospace" action="do_copy.jsp" method="post">
+<form class="nospace" action="do_copy.jsp" method="post" accept-charset='UTF-8'>
 <% crawler.printFormFields(out); %>
 <% Text.printJobFormFields(request, out); %>
 

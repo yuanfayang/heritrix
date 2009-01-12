@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.List" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -19,7 +20,7 @@ Any engines in the same Java VM will also be stopped.<p>
 
 You will have to restart it from the command line.
 
- <form method="post" action="do_stop_webui.jsp">
+ <form method="post" action="do_stop_webui.jsp" accept-charset='UTF-8'>
  <input type="submit" value="Stop Web UI JVM">
  </form>
 

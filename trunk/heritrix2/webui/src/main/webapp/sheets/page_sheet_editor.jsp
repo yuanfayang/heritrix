@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="javax.management.openmbean.CompositeData" %>
@@ -25,7 +26,7 @@ int count = 0;
 
 <%@include file="/include/nav.jsp"%>
 
-<form id="the_form" action="do_save_single_sheet.jsp" method="post">
+<form id="the_form" action="do_save_single_sheet.jsp" method="post" accept-charset='UTF-8'>
 
 
 <table width="100%">

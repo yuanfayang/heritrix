@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -49,9 +50,9 @@ input.textbox { width: 400px; }
 <p>Enter a value for the setting below.
 
 <% if (setting.isObjectType()) { %>
-<form action="do_save_object_path.jsp#<%=Text.attr(path)%>" method="post">
+<form action="do_save_object_path.jsp#<%=Text.attr(path)%>" method="post" accept-charset='UTF-8'>
 <% } else { %>
-<form action="do_save_path.jsp#<%=Text.attr(path)%>" method="post">
+<form action="do_save_path.jsp#<%=Text.attr(path)%>" method="post" accept-charset='UTF-8'>
 <% } %>
 <% Text.printSheetFormFields(request, out); %>
 <input type="hidden" name="path" value="<%=Text.attr(path)%>">

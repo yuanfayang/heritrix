@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
@@ -46,7 +47,7 @@ You may bulk import URIs to the current job's frontier from either a
 file (at the job's crawl engine machine) or a prior crawl's recovery 
 log. 
 
-<form method="post" action="do_frontier_import.jsp">
+<form method="post" action="do_frontier_import.jsp" accept-charset='UTF-8'>
 <% Text.printJobFormFields(request, out); %>
 
 <h2>Source</h2>

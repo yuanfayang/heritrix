@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="javax.management.openmbean.CompositeData" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
@@ -24,13 +25,13 @@ You will not be able to restore it.
 <table>
 <tr>
 <td>
- <form method="get" action="do_show_sheets.jsp">
+ <form method="get" action="do_show_sheets.jsp" accept-charset='UTF-8'>
  <% Text.printJobFormFields(request, out); %>
  <input type="submit" value="Cancel">
  </form>
 </td>
 <td>
- <form method="post" action="do_delete_sheet.jsp">
+ <form method="post" action="do_delete_sheet.jsp" accept-charset='UTF-8'>
  <% Text.printSheetFormFields(request, out); %>
  <input type="submit" value="Delete">
  </form>

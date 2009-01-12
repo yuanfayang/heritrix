@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%
 
@@ -22,7 +23,7 @@ String error = (String)request.getAttribute("error");
 </error>
 <% } %>
 
-<form class="nospace" action="do_add_crawler.jsp" method="post">
+<form class="nospace" action="do_add_crawler.jsp" method="post" accept-charset='UTF-8'>
 
 <table>
 <tr>

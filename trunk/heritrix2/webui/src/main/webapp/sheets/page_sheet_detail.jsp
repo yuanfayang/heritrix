@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="javax.management.openmbean.CompositeData" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>

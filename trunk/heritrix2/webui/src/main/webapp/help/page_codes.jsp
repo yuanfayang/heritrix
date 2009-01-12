@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@page import="java.util.ArrayList,java.util.regex.PatternSyntaxException"%>
 <%@page import="org.archive.util.TextUtils"%>
 

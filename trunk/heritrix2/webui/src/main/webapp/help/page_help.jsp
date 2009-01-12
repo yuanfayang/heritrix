@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <html>
 <head>

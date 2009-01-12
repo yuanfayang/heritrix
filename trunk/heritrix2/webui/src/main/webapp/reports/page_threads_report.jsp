@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
 <%@ page import="org.archive.crawler.webui.Crawler"%>
@@ -28,7 +29,7 @@
 
     <hr />
 
-    <form name="frmThread" method="GET" action="do_kill_thread.jsp">
+    <form name="frmThread" method="GET" action="do_kill_thread.jsp" accept-charset='UTF-8'>
         <input type="hidden" name="host" value="<%=crawler.getHost() %>">
         <input type="hidden" name="port" value="<%=crawler.getPort() %>">
         <input type="hidden" name="id" value="<%=crawler.getIdentityHashCode() %>">

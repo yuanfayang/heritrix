@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -98,7 +99,7 @@ Add Single Sheet...
 
 <h3>Test Settings</h3>
 
-<form method="get" action="do_show_config.jsp">
+<form method="get" action="do_show_config.jsp" accept-charset='UTF-8'>
 <% Text.printJobFormFields(request, out); %>
 Enter a URL below to see what settings will be applied for that URL:<br>
 <input type="text" name="url" size="60" value=""><br/>

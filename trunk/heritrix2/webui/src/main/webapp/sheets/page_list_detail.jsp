@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -116,7 +117,7 @@ for (Setting s: settings.getSettings()) {
 
 <% String action = settings.isObjectElementType(setting) ? "do_add_object_element.jsp" : "do_add_element.jsp"; %>
 
-<form action="<%=action%>#<%=Text.attr(path)%>" method="post">
+<form action="<%=action%>#<%=Text.attr(path)%>" method="post" accept-charset='UTF-8'>
 <% Text.printSheetFormFields(request, out); %>
 <input type="hidden" name="path" value="<%=Text.attr(setting.getPath())%>">
 

@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>

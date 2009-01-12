@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -27,7 +28,7 @@ There are no checkpoints to recover for <%=Text.html(job.getName())%>.
 <% } else { %>
 
 
-<form class="nospace" action="do_recover.jsp" method="post">
+<form class="nospace" action="do_recover.jsp" method="post" accept-charset='UTF-8'>
 <% crawler.printFormFields(out); %>
 <% Text.printJobFormFields(request, out); %>
 

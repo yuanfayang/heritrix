@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.archive.crawler.framework.JobStage" %>
@@ -39,7 +40,7 @@ will have to directly edit the seed file using a text editor on the crawler.
 The first 32K of the seeds file appears below.
 
   <% if (job.getJobStage() == JobStage.ACTIVE) { %>
-  <form action="do_refresh_seeds.jsp" method="post">
+  <form action="do_refresh_seeds.jsp" method="post" accept-charset='UTF-8'>
   <% Text.printJobFormFields(request, out); %>
   After you edit the seeds file, you can tell the running job to reload the 
   seeds file by clicking this button.<p>
@@ -50,7 +51,7 @@ The first 32K of the seeds file appears below.
   <% } %>
 <% } %>
 
-<form method="post" action="do_save_seeds.jsp">
+<form method="post" action="do_save_seeds.jsp" accept-charset='UTF-8'>
 <% Text.printJobFormFields(request, out); %>
 
 <textarea rows="25" cols="75" name="seeds">

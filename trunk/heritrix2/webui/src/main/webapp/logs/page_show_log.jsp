@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.webui.Log"%>
 <%@ page import="org.archive.crawler.webui.Text"%>
 <%@ page import="org.archive.crawler.webui.Crawler"%>
@@ -31,7 +32,7 @@
           URL=do_show_log.jsp?<%=crawler.getQueryString()+"&"+log.getQueryString(log.getCurrentLog(),log.getMode())%>">
 <% } %>
 
-<form method="GET" action="do_show_log.jsp">
+<form method="GET" action="do_show_log.jsp" accept-charset='UTF-8'>
 <input type="hidden" name="host" value="<%=crawler.getHost()%>">
 <input type="hidden" name="port" value="<%=crawler.getPort()%>">
 <input type="hidden" name="id" value="<%=crawler.getIdentityHashCode()%>">

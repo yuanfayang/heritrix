@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.webui.Text" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.CrawlJob"%>
@@ -24,7 +25,7 @@ String regex = (String)Text.get(request, "regex");
 
 <h1>Delete Frontier URIs</h1>
 
-<form method="post" action="do_delete_uris.jsp">
+<form method="post" action="do_delete_uris.jsp" accept-charset='UTF-8'>
 <% Text.printJobFormFields(request, out); %>
 
 <p>

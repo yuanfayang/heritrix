@@ -1,4 +1,4 @@
-<%@ page language="java" isErrorPage="true" %>
+<%@ page language="java" isErrorPage="true" pageEncoding="UTF-8" %>
 <!DOCTYPE HTML PUBLIC "-//w3c//dtd html 4.0 transitional//en">
 <html>
 <head>

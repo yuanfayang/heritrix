@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.archive.crawler.webui.Crawler" %>
 <%@ page import="org.archive.crawler.webui.Text" %>
@@ -21,7 +22,7 @@ boolean single = (Boolean)request.getAttribute("single");
 
 Enter a name for the new Settings Sheet <%= single ? "" : "Bundle" %> below.<br/>
 
-<form class="nospace" method="post" action="<%= single ? "do_add_single_sheet.jsp" : "do_add_sheet_bundle.jsp"%>">
+<form class="nospace" method="post" action="<%= single ? "do_add_single_sheet.jsp" : "do_add_sheet_bundle.jsp"%>" accept-charset='UTF-8'>
 <% Text.printJobFormFields(request, out); %>
 <input type="hidden" name="single" value="<%=single%>">
 
