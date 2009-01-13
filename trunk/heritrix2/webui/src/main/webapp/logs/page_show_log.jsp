@@ -244,7 +244,7 @@
 
 <h3>Rotate Log Files</h3>
 
-<form 
+<form accept-charset='UTF-8'
    method="post" 
    action="<%=request.getContextPath()%>/console/do_rotate_log_files.jsp?<%=Text.jobQueryString(request)%>"
    >

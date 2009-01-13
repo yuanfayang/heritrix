@@ -18,7 +18,7 @@ Crawler crawler = (Crawler)Text.get(request, "crawler");
 
 <h3>Stop the <%=Text.html(crawler.getLegend())%> engine?</h3>
 
-<form method="get" action="do_stop_crawler.jsp">
+<form method="get" action="do_stop_crawler.jsp" accept-charset='UTF-8'>
 <% crawler.printFormFields(out); %>
 
 <input type="radio" name="kind" value="graceful" id="graceful" checked>
