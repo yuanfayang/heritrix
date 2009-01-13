@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@include file="/include/handler.jsp"%>
 <%@ page import="java.util.Vector,java.util.HashMap" %>
 <%@ page import="java.util.logging.Level"%>
@@ -57,7 +58,7 @@
 <% if(alerts.size() == 0) { %>
     There are no alerts at this time.
 <% } else { %>
-    <form name="frmAlerts" method="post" action="alerts.jsp">
+    <form name="frmAlerts" method="post" action="alerts.jsp" accept-charset='UTF-8'>
     <input type="hidden" name="action">
     <table cellspacing="1" cellpadding="0" border="0" >
         <THEAD>

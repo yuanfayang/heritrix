@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.framework.FrontierMarker"%>
@@ -91,7 +92,7 @@
         action = null;
     }
 %>
-    <form name="frmFrontierAdd" method="POST" action="frontier.jsp">
+    <form name="frmFrontierAdd" method="POST" action="frontier.jsp" accept-charset='UTF-8'>
     <input type="hidden" name="action" value="add">
     <table cellspacing="0" cellpadding="0" width="100%">
         <tr>
@@ -132,7 +133,7 @@
     
     <hr>
     <b>View or Delete URIs</b>
-    <form name="frmFrontierList" method="POST" action="frontier.jsp">
+    <form name="frmFrontierList" method="POST" action="frontier.jsp" accept-charset='UTF-8'>
     <input type="hidden" name="action" value="">
     <table cellspacing="0" cellpadding="0" width="100%">
         <tr>

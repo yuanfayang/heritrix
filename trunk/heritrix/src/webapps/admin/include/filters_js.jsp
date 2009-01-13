@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%--This page is included by filters.jsp and by url-canonicalization-rules.jsp
     at least.
  --%>

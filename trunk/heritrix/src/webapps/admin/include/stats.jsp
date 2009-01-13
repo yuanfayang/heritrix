@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
     StatisticsTracker stats = null;
     if(handler.getCurrentJob() != null) {

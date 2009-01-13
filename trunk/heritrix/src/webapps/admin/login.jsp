@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@include file="/include/nocache.jsp"%>
 <%@ page errorPage="/error.jsp" %>
 <%@page import="java.net.URLDecoder" %>
@@ -38,7 +39,7 @@
             </tr>
             <tr>
                 <td colspan="2" height="100%" valign="top" class="main">
-                    <form method="post" 
+                    <form method="post" accept-charset='UTF-8'
                         action='<%= response.encodeURL("j_security_check") %>'
                             name="loginForm">
                         <input type="hidden" name="action" value="login">

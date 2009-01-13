@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="java.io.PrintWriter" %>
 <%@include file="/include/handler.jsp"%>
 
