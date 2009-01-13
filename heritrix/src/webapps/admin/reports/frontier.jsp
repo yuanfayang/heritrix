@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%@include file="/include/handler.jsp"%>
 <%@ page import="java.io.BufferedOutputStream" %>
 <%@ page import="java.io.FileOutputStream" %>

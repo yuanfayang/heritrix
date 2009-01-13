@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages allows the user to select all submodules which appear
@@ -7,8 +6,8 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@ include file="/include/handler.jsp"%>
-<%@ include file="/include/modules.jsp"%>
+<%@include file="/include/handler.jsp"%>
+<%@include file="/include/modules.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
@@ -41,7 +40,7 @@
         or to fill in the authentication information into an added
         RFC2617 credential).</p>
 
-    <form name="frmFilters" method="post" accept-charset='UTF-8' 
+    <form name="frmFilters" method="post" 
             action="submodules.jsp">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="action" value="done">

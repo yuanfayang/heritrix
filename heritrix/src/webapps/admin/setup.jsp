@@ -1,5 +1,4 @@
-<%@ page pageEncoding="UTF-8" %> 
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%
     String title = "Setup";

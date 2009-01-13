@@ -1,5 +1,4 @@
-<%@ page pageEncoding="UTF-8" %> 
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 <%
     boolean shutdown = request.getParameter("shutdown")!=null
                        && request.getParameter("shutdown").equals("doit");
@@ -28,7 +27,7 @@
             }
         </script>
         
-        <form name="frmShutDown" method="post" action="shutdown.jsp" accept-charset='UTF-8'>
+        <form name="frmShutDown" method="post" action="shutdown.jsp">
             <input type="hidden" name="shutdown">
         </form>
     

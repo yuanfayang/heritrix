@@ -1,5 +1,4 @@
-<%@ page pageEncoding="UTF-8" %> 
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.crawler.util.LogReader" %>
 
@@ -90,7 +89,7 @@
             document.frmJournal.submit();
         }
     </script>
-    <form name="frmJournal" method="post" action="journal.jsp" accept-charset='UTF-8'>
+    <form name="frmJournal" method="post" action="journal.jsp">
     <input type="hidden" name="action">
     <input type="hidden" name="job" value="<%=theJob.getUID()%>">
     <table>

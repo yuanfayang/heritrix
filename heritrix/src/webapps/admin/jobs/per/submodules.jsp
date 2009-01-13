@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages allows the user to select all submodules which appear
@@ -9,8 +8,8 @@
    * TODO: This page is a near duplicate of jobs/submodules.jsp. Fix.
    */
 %>
-<%@ include file="/include/handler.jsp"%>
-<%@ include file="/include/modules.jsp"%>
+<%@include file="/include/handler.jsp"%>
+<%@include file="/include/modules.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
@@ -57,7 +56,7 @@
         add the particular regex to an added canonicalization RegexRule
         or to fill in the authentication information into an added
         RFC2617 credential).</p>
-    <form name="frmFilters" method="post" accept-charset='UTF-8'
+    <form name="frmFilters" method="post"
             action="submodules.jsp">
         <input type="hidden" name="currDomain" value="<%=currDomain%>">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

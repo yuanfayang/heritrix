@@ -1,5 +1,4 @@
-<%@ page pageEncoding="UTF-8" %> 
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%
     String title = "Help";
@@ -39,7 +38,7 @@
     </tr>
     <tr>
         <td nowrap>
-            <form method="Post" accept-charset='UTF-8'>
+            <form method="Post">
 	            Test reg.expr.: <input name="regexpr" size="78" value="<%=regexpr==null?"":regexpr%>"><br>
 	            <textarea name="testLines" rows="10" cols="70"><% 
 	               if(testLines != null){

@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%@ include file="/include/handler.jsp" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob,java.util.List" %>
 <%@ page import="org.archive.crawler.Heritrix" %>
@@ -78,7 +77,7 @@
         any running jobs.  Note, you cannot delete all Heritrix instances.
         The UI gets confused if doesn't have an instance to juggle.
         </p>
-        <form action="<%=baseurl%>" method="POST" accept-charset='UTF-8'>
+        <form action="<%=baseurl%>" method="POST">
         <table border="0" cellspacing="0" cellpadding="2" 
             description="List of all local Heritrix instances">
         <thead>
@@ -136,7 +135,7 @@
         <%
         } else {
         %>
-        <form action="<%=baseurl%>" method="POST" accept-charset='UTF-8'>
+        <form action="<%=baseurl%>" method="POST">
             Name of new Heritrix instance: <input type="text"
                 name="createName" size="32" />
             <input type="submit" name="submit" value="Create"/>

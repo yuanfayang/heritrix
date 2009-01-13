@@ -1,5 +1,4 @@
-<%@ page pageEncoding="UTF-8" %> 
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%
     String title = "Threads report";
@@ -49,7 +48,7 @@
     }
     %></pre>
     <hr>
-    <form name="frmThread" method="post" action="threads.jsp" accept-charset='UTF-8'>
+    <form name="frmThread" method="post" action="threads.jsp">
         <input type="hidden" name="action">
         <b>Thread number:</b> <input name="threadNumber" size="3"> <input type="checkbox" name="replace" value="replace"> Replace thread <input type="button" onClick="doKill()" value="Kill thread">
     </form>

@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * Add or remove criteria
@@ -6,7 +5,7 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%@page import="java.util.ListIterator"%>
 <%@page import="java.util.regex.Pattern" %>
@@ -136,7 +135,7 @@
         <%=theJob.getJobName()%>:</b>
         <%@include file="/include/jobrefinementnav.jsp"%>
     <p>
-    <form name="frmCriteria" method="post" action="criteria.jsp" accept-charset='UTF-8'>
+    <form name="frmCriteria" method="post" action="criteria.jsp">
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="item" value="">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

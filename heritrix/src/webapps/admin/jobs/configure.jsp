@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages allows the user to edit the configuration 
@@ -9,8 +8,8 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@ include file="/include/handler.jsp"%>
-<%@ include file="/include/jobconfigure.jsp"%>
+<%@include file="/include/handler.jsp"%>
+<%@include file="/include/jobconfigure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
@@ -176,7 +175,7 @@
 
     <p>
     
-    <form name="frmConfig" method="post" action="configure.jsp" accept-charset='UTF-8'>
+    <form name="frmConfig" method="post" action="configure.jsp">
         <input type="hidden" name="update" value="false">        
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="item" value="">
