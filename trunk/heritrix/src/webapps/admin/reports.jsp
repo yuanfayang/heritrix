@@ -5,7 +5,7 @@
     String title = "Reports";
     int tab = 4;
 %>
-<%@include file="/include/head.jsp"%>
+<%@ include file="/include/head.jsp"%>
 <%
     String message = null;
     boolean crawling = handler.isCrawling();

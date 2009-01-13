@@ -1,5 +1,5 @@
 <%@ page pageEncoding="UTF-8" %> 
-<%@include file="/include/handler.jsp"%>
+<%@ include file="/include/handler.jsp"%>
 <%
     boolean shutdown = request.getParameter("shutdown")!=null
                        && request.getParameter("shutdown").equals("doit");

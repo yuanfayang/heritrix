@@ -1,6 +1,6 @@
 <%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.Heritrix" %>
-<%@include file="/include/handler.jsp"%>
+<%@ include file="/include/handler.jsp"%>
 
 <%
     String title = "Web UI Prefs";
