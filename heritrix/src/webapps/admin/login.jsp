@@ -1,6 +1,5 @@
-<%@ page pageEncoding="UTF-8" %> 
+<%@ page errorPage="/error.jsp" pageEncoding="UTF-8" %>
 <%@include file="/include/nocache.jsp"%>
-<%@ page errorPage="/error.jsp" %>
 <%@page import="java.net.URLDecoder" %>
 
 <%  String sMessage = null;%>

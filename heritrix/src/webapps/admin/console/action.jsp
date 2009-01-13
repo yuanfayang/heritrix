@@ -1,6 +1,6 @@
 <%@ page pageEncoding="UTF-8" %> 
 <%@ page errorPage="/error.jsp" %>
-<%@include file="/include/handler.jsp"%>
+<%@ include file="/include/handler.jsp"%>
 <%
     /**
      * This webpage performs actions that can be performed from the console.

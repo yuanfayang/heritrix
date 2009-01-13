@@ -9,8 +9,8 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@include file="/include/handler.jsp"%>
-<%@include file="/include/jobconfigure.jsp"%>
+<%@ include file="/include/handler.jsp"%>
+<%@ include file="/include/jobconfigure.jsp"%>
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>

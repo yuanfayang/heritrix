@@ -6,7 +6,7 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@include file="/include/handler.jsp"%>
+<%@ include file="/include/handler.jsp"%>
 
 <%@page import="java.util.ListIterator"%>
 <%@page import="java.util.regex.Pattern" %>

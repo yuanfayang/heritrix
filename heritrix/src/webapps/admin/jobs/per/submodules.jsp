@@ -9,8 +9,8 @@
    * TODO: This page is a near duplicate of jobs/submodules.jsp. Fix.
    */
 %>
-<%@include file="/include/handler.jsp"%>
-<%@include file="/include/modules.jsp"%>
+<%@ include file="/include/handler.jsp"%>
+<%@ include file="/include/modules.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>

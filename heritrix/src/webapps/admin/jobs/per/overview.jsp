@@ -7,7 +7,7 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@include file="/include/handler.jsp"%>
+<%@ include file="/include/handler.jsp"%>
 
 <%@page import="java.util.Collection"%>
 <%@page import="java.util.Iterator"%>

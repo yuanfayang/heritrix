@@ -1,5 +1,5 @@
 <%@ page pageEncoding="UTF-8" %> 
-<%@include file="/include/handler.jsp"%>
+<%@ include file="/include/handler.jsp"%>
 <%@ page import="org.archive.io.SinkHandlerLogRecord" %>
 <%@ page import="java.util.logging.Level" %>
 <%
