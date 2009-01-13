@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages displays availible options for per host overrides of 
@@ -7,7 +6,7 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%@page import="java.util.Collection"%>
 <%@page import="java.util.Iterator"%>
@@ -165,7 +164,7 @@
     <p>
         <%@include file="/include/jobnav.jsp"%>
     <p>
-    <form name="frmPer" method="post" action="overview.jsp" accept-charset='UTF-8'>
+    <form name="frmPer" method="post" action="overview.jsp">
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="where" value="">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

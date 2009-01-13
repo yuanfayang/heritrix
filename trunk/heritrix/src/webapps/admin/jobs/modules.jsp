@@ -1,6 +1,5 @@
-<%@ page pageEncoding="UTF-8" %> 
-<%@ include file="/include/handler.jsp"%>
-<%@ include file="/include/modules.jsp"%>
+<%@include file="/include/handler.jsp"%>
+<%@include file="/include/modules.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
@@ -193,7 +192,7 @@
 
     <p>
         <%@include file="/include/jobnav.jsp"%>
-    <form name="frmModules" method="post" action="modules.jsp" accept-charset='UTF-8'>
+    <form name="frmModules" method="post" action="modules.jsp">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="subaction" value="done">

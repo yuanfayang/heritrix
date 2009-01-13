@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.admin.CrawlJobErrorHandler" %>
 <%@ page import="org.archive.crawler.admin.ui.CookieUtils" %>
 <%@ page import="org.archive.crawler.settings.*" %>

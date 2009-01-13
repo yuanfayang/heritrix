@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%@ page errorPage="/error.jsp" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="org.archive.crawler.Heritrix" %>

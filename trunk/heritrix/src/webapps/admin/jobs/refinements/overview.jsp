@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages displays existing refinements on a particular override (or global settings).
@@ -7,7 +6,7 @@
    * @author Kristinn Sigurdsson
    */
 %>
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%@page import="java.util.ListIterator"%>
 <%@page import="java.util.regex.Pattern" %>
@@ -158,7 +157,7 @@
             <%@include file="/include/jobpernav.jsp"%>
         <% } %>
     <p>
-    <form name="frmRefinements" method="post" action="overview.jsp" accept-charset='UTF-8'>
+    <form name="frmRefinements" method="post" action="overview.jsp">
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="where" value="">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

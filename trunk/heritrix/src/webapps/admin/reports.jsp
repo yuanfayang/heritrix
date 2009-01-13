@@ -1,11 +1,10 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%@ include file="/include/handler.jsp" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob,java.util.List" %>
 <%
     String title = "Reports";
     int tab = 4;
 %>
-<%@ include file="/include/head.jsp"%>
+<%@include file="/include/head.jsp"%>
 <%
     String message = null;
     boolean crawling = handler.isCrawling();

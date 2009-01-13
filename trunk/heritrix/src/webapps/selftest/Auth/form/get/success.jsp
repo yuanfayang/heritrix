@@ -1,4 +1,3 @@
-<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="javax.servlet.*" %>
 <%@ page import="javax.servlet.http.*" %>
 

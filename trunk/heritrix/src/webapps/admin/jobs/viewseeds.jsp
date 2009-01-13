@@ -1,5 +1,4 @@
-<%@ page pageEncoding="UTF-8" %> 
-<%@ include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*,java.io.*" %>
 <%@ page import="org.archive.crawler.settings.ComplexType"%>
