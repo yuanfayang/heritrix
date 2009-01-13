@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
     /**
      * An include file that handles the sub navigation of a 'job' page. 

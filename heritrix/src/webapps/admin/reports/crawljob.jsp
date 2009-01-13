@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="java.util.*" %>

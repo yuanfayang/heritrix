@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages displays existing refinements on a particular override (or global settings).
@@ -157,7 +158,7 @@
             <%@include file="/include/jobpernav.jsp"%>
         <% } %>
     <p>
-    <form name="frmRefinements" method="post" action="overview.jsp">
+    <form name="frmRefinements" method="post" action="overview.jsp" accept-charset='UTF-8'>
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="where" value="">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

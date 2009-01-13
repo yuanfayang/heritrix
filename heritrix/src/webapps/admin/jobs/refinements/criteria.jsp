@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * Add or remove criteria
@@ -135,7 +136,7 @@
         <%=theJob.getJobName()%>:</b>
         <%@include file="/include/jobrefinementnav.jsp"%>
     <p>
-    <form name="frmCriteria" method="post" action="criteria.jsp">
+    <form name="frmCriteria" method="post" action="criteria.jsp" accept-charset='UTF-8'>
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="item" value="">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page errorPage="/error.jsp" %>
 <%@include file="/include/handler.jsp"%>
 <%

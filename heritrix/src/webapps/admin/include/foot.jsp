@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
     /**
      * An include file that handles the "look" and navigation of a web page. 

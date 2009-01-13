@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/modules.jsp"%>
 
@@ -192,7 +193,7 @@
 
     <p>
         <%@include file="/include/jobnav.jsp"%>
-    <form name="frmModules" method="post" action="modules.jsp">
+    <form name="frmModules" method="post" action="modules.jsp" accept-charset='UTF-8'>
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="subaction" value="done">

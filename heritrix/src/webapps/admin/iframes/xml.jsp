@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.util.LogReader" %><%
      // If there are empty lines before the start of the xml file Mozilla will
      // not display it properly!

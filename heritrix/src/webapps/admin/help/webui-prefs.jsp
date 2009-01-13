@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.Heritrix" %>
 <%@include file="/include/handler.jsp"%>
 
@@ -49,7 +50,7 @@
 	    <%
 	}
 %>
-    <form method="POST">
+    <form method="POST" accept-charset='UTF-8'>
     <table border="0" cellspacing="0" cellpadding="0">
     <tr>
         <td align="right">

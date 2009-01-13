@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages displays availible options for per host overrides of 
@@ -164,7 +165,7 @@
     <p>
         <%@include file="/include/jobnav.jsp"%>
     <p>
-    <form name="frmPer" method="post" action="overview.jsp">
+    <form name="frmPer" method="post" action="overview.jsp" accept-charset='UTF-8'>
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="where" value="">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

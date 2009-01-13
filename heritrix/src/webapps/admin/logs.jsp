@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@include file="/include/handler.jsp"%>
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder" %>
@@ -175,7 +176,7 @@
         }
     </script>
 
-    <form method="get" action="logs.jsp" name="frmLogs">
+    <form method="get" action="logs.jsp" name="frmLogs" accept-charset='UTF-8'>
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <table border="0" cellspacing="0" cellpadding="0">
             <tr>

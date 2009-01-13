@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages allows the user to select all submodules which appear
@@ -56,7 +57,7 @@
         add the particular regex to an added canonicalization RegexRule
         or to fill in the authentication information into an added
         RFC2617 credential).</p>
-    <form name="frmFilters" method="post"
+    <form name="frmFilters" method="post" accept-charset='UTF-8'
             action="submodules.jsp">
         <input type="hidden" name="currDomain" value="<%=currDomain%>">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">

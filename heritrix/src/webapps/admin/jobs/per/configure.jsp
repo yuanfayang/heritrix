@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages allows the user to edit the configuration 
@@ -139,7 +140,7 @@
         <%@include file="/include/jobpernav.jsp"%>
     <p>
     
-    <form name="frmConfig" method="post" action="configure.jsp">
+    <form name="frmConfig" method="post" action="configure.jsp" accept-charset='UTF-8'>
         <input type="hidden" name="update" value="true">        
         <input type="hidden" name="action" value="done">
         <input type="hidden" name="item" value="">

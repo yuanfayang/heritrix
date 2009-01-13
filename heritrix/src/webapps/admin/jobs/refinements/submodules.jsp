@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%
   /**
    * This pages allows the user to select all submodules which appear
@@ -54,7 +55,7 @@
             <b>Add/Remove/Order Submodules</b>
         <p>
 
-    <form name="frmFilters" method="post" 
+    <form name="frmFilters" method="post" accept-charset='UTF-8' 
             action="submodules.jsp">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="currDomain" value="<%=currDomain%>">

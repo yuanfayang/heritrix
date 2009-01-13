@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %> 
 <%@ page import="org.archive.crawler.admin.CrawlJobHandler"%>
 <%@ page import="org.archive.crawler.admin.CrawlJob"%>
 <%@ page import="org.archive.crawler.Heritrix"%>
