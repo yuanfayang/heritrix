@@ -49,15 +49,16 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
         Logger.getLogger(MatchesFilePatternDecideRule.class.getName());
     public static final String ATTR_USE_PRESET = "use-preset-pattern";
     public static final String IMAGES_PATTERNS = 
-        ".*(?i)(\\.(bmp|gif|jpe?g|png|tiff?))$";
+        ".*(?i)(\\.(bmp|gif|jpe?g|png|svg|tiff?))$";
     public static final String AUDIO_PATTERNS = 
-        ".*(?i)(\\.(mid|mp2|mp3|mp4|wav))$";
+        ".*(?i)(\\.(aac|aiff?|m3u|m4a|midi?|mp2|mp3|mp4|mpa|ogg|ra|ram|wav|wma))$";
     public static final String VIDEO_PATTERNS = 
-        ".*(?i)(\\.(avi|mov|mpeg|ram|rm|smil|wmv))$";
+        ".*(?i)(\\.(asf|asx|avi|flv|mov|mp4|mpeg|mpg|qt|ram|rm|smil|wmv))$";
     public static final String MISC_PATTERNS = 
         ".*(?i)(\\.(doc|pdf|ppt|swf))$";
     public static final String ALL_DEFAULT_PATTERNS = 
-        ".*(?i)(\\.(bmp|gif|jpe?g|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpeg" +
+        ".*(?i)(\\.(bmp|gif|jpe?g|png|svg|tiff?|aac|aiff?|m3u|m4a|midi?|mp2" +
+        "|mp3|mp4|mpa|ogg|ra|ram|wav|wma|asf|asx|avi|flv|mov|mp4|mpeg|mpg|qt" +
         "|ram|rm|smil|wmv|doc|pdf|ppt|swf))$";
 
     public static final String ALL = "All";
