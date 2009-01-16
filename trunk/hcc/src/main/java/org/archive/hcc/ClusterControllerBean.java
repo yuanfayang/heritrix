@@ -1179,19 +1179,23 @@ public class ClusterControllerBean implements
     }
 
     protected void handleContainerRemoved(Object name) {
-
         for (Container c : new LinkedList<Container>(containers)) {
             InetSocketAddress a = JmxUtils.extractAddress((ObjectName)name);
         	if (c.getAddress().equals(a)) {
-                for (Crawler crawler : c.getCrawlers()) {
-                    removeCrawlerAndNotify(crawler);
-                }
-                dereferenceContainer(c);
+        		handleContainerRemoved(c);
                 break;
             }
         }
     }
 
+    protected void handleContainerRemoved(Container c) {
+    	List<Crawler> crawlers = new LinkedList<Crawler>(c.getCrawlers());
+        for (Crawler crawler : crawlers) {
+            removeCrawlerAndNotify(crawler);
+        }
+        dereferenceContainer(c);
+    }
+    
     private void removeCrawlerAndNotify(Crawler crawler) {
         dereferenceCrawler(crawler);
         fireCrawlerDestroyed(crawler.getCrawlServiceProxyObjectName());
@@ -1248,6 +1252,22 @@ public class ClusterControllerBean implements
     	return Config.instance().getContainers();
     	
     }
+    
+    private boolean isConnected(Container container){
+    	MBeanServerConnection c = (MBeanServerConnection)this.connections.get(container.getAddress());
+    	if(c == null){
+    		return false;
+    	}
+    	
+    	try {
+			c.getMBeanCount();
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
+		
+    }
+    
 
     /**
      * Synchronizes the container list with the fresh list (fresh meaning, last
@@ -1261,11 +1281,12 @@ public class ClusterControllerBean implements
             List<Container> containers,
             List<Container> freshContainers) {
 
+    	//check that existing containers can communicate with remote container
         List<Container> staleContainers= new LinkedList<Container>(containers);
 
         // remove and destroy all containers not in the new list.
         for (Container c: staleContainers) {
-            if (!freshContainers.contains(c)) {
+            if (!freshContainers.contains(c) || !isConnected(c)) {
                 handleContainerRemoved(c);
             }
         }

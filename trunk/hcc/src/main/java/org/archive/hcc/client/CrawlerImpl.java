@@ -128,7 +128,21 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         }
 
     }
+    
+    @Override
+    public boolean equals(Object object){
+    	if(object instanceof CrawlerImpl){
+    		return ((CrawlerImpl)object).getName().equals(getName());
+    	}
+    	
+    	return false;
+    }
 
+    @Override
+    public int hashCode() {
+    	return this.name.hashCode();
+    }
+    
     public void terminateCurrentJob() {
         try {
             this.connection.invoke(

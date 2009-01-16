@@ -115,7 +115,7 @@ public class OrderJarFactory {
     }
 
     private String replaceKey(String string, String key, Object value){
-    	return replaceKey(string, key, value, null);
+    	return replaceKey(string, key, value, "");
     }
     
     private String replaceKey(String string, String key, Object value, Object defaultValue){
