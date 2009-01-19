@@ -254,4 +254,25 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
             }
         }));
     }
+    
+    public void testOutLinksWithBaseHref() throws URIException {
+        DefaultProcessorURI puri = new DefaultProcessorURI(UURIFactory
+                .getInstance("http://www.example.com/abc/index.html"),null);
+        puri.setBaseURI(puri.getUURI());
+        CharSequence cs = 
+        	"<base href=\"http://www.example.com/\">" + 
+        	"<a href=\"def/another1.html\">" + 
+        	"<a href=\"ghi/another2.html\">";
+        ExtractorHTML extractor = (ExtractorHTML)makeExtractor();
+        extractor.extract(puri, cs);
+        Link[] links = puri.getOutLinks().toArray(new Link[0]);
+        String dest1 = "http://www.example.com/def/another1.html";
+        String dest2 = "http://www.example.com/ghi/another2.html";
+        // ensure outlink from base href
+        assertEquals("outlink1 from base href",dest1,
+        			links[1].getDestination().toString());
+        assertEquals("outlink2 from base href",dest2,
+        			links[2].getDestination().toString());
+    }
+    
 }

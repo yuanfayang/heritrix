@@ -130,7 +130,7 @@ implements ProcessorURI {
     }
 
     public UURI getBaseURI() {
-        return base;
+    	return base != null ? base : getUURI(); 
     }
 
     public long getContentLength() {
