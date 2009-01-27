@@ -14,6 +14,7 @@
     <string name="logs-path">logs</string>
     <string name="checkpoints-path">checkpoints</string>
     <string name="state-path">state</string>
+	<string name="persist-source">$persistSource</string>
     <string name="scratch-path">scratch</string>
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">$documentLimit</long>
@@ -174,6 +175,13 @@
       </newObject>
     </map>
     <map name="fetch-processors">
+      <newObject name="PersistLoadProcessor" class="org.archive.crawler.processor.recrawl.PersistLoadProcessor">
+        <boolean name="enabled">true</boolean>
+        <newObject name="PersistLoadProcessor#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+      </newObject>
       <newObject name="DNS" class="org.archive.crawler.fetcher.FetchDNS">
         <boolean name="enabled">true</boolean>
         <newObject name="DNS#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
@@ -215,7 +223,15 @@
         <boolean name="send-connection-close">true</boolean>
         <boolean name="send-referer">true</boolean>
         <boolean name="send-range">false</boolean>
-        <string name="bind-address"/>
+        <string name="http-bind-address"/>
+      </newObject>
+      <newObject name="FetchHistoryProcessor" class="org.archive.crawler.processor.recrawl.FetchHistoryProcessor">
+        <boolean name="enabled">true</boolean>
+        <newObject name="FetchHistoryProcessor#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <integer name="history-length">2</integer>
       </newObject>
     </map>
     <map name="extract-processors">
@@ -306,6 +322,28 @@
       </newObject>
     </map>
     <map name="write-processors">
+      <newObject name="WARCArchiver" class="org.archive.crawler.writer.WARCWriterProcessor">
+        <boolean name="enabled">$writeEnabled</boolean>
+        <newObject name="WARCArchiver#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <boolean name="compress">true</boolean>
+        <string name="prefix">ARCHIVEIT-$arcPrefix</string>
+        <string name="suffix">${HOSTNAME}</string>
+        <long name="max-size-bytes">100000000</long>
+        <stringList name="path">
+          <string>warcs</string>
+        </stringList>
+        <integer name="pool-max-active">1</integer>
+        <integer name="pool-max-wait">300000</integer>
+        <long name="total-bytes-to-write">0</long>
+        <boolean name="skip-identical-digests">false</boolean>
+        <boolean name="write-requests">true</boolean>
+        <boolean name="write-metadata">true</boolean>
+        <boolean name="write-revisit-for-identical-digests">true</boolean>
+        <boolean name="write-revisit-for-not-modified">true</boolean>
+      </newObject>
       <newObject name="Archiver" class="org.archive.crawler.writer.ARCWriterProcessor">
         <boolean name="enabled">$writeEnabled</boolean>
         <newObject name="Archiver#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
@@ -362,6 +400,14 @@
           <map name="rules">
           </map>
         </newObject>
+      </newObject>
+      <newObject name="PersistLogProcessor" class="org.archive.crawler.processor.recrawl.PersistLogProcessor">
+        <boolean name="enabled">true</boolean>
+        <newObject name="PersistLogProcessor#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <string name="log-filename">persistlog.txtser.gz</string>
       </newObject>
     </map>
     <map name="loggers">
