@@ -224,6 +224,12 @@
               <version>CVS-SNAPSHOT-1</version>
               <scope>compile</scope>        
         </dependency>
+        <dependency>
+          <groupId>joda-time</groupId>
+          <artifactId>joda-time</artifactId>
+          <version>1.6</version>
+        </dependency>
+        
   </dependencies>
   <build>
     <resources>

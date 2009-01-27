@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -46,9 +45,11 @@ import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecord;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriter;
-import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.anvl.ANVLRecord;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.ISODateTimeFormat;
 
 
 /**
@@ -141,16 +142,11 @@ public class Arc2Warc {
 
        // convert ARC date to WARC-Date format
        String arcDateString = r.getHeader().getDate();
-       String warcDateString;
-       try {
-           // TODO: use Joda-time utils
-           Date warcDate = ArchiveUtils.parse14DigitDate(arcDateString);
-           warcDateString = ArchiveUtils.getLog14Date(warcDate);
-       } catch (java.text.ParseException e) {
-           e.printStackTrace();
-           throw new IOException("ERROR parsing ARC date string: " + arcDateString);
-       } 
-	   
+       String warcDateString = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+       .withZone(DateTimeZone.UTC)
+       .parseDateTime(arcDateString)
+       .toString(ISODateTimeFormat.dateTimeNoMillis());
+
        // If contentBody > 0, assume http headers.  Make the mimetype
        // be application/http.  Otherwise, give it ARC mimetype.
        String warcMimeTypeString = (r.getHeader().getContentBegin() > 0) ? 
