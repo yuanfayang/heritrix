@@ -62,6 +62,7 @@ public class OrderJarFactory {
     private boolean test = false;
     private boolean oneHopOff = false;
     private String operator = null;
+    private String persistSource = null;
     
     public OrderJarFactory(String name, String userAgent, String fromEmail, String description, String organization, List<String> seeds) {
     	assert name != null;
@@ -80,6 +81,10 @@ public class OrderJarFactory {
     	this.seeds = seeds;
     }
 
+	public void setPersistSource(String persistSource){
+		this.persistSource = persistSource;
+	}
+	
     private String readOrderFileContentsIntoString() throws IOException{
     	//read in order xml prototype to string buffer
         InputStream orderPrototype = OrderJarFactory.class
@@ -111,6 +116,8 @@ public class OrderJarFactory {
         order = replaceKey(order, "$diskPath", diskPath, "");
         order = replaceKey(order, "$organization", organization);
         order = replaceKey(order, "$description", description);
+        order = replaceKey(order, "$persistSource", persistSource);
+
         return order;
     }
 
