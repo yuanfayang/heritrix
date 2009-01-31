@@ -107,6 +107,7 @@ implements Lifecycle, Serializable {
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
+        isRunning = true; 
     }
     
     public boolean isRunning() {
@@ -117,7 +118,8 @@ implements Lifecycle, Serializable {
         if(!isRunning()) {
             return; 
         }
-        // TODO: close DB? 
+        close();
+        isRunning = false; 
     }
     
     /**
@@ -211,26 +213,38 @@ implements Lifecycle, Serializable {
             logger.info("Count of alreadyseen on close "
                     + Long.toString(count));
         }
+        Environment env = null;
+        if (this.alreadySeen != null) {
+            try {
+                env = this.alreadySeen.getEnvironment();
+                alreadySeen.sync();
+            } catch (DatabaseException e) {
+                logger.severe(e.getMessage());
+            }
+        }
+        if (env != null) {
+            try {
+                // This sync flushes whats in RAM. Its expensive operation.
+                // Without, data can be lost. Not for transactional operation.
+                env.sync();
+            } catch (DatabaseException e) {
+                logger.severe(e.getMessage());
+            }
+        }
+        
         if (createdEnvironment) {
             // Only manually close database if it were created via a
             // constructor, and not via a BdbModule. Databases created by a 
             // BdbModule will be closed by that BdbModule.
-            Environment env = null;
             if (this.alreadySeen != null) {
                 try {
-                    env = this.alreadySeen.getEnvironment();
-                    alreadySeen.sync();
                     alreadySeen.close();
                 } catch (DatabaseException e) {
                     logger.severe(e.getMessage());
                 }
-                this.alreadySeen = null;
             }
             if (env != null) {
                 try {
-                    // This sync flushes whats in RAM. Its expensive operation.
-                    // Without, data can be lost. Not for transactional operation.
-                    env.sync();
                     env.close();
                 } catch (DatabaseException e) {
                     logger.severe(e.getMessage());

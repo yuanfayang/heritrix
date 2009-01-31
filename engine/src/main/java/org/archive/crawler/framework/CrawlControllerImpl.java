@@ -72,8 +72,9 @@ import org.xbill.DNS.Lookup;
  * As the "global context" for a crawl, subcomponents will
  * often reach each other through the CrawlController.
  *
- * @author Gordon Mohr
+ * @contributor gojomo
  */
+// TODO: rename back to CrawlController
 public class CrawlControllerImpl extends Bean implements 
     Serializable, 
     Reporter, 
@@ -365,7 +366,8 @@ public class CrawlControllerImpl extends Bean implements
                 this, getCheckpointsDir().getFile());
 
         this.singleThreadLock = new ReentrantLock();
-        sExit = null;
+        // sExit = null;
+        sExit = CrawlStatus.FINISHED_ABNORMAL;
         this.manifest = new StringBuffer();
 
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
@@ -808,7 +810,7 @@ public class CrawlControllerImpl extends Bean implements
         return toePool.getActiveToeCount();
     }
 
-    public void setupToePool() {
+    protected void setupToePool() {
         toePool = new ToePool(this);
         // TODO: make # of toes self-optimizing
         toePool.setSize(getMaxToeThreads());

@@ -597,6 +597,14 @@ public abstract class AbstractFrontier
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } 
+        
+        // try to leave in safely restartable state: 
+        targetState = State.PAUSE;
+        while(outboundLock.isWriteLockedByCurrentThread()) {
+            outboundLock.writeLock().unlock();
+        }
+        //TODO: ensure all other structures are cleanly reset on restart
+        
         logger.log(Level.FINE,"ending frontier mgr thread");
     }
 
