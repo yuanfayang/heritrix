@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.archive.spring;
 
 import java.util.HashMap;
@@ -13,10 +32,24 @@ import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+/**
+ * Spring ApplicationContext extended for Heritrix use. 
+ * 
+ * Notable extensions:
+ * 
+ * Remembers its primary XML configuration file, and can report its
+ * filesystem path. 
+ * 
+ * Propagates lifecycle events (start, stop) without triggering 
+ * loops in the case of circular dependencies.
+ * 
+ * Reports a summary of Errors collected from self-Validating Beans.
+ * 
+ * @contributor gojomo
+ */
 public class PathSharingContext extends FileSystemXmlApplicationContext {
 
     public PathSharingContext(String configLocation) throws BeansException {
@@ -49,6 +82,7 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         return getConfigLocations()[0];
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void start() {
         Map lifecycleBeans = getLifecycleBeans();
@@ -73,6 +107,7 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         }
     }
     
+    @SuppressWarnings("unchecked")
     public void stop() {
         Map lifecycleBeans = getLifecycleBeans();
         for (Iterator it = new HashSet(lifecycleBeans.keySet()).iterator(); it.hasNext();) {
@@ -96,8 +131,7 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         }
     }
 
-    
-    
+    @SuppressWarnings("unchecked")
     protected Map getLifecycleBeans() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
         String[] beanNames = beanFactory.getBeanNamesForType(Lifecycle.class, false, false);
@@ -111,11 +145,15 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         return beans;
     }
 
+    //
+    // Cascading self-validation
+    //
+    
     Errors errors = null;
     public void validate() {
         errors = new BeanPropertyBindingResult(this,"");
         for(Object entry : getBeansOfType(HasValidator.class).entrySet()) {
-            String name = (String) ((Map.Entry)entry).getKey();
+            // String name = (String) ((Map.Entry)entry).getKey();
             HasValidator hv = (HasValidator) ((Map.Entry)entry).getValue();
             Validator v = hv.getValidator();
             Errors tempErrors = new BeanPropertyBindingResult(hv,"");
@@ -129,5 +167,8 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         System.err.println("============");
     }
 
+    public Errors getErrors() {
+        return errors;
+    }
     
 }
