@@ -34,15 +34,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
-
-import javax.management.ObjectName;
-import javax.naming.CompoundName;
-import javax.naming.Context;
-import javax.naming.NamingException;
-import javax.naming.NoInitialContextException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -50,11 +43,11 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.archive.crawler.framework.EngineConfig;
 import org.archive.crawler.framework.EngineImpl;
-import org.archive.crawler.framework.JobStage;
+import org.archive.crawler.restlet.EngineApplication;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.JndiUtils;
+import org.restlet.Component;
+import org.restlet.data.Protocol;
 
 
 /**
@@ -226,18 +219,7 @@ public class Heritrix {
             usage(out);
             System.exit(1);
         }
-        
-        if (cl.hasOption('n')
-                && (System.getProperty(
-                        "com.sun.management.jmxremote.port") == null)) {
-            out.println("The crawl engine is inaccessible.  You "
-                    + "must specify the system property "
-                    + "com.sun.management.jmxremote.port if you disable "
-                    + "the web UI with -n.");
-            System.exit(1);
-        }
 
-        EngineConfig config = new EngineConfig();
         WebUIConfig webConfig = new WebUIConfig();
         File properties = getDefaultPropertiesFile();
 
@@ -251,8 +233,9 @@ public class Heritrix {
             }
         }
         
+        File jobsDir = null; 
         if (cl.hasOption('j')) {
-            config.setJobsDirectory(cl.getOptionValue('j'));
+            jobsDir = new File(cl.getOptionValue('j'));
         }
                 
         if (cl.hasOption('l')) {
@@ -297,12 +280,17 @@ public class Heritrix {
             if (cl.hasOption('u')) {
                 out.println("Not running crawl engine.");
             } else {
-                EngineImpl cjm = new EngineImpl(config);
-                registerJndi(cjm.getObjectName(), out);
-                out.println("Engine registered at " 
-                        + cjm.getObjectName());
+                EngineImpl engine = new EngineImpl(jobsDir);
+                
+                Component component = new Component();
+                // TODO: update, make port configurable
+                component.getServers().add(Protocol.HTTP,8888);
+                component.getClients().add(Protocol.FILE);
+                component.getDefaultHost().attach(new EngineApplication(engine));
+                component.start();
+                out.println("engine listening at port 8888");
                 if (cl.hasOption('r')) {
-                    launch(cjm, cl.getOptionValue('r'));
+                    engine.requestLaunch(cl.getOptionValue('r'));
                 }
             }
             
@@ -339,15 +327,6 @@ public class Heritrix {
                 }
             }
         }
-        
-        try {
-            Object eternity = new Object();
-            synchronized (eternity) {
-                eternity.wait();
-            }
-        } catch (InterruptedException e) {
-            
-        }
     }
     
     
@@ -372,73 +351,8 @@ public class Heritrix {
         }
         return heritrixHome;
     }
-
-
     
-
-    protected static void registerJndi(final ObjectName name, PrintStream out)
-    throws NullPointerException, NamingException {
-    	Context c = getJndiContext();
-    	if (c == null) {
-    	    out.println("No JNDI context.");
-            return;
-    	}
-        CompoundName key = JndiUtils.bindObjectName(c, name);
-        out.println("Bound '"  + key + "' to '" + JndiUtils.
-               getCompoundName(c.getNameInNamespace()).toString()
-               + "' jndi context");
-    }
-    
-    protected static void deregisterJndi(final ObjectName name, PrintStream out)
-    throws NullPointerException, NamingException {
-    	Context c = getJndiContext();
-    	if (c == null) {
-            return;
-    	}
-        CompoundName key = JndiUtils.unbindObjectName(c, name);
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Unbound '" + key + "' from '" +
-                JndiUtils.getCompoundName(c.getNameInNamespace()).toString() +
-                	"' jndi context");
-        }
-    }
-    
-    /**
-     * @return Jndi context for the crawler or null if none found.
-     * @throws NamingException 
-     */
-    protected static Context getJndiContext() throws NamingException {
-    	Context c = null;
-    	try {
-    	    c = JndiUtils.getSubContext(EngineImpl.DOMAIN);
-    	} catch (NoInitialContextException e) {
-    	    logger.fine("No JNDI Context: " + e.toString());
-    	}
-    	return c;
-    }
-
-
     protected static boolean isDevelopment() {
         return System.getProperty("heritrix.development") != null;
     }    
-
-
-    private static void launch(EngineImpl cjm, String job) 
-    throws Exception {
-        for (String s: cjm.listJobs()) {
-            if (s.equals(JobStage.PROFILE.getPrefix() + job)) {
-                String newName = EngineImpl.getCopyDefaultName(job);
-                newName = JobStage.READY.getPrefix() + newName;
-                cjm.copy(s, newName);
-                cjm.launchJob(newName);
-                return;
-            } else if (s.equals(JobStage.READY.getPrefix() + job)) {
-                cjm.launchJob(s);
-                return;
-            }
-        }
-        throw new IllegalStateException("No such job: " + job);
-    }
-
-
 }
