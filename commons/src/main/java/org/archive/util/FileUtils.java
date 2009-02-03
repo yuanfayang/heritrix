@@ -24,70 +24,40 @@
  */
 package org.archive.util;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
+
 
 /** Utility methods for manipulating files and directories.
  *
- * @author John Erik Halse
+ * @contributor John Erik Halse
+ * @contributor gojomo
  */
 public class FileUtils {
     private static final Logger LOGGER =
         Logger.getLogger(FileUtils.class.getName());
-    
-    public static final File TMPDIR =
-        new File(System.getProperty("java.io.tmpdir", "/tmp"));
-    
-    private static final boolean DEFAULT_OVERWRITE = true;
-    
+            
     /**
      * Constructor made private because all methods of this class are static.
      */
     private FileUtils() {
         super();
-    }
-    
-    public static int copyFiles(final File srcDir, Set srcFile,
-            final File dest)
-    throws IOException {
-        int count = 0;
-        for (Iterator i = srcFile.iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            File src = new File(srcDir, name);
-            File tgt = new File(dest, name);
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine("Before " + src.getAbsolutePath() + " " +
-                    src.exists() + ", " + tgt.getAbsolutePath() + " " +
-                    tgt.exists());
-            }
-            copyFiles(src, tgt);
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine("After " + src.getAbsolutePath() + " " +
-                    src.exists() + ", " + tgt.getAbsolutePath() + " " +
-                    tgt.exists());
-            }
-            count++;
-        }
-        return count;
     }
 
     /** Recursively copy all files from one directory to another.
@@ -95,88 +65,16 @@ public class FileUtils {
      * @param src file or directory to copy from.
      * @param dest file or directory to copy to.
      * @throws IOException
+     * @deprecated use org.apache.commons.io.FileUtils.copyDirectory()
      */
     public static void copyFiles(File src, File dest)
     throws IOException {
-        copyFiles(src, null, dest, false, true);
+        org.apache.commons.io.FileUtils.copyDirectory(src, dest);
     }
     
     /**
-     * @param src Directory of files to fetch.
-     * @param filter Filter to apply to filenames.
-     * @return Files in directory sorted.
-     */
-    public static String [] getSortedDirContent(final File src,
-            final FilenameFilter filter) {
-        if (!src.exists()) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(src.getAbsolutePath() + " does not exist");
-            }
-            return null;
-        }
-       
-        if (!src.isDirectory()) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(src.getAbsolutePath() + " is not directory.");
-            }
-            return null;
-        }
-        // Go through the contents of the directory
-        String [] list = (filter == null)? src.list(): src.list(filter);
-        if (list != null) {
-            Arrays.sort(list);
-        }
-        return list;
-    }
-        
-    /**
-     * Recursively copy all files from one directory to another.
-     * 
-     * @param src File or directory to copy from.
-     * @param filter Filename filter to apply to src. May be null if no
-     * filtering wanted.
-     * @param dest File or directory to copy to.
-     * @param inSortedOrder Copy in order of natural sort.
-     * @param overwrite If target file already exits, and this parameter is
-     * true, overwrite target file (We do this by first deleting the target
-     * file before we begin the copy).
-     * @throws IOException
-     */
-    public static void copyFiles(final File src, final FilenameFilter filter,
-        final File dest, final boolean inSortedOrder, final boolean overwrite)
-    throws IOException {
-        // TODO: handle failures at any step
-        if (!src.exists()) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(src.getAbsolutePath() + " does not exist");
-            }
-            return;
-        }
-
-        if (src.isDirectory()) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(src.getAbsolutePath() + " is a directory.");
-            }
-            // Create destination directory
-            if (!dest.exists()) {
-                dest.mkdirs();
-            }
-            // Go through the contents of the directory
-            String list[] = (filter == null)? src.list(): src.list(filter);
-            if (inSortedOrder) {
-                Arrays.sort(list);
-            }
-            for (int i = 0; i < list.length; i++) {
-                copyFiles(new File(src, list[i]), filter,
-                    new File(dest, list[i]), inSortedOrder, overwrite);
-            }
-        } else {
-            copyFile(src, dest, overwrite);
-        }
-    }
-
-    /**
-     * Copy the src file to the destination.
+     * Copy the src file to the destination. Deletes any preexisting
+     * file at destination. 
      * 
      * @param src
      * @param dest
@@ -186,7 +84,7 @@ public class FileUtils {
      */
     public static boolean copyFile(final File src, final File dest)
     throws FileNotFoundException, IOException {
-        return copyFile(src, dest, -1, DEFAULT_OVERWRITE);
+        return copyFile(src, dest, -1, true);
     }
     
     /**
@@ -200,15 +98,18 @@ public class FileUtils {
      * @return True if the extent was greater than actual bytes copied.
      * @throws FileNotFoundException
      * @throws IOException
+     * @deprecated use org.apache.commons.io.FileUtils.co
      */
-    public static boolean copyFile(final File src, final File dest,
+    public static boolean copyFile(final File srcFile, final File destFile,
         final boolean overwrite)
     throws FileNotFoundException, IOException {
-        return copyFile(src, dest, -1, overwrite);
+        org.apache.commons.io.FileUtils.copyFile(srcFile, destFile);
+        return false; 
     }
     
     /**
-     * Copy up to extent bytes of the source file to the destination
+     * Copy up to extent bytes of the source file to the destination.
+     * Deletes any preexisting file at destination.
      *
      * @param src
      * @param dest
@@ -220,7 +121,7 @@ public class FileUtils {
     public static boolean copyFile(final File src, final File dest,
         long extent)
     throws FileNotFoundException, IOException {
-        return copyFile(src, dest, extent, DEFAULT_OVERWRITE);
+        return copyFile(src, dest, extent, true);
     }
 
 	/**
@@ -367,23 +268,10 @@ public class FileUtils {
      * @param file
      * @return File as String.
      * @throws IOException
+     * @deprecated use org.apache.commons.io.FileUtils.readFileToString()
      */
     public static String readFileAsString(File file) throws IOException {
-        StringBuffer sb = new StringBuffer((int) file.length());
-        String line;
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-        		new FileInputStream(file)));
-        try {
-        	    line = br.readLine();
-        	    while (line != null) {
-        	    	    sb.append(line);
-                        sb.append("\n");
-        	    	    line = br.readLine();
-        	    }
-        } finally {
-        	    br.close();
-        }
-        return sb.toString();
+        return org.apache.commons.io.FileUtils.readFileToString(file);
     }
 
     /**
@@ -408,15 +296,15 @@ public class FileUtils {
     /** Get a @link java.io.FileFilter that filters files based on a regular
      * expression.
      *
-     * @param regexp the regular expression the files must match.
+     * @param regex the regular expression the files must match.
      * @return the newly created filter.
      */
-    public static FileFilter getRegexpFileFilter(String regexp) {
+    public static FileFilter getRegexFileFilter(String regex) {
         // Inner class defining the RegexpFileFilter
-        class RegexpFileFilter implements FileFilter {
+        class RegexFileFilter implements FileFilter {
             Pattern pattern;
 
-            protected RegexpFileFilter(String re) {
+            protected RegexFileFilter(String re) {
                 pattern = Pattern.compile(re);
             }
 
@@ -425,40 +313,15 @@ public class FileUtils {
             }
         }
 
-        return new RegexpFileFilter(regexp);
-    }
-    
-    /**
-     * Use for case where files are being added to src.  Will break off copy
-     * when tgt is same as src.
-     * @param src Source directory to copy from.
-     * @param tgt Target to copy to.
-     * @param filter Filter to apply to files to copy.
-     * @throws IOException
-     */
-    public static void syncDirectories(final File src,
-            final FilenameFilter filter, final File tgt)
-    throws IOException {
-        Set<String> srcFilenames = null;
-        do {
-            srcFilenames = new HashSet<String>(Arrays.asList(src.list(filter)));
-            List<String> tgtFilenames = Arrays.asList(tgt.list(filter));
-            srcFilenames.removeAll(tgtFilenames);
-            if (srcFilenames.size() > 0) {
-                int count = FileUtils.copyFiles(src, srcFilenames, tgt);
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("Copied " + count);
-                }
-            }
-        } while (srcFilenames != null && srcFilenames.size() > 0);
+        return new RegexFileFilter(regex);
     }
     
     /**
      * Test file exists and is readable.
      * @param f File to test.
-     * @exception IOException If file does not exist or is not unreadable.
+     * @exception FileNotFoundException If file does not exist or is not unreadable.
      */
-    public static File isReadable(final File f) throws IOException {
+    public static File assertReadable(final File f) throws FileNotFoundException {
         if (!f.exists()) {
             throw new FileNotFoundException(f.getAbsolutePath() +
                 " does not exist.");
@@ -476,13 +339,13 @@ public class FileUtils {
      * @param f File to test.
      * @return True if file is readable, has uncompressed extension,
      * and magic string at file start.
-     * @exception IOException If file does not exist or is not readable.
+     * @exception IOException If file not readable or other problem.
      */
     public static boolean isReadableWithExtensionAndMagic(final File f, 
             final String uncompressedExtension, final String magic)
     throws IOException {
         boolean result = false;
-        FileUtils.isReadable(f);
+        FileUtils.assertReadable(f);
         if(f.getName().toLowerCase().endsWith(uncompressedExtension)) {
             FileInputStream fis = new FileInputStream(f);
             try {
@@ -525,6 +388,13 @@ public class FileUtils {
         return new File(context, path);
     }
     
+    /**
+     * Load Properties instance from a File
+     * 
+     * @param file
+     * @return Properties
+     * @throws IOException
+     */
     public static Properties loadProperties(File file) throws IOException {
         FileInputStream finp = new FileInputStream(file);
         try {
@@ -536,6 +406,12 @@ public class FileUtils {
         }
     }
     
+    /**
+     * Store Properties instance to a File
+     * @param p
+     * @param file destination File
+     * @throws IOException
+     */
     public static void storeProperties(Properties p, File file) throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
         try {
@@ -543,5 +419,102 @@ public class FileUtils {
         } finally {
             IoUtils.close(fos);
         }
+    }
+    
+    public static long tailLines(File file, int lineCount, List<String> lines ) throws IOException {
+        return tailLines(file, lineCount, lines, 0, 0);
+    }
+
+    /**
+     * Add lines found in given File to provided List. Up to lineCount
+     * lines will be returned, through the endPosition location. (An
+     * endPosition of 0 means end-of-file.) Return another file position 
+     * which may be passed in a subsequent call to get lines strictly 
+     * preceding this set. 
+     * 
+     * Lines are returned in <i>reverse-order</i>, latest in file first. 
+     * 
+     * @param file File to get lines
+     * @param desiredLineCount number of lines to return (if sufficient lines 
+     * precede the endPosition)
+     * @param lines List<String> that lines are added to
+     * @param endPosition return lines up through the line containing 
+     * this position in the file
+     * @param lineEstimate estimated size in bytes of lines. If zero, a 
+     * guess will be used
+     * @return long file position which can serve as the endPosition for
+     * a subsequent call
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+    public static long tailLines(File file, int desiredLineCount, List<String> lines, long endPosition, int lineEstimate) throws IOException {
+        if(lineEstimate == 0) {
+            lineEstimate = 80; 
+        }
+        int bufferSize = (desiredLineCount + 5) * lineEstimate; 
+        if(endPosition == 0) {
+            endPosition = file.length();
+        }
+        long startPosition = endPosition - bufferSize; 
+        if(startPosition<0) {
+            startPosition = 0; 
+            bufferSize = (int) (endPosition - startPosition); 
+        }
+
+        // read reasonable chunk
+        FileInputStream fis = new FileInputStream(file);
+        fis.getChannel().position(startPosition); 
+        byte[] buf = new byte[bufferSize];
+        IoUtils.readFully(fis, buf);
+        IOUtils.closeQuietly(fis);
+        
+        // find all line starts fully in buffer
+        // (position after a line-end, per definition in 
+        // BufferedReader.readLine
+        LinkedList<Integer> lineStarts = new LinkedList<Integer>();
+        if(startPosition==0) {
+            lineStarts.add(0);
+        }
+        boolean atLineEnd = false; 
+        boolean eatLF = false; 
+        for(int i = 0; i < bufferSize; i++) {
+            if ((char) buf[i] == '\n' && eatLF) {
+                eatLF = false;
+                continue;
+            }
+            if(atLineEnd) {
+                lineStarts.add(i);
+                atLineEnd = false; 
+            }
+            if ((char) buf[i] == '\r') {
+                atLineEnd = true; 
+                eatLF = true; 
+                continue;
+            }
+            if ((char) buf[i] == '\n') {
+                atLineEnd = true; 
+            }
+        }
+        
+        // discard extra lineStarts
+        while (lineStarts.size()>desiredLineCount) {
+            lineStarts.removeFirst();
+        }
+        int foundLinesCount = lineStarts.size();
+        long continueEndPosition = endPosition; 
+        if(foundLinesCount > 0) {
+            int firstLine = lineStarts.getFirst();
+            List<String> foundLines =
+                IOUtils.readLines(new ByteArrayInputStream(buf,firstLine,bufferSize-firstLine));
+            Collections.reverse(foundLines);
+            lines.addAll(foundLines);
+            continueEndPosition = startPosition + firstLine;
+        }
+ 
+        if(foundLinesCount<desiredLineCount && startPosition > 0) {
+            int newLineEstimate =  bufferSize / (foundLinesCount+1);
+            return tailLines(file,desiredLineCount-foundLinesCount,lines,continueEndPosition,newLineEstimate);
+        }
+        return continueEndPosition; 
     }
 }

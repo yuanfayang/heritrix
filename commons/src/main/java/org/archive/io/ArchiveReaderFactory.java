@@ -37,7 +37,6 @@ import org.archive.io.warc.WARCReaderFactory;
 import org.archive.net.UURI;
 import org.archive.net.md5.Md5URLConnection;
 import org.archive.net.rsync.RsyncURLConnection;
-import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 
 
@@ -264,7 +263,7 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
             int index = p.lastIndexOf('/');
             if (index >= 0) {
                 // Name file for the file we're making local.
-                localFile = new File(FileUtils.TMPDIR, p.substring(index + 1));
+                localFile = File.createTempFile("",p.substring(index + 1));
                 if (localFile.exists()) {
                     // If file of same name already exists in TMPDIR, then
                     // clean it up (Assuming only reason a file of same name in
@@ -273,7 +272,7 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
                 }
             } else {
                 localFile = File.createTempFile(ArchiveReader.class.getName(),
-                    ".tmp", FileUtils.TMPDIR);
+                    ".tmp");
             }
             addUserAgent((HttpURLConnection)connection);
             connection.connect();
