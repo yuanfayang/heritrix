@@ -8,7 +8,6 @@ import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.archive.crawler.framework.Engine;
 import org.archive.openmbeans.annotations.BeanProxy;
 import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.util.IoUtils;
@@ -165,10 +164,11 @@ public class Precedence1SelfTest extends SelfTestBase {
 
     
     protected void configureHeritrix() throws Exception {
-        ObjectName engineName = getEngine();
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        Engine engine = BeanProxy.proxy(server, engineName, Engine.class);
         // TODO: updateme!
+//        ObjectName engineName = getEngine();
+//        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+//        Engine engine = BeanProxy.proxy(server, engineName, Engine.class);
+//        
 //        ObjectName smName = engine.getSheetManagerStub("ready-basic");
 //        JMXSheetManager sm = BeanProxy.proxy(server, smName, JMXSheetManager.class);
 //        configure(sm);
