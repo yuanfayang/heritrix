@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.SerializationUtils;
 
 /**
@@ -147,24 +148,19 @@ public class IoUtils {
      * @param inputStream
      * @return String of the whole inputStream's contents
      * @throws IOException
+     * @deprecated use org.apache.commons.io.IOUtils.toString()
      */
     public static String readFullyAsString(InputStream inputStream)
     throws IOException {
-        StringBuffer sb = new StringBuffer();
-        int c;
-        while((c = inputStream.read()) > -1) {
-            sb.append((char)c);
-        }
-        return sb.toString();
+        return IOUtils.toString(inputStream);
     }
     
     
+    /**
+     * @deprecated use org.apache.commons.io.IOUtils.toString()
+     */
     public static String readFullyAsString(Reader r) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        for (int c = r.read(); c >= 0; c = r.read()) {
-            sb.append((char)c);
-        }
-        return sb.toString();
+        return IOUtils.toString(r);
     }
     
     /**

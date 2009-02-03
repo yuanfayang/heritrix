@@ -215,7 +215,7 @@ implements ARCConstants {
             boolean skipSuffixCheck)
     throws IOException {
         boolean compressedARCFile = false;
-        FileUtils.isReadable(arcFile);
+        FileUtils.assertReadable(arcFile);
         if(!skipSuffixCheck && !arcFile.getName().toLowerCase()
                 .endsWith(COMPRESSED_ARC_FILE_EXTENSION)) {
             return compressedARCFile;
