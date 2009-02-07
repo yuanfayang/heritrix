@@ -139,7 +139,7 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
         formatter.printHelp("java org.archive.io.arc.WARCReader" +
             " [--digest=true|false] \\\n" +
             " [--format=cdx|cdxfile|dump|gzipdump]" +
-            " [--offset=#] \\\n[--strict] [--parse] WARC_FILE|WARC_URL",
+            " [--offset=#] \\\n[--strict] WARC_FILE|WARC_URL",
                 options);
         System.exit(exitCode);
     }
