@@ -464,6 +464,7 @@ public class CrawlController implements Serializable, Reporter {
             // je.properties value
             envConfig.setCachePercent(bdbCachePercent);
         }
+        envConfig.setSharedCache(true);
         envConfig.setLockTimeout(5000000); // 5 seconds
         if (LOGGER.isLoggable(Level.FINEST)) {
             envConfig.setConfigParam("java.util.logging.level", "SEVERE");
