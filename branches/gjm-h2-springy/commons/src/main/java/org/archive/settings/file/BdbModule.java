@@ -191,6 +191,13 @@ Serializable, Closeable {
         this.cachePercent = cachePercent;
     }
 
+    boolean useSharedCache = true; 
+    public boolean getUseSharedCache() {
+        return useSharedCache;
+    }
+    public void setUseSharedCache(boolean useSharedCache) {
+        this.useSharedCache = useSharedCache;
+    }
     
     boolean checkpointCopyLogs = true; 
     public boolean getCheckpointCopyLogs() {
@@ -221,7 +228,7 @@ Serializable, Closeable {
             return;
         }
         try {
-            setUp(getDir().getFile(), getCachePercent(), true);
+            setUp(getDir().getFile(), getCachePercent(), true, getUseSharedCache());
         } catch (DatabaseException e) {
             throw new IllegalStateException(e);
         }
@@ -240,12 +247,13 @@ Serializable, Closeable {
         close();
     }
     
-    private void setUp(File f, int cachePercent, boolean create) 
+    private void setUp(File f, int cachePercent, boolean create, boolean sharedCache) 
     throws DatabaseException {
         EnvironmentConfig config = new EnvironmentConfig();
         config.setAllowCreate(create);
         config.setLockTimeout(5000000);        
         config.setCachePercent(cachePercent);
+        config.setSharedCache(sharedCache);
         
         f.mkdirs();
         this.bdbEnvironment = new EnhancedEnvironment(f, config);
@@ -360,7 +368,7 @@ Serializable, Closeable {
 //            cr.setState(this, DIR, path);
         }
         try {
-            setUp(getDir().getFile(), getCachePercent(), false);
+            setUp(getDir().getFile(), getCachePercent(), false, getUseSharedCache());
             for (CachedBdbMap map: bigMaps.values()) {
                 map.initialize(
                         this.bdbEnvironment, 

@@ -124,6 +124,10 @@ implements Lifecycle, Serializable {
     
     /**
      * Constructor.
+     * 
+     * Only used for testing; usually no-arg constructor is used, and
+     * environment provided by injected BdbModule. 
+     * 
      * @param bdbEnv The directory that holds the bdb environment. Will
      * make a database under here if doesn't already exit.  Otherwise
      * reopens any existing dbs.
@@ -136,6 +140,10 @@ implements Lifecycle, Serializable {
     
     /**
      * Constructor.
+     * 
+     * Only used for testing; usually no-arg constructor is used, and
+     * environment provided by injected BdbModule. 
+     * 
      * @param bdbEnv The directory that holds the bdb environment. Will
      * make a database under here if doesn't already exit.  Otherwise
      * reopens any existing dbs.
