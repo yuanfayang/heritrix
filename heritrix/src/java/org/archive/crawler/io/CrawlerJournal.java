@@ -32,9 +32,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -69,6 +72,24 @@ public class CrawlerJournal {
             new InputStreamReader(fis));   
     }
 
+    /**
+     * Get a BufferedReader on the crawler journal given.
+     * 
+     * @param source URL journal
+     * @return journal buffered reader.
+     * @throws IOException
+     */
+    public static BufferedReader getBufferedReader(URL source) throws IOException {
+        URLConnection conn = source.openConnection();
+        boolean isGzipped = conn.getContentType() != null && conn.getContentType().equalsIgnoreCase("application/x-gzip")
+                || conn.getContentEncoding() != null && conn.getContentEncoding().equalsIgnoreCase("gzip");
+        InputStream uis = conn.getInputStream();
+        return new BufferedReader(isGzipped?
+            new InputStreamReader(new GZIPInputStream(uis)):
+            new InputStreamReader(uis));   
+        
+    }
+    
     /**
      * Get a BufferedInputStream on the recovery file given.
      *
