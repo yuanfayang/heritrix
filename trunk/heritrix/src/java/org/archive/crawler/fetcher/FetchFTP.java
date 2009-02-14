@@ -342,9 +342,9 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
             Socket socket, HttpRecorder recorder) 
     throws IOException, InterruptedException {
         curi.setHttpRecorder(recorder);
-        recorder.markContentBegin();
         recorder.inputWrap(socket.getInputStream());
         recorder.outputWrap(socket.getOutputStream());
+        recorder.markContentBegin();
 
         // Read the remote file/dir listing in its entirety.
         long softMax = 0;
