@@ -243,6 +243,7 @@ Serializable, Closeable {
         config.setAllowCreate(create);
         config.setLockTimeout(5000000);        
         config.setCachePercent(cachePercent);
+        config.setSharedCache(true);
         
         File f = new File(path);
         f.mkdirs();
