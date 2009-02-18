@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.PublicSuffixes;
 import org.archive.net.UURI;
+import org.archive.state.KeyManager;
 
 /**
  * Applies its decision if the current URI differs in that portion of
@@ -35,10 +36,14 @@ import org.archive.net.UURI;
  */
 public class IsCrossTopmostAssignedSurtHopDecideRule extends PredicatedDecideRule {
     private static final long serialVersionUID = 1L;
-    
+
     private static final Logger LOGGER = Logger
             .getLogger(IsCrossTopmostAssignedSurtHopDecideRule.class.getName());
 
+    static {
+        KeyManager.addKeys(IsCrossTopmostAssignedSurtHopDecideRule.class);
+    }
+    
     public IsCrossTopmostAssignedSurtHopDecideRule() {
     }
 

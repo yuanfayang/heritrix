@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules.surt;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -43,6 +44,11 @@ public class NotSurtPrefixedDecideRule extends SurtPrefixedDecideRule {
 
     //private static final Logger logger =
     //    Logger.getLogger(NotSurtPrefixedDecideRule.class.getName());
+
+    static {
+        KeyManager.addKeys(NotSurtPrefixedDecideRule.class);
+    }
+    
     /**
      * Usual constructor. 
      * @param name

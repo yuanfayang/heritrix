@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 /**
  * Rule which applies the configured decision only if a 
@@ -38,6 +39,9 @@ public abstract class PredicatedDecideRule extends DecideRule {
     public PredicatedDecideRule() {
     }
 
+    static {
+        KeyManager.addKeys(PredicatedDecideRule.class);
+    }
     
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {

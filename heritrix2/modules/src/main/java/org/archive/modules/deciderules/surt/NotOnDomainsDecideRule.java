@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules.surt;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -40,6 +41,11 @@ public class NotOnDomainsDecideRule extends OnDomainsDecideRule {
     
     //private static final Logger logger =
     //    Logger.getLogger(NotOnDomainsDecideRule.class.getName());
+
+    static {
+        KeyManager.addKeys(NotOnDomainsDecideRule.class);
+    }
+    
     /**
      * Usual constructor. 
      * @param name

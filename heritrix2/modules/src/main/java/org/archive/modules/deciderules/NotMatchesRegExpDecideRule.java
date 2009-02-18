@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -39,6 +40,9 @@ public class NotMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
     //private static final Logger logger =
     //    Logger.getLogger(NotMatchesRegExpDecideRule.class.getName());
 
+    static {
+        KeyManager.addKeys(NotMatchesRegExpDecideRule.class);
+    }
 
     /**
      * Usual constructor. 

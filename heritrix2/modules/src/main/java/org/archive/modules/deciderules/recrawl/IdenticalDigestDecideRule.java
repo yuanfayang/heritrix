@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.PredicatedRejectDecideRule;
+import org.archive.state.KeyManager;
 
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.*;
 
@@ -43,6 +44,10 @@ public class IdenticalDigestDecideRule extends PredicatedRejectDecideRule {
 
     private static final long serialVersionUID = 4275993790856626949L;
 
+    static {
+        KeyManager.addKeys(IdenticalDigestDecideRule.class);
+    }
+    
     /**
      * Usual constructor. 
      */
