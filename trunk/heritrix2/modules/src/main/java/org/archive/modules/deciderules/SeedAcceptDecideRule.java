@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -39,6 +40,10 @@ public class SeedAcceptDecideRule extends DecideRule {
 
     private static final long serialVersionUID = 3L;
 
+    static {
+        KeyManager.addKeys(SeedAcceptDecideRule.class);
+    }
+    
     public SeedAcceptDecideRule() {
     }
 

@@ -26,6 +26,7 @@ package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.extractor.Hop;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -39,6 +40,10 @@ public class PrerequisiteAcceptDecideRule extends DecideRule {
 
     private static final long serialVersionUID = 3L;
 
+    static {
+        KeyManager.addKeys(PrerequisiteAcceptDecideRule.class);
+    }
+    
     public PrerequisiteAcceptDecideRule() {
     }
 

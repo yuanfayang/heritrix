@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules.surt;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -38,6 +39,9 @@ public class NotOnHostsDecideRule extends OnHostsDecideRule {
 
     private static final long serialVersionUID = 1512825197255050412L;
 
+    static {
+        KeyManager.addKeys(NotOnHostsDecideRule.class);
+    }
 
     /**
      * Usual constructor. 

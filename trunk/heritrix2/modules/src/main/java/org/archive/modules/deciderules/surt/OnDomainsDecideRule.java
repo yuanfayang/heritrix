@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules.surt;
 
 
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
@@ -41,6 +42,11 @@ public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
     private static final long serialVersionUID = 3L;
     //private static final Logger logger =
     //    Logger.getLogger(OnDomainsDecideRule.class.getName());
+
+    static {
+        KeyManager.addKeys(OnDomainsDecideRule.class);
+    }    
+    
     /**
      * Usual constructor. 
      */

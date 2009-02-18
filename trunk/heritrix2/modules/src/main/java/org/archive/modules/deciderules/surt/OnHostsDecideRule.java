@@ -25,6 +25,7 @@
 package org.archive.modules.deciderules.surt;
 
 
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
@@ -42,6 +43,11 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
 
     //private static final Logger logger =
     //    Logger.getLogger(OnHostsDecideRule.class.getName());
+    
+    static {
+        KeyManager.addKeys(OnHostsDecideRule.class);
+    }
+    
     /**
      * Usual constructor. 
      * @param name

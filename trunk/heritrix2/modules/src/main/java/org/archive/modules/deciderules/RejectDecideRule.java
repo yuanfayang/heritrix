@@ -24,12 +24,16 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 public class RejectDecideRule extends DecideRule {
 
     private static final long serialVersionUID = 3L;
 
+    static {
+        KeyManager.addKeys(RejectDecideRule.class);
+    }
 
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {

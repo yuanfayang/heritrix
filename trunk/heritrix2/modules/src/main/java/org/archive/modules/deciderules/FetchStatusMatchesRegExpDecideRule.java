@@ -24,6 +24,7 @@ package org.archive.modules.deciderules;
 
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 
@@ -31,6 +32,9 @@ public class FetchStatusMatchesRegExpDecideRule extends MatchesRegExpDecideRule 
 
     private static final long serialVersionUID = 3L;
 
+    static {
+        KeyManager.addKeys(FetchStatusMatchesRegExpDecideRule.class);
+    }
     
     /**
      * Usual constructor. 

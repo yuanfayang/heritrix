@@ -23,6 +23,7 @@
 package org.archive.modules.deciderules;
 
 import org.archive.modules.ProcessorURI;
+import org.archive.state.KeyManager;
 
 
 public class FetchStatusNotMatchesRegExpDecideRule
@@ -30,6 +31,10 @@ extends FetchStatusMatchesRegExpDecideRule {
 
     private static final long serialVersionUID = -2220182698344063577L;
 //    private  final Logger logger = Logger.getLogger(this.getClass().getName());
+
+    static {
+        KeyManager.addKeys(FetchStatusNotMatchesRegExpDecideRule.class);
+    }
     
     /**
      * Usual constructor. 

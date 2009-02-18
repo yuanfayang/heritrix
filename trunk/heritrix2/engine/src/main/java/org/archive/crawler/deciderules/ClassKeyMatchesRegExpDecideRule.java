@@ -29,6 +29,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.MatchesRegExpDecideRule;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -44,6 +45,10 @@ public class ClassKeyMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
 
     final private CrawlControllerImpl controller;
     
+    static {
+        KeyManager.addKeys(ClassKeyMatchesRegExpDecideRule.class);
+    }
+
     /**
      * Usual constructor. 
      */
