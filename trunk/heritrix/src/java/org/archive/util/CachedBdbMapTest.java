@@ -24,9 +24,12 @@ package org.archive.util;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.apache.commons.lang.math.RandomUtils;
 
 /**
  * @author stack
@@ -34,24 +37,94 @@ import java.util.logging.Logger;
  */
 public class CachedBdbMapTest extends TmpDirTestCase {
     File envDir; 
-    private CachedBdbMap<String,HashMap<String,String>> cache;
+    CachedBdbMap cache = null;
     
     @SuppressWarnings("unchecked")
     protected void setUp() throws Exception {
         super.setUp();
         this.envDir = new File(getTmpDir(),"CachedBdbMapTest");
         this.envDir.mkdirs();
-        this.cache = new CachedBdbMap(this.envDir,
-            this.getClass().getName(), String.class, HashMap.class);
+        
     }
     
     protected void tearDown() throws Exception {
-        this.cache.close();
+        if(cache!=null) {
+            cache.close();
+            cache = null;
+        }
         FileUtils.deleteDir(this.envDir);
         super.tearDown();
     }
     
-    public void testBackingDbGetsUpdated() {
+    @SuppressWarnings("unchecked")
+    public void testReadConsistencyUnderLoad() throws Exception {
+        final CachedBdbMap<Integer,AtomicInteger> cbdbmap = 
+            new CachedBdbMap(
+                    this.envDir, 
+                    this.getClass().getName(), 
+                    Integer.class, 
+                    AtomicInteger.class);
+        this.cache = cbdbmap;
+        final AtomicInteger level = new AtomicInteger(0);
+        final int keyCount = 128 * 1024; // 128K  keys
+        final int maxLevel = 64; 
+        // initial fill
+        for(int i=0; i < keyCount; i++) {
+            cbdbmap.put(i, new AtomicInteger(level.get()));
+        }
+        // backward checking that all values always at level or higher
+        new Thread() {
+            public void run() {
+                untilmax: while(true) {
+                    for(int j=keyCount-1; j >= 0; j--) {
+                        int targetValue = level.get(); 
+                        if(targetValue>=maxLevel) {
+                            break untilmax;
+                        }
+                        assertTrue("stale value revseq key "+j,cbdbmap.get(j).get()>=targetValue);
+                        Thread.yield();
+                    }
+                }
+            }
+        }.start();
+        // random checking that all values always at level or higher
+        new Thread() {
+            public void run() {
+                untilmax: while(true) {
+                    int j = RandomUtils.nextInt(keyCount);
+                    int targetValue = level.get(); 
+                    if(targetValue>=maxLevel) {
+                        break untilmax;
+                    }
+                    assertTrue("stale value random key "+j,
+                            cbdbmap.get(j).get()>=targetValue);
+                    Thread.yield();
+                }
+            }
+        }.start();
+        // increment all keys
+        for(; level.get() < maxLevel; level.incrementAndGet()) {
+            for(int k = 0; k < keyCount; k++) {
+                int foundValue = cbdbmap.get(k).getAndIncrement();
+                assertEquals("stale value preinc key "+k, level.get(), foundValue);
+            }
+            if(level.get() % 10 == 0) {
+                System.out.println("level to "+level.get());
+            }
+            Thread.yield(); 
+        }
+        // SUCCESS
+    }
+    
+    @SuppressWarnings("unchecked")
+    public void testBackingDbGetsUpdated() throws Exception {
+        CachedBdbMap<String,HashMap<String,String>> cbdbmap = 
+            new CachedBdbMap(
+                    this.envDir, 
+                    this.getClass().getName(), 
+                    String.class, 
+                    HashMap.class);
+        this.cache = cbdbmap;
         // Enable all logging. Up the level on the handlers and then
         // on the big map itself.
         Handler [] handlers = Logger.getLogger("").getHandlers();
@@ -66,22 +139,23 @@ public class CachedBdbMapTest extends TmpDirTestCase {
         final int upperbound = 3;
         // First put in empty hashmap.
         for (int i = 0; i < upperbound; i++) {
-            this.cache.put(key + Integer.toString(i), new HashMap<String,String>());
+            cbdbmap.put(key + Integer.toString(i), new HashMap<String,String>());
         }
         // Now add value to hash map.
         for (int i = 0; i < upperbound; i++) {
-            HashMap<String,String> m = this.cache.get(key + Integer.toString(i));
+            HashMap<String,String> m = cbdbmap.get(key + Integer.toString(i));
             m.put(key, value);
         }
-        this.cache.sync();
+        cbdbmap.sync();
         for (int i = 0; i < upperbound; i++) {
-            HashMap<String,String> m = this.cache.get(key + Integer.toString(i));
+            HashMap<String,String> m = cbdbmap.get(key + Integer.toString(i));
             String v = m.get(key);
             if (v == null || !v.equals(value)) {
                 Logger.getLogger(CachedBdbMap.class.getName()).
                     warning("Wrong value " + i);
             }
         }
+        cbdbmap.close();
     }
     
     public static void main(String [] args) {

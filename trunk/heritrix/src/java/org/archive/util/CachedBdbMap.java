@@ -274,9 +274,9 @@ implements Map<K,V>, Serializable {
         envConfig.setAllowCreate(true);
         envConfig.setTransactional(false);
         
-        // We're doing the caching ourselves so setting these at the lowest
-        // possible level.
-        envConfig.setCachePercent(1);
+//        // We're doing the caching ourselves so setting these at the lowest
+//        // possible level.
+//        envConfig.setCachePercent(1);
         DbEnvironmentEntry env = new DbEnvironmentEntry();
         try {
             env.environment = new Environment(dbDir, envConfig);
