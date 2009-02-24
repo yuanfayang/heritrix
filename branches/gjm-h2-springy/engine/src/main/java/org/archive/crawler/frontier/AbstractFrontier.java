@@ -67,6 +67,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
+import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
@@ -99,6 +100,7 @@ import org.archive.util.iterator.RegexpLineIterator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.Lifecycle;
 
 /**
@@ -1628,4 +1630,12 @@ public abstract class AbstractFrontier
             // reached it's misleading?
         }
     }
+
+    public void onApplicationEvent(ApplicationEvent event) {
+        if(event instanceof CrawlStateEvent) {
+            CrawlStateEvent.translate(this, (CrawlStateEvent)event);
+        }
+    }
+    
+    
 }

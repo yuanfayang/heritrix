@@ -69,6 +69,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
+import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
@@ -96,6 +97,7 @@ import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
+import org.springframework.context.ApplicationEvent;
 
 
 /**
@@ -1332,6 +1334,12 @@ InitializingBean, HasKeyedProperties {
         case FINISH:
             terminate();
             return;
+        }
+    }
+    
+    public void onApplicationEvent(ApplicationEvent event) {
+        if(event instanceof CrawlStateEvent) {
+            CrawlStateEvent.translate(this, (CrawlStateEvent)event);
         }
     }
 }
