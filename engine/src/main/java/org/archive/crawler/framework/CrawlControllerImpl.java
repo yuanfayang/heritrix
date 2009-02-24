@@ -43,6 +43,7 @@ import java.util.logging.Logger;
 import javax.management.Notification;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -547,40 +548,12 @@ public class CrawlControllerImpl extends Bean implements
     protected void sendCrawlStateChangeEvent(State newState, 
             CrawlStatus status) {
         this.state = newState; 
-        Map registeredCrawlStatusListeners = appCtx.getBeansOfType(CrawlStatusListener.class);
-        for (CrawlStatusListener l: (Collection<CrawlStatusListener>)registeredCrawlStatusListeners.values()) {
-            switch (newState) {
-                case PAUSED:
-                    l.crawlPaused(status.getDescription());
-                    break;
-                case RUNNING:
-                    l.crawlResuming(status.getDescription());
-                    break;
-                case PAUSING:
-                    l.crawlPausing(status.getDescription());
-                    break;
-                case STARTED:
-                    l.crawlStarted(status.getDescription());
-                    break;
-                case STOPPING:
-                    l.crawlEnding(status.getDescription());
-                    break;
-                case FINISHED:
-                    l.crawlEnded(status.getDescription());
-                    break;
-                case PREPARING:
-                    l.crawlResuming(status.getDescription());
-                    break;
-                default:
-                    throw new RuntimeException("Unknown state: " + newState);
-            }
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine("Sent " + newState + " to " + l);
-            }
-        }
+        CrawlStateEvent event = new CrawlStateEvent(this,newState,status.getDescription());
+        appCtx.publishEvent(event); 
+        
+        //TODO: replace this JMX notification with something else
         sendNotification(newState.toString(), "");
-        // FIXME: Should we ONLY use JMX notifications, and eliminate
-        // the old event framework?
+        
         LOGGER.fine("Sent " + newState);
     }
     

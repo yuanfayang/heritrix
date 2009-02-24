@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.EventObject;
 import java.util.logging.Level;
 
+import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Finishable;
@@ -32,6 +33,7 @@ import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.Lifecycle;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
@@ -355,5 +357,11 @@ public abstract class AbstractTracker
      */
     public long crawlDuration() {
         return getCrawlerTotalElapsedTime();
+    }
+    
+    public void onApplicationEvent(ApplicationEvent event) {
+        if(event instanceof CrawlStateEvent) {
+            CrawlStateEvent.translate(this, (CrawlStateEvent)event);
+        }
     }
 }
