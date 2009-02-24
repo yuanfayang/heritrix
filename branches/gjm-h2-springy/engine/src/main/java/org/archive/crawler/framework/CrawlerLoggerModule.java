@@ -271,7 +271,7 @@ public class CrawlerLoggerModule
 
     private void setupLogFile(Logger logger, String filename, Formatter f,
             boolean shouldManifest) throws IOException, SecurityException {
-        GenerationFileHandler fh = new GenerationFileHandler(filename, true,
+        GenerationFileHandler fh = GenerationFileHandler.makeNew(filename, false,
             shouldManifest);
         fh.setFormatter(f);
         logger.addHandler(fh);
@@ -285,7 +285,7 @@ public class CrawlerLoggerModule
     private void setupAlertLog(String logsPath) throws IOException {
         Logger logger = Logger.getLogger(LOGNAME_ALERTS + "." + logsPath);
         String filename = getAlertsLogPath().getFile().getAbsolutePath();
-        GenerationFileHandler fh = new GenerationFileHandler(filename, true, 
+        GenerationFileHandler fh = new GenerationFileHandler(filename, false, 
                 true);
         fh.setFormatter(new SimpleFormatter());
         AlertThreadGroup.setCurrentHandler(fh);
