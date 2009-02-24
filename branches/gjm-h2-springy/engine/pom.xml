@@ -96,7 +96,6 @@
               <version>4.1.34</version>
               <scope>compile</scope>
         </dependency>
-        <!-- DISABLED UNTIL maven-restlet repo updated
         <dependency>  
           <groupId>org.restlet</groupId>  
           <artifactId>org.restlet</artifactId>  
@@ -112,7 +111,6 @@
           <artifactId>com.noelios.restlet.ext.jetty</artifactId>  
           <version>1.1.2</version>  
         </dependency>
-         -->
         <dependency>  
           <groupId>joda-time</groupId>  
           <artifactId>joda-time</artifactId>  
