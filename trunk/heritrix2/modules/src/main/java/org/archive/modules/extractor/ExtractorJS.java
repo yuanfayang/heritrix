@@ -77,6 +77,11 @@ public class ExtractorJS extends ContentExtractor {
     protected long numberOfCURIsHandled = 0;
     protected static long numberOfLinksExtracted = 0;
 
+    // strings that STRING_URI_DETECTOR picks up as URIs,
+    // which are known to be problematic, and NOT to be 
+    // added to outLinks
+    protected final static String[] STRING_URI_EXCEPTIONS = {"text/javascript"};
+    
     /**
      * @param name
      */
@@ -167,6 +172,11 @@ public class ExtractorJS extends ContentExtractor {
                 TextUtils.getMatcher(STRING_URI_DETECTOR, subsequence);
             if(uri.matches()) {
                 String string = uri.group();
+                // protect against adding outlinks for known problematic matches
+                if (isUriMatchException(string,cs)) {
+                    TextUtils.recycleMatcher(uri);
+                    continue;
+                }
                 string = speculativeFixup(string, curi);
                 foundLinks++;
                 try {
@@ -191,6 +201,21 @@ public class ExtractorJS extends ContentExtractor {
         return foundLinks;
     }
    
+    /**
+     * checks to see if URI match is a special case 
+     * @param string matched by <code>STRING_URI_DETECTOR</code>
+     * @param cs 
+     * @return true if string is one of <code>STRING_URI_EXCEPTIONS</code>
+     */
+    private static boolean isUriMatchException(String string,CharSequence cs) {
+        for (String s : STRING_URI_EXCEPTIONS) {
+            if (s.equals(string)) 
+                return true;
+        }
+        return false;
+    }
+
+
     /**
      * Perform additional fixup of likely-URI Strings
      * 
