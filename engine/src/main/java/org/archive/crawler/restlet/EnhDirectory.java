@@ -19,9 +19,14 @@
 
 package org.archive.crawler.restlet;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.logging.Level;
 
+import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.restlet.Context;
 import org.restlet.Handler;
 import org.restlet.data.Reference;
@@ -37,7 +42,10 @@ import org.restlet.data.Response;
  * @contributor gojomo
  */
 public abstract class EnhDirectory extends org.restlet.Directory {
-
+    IOFileFilter editFilter = FileFilterUtils.falseFileFilter(); 
+    IOFileFilter pageFilter = FileFilterUtils.falseFileFilter(); 
+    IOFileFilter tailFilter = FileFilterUtils.falseFileFilter();
+    
     public EnhDirectory(Context context, Reference rootLocalReference) {
         super(context, rootLocalReference);
         // TODO Auto-generated constructor stub
@@ -67,6 +75,14 @@ public abstract class EnhDirectory extends org.restlet.Directory {
     }
 
     abstract Reference determineRootRef(Request request);
+
+    public boolean allowsEdit(File file) {
+        return editFilter.accept(file);
+    }
+
+    public void setEditFilter(IOFileFilter fileFilter) {
+        editFilter = fileFilter; 
+    }
 
     
 }

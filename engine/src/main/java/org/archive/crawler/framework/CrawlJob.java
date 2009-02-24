@@ -22,6 +22,7 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
@@ -34,11 +35,17 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
+import org.archive.crawler.event.CrawlStateEvent;
+import org.archive.settings.JobHome;
+import org.archive.spring.ConfigPath;
 import org.archive.spring.PathSharingContext;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.validation.Errors;
 
 /**
@@ -51,7 +58,7 @@ import org.springframework.validation.Errors;
  * 
  * @contributor gojomo
  */
-public class CrawlJob implements Comparable<CrawlJob>{
+public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     File primaryConfig; 
     PathSharingContext ac; 
     int launchCount; 
@@ -208,7 +215,9 @@ public class CrawlJob implements Comparable<CrawlJob>{
         checkXML(); 
         if(ac==null) {
             try {
-                ac = new PathSharingContext(primaryConfig.getAbsolutePath());
+                ac = new PathSharingContext(new String[] {primaryConfig.getAbsolutePath()},false,null);
+                ac.addApplicationListener(this);
+                ac.refresh();
             } catch (BeansException be) {
                 getJobLogger().log(Level.SEVERE,be.getMessage(),be);
             }
@@ -340,6 +349,38 @@ public class CrawlJob implements Comparable<CrawlJob>{
               .append(record.getMessage())
               .append("\n");
             return  sb.toString();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, ConfigPath> getConfigPaths() {
+        if(!isContainerOk()) {
+            return MapUtils.EMPTY_MAP;
+        }
+        Object[] jhs = ac.getBeansOfType(JobHome.class).values().toArray();
+        if(jhs.length==0) {
+            return MapUtils.EMPTY_MAP;
+        }
+        JobHome jh = (JobHome)jhs[0];
+        return jh.getPaths();        
+    }
+
+    public String jobDirRelativePath(File f) {
+        try {
+            String filePath = f.getCanonicalPath();
+            String jobPath = getJobDir().getCanonicalPath();
+            if(filePath.startsWith(jobPath)) {
+                return filePath.substring(jobPath.length()).replace(File.separatorChar, '/');
+            }
+        } catch (IOException e) {
+            getJobLogger().log(Level.WARNING,"bad file: "+f);
+        }
+        return null; 
+    }
+
+    public void onApplicationEvent(ApplicationEvent event) {
+        if(event instanceof CrawlStateEvent) {
+            getJobLogger().log(Level.INFO, ((CrawlStateEvent)event).getState().toString());
         }
     }
 }

@@ -1,27 +1,27 @@
-/* This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
- * Heritrix is free software!
- * 
- * Copyright 2008, Internet Archive Heritrix Project
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *   
- * $Header$
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package org.archive.settings;
 
 import java.beans.PropertyDescriptor;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.archive.spring.ConfigPath;
@@ -129,13 +129,22 @@ public class JobHome implements ApplicationContextAware, BeanPostProcessor {
                     if(StringUtils.isEmpty(cp.getName())) {
                         cp.setName(beanName+"."+d.getName());
                     }
-//                  remember(cp);
+                    remember(cp);
                 }
             }
         }
         return bean;
     }
 
+    // REMEBERED PATHS
+    Map<String,ConfigPath> paths = new HashMap<String,ConfigPath>();
+    protected void remember(ConfigPath cp) {
+        paths.put(cp.getName(), cp);
+    }
+    public Map<String,ConfigPath> getPaths() {
+        return paths; 
+    }
+    
     // noop
     public Object postProcessBeforeInitialization(Object bean, String beanName) 
     throws BeansException {
