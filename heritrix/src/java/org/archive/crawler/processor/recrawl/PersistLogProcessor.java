@@ -23,10 +23,7 @@
 package org.archive.crawler.processor.recrawl;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.codec.binary.Base64;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -81,7 +78,6 @@ public class PersistLogProcessor extends PersistProcessor implements CrawlStatus
                     (String) getUncheckedAttribute(null, ATTR_LOG_FILENAME));
             log = new CrawlerJournal(logFile);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             throw new RuntimeException(e);
         }
     }
