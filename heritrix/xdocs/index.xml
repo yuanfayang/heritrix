@@ -43,7 +43,7 @@
         <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
-    <subsection name="Releases 1.14.1 and 2.0.1 available 2008-08-07">
+    <subsection name="Releases 1.14.2 and 2.0.2 available 2008-11-11">
     <p>Heritrix releases 1.14.2 and 2.0.2 are now available.</p>
 
 <p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.2">
@@ -57,9 +57,9 @@ Download from Sourceforge files area</a></p>
 
 <p>These are both small bugfix releases.</p>
 
-<p>The next major release will be 2.2 later this year, which is planned to 
+<p>The next major release will be 2.2 in 2009, which is planned to 
 include updates to the Heritrix 2 configuration system and checkpointing 
-functionality, and tools easing transition from 1.14.1 to Heritrix 2.</p>
+functionality, and tools easing transition from 1.14.x to Heritrix 2.2.</p>
 
 <p>Questions and discussion are as always welcome on the 
 <a href="http://tech.groups.yahoo.com/group/archive-crawler/">
