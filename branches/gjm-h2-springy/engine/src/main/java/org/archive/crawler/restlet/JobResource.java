@@ -19,14 +19,19 @@
 
 package org.archive.crawler.restlet;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.EngineImpl;
+import org.archive.spring.ConfigPath;
 import org.archive.util.FileUtils;
 import org.restlet.Context;
 import org.restlet.data.CharacterSet;
@@ -48,6 +53,9 @@ import org.restlet.resource.WriterRepresentation;
  * @contributor gojomo
  */
 public class JobResource extends Resource {
+    public static final IOFileFilter EDIT_FILTER = 
+        FileUtils.getRegexFileFilter(".*\\.((c?xml)|(txt))$");
+
     CrawlJob cj; 
     
     public JobResource(Context ctx, Request req, Response res) throws ResourceException {
@@ -84,17 +92,46 @@ public class JobResource extends Resource {
         pw.println("<base href='"+baseRef+"'/>");
         pw.println("</head><body>");
         pw.println("<h1>Job: <i>"+cj.getShortName()+"</i></h1>");
+        
+        pw.println(cj.getLaunchCount() + " launches ");
+        if(cj.getLastLaunch()!=null) {
+            pw.println("(last at "+cj.getLastLaunch()+")");
+        }
+        pw.println("<br/>");
+        
+        // configuration & launch 
         pw.println("configuration: <a href='jobdir/" 
                 + cj.getPrimaryConfig().getName() + "'>" 
                 + cj.getPrimaryConfig() +"</a>");
         pw.println("[<a href='jobdir/" 
                 + cj.getPrimaryConfig().getName() 
-                +  "?edit=textarea'>edit</a>]");
-        pw.println("<br/>");
-        pw.println(cj.getLaunchCount() + " launches ");
-        if(cj.getLastLaunch()!=null) {
-            pw.println("(last at "+cj.getLastLaunch()+")");
+                +  "?format=textedit'>edit</a>]");        
+        pw.println("<form method='POST'>");
+        pw.print("<input type='submit' name='action' value='checkXML' ");
+        pw.print(cj.isXmlOk()?"disabled='disabled' title='XML OK'":"");
+        pw.println("/>");
+        pw.print("<input type='submit' name='action' value='instantiate' ");
+        pw.print(cj.isContainerOk()?"disabled='disabled' title='instantiated'":"");
+        pw.println("/>");
+        pw.print("<input type='submit' name='action' value='validate' ");
+        pw.print(cj.isContainerValidated()?"disabled='disabled' alt='validated'":"");
+        pw.println("/>");
+        
+        pw.print("<input type='submit' name='action' value='launch'");
+        if(cj.isProfile()) {
+            pw.print("disabled='disabled' title='profiles cannot be launched'");
         }
+        if(cj.isRunning()) {
+            pw.print("disabled='disabled' title='launched OK'");
+        }
+        pw.println("/>");
+        
+        pw.print("<input type='submit' name='action' value='discard' ");
+        pw.print(cj.isContainerOk()?"":"disabled='disabled' title='no instance'");
+        pw.println("/>");
+
+        pw.println("</form>");
+        
         pw.println("<hr/>");
         pw.println("<h2>Job Log</h2>");
         pw.println("<pre style='overflow:auto'>");
@@ -111,48 +148,8 @@ public class JobResource extends Resource {
         }
         pw.println("</pre>");
         pw.println("<hr/>");
-        pw.println("<form method='POST'>Copy to <input name='copyTo'/><input type='submit'/><input type='checkbox' name='asProfile'/>as profile</form>");
-        pw.println("<hr/>");
-        pw.println("<h2>Lifecycle</h2>");
-        pw.println("<div style='float:left'>");
-        if(cj.isXmlOk()) {
-            pw.println("XML OK<br/>");
-        } else {
-            pw.println("<form method='POST'><input type='submit' name='action' value='checkXML'/></form>");
-        }
-        pw.println("</div>");
-        pw.println("<div style='float:left'>");
-        if(cj.isContainerOk()) {
-            pw.println("instantiated OK<br/>");
-        } else {
-            pw.println("<form method='POST'><input type='submit' name='action' value='instantiate'/></form>");
-        }
-        pw.println("</div>");
-        pw.println("<div style='float:left'>");
-        if(cj.isContainerValidated()) {
-            pw.println("validated OK<br/>");
-        } else {
-            pw.println("<form method='POST'><input type='submit' name='action' value='validate'/></form>");
-        }
-        pw.println("</div>");
-        pw.println("<div style='float:left'>");
-        if(cj.isProfile()) {
-            pw.println("profiles must be copied to a non-profile job to launch");
-        } else {
-            if(cj.isRunning()) {
-                pw.println("launched OK");
-            } else {
-                pw.println("<form method='POST'><input type='submit' name='action' value='launch'/></form>");
-            }
-        } 
-        pw.println("</div>");
-        pw.println("<div style='float:left'>");
-        if(cj.isContainerOk()) {
-            pw.println("<form method='POST'><input type='submit' name='action' value='discard'/></form>");
-        } else {
-            pw.println("no context");
-        }
-        pw.println("</div>");
+        pw.println("<h2>Active Job</h2>");
+
         pw.println("<br style='clear:both'/>");
         if(cj.isRunning()) {
             pw.println("<h3>"+cj.getCrawlController().getState()+"</h3>");
@@ -186,8 +183,30 @@ public class JobResource extends Resource {
         }
         pw.println("<hr/>");
         pw.println("<h2>Files</h2>");
-        pw.println("<h3>Browse <a href='jobdir'>Job Directory</a>");
-        // TODO: specific paths from wired context?
+        pw.println("<h3>Browse <a href='jobdir'>Job Directory</a></h3>");
+        // specific paths from wired context
+        pw.println("<h3>Configuration-referenced Paths</h3>");
+        pw.println("<dl>");
+        for(ConfigPath cp : cj.getConfigPaths().values()) {
+            pw.println("<dt>"+cp.getName()+"</dt>");
+            File f = cp.getFile();
+            String jobDirRelative = cj.jobDirRelativePath(f);
+            if(jobDirRelative==null) {
+                pw.println("<dd>"+f+"</dd>");
+            } else {
+                pw.println("<dd><a href='jobdir"+jobDirRelative+"'>");
+                pw.println(f);
+                pw.println("</a>");
+                if(EDIT_FILTER.accept(f)) {
+                    pw.print("[<a href='jobdir"+jobDirRelative+"?format=textedit'>");
+                    pw.println("edit</a>]");
+                }
+                pw.println("</dd>");
+            }
+        }
+        pw.println("</dl>");
+        pw.println("<hr/>");
+        pw.println("<form method='POST'>Copy job to <input name='copyTo'/><input type='submit'/><input type='checkbox' name='asProfile'/>as profile</form>");
         pw.println("<hr/>");
         pw.close();
     }

@@ -22,11 +22,11 @@ package org.archive.crawler.restlet;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.ListIterator;
 
 import org.apache.commons.io.FileUtils;
-import org.restlet.Directory;
 import org.restlet.data.Form;
 import org.restlet.data.Reference;
 import org.restlet.data.Request;
@@ -45,8 +45,8 @@ import com.noelios.restlet.local.DirectoryResource;
  * @contributor gojomo
  */
 public class EnhDirectoryResource extends DirectoryResource {
-
-    public EnhDirectoryResource(Directory directory, Request request, Response response) throws IOException {
+    
+    public EnhDirectoryResource(EnhDirectory directory, Request request, Response response) throws IOException {
         super(directory, request, response);
     }
 
@@ -59,22 +59,44 @@ public class EnhDirectoryResource extends DirectoryResource {
     public List<Variant> getVariants() {
         List<Variant> variants = super.getVariants();
         Form f = getRequest().getResourceRef().getQueryAsForm();
-        if("textarea".equals(f.getFirstValue("edit"))) {
+        String format = f.getFirstValue("format");
+        if("textedit".equals(format)) {
+            if(variants.isEmpty()) {
+                // create empty placeholder file if appropriate
+                try {
+                    File file = new File(new URI(getTargetUri()));
+                    if(getEnhDirectory().allowsEdit(file)) {
+                        file.createNewFile();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e); 
+                }
+                variants = super.getVariants();
+            }
             // wrap FileRepresentations in EditRepresentations
-            // TODO: limit to appropriate/configured file types
             ListIterator<Variant> iter = variants.listIterator(); 
             while(iter.hasNext()) {
                 Variant v = iter.next(); 
                 if(v instanceof FileRepresentation) {
-                    iter.remove();
-                    iter.add(new EditRepresentation((FileRepresentation)v));
+                    File file = ((FileRepresentation)v).getFile();
+                    if(getEnhDirectory().allowsEdit(file)) {
+                        iter.remove();
+                        iter.add(new EditRepresentation((FileRepresentation)v,this));
+                    };
                 }
             }
+        } else if("paged".equals(format)) {
+            int lines = Integer.parseInt(f.getFirstValue("lines","64"));
+            long from = Integer.parseInt(f.getFirstValue("position","0"));
         }
         
         return variants; 
     }
     
+    protected EnhDirectory getEnhDirectory() {
+        return (EnhDirectory)getDirectory();
+    }
+
     /** 
      * Accept a POST used to edit or create a file.
      * 
@@ -90,13 +112,14 @@ public class EnhDirectoryResource extends DirectoryResource {
         File file = er.getFileRepresentation().getFile(); 
         try {
             FileUtils.writeStringToFile(file, newContents);
+            Flash.addFlash(getResponse(), "file updated");
         } catch (IOException e) {
             // TODO report error somehow
             e.printStackTrace();
         }
         // redirect to view version
         Reference ref = getRequest().getOriginalRef().clone(); 
-        ref.setQuery(null);
+        /// ref.setQuery(null);
         getResponse().redirectSeeOther(ref);
         
     }

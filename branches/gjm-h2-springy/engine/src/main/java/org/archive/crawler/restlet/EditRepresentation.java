@@ -29,6 +29,7 @@ import java.io.Writer;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.MediaType;
+import org.restlet.data.Reference;
 import org.restlet.resource.CharacterRepresentation;
 import org.restlet.resource.FileRepresentation;
 
@@ -40,10 +41,12 @@ import org.restlet.resource.FileRepresentation;
  */
 public class EditRepresentation extends CharacterRepresentation {
     FileRepresentation fileRepresentation; 
+    EnhDirectoryResource dirResource;
     
-    public EditRepresentation(FileRepresentation representation) {
+    public EditRepresentation(FileRepresentation representation, EnhDirectoryResource resource) {
         super(MediaType.TEXT_HTML);
         fileRepresentation = representation;
+        dirResource = resource; 
         // TODO: remove if not necessary in future?
         setCharacterSet(CharacterSet.UTF_8);
     }
@@ -58,9 +61,14 @@ public class EditRepresentation extends CharacterRepresentation {
     @Override
     public void write(Writer writer) throws IOException {
         PrintWriter pw = new PrintWriter(writer); 
+        Flash.renderFlashesHTML(pw, dirResource.getRequest());
         pw.println("<form method='POST'>");
         pw.println("<input type='submit' value='update contents'/>");
-        pw.println(fileRepresentation.getFile()+"<br/>");
+        pw.println(fileRepresentation.getFile());
+        Reference viewRef = dirResource.getRequest().getOriginalRef().clone(); 
+        viewRef.setQuery(null);
+        pw.println("<a href='"+viewRef+"'>view</a>");
+        pw.println("<br/>");
         pw.println("<textarea style='width:100%; height:100%' name='contents'>");
         StringEscapeUtils.escapeHtml(pw,fileRepresentation.getText()); 
         pw.println("</textarea></form>");
