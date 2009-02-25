@@ -84,5 +84,10 @@ public abstract class EnhDirectory extends org.restlet.Directory {
         editFilter = fileFilter; 
     }
 
+    public boolean allowsPaging(File file) {
+        // TODO: limit? 
+        return true;
+    }
+
     
 }

@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.lang.math.LongRange;
 
 
 /** Utility methods for manipulating files and directories.
@@ -524,5 +525,174 @@ public class FileUtils {
                 + ArchiveUtils.get14DigitDate(file.lastModified());
             file.renameTo(new File(newName));
         }
+    }
+
+    /**
+     * Retrieve a number of lines from the file around the given 
+     * position, as when paging forward or backward through a file. 
+     * 
+     * @param file File to retrieve lines
+     * @param position offset to anchor lines
+     * @param signedDesiredLineCount lines requested; if negative, 
+     *        want this number of lines ending with a line containing
+     *        the position; if positive, want this number of lines,
+     *        all starting at or after position. 
+     * @param lines List<String> to insert found lines
+     * @param lineEstimate int estimate of line size, 0 means use default
+     *        of 128
+     * @return LongRange indicating the file offsets corresponding to 
+     *         the beginning of the first line returned, and the point
+     *         after the end of the last line returned
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+    public static LongRange pagedLines(File file, long position,
+            int signedDesiredLineCount, List<String> lines, int lineEstimate)
+            throws IOException {
+        // pick a reasonably size chunk likely to have all desired lines
+        if(lineEstimate == 0) {
+            lineEstimate = 128; 
+        }
+        // consider negative positions as from end of file; -1 = last byte
+        if (position < 0) {
+            position = file.length() + position; 
+        }
+        int desiredLineCount = Math.abs(signedDesiredLineCount);
+        long startPosition;
+        long fileEnd = file.length();
+        int bufferSize = (desiredLineCount + 5) * lineEstimate; 
+        if(signedDesiredLineCount>0) {
+            // reading forward; include previous char in case line-end
+            startPosition = position - 1;
+        } else {
+            // reading backward
+            startPosition = position - bufferSize + (2 * lineEstimate);
+        }
+        if(startPosition<0) {
+            startPosition = 0; 
+        }
+        if(startPosition+bufferSize > fileEnd) {
+            bufferSize = (int)(fileEnd - startPosition); 
+        }
+
+        // read that reasonable chunk
+        FileInputStream fis = new FileInputStream(file);
+        fis.getChannel().position(startPosition); 
+        byte[] buf = new byte[bufferSize];
+        IoUtils.readFully(fis, buf);
+        IOUtils.closeQuietly(fis);
+        
+        // find all line starts fully in buffer
+        // (positions after a line-end, per line-end definition in 
+        // BufferedReader.readLine)
+        LinkedList<Integer> lineStarts = new LinkedList<Integer>();
+        if(startPosition==0) {
+            lineStarts.add(0);
+        }
+        boolean atLineEnd = false; 
+        boolean eatLF = false; 
+        for(int i = 0; i < bufferSize; i++) {
+            if ((char) buf[i] == '\n' && eatLF) {
+                eatLF = false;
+                continue;
+            }
+            if(atLineEnd) {
+                lineStarts.add(i);
+                atLineEnd = false; 
+                if(signedDesiredLineCount<0 && startPosition+i > position) {
+                    // reached next line past position, read no more
+                    break;
+                }
+            }
+            if ((char) buf[i] == '\r') {
+                atLineEnd = true; 
+                eatLF = true; 
+                continue;
+            }
+            if ((char) buf[i] == '\n') {
+                atLineEnd = true; 
+            }
+        }
+        if(startPosition+bufferSize == fileEnd) {
+            // add phantom lineStart after end
+            lineStarts.add(bufferSize);
+        }
+        int foundFullLines = lineStarts.size()-1;
+
+        // if found no lines
+        if(foundFullLines<1) {
+            if(signedDesiredLineCount>0) {
+                if(startPosition+bufferSize == fileEnd) {
+                    // nothing more to read: return nothing
+                    return new LongRange(fileEnd,fileEnd);
+                } else {
+                    // continue forward from end of buffer, perhaps larger lineEstimate
+                    return pagedLines(file, startPosition+bufferSize, desiredLineCount, lines, Math.max(bufferSize,lineEstimate));
+                }
+                
+            } else {
+                // try again with much larger line estimate
+                // TODO: fail gracefully before growing to multi-MB buffers
+                return pagedLines(file, position, desiredLineCount, lines, bufferSize);
+            }
+        }
+                
+        // trim unneeded lines
+        while(lineStarts.size()>desiredLineCount+1) {
+            if (signedDesiredLineCount < 0) { 
+                lineStarts.removeFirst();
+            } else {
+                lineStarts.removeLast();
+            }
+        }
+        int firstLine =  lineStarts.getFirst();
+        int partialLine =  lineStarts.getLast(); 
+        LongRange range = new LongRange(startPosition + firstLine, startPosition + partialLine); 
+        List<String> foundLines = 
+            IOUtils.readLines(new ByteArrayInputStream(buf,firstLine,partialLine-firstLine));
+
+        if(foundFullLines<desiredLineCount && signedDesiredLineCount < 0 && startPosition > 0) {
+            // if needed and reading backward, read more lines from earlier
+            range = expandRange(
+                        range,
+                        pagedLines(file, 
+                                   startPosition, 
+                                   signedDesiredLineCount+foundFullLines, 
+                                   lines, 
+                                   bufferSize/foundFullLines));
+            
+        }
+        
+        lines.addAll(foundLines); 
+        
+        if(signedDesiredLineCount < 0 && range.getMaximumLong() < position) {
+            // did not get line containining start position
+            range = expandRange(
+                        range,
+                        pagedLines(file,
+                                   partialLine,
+                                   1,
+                                   lines,
+                                   bufferSize/foundFullLines));
+        }
+        
+        if(signedDesiredLineCount > 0 && foundFullLines < desiredLineCount && range.getMaximumLong() < fileEnd) {
+            // need more forward lines
+            range = expandRange(
+                    range,
+                    pagedLines(file,
+                               range.getMaximumLong(),
+                               desiredLineCount - foundFullLines,
+                               lines,
+                               bufferSize/foundFullLines));
+        }
+        
+        return range; 
+    }
+
+    public static LongRange expandRange(LongRange range1, LongRange range2) {
+        return new LongRange(Math.min(range1.getMinimumLong(), range2.getMinimumLong()),
+                             Math.max(range1.getMaximumLong(), range2.getMaximumLong()));
+        
     }
 }
