@@ -86,8 +86,22 @@ public class EnhDirectoryResource extends DirectoryResource {
                 }
             }
         } else if("paged".equals(format)) {
-            int lines = Integer.parseInt(f.getFirstValue("lines","64"));
-            long from = Integer.parseInt(f.getFirstValue("position","0"));
+            ListIterator<Variant> iter = variants.listIterator(); 
+            while(iter.hasNext()) {
+                Variant v = iter.next(); 
+                if(v instanceof FileRepresentation) {
+                    File file = ((FileRepresentation)v).getFile();
+                    if(getEnhDirectory().allowsPaging(file)) {
+                        iter.remove();
+                        iter.add(new PagedRepresentation((
+                                FileRepresentation)v,
+                                this,
+                                f.getFirstValue("pos"),
+                                f.getFirstValue("lines"),
+                                f.getFirstValue("reverse")));
+                    };
+                }
+            }
         }
         
         return variants; 
