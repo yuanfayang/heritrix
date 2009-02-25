@@ -294,15 +294,15 @@ public class Heritrix {
                 }
             }
             
-            // Start WebUI, if desired.
-            if (cl.hasOption('n')) {
-                out.println("Not running web UI.");
-            } else {
-                webui = new WebUI(webConfig);
-                webui.start();
-                out.println("Web UI listening on " 
-                        + webConfig.hostAndPort() + ".");
-            }
+//            // Start WebUI, if desired.
+//            if (cl.hasOption('n')) {
+//                out.println("Not running web UI.");
+//            } else {
+//                webui = new WebUI(webConfig);
+//                webui.start();
+//                out.println("Web UI listening on " 
+//                        + webConfig.hostAndPort() + ".");
+//            }
         } catch (Exception e) {
             // Show any exceptions in STARTLOG.
             e.printStackTrace(out);
