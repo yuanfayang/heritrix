@@ -23,12 +23,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.EngineImpl;
 import org.archive.spring.ConfigPath;
@@ -138,15 +138,20 @@ public class JobResource extends Resource {
         if(cj.getJobLog().exists()) {
             try {
                 List<String> logLines = new LinkedList<String>();
-                FileUtils.tailLines(cj.getJobLog(), 5, logLines); 
+                FileUtils.pagedLines(cj.getJobLog(), -1, -3, logLines);
+                Collections.reverse(logLines);
                 for(String line : logLines) {
-                    pw.println(line);
+                    StringEscapeUtils.escapeHtml(pw,line);
+                    pw.println();
                 }
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe); 
             }
         }
         pw.println("</pre>");
+        pw.println("<a href='jobdir/"
+                +cj.getJobLog().getName()
+                +"?format=paged&pos=-1&reverse=y'>more job log...</a>");
         pw.println("<hr/>");
         pw.println("<h2>Active Job</h2>");
 
@@ -171,15 +176,24 @@ public class JobResource extends Resource {
             pw.println("<pre style=\'overflow:auto\'>");
             try {
                 List<String> logLines = new LinkedList<String>();
-                FileUtils.tailLines(cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile(), 10, logLines);
+                FileUtils.pagedLines(
+                        cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile(),
+                        -1, 
+                        -10, 
+                        logLines);
+                Collections.reverse(logLines);
                 for(String line : logLines) {
-                    pw.println(line);
+                    StringEscapeUtils.escapeHtml(pw,line);
+                    pw.println();
                 }
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe); 
             }
             pw.println("</pre>");
-            
+            pw.println("<a href='jobdir"
+                    +cj.jobDirRelativePath(
+                            cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile())
+                    +"?format=paged&pos=-1&lines=-128&reverse=y'>more crawl log...</a>");
         }
         pw.println("<hr/>");
         pw.println("<h2>Files</h2>");

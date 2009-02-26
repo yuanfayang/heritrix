@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.math.LongRange;
 
 
 /**
@@ -44,6 +45,9 @@ public class FileUtilsTest extends TmpDirTestCase {
     private String tgtDirName = FileUtilsTest.class.getName() + ".tgtdir";
     private File tgtDirFile = null;
     
+    protected File zeroLengthLinesUnix;
+    protected File zeroLengthLinesWindows;
+
     protected File smallLinesUnix;
     protected File smallLinesWindows;
     protected File largeLinesUnix;
@@ -60,9 +64,12 @@ public class FileUtilsTest extends TmpDirTestCase {
         this.tgtDirFile.mkdirs();
         addFiles();
         
+        zeroLengthLinesUnix = setUpLinesFile("zeroLengthLinesUnix",0,0,400,IOUtils.LINE_SEPARATOR_UNIX);
+        zeroLengthLinesWindows = setUpLinesFile("zeroLengthLinesUnix",0,0,400,IOUtils.LINE_SEPARATOR_WINDOWS);
+        
         smallLinesUnix = setUpLinesFile("smallLinesUnix", 0, 25, 400, IOUtils.LINE_SEPARATOR_UNIX);
         smallLinesWindows = setUpLinesFile("smallLinesWindows", 0, 25, 400, IOUtils.LINE_SEPARATOR_WINDOWS);
-        largeLinesUnix = setUpLinesFile("largeLinesUnix", 128, 256, 4096, IOUtils.LINE_SEPARATOR_UNIX);
+        largeLinesUnix = setUpLinesFile("largeLinesUnix", 128, 256, 5, IOUtils.LINE_SEPARATOR_UNIX);
         largeLinesWindows = setUpLinesFile("largeLinesWindows", 128, 256, 4096, IOUtils.LINE_SEPARATOR_WINDOWS);
         
         nakedLastLineUnix = setUpLinesFile("nakedLastLineUnix", 0, 50, 401, IOUtils.LINE_SEPARATOR_UNIX);
@@ -87,7 +94,9 @@ public class FileUtilsTest extends TmpDirTestCase {
         StringBuilder sb = new StringBuilder(maxLineSize);
         for(int i = 0;  i<lineCount ; i++) {
             sb.setLength(0);
-            int lineSize = minLineSize + (i % (maxLineSize-minLineSize));
+            int lineSize =  (maxLineSize == 0) 
+                                ? 0 
+                                : minLineSize + (i % (maxLineSize-minLineSize));
             for(int j = 0; j < lineSize; j++) {
                 sb.append("-");
             }
@@ -103,6 +112,8 @@ public class FileUtilsTest extends TmpDirTestCase {
         super.tearDown();
         FileUtils.deleteDir(this.srcDirFile);
         FileUtils.deleteDir(this.tgtDirFile);
+        org.apache.commons.io.FileUtils.deleteQuietly(zeroLengthLinesUnix);
+        org.apache.commons.io.FileUtils.deleteQuietly(zeroLengthLinesWindows);
         org.apache.commons.io.FileUtils.deleteQuietly(smallLinesUnix);
         org.apache.commons.io.FileUtils.deleteQuietly(smallLinesWindows);
         org.apache.commons.io.FileUtils.deleteQuietly(largeLinesUnix);
@@ -112,6 +123,7 @@ public class FileUtilsTest extends TmpDirTestCase {
         
     }
 
+    @SuppressWarnings("deprecation")
     public void testCopyFiles() throws IOException {
         FileUtils.copyFiles(this.srcDirFile, this.tgtDirFile);
         File [] srcFiles = this.srcDirFile.listFiles();
@@ -134,6 +146,14 @@ public class FileUtilsTest extends TmpDirTestCase {
             e = ioe;
         }
         assertNotNull("Didn't get expected IOE", e);
+    }
+    
+    public void testTailLinesZeroLengthUnix() throws IOException {
+        verifyTailLines(zeroLengthLinesUnix);
+    }
+    
+    public void testTailLinesZeroLengthWindows() throws IOException {
+        verifyTailLines(zeroLengthLinesWindows);
     }
     
     public void testTailLinesSmallUnix() throws IOException {
@@ -178,17 +198,88 @@ public class FileUtilsTest extends TmpDirTestCase {
     
     private void verifyTailLines(File file, List<String> lines, int count, int estimate) throws IOException {
         List<String> testLines; 
-        testLines = getTestLines(file,count,estimate); 
+        testLines = getTestTailLines(file,count,estimate); 
+        assertEquals("line counts not equal:"+file.getName()+" "+count+" "+estimate,lines.size(),testLines.size()); 
         assertEquals("lines not equal: "+file.getName()+" "+count+" "+estimate,lines,testLines); 
     }
 
-    private List<String> getTestLines(File file, int count, int estimate) throws IOException {
+    private List<String> getTestTailLines(File file, int count, int estimate) throws IOException {
+        long pos = -1;
+        List<String> testLines = new LinkedList<String>();
+        do {
+            List<String> returnedLines = new LinkedList<String>();
+            LongRange range = FileUtils.pagedLines(file,pos,-count,returnedLines,estimate);
+            Collections.reverse(returnedLines); 
+            testLines.addAll(returnedLines);
+            pos = range.getMinimumLong()-1;
+        } while (pos>=0);
+        Collections.reverse(testLines); 
+        return testLines;
+    }
+    
+    public void testHeadLinesZeroLengthUnix() throws IOException {
+        verifyHeadLines(zeroLengthLinesUnix);
+    }
+    
+    public void testHeadLinesZeroLengthWindows() throws IOException {
+        verifyHeadLines(zeroLengthLinesWindows);
+    }
+    
+    public void testHeadLinesSmallUnix() throws IOException {
+        verifyHeadLines(smallLinesUnix);
+    }
+
+    public void testHeadLinesLargeUnix() throws IOException {
+        verifyHeadLines(largeLinesUnix);
+    }
+
+    public void testHeadLinesSmallWindows() throws IOException {
+        verifyHeadLines(smallLinesWindows);
+    }
+
+    public void testHeadLinesLargeWindows() throws IOException {
+        verifyHeadLines(largeLinesWindows);
+    }
+
+    public void testHeadLinesNakedUnix() throws IOException {
+        verifyHeadLines(nakedLastLineUnix);
+    }
+
+    public void testHeadLinesNakedWindows() throws IOException {
+        verifyHeadLines(nakedLastLineWindows);
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    private void verifyHeadLines(File file) throws IOException {
+        List<String> lines = org.apache.commons.io.FileUtils.readLines(file);
+        verifyHeadLines(file, lines, 1, 80);
+        verifyHeadLines(file, lines, 5, 80);
+        verifyHeadLines(file, lines, 10, 80);
+        verifyHeadLines(file, lines, 20, 80);
+        verifyHeadLines(file, lines, 100, 80);
+        verifyHeadLines(file, lines, 1, 1);
+        verifyHeadLines(file, lines, 5, 1);
+        verifyHeadLines(file, lines, 10, 1);
+        verifyHeadLines(file, lines, 20, 1);
+        verifyHeadLines(file, lines, 100, 1);
+    }
+    
+    
+    private void verifyHeadLines(File file, List<String> lines, int count, int estimate) throws IOException {
+        List<String> testLines; 
+        testLines = getTestHeadLines(file,count,estimate); 
+        assertEquals("line counts not equal:"+file.getName()+" "+count+" "+estimate,lines.size(),testLines.size()); 
+        assertEquals("lines not equal: "+file.getName()+" "+count+" "+estimate,lines,testLines); 
+    }
+
+    private List<String> getTestHeadLines(File file, int count, int estimate) throws IOException {
         long pos = 0;
         List<String> testLines = new LinkedList<String>();
         do {
-            pos = FileUtils.tailLines(file,count,testLines,pos,estimate);
-        } while (pos>0);
-        Collections.reverse(testLines); 
+            LongRange range = FileUtils.pagedLines(file,pos,count,testLines,estimate);
+            pos = range.getMaximumLong();
+        } while (pos<file.length());
         return testLines;
     }
 }
