@@ -151,7 +151,7 @@ public class JobResource extends Resource {
         pw.println("</pre>");
         pw.println("<a href='jobdir/"
                 +cj.getJobLog().getName()
-                +"?format=paged&pos=-1&reverse=y'>more job log...</a>");
+                +"?format=paged&pos=-1&lines=-128&reverse=y'>more job log...</a>");
         pw.println("<hr/>");
         pw.println("<h2>Active Job</h2>");
 
