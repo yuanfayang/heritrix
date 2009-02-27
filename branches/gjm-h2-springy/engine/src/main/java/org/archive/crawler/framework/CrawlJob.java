@@ -22,6 +22,8 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -38,12 +40,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.settings.JobHome;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.PathSharingContext;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.validation.Errors;
@@ -132,7 +137,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         
         try {
             LineIterator lines = FileUtils.lineIterator(jobLog);
-            Pattern launchLine = Pattern.compile("(\\S+) (\\S+) LAUNCHED");
+            Pattern launchLine = Pattern.compile("(\\S+) (\\S+) Job launched");
             while(lines.hasNext()) {
                 String line = lines.nextLine();
                 Matcher m = launchLine.matcher(line);
@@ -218,12 +223,63 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
                 ac = new PathSharingContext(new String[] {primaryConfig.getAbsolutePath()},false,null);
                 ac.addApplicationListener(this);
                 ac.refresh();
+                getCrawlController(); // trigger NoSuchBeanDefinitionException if no CC
+                getJobLogger().log(Level.INFO,"Job instantiated");
             } catch (BeansException be) {
-                getJobLogger().log(Level.SEVERE,be.getMessage(),be);
+                if(ac!=null) {
+                    ac.close();
+                }
+                ac = null; 
+                beansException(be);
             }
         }
     }
     
+    /**
+     * Report a BeansException during instantiation; report chain in 
+     * reverse order (so root cause is first); ignore non-BeansExceptions
+     * or messages without a useful compact message. 
+     * @param be BeansException
+     */
+    protected void beansException(BeansException be) {
+        LinkedList<String> beMsgs = new LinkedList<String>();
+        Throwable t = be; 
+        while (t!=null) {
+            if(t instanceof BeansException) {
+                String msg = shortMessage((BeansException)t);
+                if(msg!=null) {
+                    beMsgs.add(msg);
+                }
+            }
+            t = t.getCause();
+        }
+        Collections.reverse(beMsgs);
+        String shortMessage = StringUtils.join(beMsgs,"; ");
+        
+        getJobLogger().log(Level.SEVERE,shortMessage,be);
+    }
+    
+    /**
+     * Return a short useful message for common BeansExceptions. 
+     * @param ex BeansException
+     * @return String short descriptive message
+     */
+    protected String shortMessage(BeansException ex) {
+        if(ex instanceof NoSuchBeanDefinitionException) {
+            NoSuchBeanDefinitionException nsbde = (NoSuchBeanDefinitionException)ex;
+            return "Missing required bean: "
+                + (nsbde.getBeanName()!=null ? "\""+nsbde.getBeanName()+"\" " : "")
+                + (nsbde.getBeanType()!=null ? "\""+nsbde.getBeanType()+"\" " : "");
+        }
+        if(ex instanceof BeanCreationException) {
+            BeanCreationException bce = (BeanCreationException)ex;
+            return bce.getBeanName()== null 
+                    ? ""
+                    : "Can't create bean '"+bce.getBeanName()+"'";
+        }
+        return ex.getMessage().replace('\n', ' ');
+    }
+
     public boolean isContainerOk() {
         return ac!=null;
     }
@@ -280,7 +336,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         }
         
         getCrawlController().requestCrawlStart();
-        getJobLogger().log(Level.INFO,"LAUNCHED");
+        getJobLogger().log(Level.INFO,"Job launched");
         scanJobLog();
     }
 
@@ -294,7 +350,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     }
     
     public boolean isRunning() {
-        return this.ac != null && this.ac.isRunning();
+        return this.ac != null && this.ac.isActive() && this.ac.isRunning();
     }
 
     public CrawlControllerImpl getCrawlController() {
@@ -332,6 +388,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
             ac = null;
         }
         xmlOkAt = new DateTime(0); 
+        getJobLogger().log(Level.INFO,"Job instance discarded");
     }
 
     /**

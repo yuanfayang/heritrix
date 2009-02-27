@@ -134,21 +134,22 @@ public class JobResource extends Resource {
         
         pw.println("<hr/>");
         pw.println("<h2>Job Log</h2>");
-        pw.println("<pre style='overflow:auto'>");
+        pw.println("<div style='font-family:monospace; white-space:pre-wrap; white-space:normal; text-indent:-10px; padding-left:10px;'>");
         if(cj.getJobLog().exists()) {
             try {
                 List<String> logLines = new LinkedList<String>();
                 FileUtils.pagedLines(cj.getJobLog(), -1, -3, logLines);
                 Collections.reverse(logLines);
                 for(String line : logLines) {
+                    pw.print("<p style='margin:0px'>");
                     StringEscapeUtils.escapeHtml(pw,line);
-                    pw.println();
+                    pw.print("</p>");
                 }
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe); 
             }
         }
-        pw.println("</pre>");
+        pw.println("</div>");
         pw.println("<a href='jobdir/"
                 +cj.getJobLog().getName()
                 +"?format=paged&pos=-1&lines=-128&reverse=y'>more job log...</a>");
