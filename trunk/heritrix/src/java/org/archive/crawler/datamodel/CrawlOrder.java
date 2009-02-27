@@ -64,7 +64,6 @@ public class CrawlOrder extends ModuleType implements Serializable {
     public static final String ATTR_LOGS_PATH = "logs-path";
     public static final String ATTR_CHECKPOINTS_PATH = "checkpoints-path";
     public static final String ATTR_STATE_PATH = "state-path";
-    public static final String ATTR_PERSIST_SOURCE = "persist-source";
     public static final String ATTR_SCRATCH_PATH = "scratch-path";
     public static final String ATTR_RECOVER_PATH = "recover-path";
     public static final String ATTR_RECOVER_RETAIN_FAILURES =
@@ -179,12 +178,6 @@ public class CrawlOrder extends ModuleType implements Serializable {
                 "state"));
         e.setOverrideable(false);
         e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_PERSIST_SOURCE, 
-                "Source of persist information. This can be a URL or path to a " +
-                "persist log, or a path to an old state directory.", ""));
-        e.setOverrideable(false);
-        e.setExpertSetting(false);
 
         e = addElementToDefinition(new SimpleType(ATTR_SCRATCH_PATH,
                 "Directory where discardable temporary files will be kept. " +
