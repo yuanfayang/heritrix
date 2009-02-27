@@ -70,7 +70,6 @@ import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
-import org.archive.crawler.processor.recrawl.PersistProcessor;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.util.CheckpointUtils;
@@ -339,17 +338,6 @@ public class CrawlController implements Serializable, Reporter {
             onFailMessage = "Unable to setup disk";
             if (disk == null) {
                 setupDisk();
-            }
-
-            String persistSource = (String) order.getAttribute(null, CrawlOrder.ATTR_PERSIST_SOURCE);
-            if (persistSource != null && !persistSource.equals("")) {
-                try {
-                    PersistProcessor.populatePersistEnv(persistSource,
-                            stateDisk);
-                } catch (IOException e) {
-                    LOGGER.severe("Unable to initialize persisted environment from "
-                                    + persistSource + " - proceeding without persisted environment!");
-                }
             }
 
             onFailMessage = "Unable to create log file(s)";
@@ -670,7 +658,7 @@ public class CrawlController implements Serializable, Reporter {
              AttributeNotFoundException, MBeanException, ReflectionException {
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
-        	scope.initialize(this);
+            scope.initialize(this);
         }
         try {
             this.serverCache = new ServerCache(this);
@@ -1626,13 +1614,13 @@ public class CrawlController implements Serializable, Reporter {
         return toePool;
     }
     
-	/**
-	 * @return toepool one-line report
-	 */
-	public String oneLineReportThreads() {
-		// TODO Auto-generated method stub
-		return toePool.singleLineReport();
-	}
+    /**
+     * @return toepool one-line report
+     */
+    public String oneLineReportThreads() {
+        // TODO Auto-generated method stub
+        return toePool.singleLineReport();
+    }
 
     /**
      * While many settings will update automatically when the SettingsHandler is
@@ -1655,7 +1643,7 @@ public class CrawlController implements Serializable, Reporter {
         setThresholds();
     }
 
-	/**
+    /**
      * @return The settings handler.
      */
     public SettingsHandler getSettingsHandler() {

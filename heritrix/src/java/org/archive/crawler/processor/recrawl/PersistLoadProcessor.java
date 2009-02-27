@@ -23,9 +23,18 @@
 package org.archive.crawler.processor.recrawl;
 
 
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
+
+import com.sleepycat.collections.StoredSortedMap;
+import com.sleepycat.je.DatabaseException;
 
 import st.ata.util.AList;
 
@@ -38,6 +47,11 @@ import st.ata.util.AList;
  */
 public class PersistLoadProcessor extends PersistOnlineProcessor {
     private static final long serialVersionUID = -1917169316015093131L;
+    private static final Logger logger =
+        Logger.getLogger(PersistLoadProcessor.class.getName());
+    
+    /** file (log) or directory (state/env) from which to preload history **/
+    public static final String ATTR_PRELOAD_SOURCE = "preload-source";
 
     /**
      * Usual constructor
@@ -47,7 +61,46 @@ public class PersistLoadProcessor extends PersistOnlineProcessor {
     public PersistLoadProcessor(String name) {
         super(name, "PersistLoadProcessor. Loads CrawlURI attributes " +
                 "from a previous crawl for current consultation.");
+        Type e;
+        e = addElementToDefinition(new SimpleType(ATTR_PRELOAD_SOURCE,
+                "Source for preloaded persist information. This can be " +
+                "a URL or path to a persist log, or a path to an old " +
+                "state directory.", ""));
+        e.setOverrideable(false);
+        e.setExpertSetting(false);
     }
+
+    
+    
+    @Override
+    protected StoredSortedMap<String,AList> initStore() {
+        StoredSortedMap<String,AList> historyMap = super.initStore();
+        
+        // Preload, if a 'preload-source' file-path/URI/dir-path specified
+        String preloadSource = 
+            (String) getUncheckedAttribute(null, ATTR_PRELOAD_SOURCE);
+        if (StringUtils.isNotBlank(preloadSource)) {
+            try {
+                PersistProcessor.copyPersistSourceToHistoryMap(
+                        getController().getDisk(), preloadSource, historyMap);
+            } catch (IOException ioe) {
+                logger.log(
+                        Level.SEVERE, 
+                        "Unable to initialize persisted environment from "
+                            + preloadSource + " - proceeding without persisted environment!",
+                        ioe);
+            } catch(DatabaseException de) {
+                logger.log(
+                        Level.SEVERE, 
+                        "Unable to initialize persisted environment from "
+                            + preloadSource + " - proceeding without persisted environment!",
+                        de);
+            }
+        }
+        return historyMap;
+    }
+
+
 
     @Override
     protected void innerProcess(CrawlURI curi) throws InterruptedException {

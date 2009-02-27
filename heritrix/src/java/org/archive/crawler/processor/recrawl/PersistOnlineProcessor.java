@@ -42,7 +42,7 @@ import com.sleepycat.je.DatabaseException;
 public abstract class PersistOnlineProcessor extends PersistProcessor {
     private static final long serialVersionUID = -666479480942267268L;
     
-    protected StoredSortedMap store;
+    protected StoredSortedMap<String,AList> store;
     protected Database historyDb;
 
     /**
@@ -61,15 +61,15 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
         store = initStore(); 
     }
 
-    protected StoredSortedMap initStore() {
-        StoredSortedMap historyMap;
+    protected StoredSortedMap<String,AList> initStore() {
+        StoredSortedMap<String,AList> historyMap;
         try {
             EnhancedEnvironment env = getController().getBdbEnvironment();
             StoredClassCatalog classCatalog = env.getClassCatalog();
             DatabaseConfig dbConfig = historyDatabaseConfig();
             historyDb = env.openDatabase(null, URI_HISTORY_DBNAME, dbConfig);
-            historyMap = new StoredSortedMap(historyDb,
-                    new StringBinding(), new SerialBinding(classCatalog,
+            historyMap = new StoredSortedMap<String,AList>(historyDb,
+                    new StringBinding(), new SerialBinding<AList>(classCatalog,
                             AList.class), true);
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
@@ -83,7 +83,6 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
                 historyDb.sync();
                 historyDb.close();
             } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
                 throw new RuntimeException(e);
             }
         }

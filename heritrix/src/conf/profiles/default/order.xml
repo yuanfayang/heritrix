@@ -13,7 +13,6 @@
     <string name="logs-path">logs</string>
     <string name="checkpoints-path">checkpoints</string>
     <string name="state-path">state</string>
-    <string name="persist-source"></string>
     <string name="scratch-path">scratch</string>
     <long name="max-bytes-download">0</long>
     <long name="max-document-download">0</long>

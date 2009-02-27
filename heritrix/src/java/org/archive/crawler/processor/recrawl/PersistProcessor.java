@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -39,6 +40,7 @@ import org.apache.commons.io.IOUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.io.CrawlerJournal;
+import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.OneLineSimpleLogger;
 import org.archive.util.SURT;
@@ -215,16 +217,16 @@ public abstract class PersistProcessor extends Processor {
      * log. If path to new environment is not provided, only logs the entries 
      * that would have been populated.
      * 
-     * @param source
+     * @param sourcePath
      *            source of old entries: can be a path to an existing
      *            environment db, or a URL or path to a persist log
-     * @param env
+     * @param envFile
      *            path to new environment db (or null for a dry run)
      * @return number of records
      * @throws DatabaseException
      * @throws IOException
      */
-    public static int populatePersistEnv(String source, File env)
+    public static int populatePersistEnv(String sourcePath, File envFile)
         throws DatabaseException, IOException {
         int count = 0;
         StoredSortedMap<String,AList> historyMap = null;
@@ -232,12 +234,12 @@ public abstract class PersistProcessor extends Processor {
         StoredClassCatalog classCatalog = null;
         Database historyDB = null;
 
-        if (env != null) {
+        if (envFile != null) {
             // set up target environment
-            if (!env.exists()) {
-                env.mkdirs();
+            if (!envFile.exists()) {
+                envFile.mkdirs();
             }
-            targetEnv = setupEnvironment(env);
+            targetEnv = setupEnvironment(envFile);
             classCatalog = targetEnv.getClassCatalog();
             historyDB = targetEnv.openDatabase(null, URI_HISTORY_DBNAME, 
                     historyDatabaseConfig());
@@ -247,33 +249,57 @@ public abstract class PersistProcessor extends Processor {
         }
 
         try {
-            // delegate depending on the source
-            File sourceFile = new File(source);
-            if (sourceFile.isDirectory()) {
-                count = copyPersistEnv(sourceFile, historyMap);
-            } else {
-                BufferedReader persistLogReader = null;
-                if (sourceFile.isFile()) {
-                    persistLogReader = CrawlerJournal.getBufferedReader(sourceFile);
-                } else {
-                    URL sourceUrl = new URL(source);
-                    persistLogReader = CrawlerJournal.getBufferedReader(sourceUrl);
-                }
-                count = populatePersistEnvFromLog(persistLogReader, historyMap);
-            }
+            count = copyPersistSourceToHistoryMap(null, sourcePath, historyMap);
         } finally {
             // in finally block so that we unlock the target env even if we
             // failed to populate it
-            if (env != null) {
-                logger.info(count + " records imported from " + source + " to BDB env " + env);
+            if (envFile != null) {
+                logger.info(count + " records imported from " + sourcePath + " to BDB env " + envFile);
                 historyDB.sync();
                 historyDB.close();
                 targetEnv.close();
             } else {
-                logger.info(count + " records found in " + source);
+                logger.info(count + " records found in " + sourcePath);
             }
         }
 
+        return count;
+    }
+
+    /**
+     * Populates a given StoredSortedMap (history map) from an old 
+     * environment db or a persist log. If a map is not provided, only 
+     * logs the entries that would have been populated.
+     * 
+     * @param sourcePath
+     *            source of old entries: can be a path to an existing
+     *            environment db, or a URL or path to a persist log
+     * @param historyMap
+     *            map to populate (or null for a dry run)
+     * @return number of records
+     * @throws DatabaseException
+     * @throws IOException
+     */
+    public static int copyPersistSourceToHistoryMap(File context,
+            String sourcePath,
+            StoredSortedMap<String, AList> historyMap)
+            throws DatabaseException, IOException, MalformedURLException,
+            UnsupportedEncodingException {
+        int count;
+        // delegate depending on the source
+        File sourceFile = FileUtils.maybeRelative(context, sourcePath);
+        if (sourceFile.isDirectory()) {
+            count = copyPersistEnv(sourceFile, historyMap);
+        } else {
+            BufferedReader persistLogReader = null;
+            if (sourceFile.isFile()) {
+                persistLogReader = CrawlerJournal.getBufferedReader(sourceFile);
+            } else {
+                URL sourceUrl = new URL(sourcePath);
+                persistLogReader = CrawlerJournal.getBufferedReader(sourceUrl);
+            }
+            count = populatePersistEnvFromLog(persistLogReader, historyMap);
+        }
         return count;
     }
 
