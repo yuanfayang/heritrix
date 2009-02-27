@@ -25,8 +25,6 @@ package org.archive.modules.seeds;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
@@ -40,7 +38,6 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
-import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.KeyChangeEvent;
@@ -48,7 +45,6 @@ import org.archive.settings.KeyChangeListener;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.spring.ConfigFile;
-import org.archive.spring.ConfigPath;
 import org.archive.spring.ReadSource;
 import org.archive.spring.WriteTarget;
 import org.archive.util.DevUtils;
@@ -57,11 +53,11 @@ import org.archive.util.FileUtils;
 /**
  * Module that maintains a list of seeds.
  *
- * @author gojomo
- *
+ * TODO: Rename to SeedModule in absence of separate interface
+ * 
+ * @contributor gojomo
  */
-public class SeedModuleImpl extends Bean implements 
-    SeedModule, 
+public class SeedModuleImpl implements 
     ReadSource,
     Serializable, 
     KeyChangeListener,
@@ -108,7 +104,7 @@ public class SeedModuleImpl extends Bean implements
      * Constructor.
      */
     public SeedModuleImpl() {
-        super(SeedModule.class);
+        super();
     }
 
     /**
