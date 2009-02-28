@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.logging.FileHandler;
@@ -292,14 +293,20 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         instantiateContainer();
         // TODO: collect, report errors
         ac.validate();
+        HashMap<String,Errors> allErrors = ac.getAllErrors();
+        for(String name : allErrors.keySet()) {
+            for(Object err : allErrors.get(name).getAllErrors()) {
+                getJobLogger().log(Level.WARNING,err.toString());
+            }
+        }
     }
 
     public boolean isContainerValidated() {
         if(ac==null) {
             return false;
         }
-        Errors errs = ac.getErrors(); 
-        return errs != null && errs.getErrorCount() == 0;
+        HashMap<String,Errors> allErrors = ac.getAllErrors();
+        return allErrors != null && allErrors.isEmpty();
     }
     
     //

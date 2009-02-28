@@ -149,26 +149,29 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
     // Cascading self-validation
     //
     
-    Errors errors = null;
+    HashMap<String,Errors> allErrors; // bean name -> Errors
     public void validate() {
-        errors = new BeanPropertyBindingResult(this,"");
+        allErrors = new HashMap<String,Errors>();
+            
         for(Object entry : getBeansOfType(HasValidator.class).entrySet()) {
-            // String name = (String) ((Map.Entry)entry).getKey();
+            String name = (String) ((Map.Entry)entry).getKey();
             HasValidator hv = (HasValidator) ((Map.Entry)entry).getValue();
             Validator v = hv.getValidator();
-            Errors tempErrors = new BeanPropertyBindingResult(hv,"");
-            v.validate(hv, tempErrors);
-            errors.addAllErrors(tempErrors);
+            Errors errors = new BeanPropertyBindingResult(hv,name);
+            v.validate(hv, errors);
+            allErrors.put(name,errors);
         }
         System.err.println("===errors===");
-        for(Object err : errors.getAllErrors()) {
-            System.err.println(err);
+        for(String name : allErrors.keySet()) {
+            for(Object obj : allErrors.get(name).getAllErrors()) {
+                System.err.println(name+": "+obj);
+            }
         }
         System.err.println("============");
     }
 
-    public Errors getErrors() {
-        return errors;
+    public HashMap<String,Errors> getAllErrors() {
+        return allErrors;
     }
     
 }
