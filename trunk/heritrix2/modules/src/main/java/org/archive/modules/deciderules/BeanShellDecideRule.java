@@ -111,7 +111,7 @@ implements Initializable, KeyChangeListener {
 
     
     @Override
-    public synchronized DecideResult innerDecide(ProcessorURI uri) {
+    public DecideResult innerDecide(ProcessorURI uri) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
         Interpreter interpreter = getInterpreter(uri); 
@@ -134,7 +134,7 @@ implements Initializable, KeyChangeListener {
      * to this thread. 
      * @return Interpreter to use
      */
-    protected Interpreter getInterpreter(StateProvider context) {
+    protected synchronized Interpreter getInterpreter(StateProvider context) {
         if(sharedInterpreter==null 
            && context.get(this, ISOLATE_THREADS)) {
             // initialize

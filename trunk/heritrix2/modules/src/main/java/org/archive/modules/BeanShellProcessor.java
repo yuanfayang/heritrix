@@ -111,7 +111,7 @@ implements Initializable, KeyChangeListener {
     }
     
     @Override
-    protected synchronized void innerProcess(ProcessorURI curi) {
+    protected void innerProcess(ProcessorURI curi) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
         Interpreter interpreter = getInterpreter(); 
@@ -132,7 +132,7 @@ implements Initializable, KeyChangeListener {
      * to this thread. 
      * @return Interpreter to use
      */
-    protected Interpreter getInterpreter() {
+    protected synchronized Interpreter getInterpreter() {
         if(sharedInterpreter!=null) {
             return sharedInterpreter;
         }
