@@ -98,7 +98,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
 
     }
 
-    protected synchronized void innerProcess(CrawlURI curi) {
+    protected void innerProcess(CrawlURI curi) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
         Interpreter interpreter = getInterpreter(); 
@@ -120,7 +120,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
      * to this thread. 
      * @return Interpreter to use
      */
-    protected Interpreter getInterpreter() {
+    protected synchronized Interpreter getInterpreter() {
         if(sharedInterpreter!=null) {
             return sharedInterpreter;
         }
