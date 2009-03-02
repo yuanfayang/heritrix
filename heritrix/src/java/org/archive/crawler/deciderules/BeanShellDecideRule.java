@@ -98,7 +98,7 @@ public class BeanShellDecideRule extends DecideRule {
         t.setOverrideable(false);
     }
 
-    public synchronized Object decisionFor(Object object) {
+    public Object decisionFor(Object object) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
         Interpreter interpreter = getInterpreter(); 
@@ -121,7 +121,7 @@ public class BeanShellDecideRule extends DecideRule {
      * to this thread. 
      * @return Interpreter to use
      */
-    protected Interpreter getInterpreter() {
+    protected synchronized Interpreter getInterpreter() {
         if(sharedInterpreter==null 
            && !(Boolean)getUncheckedAttribute(null,ATTR_ISOLATE_THREADS)) {
             // initialize
