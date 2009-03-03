@@ -43,6 +43,31 @@
         <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Release 1.14.3 available 2009-03-03">
+    <p>Heritrix release 1.14.3 is now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.3">
+1.14.3 Release Notes</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833">
+Download from Sourceforge files area</a></p>
+
+<p>This is a 'micro' release with bugfixes and small requested improvements.</p>
+
+<p>The next major release will be 2.2 in 2009, which is planned to 
+include updates to the Heritrix 2 configuration system and checkpointing 
+functionality, and tools easing transition from 1.14.x to Heritrix 2.2.</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
+    
     <subsection name="Releases 1.14.2 and 2.0.2 available 2008-11-11">
     <p>Heritrix releases 1.14.2 and 2.0.2 are now available.</p>
 
