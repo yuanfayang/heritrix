@@ -255,6 +255,34 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
         }));
     }
     
+    
+    /**
+     * test to see if embedded <SCRIPT/> which writes script TYPE
+     * creates any outlinks, e.g. "type='text/javascript'". 
+     * 
+     * [HER-1526] SCRIPT writing script TYPE common trigger of bogus links 
+     *   (eg. 'text/javascript')
+     *   
+     * @throws URIException
+     */
+    public void testScriptTagWritingScriptType() throws URIException {
+        DefaultProcessorURI puri = new DefaultProcessorURI(UURIFactory
+                .getInstance("http://www.cinemasie.com/en/fiche/dossier/322/"),null);
+        puri.setBaseURI(puri.getUURI());
+        CharSequence cs = 
+            "<script type=\"text/javascript\">"
+            + "var gaJsHost = ((\"https:\" == document.location.protocol) "
+            + "? \"https://ssl.\" : \"http://www.\");"
+            + "document.write(unescape(\"%3Cscript src='\" + gaJsHost + "
+            + "\"google-analytics.com/ga.js' "
+            + "type='text/javascript'%3E%3C/script%3E\"));"
+            + "</script>";
+        ExtractorHTML extractor = (ExtractorHTML)makeExtractor();
+        extractor.extract(puri, cs);
+        assertTrue("outlinks should be empty",puri.getOutLinks().isEmpty());
+                
+    }
+
     public void testOutLinksWithBaseHref() throws URIException {
         DefaultProcessorURI puri = new DefaultProcessorURI(UURIFactory
                 .getInstance("http://www.example.com/abc/index.html"),null);
@@ -274,5 +302,5 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
         assertEquals("outlink2 from base href",dest2,
                 links[2].getDestination().toString());
     }
-    
+        
 }
