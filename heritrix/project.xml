@@ -215,6 +215,14 @@
          <url>http://www.archive.org</url>
          <timezone>-8</timezone>
     </developer>
+    <developer>
+        <name>Siznax</name>
+        <id>siznax</id>
+        <email></email>
+        <organization>Internet Archive</organization>
+        <url>http://www.archive.org</url>
+        <timezone>-8</timezone>
+    </developer>
   </developers>
 
   <contributors>
@@ -300,6 +308,11 @@
     </contributor>
     <contributor>
         <name>Olaf Freyer</name>
+        <email></email>
+         <organization />
+    </contributor>
+    <contributor>
+        <name>Christian Dehning</name>
         <email></email>
          <organization />
     </contributor>
