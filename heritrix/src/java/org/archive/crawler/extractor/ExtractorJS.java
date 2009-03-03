@@ -44,7 +44,8 @@ import org.archive.util.TextUtils;
  * Processes Javascript files for strings that are likely to be
  * crawlable URIs.
  *
- * @author gojomo
+ * @contributor gojomo
+ * @contributor szznax
  *
  */
 public class ExtractorJS extends Extractor implements CoreAttributeConstants {
@@ -76,6 +77,22 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
     protected long numberOfCURIsHandled = 0;
     protected static long numberOfLinksExtracted = 0;
 
+    // strings that STRING_URI_DETECTOR picks up as URIs,
+    // which are known to be problematic, and NOT to be 
+    // added to outLinks
+    protected final static String[] STRING_URI_DETECTOR_EXCEPTIONS = {
+        "text/javascript"
+        };
+    
+    // URIs known to produce false-positives with the current JS extractor.
+    // e.g. currently (2.0.3) the JS extractor produces 13 false-positive 
+    // URIs from http://www.google-analytics.com/urchin.js and only 2 
+    // good URIs, which are merely one pixel images.
+    // TODO: remove this blacklist when JS extractor is improved 
+    protected final static String[] EXTRACTOR_URI_EXCEPTIONS = {
+        "http://www.google-analytics.com/urchin.js"
+        };
+    
     /**
      * @param name
      */
@@ -88,6 +105,13 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
     public void extract(CrawlURI curi) {
+        // special-cases, for when we know our current JS extractor does poorly.
+        // TODO: remove this test when JS extractor is improved 
+        for (String s: EXTRACTOR_URI_EXCEPTIONS) {
+            if (curi.toString().equals(s))
+                return;
+        }
+            
         if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }
@@ -155,6 +179,11 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
                 TextUtils.getMatcher(STRING_URI_DETECTOR, subsequence);
             if(uri.matches()) {
                 String string = uri.group();
+                // protect against adding outlinks for known problematic matches
+                if (isUriMatchException(string,cs)) {
+                    TextUtils.recycleMatcher(uri);
+                    continue;
+                }
                 string = speculativeFixup(string, curi);
                 foundLinks++;
                 try {
@@ -183,6 +212,20 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
         }
         TextUtils.recycleMatcher(strings);
         return foundLinks;
+    }
+
+    /**
+     * checks to see if URI match is a special case 
+     * @param string matched by <code>STRING_URI_DETECTOR</code>
+     * @param cs 
+     * @return true if string is one of <code>STRING_URI_EXCEPTIONS</code>
+     */
+    private static boolean isUriMatchException(String string,CharSequence cs) {
+        for (String s : STRING_URI_DETECTOR_EXCEPTIONS) {
+            if (s.equals(string)) 
+                return true;
+        }
+        return false;
     }
 
     /**

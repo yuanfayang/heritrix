@@ -394,6 +394,68 @@ implements CoreAttributeConstants {
             }
         }));
     }    
+    
+    /**
+     * test to see if embedded <SCRIPT/> which writes script TYPE
+     * creates any outlinks, e.g. "type='text/javascript'". 
+     * 
+     * [HER-1526] SCRIPT writing script TYPE common trigger of bogus links 
+     *   (eg. 'text/javascript')
+     *   
+     * @throws URIException
+     */
+    public void testScriptTagWritingScriptType() throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory
+                .getInstance("http://www.example.com/en/fiche/dossier/322/"));
+        CharSequence cs = 
+            "<script type=\"text/javascript\">"
+            + "var gaJsHost = ((\"https:\" == document.location.protocol) "
+            + "? \"https://ssl.\" : \"http://www.\");"
+            + "document.write(unescape(\"%3Cscript src='\" + gaJsHost + "
+            + "\"google-analytics.com/ga.js' "
+            + "type='text/javascript'%3E%3C/script%3E\"));"
+            + "</script>";
+        this.extractor.extract(curi, cs);
+        assertTrue("outlinks should be empty",curi.getOutLinks().isEmpty());
+                
+    }
+    
+    /**
+     * False test: tries to verify extractor ignores a 'longDesc'
+     * attribute. In fact, HTML spec says longDesc is a URI, so 
+     * crawler should find 2 links here. 
+     * See [HER-206]
+     * @throws URIException
+     */
+    public void xestAvoidBadSpec() throws URIException {
+        CrawlURI curi = new CrawlURI(UURIFactory
+                .getInstance("http://www.example.com"));
+        CharSequence cs = 
+            "<TBODY>\r\n" + 
+            "<TR>\r\n" + 
+            "<TD><IMG height=259 alt=\"Operation Overlord Commanders\"\r\n" + 
+            "src=\"/img/aboutus/history/dday60/commanders.jpg\"\r\n" + 
+            "width=500 longDesc=\"Overlord Commanders, Back row, left\r\n" + 
+            "to right:<BR>Lieutenant General Bradley, Admiral\r\n" + 
+            "Ramsay, Air Chief Marshal Leigh-Mallory, General Bedell\r\n" + 
+            "Smith.<BR>Front row, left to right: Air Chief Marshal\r\n" + 
+            "Tedder, General Eisenhower, General Montgomery.\"></TD></TR>\r\n" + 
+            "<TR>\r\n" + 
+            "<TD class=caption>�Overlord� Commanders, Back row, left\r\n" + 
+            "to right:<BR>Lieutenant General Bradley, Admiral\r\n" + 
+            "Ramsay, Air Chief Marshal Leigh-Mallory, General Bedell\r\n" + 
+            "Smith.<BR>Front row, left to right: Air Chief Marshal\r\n" + 
+            "Tedder, General Eisenhower, General\r\n" + 
+            "Montgomery.</TD></TR></TBODY></TABLE>\r\n" + 
+            "<P>\r\n" + 
+            "<TABLE id=imageinset width=\"35%\" align=right\r\n" + 
+            "summary=\"Key Facts About the Allied Forces Deployed on\r\n" + 
+            "D-Day\" border=0>\r\n" + 
+            "<TBODY>";
+        this.extractor.extract(curi, cs);
+        Link[] links = curi.getOutLinks().toArray(new Link[0]);
+        assertTrue("incorrect number of links found",links.length==1);
+    }
 
     public static void main(String[] args) throws Exception {
         if (args.length != 1 && args.length != 2) {
