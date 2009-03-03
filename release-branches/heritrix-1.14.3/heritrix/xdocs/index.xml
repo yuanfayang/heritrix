@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<document>
+  <properties>
+    <title>Home Page</title>
+    <author>Internet Archive Heritrix Team</author>
+    <revision>$Id$</revision>
+  </properties>
+
+  <body>
+    <section name="Introduction">
+        <p>Heritrix is the Internet Archive's open-source, extensible, 
+        	web-scale, archival-quality web crawler project.</p>
+        	
+        <p><em>Heritrix</em> (sometimes spelled <em>heretrix</em>, or 
+        misspelled or mis-said as <em>heratrix</em>/<em>heritix</em>/
+        <em>heretix</em>/<em>heratix</em>) is an 
+        archaic word for <em>heiress</em> (woman who inherits). Since our 
+        crawler seeks to collect and <i>preserve</i> the digital
+        artifacts of our culture for the benefit of future researchers and
+        generations, this name seemed apt.</p>
+    </section>
+    <section name="Webmasters!">
+        <p>Heritrix is designed to respect the
+        <a href="http://www.robotstxt.org/wc/robots.html">robots.txt</a>
+        exclusion directives and 
+        <a href="http://www.robotstxt.org/wc/exclusion.html#meta">META robots
+        tags</a>, and collect material at a measured, adaptive pace unlikely
+        to disrupt normal website activity.
+        </p>
+        
+        <p>If you notice our crawler behaving poorly -- The Internet Archive
+        uses <b>archive.org_bot</b> as User Agent when crawling --
+        please send us email at:
+        </p>
+        
+        <p><img src="/images/crawler-problem-report-email.gif"
+                alt="archive -dash- crawler -dash- agent, @at@ lists .dot. sourceforge .dot. net"
+                title="archive -dash- crawler -dash- agent, @at@ lists .dot. sourceforge .dot. net"/>
+        </p>
+    </section>
+    <section name="Getting Started">
+        <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
+    </section>
+    <section name="News and Status">
+    <subsection name="Releases 1.14.2 and 2.0.2 available 2008-11-11">
+    <p>Heritrix releases 1.14.2 and 2.0.2 are now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.2">
+1.14.2 Release Notes</a></p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.2+Release+Notes">
+2.0.2 Release Notes</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833">
+Download from Sourceforge files area</a></p>
+
+<p>These are both small bugfix releases.</p>
+
+<p>The next major release will be 2.2 in 2009, which is planned to 
+include updates to the Heritrix 2 configuration system and checkpointing 
+functionality, and tools easing transition from 1.14.x to Heritrix 2.2.</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
+    
+    <subsection name="Releases 1.14.1 and 2.0.1 available 2008-08-07">
+    <p>Heritrix releases 1.14.1 and 2.0.1 are now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.1">
+1.14.1 Release Notes</a></p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.1+Release+Notes">
+2.0.1 Release Notes</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833">
+Download from Sourceforge files area</a></p>
+
+<p>These are both primarily bugfix releases, with a few additional small 
+features based on requests or contributions.</p>
+    </subsection>
+    
+    <subsection name="Release 1.14.0 available 2008-04-27">
+    <p>The official Heritrix 1.14.0 release is now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.0">
+Release notes, with instructions to download and install</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980&amp;release_id=595427">
+Download from Sourceforge files area</a></p>
+
+<p>Release 1.14.0 adds a number of small features to the Heritrix 1.x 
+line, most notably upgrading support for the WARC archived-web-content 
+format to version 0.17 (ISO Committee Draft). This release also 
+includes 41 bug fixes or other incremental improvements, including 
+several based on community contributions or requests.</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
+
+    <subsection name="Release 2.0.0 official 2008-02-20">
+    <p>The official Heritrix 2.0.0 release is now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/2.0.0+Release+Notes">
+Release notes, with instructions to download and install</a></p>
+
+<p><a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=254931">
+Download from Sourceforge files area</a></p>
+
+<p>Four notable differences in Heritrix 2 are:</p>
+
+<p>(1) A more rigorous separation of the Web UI from the 'crawl engine',
+giving greater flexibility to control crawlers remotely.</p>
+<p>(2) A new settings system, easing module development and offering new
+opportunities for dynamic configuration construction.</p>
+<p>(3) A new mechanism for custom override settings for sets of related
+URIs, extending beyond Heritrix 1.x's domain-centric overrides.</p>
+<p>(4) A new system for ordering URIs within a single URI-queue, and for
+allocating frontier effort among different URI-queues, based on assigned
+integer 'precedence' values.</p>
+
+<p>A <a href="http://webteam.archive.org/confluence/display/Heritrix/2.0+Tutorial">
+tutorial of starting a basic crawl</a> in the changed web UI is
+available.</p>
+
+<p>Documentation for 2.0 is still limited but will gradually improve on 
+<a href="http://webteam.archive.org/confluence/display/Heritrix/Home">the 
+project wiki</a>. (There are now direct help links from individual web 
+UI settings to actual or potential wiki pages.)</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
+    <subsection name="Release 1.12.1 05/06/2007">
+    <p>Release 1.12.1 is a bug fix release.
+      See the <a href="articles/releasenotes/1_12_1.html">Release Notes</a> and
+      <a href="http://webteam.archive.org/confluence/display/Heritrix/Issues+with+%27Fix+Version%27+1.12.1">
+      list of fixed issues</a> for details.
+    </p>
+    <p>Additional notes about 1.12.1 which may be updated with information 
+    post-release are available 
+    <a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.12.1">
+    on the Heritrix wiki</a>. 
+    </p>
+    </subsection>
+    
+    <subsection name="Release 1.12.0 03/16/2007">
+    <p>Release 1.12.0 is the first of several planned releases enhancing
+      Heritrix with "smart crawler" functionality. In this release, the theme
+      has been offering new options to reduce the amount of duplicate content
+      crawled and stored when recrawling sites at regular intervals. A number
+      of other enhancements and bug fixes are also included.
+      See the <a href="articles/releasenotes/1_12_0.html">Release Notes</a> for
+      details.
+    </p>
+    </subsection>
+
+    <subsection name="HDFS Writer Processor 01/25/2007">
+      <p>
+      The HDFS Writer Processor extension enables storing crawled content
+      directly into HDFS, the 
+      <a href="http://lucene.apache.org/hadoop">Hadoop</a> Distributed
+      FileSystem.  For details, see the
+      <a href="http://www.zvents.com/hdfs/README.txt">README.txt</a>.
+      To download, see <a 
+      href="http://www.zvents.com/labs/hdfs_writer_processor">HDFS Writer
+      Processor</a>
+      </p>
+    </subsection>
+
+    <subsection name="Release 1.10.2 01/15/2007">
+    <p>This is primarily a bug-fix release, with a couple of new
+      features, provided before a number of significant changes to 
+      the Heritrix project that will require developer and crawl 
+      operator adjustments. Post-1.10.2, Heritrix source code control, issue 
+      tracking, and build process will migrate to new systems. Also, updates 
+      to core classes, especially with regard to the settings architecture, 
+      will noticeably break backward compatibility with 1.10.2 and prior 
+      crawler settings files and formats. 
+      See <a href="articles/releasenotes/1_10_2.html">Release Notes</a> for
+      details.
+    </p>
+    </subsection>
+
+    <subsection name="Release 1.10.1 09/27/2006">
+    <p>Bug fix release. See 
+    <a href="articles/releasenotes/1_10_1.html">Release Notes</a> for
+    detail.
+    </p>
+    </subsection>
+
+    <subsection name="Deduplicator (add-on for Heritrix) 0.2.0 release
+        09/14/2006">
+      <p>
+      The Deduplicator is a add-on module for Heritrix that allows sequential
+      snapshot crawls to leverage information about previous iterations to avoid
+      storing (or even downloading) duplicate data.  See the 
+      <a 
+      href="http://tech.groups.yahoo.com/group/archive-crawler/message/3282">
+      mailing list announcement</a> for details.
+      </p>
+    </subsection>
+
+    <subsection name="Release 1.10.0 09/11/2006">
+      <p>Release 1.10.0 adds new configuration options, experimental 
+      new protocol and format support, and lots of fixes (43 tracked bugs 
+      have been fixed and 35 feature requests added). Requires JDK 1.5.x.
+      See <a href="articles/releasenotes/1_10_0.html">Release Notes</a> for
+      detail.
+      </p>
+    </subsection>
+    
+    <subsection name="Release 1.8.0 05/05/2006">
+      <p>Release 1.8.0 offers a number of improvements, including 13 requested 
+      enhancements and fixes for 18 reported bugs. See
+      <a href="articles/releasenotes/1_8_0.html">Heritrix Release Notes</a> 
+      for detail and
+      <a href="articles/releasenotes/1_8_0.html#1_8_0_limitations">Known
+      Limitations</a>.</p>
+    </subsection>
+    
+    <subsection name="Release 1.6.0 12/01/2005">
+      <p>Release 1.6.0 offers improved remote control and monitoring via
+      JMX, a crawl-checkpointing facility, and experimental support for bloom
+      filter already-included testing, partitioning a crawl across multiple 
+      independent crawlers, and per-host/domain/queue-grouping collection 
+      quotas. Performance and stability in large crawls is also improved.
+      Among tracked issues, it includes 39 requested enhancements and fixes 96 
+      reported bugs. See
+      <a href="articles/releasenotes/1_6_0.html">Heritrix Release Notes</a> 
+      for detail and
+      <a href="articles/releasenotes/1_6_0.html#1_6_0_limitations">Known
+      Limitations</a>: e.g. Again you will need to 
+      <a href="articles/releasenotes/1_6_0.html#postselector">tweak your old order
+      files</a> to make them work with the new release.</p>
+    </subsection>
+
+    <subsection name="Release 1.4.0 04/28/2005">
+      <p>Much improved memory usage, new experimental scoping/filter model,
+      and a new revisiting frontier.  Over 90 bugs fixed. See
+      <a href="articles/releasenotes/1_4_0.html">Heritrix Release Notes</a> 
+      for detail and
+      <a href="articles/releasenotes/1_4_0.html#1_4_0_limitations">Known
+      Limitations</a>: e.g. You cannot use your old order files with the new
+      release.</p>
+    </subsection>
+
+    <subsection name="Release 1.2.0 11/16/2004">
+        <p>Added IP-based politeness, configurable URI-canonicalization,
+        and mid-fetch abort.  Lots of Bug fixes.  See
+        <a href="articles/releasenotes/1_2_0.html">Heritrix Release Notes</a> 
+        for detail and Known Limitations (In particular, https fetching
+        requires SUN JDK and UI throws OOME if jobs run in series).
+        </p>
+    </subsection>
+
+    <subsection name="Release 1.0.4 09/22/2004">
+        <p>Bug fix. Crawl.log and ARC metadata lines could have whitespace
+        in URIs and mimetype fields.  See
+        <a href="articles/releasenotes/1_0_4.html">Heritrix Release Notes</a> 
+        for detail and Known Limitations.
+        </p>
+    </subsection>
+
+    <subsection name="Release 1.0.2 09/14/2004">
+        <p>Bug fixes. 
+        See <a href="articles/releasenotes/1_0_2.html">Heritrix Release
+        Notes</a> for detail and known limitations.
+        </p>
+    </subsection>
+
+    <subsection name="Release 1.0.0 08/06/2004">
+        <p>Added new prefix ('SURT') scope and filter,
+        compression of recovery log,
+        mass adding of URIs to running crawler,
+        crawling via a http proxy, 
+        adding of headers to request,
+        improved out-of-the-box defaults,
+        hash of content to crawl log and to arcreader output,
+        and many bug fixes.
+        See <a href="articles/releasenotes/1_0_0.html">Heritrix Release
+        Notes</a> for detail and known limitations.
+        </p>
+    </subsection>
+
+    <subsection name="1.0.0 first release candidate, 0.10.0 06/04/2004">
+        <p>Release for second heritrix workshop, Copenhagen 06/2004
+        (1.0.0 first release candidate). Added site-first prioritization,
+        fixed link extraction of multibyte URIs, added metadata to arcs as xml,
+        changed arc naming template, new user and developer manuals,
+        added basic/digest auth and http post/get login facility, and added
+        help to UI. Bug fixes. 
+        See <a href="articles/releasenotes/0_10_0.html">Heritrix Release
+        Notes</a> for detail and known limitations.
+        </p>
+    </subsection>
+
+    <subsection name="Release 0.8.1 05/28/2004">
+        <p>Fixes to build with maven rc2+.
+        </p>
+    </subsection>
+
+    <subsection name="Release 0.8.0 05/24/2004">
+        <p>Release (and branch heritrix-0_8 made at the heritrix-0_7_1 tag)
+        because of concurrentmodificationexceptions if tens of seeds supplied
+        and to fix domain-scope leakage. Also, made continuous build
+        publically available, incorporated integration selftest into build,
+        made it a maven-build only (ant-build no longer supported), added
+        day/night configurations (refinements), ameliorated too-many-open
+        files, added exploit of http-header content-type charset creating
+        character streams, and heritrix now crawls ssl sites. UI improvements
+        include red start by bad configuration, precompilation, and
+        delineation of advanced settings. 
+        See <a href="articles/releasenotes/0_8_0.html">Heritrix Release
+        Notes</a> for detail.
+        </p>
+    </subsection>
+
+    <subsection name="Release 0.6.0 03/25/2004">
+        <p>Release made in advance of radical frontier changes.
+        Added bandwidth throttle, operator 'diary', settable robots expiration,
+        crawler cookie pre-population, and changing of certain options
+        mid-crawl. Many UI improvements including UI display of critical
+        exceptions, UI desccription of job-order options, and improved
+        reporting.  Optimizations.  Updated httpclient lib to 2.0 release and
+        jmx libs to 1.2.1.
+        See <a href="articles/releasenotes/0_6_0.html">Heritrix Release
+        Notes</a> for detail.
+        </p>
+    </subsection>
+
+    <subsection name="Point Release 0.4.1 02/12/2004">
+        <p>Released <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.4.1</a> to fix 
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=895955&amp;group_id=73833&amp;atid=539099">URIRegExpFilter retains memory</a>.</p>
+    </subsection>
+
+    <subsection name="Release 0.4.0 02/10/2004">
+        <p>Release made for heritrix workshop, San Francisco, 02/2004.
+        New MBEAN-based configuration, extensive UI revamp, first unit
+        tests and integration selftest framework added, pooling of
+        ARCWriters, new cmd-line start scripts, httpclient lib update (2.0RC3)
+        and bugfixes.
+        See <a href="articles/releasenotes/0_4_0.html">Heritrix Release
+        Notes</a> for detail.
+        </p>
+    </subsection>
+
+    <subsection name="First Release 01/05/2004">
+        <p>Today we made our first 'official' heritrix release,
+         <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.2.0</a>.</p>
+    </subsection>
+
+    </section>
+  </body>
+</document>
