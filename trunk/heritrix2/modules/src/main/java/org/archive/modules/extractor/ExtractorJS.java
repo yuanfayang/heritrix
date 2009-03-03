@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
@@ -80,7 +79,18 @@ public class ExtractorJS extends ContentExtractor {
     // strings that STRING_URI_DETECTOR picks up as URIs,
     // which are known to be problematic, and NOT to be 
     // added to outLinks
-    protected final static String[] STRING_URI_EXCEPTIONS = {"text/javascript"};
+    protected final static String[] STRING_URI_DETECTOR_EXCEPTIONS = {
+        "text/javascript"
+        };
+    
+    // URIs known to produce false-positives with the current JS extractor.
+    // e.g. currently (2.0.3) the JS extractor produces 13 false-positive 
+    // URIs from http://www.google-analytics.com/urchin.js and only 2 
+    // good URIs, which are merely one pixel images.
+    // TODO: remove this blacklist when JS extractor is improved 
+    protected final static String[] EXTRACTOR_URI_EXCEPTIONS = {
+        "http://www.google-analytics.com/urchin.js"
+        };
     
     /**
      * @param name
@@ -90,6 +100,14 @@ public class ExtractorJS extends ContentExtractor {
 
     
     protected boolean shouldExtract(ProcessorURI uri) {
+        
+        // special-cases, for when we know our current JS extractor does poorly.
+        // TODO: remove this test when JS extractor is improved 
+        for (String s: EXTRACTOR_URI_EXCEPTIONS) {
+            if (uri.toString().equals(s))
+                return false;
+        }
+        
         String contentType = uri.getContentType();
         if ((contentType == null)) {
             return false;
@@ -208,7 +226,7 @@ public class ExtractorJS extends ContentExtractor {
      * @return true if string is one of <code>STRING_URI_EXCEPTIONS</code>
      */
     private static boolean isUriMatchException(String string,CharSequence cs) {
-        for (String s : STRING_URI_EXCEPTIONS) {
+        for (String s : STRING_URI_DETECTOR_EXCEPTIONS) {
             if (s.equals(string)) 
                 return true;
         }
