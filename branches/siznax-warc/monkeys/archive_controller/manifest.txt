@@ -1,0 +1,2 @@
+Main-Class: org.archive.monkeys.controller.main.ControllerDriver
+Class-Path: commons-el.jar javax.servlet.jar mx4j-remote.jar org.mortbay.jmx.jar commons-logging.jar json_simple.jar mx4j-tools.jar xercesImpl.jar jasper-compiler.jar junit-4.1.jar mx4j.jar xml-apis.jar jasper-runtime.jar log4j-1.2.13.jar org.mortbay.jetty.jar xmlParserAPIs.jar

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!--
+    Copyright 2004 Johan Känngård, http://dev.kanngard.net
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+-->
+<project name="Common build file" default="all" basedir="">
+
+    <description>
+        This is a common Ant build file for projects. Version 1.1
+        
+        Copyright 2004 Johan Känngård, http://dev.kanngard.net
+    </description>
+
+    <target name="init" description="Initialize environment">
+        <property name="path.dist" value="dist"/>
+        <property name="path.src" value="monkey"/>
+    	<property name="path.build" value="build"/>
+    	<property name="component.name" value="archive_monkey_plugin"/>
+    	<property name="component.version" value="0.1"/>
+    </target>
+
+    <target name="project_prepare" description="Project-level prepare phase"/>
+
+    <target name="make_directories" description="Creates all project directories" depends="init">
+        <mkdir dir="${path.dist}"/>
+        <mkdir dir="${path.src}"/>
+    	<mkdir dir="${path.build}"/>
+    </target>
+
+    <target name="prepare" depends="init, make_directories, project_prepare" description="Prepare build directory">
+
+    </target>
+
+    <target name="project_clean" description="Project-level prepare phase"/>
+
+    <target name="clean" depends="init,project_clean" description="Wipeout all generated files">
+        <delete dir="${path.dist}"/>
+        <delete dir="${path.build}"/>
+    </target>
+
+    <target name="all" depends="dist" description="Clean and compile all components"/>
+
+    <target name="dist" depends="prepare">
+    	<delete dir="${path.build}"/>
+    	<copydir dest="${path.build}" src="${path.src}">
+    		<exclude name="${path.src}/chrome.manifest"/>
+    	</copydir>
+    	<rename dest="${path.build}/chrome.manifest" src="${path.build}/build_chrome.manifest" />
+
+    	<zip basedir="${path.build}/chrome" destfile="${path.build}/chrome/monkey.jar">
+    		<include name="**/*"/>
+    		<exclude name="**/*~"/>
+    	</zip>
+    	
+    	<zip basedir="${path.build}" destfile="${path.dist}/archive_monkey.xpi">
+    		<include name="**/*"/>
+    		<exclude name="**/*~"/>
+    	</zip>
+    </target>
+
+</project>

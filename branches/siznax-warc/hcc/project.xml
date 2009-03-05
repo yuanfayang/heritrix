@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <pomVersion>3</pomVersion>
+    <artifactId>hcc</artifactId>
+    <name>hcc</name>
+    <groupId>hcc</groupId>
+    <currentVersion>0.3.0${version.build.suffix}</currentVersion>
+    <organization>
+        <name>The Internet Archive</name>
+        <url>http://www.archive.org</url>
+        <logo>http://www.archive.org/images/logo.jpg</logo>
+    </organization>
+    <inceptionYear>2005</inceptionYear>
+    <package>org.archive.hcc</package>
+    <logo>/images/logo.gif</logo>
+    <description>The Heritrix Cluster Controller (hcc) is a set of packages that enable control of a cluster of &lt;a href="http://crawler.archive.org/"&gt;heritrix&lt;/a&gt; instances running across multiple machines. There are two main components - the controller itself and a client API for accessing the component. The controller itself is essentially a facade with a DynamicMBean interface.  Internally it effectively finds all heritrix resources in a JNDI scope and then proxies all communication to them.  It provides a set of attributes and methods which perform the general functions of finding, listing, and invoking operations on single remote instances or groups of them.  The client serves to translate the generic MBean interface into an easy to use domain specific interface thus simplying the work of programmers interested in building application specific extensions without having to deal with a generic JMX OpenDynamicMBean interface.  To download latest binary, see under the &lt;i&gt;Build Artifacts&lt;/i&gt; link of this page up on our &lt;a href="http://crawltools.archive.org:8080/cruisecontrol/buildresults/HEAD-hcc"&gt;continuous build server&lt;/a&gt;.  For how to get started using hcc, see &lt;i&gt;Getting Started&lt;/i&gt; in &lt;a hef="http://crawler.archive.org/hcc/apidocs/index.html"&gt;description&lt;/a&gt; section of the javadoc overview.</description>
+    <siteAddress>http://crawler.archive.org</siteAddress>
+    <repository />
+    <mailingLists>
+        <mailingList>
+            <name>${pom.name} Dev List</name>
+        </mailingList>
+        <mailingList>
+            <name>${pom.name} User List</name>
+        </mailingList>
+    </mailingLists>
+    <developers>
+        <developer>
+            <name>Daniel Bernstein</name>
+            <id>dbernstein</id>
+            <email>dbernstein@archive.org</email>
+            <organization>The Internet Archive</organization>
+            <timezone>Pacific</timezone>
+        </developer>
+        <developer>
+            <name>Michael Stack</name>
+            <id>stack</id>
+            <email>stack@archive.org</email>
+            <organization>The Internet Archive</organization>
+        </developer>
+        
+	    <developer>
+	        <name>Karl Thiessen</name>
+	        <id>karl</id>
+	        <email>karl@archive.org</email>
+	         <organization>Internet Archive</organization>
+	         <url>http://www.archive.org</url>
+	         <timezone>-8</timezone>
+	    </developer>    
+    </developers>
+    <licenses>
+        <license>
+            <name>GNU LESSER GENERAL PUBLIC LICENSE</name>
+            <url>http://www.gnu.org/licenses/lgpl.txt</url>
+            <distribution>repo</distribution>
+       </license>
+    </licenses>
+    <repositories>
+    	<repository>
+    		<id>apache-mirror</id>
+    		<name>Apache Mirror</name>
+    		<url>http://www.reverse.net/pub/apache</url>
+    	</repository>
+    </repositories>
+    
+    	
+		
+    <dependencies>
+        <dependency>
+            <id>MirrorJNDI</id>
+            <version>1.0</version>
+            <url>http://www.smardec.com/products/jndi.html</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <ear.bundle>true</ear.bundle>
+                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+                <description>Simple, memory-based JNDI service provider.
+                From http://java.sun.com/products/jndi/serviceproviders.html.
+                </description>
+                <license>LGPL</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <groupId>heritrix</groupId>
+            <artifactId>archive-commons</artifactId>
+            <version>1.6.0</version>
+            <url>http://crawltools.archive.org:8080/</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <description>Jar that has org.archive.io.arc content.
+                Jar manufactured w/ autojar tool.
+                </description>
+                <license>LGPL
+                </license>
+            </properties>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <url>http://junit.apache.org</url>
+            <properties>
+            </properties>
+        </dependency>
+
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>1.6.1</version>
+
+	    </dependency>    
+    </dependencies>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+	      <resource>
+	        <directory>src/main/resources</directory>
+	      </resource>
+	    </resources>
+        <unitTestSourceDirectory>src/test/java</unitTestSourceDirectory>
+
+        <unitTest>
+	        <resources>
+	        <resource>
+	          <directory>src/test/java</directory>
+	        </resource>
+	      </resources>
+        	
+            <includes>
+                <include>**/*Test.java</include>
+            </includes>
+        	<excludes>
+                <exclude>**/*SelfTest.java</exclude>
+            </excludes>
+        </unitTest>
+    </build>
+</project>
+

@@ -1,0 +1,5 @@
+<hcc-config maxInstances="1" defaultSettingsDirectory="" heritrixJmxUsername="controlRole" heritrixJmxPassword="letmein" >
+	<host name="localhost">
+		<container jmxPort="9090" maxInstances="0"/>
+	</host>
+</hcc-config>
