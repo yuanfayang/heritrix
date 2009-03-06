@@ -1,0 +1,5 @@
+description:
+QueueOverbudgetDecideRule. Applies the configured decision 
+if the target queue for the URI is, with total expenditure and
+pending expenditures already enqueued, already over its total
+budget. 
