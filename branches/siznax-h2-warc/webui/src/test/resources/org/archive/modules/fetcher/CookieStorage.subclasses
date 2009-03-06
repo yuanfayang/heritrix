@@ -1,0 +1,3 @@
+org.archive.modules.fetcher.BdbCookieStorage
+org.archive.modules.fetcher.FileCookieStorage
+org.archive.modules.fetcher.SimpleCookieStorage
