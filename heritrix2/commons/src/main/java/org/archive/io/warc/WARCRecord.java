@@ -219,10 +219,14 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
     @Override
     protected String getMimetype4Cdx(ArchiveRecordHeader h) {
         final String m = super.getMimetype4Cdx(h);
-        // Mimetypes can have spaces in WARCs.  Emitting for CDX, just
-        // squash them for now.  Later, quote them since squashing spaces won't
-        // work for params that have quoted-string values.
-        Matcher matcher = WHITESPACE.matcher(m);
-        return matcher.replaceAll("");
+        if (m == null) {
+            return "-";
+        } else {
+            // TODO: Mimetypes can have spaces in WARCs.  Emitting for CDX, just
+            // squash them for now.  Later, quote them since squashing spaces won't
+            // work for params that have quoted-string values.
+            Matcher matcher = WHITESPACE.matcher(m);
+            return matcher.replaceAll("");
+        }
     }
 }
