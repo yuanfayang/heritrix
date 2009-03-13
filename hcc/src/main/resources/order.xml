@@ -218,8 +218,8 @@
         <string name="default-encoding">ISO-8859-1</string>
         <boolean name="digest-content">true</boolean>
         <string name="digest-algorithm">sha1</string>
-        <boolean name="send-if-modified-since">true</boolean>
-        <boolean name="send-if-none-match">true</boolean>
+        <boolean name="send-if-modified-since">false</boolean>
+        <boolean name="send-if-none-match">false</boolean>
         <boolean name="send-connection-close">true</boolean>
         <boolean name="send-referer">true</boolean>
         <boolean name="send-range">false</boolean>
