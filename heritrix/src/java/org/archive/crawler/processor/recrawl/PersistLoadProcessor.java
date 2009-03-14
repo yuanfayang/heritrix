@@ -84,17 +84,9 @@ public class PersistLoadProcessor extends PersistOnlineProcessor {
                 PersistProcessor.copyPersistSourceToHistoryMap(
                         getController().getDisk(), preloadSource, historyMap);
             } catch (IOException ioe) {
-                logger.log(
-                        Level.SEVERE, 
-                        "Unable to initialize persisted environment from "
-                            + preloadSource + " - proceeding without persisted environment!",
-                        ioe);
+                logger.log(Level.WARNING, "Proceeding without persisted environment! " + ioe);
             } catch(DatabaseException de) {
-                logger.log(
-                        Level.SEVERE, 
-                        "Unable to initialize persisted environment from "
-                            + preloadSource + " - proceeding without persisted environment!",
-                        de);
+                logger.log(Level.WARNING, "Proceeding without persisted environment! " + de);
             }
         }
         return historyMap;
