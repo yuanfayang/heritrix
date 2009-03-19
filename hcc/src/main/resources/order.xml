@@ -58,12 +58,6 @@
             <string name="use-preset-pattern">Custom</string>
             <string name="regexp"/>
           </newObject>
-          <newObject name="acceptByType" class="org.archive.crawler.deciderules.MatchesFilePatternDecideRule">
-            <string name="decision">ACCEPT</string>
-            <string name="use-preset-pattern">All</string>
-            <string name="regexp"/>
-          </newObject>
-
           <newObject name="rejectIfPathological" class="org.archive.crawler.deciderules.PathologicalPathDecideRule">
             <integer name="max-repetitions">2</integer>
           </newObject>
