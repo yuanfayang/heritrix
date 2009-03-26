@@ -409,7 +409,7 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
                         fillOutbound();
                         // process discovered and finished URIs
                         drainInbound();
-                        if(isEmpty()) {
+                        if(isEmpty() || controller.atFinish()) {
                             // pause when frontier exhausted; controller will
                             // determine if this means to finish or not
                             targetState = State.PAUSE;
