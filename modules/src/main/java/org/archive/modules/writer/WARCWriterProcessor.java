@@ -28,23 +28,6 @@ import static org.archive.modules.ModuleAttributeConstants.A_SOURCE_TAG;
 import static org.archive.modules.ModuleAttributeConstants.HEADER_TRUNC;
 import static org.archive.modules.ModuleAttributeConstants.LENGTH_TRUNC;
 import static org.archive.modules.ModuleAttributeConstants.TIMER_TRUNC;
-import static org.archive.io.warc.WARCConstants.HEADER_KEY_CONCURRENT_TO;
-import static org.archive.io.warc.WARCConstants.HEADER_KEY_ETAG;
-import static org.archive.io.warc.WARCConstants.HEADER_KEY_IP;
-import static org.archive.io.warc.WARCConstants.HEADER_KEY_LAST_MODIFIED;
-import static org.archive.io.warc.WARCConstants.HEADER_KEY_PAYLOAD_DIGEST;
-import static org.archive.io.warc.WARCConstants.HEADER_KEY_PROFILE;
-import static org.archive.io.warc.WARCConstants.HEADER_KEY_TRUNCATED;
-import static org.archive.io.warc.WARCConstants.HTTP_REQUEST_MIMETYPE;
-import static org.archive.io.warc.WARCConstants.HTTP_RESPONSE_MIMETYPE;
-import static org.archive.io.warc.WARCConstants.METADATA;
-import static org.archive.io.warc.WARCConstants.NAMED_FIELD_TRUNCATED_VALUE_HEAD;
-import static org.archive.io.warc.WARCConstants.NAMED_FIELD_TRUNCATED_VALUE_LENGTH;
-import static org.archive.io.warc.WARCConstants.NAMED_FIELD_TRUNCATED_VALUE_TIME;
-import static org.archive.io.warc.WARCConstants.PROFILE_REVISIT_IDENTICAL_DIGEST;
-import static org.archive.io.warc.WARCConstants.PROFILE_REVISIT_NOT_MODIFIED;
-import static org.archive.io.warc.WARCConstants.REQUEST;
-import static org.archive.io.warc.WARCConstants.TYPE;
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_ETAG_HEADER;
 import static org.archive.modules.recrawl.RecrawlAttributeConstants.A_LAST_MODIFIED_HEADER;
 
@@ -70,6 +53,8 @@ import org.apache.commons.lang.StringUtils;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
+import org.archive.io.warc.WARCConstants;
+import org.archive.io.warc.WARCRecord;
 import org.archive.io.warc.WARCWriter;
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.modules.ProcessResult;
@@ -97,7 +82,8 @@ import org.archive.util.anvl.ANVLRecord;
  * 
  * @author stack
  */
-public class WARCWriterProcessor extends WriterPoolProcessor {
+public class WARCWriterProcessor extends WriterPoolProcessor 
+implements WARCConstants {
 
 
     private static final long serialVersionUID = 6182850087635847443L;
@@ -311,18 +297,24 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         return checkBytesWritten(curi);
     }
     
-    protected URI writeRequest(final WARCWriter w,
-            final String timestamp, final String mimetype,
-            final URI baseid, final ProcessorURI curi,
+    protected URI writeRequest(
+            final WARCWriter writer,
+            final String timestamp, 
+            final String mimetype,
+            final URI baseid, 
+            final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, REQUEST);
         ReplayInputStream ris =
             curi.getRecorder().getRecordedOutput().getReplayInputStream();
         try {
-            w.writeRequestRecord(curi.toString(), timestamp, mimetype, uid,
-                namedFields, ris,
-                curi.getRecorder().getRecordedOutput().getSize());
+            final long len = curi.getRecorder().getRecordedOutput().getSize();
+            WARCRecord record = new WARCRecord(ris,uid,len,timestamp,REQUEST);
+            record.setUrl(curi.toString());
+            record.setMimeType(mimetype);
+            record.setNamedFields(namedFields);
+            writer.writeRecord(record);
         } finally {
             if (ris != null) {
                 ris.close();
@@ -331,17 +323,24 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         return uid;
     }
     
-    protected URI writeResponse(final WARCWriter w,
-            final String timestamp, final String mimetype,
-            final URI baseid, final ProcessorURI curi,
+    protected URI writeResponse(
+            final WARCWriter w,
+            final String timestamp, 
+            final String mimetype,
+            final URI baseid, 
+            final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         ReplayInputStream ris =
             curi.getRecorder().getRecordedInput().getReplayInputStream();
         try {
-            w.writeResponseRecord(curi.toString(), timestamp, mimetype, baseid,
-                namedFields, ris,
-                curi.getRecorder().getRecordedInput().getSize());
+            final long len = curi.getRecorder().getRecordedOutput().getSize();
+            WARCRecord record = 
+                new WARCRecord(ris,baseid,len,timestamp,RESPONSE); 
+            record.setUrl(curi.toString());
+            record.setMimeType(mimetype);
+            record.setNamedFields(namedFields);
+            w.writeRecord(record);
         } finally {
             if (ris != null) {
                 ris.close();
@@ -350,17 +349,24 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         return baseid;
     }
     
-    protected URI writeResource(final WARCWriter w,
-            final String timestamp, final String mimetype,
-            final URI baseid, final ProcessorURI curi,
+    protected URI writeResource(
+            final WARCWriter w,
+            final String timestamp, 
+            final String mimetype,
+            final URI baseid, 
+            final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         ReplayInputStream ris =
             curi.getRecorder().getRecordedInput().getReplayInputStream();
         try {
-            w.writeResourceRecord(curi.toString(), timestamp, mimetype, baseid,
-                namedFields, ris,
-                curi.getRecorder().getRecordedInput().getSize());
+            final long len = curi.getRecorder().getRecordedOutput().getSize();
+            WARCRecord record = 
+                new WARCRecord(ris,baseid,len,timestamp,RESOURCE); 
+            record.setUrl(curi.toString());
+            record.setMimeType(mimetype);
+            record.setNamedFields(namedFields);
+            w.writeRecord(record);
         } finally {
             if (ris != null) {
                 ris.close();
@@ -370,12 +376,16 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
     }
 
     
-    protected URI writeRevisitDigest(final WARCWriter w,
-            final String timestamp, final String mimetype,
-            final URI baseid, final ProcessorURI curi,
+    protected URI writeRevisitDigest(
+            final WARCWriter w,
+            final String timestamp, 
+            final String mimetype,
+            final URI baseid, 
+            final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
-        long revisedLength = curi.getRecorder().getRecordedInput().getContentBegin();
+        long revisedLength = 
+            curi.getRecorder().getRecordedInput().getContentBegin();
         revisedLength = revisedLength > 0 
             ? revisedLength 
             : curi.getRecorder().getRecordedInput().getSize();
@@ -386,8 +396,12 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         ReplayInputStream ris =
             curi.getRecorder().getRecordedInput().getReplayInputStream();
         try {
-            w.writeRevisitRecord(curi.toString(), timestamp, mimetype, baseid,
-                namedFields, ris, revisedLength);
+            WARCRecord record = 
+                new WARCRecord(ris,baseid,revisedLength,timestamp,RESOURCE); 
+            record.setUrl(curi.toString());
+            record.setMimeType(mimetype);
+            record.setNamedFields(namedFields);
+            w.writeRecord(record);
         } finally {
             if (ris != null) {
                 ris.close();
@@ -397,9 +411,11 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         return baseid;
     }
     
-    protected URI writeRevisitNotModified(final WARCWriter w,
+    protected URI writeRevisitNotModified(
+            final WARCWriter w,
             final String timestamp, 
-            final URI baseid, final ProcessorURI curi,
+            final URI baseid, 
+            final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         namedFields.addLabelValue(
@@ -418,8 +434,10 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         ReplayInputStream ris =
             curi.getRecorder().getRecordedInput().getReplayInputStream();
         try {
-            w.writeRevisitRecord(curi.toString(), timestamp, null, baseid,
-                namedFields, ris, 0);
+            WARCRecord record = new WARCRecord(ris,baseid,0,timestamp,REVISIT);
+            record.setDate(timestamp);
+            record.setNamedFields(namedFields);
+            w.writeRecord(record);
         } finally {
             if (ris !=  null) {
                 ris.close();
@@ -444,9 +462,11 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         }
     }
 
-	protected URI writeMetadata(final WARCWriter w,
+	protected URI writeMetadata(
+	        final WARCWriter w,
             final String timestamp,
-            final URI baseid, final ProcessorURI curi,
+            final URI baseid, 
+            final ProcessorURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, METADATA);
@@ -489,10 +509,21 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         // fetch-completed-time: 1154569281816
         //
         // Annotations.
+
         
+//        byte [] b = r.getUTF8Bytes();
+//        w.writeMetadataRecord(curi.toString(), timestamp, ANVLRecord.MIMETYPE,
+//            uid, namedFields, new ByteArrayInputStream(b), b.length);
+//        return uid;
+
         byte [] b = r.getUTF8Bytes();
-        w.writeMetadataRecord(curi.toString(), timestamp, ANVLRecord.MIMETYPE,
-            uid, namedFields, new ByteArrayInputStream(b), b.length);
+        long len = b.length;
+        ByteArrayInputStream in = new ByteArrayInputStream(b);
+        WARCRecord record = new WARCRecord(in,uid,len,timestamp,METADATA);
+        record.setUrl(curi.toString());
+        record.setMimeType(ANVLRecord.MIMETYPE);
+        record.setNamedFields(namedFields);
+        w.writeRecord(record);
         return uid;
     }
     

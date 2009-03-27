@@ -42,6 +42,7 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
 
 
+
 /**
  * WARC implementation.
  *
@@ -56,6 +57,8 @@ import org.archive.util.anvl.ANVLRecord;
  */
 public class WARCWriter extends WriterPoolMember
 implements WARCConstants {
+    
+    WARCRecord warcInfoRecord;
     
     /**
      * NEWLINE as bytes.
@@ -73,7 +76,7 @@ implements WARCConstants {
      * Metadata.
      * TODO: Exploit writing warcinfo record.  Currently unused.
      */
-    private final List fileMetadata;
+    private final List<Object> fileMetadata;
     
     
     /**
@@ -95,10 +98,13 @@ implements WARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    public WARCWriter(final AtomicInteger serialNo,
-    		final OutputStream out, final File f,
-    		final boolean cmprs, final String a14DigitDate,
-            final List warcinfoData)
+    public WARCWriter (
+            final AtomicInteger serialNo,
+            final OutputStream out, 
+            final File f,
+            final boolean cmprs, 
+            final String a14DigitDate,
+            final List<Object> warcinfoData)
     throws IOException {
         super(serialNo, out, f, cmprs, a14DigitDate);
         this.fileMetadata = warcinfoData;
@@ -114,19 +120,22 @@ implements WARCConstants {
      * @param suffix File tail to use.  If null, unused.
      * @param warcinfoData File metadata for warcinfo record.
      */
-    public WARCWriter(final AtomicInteger serialNo,
-    		final List<File> dirs, final String prefix, 
-            final String suffix, final boolean cmprs,
-            final long maxSize, final List warcinfoData) {
-        super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
-        	WARC_FILE_EXTENSION);
+    public WARCWriter(
+            final AtomicInteger serialNo,
+            final List<File> dirs, 
+            final String prefix, 
+            final String suffix, 
+            final boolean cmprs,
+            final long maxSize, 
+            final List<Object> warcinfoData) {
+        super(serialNo, dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
         this.fileMetadata = warcinfoData;
     }
     
-    @Override
+     @Override
     protected String createFile(File file) throws IOException {
     	String filename = super.createFile(file);
-    	writeWarcinfoRecord(filename);
+    	writeWarcInfoRecord(filename,null);
         return filename;
     }
     
@@ -177,89 +186,59 @@ implements WARCConstants {
         return sb.toString();
     }
 
-    protected String createRecordHeader(final String type,
-    		final String url, final String create14DigitDate,
-    		final String mimetype, final URI recordId,
-    		final ANVLRecord xtraHeaders, final long contentLength)
+    
+    /**
+     * Create WARC header string from WARCRecord object 
+     * @param r WARCRecord object
+     * @return WARC record header String
+     * @throws IOException
+     */
+    
+    protected String createRecordHeader(WARCRecord r) 
     throws IOException {
-    	final StringBuilder sb =
-    		new StringBuilder(2048/*A SWAG: TODO: Do analysis.*/);
+        
+        // TODO: 2048 = A SWAG: Do analysis.
+    	final StringBuilder sb = new StringBuilder(2048);
+
+    	// WARC version
     	sb.append(WARC_ID).append(CRLF);
-        sb.append(HEADER_KEY_TYPE).append(COLON_SPACE).append(type).
-            append(CRLF);
-        // Do not write a subject-uri if not one present.
-        if (url != null && url.length() > 0) {
-            sb.append(HEADER_KEY_URI).append(COLON_SPACE).
-                append(checkHeaderValue(url)).append(CRLF);
-        }
-        sb.append(HEADER_KEY_DATE).append(COLON_SPACE).
-            append(create14DigitDate).append(CRLF);
-        if (xtraHeaders != null) {
-            for (final Iterator i = xtraHeaders.iterator(); i.hasNext();) {
-                sb.append(i.next()).append(CRLF);
-            }
+    	
+    	// WARC-Type
+    	sb.append(HEADER_KEY_TYPE).append(COLON_SPACE).append(r.type).append(CRLF);
+
+    	// WARC-Target-URI
+    	// Do not write a subject-uri if not one present.
+    	if (r.url != null && r.url.length() > 0) {
+    	    sb.append(HEADER_KEY_URI).append(COLON_SPACE)
+    	        .append(checkHeaderValue(r.url)).append(CRLF);
+    	}
+
+    	// WARC-Date
+    	sb.append(HEADER_KEY_DATE).append(COLON_SPACE).append(r.date).append(CRLF);
+    	if (r.namedFields != null) {
+    	    for (final Iterator<?> i = r.namedFields.iterator(); i.hasNext();) {
+    	        sb.append(i.next()).append(CRLF);
+    	    }
+    	}
+
+    	// WARC-Record-ID
+        sb.append(HEADER_KEY_ID).append(COLON_SPACE).append('<')
+            .append(r.id.toString()).append('>').append(CRLF);
+
+        // Content-type
+        if (r.length > 0) {
+            sb.append(CONTENT_TYPE).append(COLON_SPACE)
+                .append(checkHeaderLineMimetypeParameter(r.mimeType))
+                    .append(CRLF);
         }
 
-        sb.append(HEADER_KEY_ID).append(COLON_SPACE).append('<').
-            append(recordId.toString()).append('>').append(CRLF);
-        if (contentLength > 0) {
-            sb.append(CONTENT_TYPE).append(COLON_SPACE).append(
-                checkHeaderLineMimetypeParameter(mimetype)).append(CRLF);
-        }
-        sb.append(CONTENT_LENGTH).append(COLON_SPACE).
-            append(Long.toString(contentLength)).append(CRLF);
+        // Content-length
+        sb.append(CONTENT_LENGTH).append(COLON_SPACE)
+            .append(Long.toString(r.length)).append(CRLF);
     	
     	return sb.toString();
     }
 
-    /**
-     * @deprecated Use {@link #writeRecord(String,String,String,String,URI,ANVLRecord,InputStream,long,boolean)} instead
-     */
-    protected void writeRecord(final String type, final String url,
-    		final String create14DigitDate, final String mimetype,
-    		final URI recordId, ANVLRecord xtraHeaders,
-            final InputStream contentStream, final long contentLength)
-    throws IOException {
-        writeRecord(type, url, create14DigitDate, mimetype, recordId, xtraHeaders, contentStream, contentLength, true);
-    }
-
-    protected void writeRecord(final String type, final String url,
-    		final String create14DigitDate, final String mimetype,
-    		final URI recordId, ANVLRecord xtraHeaders,
-            final InputStream contentStream, final long contentLength, 
-            boolean enforceLength)
-    throws IOException {
-    	if (!TYPES_LIST.contains(type)) {
-    		throw new IllegalArgumentException("Unknown record type: " + type);
-    	}
-    	if (contentLength == 0 &&
-                (xtraHeaders == null || xtraHeaders.size() <= 0)) {
-    		throw new IllegalArgumentException("Cannot write record " +
-    		    "of content-length zero and base headers only.");
-    	}
-    	
-        preWriteRecordTasks();
-        try {
-            final String header = createRecordHeader(type, url,
-            	create14DigitDate, mimetype, recordId, xtraHeaders,
-            	contentLength);
-            // TODO: Revisit endcoding of header.
-            write(header.getBytes(WARC_HEADER_ENCODING));
-            
-            if (contentStream != null && contentLength > 0) {
-                // Write out the header/body separator.
-                write(CRLF_BYTES); // TODO: should this be written even for zero-length?
-            	copyFrom(contentStream, contentLength, enforceLength);
-            }
-            
-            // Write out the two blank lines at end of all records.
-            write(CRLF_BYTES);
-            write(CRLF_BYTES);
-        } finally {
-            postWriteRecordTasks();
-        }
-    }
-    
     protected URI generateRecordId(final Map<String, String> qualifiers)
     throws IOException {
     	URI rid = null;
@@ -272,7 +251,7 @@ implements WARCConstants {
     	}
     	return rid;
     }
-    
+
     protected URI generateRecordId(final String key, final String value)
     throws IOException {
     	URI rid = null;
@@ -285,149 +264,132 @@ implements WARCConstants {
     	}
     	return rid;
     }
-    
-    public URI writeWarcinfoRecord(String filename)
-	throws IOException {
-    	return writeWarcinfoRecord(filename, null);
+
+    public void writeRecord(WARCRecord record)
+    throws IOException {
+
+        // check record type
+    	if (!TYPES_LIST.contains(record.type)) {
+    		throw new IllegalArgumentException("Unknown record type: " 
+    		        + record.type);
+    	}
+
+    	// check record length
+    	if (record.length == 0 
+    	        && (record.namedFields == null 
+    	                || record.namedFields.size() <= 0)) {
+    		throw new IllegalArgumentException("Cannot write record " +
+    		    "of content-length zero and base headers only.");
+    	}
+
+        preWriteRecordTasks();
+        
+        try {
+            final String header = createRecordHeader(record);
+
+            // TODO: Revisit encoding of header.
+            write(header.getBytes(WARC_HEADER_ENCODING));
+            
+            if (record.getIn() != null && record.length > 0) {
+                // Write out the header/body separator.
+                // TODO: should this be written even for zero-length?
+                write(CRLF_BYTES); 
+                copyFrom(record.getIn(), record.length, 
+                        record.enforceLengthFlag);
+            }
+            
+            // Write out the two blank lines at end of all records.
+            write(CRLF_BYTES);
+            write(CRLF_BYTES);
+        } finally {
+            postWriteRecordTasks();
+        }
     }
     
-    public URI writeWarcinfoRecord(String filename, final String description)
-        	throws IOException {
+    /** write WARCINFO record 
+     * TODO: this method really belongs in a package which invokes WARCWriter
+     * @param filename WARC-Filename
+     * @param description Content-Description
+     * @return URI WARC-Record-ID
+     * @throws IOException
+     */
+    public URI writeWarcInfoRecord(String filename,final String description)
+    throws IOException {
+        
         // Strip .open suffix if present.
         if (filename.endsWith(WriterPoolMember.OCCUPIED_SUFFIX)) {
         	filename = filename.substring(0,
         		filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
         }
-        ANVLRecord record = new ANVLRecord(2);
-        record.addLabelValue(HEADER_KEY_FILENAME, filename);
+
+        ANVLRecord namedFields = new ANVLRecord(2);
+        namedFields.addLabelValue(HEADER_KEY_FILENAME, filename);
         if (description != null && description.length() > 0) {
-        	record.addLabelValue(CONTENT_DESCRIPTION, description);
+        	namedFields.addLabelValue(CONTENT_DESCRIPTION, description);
         }
+
         // Add warcinfo body.
         byte [] warcinfoBody = null;
         if (this.fileMetadata == null) {
-        	// TODO: What to write into a warcinfo?  What to associate?
-        	warcinfoBody = "TODO: Unimplemented".getBytes();
+            // TODO: What to write into a warcinfo?  What to associate?
+            warcinfoBody = "TODO: Unimplemented".getBytes();
         } else {
-        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        	for (final Iterator i = this.fileMetadata.iterator();
-        			i.hasNext();) {
-        		baos.write(i.next().toString().getBytes(UTF8Bytes.UTF8));
-        	}
-        	warcinfoBody = baos.toByteArray();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            for (final Iterator<Object> i = this.fileMetadata.iterator();
+                    i.hasNext();) {
+                baos.write(i.next().toString().getBytes(UTF8Bytes.UTF8));
+            }
+            warcinfoBody = baos.toByteArray();
         }
-        URI uri = writeWarcinfoRecord("application/warc-fields", record,
-            new ByteArrayInputStream(warcinfoBody), warcinfoBody.length);
+             
+        ByteArrayInputStream in = new ByteArrayInputStream(warcinfoBody);         
+        URI id = generateRecordId(TYPE, WARCINFO);
+        long len = warcinfoBody.length;
+        String date = ArchiveUtils.getLog14Date();
+
+        WARCRecord record = new WARCRecord(in,id,len,date,WARCINFO);
+        record.setMimeType("application/warc-fields");
+        record.setNamedFields(namedFields);
+
         // TODO: If at start of file, and we're writing compressed,
         // write out our distinctive GZIP extensions.
-        return uri;
+        
+        writeRecord(record);
+
+        return id;
+
     }
     
+
     /**
-     * Write a warcinfo to current file.
+     * Write a WARCINFO record to current file.
      * TODO: Write crawl metadata or pointers to crawl description.
-     * @param mimetype Mimetype of the <code>fileMetadata</code> block.
-     * @param namedFields Named fields. Pass <code>null</code> if none.
-     * @param fileMetadata Metadata about this WARC as RDF, ANVL, etc.
+     * @param mimeType WARCINFO Content-Type string
+     * @param namedFields WARCINFO named-fields <code>ANVLRecord</code>
+     * @param fileMetadata WARCINFO metadata (RDF, ANVL, etc.) <code>InputStream</code>
      * @param fileMetadataLength Length of <code>fileMetadata</code>.
      * @throws IOException
      * @return Generated record-id made with
      * <a href="http://en.wikipedia.org/wiki/Data:_URL">data: scheme</a> and
      * the current filename.
      */
-    public URI writeWarcinfoRecord(final String mimetype,
-    	final ANVLRecord namedFields, final InputStream fileMetadata,
-    	final long fileMetadataLength)
+    public URI writeWarcInfoRecord(
+            final String mimetype,
+            final ANVLRecord namedFields, 
+            final InputStream fileMetadata,
+            final long fileMetadataLength)
     throws IOException {
-    	final URI recordid = generateRecordId(TYPE, WARCINFO);
-    	writeWarcinfoRecord(ArchiveUtils.getLog14Date(), mimetype, recordid,
-            namedFields, fileMetadata, fileMetadataLength);
-    	return recordid;
+        final String date = ArchiveUtils.getLog14Date();
+        final URI recordid = generateRecordId(TYPE, WARCINFO);
+        WARCRecord record = new WARCRecord(fileMetadata,recordid,
+                fileMetadataLength,date,WARCINFO);
+        record.setMimeType(mimetype);
+        record.setNamedFields(namedFields);
+        writeRecord(record);
+        return recordid;
     }
     
-    /**
-     * Write a <code>warcinfo</code> to current file.
-     * The <code>warcinfo</code> type uses its <code>recordId</code> as its URL.
-     * @param recordId URI to use for this warcinfo.
-     * @param create14DigitDate Record creation date as 14 digit date.
-     * @param mimetype Mimetype of the <code>fileMetadata</code>.
-     * @param namedFields Named fields.
-     * @param fileMetadata Metadata about this WARC as RDF, ANVL, etc.
-     * @param fileMetadataLength Length of <code>fileMetadata</code>.
-     * @throws IOException
-     */
-    public void writeWarcinfoRecord(final String create14DigitDate,
-        final String mimetype, final URI recordId, final ANVLRecord namedFields,
-    	final InputStream fileMetadata, final long fileMetadataLength)
-    throws IOException {
-    	writeRecord(WARCINFO, null, create14DigitDate, mimetype,
-        	recordId, namedFields, fileMetadata, fileMetadataLength, true);
-    }
-    
-    public void writeRequestRecord(final String url,
-        final String create14DigitDate, final String mimetype,
-        final URI recordId,
-        final ANVLRecord namedFields, final InputStream request,
-        final long requestLength)
-    throws IOException {
-        writeRecord(REQUEST, url, create14DigitDate,
-            mimetype, recordId, namedFields, request,
-            requestLength, true);
-    }
-    
-    public void writeResourceRecord(final String url,
-            final String create14DigitDate, final String mimetype,
-            final ANVLRecord namedFields, final InputStream response,
-            final long responseLength)
-    throws IOException {
-    	writeResourceRecord(url, create14DigitDate, mimetype, getRecordID(),
-    			namedFields, response, responseLength);
-    }
-    
-    public void writeResourceRecord(final String url,
-            final String create14DigitDate, final String mimetype,
-            final URI recordId,
-            final ANVLRecord namedFields, final InputStream response,
-            final long responseLength)
-    throws IOException {
-        writeRecord(RESOURCE, url, create14DigitDate,
-            mimetype, recordId, namedFields, response,
-            responseLength, true);
-    }
-
-    public void writeResponseRecord(final String url,
-            final String create14DigitDate, final String mimetype,
-            final URI recordId,
-            final ANVLRecord namedFields, final InputStream response,
-            final long responseLength)
-    throws IOException {
-        writeRecord(RESPONSE, url, create14DigitDate,
-            mimetype, recordId, namedFields, response,
-            responseLength, true);
-    }
-    
-    public void writeRevisitRecord(final String url,
-            final String create14DigitDate, final String mimetype,
-            final URI recordId,
-            final ANVLRecord namedFields, final InputStream response,
-            final long responseLength)
-    throws IOException {
-        writeRecord(REVISIT, url, create14DigitDate,
-            mimetype, recordId, namedFields, response,
-            responseLength, false);
-    }
-    
-    public void writeMetadataRecord(final String url,
-            final String create14DigitDate, final String mimetype,
-            final URI recordId,
-            final ANVLRecord namedFields, final InputStream metadata,
-            final long metadataLength)
-    throws IOException {
-        writeRecord(METADATA, url, create14DigitDate,
-            mimetype, recordId, namedFields, metadata,
-            metadataLength, true);
-    }
-    
+        
     /**
      * Convenience method for getting Record-Ids.
      * @return A record ID.
@@ -442,4 +404,5 @@ implements WARCConstants {
         }
         return result;
     }
+    
 }

@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +37,8 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpParser;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
+import org.archive.io.ReplayInputStream;
+import org.archive.util.anvl.ANVLRecord;
 
 
 /**
@@ -44,8 +47,25 @@ import org.archive.io.ArchiveRecordHeader;
  * @author stack
  */
 public class WARCRecord extends ArchiveRecord implements WARCConstants {
+    
     private Pattern WHITESPACE = Pattern.compile("\\s");
     
+    /** WARC record fields **/
+    protected String type;
+    protected String date;
+    protected String mimeType;
+    protected URI id;
+    protected ANVLRecord namedFields;
+    protected InputStream inputStream;
+    protected long length;
+    protected String url;
+    protected boolean enforceLengthFlag;
+    
+    public WARCRecord(InputStream in)
+    throws IOException {
+        super(in, null, 0, false, false);
+    }
+
     /**
      * Constructor.
      *
@@ -53,8 +73,10 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * is to represent.
      * @throws IOException
      */
-    public WARCRecord(InputStream in, final String identifier,
-    	final long offset)
+    public WARCRecord (
+            InputStream in, 
+            final String identifier, 
+            final long offset)
     throws IOException {
         this(in, identifier, offset, true, false);
     }
@@ -66,12 +88,12 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * @throws IOException
      */
     public WARCRecord(InputStream in, ArchiveRecordHeader headers)
-    		throws IOException {
+    throws IOException {
         super(in, headers, 0, true, false);
     }
 
     /**
-     * Constructor.
+     * Constructor for reading WARC records
      *
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent or, if <code>headers</code> is not null, just past the
@@ -85,12 +107,109 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * formatted).
      * @throws IOException
      */
-    public WARCRecord(final InputStream in, final String identifier,
-    	final long offset, boolean digest, boolean strict) 
+    public WARCRecord(
+            final InputStream in, 
+            final String identifier,
+            final long offset, 
+            boolean digest, 
+            boolean strict) 
     throws IOException {
         super(in, null, 0, digest, strict);
         setHeader(parseHeaders(in, identifier, offset, strict));
     }
+    
+    
+    /** 
+     * Constructor for writing WARC records from an InputStream with mandatory
+     * params as defined by the WARC spec.
+     * @param is InputStream to be written
+     * @param id WARC-Record-ID
+     * @param length Content-Length
+     * @param date WARC-Date
+     * @param type WARC-Type 
+     * @throws IOException
+     */
+    public WARCRecord(
+            InputStream is, 
+            URI id, 
+            long length, 
+            String date, 
+            String type)
+    throws IOException {
+        super(is);
+        setID(id);
+        setLength(length);
+        setDate(date);
+        setType(type);
+    }
+    
+    /** set the type of WARC record 
+     * @param type <code>WARC-Type</code> in WARC header
+     */
+    public void setType(final String type) {
+        this.type = type;
+    }
+    
+    /** set the 14-digit [ISO8601] WARC-Date (YYYY-MM-DDThh:mm:ssZ)
+     * representing the instant that data capture for record creation began.
+     * @param date the <code>WARC-Date</code> in the WARC header 
+     **/
+    public void setDate(final String date) {
+        this.date = date;
+    }
+    
+    /** 
+     * set the MIME type [RFC2045] of the information contained in 
+     * the record's block.   
+     *  @param mimeType <code>Content-Type</code>
+     */
+    public void setMimeType (final String mimeType) {
+        this.mimeType = mimeType;  
+    }
+
+    /** 
+     * set a globally unique identifier for this record
+     * @param recordID the <code>WARC-Record-ID</code> in the WARC header 
+     */
+    public void setID (final URI recordID) {
+        this.id = recordID;
+    }
+
+    /** 
+     * set named-fields giving information about the current record,
+     * expandable, and beginning with "WARC-" for WARC specific purposes. 
+     * @param namedFields the WARC named-fields in the WARC header
+     */
+    public void setNamedFields (final ANVLRecord namedFields) {
+        this.namedFields = namedFields;
+    }
+
+    /**
+     * set the original URI whose capture gave rise to the information content 
+     * in this record. 
+     * @param url the <code>WARC-Target-URI</code> in the WARC header
+     */
+    public void setUrl (final String url) {
+        this.url = url;
+    }
+
+    /**
+     * set the number of octets in the record content block
+     * @param length <code>Content-Length</code>
+     */
+    public void setLength(long length) {
+        this.length = length;
+    }
+
+    /**
+     * set enforceLengthFlag which will throw IOE when read length differs 
+     * from specified length
+     * @param enforce true to enforce length
+     */
+    public void setEnforceLengthFlag (boolean enforce) {
+        this.enforceLengthFlag = enforce;
+    }
+
     
     /**
      * Parse WARC Header Line and Named Fields.
@@ -101,10 +220,14 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * @return An ArchiveRecordHeader.
      * @throws IOException 
      */
-    protected ArchiveRecordHeader parseHeaders(final InputStream in,
-        final String identifier, final long offset, final boolean strict)
+    protected ArchiveRecordHeader parseHeaders(
+            final InputStream in,
+            final String identifier,
+            final long offset,
+            final boolean strict)
     throws IOException {
-    	final Map<Object, Object> m = new HashMap<Object, Object>();
+
+        final Map<Object, Object> m = new HashMap<Object, Object>();
     	m.put(ABSOLUTE_OFFSET_KEY, new Long(offset));
     	m.put(READER_IDENTIFIER_FIELD_KEY, identifier);
         
@@ -225,4 +348,5 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
         Matcher matcher = WHITESPACE.matcher(m);
         return matcher.replaceAll("");
     }
+
 }

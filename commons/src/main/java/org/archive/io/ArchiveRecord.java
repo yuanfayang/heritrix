@@ -287,7 +287,7 @@ public abstract class ArchiveRecord extends InputStream {
         this.strict = strict;
     }
 
-        protected InputStream getIn() {
+        public InputStream getIn() {
                 return this.in;
         }
 
