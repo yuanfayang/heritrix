@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -125,7 +126,7 @@ extends TmpDirTestCase implements WARCConstants {
     	meta.addLabelValue("size", "1G");
     	meta.addLabelValue("operator", "igor");
     	byte [] bytes = meta.getUTF8Bytes();
-    	writer.writeWarcinfoRecord(ANVLRecord.MIMETYPE, null,
+    	writer.writeWarcInfoRecord(ANVLRecord.MIMETYPE, null,
     		new ByteArrayInputStream(bytes), bytes.length);
 	}
 
@@ -147,10 +148,16 @@ extends TmpDirTestCase implements WARCConstants {
     	for (int i = 0; i < 10; i++) {
     		String body = i + ". " + content;
     		byte [] bodyBytes = body.getBytes(UTF8Bytes.UTF8);
-    		writer.writeRecord(METADATA, "http://www.archive.org/",
-    			ArchiveUtils.get14DigitDate(), "no/type",
-    			rid, headerFields, new ByteArrayInputStream(bodyBytes),
-    			(long)bodyBytes.length, true);
+    		InputStream is = new ByteArrayInputStream(bodyBytes);
+    		long len = (long)bodyBytes.length;
+    		String date = ArchiveUtils.get14DigitDate();
+ 
+    		WARCRecord r = new WARCRecord(is,rid,len,date,METADATA);
+    		r.setUrl("http://www.archive.org/");
+    		r.setMimeType("no/type");
+    		r.setNamedFields(headerFields);
+    		r.setEnforceLengthFlag(true);
+    		writer.writeRecord(r);
     	}
     }
 
@@ -193,13 +200,22 @@ extends TmpDirTestCase implements WARCConstants {
         // and request to the resource field.
         ANVLRecord r = new ANVLRecord(1);
         r.addLabelValue(NAMED_FIELD_IP_LABEL, "127.0.0.1");
-        w.writeResourceRecord(
-            "http://www.one.net/id=" + indexStr,
-            ArchiveUtils.get14DigitDate(),
-            "text/html; charset=UTF-8",
-            r,
-            new ByteArrayInputStream(baos.toByteArray()),
-            recordLength);
+        String url = "http://www.one.net/id=" + indexStr;
+        String date = ArchiveUtils.get14DigitDate();
+        String mimetype = "text/html; charset=UTF-8";
+        InputStream is = new ByteArrayInputStream(baos.toByteArray());
+        WARCRecord warcRecord = new WARCRecord(is,WARCWriter.getRecordID(),recordLength,date,RESOURCE);
+        warcRecord.setUrl(url);
+        warcRecord.setMimeType(mimetype);
+        warcRecord.setNamedFields(r);
+        w.writeRecord(warcRecord);
+//        w.writeResourceRecord(
+//                "http://www.one.net/id=" + indexStr,
+//                ArchiveUtils.get14DigitDate(),
+//                "text/html; charset=UTF-8",
+//                r,
+//                new ByteArrayInputStream(baos.toByteArray()),
+//                recordLength);
         return recordLength;
     }
 
@@ -341,12 +357,12 @@ extends TmpDirTestCase implements WARCConstants {
     protected static void writeRecord(WARCWriter w, String url,
         String mimetype, int len, ByteArrayOutputStream baos)
     throws IOException {
-        w.writeResourceRecord(url,
-            ArchiveUtils.get14DigitDate(),
-            mimetype,
-            null,
-            new ByteArrayInputStream(baos.toByteArray()),
-            len);
+        ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
+        String date = ArchiveUtils.get14DigitDate();
+        URI id = WARCWriter.getRecordID();
+        WARCRecord record = new WARCRecord(is,id,len,date,RESOURCE);
+        record.setMimeType(mimetype);
+        w.writeRecord(record);
     }
     
     protected int iterateRecords(WARCReader r)
