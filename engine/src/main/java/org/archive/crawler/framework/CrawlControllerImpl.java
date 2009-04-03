@@ -558,11 +558,17 @@ public class CrawlControllerImpl extends Bean implements
     }
     
 
-
+    // TODO: provide better knowledge/guard against twice-starting
+    boolean hasStarted = false; 
+    public boolean hasStarted() {
+        return hasStarted; 
+    }
+    
     /** 
      * Operator requested crawl begin
      */
     public void requestCrawlStart() {
+        hasStarted = true; 
         sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
         frontier.loadSeeds();
         

@@ -159,7 +159,9 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
             Validator v = hv.getValidator();
             Errors errors = new BeanPropertyBindingResult(hv,name);
             v.validate(hv, errors);
-            allErrors.put(name,errors);
+            if(errors.hasErrors()) {
+                allErrors.put(name,errors);
+            }
         }
         System.err.println("===errors===");
         for(String name : allErrors.keySet()) {
