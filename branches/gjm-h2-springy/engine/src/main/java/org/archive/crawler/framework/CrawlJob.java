@@ -320,10 +320,27 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
      * state.) 
      */
     public void launch() {
-        validateConfiguration();
         if (isProfile()) {
-            throw new IllegalArgumentException("Can't launch " + this);
+            throw new IllegalArgumentException("Can't launch profile" + this);
         }
+        
+        if(isRunning()) {
+            getJobLogger().log(Level.SEVERE,"Can't relaunch running job");
+            return;
+        } else {
+            CrawlControllerImpl cc = getCrawlController();
+            if(cc!=null && cc.hasStarted()) {
+                getJobLogger().log(Level.SEVERE,"Can't relaunch previously-launched assembled job");
+                return;
+            }
+        }
+        
+        validateConfiguration();
+        if(!isContainerValidated()) {
+            getJobLogger().log(Level.SEVERE,"Can't launch problem configuration");
+            return;
+        }
+
         //final String job = changeState(j, ACTIVE);
         
         // this temporary thread ensures all crawl-created threads
@@ -389,6 +406,11 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
      */
     public void reset() {
         if(ac!=null) {
+            CrawlControllerImpl cc = getCrawlController();
+            if(cc!=null) {
+                cc.requestCrawlStop();
+                // TODO: wait for stop?
+            }
             if(ac.isRunning()) {
                 ac.stop(); 
             }
@@ -446,5 +468,13 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(event instanceof CrawlStateEvent) {
             getJobLogger().log(Level.INFO, ((CrawlStateEvent)event).getState().toString());
         }
+    }
+
+    public boolean isLaunchable() {
+        CrawlControllerImpl cc = getCrawlController();
+        if(cc==null) {
+            return true;
+        }
+        return !cc.hasStarted();
     }
 }

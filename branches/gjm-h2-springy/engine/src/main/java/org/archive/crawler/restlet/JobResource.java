@@ -107,30 +107,41 @@ public class JobResource extends Resource {
                 + cj.getPrimaryConfig().getName() 
                 +  "?format=textedit'>edit</a>]");        
         pw.println("<form method='POST'>");
-        pw.print("<input type='submit' name='action' value='checkXML' ");
-        pw.print(cj.isXmlOk()?"disabled='disabled' title='XML OK'":"");
-        pw.println("/>");
-        pw.print("<input type='submit' name='action' value='instantiate' ");
-        pw.print(cj.isContainerOk()?"disabled='disabled' title='instantiated'":"");
-        pw.println("/>");
-        pw.print("<input type='submit' name='action' value='validate' ");
-        pw.print(cj.isContainerValidated()?"disabled='disabled' alt='validated'":"");
-        pw.println("/>");
-        
-        pw.print("<input type='submit' name='action' value='launch'");
+        pw.println("<table width='450px'><tr><td style= 'vertical-align:top' width='150px'>");
+        pw.print("<input style='width:100%' type='submit' name='action' value='prep' ");
+        pw.print(cj.isContainerValidated()?"disabled='disabled' title='prep job'":"");
+        pw.println("/><br/>");
+        if(cj.isXmlOk()) {
+            pw.println("cxml ok<br/>");
+            if(cj.isContainerOk()) {
+                pw.println("container ok<br/>");
+                if(cj.isContainerValidated()) {
+                    pw.println("config valid<br/>");
+                } else {
+                    pw.println("CONFIG INVALID<br/>");
+                }
+            } else {
+                pw.println("CONTAINER BAD<br/>");
+            }
+        }else {
+            // pw.println("XML NOT WELL-FORMED<br/>");
+        }
+        pw.println("</td><td style= \'vertical-align:top\' width='150px'>");
+        pw.print("<input style=\'width:100%\' type='submit' name='action' value='launch'");
         if(cj.isProfile()) {
             pw.print("disabled='disabled' title='profiles cannot be launched'");
         }
-        if(cj.isRunning()) {
+        if(!cj.isLaunchable()) {
             pw.print("disabled='disabled' title='launched OK'");
         }
         pw.println("/>");
-        
-        pw.print("<input type='submit' name='action' value='discard' ");
+
+        pw.println("</td><td style= \'vertical-align:top\' width='150px'>");
+        pw.print("<input style=\'width:100%\' type='submit' name='action' value='discard' ");
         pw.print(cj.isContainerOk()?"":"disabled='disabled' title='no instance'");
         pw.println("/>");
 
-        pw.println("</form>");
+        pw.println("</td></tr></table></form>");
         
         pw.println("<hr/>");
         pw.println("<h2>Job Log</h2>");
@@ -246,7 +257,7 @@ public class JobResource extends Resource {
             cj.checkXML();
         } else if("instantiate".equals(action)) {
             cj.instantiateContainer();
-        } else if("validate".equals(action)) {
+        } else if("prep".equals(action)||"validate".equals(action)) {
             cj.validateConfiguration();
         } else if("discard".equals(action)) {
             cj.reset(); 
