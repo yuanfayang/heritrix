@@ -285,8 +285,8 @@ public class CrawlerLoggerModule
     private void setupAlertLog(String logsPath) throws IOException {
         Logger logger = Logger.getLogger(LOGNAME_ALERTS + "." + logsPath);
         String filename = getAlertsLogPath().getFile().getAbsolutePath();
-        GenerationFileHandler fh = new GenerationFileHandler(filename, false, 
-                true);
+        GenerationFileHandler fh = 
+            GenerationFileHandler.makeNew(filename, false, true);
         fh.setFormatter(new SimpleFormatter());
         AlertThreadGroup.setCurrentHandler(fh);
         AlertHandler ah = new AlertHandler();

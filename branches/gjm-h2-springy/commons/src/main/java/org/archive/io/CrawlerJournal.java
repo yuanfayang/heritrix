@@ -42,6 +42,7 @@ import java.util.zip.GZIPOutputStream;
 
 import org.archive.settings.RecoverAction;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.FileUtils;
 
 /**
  * Utility class for a crawler journal/log that is compressed and 
@@ -125,6 +126,7 @@ public class CrawlerJournal {
     protected MutableString accumulatingBuffer = new MutableString(1024);
 
     protected Writer initialize(final File f) throws FileNotFoundException, IOException {
+        FileUtils.moveAsideIfExists(f);
         return new OutputStreamWriter(new GZIPOutputStream(
             new FastBufferedOutputStream(new FileOutputStream(f))));
     }
