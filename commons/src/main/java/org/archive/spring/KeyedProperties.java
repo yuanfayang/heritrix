@@ -1,4 +1,23 @@
-package org.archive.spring;
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+ 
+ package org.archive.spring;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,11 +56,14 @@ public class KeyedProperties extends HashMap<String,Object> {
      * @return discovered override, or local value
      */
     public Object get(String key) {
-        for(Map m: overrides.get()) {
-            for(String ok : getOverrideKeys(key)) {
-                Object val = m.get(ok);
-                if(val!=null) {
-                    return val;
+        for(OverrideContext ocontext: threadOverrides.get()) {
+            for(String name: ocontext.getOverrideNames()) {
+                Map<String,Object> m = ocontext.getOverrideMap(name);
+                for(String ok : getOverrideKeys(key)) {
+                    Object val = m.get(ok);
+                    if(val!=null) {
+                        return val;
+                    }
                 }
             }
         }
@@ -63,28 +85,60 @@ public class KeyedProperties extends HashMap<String,Object> {
         return keys;
     }
 
+    
+    //
+    // CLASS SERVICES
+    //
+    
     /**
      * ThreadLocal (contextual) collection of pushed override maps
      */
-    static ThreadLocal<LinkedList<Map>> overrides = new ThreadLocal<LinkedList<Map>>() {
-        protected LinkedList<Map> initialValue() {
-            return new LinkedList<Map>();
+    static ThreadLocal<LinkedList<OverrideContext>> threadOverrides = 
+        new ThreadLocal<LinkedList<OverrideContext>>() {
+        protected LinkedList<OverrideContext> initialValue() {
+            return new LinkedList<OverrideContext>();
         }
     };
     /**
      * Add an override map to the stack 
      * @param m Map to add
      */
-    static public void  pushOverridesMap(Map m) {
-        overrides.get().addFirst(m);
+    static public void pushOverrideContext(OverrideContext ocontext) {
+        threadOverrides.get().addFirst(ocontext);
     }
     
     /**
      * Remove last-added override map from the stack
      * @return Map removed
      */
-    static public Map popOverridesMap() {
+    static public OverrideContext popOverridesContext() {
         // TODO maybe check that pop is as expected
-        return overrides.get().removeFirst();
+        return threadOverrides.get().removeFirst();
+    }
+    
+    static public void clearAllOverrideContexts() {
+        threadOverrides.get().clear(); 
+    }
+    
+    static public void loadOverridesFrom(OverrideContext ocontext) {
+        assert ocontext.haveOverrideNamesBeenSet();
+        pushOverrideContext(ocontext);
+    }
+    
+    static public boolean clearOverridesFrom(OverrideContext ocontext) {
+        return threadOverrides.get().remove(ocontext);
+    }
+    
+    static public void withOverridesDo(OverrideContext ocontext, Runnable todo) {
+        try {
+            loadOverridesFrom(ocontext);
+            todo.run();
+        } finally {
+            clearOverridesFrom(ocontext); 
+        }
+    }
+
+    public static boolean overridesActiveFrom(OverrideContext ocontext) {
+        return threadOverrides.get().contains(ocontext);
     }
 }
