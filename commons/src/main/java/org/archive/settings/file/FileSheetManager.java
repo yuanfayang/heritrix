@@ -381,8 +381,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     @Override @SuppressWarnings("unchecked")
     public List<Association> findConfigNames(String uri) {
         final List<Association> result = new ArrayList<Association>();
-        List<String> prefixes = new ArrayList<String>();
-        PrefixFinder.find((SortedSet)surtToSheets.keySet(), uri, prefixes);
+        List<String> prefixes = PrefixFinder.find((SortedSet)surtToSheets.keySet(), uri);
         for (String prefix: prefixes) {
             Collection<String> all = surtToSheets.duplicates(prefix);
             for (String surt: all) {
@@ -396,8 +395,7 @@ public class FileSheetManager extends SheetManager implements Checkpointable {
     @Override @SuppressWarnings("unchecked")
     public Sheet findConfig(String context) {
         final List<Sheet> sheets = new ArrayList<Sheet>();
-        List<String> prefixes = new ArrayList<String>();
-        PrefixFinder.find((SortedSet)surtToSheets.keySet(), context, prefixes);
+        List<String> prefixes = PrefixFinder.find((SortedSet)surtToSheets.keySet(), context);
         for (String prefix: prefixes) {
             Collection<String> all = surtToSheets.duplicates(prefix);
             for (String sheetName: all) {

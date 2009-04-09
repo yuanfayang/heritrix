@@ -31,20 +31,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.commons.io.FileUtils;
 import org.archive.util.TmpDirTestCase;
 
-import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
-
-import junit.framework.TestCase;
 
 /**
  * Unit test for PrefixFinder.
@@ -53,57 +54,68 @@ import junit.framework.TestCase;
  */
 public class PrefixFinderTest extends TmpDirTestCase {
 
-
     public void xtestFind() {
         for (int i = 0; i < 100; i++) {
             doTest();
         }
     }
 
-    
-    public void testSmallSet() {
+    public void testNoneFoundSmallSet() {
         SortedSet<String> testData = new TreeSet<String>();
         testData.add("foo");
-        List<String> result = new ArrayList<String>();
-        int count = PrefixFinder.find(testData, "baz", result);
+        List<String> result = PrefixFinder.find(testData, "baz");
         assertTrue(result.isEmpty());
-        assertEquals(count, 0);
     }
     
+    public void testOneFoundSmallSet() {
+        SortedSet<String> testData = new TreeSet<String>();
+        testData.add("foo");
+        List<String> result = PrefixFinder.find(testData, "foobar");
+        assertTrue(result.size()==1);
+        assertTrue(result.contains("foo"));
+    }
     
-    public void testStrangeCase() throws Exception {
+    public void testSortedMap() {
+        TreeMap map = new TreeMap();
+        testUrlsNoMatch(map);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public void testStoredSortedMap() throws Exception {
         EnvironmentConfig config = new EnvironmentConfig();
         config.setAllowCreate(true);
         config.setLockTimeout(5000000);        
         config.setCachePercent(5);
         
         File f = new File(getTmpDir(), "PrefixFinderText");
+        FileUtils.deleteQuietly(f);
         f.mkdirs();
         Environment bdbEnvironment = new Environment(f, config);
-        
-//        // Open the class catalog database. Create it if it does not
-//        // already exist. 
-//        DatabaseConfig dbConfig = new DatabaseConfig();
-//        dbConfig.setAllowCreate(true);
-//        Database classCatalogDB = bdbEnvironment.openDatabase(null, "classes", dbConfig);
-//        StoredClassCatalog classCatalog = new StoredClassCatalog(classCatalogDB);
-        
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
         dbConfig.setDeferredWrite(true);
         Database db = bdbEnvironment.openDatabase(null, "test", dbConfig);
         
         StoredSortedMap ssm = new StoredSortedMap(db, new StringBinding(), new StringBinding(), true);        
-        ssm.put("http://(com,ilovepauljack,www,", "foo");
-        for (int i = 0; i < 10; i++) {
-            ssm.put("http://" + Math.random(), "foo");
-        }
-        List<String> results = new ArrayList<String>();
-        PrefixFinder.find((SortedSet)ssm.keySet(), "http://", results);        
+        testUrlsNoMatch(ssm);   
+        db.close();
+        bdbEnvironment.close();
     }
 
+    @SuppressWarnings("unchecked")
+    private void testUrlsNoMatch(SortedMap sm) {
+        sm.put("http://(com,ilovepauljack,www,", "foo");
+        for (int i = 0; i < 10; i++) {
+            sm.put("http://" + Math.random(), "foo");
+        }
+        Set keys = sm.keySet(); 
+        if(!(keys instanceof SortedSet)) {
+            keys = new TreeSet(keys);
+        }
+        List<String> results = PrefixFinder.find((SortedSet)keys, "http://");
+        assertTrue(results.isEmpty());
+    }
 
-    
     private void doTest() {
         // Generate test data.
         SortedSet<String> testData = new TreeSet<String>();
@@ -132,8 +144,7 @@ public class PrefixFinderTest extends TmpDirTestCase {
         // Results go from longest to shortest.
         Collections.reverse(expected);
 
-        final List<String> result = new ArrayList<String>();
-        int count = PrefixFinder.find(testData, prefix, result);
+        final List<String> result = PrefixFinder.find(testData, prefix);
 
         if (!result.equals(expected)) {
             System.out.println("Expected: " + expected);
@@ -141,10 +152,6 @@ public class PrefixFinderTest extends TmpDirTestCase {
         }
         assertEquals(result, expected);
         
-        // I pulled "100" out of nowhere.  The point here is to make sure
-        // the algorithm isn't iterating over the entire map.
-        assertTrue("Operation count too high: " + count + " > 100", count < 100);
-
         // Double-check.
         for (String value: result) {
             if (!prefix.startsWith(value)) {
