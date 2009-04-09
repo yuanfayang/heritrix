@@ -25,7 +25,6 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.archive.spring.ConfigPath;
-import org.archive.spring.HasValidator;
 import org.archive.spring.PathSharingContext;
 import org.archive.spring.ReadSource;
 import org.springframework.beans.BeanWrapperImpl;
@@ -33,8 +32,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 /**
  * JobHome represents certain once-per-job information, such as job
@@ -43,7 +40,8 @@ import org.springframework.validation.Validator;
  * to use the job's base path. 
  * 
  * TODO: rename or merge with something else? it's become an central 
- * part of any spring-configured crawl
+ * part of any spring-configured crawl, but seems like functionality
+ * should live elsewhere.
  */
 public class JobHome implements ApplicationContextAware, BeanPostProcessor {
     
@@ -96,21 +94,9 @@ public class JobHome implements ApplicationContextAware, BeanPostProcessor {
     public Object postProcessAfterInitialization(Object bean, String beanName)
     throws BeansException {
         fixupPaths(bean, beanName);
-//        performValidation(bean,beanName); 
         return bean;
         
     }
-//    protected void performValidation(Object bean, String beanName) {
-//        if(bean instanceof HasValidator) {
-//            Validator v = ((HasValidator)bean).getValidator(); 
-//            v.validate(bean, getErrors());
-//        }
-//    }
-//    
-//    protected Errors getErrors() {
-//        // TODO Auto-generated method stub
-//        return null;
-//    }
     
     protected Object fixupPaths(Object bean, String beanName) {
         BeanWrapperImpl wrapper = new BeanWrapperImpl(bean);
@@ -150,29 +136,4 @@ public class JobHome implements ApplicationContextAware, BeanPostProcessor {
     throws BeansException {
         return bean;
     }
-    
-//    //// REMEMBER ACTUAL PATHS USED BY SYMBOLIC NAME (for UI & postcrawl access)
-//    public static final String PATHS_PROPERTIES_FILE = "paths.properties";
-//    Properties materializedPaths = new Properties();
-//    
-//    protected File remember(ConfigPath cp) {
-//        File materialized = cp.getFile();
-//        String key = cp.getName(); 
-//        if(key!=null && !materializedPaths.containsKey(key)) {
-//            String materializedPath = materialized.getAbsolutePath();
-//            if(materializedPath.startsWith(path.getFile().getAbsolutePath())) {
-//                // trim to relative
-//                materializedPath = materializedPath.substring(path.getFile().getAbsolutePath().length());
-//            }
-//            materializedPaths.put(key, materializedPath);
-//            try {
-//                FileUtils.storeProperties(
-//                        materializedPaths, new File(path.getFile(),PATHS_PROPERTIES_FILE));
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-//        return materialized;
-//    }
-
 }
