@@ -100,12 +100,12 @@ public class JobResource extends Resource {
         pw.println("<br/>");
         
         // configuration & launch 
-        pw.println("configuration: <a href='jobdir/" 
-                + cj.getPrimaryConfig().getName() + "'>" 
-                + cj.getPrimaryConfig() +"</a>");
-        pw.println("[<a href='jobdir/" 
-                + cj.getPrimaryConfig().getName() 
-                +  "?format=textedit'>edit</a>]");        
+        pw.println("configuration: ");
+        printLinkedIfInJobDirectory(pw, cj.getPrimaryConfig());
+        for(File f : cj.getImportedConfigs(cj.getPrimaryConfig())) {
+            pw.println("imported: ");
+            printLinkedIfInJobDirectory(pw,f);
+        }
         pw.println("<form method='POST'>");
         pw.println("<table width='450px'><tr><td style= 'vertical-align:top' width='150px'>");
         pw.print("<input style='width:100%' type='submit' name='action' value='prep' ");
@@ -215,26 +215,38 @@ public class JobResource extends Resource {
         pw.println("<dl>");
         for(ConfigPath cp : cj.getConfigPaths().values()) {
             pw.println("<dt>"+cp.getName()+"</dt>");
-            File f = cp.getFile();
-            String jobDirRelative = cj.jobDirRelativePath(f);
-            if(jobDirRelative==null) {
-                pw.println("<dd>"+f+"</dd>");
-            } else {
-                pw.println("<dd><a href='jobdir"+jobDirRelative+"'>");
-                pw.println(f);
-                pw.println("</a>");
-                if(EDIT_FILTER.accept(f)) {
-                    pw.print("[<a href='jobdir"+jobDirRelative+"?format=textedit'>");
-                    pw.println("edit</a>]");
-                }
-                pw.println("</dd>");
-            }
+            pw.println("<dd>");
+            printLinkedIfInJobDirectory(pw, cp.getFile());
+            pw.println("</dd>");
         }
         pw.println("</dl>");
         pw.println("<hr/>");
         pw.println("<form method='POST'>Copy job to <input name='copyTo'/><input type='submit'/><input type='checkbox' name='asProfile'/>as profile</form>");
         pw.println("<hr/>");
         pw.close();
+    }
+
+    /**
+     * Print the given File path, but only provide view/edit link if
+     * path is within job directory.
+     * 
+     * @param pw PrintWriter
+     * @param f File
+     */
+    protected void printLinkedIfInJobDirectory(PrintWriter pw, File f) {
+        String jobDirRelative = cj.jobDirRelativePath(f);
+        if(jobDirRelative==null) {
+            pw.println(f);
+            return;
+        }
+        pw.println("<a href='jobdir" 
+                + jobDirRelative + "'>" 
+                + f +"</a>");
+        if(EDIT_FILTER.accept(f)) {
+            pw.println("[<a href='jobdir" 
+                    + jobDirRelative 
+                    +  "?format=textedit'>edit</a>]<br/>");
+        }
     }
 
     protected EngineImpl getEngine() {
