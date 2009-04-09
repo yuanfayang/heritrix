@@ -1,38 +1,36 @@
-/* 
- * Copyright (C) 2007 Internet Archive.
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * PrefixFinder.java
- *
- * Created on Jun 26, 2007
- *
- * $Id:$
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.archive.settings.file;
 
+import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.SortedMap;
 import java.util.SortedSet;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.sleepycat.util.keyrange.KeyRangeException;
+import com.sleepycat.collections.StoredSortedKeySet;
+import com.sleepycat.collections.StoredSortedMap;
+import com.sleepycat.collections.StoredSortedValueSet;
 
 
 /**
@@ -52,55 +50,101 @@ public class PrefixFinder {
      * expression will be true: <tt>string.startsWith(element.getKey())</tt>.
      * 
      * @param set     the sorted set containing potential prefixes
-     * @param string  the string whose prefixes to find 
-     * @param result  the list of prefixes 
-     * @return   the number of times the set was consulted; 
-     *            used for unit testing
+     * @param input   the string whose prefixes to find 
+     * @return   the list of prefixes 
      */
-    public static int find(SortedSet<String> set, String input, List<String> result) {
-        // OK, the docs for SortedSet.headSet say that the str + '\0' idiom is best
-        // for including the target string in the returned set.  But, using \0
-        // causes StoredSortedSet to return the wrong thing -- the returned set will
-        // not just include the parameter string, but whatever element is next AFTER
-        // that string too.  :(  This appears to be because internal sleepycat code
-        // uses a \0 to delineate records, maybe?  I dunno, but using ASCII code 1
-        // instead of 0 makes the algorithm work as expected.
-        set = set.headSet(input + '\u0001');
+    public static List<String> find(SortedSet<String> set, String input) {
+        LinkedList<String> result = new LinkedList<String>();
+        set = headSetInclusive(set, input);
         int opCount = 0;
         for (String last = last(set); last != null; last = last(set)) {
             opCount++;
             if (input.startsWith(last)) {
-                result.add(last);
+                result.push(last);
+                set = set.headSet(last); 
             } else {
                 // Find the longest common prefix.
                 int p = StringUtils.indexOfDifference(input, last);
                 if (p <= 0) {
-                    return opCount;
+                    return result;
                 }
-                // Can't use a \0 to terminate, as that freaks out bdb
-                last = input.substring(0, p) + '\u0001';
+                last = input.substring(0, p);
+                set = headSetInclusive(set, last);
             }
-            try {
-                set = set.headSet(last);
-            } catch (KeyRangeException e) {
-                // StoredSortedSet incorrectly raises this instead of 
-                // returning an empty set from headSet.  This simply means
-                // there are no more elements to consider.
-                return opCount;
-            }
-            
         }
-        return opCount;
+        return result;
     }
 
     
-    private static String last(SortedSet<String> set) {
-        try {
-            return set.last();
-        } catch (NoSuchElementException e) {
-            return null;
+    @SuppressWarnings("unchecked")
+    protected static SortedSet<String> headSetInclusive(SortedSet<String> set, String input) {
+        // use NavigableSet inclusive version if available
+        if(set instanceof NavigableSet) {
+            return ((NavigableSet)set).headSet(input, true);
         }
-        
+        // use Stored*Set inclusive version if available
+        if(set instanceof StoredSortedKeySet) {
+            return ((StoredSortedKeySet)set).headSet(input, true);
+        }
+        if(set instanceof StoredSortedValueSet) {
+            return ((StoredSortedValueSet)set).headSet(input, true);
+        }
+        // Use synthetic "one above" trick
+        // NOTE: because '\0' sorts in the middle in "java modified UTF-8",
+        // used in the Stored* class StringBindings, this trick won't work
+        // there
+        return set.headSet(input+'\0');
     }
 
+
+    private static String last(SortedSet<String> set) {
+        return set.isEmpty() ? null : set.last();
+    }
+
+
+    public static List<String> findKeys(SortedMap<String,?> map, String input) {
+        LinkedList<String> result = new LinkedList<String>();
+        map = headMapInclusive(map, input);
+        int opCount = 0;
+        for (String last = last(map); last != null; last = last(map)) {
+            opCount++;
+            if (input.startsWith(last)) {
+                result.push(last);
+                map = map.headMap(last); 
+            } else {
+                // Find the longest common prefix.
+                int p = StringUtils.indexOfDifference(input, last);
+                if (p <= 0) {
+                    return result;
+                }
+                last = input.substring(0, p);
+                map = headMapInclusive(map, last);
+            }
+        }
+        return result;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private static SortedMap<String, ?> headMapInclusive(SortedMap<String, ?> map, String input) {
+        // use NavigableMap inclusive version if available
+        if(map instanceof NavigableMap) {
+            return ((NavigableMap)map).headMap(input, true);
+        }
+        // use StoredSortedMap inclusive version if available
+        if(map instanceof StoredSortedMap) {
+            return ((StoredSortedMap)map).headMap(input, true);
+        }
+        // Use synthetic "one above" trick
+        // NOTE: because '\0' sorts in the middle in "java modified UTF-8",
+        // used in the Stored* class StringBindings, this trick won't work
+        // there
+        return map.headMap(input+'\0');
+    }
+
+
+    private static String last(SortedMap<String,?> map) {
+        // TODO Auto-generated method stub
+        return map.isEmpty() ? null : map.lastKey();
+    }
 }

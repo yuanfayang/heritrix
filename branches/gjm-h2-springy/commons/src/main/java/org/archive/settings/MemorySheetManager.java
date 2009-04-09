@@ -253,8 +253,7 @@ public class MemorySheetManager extends SheetManager {
     @Override
     public List<Association> findConfigNames(String uri) {
         final List<Association> result = new ArrayList<Association>();
-        List<String> prefixes = new ArrayList<String>();
-        PrefixFinder.find((SortedSet<String>)associations.keySet(), uri, prefixes);
+        List<String> prefixes = PrefixFinder.find((SortedSet<String>)associations.keySet(), uri);
         for (String prefix: prefixes) {
             Set<Sheet> sheets = associations.get(prefix);
             for (Sheet sheet: sheets) {
@@ -268,9 +267,8 @@ public class MemorySheetManager extends SheetManager {
     @Override
     public Sheet findConfig(String context) {
         final List<Sheet> result = new ArrayList<Sheet>();
-        List<String> prefixes = new ArrayList<String>();
         TreeSet<String> k = new TreeSet<String>(associations.keySet());
-        PrefixFinder.find(k, context, prefixes);
+        List<String> prefixes = PrefixFinder.find(k, context);
         for (String prefix: prefixes) {
             Set<Sheet> sheets = associations.get(prefix);
             for (Sheet sheet: sheets) {
