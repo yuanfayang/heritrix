@@ -22,12 +22,14 @@ package org.archive.spring;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.Lifecycle;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
@@ -144,6 +146,42 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         }
         return beans;
     }
+    
+    // override to avoid lifecycle loops via AbstractApplicationContext's 
+    // problematic doStop()
+    @SuppressWarnings("unchecked")
+    protected void doClose() {
+        if (isActive()) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Closing " + this);
+            }
+            try {
+                // Publish shutdown event.
+                publishEvent(new ContextClosedEvent(this));
+            }
+            catch (Throwable ex) {
+                logger.error("Exception thrown from ApplicationListener handling ContextClosedEvent", ex);
+            }
+            // Stop all Lifecycle beans, to avoid delays during individual destruction.
+            Map lifecycleBeans = getLifecycleBeans();
+            for (Iterator it = new LinkedHashSet(lifecycleBeans.keySet()).iterator(); it.hasNext();) {
+                String beanName = (String) it.next();
+                doStop(lifecycleBeans, beanName);
+            }
+            // Destroy all cached singletons in the context's BeanFactory.
+            destroyBeans();
+            // Close the state of this context itself.
+            closeBeanFactory();
+            onClose();
+            // because these are private to superclass...
+//            synchronized (this.activeMonitor) {
+//                this.active = false;
+//            }
+            // ... fake it with this eqivalent method...
+            cancelRefresh(null); 
+        }
+    }
+    
 
     //
     // Cascading self-validation
