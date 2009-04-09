@@ -37,6 +37,7 @@ import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Cookie;
@@ -156,9 +157,9 @@ public abstract class AbstractCookieStorage
                 }
             }
         } catch (FileNotFoundException e) {
-            System.out.println("Could not find file: " + cookiesFile);
+            LOGGER.log(Level.WARNING,"Could not find file: " + cookiesFile, e);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING,e.getMessage(), e);
         } finally {
             IoUtils.close(raf);
         }
