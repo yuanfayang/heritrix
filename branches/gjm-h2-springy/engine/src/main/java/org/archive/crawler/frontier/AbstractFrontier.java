@@ -1,27 +1,22 @@
-/* AbstractFrontier
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * $Id$
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Created on Aug 17, 2004
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2004 Internet Archive.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.crawler.frontier;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FETCH_COMPLETED_TIME;
@@ -93,6 +88,7 @@ import org.archive.settings.SheetManager;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
+import org.archive.spring.SheetOverridesManager;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.iterator.LineReadingIterator;
@@ -144,6 +140,15 @@ public abstract class AbstractFrontier
         this.controller = controller;
     }
     
+    protected SheetOverridesManager sheetOverridesManager;
+    public SheetOverridesManager getSheetOverridesManager() {
+        return sheetOverridesManager;
+    }
+    @Autowired
+    public void setSheetOverridesManager(SheetOverridesManager sheetOverridesManager) {
+        this.sheetOverridesManager = sheetOverridesManager;
+    }
+    
     protected CrawlerLoggerModule loggerModule;
     public CrawlerLoggerModule getLoggerModule() {
         return this.loggerModule;
@@ -181,7 +186,7 @@ public abstract class AbstractFrontier
         return this.scope;
     }
     @Autowired
-    public void setDecideRule(DecideRule scope) {
+    public void setScope(DecideRule scope) {
         this.scope = scope;
     }
         
@@ -738,8 +743,9 @@ public abstract class AbstractFrontier
      *
      * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CrawlURI)
      */
-    public void schedule(CrawlURI caUri) {
-        enqueueOrDo(new ScheduleIfUnique(caUri));
+    public void schedule(CrawlURI curi) {
+        applyOverridesTo(curi);
+        enqueueOrDo(new ScheduleIfUnique(curi));
     }
 
     /**
@@ -751,9 +757,10 @@ public abstract class AbstractFrontier
      * queue on the readyClassQueues queue. 
      * @param caUri CrawlURI.
      */
-    public void receive(CrawlURI caUri) {
+    public void receive(CrawlURI curi) {
+        applyOverridesTo(curi);
         // prefer doing asap if already in manager thread
-        doOrEnqueue(new ScheduleAlways(caUri));
+        doOrEnqueue(new ScheduleAlways(curi));
     }
     
     /**
@@ -1006,7 +1013,6 @@ public abstract class AbstractFrontier
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
             CrawlURI caUri = new CrawlURI(u);
-            caUri.setStateProvider(manager);
             caUri.setSeed(true);
             caUri.setSchedulingDirective(SchedulingConstants.MEDIUM);
             if (getSourceTagSeeds()) {
@@ -1054,13 +1060,11 @@ public abstract class AbstractFrontier
         }
     }
 
-    protected CrawlURI asCrawlUri(CrawlURI curi) {
+    protected void prepForFrontier(CrawlURI curi) {
         if (curi.getOrdinal() == 0) {
             curi.setOrdinal(nextOrdinal.getAndIncrement());
         }
         curi.setClassKey(getClassKey(curi));
-        curi.setStateProvider(manager);
-        return curi;
     }
 
     /**
@@ -1437,12 +1441,14 @@ public abstract class AbstractFrontier
      * @param cauri CrawlURI we're to get a key for.
      * @return a String token representing a queue
      */
-    public String getClassKey(CrawlURI cauri) {
+    public String getClassKey(CrawlURI curi) {
+        assert KeyedProperties.overridesActiveFrom(curi); 
+        
         String queueKey = getForceQueueAssignment();
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
             //TODO:SPRINGY set overrides based on cauri?
-            queueKey = getQueueAssignmentPolicy().getClassKey(cauri);
+            queueKey = getQueueAssignmentPolicy().getClassKey(curi);
         }
         return queueKey;
     }
@@ -1578,12 +1584,17 @@ public abstract class AbstractFrontier
      * whether the CrawlURI was already-seen. 
      */
     public class ScheduleAlways extends InEvent {
-        CrawlURI caUri;
+        CrawlURI curi;
         public ScheduleAlways(CrawlURI c) {
-            this.caUri = c;
+            this.curi = c;
         }
         public void process() {
-            processScheduleAlways(caUri);
+            try {
+                KeyedProperties.loadOverridesFrom(curi);
+                processScheduleAlways(curi);
+            } finally {
+                KeyedProperties.clearOverridesFrom(curi); 
+            }
         } 
     }
     
@@ -1592,12 +1603,17 @@ public abstract class AbstractFrontier
      * already-seen. (That is, if it passes the UriUniqFilter.)
      */
     public class ScheduleIfUnique extends InEvent {
-        CrawlURI caUri;
+        CrawlURI curi;
         public ScheduleIfUnique(CrawlURI c) {
-            this.caUri = c;
+            this.curi = c;
         }
         public void process() {
-            processScheduleIfUnique(caUri);
+            try {
+                KeyedProperties.loadOverridesFrom(curi);
+                processScheduleIfUnique(curi);
+            } finally {
+                KeyedProperties.clearOverridesFrom(curi); 
+            }
         }   
     }
     
@@ -1611,7 +1627,12 @@ public abstract class AbstractFrontier
             this.caUri = c;
         }
         public void process() {
-            processFinish(caUri);
+            try {
+                KeyedProperties.loadOverridesFrom(caUri);
+                processFinish(caUri);
+            } finally {
+                KeyedProperties.clearOverridesFrom(caUri); 
+            }
         }   
     }
     
@@ -1637,5 +1658,11 @@ public abstract class AbstractFrontier
         }
     }
     
-    
+    @SuppressWarnings("unchecked")
+    protected void applyOverridesTo(CrawlURI curi) {
+        curi.setOverrideMapsSource(sheetOverridesManager); 
+        if(!curi.haveOverrideNamesBeenSet()) {
+            sheetOverridesManager.applyOverrides(curi);
+        }
+    }
 }

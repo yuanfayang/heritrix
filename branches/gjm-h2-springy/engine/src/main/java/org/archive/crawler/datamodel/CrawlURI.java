@@ -74,6 +74,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -94,8 +95,8 @@ import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.settings.SheetManager;
-import org.archive.state.StateProvider;
+import org.archive.spring.OverrideContext;
+import org.archive.spring.OverrideMapsSource;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
@@ -114,7 +115,7 @@ import org.archive.util.Reporter;
  *
  * @author Gordon Mohr
  */
-public class CrawlURI implements ProcessorURI, Reporter, Serializable {
+public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverrideContext{
 
     private static final long serialVersionUID = 3L;
 
@@ -219,8 +220,8 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     transient Map<String,Object> data;
 
     
-    private transient SheetManager manager;
-    private transient StateProvider provider;
+//    private transient SheetManager manager;
+//    private transient StateProvider provider;
 
 
     private boolean forceRevisit = false; // even if already visited
@@ -1547,18 +1548,18 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
     }
 
     
-    public void setStateProvider(SheetManager manager) {
-        if(this.provider!=null) {
-            return;
-        }
-        this.manager = manager;
-//        this.provider = manager.findConfig(SURT.fromURI(toString()));
-    }
-    
-    
-    public StateProvider getStateProvider() {
-        return provider;
-    }
+//    public void setStateProvider(SheetManager manager) {
+//        if(this.provider!=null) {
+//            return;
+//        }
+//        this.manager = manager;
+////        this.provider = manager.findConfig(SURT.fromURI(toString()));
+//    }
+//    
+//    
+//    public StateProvider getStateProvider() {
+//        return provider;
+//    }
 
     
 //    public <T> T get(Object module, Key<T> key) {
@@ -1784,7 +1785,7 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
                 getPathFromSeed() + link.getHopType().getHopChar(),
                 getUURI(), link.getContext());
         newCaURI.inheritFrom(this);
-        newCaURI.setStateProvider(manager);
+//        newCaURI.setStateProvider(manager);
         return newCaURI;
     }
 
@@ -1833,5 +1834,31 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable {
      */
     public void setPrecedence(int precedence) {
         this.precedence = precedence;
+    }
+    
+    
+    //
+    // OverridesSource implementation
+    //
+    protected LinkedList<String> overrideNames = null;
+    transient protected OverrideMapsSource overrideMapsSource; 
+    public boolean haveOverrideNamesBeenSet() {
+        return overrideNames != null;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public LinkedList<String> getOverrideNames() {
+        if(overrideNames == null) {
+            overrideNames = new LinkedList<String>(); 
+        }
+        return overrideNames;
+    }
+
+    public Map<String, Object> getOverrideMap(String name) {
+        return overrideMapsSource.getOverrideMap(name);
+    }
+
+    public void setOverrideMapsSource(OverrideMapsSource overrideMapsSource) {
+        this.overrideMapsSource = overrideMapsSource;
     }
 }
