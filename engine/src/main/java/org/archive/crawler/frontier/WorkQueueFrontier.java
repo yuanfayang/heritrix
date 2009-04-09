@@ -1,25 +1,22 @@
-/* $Id$
- * Created on Sep 24, 2004
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- *  Copyright (C) 2004 Internet Archive.
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
-  */
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.archive.crawler.frontier;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIRE;
@@ -62,7 +59,7 @@ import org.archive.crawler.frontier.precedence.UriPrecedencePolicy;
 import org.archive.net.UURI;
 import org.archive.settings.KeyChangeEvent;
 import org.archive.settings.KeyChangeListener;
-import org.archive.state.StateProvider;
+import org.archive.spring.KeyedProperties;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Transform;
 import org.archive.util.Transformer;
@@ -330,13 +327,13 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * queue on the readyClassQueues queue. 
      * @param caUri CrawlURI.
      */
-    protected void processScheduleAlways(CrawlURI caUri) {
+    protected void processScheduleAlways(CrawlURI curi) {
         assert Thread.currentThread() == managerThread;
+        assert KeyedProperties.overridesActiveFrom(curi); 
         
-        CrawlURI curi = asCrawlUri(caUri);
+        prepForFrontier(curi);
         applySpecialHandling(curi);
         sendToQueue(curi);
-
     }
     
     /**
@@ -345,31 +342,30 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      *
      * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CrawlURI)
      */
-    protected void processScheduleIfUnique(CrawlURI caUri) {
+    protected void processScheduleIfUnique(CrawlURI curi) {
         assert Thread.currentThread() == managerThread;
+        assert KeyedProperties.overridesActiveFrom(curi); 
         
         // Canonicalization may set forceFetch flag.  See
         // #canonicalization(CrawlURI) javadoc for circumstance.
-        caUri.setStateProvider(manager);
-        String canon = canonicalize(caUri);
-        if (caUri.forceFetch()) {
-            uriUniqFilter.addForce(canon, caUri);
+        String canon = canonicalize(curi);
+        if (curi.forceFetch()) {
+            uriUniqFilter.addForce(canon, curi);
         } else {
-            uriUniqFilter.add(canon, caUri);
+            uriUniqFilter.add(canon, curi);
         }
     }
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.frontier.AbstractFrontier#asCrawlUri(org.archive.crawler.datamodel.CrawlURI)
 	 */
-	protected CrawlURI asCrawlUri(CrawlURI caUri) {
-		CrawlURI curi = super.asCrawlUri(caUri);
+	protected void prepForFrontier(CrawlURI caUri) {
+		super.prepForFrontier(caUri);
 		// force cost to be calculated, pre-insert
-		getCost(curi);
+		getCost(caUri);
         // set
         // TODO:SPRINGY set overrides by curi? 
-        getUriPrecedencePolicy().uriScheduled(curi);
-		return curi;
+        getUriPrecedencePolicy().uriScheduled(caUri);
 	}
 	
     /**
@@ -662,10 +658,16 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                         break returnauri;
                     }
                     
-                    curi.setStateProvider(manager);
-                    
+                    // from queues, override names persist but not map source
+                    curi.setOverrideMapsSource(sheetOverridesManager);
                     // check if curi belongs in different queue
-                    String currentQueueKey = getClassKey(curi);
+                    String currentQueueKey;
+                    try {
+                        KeyedProperties.loadOverridesFrom(curi);
+                        currentQueueKey = getClassKey(curi);
+                    } finally {
+                        KeyedProperties.clearOverridesFrom(curi); 
+                    }
                     if (currentQueueKey.equals(curi.getClassKey())) {
                         // curi was in right queue, emit
                         noteAboutToEmit(curi, readyQ);
@@ -716,6 +718,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      * @return the associated cost
      */
     private int getCost(CrawlURI curi) {
+        assert KeyedProperties.overridesActiveFrom(curi);
+        
         int cost = curi.getHolderCost();
         if (cost == CrawlURI.UNCALCULATED) {
             //TODO:SPRINGY push overrides by curi
@@ -838,21 +842,25 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             return;
         }
         // TODO: consider confusing cross-effects of this and IP-based politeness
-        StateProvider p = contextUri.getStateProvider();
-        if (p == null) {
-            contextUri.setStateProvider(manager);
+
+        contextUri.setOverrideMapsSource(sheetOverridesManager);
+        try {
+            // TODO:SPRINGY set override
+            KeyedProperties.loadOverridesFrom(contextUri);
+  
+            //queue.setSessionBalance(contextUri.get(this, BALANCE_REPLENISH_AMOUNT));
+            queue.setSessionBalance(getBalanceReplenishAmount());
+            
+            // reset total budget (it may have changed)
+            // TODO: is this the best way to be sensitive to potential mid-crawl changes
+            // TODO:SPRINGY set override
+            //long totalBudget = contextUri.get(this, QUEUE_TOTAL_BUDGET);
+            long totalBudget = getQueueTotalBudget();
+            queue.setTotalBudget(totalBudget);
+            queue.unpeek(contextUri); // don't insist on that URI being next released
+        } finally {
+            KeyedProperties.clearOverridesFrom(contextUri); 
         }
-        // TODO:SPRINGY set override
-        //queue.setSessionBalance(contextUri.get(this, BALANCE_REPLENISH_AMOUNT));
-        queue.setSessionBalance(getBalanceReplenishAmount());
-        
-        // reset total budget (it may have changed)
-        // TODO: is this the best way to be sensitive to potential mid-crawl changes
-        // TODO:SPRINGY set override
-        //long totalBudget = contextUri.get(this, QUEUE_TOTAL_BUDGET);
-        long totalBudget = getQueueTotalBudget();
-        queue.setTotalBudget(totalBudget);
-        queue.unpeek(contextUri); // don't insist on that URI being next released
     }
 
     /**
@@ -992,8 +1000,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             }
             incrementFailedFetchCount();
             // let queue note error
-            curi.setStateProvider(manager);
             //TODO:SPRINGY set overrides by curi or wq?
+            assert KeyedProperties.overridesActiveFrom(curi);
+            
             wq.noteError(getErrorPenaltyAmount());
             doJournalFinishedFailure(curi);
             wq.expend(getCost(curi)); // failures cost
@@ -1477,9 +1486,15 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     public void considerIncluded(UURI u) {
         this.uriUniqFilter.note(canonicalize(u));
         CrawlURI temp = new CrawlURI(u);
-        temp.setStateProvider(manager);
-        temp.setClassKey(getClassKey(temp));
-        getQueueFor(temp).expend(getCost(temp));
+        applyOverridesTo(temp);
+        try {
+            KeyedProperties.loadOverridesFrom(temp);
+            temp.setClassKey(getClassKey(temp));
+            getQueueFor(temp).expend(getCost(temp));
+        } finally {
+            KeyedProperties.clearOverridesFrom(temp); 
+        }
+        
     }
     
     protected abstract void closeQueue() throws IOException;
