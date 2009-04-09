@@ -25,6 +25,7 @@ import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -37,7 +38,9 @@ import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -53,6 +56,9 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.validation.Errors;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * CrawlJob represents a crawl configuration, including its 
@@ -167,9 +173,9 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         return primaryConfig.getName().startsWith("profile-");
     }
 
-//
-//
-//
+    //
+    // writing a basic HTML representation
+    //
 
     public void writeHtmlTo(PrintWriter pw) {
         writeHtmlTo(pw,"./");
@@ -190,33 +196,58 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         pw.println("</span>");
     }
 
-    //
-    // Is the primary XML config minimally well-formed? 
-    //
-
+    /**
+     * Is the primary XML config minimally well-formed? 
+     */
     public void checkXML() {
         // TODO: suppress check if XML unchanged? job.log when XML changed? 
+
+        DateTime testTime = new DateTime(getPrimaryConfig().lastModified());
+        Document doc = getDomDocument(getPrimaryConfig());
+        // TODO: check for other minimal requirements, like
+        // presence of a few key components (CrawlController etc.)? 
+        if(doc!=null) {
+            xmlOkAt = testTime; 
+        } else {
+            xmlOkAt = new DateTime(0L);
+        }
+
+    }
+
+    /**
+     * Read a file to a DOM Document; return null if this isn't possible
+     * for any reason.
+     * 
+     * @param f File of XML
+     * @return org.w3c.dom.Document or null if problems encountered
+     */
+    protected Document getDomDocument(File f) {
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            DateTime testTime = new DateTime(getPrimaryConfig().lastModified());
-            docBuilder.parse(getPrimaryConfig());
-            // TODO: check for other minimal requirements, like
-            // presence of a few key components (CrawlController etc.)? 
-            xmlOkAt = testTime; 
-        } catch (Exception e) {
-            xmlOkAt = new DateTime(0L);
+            return docBuilder.parse(f);
+        } catch (ParserConfigurationException e) {
+            return null; 
+        } catch (SAXException e) {
+            return null; 
+        } catch (IOException e) {
+            return null; 
         }
     }
     
+    /**
+     * Is the primary config file legal XML?
+     * 
+     * @return true if the primary configuration file passed XML testing
+     */
     public boolean isXmlOk() {
         return xmlOkAt.getMillis() >= getPrimaryConfig().lastModified();
     }
     
-    //
-    // Can the configuration yield an assembled ApplicationContext? 
-    //
     
+    /**
+     * Can the configuration yield an assembled ApplicationContext? 
+     */
     public void instantiateContainer() {
         checkXML(); 
         if(ac==null) {
@@ -227,9 +258,9 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
                 getCrawlController(); // trigger NoSuchBeanDefinitionException if no CC
                 getJobLogger().log(Level.INFO,"Job instantiated");
             } catch (BeansException be) {
-                if(ac!=null) {
-                    ac.close();
-                }
+//                if(ac!=null) {
+//                    ac.close();
+//                }
                 ac = null; 
                 beansException(be);
             }
@@ -285,13 +316,18 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         return ac!=null;
     }
     
-    //
-    // Does the assembled ApplicationContext self-validate? 
-    //
-    
+    /**
+     * Does the assembled ApplicationContext self-validate? Any failures
+     * are reported as WARNING log events in the job log. 
+     * 
+     * TODO: make these severe? 
+     */
     public void validateConfiguration() {
         instantiateContainer();
-        // TODO: collect, report errors
+        if(ac==null) {
+            // fatal errors already encountered and reported
+            return; 
+        }
         ac.validate();
         HashMap<String,Errors> allErrors = ac.getAllErrors();
         for(String name : allErrors.keySet()) {
@@ -301,6 +337,10 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         }
     }
 
+    /**
+     * Ddid the ApplicationContext self-validate? 
+     * return true if validation passed without errors
+     */
     public boolean isContainerValidated() {
         if(ac==null) {
             return false;
@@ -348,7 +388,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         // logging/alerting
         Thread launcher = new Thread(new AlertThreadGroup(getShortName()), getShortName()) {
             public void run() {
-                ac.start();
+                startContext();
             }
         };
         launcher.start();
@@ -359,11 +399,33 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
             // do nothing
         }
         
+        if(ac==null) {
+            // unlaunchable
+            return; 
+        }
         getCrawlController().requestCrawlStart();
         getJobLogger().log(Level.INFO,"Job launched");
         scanJobLog();
     }
+    
+    /**
+     * Start the context, catching and reporting any BeansExceptions.
+     */
+    protected void startContext() {
+        try {
+            ac.start(); 
+        } catch (BeansException be) {
+            ac.close();
+            ac = null; 
+            beansException(be);
+        }
+    }
 
+    /** 
+     * Sort for reverse-chronological listing.
+     * 
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
     public int compareTo(CrawlJob o) {
         // prefer reverse-chronological ordering
         return -((Long)getLastActivityTime()).compareTo(o.getLastActivityTime());
@@ -438,6 +500,37 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         }
     }
 
+    /**
+     * Return all config files included via 'import' statements in the
+     * primary config (or other included configs). 
+     * 
+     * @param xml File to examine
+     * @return List<File> of all transitively-imported Files
+     */
+    @SuppressWarnings("unchecked")
+    public List<File> getImportedConfigs(File xml) {
+        List<File> imports = new LinkedList<File>(); 
+        Document doc = getDomDocument(xml);
+        if(doc==null) {
+            return ListUtils.EMPTY_LIST;
+        }
+        NodeList importElements = doc.getElementsByTagName("import");
+        for(int i = 0; i < importElements.getLength(); i++) {
+            File imported = new File(
+                    getJobDir(),
+                    importElements.item(i).getAttributes().getNamedItem("resource").getTextContent());
+            imports.add(imported);
+            imports.addAll(getImportedConfigs(imported));
+        }
+        return imports; 
+    }
+    
+    /**
+     * Return all known ConfigPaths, as an aid to viewing or editting. 
+     * 
+     * @return all ConfigPaths known to the ApplicationContext, in a 
+     * map by name, or an empty map if no ApplicationContext
+     */
     @SuppressWarnings("unchecked")
     public Map<String, ConfigPath> getConfigPaths() {
         if(!isContainerOk()) {
@@ -451,6 +544,14 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         return jh.getPaths();        
     }
 
+    /**
+     * Compute a path relative to the job directory for all contained 
+     * files, or null if the File is not inside the job directory. 
+     * 
+     * @param f File
+     * @return path relative to the job directory, or null if File not 
+     * inside job dir
+     */
     public String jobDirRelativePath(File f) {
         try {
             String filePath = f.getCanonicalPath();
@@ -464,12 +565,21 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         return null; 
     }
 
+    /** 
+     * Log note of all ApplicationEvents.
+     * 
+     * @see org.springframework.context.ApplicationListener#onApplicationEvent(org.springframework.context.ApplicationEvent)
+     */
     public void onApplicationEvent(ApplicationEvent event) {
         if(event instanceof CrawlStateEvent) {
             getJobLogger().log(Level.INFO, ((CrawlStateEvent)event).getState().toString());
         }
     }
 
+    /**
+     * Is this launchable? (Has CrawlController and not yet been launched?)
+     * @return true if launchable
+     */
     public boolean isLaunchable() {
         CrawlControllerImpl cc = getCrawlController();
         if(cc==null) {
@@ -477,4 +587,6 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         }
         return !cc.hasStarted();
     }
+
+
 }
