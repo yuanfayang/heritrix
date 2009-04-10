@@ -33,8 +33,6 @@ import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
-import javax.management.Notification;
-
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.crawler.event.CrawlURIDispositionListener;
@@ -43,7 +41,6 @@ import org.archive.modules.Processor;
 import org.archive.modules.ProcessorChain;
 import org.archive.modules.net.ServerCache;
 import org.archive.openmbeans.annotations.Bean;
-import org.archive.openmbeans.annotations.Emitter;
 import org.archive.settings.JobHome;
 import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
@@ -1059,14 +1056,6 @@ public class CrawlControllerImpl extends Bean implements
      */
     public Object getState() {
         return this.state;
-    }
-    
-    @Emitter(desc="Emitted when the crawl status changes (eg, when a crawl "
-        + " goes from CRAWLING to ENDED)",         
-        types={ "PAUSED", "RUNNING", "PAUSING", "STARTED", "STOPPING", 
-            "FINISHED", "PREPARED" })
-    void emit(Notification n) {
-        sendNotification(n);
     }
 
     public String getCrawlStatusString() {
