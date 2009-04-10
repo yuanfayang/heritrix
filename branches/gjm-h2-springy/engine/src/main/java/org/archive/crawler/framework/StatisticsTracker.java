@@ -123,6 +123,12 @@ public interface StatisticsTracker extends Runnable {
                 "duplicate-reduction policies.")
     public long totalBytesCrawled();    
     
+    /**
+     * Returns a text summary of bytes crawled. 
+     * 
+     * @return String text summary of bytes crawled
+     */
+    public String crawledBytesSummary() ;
     
     /**
      * Total amount of time spent actively crawling so far.<p>
