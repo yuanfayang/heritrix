@@ -76,10 +76,16 @@ public class EngineResource extends Resource {
         pw.println("<base href='"+baseRef+"'/>");
         pw.println("</head><body>");
         pw.println("<h1>"+engineTitle+"</h1>"); 
+        
+        pw.println("<b>Memory: </b>");
+        pw.println(engine.heapReport());
+        
         pw.println("<h2>Browse <a href='jobsdir'>Jobs Directory</a></h2>");
-        pw.println("<h2>Job Configs</h2>");
+        
         ArrayList<CrawlJob> jobs = new ArrayList<CrawlJob>();
         jobs.addAll(engine.getJobConfigs().values());
+         
+        pw.println("<h2>Job Configs ("+jobs.size()+")</h2>");
         Collections.sort(jobs);
         for(CrawlJob cj: jobs) {
             pw.println("<li>");

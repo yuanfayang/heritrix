@@ -32,6 +32,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.EngineImpl;
 import org.archive.spring.ConfigPath;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.restlet.Context;
 import org.restlet.data.CharacterSet;
@@ -91,60 +92,90 @@ public class JobResource extends Resource {
         pw.println("<head><title>"+jobTitle+"</title>");
         pw.println("<base href='"+baseRef+"'/>");
         pw.println("</head><body>");
-        pw.println("<h1>Job: <i>"+cj.getShortName()+"</i></h1>");
+        pw.println("<h1>Job <i>"+cj.getShortName()+"</i> (");
         
-        pw.println(cj.getLaunchCount() + " launches ");
+        pw.println(cj.getLaunchCount() + " launches, ");
         if(cj.getLastLaunch()!=null) {
-            pw.println("(last at "+cj.getLastLaunch()+")");
+            long ago = System.currentTimeMillis() - cj.getLastLaunch().getMillis();
+            pw.println("last "+ArchiveUtils.formatMillisecondsToConventional(ago, 2)+" ago)");
         }
-        pw.println("<br/>");
+        pw.println("</h1>");
         
-        // configuration & launch 
-        pw.println("configuration: ");
-        printLinkedIfInJobDirectory(pw, cj.getPrimaryConfig());
-        for(File f : cj.getImportedConfigs(cj.getPrimaryConfig())) {
-            pw.println("imported: ");
-            printLinkedIfInJobDirectory(pw,f);
-        }
+        
+        // button controls
         pw.println("<form method='POST'>");
-        pw.println("<table width='450px'><tr><td style= 'vertical-align:top' width='150px'>");
-        pw.print("<input style='width:100%' type='submit' name='action' value='prep' ");
-        pw.print(cj.isContainerValidated()?"disabled='disabled' title='prep job'":"");
-        pw.println("/><br/>");
-        if(cj.isXmlOk()) {
-            pw.println("cxml ok<br/>");
-            if(cj.isContainerOk()) {
-                pw.println("container ok<br/>");
-                if(cj.isContainerValidated()) {
-                    pw.println("config valid<br/>");
-                } else {
-                    pw.println("CONFIG INVALID<br/>");
-                }
-            } else {
-                pw.println("CONTAINER BAD<br/>");
-            }
-        }else {
-            // pw.println("XML NOT WELL-FORMED<br/>");
-        }
-        pw.println("</td><td style= \'vertical-align:top\' width='150px'>");
-        pw.print("<input style=\'width:100%\' type='submit' name='action' value='launch'");
+        // PREP, LAUNCH
+        pw.print("<input style='width:6em' type='submit' name='action' value='build' ");
+        pw.print(cj.isContainerValidated()?"disabled='disabled' title='build job'":"");
+        pw.println("/>");
+        pw.print("<input style='width:6em' type='submit' name='action' value='launch'");
         if(cj.isProfile()) {
             pw.print("disabled='disabled' title='profiles cannot be launched'");
         }
         if(!cj.isLaunchable()) {
             pw.print("disabled='disabled' title='launched OK'");
         }
-        pw.println("/>");
-
-        pw.println("</td><td style= \'vertical-align:top\' width='150px'>");
-        pw.print("<input style=\'width:100%\' type='submit' name='action' value='discard' ");
-        pw.print(cj.isContainerOk()?"":"disabled='disabled' title='no instance'");
-        pw.println("/>");
-
-        pw.println("</td></tr></table></form>");
+        pw.println("/> - ");
         
-        pw.println("<hr/>");
-        pw.println("<h2>Job Log</h2>");
+        // PAUSE, UNPAUSE, CHECKPOINT
+        pw.println("<input  style=\'width:6em\'");
+        if(!cj.isPausable()) {
+            pw.println(" disabled ");
+        }
+        pw.println(" type='submit' name='action' value='pause'/>");
+        pw.println("<input style=\'width:6em\'");
+        if(!cj.isUnpausable()) {
+            pw.println(" disabled ");
+        }
+        pw.println(" type='submit' name='action' value='unpause'/>");
+        pw.println("<input style='width:6em'");
+        if(true /*!cj.isUnpausable()*/) { // TODO: not yet implemented
+            pw.println(" disabled ");
+        }
+        pw.println(" type='submit' name='action' value='checkpoint'/> - ");
+
+        
+        // TERMINATE, RESET
+        pw.println("<input style='width:6em' ");
+        if(!cj.isRunning()) {
+            pw.println(" disabled ");
+        }
+        pw.println(" type='submit' name='action' value='terminate'/>");
+        pw.println("<input style='width:6em' type='submit' name='action' value='discard' ");
+        pw.print(cj.isContainerOk()?"":"disabled='disabled' title='no instance'");
+        pw.println("/><br/>");
+
+        pw.println("</form>");
+        
+        // configuration 
+        pw.println("configuration: ");
+        printLinkedIfInJobDirectory(pw, cj.getPrimaryConfig());
+        for(File f : cj.getImportedConfigs(cj.getPrimaryConfig())) {
+            pw.println("imported: ");
+            printLinkedIfInJobDirectory(pw,f);
+        }
+        
+//        if(cj.isXmlOk()) {
+//            pw.println("cxml ok<br/>");
+//            if(cj.isContainerOk()) {
+//                pw.println("container ok<br/>");
+//                if(cj.isContainerValidated()) {
+//                    pw.println("config valid<br/>");
+//                } else {
+//                    pw.println("CONFIG INVALID<br/>");
+//                }
+//            } else {
+//                pw.println("CONTAINER BAD<br/>");
+//            }
+//        }else {
+//            // pw.println("XML NOT WELL-FORMED<br/>");
+//        }
+
+        pw.println("<h2>Job Log ");
+        pw.println("(<a href='jobdir/"
+                +cj.getJobLog().getName()
+                +"?format=paged&pos=-1&lines=-128&reverse=y'><i>more</i></a>)");
+        pw.println("</h2>");
         pw.println("<div style='font-family:monospace; white-space:pre-wrap; white-space:normal; text-indent:-10px; padding-left:10px;'>");
         if(cj.getJobLog().exists()) {
             try {
@@ -161,31 +192,54 @@ public class JobResource extends Resource {
             }
         }
         pw.println("</div>");
-        pw.println("<a href='jobdir/"
-                +cj.getJobLog().getName()
-                +"?format=paged&pos=-1&lines=-128&reverse=y'>more job log...</a>");
-        pw.println("<hr/>");
-        pw.println("<h2>Active Job</h2>");
-
-        pw.println("<br style='clear:both'/>");
+        
+       
         if(cj.isRunning()) {
-            pw.println("<h3>"+cj.getCrawlController().getState()+"</h3>");
-            pw.println("<form method='POST'>");
-            pw.println("<input ");
-            if(!cj.isPausable()) {
-                pw.println(" disabled ");
+            pw.println("<h2>Active Job: "+cj.getCrawlController().getState()+"</h2>");
+        } else {
+            pw.println("<h2>Idle Job</h2>");
+        }
+
+        if(cj.isRunning()) {
+            pw.println("<b>Totals</b><br/>&nbsp;&nbsp;");
+            pw.println(cj.uriTotalsReport());
+            pw.println("<br/>&nbsp;&nbsp;");
+            pw.println(cj.sizeTotalsReport());
+                        
+            pw.println("<br/><b>Alerts</b><br>&nbsp;&nbsp;");
+            pw.println(cj.getAlertCount()==0 ? "<i>none</i>" : cj.getAlertCount()); 
+            if(cj.getAlertCount()>0) {
+                pw.println("<a href='jobdir"
+                        +cj.jobDirRelativePath(
+                                cj.getCrawlController().getLoggerModule().getAlertsLogPath().getFile())
+                        +"?format=paged&pos=-1&lines=-128'>tail alert log...</a>");
             }
-            pw.println(" type='submit' name='action' value='pause'/>");
-            pw.println("<input ");
-            if(!cj.isUnpausable()) {
-                pw.println(" disabled ");
-            }
-            pw.println(" type='submit' name='action' value='unpause'/>");
-            pw.println("<input type='submit' name='action' value='terminate'/>");
-            pw.println("</form>");
             
-            pw.println("<h3>Crawl Log</h3>");
-            pw.println("<pre style=\'overflow:auto\'>");
+            pw.println("<br/><b>Rates</b><br/>&nbsp;&nbsp;");
+            pw.println(cj.rateReport());
+            
+            pw.println("<br/><b>Load</b><br/>&nbsp;&nbsp;");
+            pw.println(cj.loadReport());
+            
+            pw.println("<br/><b>Elapsed</b><br/>&nbsp;&nbsp;");
+            pw.println(cj.elapsedReport());
+            
+            pw.println("<br/><b>Threads</b><br/>&nbsp;&nbsp;");
+            pw.println(cj.threadReport());
+    
+            pw.println("<br/><b>Frontier</b><br/>&nbsp;&nbsp;");
+            pw.println(cj.frontierReport());
+            
+            pw.println("<br/><b>Memory</b><br/>&nbsp;&nbsp;");
+            pw.println(getEngine().heapReport());
+            
+            pw.println("<h3>Crawl Log");
+            pw.println("(<a href='jobdir"
+                    +cj.jobDirRelativePath(
+                            cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile())
+                    +"?format=paged&pos=-1&lines=-128&reverse=y'><i>more</i></a>)");
+            pw.println("</h3>");
+            pw.println("<pre style='overflow:auto'>");
             try {
                 List<String> logLines = new LinkedList<String>();
                 FileUtils.pagedLines(
@@ -202,22 +256,23 @@ public class JobResource extends Resource {
                 throw new RuntimeException(ioe); 
             }
             pw.println("</pre>");
-            pw.println("<a href='jobdir"
-                    +cj.jobDirRelativePath(
-                            cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile())
-                    +"?format=paged&pos=-1&lines=-128&reverse=y'>more crawl log...</a>");
+            
         }
-        pw.println("<hr/>");
+        
         pw.println("<h2>Files</h2>");
         pw.println("<h3>Browse <a href='jobdir'>Job Directory</a></h3>");
         // specific paths from wired context
         pw.println("<h3>Configuration-referenced Paths</h3>");
-        pw.println("<dl>");
-        for(ConfigPath cp : cj.getConfigPaths().values()) {
-            pw.println("<dt>"+cp.getName()+"</dt>");
-            pw.println("<dd>");
-            printLinkedIfInJobDirectory(pw, cp.getFile());
-            pw.println("</dd>");
+        if(cj.getConfigPaths().isEmpty()) {
+            pw.println("<i>build the job to discover referenced paths</i>");
+        } else {
+            pw.println("<dl>");
+            for(ConfigPath cp : cj.getConfigPaths().values()) {
+                pw.println("<dt>"+cp.getName()+"</dt>");
+                pw.println("<dd>");
+                printLinkedIfInJobDirectory(pw, cp.getFile());
+                pw.println("</dd>");
+            }
         }
         pw.println("</dl>");
         pw.println("<hr/>");
@@ -269,7 +324,7 @@ public class JobResource extends Resource {
             cj.checkXML();
         } else if("instantiate".equals(action)) {
             cj.instantiateContainer();
-        } else if("prep".equals(action)||"validate".equals(action)) {
+        } else if("build".equals(action)||"validate".equals(action)) {
             cj.validateConfiguration();
         } else if("discard".equals(action)) {
             cj.reset(); 
