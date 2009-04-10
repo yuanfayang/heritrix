@@ -191,4 +191,21 @@ public class EngineImpl {
     public File getJobsDir() {
         return jobsDir;
     }
+    
+    public String heapReport() {
+        long totalMemory = Runtime.getRuntime().totalMemory();
+        long freeMemory = Runtime.getRuntime().freeMemory();
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        StringBuilder sb = new StringBuilder(64); 
+        sb
+         .append((totalMemory-freeMemory)/1024)
+         .append(" KiB used; ")
+         .append(totalMemory/1024)
+         .append(" KiB current heap; ")
+         .append(maxMemory/1024)
+         .append(" KiB max heap");
+         return sb.toString(); 
+    }
+
+   
 }
