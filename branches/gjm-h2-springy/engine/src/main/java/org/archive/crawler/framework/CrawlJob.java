@@ -49,6 +49,7 @@ import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.settings.JobHome;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.PathSharingContext;
+import org.archive.util.ArchiveUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
@@ -75,6 +76,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     PathSharingContext ac; 
     int launchCount; 
     DateTime lastLaunch;
+    AlertThreadGroup alertThreadGroup;
     
     DateTime xmlOkAt = new DateTime(0L);
     Logger jobLogger;
@@ -82,6 +84,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     public CrawlJob(File cxml) {
         primaryConfig = cxml; 
         scanJobLog(); 
+        alertThreadGroup = new AlertThreadGroup(getShortName());
     }
     
     public File getPrimaryConfig() {
@@ -182,6 +185,9 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     }
     public void writeHtmlTo(PrintWriter pw, String uriPrefix) {
         pw.println("<span class='job'>");
+        if(isRunning()) {
+            pw.println("ACTIVE; "+getCrawlController().getState()+":");
+        }
         pw.println("<a href='"+uriPrefix+getShortName()+"'>"+getShortName()+"</a>");
         if(isProfile()) {
             pw.println("(profile)");
@@ -386,7 +392,8 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         // this temporary thread ensures all crawl-created threads
         // land in the AlertThreadGroup, to assist crawl-wide 
         // logging/alerting
-        Thread launcher = new Thread(new AlertThreadGroup(getShortName()), getShortName()) {
+        alertThreadGroup = new AlertThreadGroup(getShortName());
+        Thread launcher = new Thread(alertThreadGroup, getShortName()) {
             public void run() {
                 startContext();
             }
@@ -451,7 +458,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(cc==null) {
             return false;
         }
-        return !cc.isPaused(); 
+        return cc.isStateRunning(); 
     }
     
     public boolean isUnpausable() {
@@ -588,5 +595,103 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         return !cc.hasStarted();
     }
 
+    public int getAlertCount() {
+        return alertThreadGroup.getAlertCount();
+    }
+    
+    protected StatisticsTracker getStats() {
+        CrawlControllerImpl cc = getCrawlController();
+        return cc!=null ? cc.getStatisticsTracker() : null;
+    }
+
+    public Object rateReport() {
+        StatisticsTracker stats = getStats();
+        if(stats==null) {
+            return "<i>n/a</i>";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb
+         .append(ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2))
+         .append(" URIs/sec (")
+         .append(ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2))
+         .append(" avg); ")
+         .append(stats.currentProcessedKBPerSec())
+         .append(" KB/sec (")
+         .append(stats.processedKBPerSec())
+         .append(" avg)");
+        return sb.toString();
+    }
+
+    public Object loadReport() {
+        StatisticsTracker stats = getStats();
+        if(stats==null) {
+            return "<i>n/a</i>";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb
+         .append(stats.activeThreadCount())
+         .append(" active of ")
+         .append(stats.threadCount())
+         .append(" threads; ")
+         .append(ArchiveUtils.doubleToString((double)stats.congestionRatio(),2))
+         .append(" congestion ratio; ")
+         .append(stats.deepestUri())
+         .append("  deepest queue; ")
+         .append(stats.averageDepth())
+         .append("  average depth");
+        return sb.toString();
+    }
+
+    public String uriTotalsReport() {
+        StatisticsTracker stats = getStats();
+        if(stats==null) {
+            return "<i>n/a</i>";
+        }
+        long downloaded = stats.successfullyFetchedCount();
+        long total = stats.totalCount();
+        long queued = stats.queuedUriCount(); 
+        StringBuilder sb = new StringBuilder(64); 
+        sb
+         .append(downloaded)
+         .append(" downloaded + ")
+         .append(queued)
+         .append(" queued = ")
+         .append(total)
+         .append(" total");
+         return sb.toString(); 
+    }
+
+    public String sizeTotalsReport() {
+        StatisticsTracker stats = getStats();
+        if(stats==null) {
+            return "<i>n/a</i>";
+        }
+        return stats.crawledBytesSummary();
+    }
+
+    public String elapsedReport() {
+        StatisticsTracker stats = getStats();
+        if(stats==null) {
+            return "<i>n/a</i>";
+        }
+        long timeElapsed = stats.getCrawlerTotalElapsedTime();
+        return ArchiveUtils.formatMillisecondsToConventional(timeElapsed,false);
+    }
+
+    public String threadReport() {
+        CrawlControllerImpl cc = getCrawlController();
+        if(cc==null) {
+            return "<i>n/a</i>";
+        }
+        return cc.getToeThreadReportShort();
+    }
+
+    public String frontierReport() {
+        CrawlControllerImpl cc = getCrawlController();
+        if(cc==null) {
+            return "<i>n/a</i>";
+        }
+        return cc.getFrontierReportShort();
+    }
 
 }
