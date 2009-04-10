@@ -594,34 +594,44 @@ public class ArchiveUtils {
      * @return Human readable string version of passed <code>time</code>
      */
     public static String formatMillisecondsToConventional(long time, boolean toMs) {
+        return formatMillisecondsToConventional(time,5);
+    }
+        
+    /**
+     * Convert milliseconds value to a human-readable duration of 
+     * mixed units, using units no larger than days. For example,
+     * "5d12h13m12s113ms" or "19h51m". 
+     * 
+     * @param duration
+     * @param unitCount how many significant units to show, at most
+     *  for example, a value of 2 would show days+hours or hours+seconds 
+     *  but not hours+second+milliseconds
+     * @return Human readable string version of passed <code>time</code>
+     */
+    public static String formatMillisecondsToConventional(long duration, int unitCount) {
+        if(unitCount <=0) {
+            unitCount = 5;
+        }
+        if(duration==0) {
+            return "0ms";
+        }
         StringBuffer sb = new StringBuffer();
-        if(time<0) {
+        if(duration<0) {
             sb.append("-");
         }
-        long absTime = Math.abs(time);
-        if(!toMs && absTime < 1000) {
-            return "0s";
-        }
-        if(absTime > DAY_IN_MS) {
-            // days
-            sb.append(absTime / DAY_IN_MS + "d");
-            absTime = absTime % DAY_IN_MS;
-        }
-        if (absTime > HOUR_IN_MS) {
-            //got hours.
-            sb.append(absTime / HOUR_IN_MS + "h");
-            absTime = absTime % HOUR_IN_MS;
-        }
-        if (absTime > 60000) {
-            sb.append(absTime / 60000 + "m");
-            absTime = absTime % 60000;
-        }
-        if (absTime > 1000) {
-            sb.append(absTime / 1000 + "s");
-            absTime = absTime % 1000;
-        }
-        if(toMs) {
-            sb.append(absTime + "ms");
+        long absTime = Math.abs(duration);
+        long[] thresholds = {DAY_IN_MS, HOUR_IN_MS, 60000, 1000, 1};
+        String[] units = {"d","h","m","s","ms"};
+        
+        for(int i = 0; i < thresholds.length; i++) {
+            if(absTime >= thresholds[i]) {
+                sb.append(absTime / thresholds[i] + units[i]);
+                absTime = absTime % thresholds[i];
+                unitCount--;
+            }
+            if(unitCount==0) {
+                break;
+            }
         }
         return sb.toString();
     }
