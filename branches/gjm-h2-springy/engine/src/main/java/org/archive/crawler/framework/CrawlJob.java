@@ -258,7 +258,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         checkXML(); 
         if(ac==null) {
             try {
-                ac = new PathSharingContext(new String[] {primaryConfig.getAbsolutePath()},false,null);
+                ac = new PathSharingContext(new String[] {"file:"+primaryConfig.getAbsolutePath()},false,null);
                 ac.addApplicationListener(this);
                 ac.refresh();
                 getCrawlController(); // trigger NoSuchBeanDefinitionException if no CC
