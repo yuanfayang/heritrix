@@ -1518,6 +1518,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     
     
     public long averageDepth() {
+        if(inProcessQueues==null || readyClassQueues==null || snoozedClassQueues==null) {
+            return 0; 
+        }
         int inProcessCount = inProcessQueues.uniqueSet().size();
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
@@ -1527,6 +1530,9 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         return (totalQueueCount == 0) ? 0 : queuedUriCount.get() / totalQueueCount;
     }
     public float congestionRatio() {
+        if(inProcessQueues==null || readyClassQueues==null || snoozedClassQueues==null) {
+            return 0; 
+        }
         int inProcessCount = inProcessQueues.uniqueSet().size();
         int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
