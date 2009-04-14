@@ -27,14 +27,13 @@
 package org.archive.modules.extractor;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.modules.LoggerModule;
 import org.archive.net.UURI;
 
 /**
  * @author pjack
  *
  */
-public interface UriErrorLoggerModule extends LoggerModule {
+public interface UriErrorLoggerModule {
 
     void logUriError(URIException e, UURI u, CharSequence l);
 }
