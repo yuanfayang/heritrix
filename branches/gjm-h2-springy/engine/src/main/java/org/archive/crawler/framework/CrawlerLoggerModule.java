@@ -1,27 +1,20 @@
-/* 
- * Copyright (C) 2007 Internet Archive.
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * CrawlerLoggerModule.java
- *
- * Created on Mar 16, 2007
- *
- * $Id:$
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.archive.crawler.framework;
@@ -200,8 +193,6 @@ public class CrawlerLoggerModule
      */
     transient private Map<Logger,FileHandler> fileHandlers;
 
-    transient private Map<String,Logger> loggers = new HashMap<String,Logger>();
-
     private StringBuffer manifest = new StringBuffer();
     
     private transient AlertThreadGroup atg;
@@ -278,7 +269,6 @@ public class CrawlerLoggerModule
         addToManifest(filename, MANIFEST_LOG_FILE, shouldManifest);
         logger.setUseParentHandlers(false);
         this.fileHandlers.put(logger, fh);
-        this.loggers.put(logger.getName(), logger);
     }
     
     
@@ -288,16 +278,12 @@ public class CrawlerLoggerModule
         GenerationFileHandler fh = 
             GenerationFileHandler.makeNew(filename, false, true);
         fh.setFormatter(new SimpleFormatter());
-        AlertThreadGroup.setCurrentHandler(fh);
-        AlertHandler ah = new AlertHandler();
-        ah.setLevel(Level.WARNING);
-        ah.setFormatter(new SimpleFormatter());
-        logger.addHandler(ah);
+        AlertThreadGroup.current().addLogger(logger);
+        AlertHandler.ensureStaticInitialization(); 
+        logger.addHandler(fh);
         addToManifest(filename, MANIFEST_LOG_FILE, true);
         logger.setUseParentHandlers(false);
-        this.fileHandlers.put(logger, fh);
-        this.loggers.put(logger.getName(), logger);
-        
+        this.fileHandlers.put(logger, fh);  
     }
 
     
@@ -369,14 +355,6 @@ public class CrawlerLoggerModule
 //            this.checkpointer.getNextCheckpointName());
     }
 
-
-    
-    
-    public Logger getLogger(String name) {
-        return loggers.get(name);
-    }
-
-
     public Logger getNonfatalErrors() {
         return nonfatalErrors;
     }
@@ -444,7 +422,6 @@ public class CrawlerLoggerModule
     private void readObject(ObjectInputStream in) 
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        loggers = new HashMap<String,Logger>();
         getPath().getFile().mkdirs();
         this.atg = AlertThreadGroup.current();
         this.setupLogs();

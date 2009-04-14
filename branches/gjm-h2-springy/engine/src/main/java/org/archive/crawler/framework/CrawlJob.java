@@ -393,6 +393,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         // land in the AlertThreadGroup, to assist crawl-wide 
         // logging/alerting
         alertThreadGroup = new AlertThreadGroup(getShortName());
+        alertThreadGroup.addLogger(getJobLogger());
         Thread launcher = new Thread(alertThreadGroup, getShortName()) {
             public void run() {
                 startContext();

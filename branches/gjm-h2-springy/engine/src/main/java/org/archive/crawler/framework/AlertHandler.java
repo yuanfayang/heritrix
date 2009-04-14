@@ -1,79 +1,78 @@
-/**
- * 
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.crawler.framework;
 
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-
-import org.archive.io.SinkHandlerLogThread;
 
 
 /**
- * @author pjack
- *
+ * Stub Handler, catching and relaying WARNING/SEVERE events to 
+ * AlertThreadGroup.
+ * 
+ * @contributor pjack
+ * @contributor gojomo
  */
 public class AlertHandler extends Handler {
-
-
-    final public static AlertHandler INSTANCE = new AlertHandler();
-
-
+    // install global AlertHandler
     static {
         AlertHandler h = new AlertHandler();
         h.setLevel(Level.WARNING);
         Logger.getLogger("").addHandler(h);
-        h.setFormatter(new SimpleFormatter());
     }
 
 
     @Override
     public void close() throws SecurityException {
-        AlertThreadGroup.closeCurrent();
+       // Do nothing
     }
 
 
     @Override
     public void flush() {
-        Handler current = AlertThreadGroup.currentHandler();
-        if (current != null) {
-            current.flush();
-        }
+        // Do nothing
     }
 
     
+    /** 
+     * Pass record to AlertThreadGroup. 
+     * 
+     * @see java.util.logging.Handler#publish(java.util.logging.LogRecord)
+     */
     @Override
     public void publish(LogRecord record) {
         if (!isLoggable(record)) {
             return;
         }
-        AlertThreadGroup atg = AlertThreadGroup.current();
-        if (atg == null) {
-            return;
-        }
-        String orig = record.getMessage();
-        StringBuilder newMessage = new StringBuilder(256);
-        Thread current = Thread.currentThread();
-        newMessage.append(orig).append(" (in thread '");
-        newMessage.append(current.getName()).append("'");
-        if (current instanceof SinkHandlerLogThread) {
-            SinkHandlerLogThread tt = (SinkHandlerLogThread)current;
-            if(tt.getCurrentProcessorName().length()>0) {
-                newMessage.append("; in processor '");
-                newMessage.append(tt.getCurrentProcessorName());
-                newMessage.append("'");
-            }
-        }
-        newMessage.append(")");
-        record.setMessage(newMessage.toString());
-        Handler handler = atg.getDelegate();
-        if (handler != null) {
-            handler.publish(record);
-            atg.incrementAlertCount();
-        }
+        AlertThreadGroup.publishCurrent(record); 
+    }
+
+
+    /**
+     * Simply to ensure static initialization (installing catchall
+     * handler on topmost logger) is run. 
+     */
+    public static void ensureStaticInitialization() {
+        // Do nothing
     }
 
 }

@@ -25,8 +25,9 @@ package org.archive.io;
 
 
 /**
- * Implemented by threads that provide extra information to 
- * SinkHanderLogRecord.
+ * Implemented by threads that provide extra information.
+ * 
+ * TODO: rename class, rename getCurrentProcessorName()
  */
 public interface SinkHandlerLogThread {
 
