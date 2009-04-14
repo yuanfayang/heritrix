@@ -29,6 +29,7 @@ import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.EngineImpl;
 import org.restlet.Context;
 import org.restlet.data.CharacterSet;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -48,7 +49,7 @@ public class EngineResource extends Resource {
 
     public EngineResource(Context ctx, Request req, Response res) {
         super(ctx, req, res);
-
+        setModifiable(true);
         getVariants().add(new Variant(MediaType.TEXT_HTML));
     }
 
@@ -62,6 +63,17 @@ public class EngineResource extends Resource {
         // TODO: remove if not necessary in future?
         representation.setCharacterSet(CharacterSet.UTF_8);
         return representation;
+    }
+    
+    @Override
+    public void acceptRepresentation(Representation entity) throws ResourceException {
+        Form form = getRequest().getEntityAsForm();
+        String action = form.getFirstValue("action");
+        if("rescan".equals(action)) {
+            getEngine().findJobConfigs(); 
+        } 
+        // default: redirect to GET self
+        getResponse().redirectSeeOther(getRequest().getOriginalRef());
     }
 
     protected void writeHtml(Writer writer) {
@@ -85,7 +97,9 @@ public class EngineResource extends Resource {
         ArrayList<CrawlJob> jobs = new ArrayList<CrawlJob>();
         jobs.addAll(engine.getJobConfigs().values());
          
-        pw.println("<h2>Job Configs ("+jobs.size()+")</h2>");
+        pw.println("<form method=\'POST\'><h2>Job Configs ("+jobs.size()+")");
+        pw.println("<input style='width:6em' type='submit' name='action' value='rescan'>");
+        pw.println("</h2></form>");
         Collections.sort(jobs);
         for(CrawlJob cj: jobs) {
             pw.println("<li>");

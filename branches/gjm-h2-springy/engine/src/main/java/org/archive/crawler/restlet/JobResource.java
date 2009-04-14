@@ -92,14 +92,14 @@ public class JobResource extends Resource {
         pw.println("<head><title>"+jobTitle+"</title>");
         pw.println("<base href='"+baseRef+"'/>");
         pw.println("</head><body>");
-        pw.println("<h1>Job <i>"+cj.getShortName()+"</i> (");
+        pw.print("<h1>Job <i>"+cj.getShortName()+"</i> (");
         
-        pw.println(cj.getLaunchCount() + " launches, ");
+        pw.print(cj.getLaunchCount() + " launches");
         if(cj.getLastLaunch()!=null) {
             long ago = System.currentTimeMillis() - cj.getLastLaunch().getMillis();
-            pw.println("last "+ArchiveUtils.formatMillisecondsToConventional(ago, 2)+" ago)");
+            pw.println(", last "+ArchiveUtils.formatMillisecondsToConventional(ago, 2)+" ago)");
         }
-        pw.println("</h1>");
+        pw.println(")</h1>");
         
         
         // button controls
@@ -180,7 +180,7 @@ public class JobResource extends Resource {
         if(cj.getJobLog().exists()) {
             try {
                 List<String> logLines = new LinkedList<String>();
-                FileUtils.pagedLines(cj.getJobLog(), -1, -3, logLines);
+                FileUtils.pagedLines(cj.getJobLog(), -1, -5, logLines);
                 Collections.reverse(logLines);
                 for(String line : logLines) {
                     pw.print("<p style='margin:0px'>");
@@ -194,13 +194,17 @@ public class JobResource extends Resource {
         pw.println("</div>");
         
        
-        if(cj.isRunning()) {
+        if(!cj.isContainerOk()) {
+            pw.println("<h2>Unbuilt Job</h2>");
+        } else if(cj.isRunning()) {
             pw.println("<h2>Active Job: "+cj.getCrawlController().getState()+"</h2>");
+        } else if(cj.isLaunchable()){
+            pw.println("<h2>Ready Job</h2>");
         } else {
-            pw.println("<h2>Idle Job</h2>");
+            pw.println("<h2>Finished Job: "+cj.getCrawlController().getCrawlExitStatus()+"</h2>");
         }
 
-        if(cj.isRunning()) {
+        if(cj.isContainerOk()) {
             pw.println("<b>Totals</b><br/>&nbsp;&nbsp;");
             pw.println(cj.uriTotalsReport());
             pw.println("<br/>&nbsp;&nbsp;");
@@ -233,29 +237,32 @@ public class JobResource extends Resource {
             pw.println("<br/><b>Memory</b><br/>&nbsp;&nbsp;");
             pw.println(getEngine().heapReport());
             
-            pw.println("<h3>Crawl Log");
-            pw.println("(<a href='jobdir"
-                    +cj.jobDirRelativePath(
-                            cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile())
-                    +"?format=paged&pos=-1&lines=-128&reverse=y'><i>more</i></a>)");
-            pw.println("</h3>");
-            pw.println("<pre style='overflow:auto'>");
-            try {
-                List<String> logLines = new LinkedList<String>();
-                FileUtils.pagedLines(
-                        cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile(),
-                        -1, 
-                        -10, 
-                        logLines);
-                Collections.reverse(logLines);
-                for(String line : logLines) {
-                    StringEscapeUtils.escapeHtml(pw,line);
-                    pw.println();
+            if(cj.isRunning() || (cj.isContainerOk() && !cj.isLaunchable())) {
+                // show crawl log for running or finished crawls
+                pw.println("<h3>Crawl Log");
+                pw.println("(<a href='jobdir"
+                        +cj.jobDirRelativePath(
+                                cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile())
+                        +"?format=paged&pos=-1&lines=-128&reverse=y'><i>more</i></a>)");
+                pw.println("</h3>");
+                pw.println("<pre style='overflow:auto'>");
+                try {
+                    List<String> logLines = new LinkedList<String>();
+                    FileUtils.pagedLines(
+                            cj.getCrawlController().getLoggerModule().getCrawlLogPath().getFile(),
+                            -1, 
+                            -10, 
+                            logLines);
+                    Collections.reverse(logLines);
+                    for(String line : logLines) {
+                        StringEscapeUtils.escapeHtml(pw,line);
+                        pw.println();
+                    }
+                } catch (IOException ioe) {
+                    throw new RuntimeException(ioe); 
                 }
-            } catch (IOException ioe) {
-                throw new RuntimeException(ioe); 
+                pw.println("</pre>");
             }
-            pw.println("</pre>");
             
         }
         

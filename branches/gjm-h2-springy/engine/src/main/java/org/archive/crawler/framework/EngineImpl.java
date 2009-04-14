@@ -73,8 +73,19 @@ public class EngineImpl {
      * Find all job configurations in the usual place -- subdirectories
      * of the jobs directory with files ending '.cxml'.
      */
-    protected void findJobConfigs() {
-        // TODO: allow other places/paths to be scanned/added as well
+    public void findJobConfigs() {
+        // TODO: allow other places/paths to be scanned/added as well?
+        
+        // remove crawljobs whose directories have disappeared
+        // TODO: try a more delicate cleanup; eg: if appCtx exists?
+        for(String jobName: jobConfigs.keySet().toArray(new String[0])) {
+            CrawlJob cj = jobConfigs.get(jobName);
+            if(!cj.getJobDir().exists()) {
+                jobConfigs.remove(jobName); 
+            }
+        }
+        
+        // discover any new job directories
         for (File dir : jobsDir.listFiles(new FileFilter(){
             public boolean accept(File pathname) {
                 return pathname.isDirectory();
@@ -185,6 +196,10 @@ public class EngineImpl {
     }
 
     public CrawlJob getJob(String shortName) {
+        if(!jobConfigs.containsKey(shortName)) {
+            // try a rescan if not already present
+            findJobConfigs();
+        }
         return jobConfigs.get(shortName); 
     }
 
