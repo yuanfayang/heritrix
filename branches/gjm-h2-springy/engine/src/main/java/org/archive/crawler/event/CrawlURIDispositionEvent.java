@@ -18,25 +18,30 @@
  */
 package org.archive.crawler.event;
 
-import org.archive.crawler.framework.CrawlControllerImpl.State;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.springframework.context.ApplicationEvent;
 
-public class CrawlStateEvent extends ApplicationEvent {
+public class CrawlURIDispositionEvent extends ApplicationEvent {
+    public enum Disposition {
+        SUCCEEDED, FAILED, DISREGARDED, DEFERRED_FOR_RETRY
+    }
+    
     private static final long serialVersionUID = 1L;
-    protected State state;
-    protected String message;
+    protected CrawlURI curi;
+    protected Disposition disposition;
 
-    public CrawlStateEvent(Object source, State state, String message) {
+    public CrawlURIDispositionEvent(Object source, CrawlURI curi, Disposition disposition) {
         super(source);
-        this.state = state;
-        this.message = message; 
+        this.curi = curi;
+        this.disposition = disposition; 
     }
 
-    public String getMessage() {
-        return message;
+    public Disposition getDisposition() {
+        return this.disposition;
     }
 
-    public State getState() {
-        return state;
+    public CrawlURI getCrawlURI() {
+        return this.curi;
     }
+    
 }

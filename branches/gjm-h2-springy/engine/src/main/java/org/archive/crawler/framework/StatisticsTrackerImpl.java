@@ -50,14 +50,13 @@ import javax.management.openmbean.OpenDataException;
 
 import org.apache.commons.collections.Closure;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.event.CrawlURIDispositionListener;
+import org.archive.crawler.event.CrawlURIDispositionEvent;
 import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
-import org.archive.settings.JobHome;
 import org.archive.settings.file.BdbModule;
 import org.archive.settings.jmx.Types;
 import org.archive.spring.ConfigPath;
@@ -67,6 +66,7 @@ import org.archive.util.LongWrapper;
 import org.archive.util.MimetypeUtils;
 import org.archive.util.PaddingStringBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
 
 /**
  * This is an implementation of the AbstractTracker. It is designed to function
@@ -120,7 +120,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @see org.archive.crawler.framework.AbstractTracker
  */
 public class StatisticsTrackerImpl extends AbstractTracker
-implements CrawlURIDispositionListener, Serializable {
+implements Serializable {
     private static final long serialVersionUID = 8004878315916392305L;
 
     public enum Reports{
@@ -145,15 +145,6 @@ implements CrawlURIDispositionListener, Serializable {
     @Autowired
     public void setBdbModule(BdbModule bdb) {
         this.bdb = bdb;
-    }
-    
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
 
     protected ConfigPath reportsDir = new ConfigPath(EngineImpl.REPORTS_DIR_NAME,".");
@@ -282,7 +273,6 @@ implements CrawlURIDispositionListener, Serializable {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-        controller.addCrawlURIDispositionListener(this);
     }
 
     protected void finalCleanup() {
@@ -1143,7 +1133,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeCrawlReportTo(PrintWriter writer) {
-        writer.print("Crawl Name: " + controller.getJobHome().getName());
+        writer.print("Crawl Name: " + controller.getMetadata().getJobName());
         writer.print("\nCrawl Status: " + controller.getCrawlExitStatus().desc);
         writer.print("\nDuration Time: " +
                 ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));
@@ -1254,7 +1244,7 @@ implements CrawlURIDispositionListener, Serializable {
     public void dumpReports() {
         // Add all files mentioned in the crawl order to the
         // manifest set.
-        controller.addOrderToManifest();
+        //controller.addOrderToManifest();
         writeReportFile("hosts","hosts-report.txt");
         writeReportFile("mime types","mimetype-report.txt");
         writeReportFile("response codes","responsecode-report.txt");
@@ -1330,6 +1320,29 @@ implements CrawlURIDispositionListener, Serializable {
         }
         return -1;
     }
+    
+    public void onApplicationEvent(ApplicationEvent event) {
+        super.onApplicationEvent(event); 
+        if(event instanceof CrawlURIDispositionEvent) {
+            CrawlURIDispositionEvent dvent = (CrawlURIDispositionEvent)event;
+            switch(dvent.getDisposition()) {
+                case SUCCEEDED:
+                    this.crawledURISuccessful(dvent.getCrawlURI());
+                    break;
+                case FAILED:
+                    this.crawledURIFailure(dvent.getCrawlURI());
+                    break;
+                case DISREGARDED:
+                    this.crawledURIDisregard(dvent.getCrawlURI());
+                    break;
+                case DEFERRED_FOR_RETRY:
+                    this.crawledURINeedRetry(dvent.getCrawlURI());
+                    break;
+                default:
+                    throw new RuntimeException("Unknown disposition: " + dvent.getDisposition());
+            }
+        }
+    }
 }
 
 class LargestSet implements Serializable {
@@ -1394,5 +1407,4 @@ class LargestSet implements Serializable {
     public String[] keySet(){
         return set.keySet().toArray(new String[0]);
     }
-    
 }

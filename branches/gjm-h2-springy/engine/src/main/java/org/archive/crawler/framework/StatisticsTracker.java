@@ -26,6 +26,7 @@ import javax.management.openmbean.CompositeData;
 import org.archive.openmbeans.annotations.Attribute;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
+import org.springframework.context.ApplicationListener;
 
 /**
  * An interface for objects that want to collect statistics on
@@ -49,20 +50,16 @@ import org.archive.openmbeans.annotations.Parameter;
  * classes defined in the crawl order only the first one will be
  * used to access this data.
  *
- * <p>It is recommended that it register for
- * {@link org.archive.crawler.event.CrawlStatusListener CrawlStatus} events and
- * {@link org.archive.crawler.event.CrawlURIDispositionListener CrawlURIDisposition}
- * events to be able to properly monitor a crawl. Both are registered with the
- * CrawlController.
+ * <p>A StatisticsTracker is an ApplicationListener to receive 
+ * crawl and URI events.
  *
  * @author Kristinn Sigurdsson
  *
  * @see AbstractTracker
- * @see org.archive.crawler.event.CrawlStatusListener
- * @see org.archive.crawler.event.CrawlURIDispositionListener
  * @see org.archive.crawler.framework.CrawlControllerImpl
  */
-public interface StatisticsTracker extends Runnable {
+public interface StatisticsTracker extends Runnable, ApplicationListener {
+    // TODO: Convert to Enum
     /** Seed successfully crawled */
     public static final String SEED_DISPOSITION_SUCCESS =
         "Seed successfully crawled";

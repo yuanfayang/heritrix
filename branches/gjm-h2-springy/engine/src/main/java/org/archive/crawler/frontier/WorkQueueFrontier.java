@@ -22,6 +22,10 @@ package org.archive.crawler.frontier;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIRE;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.SUCCEEDED;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.FAILED;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.DISREGARDED;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.DEFERRED_FOR_RETRY;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -51,6 +55,7 @@ import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.CrawlUriReceiver;
+import org.archive.crawler.event.CrawlURIDispositionEvent;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy;
 import org.archive.crawler.frontier.precedence.CostUriPrecedencePolicy;
@@ -63,7 +68,11 @@ import org.archive.spring.KeyedProperties;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Transform;
 import org.archive.util.Transformer;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.support.AbstractApplicationContext;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -77,7 +86,8 @@ import com.sleepycat.je.DatabaseException;
  * @author Christian Kohlschuetter
  */
 public abstract class WorkQueueFrontier extends AbstractFrontier
-implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
+implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener, 
+ApplicationContextAware {
     private static final long serialVersionUID = 570384305871965843L;
 
     /** truncate reporting of queues at some large but not unbounded number */
@@ -106,6 +116,12 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
     
     private static final Logger logger =
         Logger.getLogger(WorkQueueFrontier.class.getName());
+    
+    // ApplicationContextAware implementation, for eventing
+    AbstractApplicationContext appCtx;
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.appCtx = (AbstractApplicationContext)applicationContext;
+    }
     
     /**
      * Whether queues should start INACTIVE (only becoming active 
@@ -957,7 +973,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
                 }
 
             // Let everyone interested know that it will be retried.
-            controller.fireCrawledURINeedRetryEvent(curi);
+            appCtx.publishEvent(
+                new CrawlURIDispositionEvent(this,curi,DEFERRED_FOR_RETRY));
             doJournalRescheduled(curi);
             return;
         }
@@ -971,7 +988,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             totalProcessedBytes += curi.getRecordedSize();
             incrementSucceededFetchCount();
             // Let everyone know in case they want to do something before we strip the curi.
-            controller.fireCrawledURISuccessfulEvent(curi);
+            appCtx.publishEvent(
+                new CrawlURIDispositionEvent(this,curi,SUCCEEDED));
             doJournalFinishedSuccess(curi);
             wq.expend(getCost(curi)); // successes cost
         } else if (isDisregarded(curi)) {
@@ -979,7 +997,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
             // manage to schedule it, it must be disregarded for some reason.
             incrementDisregardedUriCount();
             // Let interested listeners know of disregard disposition.
-            controller.fireCrawledURIDisregardEvent(curi);
+            appCtx.publishEvent(
+                new CrawlURIDispositionEvent(this,curi,DISREGARDED));
             doJournalDisregarded(curi);
             // if exception, also send to crawlErrors
             if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
@@ -991,7 +1010,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         } else {
             // In that case FAILURE, note & log
             //Let interested listeners know of failed disposition.
-            this.controller.fireCrawledURIFailureEvent(curi);
+            appCtx.publishEvent(
+                new CrawlURIDispositionEvent(this,curi,FAILED));
             // if exception, also send to crawlErrors
             if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
                 Object[] array = { curi };
@@ -1302,7 +1322,7 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
         w.print(ArchiveUtils.get12DigitDate());
         w.print("\n");
         w.print(" Job being crawled: ");
-        w.print(controller.getJobHome().getName());
+        w.print(controller.getMetadata().getJobName());
         w.print("\n");
         w.print("\n -----===== STATS =====-----\n");
         w.print(" Discovered:    ");
@@ -1476,7 +1496,8 @@ implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener {
      */
     public void deleted(CrawlURI curi) {
         //treat as disregarded
-        controller.fireCrawledURIDisregardEvent(curi);
+        appCtx.publishEvent(
+            new CrawlURIDispositionEvent(this,curi,DISREGARDED));
         log(curi);
         incrementDisregardedUriCount();
         curi.stripToMinimal();
