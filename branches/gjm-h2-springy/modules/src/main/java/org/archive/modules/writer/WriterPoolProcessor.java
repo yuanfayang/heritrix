@@ -186,11 +186,11 @@ implements Lifecycle {
         this.maxTotalBytesToWrite = maxTotalBytesToWrite;
     }
 
-    public MetadataProvider getMetadataProvider() {
-        return (MetadataProvider) kp.get("metadataProvider");
+    public DefaultMetadataProvider getMetadataProvider() {
+        return (DefaultMetadataProvider) kp.get("metadataProvider");
     }
     @Autowired
-    public void setMetadataProvider(MetadataProvider provider) {
+    public void setMetadataProvider(DefaultMetadataProvider provider) {
         kp.put("metadataProvider",provider);
     }
 

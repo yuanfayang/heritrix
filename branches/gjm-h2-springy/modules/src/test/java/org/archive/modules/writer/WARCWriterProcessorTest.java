@@ -28,7 +28,6 @@ package org.archive.modules.writer;
 
 import java.io.File;
 
-import org.archive.modules.DummyMetadataProvider;
 import org.archive.modules.ProcessorTestBase;
 import org.archive.modules.fetcher.DefaultServerCache;
 import org.archive.spring.ConfigPath;
@@ -56,7 +55,7 @@ public class WARCWriterProcessorTest extends ProcessorTestBase {
         WARCWriterProcessor result = new WARCWriterProcessor();
         result.setDirectory(new ConfigPath("test",tmp.getAbsolutePath()));
         result.setServerCache(new DefaultServerCache());
-        result.setMetadataProvider(new DummyMetadataProvider());
+        result.setMetadataProvider(new DefaultMetadataProvider());
         result.start();
         return result;
     }

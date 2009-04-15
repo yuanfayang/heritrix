@@ -29,7 +29,6 @@ import java.io.IOException;
 import javax.management.openmbean.CompositeData;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.fetcher.FetchStats;
@@ -87,13 +86,10 @@ import org.json.JSONException;
  * exposes information about hosts.
  *
  * <p>Furthermore any implementation of the URI Frontier should trigger
- * {@link org.archive.crawler.event.CrawlURIDispositionListener
- * CrawlURIDispostionEvents} by invoking the proper methods on the
- * {@link org.archive.crawler.framework.CrawlControllerImpl CrawlController}.
- * Doing this allows a custom built
- * {@link org.archive.crawler.framework.StatisticsTracker
- * Statistics Tracking} module to gather any other additional data it might be
- * interested in by examining the completed URIs.
+ * {@link org.archive.crawler.event.CrawlURIDispositionEvent
+ * CrawlURIDispostionEvents} on the ApplicationContext to allow
+ * statistics modules or other interested observers to collect info
+ * about each completed URI's processing.
  *
  * <p>All URI Frontiers inherit from
  * {@link org.archive.crawler.settings.ModuleType ModuleType}
@@ -110,37 +106,9 @@ import org.json.JSONException;
  * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURISuccessfulEvent(CrawlURI)
  * @see org.archive.crawler.framework.StatisticsTracker
  * @see org.archive.crawler.framework.ToeThread
- * @see org.archive.crawler.framework.FrontierHostStatistics
  * @see org.archive.crawler.settings.ModuleType
  */
 public interface Frontier extends Module, Reporter {
-    /**
-     * All URI Frontiers should have the same 'name' attribute. This constant
-     * defines that name. This is a name used to reference the Frontier being
-     * used in a given crawl order and since there can only be one Frontier
-     * per crawl order a fixed, unique name for Frontiers is optimal.
-     *
-     * @see org.archive.crawler.settings.ModuleType#ModuleType(String)
-     */
-    public static final String ATTR_NAME = "frontier";
-
-    /**
-     * Initialize the Frontier.
-     *
-     * <p> This method is invoked by the CrawlController once it has
-     * created the Frontier. The constructor of the Frontier should
-     * only contain code for setting up it's settings framework. This
-     * method should contain all other 'startup' code.
-     *
-     * @param c The CrawlController that created the Frontier.
-     *
-     * @throws FatalConfigurationException If provided settings are illegal or
-     *            otherwise unusable.
-     * @throws IOException If there is a problem reading settings or seeds file
-     *            from disk.
-     */
-//    public void initialize(CrawlController c)
-//            throws FatalConfigurationException, IOException;
 
     /**
      * Get the next URI that should be processed. If no URI becomes availible
@@ -148,9 +116,8 @@ public interface Frontier extends Module, Reporter {
      *
      * @return the next URI that should be processed.
      * @throws InterruptedException
-     * @throws EndedException 
      */
-    CrawlURI next() throws InterruptedException, EndedException;
+    CrawlURI next() throws InterruptedException;
 
     /**
      * Returns true if the frontier contains no more URIs to crawl.

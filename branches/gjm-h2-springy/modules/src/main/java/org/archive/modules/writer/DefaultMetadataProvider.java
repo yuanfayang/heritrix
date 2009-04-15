@@ -31,7 +31,6 @@ import java.util.regex.Matcher;
 
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.net.RobotsHonoringPolicy;
-import org.archive.settings.JobHome;
 import org.archive.spring.BeanFieldsPatternValidator;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.HasValidator;
@@ -44,10 +43,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Validator;
 
 /**
- * @author pjack
+ * @contributor pjack
+ * TODO: Rename to CrawlMetadata
  */
-public class DefaultMetadataProvider implements 
-    MetadataProvider, 
+public class DefaultMetadataProvider implements  
     UserAgentProvider, 
     Serializable, 
     Module,
@@ -156,17 +155,12 @@ public class DefaultMetadataProvider implements
         return userAgent;
     }
 
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
-    }
-    
+    String jobName;
     public String getJobName() {
-        return jobHome.getName();
+        return jobName;
+    }
+    public void setJobHome(String jobName) {
+        this.jobName = jobName;
     }
 
     public String getRobotsPolicyName() {

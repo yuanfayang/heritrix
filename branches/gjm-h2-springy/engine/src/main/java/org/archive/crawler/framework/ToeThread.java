@@ -34,7 +34,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.io.SinkHandlerLogThread;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessResult;
@@ -132,12 +131,11 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
      * @see java.lang.Thread#run()
      */
     public void run() {
-        String name = controller.getJobHome().getName();
+        String name = controller.getMetadata().getJobName();
         logger.fine(getName()+" started for order '"+name+"'");
 
         try {
             while ( true ) {
-                // TODO check for thread-abort? or is waiting for interrupt enough?
                 continueCheck();
                 
                 setStep(STEP_ABOUT_TO_GET_URI);
@@ -166,7 +164,6 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
                 
                 setStep(STEP_FINISHING_PROCESS);
                 lastFinishTime = System.currentTimeMillis();
-                controller.releaseContinuePermission();
                 if(shouldRetire) {
                     break; // from while(true)
                 }
@@ -174,26 +171,20 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         } catch (InterruptedException e) {
             // thread interrupted, ok to end
             logger.log(Level.FINE,this.getName()+ " ended with Interruption");
-        } catch (EndedException e) {
-            // crawl ended (or thread was retired), so allow thread to end
-            logger.log(Level.FINE,this.getName()+ " ended with EndedException");
         } catch (Exception e) {
             // everything else (including interruption)
             logger.log(Level.SEVERE,"Fatal exception in "+getName(),e);
         } catch (OutOfMemoryError err) {
             seriousError(err);
-        } finally {
-            controller.releaseContinuePermission();
-        }
+        } 
+
         setCurrentCuri(null);
         // Do cleanup so that objects can be GC.
         this.httpRecorder.closeRecorders();
         this.httpRecorder = null;
-//        localProcessors = null;
 
         logger.fine(getName()+" finished for order '"+name+"'");
         setStep(STEP_FINISHED);
-        controller.toeEnded();
         controller = null;
     }
 
@@ -218,16 +209,13 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         atStepSince = System.currentTimeMillis();
     }
 
-        private void seriousError(Error err) {
-            // try to prevent timeslicing until we have a chance to deal with OOM
-        // TODO: recognize that new JVM priority indifference may make this
-        // priority-jumbling pointless
+    private void seriousError(Error err) {
+        // try to prevent timeslicing until we have a chance to deal with OOM
+        // Note that modern-day JVM priority indifference with native threads
+        // may make this priority-jumbling pointless
         setPriority(DEFAULT_PRIORITY+1);  
         if (controller!=null) {
             // hold all ToeThreads from proceeding to next processor
-            controller.singleThreadMode();
-            // TODO: consider if SoftReferences would be a better way to 
-            // engineer a soft-landing for low-memory conditions
             controller.freeReserveMemory();
             controller.requestCrawlPause();
             if (controller.getFrontier().getFrontierJournal() != null) {
@@ -283,7 +271,6 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         if(Thread.interrupted()) {
             throw new InterruptedException("die request detected");
         }
-        controller.acquireContinuePermission();
     }
 
     /**
@@ -298,11 +285,9 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
         lastStartTime = System.currentTimeMillis();
         ProcessorChain localProcessors = 
             controller.getProcessorChain();
-//        currentCuri.setStateProvider(controller.getSheetManager());
-        //TODO:SPRINGY push overrides
+        
         currentCuri.setRecorder(httpRecorder);
         try {
-            //Set<Map.Entry<String,Processor>> procs = localProcessors.entrySet();
             Iterator<Processor> iter = localProcessors.iterator();
             Processor curProc = 
                 iter.hasNext() ? iter.next() : null;

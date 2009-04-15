@@ -46,7 +46,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.event.CrawlStateEvent;
-import org.archive.settings.JobHome;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.PathSharingContext;
 import org.archive.util.ArchiveUtils;
@@ -541,15 +540,11 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
      */
     @SuppressWarnings("unchecked")
     public Map<String, ConfigPath> getConfigPaths() {
-        if(!isContainerOk()) {
+        CrawlControllerImpl cc = getCrawlController();
+        if(cc==null) {
             return MapUtils.EMPTY_MAP;
         }
-        Object[] jhs = ac.getBeansOfType(JobHome.class).values().toArray();
-        if(jhs.length==0) {
-            return MapUtils.EMPTY_MAP;
-        }
-        JobHome jh = (JobHome)jhs[0];
-        return jh.getPaths();        
+        return cc.getPaths();        
     }
 
     /**

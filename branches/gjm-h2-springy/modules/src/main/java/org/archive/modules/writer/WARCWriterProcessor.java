@@ -547,7 +547,7 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         record.addLabelValue("conformsTo","http://crawler.archive.org/warc/0.17/WARC0.17ISO.doc");
         // Get other values from metadata provider
 
-        MetadataProvider provider = getMetadataProvider();
+        DefaultMetadataProvider provider = getMetadataProvider();
 
         addIfNotBlank(record,"operator", provider.getOperator());
         addIfNotBlank(record,"publisher", provider.getOrganization());

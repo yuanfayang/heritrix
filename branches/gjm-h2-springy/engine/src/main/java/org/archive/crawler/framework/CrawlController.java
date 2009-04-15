@@ -47,9 +47,6 @@ public interface CrawlController {
     @Operation(desc = "Resume crawl from paused state.")
     void requestCrawlResume();
 
-    @Attribute(desc="The current crawl status.", def="PAUSED")
-    String getCrawlStatusString();
-
     @Attribute(desc = "Returns the toe threads report", def="")
     String getToeThreadReport();
 
