@@ -69,7 +69,6 @@ public class CrawlControllerImpl implements
     Serializable, 
     Reporter, 
     Lifecycle,
-    CrawlController,
     ApplicationContextAware,
     BeanPostProcessor {
  

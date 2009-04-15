@@ -29,10 +29,8 @@ import java.io.Serializable;
 import org.archive.modules.ProcessorURI;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Module;
 
-
-public abstract class DecideRule implements Module, Serializable, HasKeyedProperties {
+public abstract class DecideRule implements Serializable, HasKeyedProperties {
     protected KeyedProperties kp = new KeyedProperties();
     public KeyedProperties getKeyedProperties() {
         return kp;

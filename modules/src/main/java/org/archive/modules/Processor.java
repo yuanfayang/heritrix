@@ -37,7 +37,6 @@ import org.archive.modules.deciderules.DecideRule;
 import org.archive.net.UURI;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Module;
 import org.springframework.context.Lifecycle;
 
 
@@ -48,7 +47,7 @@ import org.springframework.context.Lifecycle;
  * @author pjack
  */
 public abstract class Processor 
-implements Module, Serializable, HasKeyedProperties, Lifecycle {
+implements Serializable, HasKeyedProperties, Lifecycle {
     protected KeyedProperties kp = new KeyedProperties();
     public KeyedProperties getKeyedProperties() {
         return kp;

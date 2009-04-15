@@ -42,7 +42,6 @@ import org.archive.io.GenerationFileHandler;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.spring.ConfigPath;
@@ -55,9 +54,8 @@ import org.springframework.context.Lifecycle;
  *
  */
 public class CrawlerLoggerModule 
-    extends Bean  
     implements 
-        UriErrorLoggerModule, AlertTracker, Lifecycle, InitializingBean,
+        UriErrorLoggerModule, Lifecycle, InitializingBean,
         Checkpointable {
     private static final long serialVersionUID = 1L;
 
@@ -198,9 +196,8 @@ public class CrawlerLoggerModule
     private transient AlertThreadGroup atg;
 
     public CrawlerLoggerModule() {
-        super(AlertTracker.class);
+        
     }
-
     
     public void start() {
         if(isRunning) {

@@ -35,7 +35,6 @@ import org.archive.spring.BeanFieldsPatternValidator;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.HasValidator;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Module;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +46,7 @@ import org.springframework.validation.Validator;
  */
 public class DefaultMetadataProvider implements  
     UserAgentProvider, 
-    Serializable, 
-    Module,
+    Serializable,
     HasKeyedProperties,
     HasValidator,
     InitializingBean {

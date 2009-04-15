@@ -25,14 +25,13 @@
 package org.archive.crawler.frontier.precedence;
 
 import org.archive.crawler.frontier.WorkQueue;
-import org.archive.state.Module;
 
 /**
  * Superclass for QueuePrecedencePolicies, which set a integer precedence value 
  * on uri-queues inside the frontier when the uri-queue is first created, and 
  * before the uri-queue is placed on a new internal queue-of-queues. 
  */
-abstract public class QueuePrecedencePolicy implements Module {
+abstract public class QueuePrecedencePolicy {
     
     /**
      * Set an appropriate initial precedence value on the given
