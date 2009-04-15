@@ -25,7 +25,6 @@ import java.util.EventObject;
 import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStateEvent;
-import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.Finishable;
 import org.archive.state.Module;
@@ -60,7 +59,6 @@ import org.xbill.DNS.Lookup;
 public abstract class AbstractTracker 
     extends Bean 
     implements StatisticsTracker, 
-               CrawlStatusListener, 
                Serializable, 
                Module, 
                Lifecycle, // InitializingBean, 
@@ -273,9 +271,6 @@ public abstract class AbstractTracker
         return getIntervalSeconds();
     }
 
-    /**
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-     */
     public void crawlPausing(String statusMessage) {
         logNote("CRAWL WAITING - " + statusMessage);
     }
@@ -296,6 +291,9 @@ public abstract class AbstractTracker
 
     public void crawlResuming(String statusMessage) {
         tallyCurrentPause();
+        if (this.crawlerStartTime == 0) {
+            noteStart();
+        }
         logNote("CRAWL RESUMED - " + statusMessage);
         lastLogPointTime = System.currentTimeMillis();
     }
@@ -316,9 +314,6 @@ public abstract class AbstractTracker
         logNote("CRAWL ENDING - " + sExitMessage);
     }
 
-    /**
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
     public void crawlEnded(String sExitMessage) {
         // Note the time when the crawl stops.
         crawlerEndTime = System.currentTimeMillis();
@@ -333,11 +328,6 @@ public abstract class AbstractTracker
         finalCleanup();        
     }
 
-    public void crawlStarted(String message) {
-        tallyCurrentPause();
-        noteStart();
-    }
-    
     /**
      * Dump reports, if any, on request or at crawl end. 
      */
@@ -361,7 +351,29 @@ public abstract class AbstractTracker
     
     public void onApplicationEvent(ApplicationEvent event) {
         if(event instanceof CrawlStateEvent) {
-            CrawlStateEvent.translate(this, (CrawlStateEvent)event);
+            CrawlStateEvent event1 = (CrawlStateEvent)event;
+            switch(event1.getState()) {
+                case PAUSED:
+                    this.crawlPaused(event1.getMessage());
+                    break;
+                case RUNNING:
+                    this.crawlResuming(event1.getMessage());
+                    break;
+                case PAUSING:
+                    this.crawlPausing(event1.getMessage());
+                    break;
+                case STOPPING:
+                    this.crawlEnding(event1.getMessage());
+                    break;
+                case FINISHED:
+                    this.crawlEnded(event1.getMessage());
+                    break;
+                case PREPARING:
+                    this.crawlResuming(event1.getMessage());
+                    break;
+                default:
+                    throw new RuntimeException("Unknown state: " + event1.getState());
+            }
         }
     }
 }

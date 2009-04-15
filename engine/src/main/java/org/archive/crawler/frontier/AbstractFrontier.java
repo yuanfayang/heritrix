@@ -63,7 +63,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.event.CrawlStateEvent;
-import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
@@ -83,13 +82,11 @@ import org.archive.modules.seeds.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.JobHome;
 import org.archive.settings.SheetManager;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
 import org.archive.spring.SheetOverridesManager;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
@@ -106,8 +103,7 @@ import org.springframework.context.Lifecycle;
  */
 public abstract class AbstractFrontier 
     extends Bean
-    implements CrawlStatusListener, 
-               Frontier, 
+    implements Frontier, 
                Serializable, 
                Lifecycle, // InitializingBean, 
                SeedRefreshListener, 
@@ -179,8 +175,6 @@ public abstract class AbstractFrontier
     /** ordinal numbers to assign to created CrawlURIs */
     protected AtomicLong nextOrdinal = new AtomicLong(1);
 
-    
-    //TODO:SPRINGY decide if this should be overridable
     protected DecideRule scope;
     public DecideRule getScope() {
         return this.scope;
@@ -188,15 +182,6 @@ public abstract class AbstractFrontier
     @Autowired
     public void setScope(DecideRule scope) {
         this.scope = scope;
-    }
-        
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
     }
     
     protected ConfigPath recoveryDir = new ConfigPath("recovery subdirectory","logs");
@@ -1460,33 +1445,12 @@ public abstract class AbstractFrontier
         return this.recover;
     }
 
-    public void crawlEnding(String sExitMessage) {
-        // TODO Auto-generated method stub
-    }
-
     public void crawlEnded(String sExitMessage) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("Closing with " + Long.toString(queuedUriCount()) +
                 " urls still in queue.");
         }
     }
-
-    public void crawlStarted(String message) {
-    }
-
-    public void crawlPausing(String statusMessage) {
-    }
-
-    public void crawlPaused(String statusMessage) {
-    }
-
-    public void crawlResuming(String statusMessage) {
-    }
-    
-    public void crawlCheckpoint(StateProvider context, File checkpointDir)
-    throws Exception {
-    }
-
 
     //
     // Reporter implementation
@@ -1654,7 +1618,14 @@ public abstract class AbstractFrontier
 
     public void onApplicationEvent(ApplicationEvent event) {
         if(event instanceof CrawlStateEvent) {
-            CrawlStateEvent.translate(this, (CrawlStateEvent)event);
+            CrawlStateEvent event1 = (CrawlStateEvent)event;
+            switch(event1.getState()) {
+                case FINISHED:
+                    this.crawlEnded(event1.getMessage());
+                    break;
+                default:
+                    // ignore;
+            }
         }
     }
     
