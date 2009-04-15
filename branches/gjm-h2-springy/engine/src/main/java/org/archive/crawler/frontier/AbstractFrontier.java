@@ -82,7 +82,6 @@ import org.archive.modules.seeds.SeedRefreshListener;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.SheetManager;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
@@ -390,8 +389,6 @@ public abstract class AbstractFrontier
      * Can be null if user chose not to run a recovery.log.
      */
     private transient FrontierJournal recover = null;
-    
-    protected SheetManager manager;
     
     /** file collecting report of ignored seed-file entries (if any) */
     public static final String IGNORED_SEEDS_FILENAME = "seeds.ignored";

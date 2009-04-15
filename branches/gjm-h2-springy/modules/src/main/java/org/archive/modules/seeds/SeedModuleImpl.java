@@ -40,8 +40,6 @@ import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.KeyChangeEvent;
-import org.archive.settings.KeyChangeListener;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
 import org.archive.spring.ConfigFile;
@@ -60,7 +58,6 @@ import org.archive.util.FileUtils;
 public class SeedModuleImpl implements 
     ReadSource,
     Serializable, 
-    KeyChangeListener,
     Checkpointable {
 
     private static final long serialVersionUID = 3L;
@@ -162,7 +159,7 @@ public class SeedModuleImpl implements
      * involved reconfiguration (such as reading from external
      * files) may be necessary.
      */
-    public void keyChanged(KeyChangeEvent event) {
+    public void noteReconfiguration(/*KeyChangeEvent event*/) {
         // TODO: further improve this so that case with hundreds of
         // thousands or millions of seeds works better without requiring
         // this specific settings check 

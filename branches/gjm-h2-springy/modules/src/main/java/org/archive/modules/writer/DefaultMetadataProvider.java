@@ -35,7 +35,6 @@ import org.archive.spring.BeanFieldsPatternValidator;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.HasValidator;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Key;
 import org.archive.state.Module;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.InitializingBean;
@@ -144,7 +143,6 @@ public class DefaultMetadataProvider implements
     public void setOrganization(String organization) {
         this.organization = organization;
     }
-    final public static Key<String> ORGANIZATION = Key.make("");
     
     public String getUserAgent() {
         String userAgent = getUserAgentTemplate();

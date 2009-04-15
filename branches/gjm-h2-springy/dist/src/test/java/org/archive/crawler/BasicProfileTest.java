@@ -2,9 +2,7 @@ package org.archive.crawler;
 
 
 import java.io.File;
-import java.io.FileOutputStream;
 
-import org.archive.settings.file.Validator;
 import org.archive.spring.PathSharingContext;
 import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;

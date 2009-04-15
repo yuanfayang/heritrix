@@ -2,8 +2,6 @@ package org.archive.crawler.selftest;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy;
-import org.archive.state.KeyManager;
-
 
 /**
  * 
@@ -19,10 +17,4 @@ public class KeyWordUriPrecedencePolicy extends BaseUriPrecedencePolicy {
         }
         return super.calculatePrecedence(curi);
     }
-
-
-    static {
-        KeyManager.addKeys(KeyWordUriPrecedencePolicy.class);
-    }
-
 }

@@ -27,7 +27,6 @@
 package org.archive.crawler.frontier;
 
 import org.archive.crawler.framework.CrawlerProcessorTestBase;
-import org.archive.settings.MemorySheetManager;
 
 
 /**

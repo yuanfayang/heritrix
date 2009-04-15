@@ -38,8 +38,6 @@ import org.archive.modules.deciderules.PredicatedDecideRule;
 import org.archive.modules.seeds.SeedListener;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
-import org.archive.settings.KeyChangeEvent;
-import org.archive.settings.KeyChangeListener;
 import org.archive.util.SurtPrefixSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
@@ -61,7 +59,7 @@ import org.springframework.context.Lifecycle;
  * @author gojomo
  */
 public class SurtPrefixedDecideRule extends PredicatedDecideRule 
-        implements SeedListener, Lifecycle, KeyChangeListener {
+        implements SeedListener, Lifecycle {
 
     private static final long serialVersionUID = 3L;
 
@@ -288,7 +286,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
     /**
      * Re-read prefixes after an update.
      */
-    public synchronized void keyChanged(KeyChangeEvent event) {
+    public synchronized void noteReconfiguration(/*KeyChangeEvent event*/) {
         if (getRebuildOnReconfig()) {
             readPrefixes();
         }

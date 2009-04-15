@@ -17,11 +17,10 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.net.UURI;
-import org.archive.state.ExampleStateProvider;
 import org.archive.util.Recorder;
 
 
-public class DefaultProcessorURI extends ExampleStateProvider 
+public class DefaultProcessorURI 
 implements ProcessorURI {
 
     

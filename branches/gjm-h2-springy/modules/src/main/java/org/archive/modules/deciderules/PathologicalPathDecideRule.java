@@ -28,9 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import org.archive.modules.ProcessorURI;
-import org.archive.settings.KeyChangeEvent;
-import org.archive.settings.KeyChangeListener;
-
 
 
 /**
@@ -40,8 +37,7 @@ import org.archive.settings.KeyChangeListener;
  *
  * @author gojomo
  */
-public class PathologicalPathDecideRule extends DecideRule 
-implements KeyChangeListener {
+public class PathologicalPathDecideRule extends DecideRule {
 
     private static final long serialVersionUID = 3L;
 
@@ -100,13 +96,5 @@ implements KeyChangeListener {
     
     protected String constructRegexp(int rep) {
         return (rep == 0) ? null : ".*?/(.*?/)\\1{" + rep + ",}.*";
-    }
-    
-    
-    /**
-     * Repetitions may have changed; refresh constructedRegexp
-     */
-    public void keyChanged(KeyChangeEvent event) {
-        pattern.set(null);
     }
 }

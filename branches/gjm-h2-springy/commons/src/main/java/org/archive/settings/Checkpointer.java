@@ -53,12 +53,12 @@ public class Checkpointer {
     }
 
 
-    public static void checkpoint(SheetManager mgr, File dir) 
+    public static void checkpoint(/*SheetManager*/Object mgr, File dir) 
     throws IOException {
         List<RecoverAction> actions = new ArrayList<RecoverAction>();
-        for (Checkpointable c: mgr.getCheckpointables()) {
-            c.checkpoint(dir, actions);
-        }
+//        for (Checkpointable c: mgr.getCheckpointables()) {
+//            c.checkpoint(dir, actions);
+//        }
         
         writeObject(new File(dir, ACTIONS_FILE), actions);
         writeObject(new File(dir, OBJECT_GRAPH_FILE), mgr);
@@ -97,31 +97,31 @@ public class Checkpointer {
         }
     }
 
-    public static SheetManager recover(File dir, CheckpointRecovery recovery) 
-    throws IOException {
-        List<RecoverAction> actions = readActions(dir);
-        for (RecoverAction action: actions) try {
-            action.recoverFrom(dir, recovery);
-        } catch (Exception e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
-        }
-        
-        CheckpointInputStream cinp = null;
-        try {
-            File f = new File(dir, OBJECT_GRAPH_FILE);
-            cinp = new CheckpointInputStream(new FileInputStream(f), recovery);
-            SheetManager mgr = (SheetManager)cinp.readObject();
-            recovery.apply(mgr.getGlobalSheet());
-            return mgr;
-        } catch (ClassNotFoundException e) { 
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
-        }finally {
-            IoUtils.close(cinp);
-        }
-    }
+//    public static SheetManager recover(File dir, CheckpointRecovery recovery) 
+//    throws IOException {
+//        List<RecoverAction> actions = readActions(dir);
+//        for (RecoverAction action: actions) try {
+//            action.recoverFrom(dir, recovery);
+//        } catch (Exception e) {
+//            IOException io = new IOException();
+//            io.initCause(e);
+//            throw io;
+//        }
+//        
+//        CheckpointInputStream cinp = null;
+//        try {
+//            File f = new File(dir, OBJECT_GRAPH_FILE);
+//            cinp = new CheckpointInputStream(new FileInputStream(f), recovery);
+//            SheetManager mgr = (SheetManager)cinp.readObject();
+//            recovery.apply(mgr.getGlobalSheet());
+//            return mgr;
+//        } catch (ClassNotFoundException e) { 
+//            IOException io = new IOException();
+//            io.initCause(e);
+//            throw io;
+//        }finally {
+//            IoUtils.close(cinp);
+//        }
+//    }
 
 }

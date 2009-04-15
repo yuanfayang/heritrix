@@ -29,7 +29,6 @@ import java.util.List;
 
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.StateProvider;
 
 /**
  * RobotsHonoringPolicy represent the strategy used by the crawler 
@@ -134,30 +133,6 @@ public class RobotsHonoringPolicy implements Serializable, HasKeyedProperties {
      */
     public RobotsHonoringPolicy() {
     }
-
-
-    /**
-     * If policy-type is most favored crawler of set, then this method
-     * gets a list of all useragents in that set.
-     *
-     * @return List of Strings with user agents
-     */
-    public List<String> getUserAgents(StateProvider context) {
-        if (isType(Type.MOST_FAVORED_SET)) {
-            return getUserAgents();
-        }
-        return null;
-    }
-
-    /**
-     * Get the supplied custom robots.txt
-     *
-     * @return String with content of alternate robots.txt
-     */
-    public String getCustomRobots(StateProvider context) {
-        // TODO: change callers to ensure overrides installed, use no-arg accessor
-        return getCustomRobots();
-    }
     
     /**
      * Check if policy is of a certain type.
@@ -170,6 +145,11 @@ public class RobotsHonoringPolicy implements Serializable, HasKeyedProperties {
         return type == getType();
     }
 
+    /**
+     * Get the supplied custom robots.txt
+     *
+     * @return String with content of alternate robots.txt
+     */
     public String getCustomRobots() {
         return (String) kp.get("customRobots");
     }

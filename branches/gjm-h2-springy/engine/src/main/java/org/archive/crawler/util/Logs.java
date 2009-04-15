@@ -27,8 +27,8 @@ package org.archive.crawler.util;
 
 
 /**
- * Enumerates existing Heritrix logs that the {@link LogRemoteAccessImpl} 
- * supports access to. 
+ * Enumerates existing Heritrix logs
+ * 
  * @author Kristinn Sigurdsson
  */
 public enum Logs{

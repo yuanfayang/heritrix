@@ -31,8 +31,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import org.archive.state.Key;
-
 /**
  * Default implementation.
  * 
@@ -42,8 +40,8 @@ import org.archive.state.Key;
 public class DefaultCheckpointRecovery implements CheckpointRecovery {
 
     
-    final private Map<Object,Map<Key,Object>> newSettings =
-        new IdentityHashMap<Object,Map<Key,Object>>();
+//    final private Map<Object,Map<Key,Object>> newSettings =
+//        new IdentityHashMap<Object,Map<Key,Object>>();
 
     final private Map<URI,URI> uriTranslations = new HashMap<URI,URI>();
 
@@ -69,15 +67,15 @@ public class DefaultCheckpointRecovery implements CheckpointRecovery {
     }
 
 
-    public <T> void setState(Object module, Key<T> key, T value) {
-        Map<Key,Object> map = newSettings.get(module);
-        if (map == null) {
-            map = new HashMap<Key,Object>();
-            newSettings.put(module, map);
-        }
-        
-        map.put(key, value);
-    }
+//    public <T> void setState(Object module, Key<T> key, T value) {
+//        Map<Key,Object> map = newSettings.get(module);
+//        if (map == null) {
+//            map = new HashMap<Key,Object>();
+//            newSettings.put(module, map);
+//        }
+//        
+//        map.put(key, value);
+//    }
 
 
     public String translatePath(String path) {
@@ -106,14 +104,14 @@ public class DefaultCheckpointRecovery implements CheckpointRecovery {
     }
     
     
-    public void apply(SingleSheet global) {
-        for (Map.Entry<Object,Map<Key,Object>> mod: newSettings.entrySet()) {
-            Object module = mod.getKey();
-            for (Map.Entry<Key,Object> me: mod.getValue().entrySet()) {
-                @SuppressWarnings("unchecked")
-                Key<Object> k = me.getKey();
-                global.set(module, k, me.getValue());
-            }
-        }
-    }
+//    public void apply(SingleSheet global) {
+//        for (Map.Entry<Object,Map<Key,Object>> mod: newSettings.entrySet()) {
+//            Object module = mod.getKey();
+//            for (Map.Entry<Key,Object> me: mod.getValue().entrySet()) {
+//                @SuppressWarnings("unchecked")
+//                Key<Object> k = me.getKey();
+//                global.set(module, k, me.getValue());
+//            }
+//        }
+//    }
 }

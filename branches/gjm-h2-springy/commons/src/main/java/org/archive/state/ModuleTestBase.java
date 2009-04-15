@@ -24,22 +24,13 @@
 package org.archive.state;
 
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import org.apache.commons.lang.SerializationUtils;
 
 import junit.framework.TestCase;
+
+import org.apache.commons.lang.SerializationUtils;
 
 
 /**
@@ -70,10 +61,6 @@ public abstract class ModuleTestBase extends TestCase {
     public ModuleTestBase() {
         File srcDir = getSourceCodeDir();
         File resourceDir = getResourceDir();
-        if ((srcDir != null) && (resourceDir != null)) {
-            KeyMetadataMaker.makeDefaultLocale(srcDir, resourceDir, 
-                    getModuleClass());
-        }
     }
 
     
@@ -167,49 +154,6 @@ public abstract class ModuleTestBase extends TestCase {
     protected Object makeModule() throws Exception {
         return getModuleClass().newInstance();
     }
-
-    /**
-     * Tests that the processor developer remembered to invoke 
-     * {@link KeyManager#addKeys(Class)}.
-     */
-    public void testKeyManagerRegistration() {
-        Map<String,Key<Object>> keys = KeyManager.getKeys(getModuleClass());
-        Field[] fields = getModuleClass().getFields();
-        int expectedKeyCount = 0;
-        for (Field f: fields) {
-            if (f.getType() == Key.class) {
-                expectedKeyCount++;
-            }
-        }
-        if ((expectedKeyCount > 0) && keys.isEmpty()) {
-            fail("Developer forgot KeyManager.addKeys.");
-        }
-        
-        assertEquals(expectedKeyCount, keys.size());
-    }
-
-    
-    /**
-     * Tests that all keys defined by the processor class have names and
-     * descriptions in English.
-     */
-    public void testDefaultLocale() {
-        Class<?> c = getModuleClass();
-        Map<String,Key<Object>> keys = KeyManager.getKeys(c);
-        List<String> problems = new ArrayList<String>();
-        for (Key<?> k: keys.values()) {
-            String name = k.getName(Locale.ENGLISH);
-            String desc = k.getDescription(Locale.ENGLISH);
-            if (name == null || desc == null) {
-                problems.add(k.getFieldName());
-            }
-        }
-        if (KeyManager.getModuleDescription(c, Locale.ENGLISH) == null) {
-            problems.add("class description");
-        }
-        TestCase.assertTrue(problems.toString(), problems.isEmpty());
-    }
-
 
     /**
      * Tests that the module can be serialized.  The value returned by 

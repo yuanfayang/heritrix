@@ -33,11 +33,6 @@ import java.util.logging.Logger;
 
 import org.archive.modules.credential.Credential;
 import org.archive.modules.credential.CredentialStore;
-import org.archive.settings.MemorySheetManager;
-import org.archive.settings.SettingsMap;
-import org.archive.settings.Sheet;
-import org.archive.settings.SingleSheet;
-import org.archive.state.Key;
 import org.archive.state.ModuleTestBase;
 
 
@@ -65,13 +60,13 @@ public class CredentialStoreTest extends ModuleTestBase {
 
     final public void testCredentials() throws Exception {
         if(true) return;
-        MemorySheetManager manager = new MemorySheetManager();
-        SingleSheet global = manager.getGlobalSheet();
-        SingleSheet domain = manager.addSingleSheet("domain");
-        SingleSheet hostSingle = manager.addSingleSheet("hostSingle");
-        manager.associate(hostSingle, Collections.singleton("org.archive"));
-        manager.associate(domain, Collections.singleton("org."));
-        Sheet host = manager.findConfig("org.archive.foo");
+//        MemorySheetManager manager = new MemorySheetManager();
+//        SingleSheet global = manager.getGlobalSheet();
+//        SingleSheet domain = manager.addSingleSheet("domain");
+//        SingleSheet hostSingle = manager.addSingleSheet("hostSingle");
+//        manager.associate(hostSingle, Collections.singleton("org.archive"));
+//        manager.associate(domain, Collections.singleton("org."));
+//        Sheet host = manager.findConfig("org.archive.foo");
         
         CredentialStore store = new CredentialStore();
         //FIXME:SPRINGY
@@ -83,16 +78,16 @@ public class CredentialStoreTest extends ModuleTestBase {
 //        hostSingle.set(store, CredentialStore.CREDENTIALS, 
 //                new SettingsMap<Credential>(hostSingle, Credential.class));
         
-        writeCrendentials(store, global, "global");
-        writeCrendentials(store, domain, "domain");
-        writeCrendentials(store, hostSingle, "host");
-        List types = CredentialStore.getCredentialTypes();
-        
-        
-        
-        List<String> globalNames = checkContextNames(store, global, types.size());
-        checkContextNames(store, domain, types.size() * 2); // should be global + domain
-        checkContextNames(store, host, types.size() * 3); // should be global + domain + host
+//        writeCrendentials(store, global, "global");
+//        writeCrendentials(store, domain, "domain");
+//        writeCrendentials(store, hostSingle, "host");
+//        List types = CredentialStore.getCredentialTypes();
+//        
+//        
+//        
+//        List<String> globalNames = checkContextNames(store, global, types.size());
+//        checkContextNames(store, domain, types.size() * 2); // should be global + domain
+//        checkContextNames(store, host, types.size() * 3); // should be global + domain + host
 
         //FIXME:SPRINGY
 //        Key<Map<String,Credential>> k = CredentialStore.CREDENTIALS;
@@ -101,32 +96,32 @@ public class CredentialStoreTest extends ModuleTestBase {
 //            defMap.remove(name);
 //        }
         // Should be only host and domain objects at deepest scope.
-        checkContextNames(store, host, types.size() * 2);
+//        checkContextNames(store, host, types.size() * 2);
     }
 
-    private List<String> checkContextNames(CredentialStore store, 
-            Sheet sheet, int size) {
-        Map<String,Credential> map = store.getCredentials();
-
-        List<String> names = new ArrayList<String>(size);
-        names.addAll(map.keySet());
-        assertEquals("Not enough names", size, map.size());
-        return names;
-    }
-
-    private void writeCrendentials(CredentialStore store, SingleSheet context,
-                String prefix) throws Exception {
-        Map<String,Credential> map = new SettingsMap<Credential>(context, 
-                Credential.class);
-//        context.set(store, CredentialStore.CREDENTIALS, map);
-        store.setCredentials(map);
-        
-        List<Class> types = CredentialStore.getCredentialTypes();
-        for (Class cl: types) {
-            Credential c = (Credential)cl.newInstance();
-            map.put(prefix + "." + cl.getName(), c);
-            assertNotNull("Failed create of " + cl, c);
-            logger.info("Created " + cl.getName());
-        }
-    }
+//    private List<String> checkContextNames(CredentialStore store, 
+//            Sheet sheet, int size) {
+//        Map<String,Credential> map = store.getCredentials();
+//
+//        List<String> names = new ArrayList<String>(size);
+//        names.addAll(map.keySet());
+//        assertEquals("Not enough names", size, map.size());
+//        return names;
+//    }
+//
+//    private void writeCredentials(CredentialStore store, SingleSheet context,
+//                String prefix) throws Exception {
+//        Map<String,Credential> map = new SettingsMap<Credential>(context, 
+//                Credential.class);
+////        context.set(store, CredentialStore.CREDENTIALS, map);
+//        store.setCredentials(map);
+//        
+//        List<Class> types = CredentialStore.getCredentialTypes();
+//        for (Class cl: types) {
+//            Credential c = (Credential)cl.newInstance();
+//            map.put(prefix + "." + cl.getName(), c);
+//            assertNotNull("Failed create of " + cl, c);
+//            logger.info("Created " + cl.getName());
+//        }
+//    }
 }
