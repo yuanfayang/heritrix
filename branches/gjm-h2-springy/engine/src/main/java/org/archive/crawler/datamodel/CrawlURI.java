@@ -34,11 +34,6 @@ import static org.archive.crawler.datamodel.CoreAttributeConstants.A_NONFATAL_ER
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_PREREQUISITE_URI;
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_SOURCE_TAG;
 import static org.archive.crawler.datamodel.SchedulingConstants.NORMAL;
-import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_CONTENT_STATE_KEY;
-import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_FETCH_OVERDUE;
-import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_TIME_OF_NEXT_PROCESSING;
-import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_WAIT_INTERVAL;
-import static org.archive.crawler.extras.adaptive.AdaptiveRevisitAttributeConstants.A_WAIT_REEVALUATED;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_CUSTOM_PROCESSOR;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_BLOCKED_BY_USER;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_CONNECT_FAILED;
@@ -1391,82 +1386,17 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverrideC
         }
     }
 
-
-
     public void setForceRetire(boolean b) {
         getData().put(A_FORCE_RETIRE, b);
     }
-
-
-    public boolean isWaitReevaluated() {
-        if (data == null) {
-            return false;
-        } else {
-            return (Boolean)data.get(A_WAIT_REEVALUATED);
-        }
-    }
-    
-    
-    public void setWaitReevaluated(boolean b) {
-        getData().put(A_WAIT_REEVALUATED, b);
-    }
-
-    
-    public static enum ContentState { CHANGED, UNCHANGED, UNKNOWN };
-    
-    public ContentState getContentState() {
-        if (data == null) {
-            return ContentState.UNKNOWN;
-        } else {
-            return (ContentState)data.get(A_CONTENT_STATE_KEY);
-        }
-    }
-
-
-    public void setContentState(ContentState state) {
-        getData().put(A_CONTENT_STATE_KEY, state);
-    }
-
-    
-    public long getFetchOverdueTime() {
-        if (data != null) {
-            return (Long)data.get(A_FETCH_OVERDUE);
-        }
-        return 0L; // TODO: Determine sane default for this
-    }
-    
-    
-    public void setWaitInterval(long wi) {
-        getData().put(A_WAIT_INTERVAL, wi);
-    }
-
 
     public HttpMethod getHttpMethod() {
         return method;
     }
 
-
-
-
     public void setBaseURI(UURI base) {
         getData().put(A_HTML_BASE, base);
     }
-
-    
-    
-    public long getNextProcessingTime() {
-        if (data != null) {
-            return (Long)data.get(A_TIME_OF_NEXT_PROCESSING);
-        } else {
-            return 0L;
-        }
-    }
-    
-    
-    public void setNextProcessingTime(long t) {
-    	getData().put(A_TIME_OF_NEXT_PROCESSING, t);
-    }
-    
     
     public Map<String,Object> getData() {
         if (data == null) {
@@ -1475,7 +1405,6 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverrideC
         return data;
     }
 
-    
     /**
      * Set the <tt>isSeed</tt> attribute of this URI.
      * @param b Is this URI a seed, true or false.
@@ -1491,15 +1420,13 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverrideC
         }
     }
 
-    
     /**
      * @return Whether seeded.
      */
     public boolean isSeed() {
         return this.isSeed;
     }
-
-    
+  
     /**
      * @return UURI
      */
@@ -1507,7 +1434,6 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverrideC
         return this.uuri;
     }
 
-    
     /**
      * @return path (hop-types) from seed
      */
