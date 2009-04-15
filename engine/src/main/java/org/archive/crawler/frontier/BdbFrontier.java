@@ -155,7 +155,6 @@ implements Serializable, Checkpointable {
                 wq = new BdbWorkQueue(classKey, this);
                 //TODO:SPRINGY set overrides
                 wq.setTotalBudget(getQueueTotalBudget());
-                wq.setStateProvider(manager);
                 //TODO:SPRINGY set overrides 
                 getQueuePrecedencePolicy().queueCreated(wq);
                 allQueues.put(classKey, wq);
@@ -175,9 +174,6 @@ implements Serializable, Checkpointable {
         assert Thread.currentThread() == managerThread; 
         
         WorkQueue wq = (WorkQueue)allQueues.get(classKey);
-        if(wq!=null) {
-            wq.setStateProvider(manager);
-        }
         return wq;
     }
 

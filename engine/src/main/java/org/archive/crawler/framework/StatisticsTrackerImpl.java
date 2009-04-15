@@ -58,9 +58,7 @@ import org.archive.modules.net.ServerCacheUtil;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.net.UURI;
 import org.archive.settings.file.BdbModule;
-import org.archive.settings.jmx.Types;
 import org.archive.spring.ConfigPath;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
 import org.archive.util.MimetypeUtils;
@@ -879,31 +877,6 @@ implements Serializable {
     public void crawledURIFailure(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_FAILURE);
     }
-
-    public CompositeData[] seedReport(){
-        Iterator<SeedRecord> it = getSeedRecordsSortedByStatusCode();
-        List<CompositeData> cd = new LinkedList<CompositeData>();
-        try {
-            while(it.hasNext()){
-                SeedRecord sr = it.next();
-                CompositeDataSupport cds = new CompositeDataSupport(
-                        Types.SET_SEED_RECORD,
-                        new String[]{"uri","statusCode","disposition","redirectUri"},
-                        new Object[]{
-                                sr.getUri(),
-                                sr.getStatusCode(),
-                                sr.getDisposition(),
-                                sr.getRedirectUri()});
-                cd.add(cds);
-            }
-        } catch (OpenDataException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            return null;
-        }
-        
-        return cd.toArray(new CompositeData[0]);
-    }
     
     /**
      * Get a seed iterator for the job being monitored. 
@@ -1259,7 +1232,7 @@ implements Serializable {
         writeReportFile("associations","associations-report.txt");
     }
 
-    public void crawlCheckpoint(StateProvider def, File cpDir) throws Exception {
+    public void crawlCheckpoint(/*StateProvider*/ Object def, File cpDir) throws Exception {
         // CrawlController is managing the checkpointing of this object.
         logNote("CRAWL CHECKPOINTING TO " + cpDir.toString());
     }

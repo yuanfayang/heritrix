@@ -34,7 +34,6 @@ import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.StringExtractorTestBase;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.ExampleStateProvider;
 import org.archive.util.Recorder;
 
 import static org.archive.modules.extractor.LinkContext.EMBED_MISC;

@@ -20,12 +20,12 @@
 package org.archive.crawler.frontier;
 
 import static org.archive.crawler.datamodel.CoreAttributeConstants.A_FORCE_RETIRE;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.DEFERRED_FOR_RETRY;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.DISREGARDED;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.FAILED;
+import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.SUCCEEDED;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_DEFERRED;
 import static org.archive.modules.fetcher.FetchStatusCodes.S_RUNTIME_EXCEPTION;
-import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.SUCCEEDED;
-import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.FAILED;
-import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.DISREGARDED;
-import static org.archive.crawler.event.CrawlURIDispositionEvent.Disposition.DEFERRED_FOR_RETRY;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -62,8 +62,6 @@ import org.archive.crawler.frontier.precedence.CostUriPrecedencePolicy;
 import org.archive.crawler.frontier.precedence.QueuePrecedencePolicy;
 import org.archive.crawler.frontier.precedence.UriPrecedencePolicy;
 import org.archive.net.UURI;
-import org.archive.settings.KeyChangeEvent;
-import org.archive.settings.KeyChangeListener;
 import org.archive.spring.KeyedProperties;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Transform;
@@ -86,7 +84,7 @@ import com.sleepycat.je.DatabaseException;
  * @author Christian Kohlschuetter
  */
 public abstract class WorkQueueFrontier extends AbstractFrontier
-implements Closeable, CrawlUriReceiver, Serializable, KeyChangeListener, 
+implements Closeable, CrawlUriReceiver, Serializable, 
 ApplicationContextAware {
     private static final long serialVersionUID = 570384305871965843L;
 
@@ -555,7 +553,7 @@ ApplicationContextAware {
     /** 
      * Accomodate any changes in settings.
      */
-    public void keyChanged(KeyChangeEvent event) {
+    public void reconsiderRetiredQueues() {
 
         // The rules for a 'retired' queue may have changed; so,
         // unretire all queues to 'inactive'. If they still qualify

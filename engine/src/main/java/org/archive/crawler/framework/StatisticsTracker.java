@@ -21,11 +21,6 @@ package org.archive.crawler.framework;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.management.openmbean.CompositeData;
-
-import org.archive.openmbeans.annotations.Attribute;
-import org.archive.openmbeans.annotations.Operation;
-import org.archive.openmbeans.annotations.Parameter;
 import org.springframework.context.ApplicationListener;
 
 /**
@@ -83,9 +78,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @return The length of time - in msec - that this crawl has been running.
      */
-    @Operation(desc="Returns how long the current crawl has been running " +
-                "(excluding any time spent paused/suspended/stopped) " +
-                "since it began.")
     public long crawlDuration();
 
     /**
@@ -102,9 +94,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      * @return The total number of uncompressed bytes written to disk
      * @deprecated misnomer; use totalBytesCrawled instead
      */
-    @Operation(desc="Returns the total number of uncompressed bytes " +
-                "processed. Stored data may be much smaller due to" +
-                "compression or duplicate-reduction policies.")
     public long totalBytesWritten();
     
     
@@ -115,9 +104,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      * 
      * @return The total number of uncompressed bytes crawled
      */
-    @Operation(desc="Returns the total number of uncompressed bytes crawled. " +
-                "Stored data may be much smaller due to compression or " +
-                "duplicate-reduction policies.")
     public long totalBytesCrawled();    
     
     /**
@@ -135,8 +121,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      * time spent paused.
      * @return Total amount of time (in msec.) spent crawling so far.
      */
-    @Attribute(desc="Total amount of time spent actively crawling so far.", 
-            def="0")
     public long getCrawlerTotalElapsedTime();
     
     /**
@@ -146,9 +130,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      * @return The rate per second of documents gathered during the last
      * snapshot
      */
-    @Operation(desc="Returns an estimate of recent document download rates " +
-                "based on a queue of recently seen CrawlURIs (as of last " +
-                "snapshot).")
     public double currentProcessedDocsPerSec();
     
     /**
@@ -157,9 +138,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @return  The rate per second of documents gathered so far
      */
-    @Operation(desc="Returns the number of documents that have been " +
-                "processed per second over the life of the crawl " +
-                "(as of last snapshot)")
     public double processedDocsPerSec();
     
     /**
@@ -168,8 +146,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @return The rate per second of KB gathered so far
      */
-    @Operation(desc="Calculates the rate that data, in kb, has been " +
-                "processed over the life of the crawl (as of last snapshot.)")
     public long processedKBPerSec();
 
     /**
@@ -180,10 +156,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @return The rate per second of KB gathered during the last snapshot
      */
-    @Operation(desc="Calculates an estimate of the rate, in kb, at which " +
-        "documents are currently being processed by the crawler.  For more " +
-        "accurate estimates set a larger queue size, or get " +
-        "and average multiple values (as of last snapshot).")
     public int currentProcessedKBPerSec();
     
     /**
@@ -191,7 +163,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      * 
      * @return The number of active (non-paused) threads
      */
-    @Operation(desc="Returns the number of active (non-paused threads.")
     public int activeThreadCount();
     
     /**
@@ -204,26 +175,18 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
-    @Operation(desc="Returns the number of sucessfully processed URIs. " +
-            "If the crawl is not running, this will return the value of the " +
-            "last snapshot.")
     public long successfullyFetchedCount();
     
     /**
      * @return Total number of URIs (processed + queued +
      * currently being processed)
      */
-    @Operation(desc="Returns the total number of URIs (processed + queued + " +
-                "currently being processed).")
     public long totalCount();
     
-    @Operation(desc="Returns the congestion ratio.")
     public float congestionRatio();
     
-    @Operation(desc="Returns the deepest URI.")
     public long deepestUri();
     
-    @Operation(desc="Returns the average depth.")
     public long averageDepth();
     
     /**
@@ -242,9 +205,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      */
     public Iterator getSeedRecordsSortedByStatusCode();
 
-    @Operation(desc="Returns the seed report", type="org.archive.settings.jmx.Types.SET_SEED_RECORD")
-    CompositeData[] seedReport();
-    
     /**
      * @return legend of progress-statistics
      */
@@ -266,7 +226,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @return The total number of ToeThreads
      */
-    @Operation(desc="Get the total number of ToeThreads (sleeping and active).")
     public int threadCount();
 
     
@@ -280,7 +239,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
-    @Operation(desc="Returns the number of URIs queued up and waiting for processing.")
     public long queuedUriCount();
 
     /**
@@ -293,7 +251,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
-    @Operation(desc="Returns the number of discovered URIs.")
     public long discoveredUriCount();
 
     /**
@@ -303,7 +260,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
-    @Operation(desc="Returns the number processed URIs.")
     public long finishedUriCount();
 
     /**
@@ -311,7 +267,6 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @return The total number of failed fetch attempts
      */
-    @Operation(desc="Returns the number URIs that could not be fetched.")
     public long failedFetchAttempts();
 
     /**
@@ -319,21 +274,13 @@ public interface StatisticsTracker extends Runnable, ApplicationListener {
      *
      * @return The total number of failed fetch attempts
      */
-    @Operation(desc="Returns the number of disregarded URIs.")
     public long disregardedFetchAttempts();
 
-    @Operation(desc="Returns the known keys in a report.")
-    public String[] getReportKeys(
-            @Parameter(name="report", desc="The name of the report.")
-            String report);
+    public String[] getReportKeys(String report);
     
-    @Operation(desc="Returns the known value keys of a key in a report.")
     public long getReportValue(
-            @Parameter(name="report", desc="The name of the report.")
             String report, 
-            @Parameter(name="key", desc="The key in the report whose value we want.")
             String key);
     
-    @Operation(desc="Dumps crawl reports to disk.")
     public void dumpReports();
 }

@@ -31,8 +31,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.URI;
 
-import org.archive.state.Key;
-
 
 /**
  * Object input stream that provides information useful during checkpoint
@@ -58,9 +56,9 @@ implements CheckpointRecovery {
         return recovery.getRecoveredJobName();
     }
 
-    public <T> void setState(Object module, Key<T> key, T value) {
-        recovery.setState(module, key, value);
-    }
+//    public <T> void setState(Object module, Key<T> key, T value) {
+//        recovery.setState(module, key, value);
+//    }
 
 
     public String translatePath(String path) {
@@ -73,7 +71,7 @@ implements CheckpointRecovery {
     }
 
 
-    public void apply(SingleSheet global) {
-        throw new UnsupportedOperationException();
-    }
+//    public void apply(SingleSheet global) {
+//        throw new UnsupportedOperationException();
+//    }
 }

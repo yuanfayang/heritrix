@@ -26,16 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.modules.canonicalize.CanonicalizationRule;
-import org.archive.modules.canonicalize.Canonicalizer;
-import org.archive.modules.canonicalize.FixupQueryString;
-import org.archive.modules.canonicalize.LowercaseRule;
-import org.archive.modules.canonicalize.StripSessionIDs;
-import org.archive.modules.canonicalize.StripUserinfoRule;
-import org.archive.modules.canonicalize.StripWWWRule;
-import org.archive.net.UURI;
-import org.archive.net.UURIFactory;
-import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 
 /**
@@ -44,23 +34,6 @@ import org.archive.util.TmpDirTestCase;
  * @version $Date$, $Revision$
  */
 public class CanonicalizerTest extends TmpDirTestCase {
-
-    public static class TestURI extends ExampleStateProvider {
-        private UURI uuri;
-        
-        public TestURI(String uri) {
-            try {
-                this.uuri = UURIFactory.getInstance(uri);
-            } catch (URIException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        
-        public String toString() {
-            return uuri.toString();
-        }
-    }
-
 
     private List<CanonicalizationRule> rules = null;
     

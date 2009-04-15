@@ -17,7 +17,6 @@ import org.archive.crawler.frontier.precedence.SimplePrecedenceProvider;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.modules.fetcher.FetchStats.Stage;
-import org.archive.settings.SheetManager;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -656,22 +655,6 @@ public abstract class WorkQueue implements Frontier.FrontierGroup,
     public int getPrecedence() {
         return precedenceProvider.getPrecedence();
     }
-    
-    public void setStateProvider(SheetManager manager) {
-//      TODO:SPRINGY adapt for overrides
-//        if(provider!=null) {
-//            // no need to reset
-//            return; 
-//        }
-//        this.provider = null; // manager.findConfig(getClassKey()); 
-    }
-
-//    public <T> T get(Object module, Key<T> key) {
-//        if (provider == null) {
-//            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
-//        }
-//        return provider.get(module, key);
-//    }
 
     /**
      * @return the onInactiveQueues

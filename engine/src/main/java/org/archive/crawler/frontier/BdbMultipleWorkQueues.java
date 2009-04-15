@@ -149,7 +149,7 @@ public class BdbMultipleWorkQueues {
         int matches = 0;
         int tries = 0;
         ArrayList<String> results = new ArrayList<String>(maxMatches);
-        byte[] marker = FrontierJMXTypes.fromString(m);
+        byte[] marker = m.getBytes(); // = FrontierJMXTypes.fromString(m);
         
         DatabaseEntry key;
         if (marker == null) {
@@ -192,14 +192,14 @@ public class BdbMultipleWorkQueues {
             // end of scan
             m = null;
         } else {
-            m = FrontierJMXTypes.toString(key.getData());
+            m = new String(key.getData()); // = FrontierJMXTypes.toString(key.getData());
         }
         
         String[] arr = results.toArray(new String[results.size()]);
         CompositeData cd;
         try {
             cd = new CompositeDataSupport(
-                    FrontierJMXTypes.URI_LIST_DATA,
+                    /*FrontierJMXTypes.URI_LIST_DATA*/ null,
                     new String[] { "list", "marker" },
                     new Object[] { arr, m });
         } catch (OpenDataException e) {

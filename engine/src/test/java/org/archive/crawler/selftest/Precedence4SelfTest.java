@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.util.IoUtils;
 
 
@@ -51,9 +50,10 @@ public class Precedence4SelfTest extends Precedence1SelfTest {
     
     
     @Override
-    protected void configure(JMXSheetManager sm) {
-        sm.associate("HiPri", "http://(127.0.0.1:7777)/five/a.html");
-        sm.associate("LoPri", "http://(127.0.0.1:7777)/five/b.html");        
+    protected void configure(/*JMXSheetManager sm*/) {
+        //TODO:Springy fixme
+//        sm.associate("HiPri", "http://(127.0.0.1:7777)/five/a.html");
+//        sm.associate("LoPri", "http://(127.0.0.1:7777)/five/b.html");        
     }
 
 

@@ -37,7 +37,6 @@ import org.archive.modules.ProcessorURI;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
 import org.archive.state.Module;
-import org.archive.state.StateProvider;
 
 
 /**
@@ -128,7 +127,7 @@ public class CredentialStore implements Module, Serializable, HasKeyedProperties
      * @throws MBeanException
      * @throws ReflectionException
      */
-    public Credential get(StateProvider context, String name) {
+    public Credential get(/*StateProvider*/Object context, String name) {
         return getCredentials().get(name);
     }
 

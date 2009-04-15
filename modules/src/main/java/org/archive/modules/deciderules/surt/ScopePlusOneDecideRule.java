@@ -28,7 +28,6 @@ import java.util.logging.Logger;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.DecideResult;
 import org.archive.net.UURI;
-import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
 /**
@@ -104,23 +103,13 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
     }
     
     /**
-     * Synchronized get of prefix set to use
-     * 
-     * @return SurtPrefixSet to use for check
-     *@see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#getPrefixes()
-     */
-    protected synchronized SurtPrefixSet getPrefixes() {
-        return getPrefixes(null);
-    } 
-    
-    /**
      * Synchronized get of prefix set to use.
      * @param o Context object.
      * 
      * @return SurtPrefixSet to use for check
      * @see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#getPrefixes()
      */
-    protected synchronized SurtPrefixSet getPrefixes(StateProvider o) {
+    protected synchronized SurtPrefixSet getPrefixes(/*StateProvider o*/) {
         if (surtPrefixes == null) {
             readPrefixes();
         }

@@ -24,10 +24,7 @@
 */
 package org.archive.modules.deciderules.surt;
 
-
-import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
-
 
 /**
  * Rule applies configured decision to any URIs that
@@ -55,7 +52,7 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
      * 
      * @see org.archive.modules.deciderules.surt.SurtPrefixedDecideRule#readPrefixes()
      */
-    protected void readPrefixes(StateProvider context) {
+    protected void readPrefixes(/*StateProvider context*/) {
         buildSurtPrefixSet();
         surtPrefixes.convertAllPrefixesToHosts();
         dumpSurtPrefixSet();

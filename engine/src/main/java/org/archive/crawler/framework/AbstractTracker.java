@@ -26,9 +26,7 @@ import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.openmbeans.annotations.Bean;
-import org.archive.settings.Finishable;
 import org.archive.state.Module;
-import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,8 +59,7 @@ public abstract class AbstractTracker
     implements StatisticsTracker, 
                Serializable, 
                Module, 
-               Lifecycle, // InitializingBean, 
-               Finishable {
+               Lifecycle {
     /**
      * The interval between writing progress information to log.
      */
@@ -323,7 +320,7 @@ public abstract class AbstractTracker
     }
     
     
-    public void finalTasks(StateProvider p) {
+    public void finalTasks() {
         dumpReports();
         finalCleanup();        
     }

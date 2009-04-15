@@ -9,7 +9,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.archive.openmbeans.annotations.BeanProxy;
-import org.archive.settings.jmx.JMXSheetManager;
 import org.archive.util.IoUtils;
 
 /**
@@ -175,9 +174,10 @@ public class Precedence1SelfTest extends SelfTestBase {
     }
     
 
-    protected void configure(JMXSheetManager sm) {
-        sm.associate("HiPri", "http://(127.0.0.1:7777)/one");
-        sm.associate("LoPri", "http://(127.0.0.1:7777)/ten");        
+    protected void configure(/*JMXSheetManager sm*/) {
+        // TODO: updateme!
+//        sm.associate("HiPri", "http://(127.0.0.1:7777)/one");
+//        sm.associate("LoPri", "http://(127.0.0.1:7777)/ten");        
     }
     
 

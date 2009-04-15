@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.FileWriter;
 
 import org.archive.modules.net.BdbServerCache;
-import org.archive.settings.MemorySheetManager;
 import org.archive.settings.file.BdbModule;
 import org.archive.spring.ConfigPath;
 import org.archive.state.ModuleTestBase;
@@ -80,8 +79,6 @@ public class CrawlControllerImplTest extends ModuleTestBase {
         } finally {
             IoUtils.close(fileWriter);
         }
-
-        MemorySheetManager manager = new MemorySheetManager();
         
         File state = new File(tmp, "state");
         state.mkdirs();

@@ -28,8 +28,6 @@ package org.archive.settings;
 
 import java.net.URI;
 
-import org.archive.state.Key;
-
 /**
  * The information about a checkpoint recovery.
  * 
@@ -43,7 +41,7 @@ public interface CheckpointRecovery {
     
     URI translateURI(URI uri);
     
-    <T> void setState(Object module, Key<T> key, T value);
-
-    void apply(SingleSheet global);
+//    <T> void setState(Object module, Key<T> key, T value);
+//
+//    void apply(SingleSheet global);
 }
