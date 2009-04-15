@@ -80,7 +80,6 @@ import org.archive.modules.net.ServerCacheUtil;
 import org.archive.modules.seeds.SeedModuleImpl;
 import org.archive.modules.seeds.SeedRefreshListener;
 import org.archive.net.UURI;
-import org.archive.openmbeans.annotations.Bean;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
@@ -101,7 +100,6 @@ import org.springframework.context.Lifecycle;
  * @author gojomo
  */
 public abstract class AbstractFrontier 
-    extends Bean
     implements Frontier, 
                Serializable, 
                Lifecycle, // InitializingBean, 
@@ -443,7 +441,7 @@ public abstract class AbstractFrontier
      * @param description Description for this frontier.
      */
     public AbstractFrontier() {
-        super(Frontier.class);
+
     }
 
     /** reusable no-op inbound event, to force reeval of state/eligible URIs */

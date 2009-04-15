@@ -3,12 +3,8 @@ package org.archive.crawler.selftest;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.lang.management.ManagementFactory;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import org.archive.openmbeans.annotations.BeanProxy;
+import org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy;
 import org.archive.util.IoUtils;
 
 /**

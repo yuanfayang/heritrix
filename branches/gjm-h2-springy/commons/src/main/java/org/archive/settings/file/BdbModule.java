@@ -49,7 +49,6 @@ import java.util.logging.Logger;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.RecoverAction;
 import org.archive.spring.ConfigPath;
-import org.archive.state.Module;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.bdbje.EnhancedEnvironment;
@@ -69,7 +68,7 @@ import com.sleepycat.je.SecondaryKeyCreator;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
-public class BdbModule implements Module, Lifecycle, Checkpointable, 
+public class BdbModule implements Lifecycle, Checkpointable, 
 Serializable, Closeable {
     private static final long serialVersionUID = 1L;
     final private static Logger LOGGER = 

@@ -36,8 +36,6 @@ import java.util.logging.Logger;
 import org.archive.modules.ProcessorURI;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Module;
-
 
 /**
  * Front door to the credential store.
@@ -51,7 +49,7 @@ import org.archive.state.Module;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStore implements Module, Serializable, HasKeyedProperties {
+public class CredentialStore implements Serializable, HasKeyedProperties {
 
     private static final long serialVersionUID = 3L;
 

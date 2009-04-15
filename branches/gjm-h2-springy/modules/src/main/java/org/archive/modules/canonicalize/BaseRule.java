@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.state.Module;
 
 /**
  * Base of all rules applied canonicalizing a URL that are configurable
@@ -40,7 +39,7 @@ import org.archive.state.Module;
  * @version $Date$, $Revision$
  */
 public abstract class BaseRule
-implements CanonicalizationRule, Module, Serializable, HasKeyedProperties {
+implements CanonicalizationRule, Serializable, HasKeyedProperties {
     protected KeyedProperties kp = new KeyedProperties();
     public KeyedProperties getKeyedProperties() {
         return kp;

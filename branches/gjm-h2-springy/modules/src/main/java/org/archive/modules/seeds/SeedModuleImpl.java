@@ -38,7 +38,6 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
-import org.archive.openmbeans.annotations.Operation;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.Checkpointable;
@@ -108,7 +107,6 @@ public class SeedModuleImpl implements
      * Refresh seeds.
      *
      */
-    @Operation(desc="Notify all listeners that the seeds file has changed.")
     public void refreshSeeds() {
         fireSeedsRefreshed();
     }

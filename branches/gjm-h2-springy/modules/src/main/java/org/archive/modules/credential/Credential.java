@@ -35,9 +35,6 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.state.Module;
-
-
 
 /**
  * Credential type.
@@ -52,7 +49,7 @@ import org.archive.state.Module;
  * @author stack
  * @version $Revision$, $Date$
  */
-public abstract class Credential implements Module, Serializable {
+public abstract class Credential implements Serializable {
 
     private static final Logger logger =
         Logger.getLogger(Credential.class.getName());

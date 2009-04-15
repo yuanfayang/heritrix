@@ -25,7 +25,6 @@
 package org.archive.crawler.frontier.precedence;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.state.Module;
 
 /**
  * Superclass for URI precedence policies, which set a integer 
@@ -38,7 +37,7 @@ import org.archive.state.Module;
  * that consults URI precedence values is chosen. 
  * 
  */
-abstract public class UriPrecedencePolicy implements Module {
+abstract public class UriPrecedencePolicy {
 
     /**
      * Add a precedence value to the supplied CrawlURI, which is being 

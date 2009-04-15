@@ -25,8 +25,6 @@ import java.util.EventObject;
 import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStateEvent;
-import org.archive.openmbeans.annotations.Bean;
-import org.archive.state.Module;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +53,8 @@ import org.xbill.DNS.Lookup;
  * @see org.archive.crawler.admin.StatisticsTrackerImpl
  */
 public abstract class AbstractTracker 
-    extends Bean 
     implements StatisticsTracker, 
-               Serializable, 
-               Module, 
+               Serializable,
                Lifecycle {
     /**
      * The interval between writing progress information to log.
@@ -105,7 +101,7 @@ public abstract class AbstractTracker
      * Constructor.
      */
     public AbstractTracker() {
-        super(StatisticsTracker.class);
+
     }
 
     boolean isRunning = false; 

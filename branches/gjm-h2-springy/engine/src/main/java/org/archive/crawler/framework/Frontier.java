@@ -33,9 +33,6 @@ import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.net.UURI;
-import org.archive.openmbeans.annotations.Operation;
-import org.archive.openmbeans.annotations.Parameter;
-import org.archive.state.Module;
 import org.archive.util.Reporter;
 import org.json.JSONException;
 
@@ -108,7 +105,7 @@ import org.json.JSONException;
  * @see org.archive.crawler.framework.ToeThread
  * @see org.archive.crawler.settings.ModuleType
  */
-public interface Frontier extends Module, Reporter {
+public interface Frontier extends Reporter {
 
     /**
      * Get the next URI that should be processed. If no URI becomes availible
@@ -296,10 +293,7 @@ public interface Frontier extends Module, Reporter {
      * @throws IOException If problems occur reading file.
      * @throws JSONException 
      */
-    @Operation(desc="Import URIs from a file, to be scheduled and/or " +
-    		"considered-included.")
     public void importURIs(
-            @Parameter(name="params", desc="JSONified map of parameters ")
             String params)
 			throws IOException;
 
@@ -362,28 +356,10 @@ public interface Frontier extends Module, Reporter {
      * @see FrontierMarker
      * @see #getInitialMarker(String, boolean)
      */
-    @Operation(desc="Returns a list of all uncrawled URIs starting from" +
-    		" a specified marker until numberOfMatches is reached.",
-    		type="org.archive.crawler.frontier.FrontierJMXTypes.URI_LIST_DATA")
     public CompositeData getURIsList(
-            @Parameter(name="marker", desc="A marker specifying from what " +
-            		"position in the Frontier the list should begin.  " +
-            		"Set to null to start from the beginning.")
             String marker,
-            
-            @Parameter(name="numberOfMatches", desc="The maximum number of " +
-            		"URIs to add to the list.")
             int numberOfMatches,
-            
-            @Parameter(name="regex", desc="A regular expression used to " +
-            		"filter URIs.  Only URIs that match the regular " +
-            		"expression will be included in the result.  Use" +
-            		"a single period to include all URIs.")
             String regex,
-            
-            @Parameter(name="verbose", desc="If set to true the strings " +
-            		"returned will contain additional information about " +
-            		"each URI beyond their names.")
             boolean verbose);
 
     /**
@@ -403,14 +379,8 @@ public interface Frontier extends Module, Reporter {
      *              deleted.
      * @return The number of URIs deleted
      */
-    @Operation(desc="Delete any discovered/pending URI that matches " +
-    		"the given uriRegex, but only from queues that match the " +
-    		"queueRegex.")
     public long deleteURIs(
-            @Parameter(name="queueRegex", desc="The regex used to determine which queues to remove URis from.")
             String queueRegex,
-            
-            @Parameter(name="uriRegex", desc="The regex used to determine which URIs to delete.")
             String match);
 
     /**
