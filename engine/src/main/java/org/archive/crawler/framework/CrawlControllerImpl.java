@@ -19,34 +19,34 @@
  
 package org.archive.crawler.framework;
 
+import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.EventObject;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Map;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CrawlURI;
+import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.event.CrawlStateEvent;
-import org.archive.crawler.event.CrawlURIDispositionListener;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorChain;
 import org.archive.modules.net.ServerCache;
-import org.archive.openmbeans.annotations.Bean;
-import org.archive.settings.JobHome;
+import org.archive.modules.writer.DefaultMetadataProvider;
 import org.archive.spring.ConfigPath;
+import org.archive.spring.PathSharingContext;
+import org.archive.spring.ReadSource;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.Lifecycle;
@@ -65,20 +65,25 @@ import org.xbill.DNS.Lookup;
  * @contributor gojomo
  */
 // TODO: rename back to CrawlController
-public class CrawlControllerImpl extends Bean implements 
+public class CrawlControllerImpl implements 
     Serializable, 
     Reporter, 
     Lifecycle,
     CrawlController,
-    ApplicationContextAware {
+    ApplicationContextAware,
+    BeanPostProcessor {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlControllerImpl.class,1);
-
-    AbstractApplicationContext appCtx;
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.appCtx = (AbstractApplicationContext)applicationContext;
+    
+    DefaultMetadataProvider metadata;
+    public DefaultMetadataProvider getMetadata() {
+        return metadata;
+    }
+    @Autowired
+    public void setMetadata(DefaultMetadataProvider provider) {
+        this.metadata = provider;
     }
     
     protected ServerCache serverCache;
@@ -264,15 +269,6 @@ public class CrawlControllerImpl extends Bean implements
     public void setLoggerModule(CrawlerLoggerModule loggerModule) {
         this.loggerModule = loggerModule;
     }
-
-    protected JobHome jobHome;
-    public JobHome getJobHome() {
-        return jobHome;
-    }
-    @Autowired
-    public void setJobHome(JobHome home) {
-        this.jobHome = home;
-    }
     
     /**
      * Messages from the crawlcontroller.
@@ -283,31 +279,20 @@ public class CrawlControllerImpl extends Bean implements
         Logger.getLogger(CrawlControllerImpl.class.getName());
 
     private transient ToePool toePool;
-    
-    // Used to enable/disable single-threaded operation after OOM
-    private volatile transient boolean singleThreadMode = false; 
-    private ReentrantLock singleThreadLock = null;
 
     // emergency reserve of memory to allow some progress/reporting after OOM
     private transient LinkedList<char[]> reserveMemory;
     private static final int RESERVE_BLOCKS = 1;
     private static final int RESERVE_BLOCK_SIZE = 6*2^20; // 6MB
 
-    transient ThreadGroup alertThreadGroup;
-    
-    // crawl state: as requested or actual
-
-    
     /**
      * Crawl exit status.
      */
     private transient CrawlStatus sExit;
 
-    
-    // FIXME: Make this an outer class.
     public static enum State {
         NASCENT, RUNNING, PAUSED, PAUSING, CHECKPOINTING, 
-        STOPPING, FINISHED, STARTED, PREPARING 
+        STOPPING, FINISHED, PREPARING 
     }
 
     transient private State state = State.NASCENT;
@@ -331,32 +316,25 @@ public class CrawlControllerImpl extends Bean implements
      */
     transient private StringBuffer manifest;
 
-
-    // Since there is a high probability that there will only ever by one
-    // CrawlURIDispositionListner we will use this while there is only one:
-    private transient CrawlURIDispositionListener
-        registeredCrawlURIDispositionListener;
-
-    // And then switch to the array once there is more then one.
-     protected transient ArrayList<CrawlURIDispositionListener> 
-     registeredCrawlURIDispositionListeners;
-
-
-    
-
     public CrawlControllerImpl() {
-        super(CrawlController.class);
+
     }
     
+    transient AlertThreadGroup alertThreadGroup;
+    
     public void start() {
+        // cache AlertThreadGroup for later ToePool launch
+        AlertThreadGroup atg = AlertThreadGroup.current();
+        if(atg!=null) {
+            alertThreadGroup = atg;
+        }
+        
         if(isRunning) {
             return; 
         }
         this.checkpointer = new Checkpointer(
                 this, getCheckpointsDir().getFile());
 
-        this.singleThreadLock = new ReentrantLock();
-        // sExit = null;
         sExit = CrawlStatus.FINISHED_ABNORMAL;
         this.manifest = new StringBuffer();
 
@@ -368,11 +346,6 @@ public class CrawlControllerImpl extends Bean implements
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
-
-        // Can't call setupToePool yet due to circular dependency with Frontier
-        // So, remember current ThreadGroup so we can create the ToePool in 
-        // it later.
-        alertThreadGroup = Thread.currentThread().getThreadGroup();
         isRunning = true; 
     }
     
@@ -385,147 +358,7 @@ public class CrawlControllerImpl extends Bean implements
         // TODO: more stop/cleanup?
         isRunning = false; 
     }
-    /**
-     * Register for CrawlURIDisposition events.
-     *
-     * @param cl a class implementing the CrawlURIDispostionListener interface
-     *
-     * @see CrawlURIDispositionListener
-     */
-    public void addCrawlURIDispositionListener(CrawlURIDispositionListener cl) {
-        registeredCrawlURIDispositionListener = null;
-        if (registeredCrawlURIDispositionListeners == null) {
-            // First listener;
-            registeredCrawlURIDispositionListener = cl;
-            //Only used for the first one while it is the only one.
-            registeredCrawlURIDispositionListeners 
-             = new ArrayList<CrawlURIDispositionListener>(1);
-            //We expect it to be very small.
-        }
-        registeredCrawlURIDispositionListeners.add(cl);
-    }
 
-    /**
-     * Allows an external class to raise a CrawlURIDispostion
-     * crawledURISuccessful event that will be broadcast to all listeners that
-     * have registered with the CrawlController.
-     *
-     * @param curi - The CrawlURI that will be sent with the event notification.
-     *
-     * @see CrawlURIDispositionListener#crawledURISuccessful(CrawlURI)
-     */
-    public void fireCrawledURISuccessfulEvent(CrawlURI curi) {
-        if (registeredCrawlURIDispositionListener != null) {
-            // Then we'll just use that.
-            registeredCrawlURIDispositionListener.crawledURISuccessful(curi);
-        } else {
-            // Go through the list.
-            if (registeredCrawlURIDispositionListeners != null
-                && registeredCrawlURIDispositionListeners.size() > 0) {
-                Iterator it = registeredCrawlURIDispositionListeners.iterator();
-                while (it.hasNext()) {
-                    (
-                        (CrawlURIDispositionListener) it
-                            .next())
-                            .crawledURISuccessful(
-                        curi);
-                }
-            }
-        }
-    }
-
-    /**
-     * Allows an external class to raise a CrawlURIDispostion
-     * crawledURINeedRetry event that will be broadcast to all listeners that
-     * have registered with the CrawlController.
-     *
-     * @param curi - The CrawlURI that will be sent with the event notification.
-     *
-     * @see CrawlURIDispositionListener#crawledURINeedRetry(CrawlURI)
-     */
-    public void fireCrawledURINeedRetryEvent(CrawlURI curi) {
-        if (registeredCrawlURIDispositionListener != null) {
-            // Then we'll just use that.
-            registeredCrawlURIDispositionListener.crawledURINeedRetry(curi);
-            return;
-        }
-        
-        // Go through the list.
-        if (registeredCrawlURIDispositionListeners != null
-                && registeredCrawlURIDispositionListeners.size() > 0) {
-            for (Iterator i = registeredCrawlURIDispositionListeners.iterator();
-                    i.hasNext();) {
-                ((CrawlURIDispositionListener)i.next()).crawledURINeedRetry(curi);
-            }
-        }
-    }
-
-    /**
-     * Allows an external class to raise a CrawlURIDispostion
-     * crawledURIDisregard event that will be broadcast to all listeners that
-     * have registered with the CrawlController.
-     * 
-     * @param curi -
-     *            The CrawlURI that will be sent with the event notification.
-     * 
-     * @see CrawlURIDispositionListener#crawledURIDisregard(CrawlURI)
-     */
-    public void fireCrawledURIDisregardEvent(CrawlURI curi) {
-        if (registeredCrawlURIDispositionListener != null) {
-            // Then we'll just use that.
-            registeredCrawlURIDispositionListener.crawledURIDisregard(curi);
-        } else {
-            // Go through the list.
-            if (registeredCrawlURIDispositionListeners != null
-                && registeredCrawlURIDispositionListeners.size() > 0) {
-                Iterator it = registeredCrawlURIDispositionListeners.iterator();
-                while (it.hasNext()) {
-                    (
-                        (CrawlURIDispositionListener) it
-                            .next())
-                            .crawledURIDisregard(
-                        curi);
-                }
-            }
-        }
-    }
-
-    /**
-     * Allows an external class to raise a CrawlURIDispostion crawledURIFailure event
-     * that will be broadcast to all listeners that have registered with the CrawlController.
-     *
-     * @param curi - The CrawlURI that will be sent with the event notification.
-     *
-     * @see CrawlURIDispositionListener#crawledURIFailure(CrawlURI)
-     */
-    public void fireCrawledURIFailureEvent(CrawlURI curi) {
-        if (registeredCrawlURIDispositionListener != null) {
-            // Then we'll just use that.
-            registeredCrawlURIDispositionListener.crawledURIFailure(curi);
-        } else {
-            // Go through the list.
-            if (registeredCrawlURIDispositionListeners != null
-                && registeredCrawlURIDispositionListeners.size() > 0) {
-                Iterator it = registeredCrawlURIDispositionListeners.iterator();
-                while (it.hasNext()) {
-                    ((CrawlURIDispositionListener)it.next())
-                        .crawledURIFailure(curi);
-                }
-            }
-        }
-    }
-
-
-    
-    protected FatalConfigurationException
-            convertToFatalConfigurationException(Exception e) {
-        FatalConfigurationException fce =
-            new FatalConfigurationException("Converted exception: " +
-               e.getMessage());
-        fce.setStackTrace(e.getStackTrace());
-        return fce;
-    }
-    
     /**
      * Send crawl change event to all listeners.
      * @param newState State change we're to tell listeners' about.
@@ -536,14 +369,13 @@ public class CrawlControllerImpl extends Bean implements
     @SuppressWarnings("unchecked")
     protected void sendCrawlStateChangeEvent(State newState, 
             CrawlStatus status) {
+        if(this.state == newState) {
+            // suppress duplicate state-reports
+            return;
+        }
         this.state = newState; 
         CrawlStateEvent event = new CrawlStateEvent(this,newState,status.getDescription());
         appCtx.publishEvent(event); 
-        
-        //TODO: replace this JMX notification with something else
-        sendNotification(newState.toString(), "");
-        
-        LOGGER.fine("Sent " + newState);
     }
     
 
@@ -562,11 +394,6 @@ public class CrawlControllerImpl extends Bean implements
         frontier.loadSeeds();
         
         setupToePool();
-
-        sendCrawlStateChangeEvent(State.STARTED, CrawlStatus.PENDING);
-        CrawlStatus jobState = CrawlStatus.RUNNING;
-        state = State.RUNNING;
-        sendCrawlStateChangeEvent(this.state, jobState);
 
         // A proper exit will change this value.
         this.sExit = CrawlStatus.FINISHED_ABNORMAL;
@@ -588,16 +415,8 @@ public class CrawlControllerImpl extends Bean implements
     protected void completeStop() {
         LOGGER.fine("Entered complete stop.");
 
-
-//        sheetManager.closeModules();
         loggerModule.closeLogFiles();
-        
-        // Release reference to logger file handler instances.
         this.manifest = null;
-
-//        if (this.sheetManager !=  null) {
-//            this.sheetManager.cleanup();
-//        }
         this.reserveMemory = null;
         if (this.checkpointer != null) {
             this.checkpointer.cleanup();
@@ -605,22 +424,14 @@ public class CrawlControllerImpl extends Bean implements
         }
         if (this.toePool != null) {
             this.toePool.cleanup();
-            // I played with launching a thread here to do cleanup of the
-            // ToePool ThreadGroup (making sure the cleanup thread was not
-            // in the ToePool ThreadGroup).  Did this because ToePools seemed
-            // to be sticking around holding references to CrawlController at
-            // least.  Need to spend more time looking to see that this is
-            // still the case even after adding the above toePool#cleanup call.
         }
         this.toePool = null;
-
 
         LOGGER.fine("Finished crawl.");
 
         appCtx.stop(); 
         // Ok, now we are ready to exit.
         sendCrawlStateChangeEvent(State.FINISHED, this.sExit);
-//        this.sheetManager = null;
     }
     
     synchronized void completePause() {
@@ -724,11 +535,7 @@ public class CrawlControllerImpl extends Bean implements
         sExit = CrawlStatus.WAITING_FOR_PAUSE;
         getFrontier().pause();
         sendCrawlStateChangeEvent(State.PAUSING, this.sExit);
-        if (toePool.getActiveToeCount() == 0) {
-            // if all threads already held, complete pause now
-            // (no chance to trigger off later held thread)
-            completePause();
-        }
+        // wait for pause to come via frontier changes
     }
 
     /**
@@ -761,8 +568,6 @@ public class CrawlControllerImpl extends Bean implements
             return;
         }
         
-        // ToePool might be null if we are resuming after a checkpoint recovery
-        multiThreadMode();
         Frontier f = getFrontier();
         f.unpause();
         sendCrawlStateChangeEvent(State.RUNNING, CrawlStatus.RUNNING);
@@ -779,7 +584,7 @@ public class CrawlControllerImpl extends Bean implements
     }
 
     protected void setupToePool() {
-        toePool = new ToePool(this);
+        toePool = new ToePool(alertThreadGroup,this);
         // TODO: make # of toes self-optimizing
         toePool.setSize(getMaxToeThreads());
         toePool.waitForAll();
@@ -840,120 +645,21 @@ public class CrawlControllerImpl extends Bean implements
     public boolean atFinish() {
         return state == State.RUNNING && !shouldContinueCrawling();
     }
-    
-    
-    private void writeObject(ObjectOutputStream stream) throws IOException {
-        // In an ideal world, this wouldn't be necessary:  Modules would
-        // declare formal dependencies on the objects they require, and would
-        // not go through the CrawlController to find each other.  However,
-        // since many modules still do use the CrawlController to find each
-        // other, we must ensure that critical things are deserialized in
-        // order.  In particular, CrawlOrder and BdbModule must be deserialized
-        // first since Modules that are constructed during defaultReadObject
-        // may require those things.
-//        stream.writeObject(order);
-        stream.defaultWriteObject();
-    }
-    
-    
+
     private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
-//        this.order = (CrawlOrder)stream.readObject();
         this.state = State.PAUSED;
 
         this.manifest = new StringBuffer();
 
         stream.defaultReadObject();
-
-        // Ensure no holdover singleThreadMode
-        singleThreadMode = false;
-        alertThreadGroup = Thread.currentThread().getThreadGroup();
     }
-
-
-    /**
-     * Go to single thread mode, where only one ToeThread may
-     * proceed at a time. Also acquires the single lock, so 
-     * no further threads will proceed past an 
-     * acquireContinuePermission. Caller mush be sure to release
-     * lock to allow other threads to proceed one at a time. 
-     */
-    public void singleThreadMode() {
-        this.singleThreadLock.lock();
-        singleThreadMode = true; 
-    }
-
-    /**
-     * Go to back to regular multi thread mode, where all
-     * ToeThreads may proceed at once
-     */
-    public void multiThreadMode() {
-        this.singleThreadLock.lock();
-        singleThreadMode = false; 
-        while(this.singleThreadLock.isHeldByCurrentThread()) {
-            this.singleThreadLock.unlock();
-        }
-    }
-    
-    /**
-     * Proceed only if allowed, giving CrawlController a chance
-     * to enforce single-thread mode.
-     */
-    public void acquireContinuePermission() {
-        if (singleThreadMode) {
-            this.singleThreadLock.lock();
-            if(!singleThreadMode) {
-                // If changed while waiting, ignore
-                while(this.singleThreadLock.isHeldByCurrentThread()) {
-                    this.singleThreadLock.unlock();
-                }
-            }
-        } // else, permission is automatic
-    }
-
-    /**
-     * Relinquish continue permission at end of processing (allowing
-     * another thread to proceed if in single-thread mode). 
-     */
-    public void releaseContinuePermission() {
-        if (singleThreadMode) {
-            while(this.singleThreadLock.isHeldByCurrentThread()) {
-                this.singleThreadLock.unlock();
-            }
-        } // else do nothing; 
-    }
-    
+  
     public void freeReserveMemory() {
         if(!reserveMemory.isEmpty()) {
             reserveMemory.removeLast();
             System.gc();
         }
-    }
-    
-    /**
-     * Note that a ToeThread ended 
-     */
-    public synchronized void toeEnded() {
-
-    }
-
-    /**
-     * Add order file contents to manifest.
-     * Write configuration files and any files managed by CrawlController to
-     * it - files managed by other classes, excluding the settings framework,
-     * are responsible for adding their files to the manifest themselves.
-     * by calling addToManifest.
-     * Call before writing out reports.
-     */
-    public void addOrderToManifest() {
-        // FIXME: Figure out how to let modules advertise their files
-        /*
-        for (Iterator it = getSettingsHandler().getListOfAllFiles().iterator();
-                it.hasNext();) {
-            addToManifest((String)it.next(),
-                CrawlController.MANIFEST_CONFIG_FILE, true);
-        }
-        */
     }
     
     // 
@@ -1011,7 +717,7 @@ public class CrawlControllerImpl extends Bean implements
             "Processors report - "
                 + ArchiveUtils.get12DigitDate()
                 + "\n");
-        writer.print("  Job being crawled:    " + getJobHome().getName()
+        writer.print("  Job being crawled:    " + metadata.getJobName()
                 + "\n");
 
         writer.print("  Number of Processors: " + getProcessorChain().size() + "\n");
@@ -1056,10 +762,6 @@ public class CrawlControllerImpl extends Bean implements
      */
     public Object getState() {
         return this.state;
-    }
-
-    public String getCrawlStatusString() {
-        return this.state.toString();
     }
     
     public CrawlStatus getCrawlExitStatus() {
@@ -1131,5 +833,89 @@ public class CrawlControllerImpl extends Bean implements
         default:
             // do nothing
         }
+    }
+    
+    //// BEANPOSTPROCESSOR IMPLEMENTATION
+    
+    /**
+     * Fix all beans with ConfigPath properties that lack a base path
+     * or a name, to use a job-implied base path and name. 
+     * @see org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization(java.lang.Object, java.lang.String)
+     */
+    public Object postProcessAfterInitialization(Object bean, String beanName)
+    throws BeansException {
+        fixupPaths(bean, beanName);
+        return bean;
+        
+    }
+    
+    protected Object fixupPaths(Object bean, String beanName) {
+        BeanWrapperImpl wrapper = new BeanWrapperImpl(bean);
+        for(PropertyDescriptor d : wrapper.getPropertyDescriptors()) {
+            if(ConfigPath.class.isAssignableFrom(d.getPropertyType())
+                || ReadSource.class.isAssignableFrom(d.getPropertyType())) {
+                Object value = wrapper.getPropertyValue(d.getName());
+                if(ConfigPath.class.isInstance(value)) {
+                    ConfigPath cp = (ConfigPath) value;
+                    if(cp==null) {
+                        continue;
+                    }
+                    if(cp.getBase()==null) {
+                        cp.setBase(path);
+                    }
+                    if(StringUtils.isEmpty(cp.getName())) {
+                        cp.setName(beanName+"."+d.getName());
+                    }
+                    remember(cp);
+                }
+            }
+        }
+        return bean;
+    }
+    
+    //// BEAN PROPERTIES
+    
+    ConfigPath path; 
+    public ConfigPath getPath() {
+        return path;
+    }
+    public void setPath(ConfigPath p) {
+        path = p; 
+    }
+    
+    //// APPLICATIONCONTEXTAWARE IMPLEMENTATION
+
+    AbstractApplicationContext appCtx;
+    /**
+     * Remember ApplicationContext, and if possible primary 
+     * configuration file's home directory. 
+     * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
+     */
+    public void setApplicationContext(ApplicationContext appCtx) throws BeansException {
+        this.appCtx = (AbstractApplicationContext)appCtx;
+        String basePath;
+        if(appCtx instanceof PathSharingContext) {
+            File configFile = new File(
+                    ((PathSharingContext)appCtx).getPrimaryConfigurationPath());
+            basePath = configFile.getParent();
+        } else {
+            basePath = ".";
+        }
+        path = new ConfigPath("job base",basePath); 
+    }
+
+    // REMEBERED PATHS
+    Map<String,ConfigPath> paths = new HashMap<String,ConfigPath>();
+    protected void remember(ConfigPath cp) {
+        paths.put(cp.getName(), cp);
+    }
+    public Map<String,ConfigPath> getPaths() {
+        return paths; 
+    }
+    
+    // noop
+    public Object postProcessBeforeInitialization(Object bean, String beanName) 
+    throws BeansException {
+        return bean;
     }
 }

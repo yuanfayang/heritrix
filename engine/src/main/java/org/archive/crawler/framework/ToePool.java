@@ -51,8 +51,8 @@ public class ToePool extends ThreadGroup implements Reporter {
      *
      * @param c A reference to the CrawlController for the current crawl.
      */
-    public ToePool(CrawlControllerImpl c) {
-        super(c.alertThreadGroup, "ToeThreads");        
+    public ToePool(AlertThreadGroup atg, CrawlControllerImpl c) {
+        super(atg, "ToeThreads");        
         this.controller = c;
         setDaemon(true);
     }
@@ -212,7 +212,7 @@ public class ToePool extends ThreadGroup implements Reporter {
         writer.print("Toe threads report - "
                 + ArchiveUtils.get12DigitDate() + "\n");
         writer.print(" Job being crawled: "
-                + this.controller.getJobHome().getName() + "\n");
+                + this.controller.getMetadata().getJobName() + "\n");
         writer.print(" Number of toe threads in pool: " + getToeCount() + " ("
                 + getActiveToeCount() + " active)\n\n");
 
