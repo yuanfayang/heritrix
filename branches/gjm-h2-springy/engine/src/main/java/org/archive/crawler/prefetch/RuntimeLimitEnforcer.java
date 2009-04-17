@@ -32,7 +32,7 @@ import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlStatus;
-import org.archive.crawler.framework.StatisticsTracker;
+import org.archive.crawler.reporting.StatisticsTracker;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
@@ -176,7 +176,7 @@ public class RuntimeLimitEnforcer extends Processor {
         CrawlControllerImpl controller = getCrawlController();
         StatisticsTracker stats = getStatisticsTracker();
         long allowedRuntimeMs = getRuntimeSeconds() * 1000L;
-        long currentRuntimeMs = stats.crawlDuration();
+        long currentRuntimeMs = stats.getCrawlElapsedTime();
         if(currentRuntimeMs > allowedRuntimeMs){
             Operation op = getExpirationOperation();
             if(op != null){
