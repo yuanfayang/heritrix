@@ -59,13 +59,13 @@ public abstract class Extractor extends Processor {
         this.loggerModule = loggerModule;
     }
     
-    ExtractorHelper extractorHelper = new ExtractorHelper();
-    public ExtractorHelper getExtractorHelper() {
-        return extractorHelper;
+    ExtractorParameters extractorParameters;
+    public ExtractorParameters getExtractorParameters() {
+        return extractorParameters;
     }
     @Autowired
-    public void setExtractorHelper(ExtractorHelper helper) {
-        this.extractorHelper = helper; 
+    public void setExtractorParameters(ExtractorParameters helper) {
+        this.extractorParameters = helper; 
     }
     
     /**

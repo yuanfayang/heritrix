@@ -70,6 +70,7 @@ import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.canonicalize.CanonicalizationRule;
 import org.archive.modules.canonicalize.Canonicalizer;
 import org.archive.modules.deciderules.DecideRule;
+import org.archive.modules.extractor.ExtractorParameters;
 import org.archive.modules.fetcher.UserAgentProvider;
 import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.modules.net.CrawlHost;
@@ -104,7 +105,8 @@ public abstract class AbstractFrontier
                Serializable, 
                Lifecycle, // InitializingBean, 
                SeedRefreshListener, 
-               HasKeyedProperties {
+               HasKeyedProperties,
+               ExtractorParameters {
     private static final long serialVersionUID = 555881755284996860L;
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
@@ -358,6 +360,16 @@ public abstract class AbstractFrontier
     }
     public void setRecoveryLogEnabled(boolean enabled) {
         kp.put("recoveryLogEnabled",enabled);
+    }
+    
+    {
+        setMaxOutlinks(6000);
+    }
+    public int getMaxOutlinks() {
+        return (Integer) kp.get("maxOutlinks");
+    }
+    public void setMaxOutlinks(int max) {
+        kp.put("maxOutlinks", max);
     }
 
     // top-level stats
