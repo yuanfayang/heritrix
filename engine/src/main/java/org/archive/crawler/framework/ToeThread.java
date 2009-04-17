@@ -642,7 +642,7 @@ implements RecorderMarker, Reporter, ProgressStatisticsReporter,
 
     public void progressStatisticsLine(PrintWriter writer) {
         writer.print(getController().getStatisticsTracker()
-            .getProgressStatisticsLine());
+            .getSnapshot().getProgressStatisticsLine());
         writer.print("\n");
     }
 
