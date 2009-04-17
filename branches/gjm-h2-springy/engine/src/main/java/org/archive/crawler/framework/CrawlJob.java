@@ -46,7 +46,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.event.CrawlStateEvent;
+import org.archive.crawler.reporting.CrawlStatSnapshot;
+import org.archive.crawler.reporting.StatisticsTracker;
 import org.archive.spring.ConfigPath;
+import org.archive.spring.ConfigPathConfiguration;
 import org.archive.spring.PathSharingContext;
 import org.archive.util.ArchiveUtils;
 import org.joda.time.DateTime;
@@ -258,6 +261,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(ac==null) {
             try {
                 ac = new PathSharingContext(new String[] {"file:"+primaryConfig.getAbsolutePath()},false,null);
+//                ac = new PathSharingContext(new String[] {primaryConfig.getAbsolutePath()},false,null);
                 ac.addApplicationListener(this);
                 ac.refresh();
                 getCrawlController(); // trigger NoSuchBeanDefinitionException if no CC
@@ -540,11 +544,12 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
      */
     @SuppressWarnings("unchecked")
     public Map<String, ConfigPath> getConfigPaths() {
-        CrawlControllerImpl cc = getCrawlController();
-        if(cc==null) {
+        if(ac==null) {
             return MapUtils.EMPTY_MAP;
         }
-        return cc.getPaths();        
+        ConfigPathConfiguration cpc = 
+            (ConfigPathConfiguration)ac.getBean("configPathConfiguration");
+        return cpc.getPaths();        
     }
 
     /**
@@ -605,15 +610,16 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(stats==null) {
             return "<i>n/a</i>";
         }
+        CrawlStatSnapshot snapshot = stats.getSnapshot();
         StringBuilder sb = new StringBuilder();
         sb
-         .append(ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2))
+         .append(ArchiveUtils.doubleToString(snapshot.currentDocsPerSecond,2))
          .append(" URIs/sec (")
-         .append(ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2))
+         .append(ArchiveUtils.doubleToString(snapshot.docsPerSecond,2))
          .append(" avg); ")
-         .append(stats.currentProcessedKBPerSec())
+         .append(snapshot.currentKiBPerSec)
          .append(" KB/sec (")
-         .append(stats.processedKBPerSec())
+         .append(snapshot.totalKiBPerSec)
          .append(" avg)");
         return sb.toString();
     }
@@ -623,17 +629,18 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(stats==null) {
             return "<i>n/a</i>";
         }
+        CrawlStatSnapshot snapshot = stats.getSnapshot();
         StringBuilder sb = new StringBuilder();
         sb
-         .append(stats.activeThreadCount())
+         .append(snapshot.busyThreads)
          .append(" active of ")
          .append(stats.threadCount())
          .append(" threads; ")
-         .append(ArchiveUtils.doubleToString((double)stats.congestionRatio(),2))
+         .append(ArchiveUtils.doubleToString(snapshot.congestionRatio,2))
          .append(" congestion ratio; ")
-         .append(stats.deepestUri())
+         .append(snapshot.deepestUri)
          .append("  deepest queue; ")
-         .append(stats.averageDepth())
+         .append(snapshot.averageDepth)
          .append("  average depth");
         return sb.toString();
     }
@@ -643,9 +650,10 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(stats==null) {
             return "<i>n/a</i>";
         }
-        long downloaded = stats.successfullyFetchedCount();
-        long total = stats.totalCount();
-        long queued = stats.queuedUriCount(); 
+        CrawlStatSnapshot snapshot = stats.getSnapshot();
+        long downloaded = snapshot.downloadedUriCount;
+        long total = snapshot.totalCount();
+        long queued = snapshot.queuedUriCount; 
         StringBuilder sb = new StringBuilder(64); 
         sb
          .append(downloaded)
@@ -670,7 +678,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(stats==null) {
             return "<i>n/a</i>";
         }
-        long timeElapsed = stats.getCrawlerTotalElapsedTime();
+        long timeElapsed = stats.getCrawlElapsedTime();
         return ArchiveUtils.formatMillisecondsToConventional(timeElapsed,false);
     }
 
@@ -689,5 +697,4 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         }
         return cc.getFrontierReportShort();
     }
-
-}
+}//EOC

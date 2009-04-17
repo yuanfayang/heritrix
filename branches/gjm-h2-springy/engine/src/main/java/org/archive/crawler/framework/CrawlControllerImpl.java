@@ -19,34 +19,26 @@
  
 package org.archive.crawler.framework;
 
-import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
-import java.util.EventObject;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.event.CrawlStateEvent;
+import org.archive.crawler.reporting.StatisticsTracker;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorChain;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.writer.DefaultMetadataProvider;
 import org.archive.spring.ConfigPath;
-import org.archive.spring.PathSharingContext;
-import org.archive.spring.ReadSource;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.Lifecycle;
@@ -69,12 +61,17 @@ public class CrawlControllerImpl implements
     Serializable, 
     Reporter, 
     Lifecycle,
-    ApplicationContextAware,
-    BeanPostProcessor {
+    ApplicationContextAware {
  
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlControllerImpl.class,1);
+    
+    // ApplicationContextAware implementation, for eventing
+    AbstractApplicationContext appCtx;
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.appCtx = (AbstractApplicationContext)applicationContext;
+    }
     
     DefaultMetadataProvider metadata;
     public DefaultMetadataProvider getMetadata() {
@@ -157,43 +154,6 @@ public class CrawlControllerImpl implements
         this.processorChain = processorChain;
     }
 
-    
-    /**
-     * Maximum number of bytes to download. Once this number is exceeded 
-     * the crawler will stop. A value of zero means no upper limit.
-     */
-    long maxBytesDownload = 0L;
-    public long getMaxBytesDownload() {
-        return maxBytesDownload;
-    }
-    public void setMaxBytesDownload(long maxBytesDownload) {
-        this.maxBytesDownload = maxBytesDownload;
-    }
-
-    /**
-     * Maximum number of documents to download. Once this number is exceeded the 
-     * crawler will stop. A value of zero means no upper limit.
-     */
-    long maxDocumentsDownload = 0L; 
-    public long getMaxDocumentsDownload() {
-        return maxDocumentsDownload;
-    }
-    public void setMaxDocumentsDownload(long maxDocumentsDownload) {
-        this.maxDocumentsDownload = maxDocumentsDownload;
-    }
-
-    /**
-     * Maximum amount of time to crawl (in seconds). Once this much time has 
-     * elapsed the crawler will stop. A value of zero means no upper limit.
-     */
-    long maxTimeSeconds = 0L;
-    public long getMaxTimeSeconds() {
-        return maxTimeSeconds;
-    }
-    public void setMaxTimeSeconds(long maxTimeSeconds) {
-        this.maxTimeSeconds = maxTimeSeconds;
-    }
-    
     /**
      * Maximum number of threads processing URIs at the same time.
      */
@@ -303,12 +263,6 @@ public class CrawlControllerImpl implements
      */
     private Checkpointer checkpointer;
 
-
-    // crawl limits
-    private long maxBytes;
-    private long maxDocument;
-    private long maxTime;
-
     /**
      * A manifest of all files used/created during this crawl. Written to file
      * at the end of the crawl (the absolutely last thing done).
@@ -397,10 +351,6 @@ public class CrawlControllerImpl implements
         // A proper exit will change this value.
         this.sExit = CrawlStatus.FINISHED_ABNORMAL;
         
-        Thread statLogger = new Thread(getStatisticsTracker());
-        statLogger.setName("StatLogger");
-        statLogger.start();
-        
         if (getPauseAtStart()) {
             requestCrawlPause();
         } else {
@@ -444,20 +394,6 @@ public class CrawlControllerImpl implements
         Frontier frontier = getFrontier();
         if (frontier.isEmpty()) {
             this.sExit = CrawlStatus.FINISHED;
-            return false;
-        }
-        if (maxBytes > 0 && getStatisticsTracker().totalBytesCrawled() >= maxBytes) {
-            // Hit the max byte download limit!
-            sExit = CrawlStatus.FINISHED_DATA_LIMIT;
-            return false;
-        } else if (maxDocument > 0
-                && frontier.succeededFetchCount() >= maxDocument) {
-            // Hit the max document download limit!
-            this.sExit = CrawlStatus.FINISHED_DOCUMENT_LIMIT;
-            return false;
-        } else if (maxTime > 0 && getStatisticsTracker().crawlDuration() >= maxTime * 1000) {
-            // Hit the max byte download limit!
-            this.sExit = CrawlStatus.FINISHED_TIME_LIMIT;
             return false;
         }
         return state == State.RUNNING;
@@ -736,17 +672,6 @@ public class CrawlControllerImpl implements
         // TODO improve
         return "nothingYet";
     }
-
-    /**
-     * Called whenever progress statistics logging event.
-     * @param e Progress statistics event.
-     */
-    public void progressStatisticsEvent(final EventObject e) {
-        // Default is to do nothing.  Subclass if you want to catch this event.
-        // Later, if demand, add publisher/listener support.  Currently hacked
-        // in so the subclass in CrawlJob added to support JMX can send
-        // notifications of progressStatistics change.
-    }
     
     /**
      * Log to the progress statistics log.
@@ -833,88 +758,4 @@ public class CrawlControllerImpl implements
             // do nothing
         }
     }
-    
-    //// BEANPOSTPROCESSOR IMPLEMENTATION
-    
-    /**
-     * Fix all beans with ConfigPath properties that lack a base path
-     * or a name, to use a job-implied base path and name. 
-     * @see org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization(java.lang.Object, java.lang.String)
-     */
-    public Object postProcessAfterInitialization(Object bean, String beanName)
-    throws BeansException {
-        fixupPaths(bean, beanName);
-        return bean;
-        
-    }
-    
-    protected Object fixupPaths(Object bean, String beanName) {
-        BeanWrapperImpl wrapper = new BeanWrapperImpl(bean);
-        for(PropertyDescriptor d : wrapper.getPropertyDescriptors()) {
-            if(ConfigPath.class.isAssignableFrom(d.getPropertyType())
-                || ReadSource.class.isAssignableFrom(d.getPropertyType())) {
-                Object value = wrapper.getPropertyValue(d.getName());
-                if(ConfigPath.class.isInstance(value)) {
-                    ConfigPath cp = (ConfigPath) value;
-                    if(cp==null) {
-                        continue;
-                    }
-                    if(cp.getBase()==null) {
-                        cp.setBase(path);
-                    }
-                    if(StringUtils.isEmpty(cp.getName())) {
-                        cp.setName(beanName+"."+d.getName());
-                    }
-                    remember(cp);
-                }
-            }
-        }
-        return bean;
-    }
-    
-    //// BEAN PROPERTIES
-    
-    ConfigPath path; 
-    public ConfigPath getPath() {
-        return path;
-    }
-    public void setPath(ConfigPath p) {
-        path = p; 
-    }
-    
-    //// APPLICATIONCONTEXTAWARE IMPLEMENTATION
-
-    AbstractApplicationContext appCtx;
-    /**
-     * Remember ApplicationContext, and if possible primary 
-     * configuration file's home directory. 
-     * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
-     */
-    public void setApplicationContext(ApplicationContext appCtx) throws BeansException {
-        this.appCtx = (AbstractApplicationContext)appCtx;
-        String basePath;
-        if(appCtx instanceof PathSharingContext) {
-            File configFile = new File(
-                    ((PathSharingContext)appCtx).getPrimaryConfigurationPath());
-            basePath = configFile.getParent();
-        } else {
-            basePath = ".";
-        }
-        path = new ConfigPath("job base",basePath); 
-    }
-
-    // REMEBERED PATHS
-    Map<String,ConfigPath> paths = new HashMap<String,ConfigPath>();
-    protected void remember(ConfigPath cp) {
-        paths.put(cp.getName(), cp);
-    }
-    public Map<String,ConfigPath> getPaths() {
-        return paths; 
-    }
-    
-    // noop
-    public Object postProcessBeforeInitialization(Object bean, String beanName) 
-    throws BeansException {
-        return bean;
-    }
-}
+}//EOC
