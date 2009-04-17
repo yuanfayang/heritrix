@@ -188,8 +188,30 @@ public interface Frontier extends Reporter {
      */
     public long queuedUriCount();
 
+    /**
+     * Ordinal position of the 'deepest' URI eligible 
+     * for crawling. Essentially, the length of the longest
+     * frontier internal queue. 
+     * 
+     * @return long URI count to deepest URI
+     */
     public long deepestUri(); // aka longest queue
+    
+    /**
+     * Average depth of the last URI in all eligible queues.
+     * That is, the average length of all eligible queues.
+     * 
+     * @return long average depth of last URIs in queues 
+     */
     public long averageDepth(); // aka average queue length
+    
+    /**
+     * Ratio of number of threads that would theoretically allow
+     * maximum crawl progress (if each was as productive as current
+     * threads), to current number of threads.
+     * 
+     * @return float congestion ratio 
+     */
     public float congestionRatio(); // multiple of threads needed for max progress
     
     /**
