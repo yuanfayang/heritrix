@@ -29,6 +29,7 @@ import org.archive.util.Reporter;
  */
 public abstract class WorkQueue implements Frontier.FrontierGroup,
         Serializable, Reporter, Delayed {
+    private static final long serialVersionUID = -3199666138837266341L;
     private static final Logger logger =
         Logger.getLogger(WorkQueue.class.getName());
     
