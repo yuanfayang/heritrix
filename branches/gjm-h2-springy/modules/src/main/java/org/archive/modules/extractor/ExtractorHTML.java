@@ -553,7 +553,7 @@ public class ExtractorHTML extends ContentExtractor implements InitializingBean 
             // to become a part of is expected to outlive the current
             // ReplayCharSequence.
             HTMLLinkContext hc = new HTMLLinkContext(context.toString());
-            int max = getExtractorHelper().getMaxOutlinks();
+            int max = getExtractorParameters().getMaxOutlinks();
             Link.addRelativeToBase(curi, max, uri, hc, hop);
         } catch (URIException e) {
             logUriError(e, curi.getUURI(), uri);
@@ -806,7 +806,7 @@ public class ExtractorHTML extends ContentExtractor implements InitializingBean 
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                int max = getExtractorHelper().getMaxOutlinks();
+                int max = getExtractorParameters().getMaxOutlinks();
                 Link.addRelativeToBase(curi, max, refreshUri, 
                         HTMLLinkContext.META, Hop.REFER);
             } catch (URIException e) {

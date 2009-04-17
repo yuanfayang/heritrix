@@ -166,7 +166,7 @@ public class ExtractorJS extends ContentExtractor {
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
                 foundLinks++;
                 try {
-                    int max = ext.getExtractorHelper().getMaxOutlinks();
+                    int max = ext.getExtractorParameters().getMaxOutlinks();
                     if (handlingJSFile) {
                         Link.addRelativeToVia(curi, max, string, JS_MISC, 
                                 SPECULATIVE);

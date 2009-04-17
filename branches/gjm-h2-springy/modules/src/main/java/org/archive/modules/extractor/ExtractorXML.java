@@ -133,7 +133,7 @@ public class ExtractorXML extends ContentExtractor {
                 // treat as speculative, as whether context really 
                 // intends to create a followable/fetchable URI is
                 // unknown
-                int max = ext.getExtractorHelper().getMaxOutlinks();
+                int max = ext.getExtractorParameters().getMaxOutlinks();
                 Link.add(curi, max, xmlUri, LinkContext.SPECULATIVE_MISC, 
                         Hop.SPECULATIVE);
             } catch (URIException e) {
