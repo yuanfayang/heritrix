@@ -283,7 +283,11 @@ public class JobResource extends Resource {
         }
         pw.println("</dl>");
         pw.println("<hr/>");
-        pw.println("<form method='POST'>Copy job to <input name='copyTo'/><input type='submit'/><input type='checkbox' name='asProfile'/>as profile</form>");
+        pw.println(
+            "<form method='POST'>Copy job to <input name='copyTo'/>" +
+            "<input type='submit'/>" +
+            "<input id='asProfile' type='checkbox' name='asProfile'/>" +
+            "<label for='asProfile'>as profile</label></form>");
         pw.println("<hr/>");
         pw.close();
     }
