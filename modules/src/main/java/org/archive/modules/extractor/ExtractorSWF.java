@@ -269,7 +269,7 @@ public class ExtractorSWF extends ContentExtractor {
                 linkCount =+ ExtractorJS.considerStrings(ExtractorSWF.this, curi, url, 
                         false);
             } else {
-                int max = getExtractorHelper().getMaxOutlinks();
+                int max = getExtractorParameters().getMaxOutlinks();
                 Link.addRelativeToVia(curi, max, url, LinkContext.EMBED_MISC, 
                         Hop.EMBED);
                 linkCount++;
