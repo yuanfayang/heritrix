@@ -133,7 +133,7 @@ public class PagedRepresentation extends CharacterRepresentation {
         pw.println(file);
         emitControls(pw); 
         
-        pw.println("<pre style='overflow:auto;'>");
+        pw.println("<pre>");
         emitBumper(pw, true);
         for(String line : lines) {
             StringEscapeUtils.escapeHtml(pw,line); 
