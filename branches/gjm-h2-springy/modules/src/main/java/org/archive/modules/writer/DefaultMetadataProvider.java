@@ -155,7 +155,7 @@ public class DefaultMetadataProvider implements
     public String getJobName() {
         return jobName;
     }
-    public void setJobHome(String jobName) {
+    public void setJobName(String jobName) {
         this.jobName = jobName;
     }
 

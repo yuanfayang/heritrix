@@ -46,6 +46,7 @@ import org.archive.spring.ReadSource;
 import org.archive.spring.WriteTarget;
 import org.archive.util.DevUtils;
 import org.archive.util.FileUtils;
+import org.springframework.beans.factory.annotation.Required;
 
 /**
  * Module that maintains a list of seeds.
@@ -67,11 +68,11 @@ public class SeedModuleImpl implements
     /**
      * File from which to extract seeds.
      */
-    protected ReadSource seedsSource = 
-        (ReadSource) new ConfigFile("seeds file","seeds.txt");
+    protected ReadSource seedsSource = null;
     public ReadSource getSeedsSource() {
         return seedsSource;
     }
+    @Required
     public void setSeedsSource(ReadSource seedsSource) {
         this.seedsSource = seedsSource;
     }

@@ -100,8 +100,12 @@ public class ConfigPathConfiguration
         this.appCtx = (AbstractApplicationContext)appCtx;
         String basePath;
         if(appCtx instanceof PathSharingContext) {
-            File configFile = new File(
-                    ((PathSharingContext)appCtx).getPrimaryConfigurationPath());
+            String primaryConfigurationPath = ((PathSharingContext)appCtx).getPrimaryConfigurationPath();
+            if(primaryConfigurationPath.startsWith("file:")) {
+                // strip URI-scheme if present (as is usual)
+                primaryConfigurationPath = primaryConfigurationPath.substring(5);
+            }
+            File configFile = new File(primaryConfigurationPath);
             basePath = configFile.getParent();
         } else {
             basePath = ".";
