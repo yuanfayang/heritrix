@@ -22,10 +22,10 @@ package org.archive.spring;
 import java.util.Map;
 
 /**
- * Interface for a source of override maps by name. 
+ * Interface for a source of overlay maps by name. 
  * 
  * @contributor gojomo
  */
-public interface OverrideMapsSource {
-    public Map<String,Object> getOverrideMap(String name); 
+public interface OverlayMapsSource {
+    public Map<String,Object> getOverlayMap(String name); 
 }

@@ -110,7 +110,7 @@
   <!-- autowired serverCache reference -->
  </bean>
  
- <bean id="sheetOverridesManager" class="org.archive.spring.SheetOverridesManager" autowire="byType">
+ <bean id="sheetOverlaysManager" class="org.archive.spring.SheetOverlaysManager" autowire="byType">
  </bean>
 
  <bean id="frontier" class="org.archive.crawler.frontier.BdbFrontier" autowire="byName">

@@ -90,8 +90,8 @@ import org.archive.modules.extractor.Link;
 import org.archive.modules.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.spring.OverrideContext;
-import org.archive.spring.OverrideMapsSource;
+import org.archive.spring.OverlayContext;
+import org.archive.spring.OverlayMapsSource;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
@@ -110,7 +110,7 @@ import org.archive.util.Reporter;
  *
  * @author Gordon Mohr
  */
-public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverrideContext{
+public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverlayContext{
 
     private static final long serialVersionUID = 3L;
 
@@ -1766,25 +1766,25 @@ public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverrideC
     //
     // OverridesSource implementation
     //
-    protected LinkedList<String> overrideNames = null;
-    transient protected OverrideMapsSource overrideMapsSource; 
-    public boolean haveOverrideNamesBeenSet() {
-        return overrideNames != null;
+    protected LinkedList<String> overlayNames = null;
+    transient protected OverlayMapsSource overlayMapsSource; 
+    public boolean haveOverlayNamesBeenSet() {
+        return overlayNames != null;
     }
     
     @SuppressWarnings("unchecked")
-    public LinkedList<String> getOverrideNames() {
-        if(overrideNames == null) {
-            overrideNames = new LinkedList<String>(); 
+    public LinkedList<String> getOverlayNames() {
+        if(overlayNames == null) {
+            overlayNames = new LinkedList<String>(); 
         }
-        return overrideNames;
+        return overlayNames;
     }
 
-    public Map<String, Object> getOverrideMap(String name) {
-        return overrideMapsSource.getOverrideMap(name);
+    public Map<String, Object> getOverlayMap(String name) {
+        return overlayMapsSource.getOverlayMap(name);
     }
 
-    public void setOverrideMapsSource(OverrideMapsSource overrideMapsSource) {
-        this.overrideMapsSource = overrideMapsSource;
+    public void setOverlayMapsSource(OverlayMapsSource overrideMapsSource) {
+        this.overlayMapsSource = overrideMapsSource;
     }
 }
