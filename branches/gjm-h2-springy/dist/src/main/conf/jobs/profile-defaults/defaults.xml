@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:context="http://www.springframework.org/schema/context"
+	     xmlns:aop="http://www.springframework.org/schema/aop"
+	     xmlns:tx="http://www.springframework.org/schema/tx"
+	     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
+           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+ 
+ <context:annotation-config/>
+
+ <bean id="configPathConfiguration" class="org.archive.spring.ConfigPathConfiguration">
+  <!-- may set other-than-default 'path' here (default is direcotry of crawler-beans.cxml -->
+ </bean>
+
+ <!-- Shared BDB Crawler State -->
+ <!-- TODO: move to an include? -->
+ <bean id="bdb" class="org.archive.settings.file.BdbModule" autowire="byName">
+  <!-- autowired homeDirectory reference -->
+ </bean>
+ 
+ <!-- Policy to use when deciding to honor robots.txt and similar -->
+ <!-- TODO: move to an include? -->
+ <bean name="robotsHonoringPolicy" class="org.archive.modules.net.RobotsHonoringPolicy">
+ </bean>
+
+ <!-- Crawl metadata, including identification of crawler/operator -->
+ <!-- TODO: move to an include? -->
+ <bean id="metadata" class="org.archive.modules.writer.DefaultMetadataProvider" autowire="byName">
+  <property name="description" value="Default seed sites crawl."/>
+  <property name="jobName" value="dummy-name"/>
+  <!-- autowired robots-honoring-policy reference -->
+  <!-- autowired job-home reference -->
+ </bean>
+ 
+ <!-- Shared logging facility -->
+ <!-- TODO: move to an include? comment out defaults? -->
+ <bean id="loggerModule" class="org.archive.crawler.framework.CrawlerLoggerModule">
+  <!-- autowired job-home reference -->
+ </bean>
+ 
+ <!-- Seeds: crawl starting points -->
+ <!-- TODO: move to an include? -->
+ <bean id="seeds" class="org.archive.modules.seeds.SeedModuleImpl">
+  <property name="seedsSource">
+   <bean class="org.archive.spring.ConfigString">
+    <property name="value" value="# override this"/>
+   </bean>
+  </property>
+ </bean>
+ 
+ <!-- TODO: move to an include? comment out defaults? -->
+ <bean id="scope" class="org.archive.modules.deciderules.DecideRuleSequence">
+  <property name="rules">
+   <list>
+    <bean class="org.archive.modules.deciderules.RejectDecideRule">
+    </bean>
+    <bean class="org.archive.modules.deciderules.surt.SurtPrefixedDecideRule" autowire="byName">
+     <!-- autowired seeds reference -->
+    </bean>
+    <bean class="org.archive.modules.deciderules.TooManyHopsDecideRule">
+     <property name="maxHops" value="1"/>
+    </bean>
+    <bean class="org.archive.modules.deciderules.TransclusionDecideRule">
+    </bean>
+    <bean class="org.archive.modules.deciderules.PathologicalPathDecideRule">
+    </bean>
+    <bean class="org.archive.modules.deciderules.TooManyPathSegmentsDecideRule">
+    </bean>
+    <bean class="org.archive.modules.deciderules.PrerequisiteAcceptDecideRule">
+    </bean>
+   </list>
+  </property>
+ </bean>
+ 
+ <bean id="uriUniqFilter" class="org.archive.crawler.util.BdbUriUniqFilter" autowire="byName">
+  <!--  autowired BDB reference?  -->
+ </bean>
+ 
+ <bean id="queueAssignmentPolicy" class="org.archive.crawler.frontier.SurtAuthorityQueueAssignmentPolicy">
+ </bean>
+ 
+ <bean id="serverCache" class="org.archive.modules.net.BdbServerCache" autowire="byName">
+  <!--  autowired BDB reference?  -->
+ </bean>
+ 
+ <bean id="credentialStore" class="org.archive.modules.credential.CredentialStore">
+  <!-- default values: ->
+  <property name="credentials">
+   <map>
+   </map>
+  </property>
+  <!-  -->
+ </bean>
+ 
+ <bean id="crawlController" class="org.archive.crawler.framework.CrawlControllerImpl" autowire="byName">
+  <!-- autowired frontier reference -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired processorChain reference -->
+  <!-- autowired server-cache reference -->
+  <!-- autowired statistics-tracker reference -->
+ </bean>
+ 
+ <bean id="statisticsTracker" class="org.archive.crawler.reporting.StatisticsTracker" autowire="byName">
+  <!-- autowired BDB reference -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired seeds reference -->
+  <!-- autowired serverCache reference -->
+ </bean>
+ 
+ <bean id="sheetOverridesManager" class="org.archive.spring.SheetOverridesManager" autowire="byType">
+ </bean>
+
+ <bean id="frontier" class="org.archive.crawler.frontier.BdbFrontier" autowire="byName">
+  <property name="canonicalizationRules">
+   <list>
+    <bean class="org.archive.modules.canonicalize.LowercaseRule"/>
+    <bean class="org.archive.modules.canonicalize.StripUserinfoRule"/>
+    <bean class="org.archive.modules.canonicalize.StripWWWNRule"/>
+    <bean class="org.archive.modules.canonicalize.StripSessionIDs"/>
+    <bean class="org.archive.modules.canonicalize.StripSessionCFIDs"/>
+    <bean class="org.archive.modules.canonicalize.FixupQueryString"/>
+   </list>
+  </property>
+  
+  <!-- autowired queueAssignmentPolicy reference -->
+  <!-- autowired uriUniqFilter reference -->
+  <!-- autowired bdb reference -->
+  <!-- autowired controller reference -->
+  <!-- autowired sheetOverridesManager reference -->
+  <!-- autowired loggerModule reference -->
+  <!-- autowired scope reference -->
+  <!-- autowired seeds reference -->
+  <!-- autowired serverCache reference -->
+  <!-- autowired metadata (user-agent-provider) reference -->
+ </bean>
+ 
+ <bean id="preselector" class="org.archive.crawler.prefetch.Preselector">
+     <!-- autowired scope reference -->
+     <!-- autowired loggerModule reference -->
+ </bean>
+    
+ <bean id="preconditionEnforcer" class="org.archive.crawler.prefetch.PreconditionEnforcer">
+     <!-- autowired loggerModule reference -->
+     <!-- autowired credentialStore reference -->
+ </bean>
+    
+ <bean id="fetchDns" class="org.archive.modules.fetcher.FetchDNS">
+     <!-- autowired serverCache reference -->
+ </bean>
+    
+ <bean id="fetchHttp" class="org.archive.modules.fetcher.FetchHTTP">
+     <property name="cookieStorage">
+      <bean class="org.archive.modules.fetcher.BdbCookieStorage">
+       <!--  autowired bdbModule reference -->
+       <!-- default values: ->
+       <property name="loadCookiesFromFile" value=""/>
+       <property name="saveCookiesToFile" value=""/>
+       <!-  -->
+      </bean>
+     </property>
+     
+     <!-- autowired credentialStore reference -->
+     <!-- autowired serverCache reference -->
+     <!-- autowired metadata reference -->
+ </bean>
+    
+ <bean id="extractorHttp" class="org.archive.modules.extractor.ExtractorHTTP">
+     <!-- autowired loggerModule reference -->
+ </bean>
+    
+ <bean id="extractorHtml" class="org.archive.modules.extractor.ExtractorHTML">
+     <!-- autowired loggerModule reference -->
+     <!-- autowired robotsHonoringPolicy reference -->
+ </bean>
+    
+ <bean id="extractorCss" class="org.archive.modules.extractor.ExtractorCSS">
+     <!-- autowired loggerModule reference -->
+ </bean>
+    
+ <bean id="extractorJs" class="org.archive.modules.extractor.ExtractorJS">
+     <!-- autowired loggerModule reference -->
+ </bean>
+    
+ <bean id="extractorSwf" class="org.archive.modules.extractor.ExtractorSWF">
+     <!-- autowired loggerModule reference -->
+ </bean>
+    
+ <bean id="arcWriterProcessor" class="org.archive.modules.writer.ARCWriterProcessor">
+     <!-- autowired serverCache reference -->
+     <!-- autowired metadata reference -->
+ </bean>
+    
+ <bean id="crawlStateUpdater" class="org.archive.crawler.postprocessor.CrawlStateUpdater">
+     <!-- autowired serverCache reference -->
+     <!-- autowired robotsHonoringPolicy reference -->
+ </bean>
+    
+ <bean id="linksScoper" class="org.archive.crawler.postprocessor.LinksScoper">
+     <!-- autowired scope reference -->
+     <!-- autowired loggerModule reference -->
+ </bean>
+    
+ <bean id="frontierScheduler" class="org.archive.crawler.postprocessor.FrontierScheduler">
+     <!-- autowired frontier reference -->
+ </bean>
+    
+
+ <bean id="processors" class="org.archive.modules.ProcessorChain">
+  <property name="processors">
+   <list>
+    <ref bean="preselector"/>
+    <ref bean="preconditionEnforcer"/>
+    <ref bean="fetchDns"/>
+    <ref bean="fetchHttp"/>
+    <ref bean="extractorHttp"/>
+    <ref bean="extractorHtml"/>
+    <ref bean="extractorCss"/>
+    <ref bean="extractorJs"/>
+    <ref bean="extractorSwf"/>
+    <ref bean="arcWriterProcessor"/>
+    <ref bean="crawlStateUpdater"/>
+    <ref bean="linksScoper"/>
+    <ref bean="frontierScheduler"/>
+   </list>
+  </property>
+ </bean>
+
+</beans>
