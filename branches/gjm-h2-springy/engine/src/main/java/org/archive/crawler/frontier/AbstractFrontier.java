@@ -85,7 +85,7 @@ import org.archive.settings.CheckpointRecovery;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.spring.SheetOverridesManager;
+import org.archive.spring.SheetOverlaysManager;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
@@ -135,13 +135,13 @@ public abstract class AbstractFrontier
         this.controller = controller;
     }
     
-    protected SheetOverridesManager sheetOverridesManager;
-    public SheetOverridesManager getSheetOverridesManager() {
-        return sheetOverridesManager;
+    protected SheetOverlaysManager sheetOverlaysManager;
+    public SheetOverlaysManager getSheetOverlaysManager() {
+        return sheetOverlaysManager;
     }
     @Autowired
-    public void setSheetOverridesManager(SheetOverridesManager sheetOverridesManager) {
-        this.sheetOverridesManager = sheetOverridesManager;
+    public void setSheetOverlaysManager(SheetOverlaysManager sheetOverlaysManager) {
+        this.sheetOverlaysManager = sheetOverlaysManager;
     }
     
     protected CrawlerLoggerModule loggerModule;
@@ -1638,9 +1638,9 @@ public abstract class AbstractFrontier
     
     @SuppressWarnings("unchecked")
     protected void applyOverridesTo(CrawlURI curi) {
-        curi.setOverrideMapsSource(sheetOverridesManager); 
-        if(!curi.haveOverrideNamesBeenSet()) {
-            sheetOverridesManager.applyOverrides(curi);
+        curi.setOverlayMapsSource(sheetOverlaysManager); 
+        if(!curi.haveOverlayNamesBeenSet()) {
+            sheetOverlaysManager.applyOverlays(curi);
         }
     }
 }

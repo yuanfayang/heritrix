@@ -673,7 +673,7 @@ ApplicationContextAware {
                     }
                     
                     // from queues, override names persist but not map source
-                    curi.setOverrideMapsSource(sheetOverridesManager);
+                    curi.setOverlayMapsSource(sheetOverlaysManager);
                     // check if curi belongs in different queue
                     String currentQueueKey;
                     try {
@@ -857,7 +857,7 @@ ApplicationContextAware {
         }
         // TODO: consider confusing cross-effects of this and IP-based politeness
 
-        contextUri.setOverrideMapsSource(sheetOverridesManager);
+        contextUri.setOverlayMapsSource(sheetOverlaysManager);
         try {
             // TODO:SPRINGY set override
             KeyedProperties.loadOverridesFrom(contextUri);

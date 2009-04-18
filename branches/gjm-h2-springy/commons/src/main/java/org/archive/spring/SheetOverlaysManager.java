@@ -40,13 +40,13 @@ import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
  * Manager which marks-up CrawlURIs with the names of all applicable 
- * Sheets, and returns override maps by name. 
+ * Sheets, and returns overlay maps by name. 
  * 
  * @contributor gojomo
  */
 @SuppressWarnings("unchecked")
-public class SheetOverridesManager implements 
-BeanFactoryAware, InitializingBean, OverrideMapsSource, ApplicationListener {
+public class SheetOverlaysManager implements 
+BeanFactoryAware, InitializingBean, OverlayMapsSource, ApplicationListener {
 
     BeanFactory beanFactory; 
     /** all Sheets applied by SURT-prefix */
@@ -101,39 +101,39 @@ BeanFactoryAware, InitializingBean, OverrideMapsSource, ApplicationListener {
     }
     
     /**
-     * Apply the proper overrides (by Sheet beanName) to the given CrawlURI. 
+     * Apply the proper overlays (by Sheet beanName) to the given CrawlURI. 
      * 
      * TODO: add guard against redundant application more than once? 
-     * TODO: add mechanism for reapplying overrides after settings change? 
+     * TODO: add mechanism for reapplying overlays after settings change? 
      * @param curi
      */
-    public void applyOverrides(CrawlURI curi) {
-        // apply SURT-based overrides
+    public void applyOverlays(CrawlURI curi) {
+        // apply SURT-based overlays
         String effectiveSurt = SurtPrefixSet.getCandidateSurt(curi.getUURI());
         @SuppressWarnings("unused")
         List<String> foundPrefixes = PrefixFinder.findKeys(sheetNamesBySurt, effectiveSurt);       
         for(String prefix : foundPrefixes) {
             for(String name : sheetNamesBySurt.get(prefix)) {
-                curi.getOverrideNames().push(name);
+                curi.getOverlayNames().push(name);
             }
         }
-        // apply deciderule-based overrides
+        // apply deciderule-based overlays
         for(SheetForDecideRuled sheet : ruleSheets) {
             if(sheet.getRules().accepts(curi)) {
-                curi.getOverrideNames().addFirst(sheet.getBeanName());
+                curi.getOverlayNames().addFirst(sheet.getBeanName());
             }
         }
-        // even if no overrides set, let creation of empty list signal
-        // step has occurred -- helps ensure overrides added once-only
-        curi.getOverrideNames();
+        // even if no overlays set, let creation of empty list signal
+        // step has occurred -- helps ensure overlays added once-only
+        curi.getOverlayNames();
     }
 
     /**
-     * Retrieve the named overrides Map.
+     * Retrieve the named overlay Map.
      * 
-     * @see org.archive.spring.OverrideMapsSource#getOverrideMap(java.lang.String)
+     * @see org.archive.spring.OverlayMapsSource#getOverlayMap(java.lang.String)
      */
-    public Map<String, Object> getOverrideMap(String name) {
+    public Map<String, Object> getOverlayMap(String name) {
         Sheet sheet = (Sheet) beanFactory.getBean(name, Sheet.class);
         return sheet.getMap();
     }
@@ -143,7 +143,7 @@ BeanFactoryAware, InitializingBean, OverrideMapsSource, ApplicationListener {
      * is assembled. This ensures target HasKeyedProperties beans know
      * any long paths by which their properties are addressed, and 
      * handles (by either PropertyEditor-conversion or a fast-failure)
-     * any type-mismatches between override values and their target
+     * any type-mismatches between overlay values and their target
      * properties.
      * @see org.springframework.context.ApplicationListener#onApplicationEvent(org.springframework.context.ApplicationEvent)
      */

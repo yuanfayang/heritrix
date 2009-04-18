@@ -56,9 +56,9 @@ public class KeyedProperties extends HashMap<String,Object> {
      * @return discovered override, or local value
      */
     public Object get(String key) {
-        for(OverrideContext ocontext: threadOverrides.get()) {
-            for(String name: ocontext.getOverrideNames()) {
-                Map<String,Object> m = ocontext.getOverrideMap(name);
+        for(OverlayContext ocontext: threadOverrides.get()) {
+            for(String name: ocontext.getOverlayNames()) {
+                Map<String,Object> m = ocontext.getOverlayMap(name);
                 for(String ok : getOverrideKeys(key)) {
                     Object val = m.get(ok);
                     if(val!=null) {
@@ -93,17 +93,17 @@ public class KeyedProperties extends HashMap<String,Object> {
     /**
      * ThreadLocal (contextual) collection of pushed override maps
      */
-    static ThreadLocal<LinkedList<OverrideContext>> threadOverrides = 
-        new ThreadLocal<LinkedList<OverrideContext>>() {
-        protected LinkedList<OverrideContext> initialValue() {
-            return new LinkedList<OverrideContext>();
+    static ThreadLocal<LinkedList<OverlayContext>> threadOverrides = 
+        new ThreadLocal<LinkedList<OverlayContext>>() {
+        protected LinkedList<OverlayContext> initialValue() {
+            return new LinkedList<OverlayContext>();
         }
     };
     /**
      * Add an override map to the stack 
      * @param m Map to add
      */
-    static public void pushOverrideContext(OverrideContext ocontext) {
+    static public void pushOverrideContext(OverlayContext ocontext) {
         threadOverrides.get().addFirst(ocontext);
     }
     
@@ -111,7 +111,7 @@ public class KeyedProperties extends HashMap<String,Object> {
      * Remove last-added override map from the stack
      * @return Map removed
      */
-    static public OverrideContext popOverridesContext() {
+    static public OverlayContext popOverridesContext() {
         // TODO maybe check that pop is as expected
         return threadOverrides.get().removeFirst();
     }
@@ -120,16 +120,16 @@ public class KeyedProperties extends HashMap<String,Object> {
         threadOverrides.get().clear(); 
     }
     
-    static public void loadOverridesFrom(OverrideContext ocontext) {
-        assert ocontext.haveOverrideNamesBeenSet();
+    static public void loadOverridesFrom(OverlayContext ocontext) {
+        assert ocontext.haveOverlayNamesBeenSet();
         pushOverrideContext(ocontext);
     }
     
-    static public boolean clearOverridesFrom(OverrideContext ocontext) {
+    static public boolean clearOverridesFrom(OverlayContext ocontext) {
         return threadOverrides.get().remove(ocontext);
     }
     
-    static public void withOverridesDo(OverrideContext ocontext, Runnable todo) {
+    static public void withOverridesDo(OverlayContext ocontext, Runnable todo) {
         try {
             loadOverridesFrom(ocontext);
             todo.run();
@@ -138,7 +138,7 @@ public class KeyedProperties extends HashMap<String,Object> {
         }
     }
 
-    public static boolean overridesActiveFrom(OverrideContext ocontext) {
+    public static boolean overridesActiveFrom(OverlayContext ocontext) {
         return threadOverrides.get().contains(ocontext);
     }
 }

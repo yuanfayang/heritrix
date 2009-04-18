@@ -23,16 +23,16 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Interface for objects that can contribute 'overrides' to replace the
+ * Interface for objects that can contribute 'overlays' to replace the
  * usual values in configured objects. 
  * @contributor gojomo
  */
-public interface OverrideContext {
-    /** test if this context has actually been configured with overrides
-     * (even if in fact no overrides were added) */
-    public boolean haveOverrideNamesBeenSet();
-    /** return a list of the names of override maps to consider */ 
-    LinkedList<String> getOverrideNames();
-    /** get the map corresponding to the override name */ 
-    Map<String,Object> getOverrideMap(String name);
+public interface OverlayContext {
+    /** test if this context has actually been configured with overlays
+     * (even if in fact no overlays were added) */
+    public boolean haveOverlayNamesBeenSet();
+    /** return a list of the names of overlay maps to consider */ 
+    LinkedList<String> getOverlayNames();
+    /** get the map corresponding to the overlay name */ 
+    Map<String,Object> getOverlayMap(String name);
 }
