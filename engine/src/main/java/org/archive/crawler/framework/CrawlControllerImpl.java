@@ -43,6 +43,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.Lifecycle;
 import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.stereotype.Component;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -57,6 +58,7 @@ import org.xbill.DNS.Lookup;
  * @contributor gojomo
  */
 // TODO: rename back to CrawlController
+@Component("crawlController")
 public class CrawlControllerImpl implements 
     Serializable, 
     Reporter, 

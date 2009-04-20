@@ -40,7 +40,7 @@ import org.archive.io.CrawlerJournal;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.settings.file.Checkpointable;
+import org.archive.settings.Checkpointable;
 import org.json.JSONObject;
 
 /**

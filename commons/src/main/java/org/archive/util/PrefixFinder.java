@@ -17,7 +17,7 @@
  *  limitations under the License.
  */
 
-package org.archive.settings.file;
+package org.archive.util;
 
 import java.util.LinkedList;
 import java.util.List;

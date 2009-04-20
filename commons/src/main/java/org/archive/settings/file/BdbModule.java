@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.archive.settings.CheckpointRecovery;
+import org.archive.settings.Checkpointable;
 import org.archive.settings.RecoverAction;
 import org.archive.spring.ConfigPath;
 import org.archive.util.CachedBdbMap;

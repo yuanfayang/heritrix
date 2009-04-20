@@ -24,13 +24,12 @@
  * $Id:$
  */
 
-package org.archive.settings.file;
+package org.archive.settings;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.archive.settings.RecoverAction;
 
 /**
  * @author pjack

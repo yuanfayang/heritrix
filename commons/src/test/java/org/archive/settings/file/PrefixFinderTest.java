@@ -31,6 +31,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.commons.io.FileUtils;
+import org.archive.util.PrefixFinder;
 import org.archive.util.TmpDirTestCase;
 
 import com.sleepycat.bind.tuple.StringBinding;
