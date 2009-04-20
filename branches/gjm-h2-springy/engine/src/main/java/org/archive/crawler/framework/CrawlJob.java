@@ -697,4 +697,9 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         }
         return cc.getFrontierReportShort();
     }
+
+    public void terminate() {
+        getCrawlController().requestCrawlStop();
+    }
+    
 }//EOC

@@ -191,8 +191,8 @@ public class EngineImpl {
         FileUtils.deleteDirectory(job.getJobDir());
     }
 
-    public void requestLaunch(String jobPath) {
-        // TODO: find matching CrawlJob, launch, report errors if any
+    public void requestLaunch(String shortName) {
+        jobConfigs.get(shortName).launch();
     }
 
     public CrawlJob getJob(String shortName) {
@@ -220,6 +220,46 @@ public class EngineImpl {
          .append(maxMemory/1024)
          .append(" KiB max heap");
          return sb.toString(); 
+    }
+
+    public void shutdown() {
+        // TODO stop everything
+        for(CrawlJob job : jobConfigs.values()) {
+            if(job.isRunning()) {
+                job.terminate();
+            }
+        }
+        waitForNoRunningJobs(0);
+    }
+
+    /**
+     * Wait for all jobs to be in non-running state, or until timeout
+     * (given in ms) elapses. Use '0' for no timeout (wait as long as
+     * necessary.
+     * 
+     * @param timeout
+     * @return true if timeout occurred and a job is (possibly) still running
+     */
+    public boolean waitForNoRunningJobs(long timeout) {
+        long startTime = System.currentTimeMillis();     
+        // wait for all jobs to not be running
+        outer: while(true) {
+            if(timeout>0 && (startTime+timeout)>System.currentTimeMillis()) {
+                return true; 
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                break;
+            }
+            for(CrawlJob job : jobConfigs.values()) {
+                if(job.isRunning()) {
+                    continue outer;
+                }
+            }
+            break;
+        }
+        return false; 
     }
 
    
