@@ -69,6 +69,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.Lifecycle;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
@@ -127,7 +128,12 @@ import com.sleepycat.je.DatabaseException;
  * TODO: rename to StatisticsTracker
  */
 public class StatisticsTracker 
-    implements Runnable, Lifecycle, Serializable, ApplicationContextAware {
+    implements 
+        ApplicationContextAware, 
+        ApplicationListener,
+        Lifecycle, 
+        Runnable, 
+        Serializable {
     private static final long serialVersionUID = 5L;
 
     protected SeedModuleImpl seeds;
@@ -184,6 +190,7 @@ public class StatisticsTracker
     /**
      * All report types, for iteration dump at end
      */
+    @SuppressWarnings("unchecked")
     public static final Class[] REPORTS = {
         HostsReport.class, MimetypesReport.class, 
         ResponseCodeReport.class, SeedsReport.class, 
@@ -291,7 +298,6 @@ public class StatisticsTracker
         executor.shutdownNow();
     }
     
-    @Override
     public void start() {
         isRunning = true;
         try {
@@ -800,7 +806,7 @@ public class StatisticsTracker
      * 
      * @return SortedMap of hosts distribution
      */
-    public SortedMap getReverseSortedHostCounts(
+    public SortedMap<String,LongWrapper> getReverseSortedHostCounts(
             Map<String,LongWrapper> hostCounts) {
         synchronized(hostCounts){
             return getReverseSortedCopy(hostCounts);
@@ -812,7 +818,7 @@ public class StatisticsTracker
      * (largest first) order. 
      * @return SortedMap of hosts distribution
      */
-    public SortedMap getReverseSortedHostsDistribution() {
+    public SortedMap<String,LongWrapper> getReverseSortedHostsDistribution() {
         synchronized(hostsDistribution){
             return getReverseSortedCopy(hostsDistribution);
         }
