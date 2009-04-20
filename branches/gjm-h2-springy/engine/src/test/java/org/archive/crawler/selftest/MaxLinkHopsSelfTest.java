@@ -42,7 +42,7 @@ public class MaxLinkHopsSelfTest
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "1.html", "2.html", "3.html", "robots.txt"
     })));
-
+    
     @Override
     protected void verify() throws Exception {
         Set<String> files = filesInArcs();
@@ -58,7 +58,7 @@ public class MaxLinkHopsSelfTest
         String retVal = config.replaceFirst(
                 "(?s)<bean class=\"org.archive.modules.deciderules.TooManyHopsDecideRule\".*?</bean>", 
                 replacement);
-        return retVal;
+        return super.changeGlobalConfig(retVal);
     }
 }
 

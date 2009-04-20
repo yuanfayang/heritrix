@@ -1,38 +1,29 @@
-/* 
- * Copyright (C) 2007 Internet Archive.
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * SelfTestBase.java
- *
- * Created on Feb 21, 2007
- *
- * $Id:$
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.archive.crawler.selftest;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,18 +31,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
+import org.apache.commons.io.FileUtils;
 import org.archive.crawler.Heritrix;
-import org.archive.crawler.framework.CrawlStatus;
 import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.util.FileUtils;
-import org.archive.util.IoUtils;
-import org.archive.util.JmxWaiter;
 import org.archive.util.TmpDirTestCase;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -61,18 +46,21 @@ import org.mortbay.jetty.handler.HandlerList;
 import org.mortbay.jetty.handler.ResourceHandler;
 
 /**
- * @author pjack
- *
+ * Base class for 'self tests', integrations tests formatted as unit 
+ * tests, where the crawler launches an entire crawl exercising multiple
+ * features against a test harness website.
+ * 
+ * @contributor pjack
+ * @contributor gojomo
  */
 public abstract class SelfTestBase extends TmpDirTestCase {
 
     final private Logger LOGGER = 
         Logger.getLogger(SelfTestBase.class.getName());
     
+    protected Heritrix heritrix;
     protected Server httpServer;
     
-    protected HeritrixThread heritrixThread;
-
     protected void open() throws Exception {
         // We expect to be run from the project directory.
         // (Both eclipse and maven run junit tests from there).
@@ -92,13 +80,13 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         // If we have an old job lying around from a previous run, delete it.
         File tmpJobs = new File(tmpTestDir, "jobs");
         if (tmpJobs.exists()) {
-            FileUtils.deleteDir(tmpJobs);
+            FileUtils.deleteDirectory(tmpJobs);
         }
         
         // Copy the selftest's profile in the project directory to the
         // default profile in the temporary Heritrix directory.
-        File tmpDefProfile = new File(tmpJobs, "ready-basic");
-        FileUtils.copyFiles(new File(src, "profile"), tmpDefProfile);
+        File tmpDefProfile = new File(tmpJobs, "selftest-job");
+        org.apache.commons.io.FileUtils.copyDirectory(new File(src, "profile"), tmpDefProfile);
         
         // Start up a Jetty that serves the selftest's content directory.
         startHttpServer();
@@ -107,98 +95,51 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         File tmpConfDir = new File(tmpTestDir, "conf");
         tmpConfDir.mkdirs();
         File srcConf = new File(src.getParentFile(), "conf");
-        FileUtils.copyFiles(srcConf, tmpConfDir);
+        FileUtils.copyDirectory(srcConf, tmpConfDir);
 
-//        String globalSheetText = FileUtils.readFileAsString(
-//                new File(srcConf, "global.sheet"));
-//        globalSheetText = changeGlobalConfig(globalSheetText);
-//        File sheets = new File(tmpDefProfile, "sheets");
-//        File globalSheet = new File(sheets, "global.sheet");
-//        FileWriter fw = new FileWriter(globalSheet);
-//        fw.write(globalSheetText);
-        String crawlerBeansText = FileUtils.readFileAsString(
-                new File(srcConf, "crawler-beans.xml"));
+        String crawlerBeansText = FileUtils.readFileToString(
+                new File(srcConf, "selftest-crawler-beans.cxml"));
         crawlerBeansText = changeGlobalConfig(crawlerBeansText);
-        File crawlerBeans = new File(tmpDefProfile, "crawler-beans.xml");
+        File crawlerBeans = new File(tmpDefProfile, "selftest-crawler-beans.cxml");
         FileWriter fw = new FileWriter(crawlerBeans);
         fw.write(crawlerBeansText);
         fw.close();
         
         startHeritrix(tmpTestDir.getAbsolutePath());
-        this.waitForCrawlFinish();
+        
+        waitForCrawlFinish();
     }
     
     
-    protected String changeGlobalConfig(String globalSheetText) {
-        return globalSheetText;
+    protected String changeGlobalConfig(String config) {
+        config = config.replace(
+                "@@URL_VALUE@@","http://crawler.archive.org/selftestcrawl");
+        // if not already changed, used default self-test start URL
+        config = config.replace(
+                "@@SEEDS_VALUE@@", getSeedsString());
+        // if not already replaced, remove other placeholder
+        config = config.replace("@@MORE_PROPERTIES@@","");
+        return config;
+    }
+    
+    /**
+     * Get seeds for this test. Should be in form that can be
+     * spliced into a Java properties-format string (any internal
+     * lineends escaped with '\'). 
+     * @return String seeds to use
+     */
+    protected String getSeedsString() {
+        // default barring overrides
+        return "http://127.0.0.1:7777/index.html";
     }
     
 
     protected void close() throws Exception {
         stopHttpServer();
         stopHeritrix();
-        Set<ObjectName> set = dumpMBeanServer();
-        if (!set.isEmpty()) {
-            MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-            for (ObjectName name: set) {
-                server.unregisterMBean(name);
-            }
-            throw new IllegalStateException("MBeans lived on after test: " + set);
-        }
-        // verify ToeThreads all dead
-        boolean pass = true;
-        ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
-        for(long id : tmxb.getAllThreadIds()) {
-            ThreadInfo tinfo = tmxb.getThreadInfo(id);
-            if (isUndeadToeThread(tinfo)) {
-                System.out.println("TOE THREAD LIVED ON AFTER TEST: " + tinfo);
-                for (StackTraceElement e: tinfo.getStackTrace()) {
-                    System.out.println(e);
-                }
-                pass = false;
-            }
-        }
-        assertTrue("Undead ToeThreads, see stdout.", pass);
     }
-    
-    
-    private boolean isUndeadToeThread(ThreadInfo tinfo) {
-        if (tinfo == null) {
-            return false;
-        }
-        if (!tinfo.getThreadName().contains("ToeThread")) {
-            return false;
-        }
-        if (tinfo.getThreadState() == Thread.State.TERMINATED) {
-            // The thread isn't running, so it's fine (probably just needs
-            // to be garbage collected)
-            return false;
-        }
-        // Running selftests under maven2 had toe threads that were marked
-        // as WAITING, but had no stack trace elements.
-        return tinfo.getStackTrace().length > 0;
-    }
-
-    
-    protected Set<ObjectName> dumpMBeanServer() throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        @SuppressWarnings("unchecked")
-        Set<ObjectName> set = 
-            server.queryNames(null, new ObjectName("org.archive.crawler:*"));
-        System.out.println(set);
-        return set;
-    }
-    
 
     public void testSomething() throws Exception {
-        // Heritrix usually checks that either (a) a webui is run in the JVM
-        // or (b) JMX is enabled in the JVM.  Otherwise the engine is 
-        // inaccessible.
-        //
-        // Except selftests require neither (a) or (b).  Since Heritrix.main's
-        // JMX test is naive, we can just set this system property to trick
-        // main() into thinking we've enabled remote JMX.
-        System.setProperty("com.sun.management.jmxremote.port", "none");
         try {
             boolean fail = false;
             try {
@@ -253,63 +194,37 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
     
     protected void startHeritrix(String path) throws Exception {
-        // Launch heritrix in its own thread.
-        // By interrupting the thread, we can gracefully clean up the test.
-        String[] args = { "-j", path + "/jobs", "-n" };
-        heritrixThread = new HeritrixThread(args);
-        heritrixThread.start();
+        String authPassword = 
+            (new BigInteger(SecureRandom.getSeed(16))).toString(16);
+        String[] args = { "-j", path + "/jobs", "-a", authPassword };
+        // TODO: add auth password? 
+        heritrix = new Heritrix();
+        heritrix.instanceMain(args);
         
         configureHeritrix();
 
-        // Wait up to 20 seconds for the main OpenMBean to appear.
-        ObjectName cjm = getEngine();
-
-        // Tell the Engine to launch a new job based on the 
-        // default profile.
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        server.invoke(
-                cjm, 
-                "launchJob", 
-                new Object[] { "ready-basic" },
-                new String[] { "java.lang.String" });
-        
-        // Above invocation should have created a new SheetManager and a new
-        // CrawlController for the job.  Find the CrawlController.
-        
-        waitFor("org.archive.crawler:*,name=basic,type=org.archive.crawler.framework.CrawlController", true);
+        heritrix.getEngine().requestLaunch("selftest-job");
     }
     
     
     protected void configureHeritrix() throws Exception {
-        
+        // by default do nothing
     }
     
     
     protected void stopHeritrix() throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        ObjectName cjm = getEngine();
-        server.invoke(cjm, "close", new Object[0], new String[0]);
-        heritrixThread.interrupt();
+        heritrix.getEngine().shutdown();
+        heritrix.getComponent().stop(); 
     }
-
+    
     protected void waitForCrawlFinish() throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        
-        // Above invocation should have created a new SheetManager and a new
-        // CrawlController for the job.  Find the CrawlController.
-        ObjectName crawlController = getCrawlController("basic");
-        waitFor(crawlController);
-        
-        // Set up utility to wait for signal from crawler.
-        JmxWaiter waiter = new JmxWaiter(server, crawlController, "FINISHED");
-        waiter.waitUntilNotification(0L);
+        heritrix.getEngine().waitForNoRunningJobs(0);
     }
     
     protected File getSrcHtdocs() {
         return new File(getTestDataDir(), "htdocs");
     }
-    
-    
+
     protected File getTestDataDir() {
         File r = new File("testdata");
         if (!r.exists()) {
@@ -337,32 +252,23 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         File selftest = new File(tmp, "selftest");
         File crawl = new File(selftest, getSelfTestName());
         return crawl;
-    }
+    }  
     
-    
-    protected File getReadyJobDir() {
+    protected File getJobDir() {
         File crawl = getCrawlDir();
         File jobs = new File(crawl, "jobs");
-        File theJob = new File(jobs, "ready-basic");
-        return theJob;
-    }
-    
-    
-    protected File getCompletedJobDir() {
-        File crawl = getCrawlDir();
-        File jobs = new File(crawl, "jobs");
-        File theJob = new File(jobs, "completed-basic");
+        File theJob = new File(jobs, "selftest-job");
         return theJob;
     }
     
     
     protected File getArcDir() {
-        return new File(getCompletedJobDir(), "arcs");
+        return new File(getJobDir(), "arcs");
     }
     
     
     protected File getLogsDir() {
-        return new File(getCompletedJobDir(), "logs");
+        return new File(getJobDir(), "logs");
     }
 
 
@@ -372,104 +278,6 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         int i = full.lastIndexOf('.');
         return full.substring(i + 1);
     }
-    
-    
-    
-    protected static void waitFor(ObjectName name) throws Exception{
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        int count = 0;
-        while (server.queryNames(name, null).isEmpty()) {
-            count++;
-            if (count > 40) {
-                throw new IllegalStateException("Could not find " + 
-                        name + " after 20 seconds.");
-            }
-            Thread.sleep(500);
-        }
-    }
-
-    
-    protected static ObjectName waitFor(String query, boolean exist) throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        int count = 0;
-        ObjectName name = new ObjectName(query);
-        Set set = server.queryNames(null, name);
-        int secondsToWait = 600; 
-        while (set.isEmpty() == exist) {
-            count++;
-            if (count > secondsToWait) {
-                throw new IllegalStateException("Could not find " + 
-                        name + " after "+secondsToWait+" seconds.");
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-                System.err.println("SelfTestBase.waitFor() sleep interrupted");
-            }
-            set = server.queryNames(null, name);
-            if (set.size() > 1) {
-                throw new IllegalStateException(set.size() + " matches for " + query);
-            }
-        }
-        if (set.isEmpty()) {
-            return null;
-        } else {
-            return (ObjectName)set.iterator().next();
-        }
-    }
-    
-    
-    protected static ObjectName getCrawlController(String job) throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        @SuppressWarnings("unchecked")
-        Set<ObjectName> set = server.queryNames(null, null);
-        for (ObjectName name: set) {
-            if (name.getDomain().equals("org.archive.crawler")
-                    && name.getKeyProperty("name").equals(job)
-                    && name.getKeyProperty("type").equals("org.archive.crawler.framework.CrawlController")) {
-                return name;
-            }
-        }
-        return null;
-    }
-    
-    
-    protected static ObjectName getEngine() throws Exception {
-        return waitFor("org.archive.crawler:*,name=Engine", true);
-//        ObjectName cjm = JmxUtils.makeObjectName(
-//                EngineImpl.DOMAIN,
-//                EngineImpl.NAME, 
-//                EngineImpl.TYPE);
-//        waitFor(cjm);
-//        return cjm;
-    }
-    
-    
-    protected static void invokeAndWait(String job, String operation, CrawlStatus status) 
-    throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        
-        // Above invocation should have created a new SheetManager and a new
-        // CrawlController for the job.  Find the CrawlController.
-        ObjectName crawlController = getCrawlController(job);
-        waitFor(crawlController);
-        
-        // Set up utility to wait for signal from crawler.
-        JmxWaiter waiter = new JmxWaiter(server, crawlController, 
-                status.toString());
-        
-        // Tell the CrawlController to start the crawl.
-        server.invoke(
-                crawlController,
-                operation,
-                new Object[0],
-                new String[0]             
-                );
-        System.out.println("waiting for " + status);
-        // Wait for the FINISHED signal for up to 30 seconds.
-        waiter.waitUntilNotification(0);
-    }
-
     
     protected void verifyArcsClosed() {
         File arcsDir = getArcDir();
@@ -485,7 +293,6 @@ public abstract class SelfTestBase extends TmpDirTestCase {
             }
         }
     }
-    
     
     protected void verifyLogFileEmpty(String logFileName) {
         File logsDir = getLogsDir();
@@ -507,9 +314,9 @@ public abstract class SelfTestBase extends TmpDirTestCase {
     
     
     protected void verifyProgressStatistics() throws IOException {
-        File logs = new File(getCompletedJobDir(), "logs");
+        File logs = new File(getJobDir(), "logs");
         File statsFile = new File(logs, "progress-statistics.log");
-        String stats = IoUtils.readFullyAsString(new FileInputStream(statsFile));
+        String stats = FileUtils.readFileToString(statsFile);
         if (!stats.contains("CRAWL RESUMED - Preparing")) {
             fail("progress-statistics.log has no Prepared line.");
         }
@@ -559,30 +366,4 @@ public abstract class SelfTestBase extends TmpDirTestCase {
         LOGGER.finest(result.toString());
         return result;
     }
-
-
-    static class HeritrixThread extends Thread{
-        
-        String[] args;
-        Exception exception;
-
-        public HeritrixThread(String args[]) {
-            this.args = args;
-        }
-        
-        
-        public void run() {
-            try {
-                Heritrix.main(args);
-            } catch (Exception e) {
-                e.printStackTrace();
-                this.exception = e;
-            }
-        }
-        
-        public Exception getStartUpException() {
-            return exception;
-        }
-    }
-
 }

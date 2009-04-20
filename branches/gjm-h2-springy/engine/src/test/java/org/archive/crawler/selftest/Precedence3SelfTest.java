@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+ 
 package org.archive.crawler.selftest;
 
 import java.io.BufferedReader;
@@ -6,9 +25,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.TestCase;
-
-import org.archive.util.IoUtils;
+import org.apache.commons.io.IOUtils;
 
 /**
  * Tests that URLs can be assigned precedence values based on in-line analysis
@@ -99,7 +116,7 @@ public class Precedence3SelfTest extends SelfTestBase {
                 crawled.add(s);
             }
         } finally {
-            IoUtils.close(br);
+            IOUtils.closeQuietly(br);
         }
         
         System.out.println(crawled);
@@ -148,25 +165,29 @@ public class Precedence3SelfTest extends SelfTestBase {
         return "http://127.0.0.1:7777/" + ch + ".html";
     }
 
-    @Override
-    protected String changeGlobalConfig(String global) {
-        global = insertAfter(global, "root:controller=",
-                "root:controller:max-toe-threads=int, 1");
-        global = insertAfter(global, "root:controller:frontier=", 
-            "root:controller:frontier:uri-precedence-policy=object, org.archive.crawler.selftest.KeyWordUriPrecedencePolicy\n" + 
-            "root:controller:frontier:uri-precedence-policy:base-precedence=int, 5\n");
-        global = insertAfter(global, "root:controller:processors:LinksScoper:scope=",
-                "root:controller:processors:KeyWord=object, org.archive.crawler.selftest.KeyWordProcessor\n");
-        return global;
+    protected String getSeedsString() {
+        return "http://127.0.0.1:7777/H.html";
     }
-
     
-    protected String insertAfter(String globalSheetText, String path, String settings) {
-        int p1 = globalSheetText.indexOf(path);
-        int p2 = globalSheetText.indexOf("\n", p1);
-        String head = globalSheetText.substring(0, p2 + 1);
-        String tail = globalSheetText.substring(p2);
-        return head + settings + tail;
-    }
+    @Override
+    protected String changeGlobalConfig(String config) {
+        // single toethread
+        config = config.replace("@@MORE_PROPERTIES@@", "crawlController.maxToeThreads=1");
+        
+        // add the keyword-based uriPrecedencePolicy
+        String uriPrecedencePolicy = 
+            "<property name='uriPrecedencePolicy'>\n" +
+            " <bean class='org.archive.crawler.selftest.KeyWordUriPrecedencePolicy'>\n" +
+            "  <property name='basePrecedence' value='5'/>\n" +
+            " </bean>" +
+            "</property>";
+        config = config.replace("<!--@@frontier_properties@@-->", uriPrecedencePolicy);
 
+        // add the keyword processor after linkScoper
+        config = config.replace(
+                "<ref bean=\"linksScoper\"/>", 
+                "<ref bean=\"linksScoper\"/>\n" +
+                "<bean class='org.archive.crawler.selftest.KeyWordProcessor'/>");
+        return super.changeGlobalConfig(config);
+    }
 }

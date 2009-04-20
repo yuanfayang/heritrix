@@ -39,20 +39,16 @@ import org.mortbay.jetty.security.ConstraintMapping;
 import org.mortbay.jetty.security.HashUserRealm;
 import org.mortbay.jetty.security.SecurityHandler;
 import org.mortbay.jetty.servlet.ServletHandler;
-import org.mortbay.jetty.servlet.ServletHolder;
-
 
 /**
- * Test authentications, both basic/digest auth and html form logins.
+ * Test HTTP basic authentication
  *
- * @author stack
- * @version $Id$
+ * @contributor stack
+ * @contributor gojomo
  */
-public class AuthSelfTest
+public class HttpAuthSelfTest
     extends SelfTestBase
 {
-
-
     /**
      * Files to find as a list.
      */
@@ -60,16 +56,14 @@ public class AuthSelfTest
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "link1.html", "link2.html", "link3.html", 
             "basic/index.html", "basic/link1.html", "basic/link2.html", "basic/link3.html", 
-            "login/login.html", "success.html", "robots.txt"
+            "robots.txt"
     })));
-
-
+    
     @Override
     protected void verify() throws Exception {
         Set<String> found = this.filesInArcs();
         assertEquals("wrong files in ARCs",EXPECTED,found);
     }
-
 
     @Override
     protected void startHttpServer() throws Exception {
@@ -109,19 +103,14 @@ public class AuthSelfTest
                 servletHandler,
                 new DefaultHandler() });
         server.setHandler(handlers);
-        
-        ServletHolder holder = new ServletHolder(new AuthServlet());
-        servletHandler.addServletWithMapping(holder, "/login/*");
 
         this.httpServer = server;
         this.httpServer.start();
     }
 
-
-
     @Override
     protected String changeGlobalConfig(String config) {
-        String replacement = 
+        String newCredStore = 
             "<bean id=\"credentialStore\" class=\"org.archive.modules.credential.CredentialStore\">\n" + 
             "  <property name=\"credentials\">\n" + 
             "   <map>\n" + 
@@ -133,25 +122,13 @@ public class AuthSelfTest
             "      <property name=\"password\" value=\"xyzzy\"/>\n" + 
             "     </bean>\n" + 
             "    </entry>\n" + 
-            "    <entry key=\"test2\">\n" + 
-            "     <bean class=\"org.archive.modules.credential.HtmlFormCredential\">\n" + 
-            "     <property name=\"domain\" value=\"127.0.0.1:7777\"/>\n" + 
-            "     <property name=\"loginUri\" value=\"http://127.0.0.1:7777/login/login.html\"/>\n" + 
-            "     <property name=\"formItems\">\n" + 
-            "      <map>\n" + 
-            "       <entry key=\"username\" value=\"Mr. Happy Pants\"/>\n" + 
-            "       <entry key=\"password\" value=\"xyzzy\"/>\n" + 
-            "      </map>\n" + 
-            "     </property>\n" + 
-            "     </bean>\n" + 
-            "    </entry>\n" + 
             "   </map>\n" + 
             "  </property>\n" + 
             "</bean>";
-        String retVal = config.replaceFirst(
+        config = config.replaceFirst(
                 "(?s)<bean id=\"credentialStore\" .*?</bean>", 
-                replacement);
-        return retVal;
+                newCredStore);
+        return super.changeGlobalConfig(config);
     }
 
 }

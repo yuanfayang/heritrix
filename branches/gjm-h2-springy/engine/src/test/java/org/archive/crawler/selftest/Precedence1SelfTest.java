@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+ 
 package org.archive.crawler.selftest;
 
 import java.io.BufferedReader;
@@ -145,36 +164,55 @@ public class Precedence1SelfTest extends SelfTestBase {
         assertEquals(EXPECTED, crawled);
     }
 
+    protected String getSeedsString() {
+        return "http://127.0.0.1:7777/seed.html";
+    }
+    
     @Override
-    protected String changeGlobalConfig(String globalSheetText) {
-        int p1 = globalSheetText.indexOf("root:controller:frontier=");
-        int p2 = globalSheetText.indexOf("\n", p1);
-        String head = globalSheetText.substring(0, p2 + 1);
-        String tail = globalSheetText.substring(p2);
-        return head + 
-            "root:controller:frontier:uri-precedence-policy=object, org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy\n" + 
-            "root:controller:frontier:uri-precedence-policy:base-precedence=int, 5\n" +
-            tail;
+    protected String changeGlobalConfig(String config) {
+        // add a uriPrecedencePolicy with overlayable values, IF replaced
+        // string not already gone (as if by subclass)
+        String uriPrecedencePolicy = 
+            "<property name='uriPrecedencePolicy'>\n" +
+            " <bean class='org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy'>\n" +
+            "  <property name='basePrecedence' value='5'/>\n" +
+            " </bean>" +
+            "</property>";
+        config = config.replace("<!--@@frontier_properties@@-->", uriPrecedencePolicy);
+        
+        config = configureSheets(config);
+        return super.changeGlobalConfig(config);
     }
 
-    
-    protected void configureHeritrix() throws Exception {
-        // TODO: updateme!
-//        ObjectName engineName = getEngine();
-//        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-//        Engine engine = BeanProxy.proxy(server, engineName, Engine.class);
-//        
-//        ObjectName smName = engine.getSheetManagerStub("ready-basic");
-//        JMXSheetManager sm = BeanProxy.proxy(server, smName, JMXSheetManager.class);
-//        configure(sm);
-    }
-    
+    protected String configureSheets(String config) {
+        // add sheets which overlay alternate precedence values for some URIs
+        String sheets = 
+            "<bean id='loPri' class='org.archive.crawler.spring.SheetForSurtPrefixes'>\n" +
+            " <property name='surtPrefixes'>\n" +
+            "  <list>\n" +
+            "   <value>http://(127.0.0.1:7777)/ten</value>\n" +
+            "  </list>\n" +
+            " </property>\n" +
+            " <property name='map'>\n" +
+            "  <map>\n" +
+            "   <entry key='frontier.uriPrecedencePolicy.basePrecedence' value='10'/>\n" +
+            "  </map>\n" +
+            " </property>\n" +
+            "</bean>\n" +
+            "<bean id='hiPri' class='org.archive.crawler.spring.SheetForSurtPrefixes'>\n" +
+            " <property name='surtPrefixes'>\n" +
+            "  <list>\n" +
+            "   <value>http://(127.0.0.1:7777)/one</value>\n" +
+            "  </list>\n" +
+            " </property>\n" +
+            " <property name='map'>\n" +
+            "  <map>\n" +
+            "   <entry key='frontier.uriPrecedencePolicy.basePrecedence' value='1'/>\n" +
+            "  </map>\n" +
+            " </property>\n" +
+            "</bean>\n";
 
-    protected void configure(/*JMXSheetManager sm*/) {
-        // TODO: updateme!
-//        sm.associate("HiPri", "http://(127.0.0.1:7777)/one");
-//        sm.associate("LoPri", "http://(127.0.0.1:7777)/ten");        
+        config = config.replace("</beans>", sheets+"</beans>");
+        return config;
     }
-    
-
 }
