@@ -34,7 +34,7 @@ import java.util.Set;
 
 /**
  * @contributor pjack
- *
+ * @contributor gojomo
  */
 public class SimpleSelfTest extends SelfTestBase {
 
@@ -43,8 +43,7 @@ public class SimpleSelfTest extends SelfTestBase {
             new HashSet<String>(Arrays.asList(new String[] {
             "index.html", "link1.html", "link2.html", "link3.html", "robots.txt"
     })));
-    
-    
+
     @Override
     protected void verify() throws Exception {
         Set<String> files = filesInArcs();

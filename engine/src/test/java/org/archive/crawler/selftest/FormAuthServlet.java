@@ -35,9 +35,8 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author pjack
- *
  */
-public class AuthServlet extends HttpServlet {
+public class FormAuthServlet extends HttpServlet {
 
 
     private static final long serialVersionUID = 1L;

@@ -24,21 +24,22 @@ public class Precedence2SelfTest extends Precedence1SelfTest {
 
 
     @Override
-    protected String changeGlobalConfig(String globalSheetText) {
-        int p1 = globalSheetText.indexOf("root:controller:frontier=");
-        int p2 = globalSheetText.indexOf("\n", p1);
-        String head = globalSheetText.substring(0, p2 + 1);
-        String tail = globalSheetText.substring(p2);
-        return head + 
-            "root:controller:frontier:uri-precedence-policy=object, org.archive.crawler.frontier.precedence.PreloadedUriPrecedencePolicy\n" + 
-            "root:controller:frontier:uri-precedence-policy:base-precedence=int, 5\n" +
-            tail;
+    protected String changeGlobalConfig(String config) {
+        // add an autowired uriPrecedencePolicy with preloaded values
+        String uriPrecedencePolicy = 
+            " <bean id='uriPrecedencePolicy' class='org.archive.crawler.frontier.precedence.PreloadedUriPrecedencePolicy'>\n" +
+            "  <property name='basePrecedence' value='5'/>\n" +
+            " </bean>";
+        config = config.replace("<!--@@beans_morebeans@@-->", uriPrecedencePolicy);
+        // suppress superclass insertion of inner bean policy
+        config = config.replace("<!--@@frontier_properties@@-->", "");
+        return super.changeGlobalConfig(config);
     }
 
     @Override
     protected void configureHeritrix() throws Exception {
-        File src = new File(getReadyJobDir(), "rank.txt");
-        File dest = new File(getReadyJobDir(), "state");
+        File src = new File(getJobDir(), "rank.txt");
+        File dest = new File(getJobDir(), "state");
         String[] args = new String[] { 
                 src.getAbsolutePath(), 
                 dest.getAbsolutePath() 

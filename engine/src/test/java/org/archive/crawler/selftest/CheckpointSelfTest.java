@@ -23,18 +23,9 @@
 package org.archive.crawler.selftest;
 
 
-import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.Set;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import junit.framework.TestResult;
-
-import org.archive.crawler.framework.CrawlStatus;
-import org.archive.util.FileUtils;
+import org.archive.crawler.framework.CrawlJob;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.bio.SocketConnector;
 import org.mortbay.jetty.servlet.ServletHandler;
@@ -63,6 +54,13 @@ public class CheckpointSelfTest extends SelfTestBase {
     public CheckpointSelfTest() {
     }
 
+    protected String getSeedsString() {
+        String seedsString = "";
+        for(int p = MIN_PORT; p <= MAX_PORT; p++) {
+            seedsString += "http://127.0.0.1:"+p+"/random\\\n";
+        }
+        return seedsString;
+    }
     
     @Override
     protected void stopHttpServer() {
@@ -112,70 +110,70 @@ public class CheckpointSelfTest extends SelfTestBase {
     }
 
 
-    @Override
+//    @Override
     protected void waitForCrawlFinish() throws Exception {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        
-        // Start the crawl; wait for two seconds; pause the crawl so we
-        // can checkpoint; checkpoint; and abort the crawl.
-        
-        // superclass startHeritrix()'s launchJob already did a requestCrawlStart
-        // this second invocation was causing two sets of ToeThreads to be 
-        // launched, one set of which lingered
-        // invokeAndWait("basic", "requestCrawlStart", CrawlStatus.RUNNING);
-        Thread.sleep(2000);
-        invokeAndWait("basic", "requestCrawlPause", CrawlStatus.PAUSED);
-        invokeAndWait("basic", "requestCrawlCheckpoint", CrawlStatus.PAUSED);
-        invokeAndWait("basic", "requestCrawlStop", CrawlStatus.FINISHED);
-        waitFor("org.archive.crawler:*,name=basic,type=org.archive.crawler.framework.CrawlController", false);
-        stopHeritrix();
-        Set<ObjectName> set = dumpMBeanServer();
-        if (!set.isEmpty()) {
-            throw new Exception("Mbeans lived on after stopHeritrix: " + set);
-        }
-        this.heritrixThread = new HeritrixThread(new String[] {
-            "-j", getCrawlDir().getAbsolutePath() + "/jobs", "-n"
-        });
-        this.heritrixThread.start();
-        
-        ObjectName cjm = getEngine();
-        String[] checkpoints = (String[])server.invoke(
-                cjm,
-                "listCheckpoints", 
-                new Object[] { "completed-basic" },
-                new String[] { "java.lang.String" });
 
-        assertEquals(1, checkpoints.length);
-        File recoverLoc = new File(getCompletedJobDir().getParentFile(), "recovered");
-        FileUtils.deleteDir(recoverLoc);
-        String[] oldPath = new String[] { getCompletedJobDir().getAbsolutePath() };
-        String[] newPath = new String[] { recoverLoc.getAbsolutePath() };
-        server.invoke(
-                cjm,
-                "recoverCheckpoint", 
-                new Object[] {
-                        "completed-basic",
-                        "active-recovered",
-                        checkpoints[0], 
-                        oldPath, 
-                        newPath
-                },
-                new String[] { 
-                        String.class.getName(),
-                        String.class.getName(),
-                        String.class.getName(),
-                        "java.lang.String[]",
-                        "java.lang.String[]"
-                        });
-        ObjectName cc = getCrawlController("recovered");
-        waitFor(cc);
-        invokeAndWait("recovered", "requestCrawlResume", CrawlStatus.FINISHED);
+        Thread.sleep(2000);
+        CrawlJob cj = heritrix.getEngine().getJob("selftest-job");
         
-        server.invoke(
-                cjm, 
-                "closeSheetManagerStub", 
-                new Object[] { "completed-basic" },
-                new String[] { "java.lang.String" });
+        // TODO: pause, checkpoint, launch new job, yadda yadda
+        
+        // for now, just kill & wait
+        cj.terminate();
+        super.waitForCrawlFinish();
+        
+//        invokeAndWait("basic", "requestCrawlPause", CrawlStatus.PAUSED);
+//        invokeAndWait("basic", "requestCrawlCheckpoint", CrawlStatus.PAUSED);
+//        invokeAndWait("basic", "requestCrawlStop", CrawlStatus.FINISHED);
+//        waitFor("org.archive.crawler:*,name=basic,type=org.archive.crawler.framework.CrawlController", false);
+//        stopHeritrix();
+//        Set<ObjectName> set = dumpMBeanServer();
+//        if (!set.isEmpty()) {
+//            throw new Exception("Mbeans lived on after stopHeritrix: " + set);
+//        }
+//        this.heritrixThread = new HeritrixThread(new String[] {
+//            "-j", getCrawlDir().getAbsolutePath() + "/jobs", "-n"
+//        });
+//        this.heritrixThread.start();
+//        
+//        ObjectName cjm = getEngine();
+//        String[] checkpoints = (String[])server.invoke(
+//                cjm,
+//                "listCheckpoints", 
+//                new Object[] { "completed-basic" },
+//                new String[] { "java.lang.String" });
+//
+//        assertEquals(1, checkpoints.length);
+//        File recoverLoc = new File(getCompletedJobDir().getParentFile(), "recovered");
+//        FileUtils.deleteDir(recoverLoc);
+//        String[] oldPath = new String[] { getCompletedJobDir().getAbsolutePath() };
+//        String[] newPath = new String[] { recoverLoc.getAbsolutePath() };
+//        server.invoke(
+//                cjm,
+//                "recoverCheckpoint", 
+//                new Object[] {
+//                        "completed-basic",
+//                        "active-recovered",
+//                        checkpoints[0], 
+//                        oldPath, 
+//                        newPath
+//                },
+//                new String[] { 
+//                        String.class.getName(),
+//                        String.class.getName(),
+//                        String.class.getName(),
+//                        "java.lang.String[]",
+//                        "java.lang.String[]"
+//                        });
+//        ObjectName cc = getCrawlController("recovered");
+//        waitFor(cc);
+//        invokeAndWait("recovered", "requestCrawlResume", CrawlStatus.FINISHED);
+//        
+//        server.invoke(
+//                cjm, 
+//                "closeSheetManagerStub", 
+//                new Object[] { "completed-basic" },
+//                new String[] { "java.lang.String" });
     }
 
 
@@ -185,11 +183,13 @@ public class CheckpointSelfTest extends SelfTestBase {
     protected void verifyCommon() throws IOException {
         // checkpointing rotated the logs so default behavior won't work here
         // FIXME: Make this work :)
+        
     }
 
 
     protected void verify() throws Exception {
         // FIXME: Complete test.
+        assertTrue("neither feature nor test yet implemented",false);
     }
 
     /**

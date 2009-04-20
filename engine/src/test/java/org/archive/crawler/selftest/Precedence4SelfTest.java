@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.archive.crawler.selftest;
 
 import java.io.BufferedReader;
@@ -6,8 +25,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.util.IoUtils;
-
+import org.apache.commons.io.IOUtils;
 
 /**
  * Tests that operators can manually assign precedence values to individual 
@@ -24,7 +42,6 @@ import org.archive.util.IoUtils;
  */
 public class Precedence4SelfTest extends Precedence1SelfTest {
 
-
     @Override
     protected void verify() throws Exception {
         File crawlLog = new File(getLogsDir(), "crawl.log");
@@ -39,7 +56,7 @@ public class Precedence4SelfTest extends Precedence1SelfTest {
                 crawled.add(s);
             }
         } finally {
-            IoUtils.close(br);
+            IOUtils.closeQuietly(br);
         }
         
         //assertEquals("dns:localhost", crawled.get(0));
@@ -47,14 +64,52 @@ public class Precedence4SelfTest extends Precedence1SelfTest {
         assertEquals("http://127.0.0.1:7777/five/a.html", crawled.get(1));
         assertEquals("http://127.0.0.1:7777/five/b.html", crawled.get(crawled.size() - 1));
     }
+
     
     
-    @Override
-    protected void configure(/*JMXSheetManager sm*/) {
-        //TODO:Springy fixme
-//        sm.associate("HiPri", "http://(127.0.0.1:7777)/five/a.html");
-//        sm.associate("LoPri", "http://(127.0.0.1:7777)/five/b.html");        
+    protected String getSeedsString() {
+        return "http://127.0.0.1:7777/seed.html\\n"+
+            "http://127.0.0.1:7777/one/a.html\\n"+
+            "http://127.0.0.1:7777/five/a.html\\n"+
+            "http://127.0.0.1:7777/ten/a.html\\n"+
+            "http://127.0.0.1:7777/ten/b.html\\n"+
+            "http://127.0.0.1:7777/five/b.html\\n"+
+            "http://127.0.0.1:7777/one/b.html\\n"+
+            "http://127.0.0.1:7777/five/c.html\\n"+
+            "http://127.0.0.1:7777/one/c.html\\n"+
+            "http://127.0.0.1:7777/ten/c.html";
     }
+    
+    protected String configureSheets(String config) {
+        // add sheets which overlay alternate precedence values for two
+        // specific URIs
+        String sheets = 
+            "<bean id='loPri' class='org.archive.crawler.spring.SheetForSurtPrefixes'>\n" +
+            " <property name='surtPrefixes'>\n" +
+            "  <list>\n" +
+            "   <value>http://(127.0.0.1:7777)/five/b.html</value>\n" +
+            "  </list>\n" +
+            " </property>\n" +
+            " <property name='map'>\n" +
+            "  <map>\n" +
+            "   <entry key='frontier.uriPrecedencePolicy.basePrecedence' value='10'/>\n" +
+            "  </map>\n" +
+            " </property>\n" +
+            "</bean>\n" +
+            "<bean id='hiPri' class='org.archive.crawler.spring.SheetForSurtPrefixes'>\n" +
+            " <property name='surtPrefixes'>\n" +
+            "  <list>\n" +
+            "   <value>http://(127.0.0.1:7777)/five/a.html</value>\n" +
+            "  </list>\n" +
+            " </property>\n" +
+            " <property name='map'>\n" +
+            "  <map>\n" +
+            "   <entry key='frontier.uriPrecedencePolicy.basePrecedence' value='1'/>\n" +
+            "  </map>\n" +
+            " </property>\n" +
+            "</bean>\n";
 
-
+        config = config.replace("</beans>", sheets+"</beans>");
+        return config;
+    }
 }

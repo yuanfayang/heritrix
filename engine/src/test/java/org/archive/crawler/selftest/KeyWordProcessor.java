@@ -60,10 +60,10 @@ public class KeyWordProcessor extends Processor {
      */
     int notFoundPrecedence = 10; 
     public int getNotFoundPrecedence() {
-        return this.foundPrecedence;
+        return this.notFoundPrecedence;
     }
     public void setNotFoundPrecedence(int prec) {
-        this.foundPrecedence = prec; 
+        this.notFoundPrecedence = prec; 
     }
 
     @Override
