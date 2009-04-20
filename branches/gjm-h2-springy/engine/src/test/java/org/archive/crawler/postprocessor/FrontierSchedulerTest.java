@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class FrontierSchedulerTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class<?> getModuleClass() {
-        return FrontierScheduler.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new FrontierScheduler();
-    }
-    
-    
     // TODO TESTME!
     
 }

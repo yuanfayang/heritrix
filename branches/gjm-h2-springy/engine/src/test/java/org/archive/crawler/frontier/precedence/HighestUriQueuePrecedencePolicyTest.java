@@ -34,15 +34,7 @@ import org.archive.state.ModuleTestBase;
  */
 public class HighestUriQueuePrecedencePolicyTest extends ModuleTestBase {
 
-    @Override
-    protected Class<?> getModuleClass() {
-        return HighestUriQueuePrecedencePolicy.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new HighestUriQueuePrecedencePolicy();
-    }
+    //TODO add tests
 
 }
 

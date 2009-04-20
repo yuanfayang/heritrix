@@ -70,7 +70,7 @@ public class BdbMultipleWorkQueues {
     private Database pendingUrisDB = null;
     
     /**  Supporting bdb serialization of CrawlURIs */
-    private RecyclingSerialBinding crawlUriBinding;
+    private RecyclingSerialBinding<CrawlURI> crawlUriBinding;
 
     /**
      * Create the multi queue in the given environment. 
@@ -85,7 +85,7 @@ public class BdbMultipleWorkQueues {
     throws DatabaseException {
         this.pendingUrisDB = db;
         crawlUriBinding =
-            new RecyclingSerialBinding(classCatalog, CrawlURI.class);
+            new RecyclingSerialBinding<CrawlURI>(classCatalog, CrawlURI.class);
     }
 
     /**

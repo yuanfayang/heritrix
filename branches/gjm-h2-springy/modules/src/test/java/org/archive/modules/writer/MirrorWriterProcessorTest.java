@@ -25,30 +25,13 @@
  */
 package org.archive.modules.writer;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.writer.MirrorWriterProcessor;
-
 
 /**
  * @author pjack
- *
  */
 public class MirrorWriterProcessorTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return MirrorWriterProcessor.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new MirrorWriterProcessor();
-    }
-    
-    
     // TODO TESTME!
     
 }

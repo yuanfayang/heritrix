@@ -1,27 +1,22 @@
-/* CompositeIterator
-*
-* $Id$
-*
-* Created on Mar 3, 2004
-*
-* Copyright (C) 2004 Internet Archive.
-*
-* This file is part of the Heritrix web crawler (crawler.archive.org).
-*
-* Heritrix is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser Public License as published by
-* the Free Software Foundation; either version 2.1 of the License, or
-* any later version.
-*
-* Heritrix is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Lesser Public License for more details.
-*
-* You should have received a copy of the GNU Lesser Public License
-* along with Heritrix; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.archive.util.iterator;
 
 import java.util.ArrayList;
@@ -32,9 +27,9 @@ import java.util.NoSuchElementException;
  * An iterator that's built up out of any number of other iterators.
  * @author gojomo
  */
-public class CompositeIterator implements Iterator {
-    ArrayList<Iterator> iterators = new ArrayList<Iterator>();
-    Iterator currentIterator;
+public class CompositeIterator<E> implements Iterator<E> {
+    ArrayList<Iterator<E>> iterators = new ArrayList<Iterator<E>>();
+    Iterator<E> currentIterator;
     int indexOfCurrentIterator = -1;
 
     /**
@@ -44,7 +39,7 @@ public class CompositeIterator implements Iterator {
      */
     private boolean nextIterator() {
         if (++indexOfCurrentIterator < iterators.size()) {
-            currentIterator = (Iterator) iterators.get(indexOfCurrentIterator);
+            currentIterator = iterators.get(indexOfCurrentIterator);
             // If the new iterator was empty this will move us to the next one.
             return hasNext();
         } else {
@@ -69,7 +64,7 @@ public class CompositeIterator implements Iterator {
     /* (non-Javadoc)
      * @see java.util.Iterator#next()
      */
-    public Object next() {
+    public E next() {
         if(hasNext()) {
             return currentIterator.next();
         } else {
@@ -98,7 +93,7 @@ public class CompositeIterator implements Iterator {
      * @param i1
      * @param i2
      */
-    public CompositeIterator(Iterator i1, Iterator i2) {
+    public CompositeIterator(Iterator<E> i1, Iterator<E> i2) {
         this();
         add(i1);
         add(i2);
@@ -109,7 +104,7 @@ public class CompositeIterator implements Iterator {
      *
      * @param i an iterator to add.
      */
-    public void add(Iterator i) {
+    public void add(Iterator<E> i) {
         iterators.add(i);
     }
 

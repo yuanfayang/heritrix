@@ -36,8 +36,8 @@ public class MimetypesReport extends Report {
     public void write(PrintWriter writer) {
         // header
         writer.print("[#urls] [#bytes] [mime-types]\n");
-        TreeMap fd = stats.getReverseSortedCopy(stats.getFileDistribution());
-        for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
+        TreeMap<String,LongWrapper> fd = stats.getReverseSortedCopy(stats.getFileDistribution());
+        for (Iterator<String> i = fd.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
             // Key is mime type.
             writer.print(Long.toString(((LongWrapper)fd.get(key)).longValue));

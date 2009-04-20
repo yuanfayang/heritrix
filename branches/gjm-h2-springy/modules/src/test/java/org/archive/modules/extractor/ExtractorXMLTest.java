@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.ExtractorXML;
-
 
 /**
  * Unit test for {@link ExtractorXML}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.ExtractorXML;
  */
 public class ExtractorXMLTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorXML.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorXML();
-    }
-    
-    
     // TODO TESTME!
     
 }

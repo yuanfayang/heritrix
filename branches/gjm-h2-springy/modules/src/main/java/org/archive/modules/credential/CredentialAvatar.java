@@ -1,25 +1,22 @@
-/* CredentialAvatar
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * Created on Apr 23, 2004
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Copyright (C) 2004 Internet Archive.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.modules.credential;
 
 import java.io.Serializable;
@@ -29,7 +26,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.archive.modules.ProcessorURI;
-
 
 /**
  * A credential representation.
@@ -69,7 +65,7 @@ implements Serializable {
     /**
      * Type represented by this avatar.
      */
-    private final Class type;
+    private final Class<?> type;
 
     /**
      * Data.
@@ -90,7 +86,7 @@ implements Serializable {
      * @param type Type for this credential avatar.
      * @param key Key for this credential avatar.
      */
-    public CredentialAvatar(Class type, String key) {
+    public CredentialAvatar(Class<?> type, String key) {
         this(type, key, null);
     }
 
@@ -102,7 +98,7 @@ implements Serializable {
      * null and then just the presence is used as signifier of successful
      * auth.
      */
-    public CredentialAvatar(Class type, String key, String payload) {
+    public CredentialAvatar(Class<?> type, String key, String payload) {
         if (!checkType(type)) {
             throw new IllegalArgumentException("Type is unrecognized: " +
                 type);
@@ -115,6 +111,7 @@ implements Serializable {
     /**
      * Shutdown default constructor.
      */
+    @SuppressWarnings("unused")
     private CredentialAvatar() {
         super();
         this.key = null;
@@ -126,11 +123,11 @@ implements Serializable {
      * @param candidateType Type to check.
      * @return True if this is a known credential type.
      */
-    protected boolean checkType(Class candidateType) {
+    protected boolean checkType(Class<?> candidateType) {
         boolean result = false;
-        List types = CredentialStore.getCredentialTypes();
-        for (Iterator i = types.iterator(); i.hasNext();) {
-            if (((Class)i.next()).equals(candidateType)) {
+        List<Class<?>> types = CredentialStore.getCredentialTypes();
+        for (Iterator<Class<?>> i = types.iterator(); i.hasNext();) {
+            if (i.next().equals(candidateType)) {
                 result = true;
                 break;
             }
@@ -155,7 +152,7 @@ implements Serializable {
     /**
      * @return Type represented by this avatar.
      */
-    public Class getType() {
+    public Class<?> getType() {
         return this.type;
     }
 
@@ -163,7 +160,7 @@ implements Serializable {
 	 * @param otherType Class to match.
 	 * @return True if this credential avatar is of same type.
 	 */
-	public boolean match(Class otherType) {
+	public boolean match(Class<?> otherType) {
 		return this.type.equals(otherType);
 	}
 
@@ -172,7 +169,7 @@ implements Serializable {
      * @param otherKey Key to test.
      * @return True if this is avatar for passed credential.
      */
-    public boolean match(Class otherType, String otherKey) {
+    public boolean match(Class<?> otherType, String otherKey) {
         return match(otherType) &&
             (otherKey != null && this.key != null &&
             		this.key.equals(otherKey));

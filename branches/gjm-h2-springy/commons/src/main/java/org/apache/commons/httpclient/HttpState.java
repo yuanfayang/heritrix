@@ -66,7 +66,7 @@ import com.sleepycat.collections.StoredIterator; // <- IA/HERITRIX CHANGE
  * @version $Revision$ $Date$
  * 
  */
-@SuppressWarnings("unchecked") // <- IA/HERITRIX CHANGE
+@SuppressWarnings({"unchecked","unused"}) // <- IA/HERITRIX CHANGE
 public class HttpState {
 
     // ----------------------------------------------------- Instance Variables

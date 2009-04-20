@@ -1,3 +1,4 @@
+/*RELICENSE_RESEARCH*/
 /* MirrorWriter
  *
  * $Id$
@@ -83,6 +84,7 @@ import org.archive.util.IoUtils;
    
    @author Howard Lee Gayle
 */
+@SuppressWarnings("unchecked")
 public class MirrorWriterProcessor extends Processor {
     private static final long serialVersionUID = 3L;
     private static final Logger logger =

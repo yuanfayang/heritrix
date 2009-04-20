@@ -1,28 +1,22 @@
 /*
- * ExperimentalWARCWriterTest
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * $Id: ExperimentalWARCWriterTest.java 4554 2006-08-30 02:35:48Z stack-sf $
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Created on July 27th, 2006
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2006 Internet Archive.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.io.warc;
 
 import java.io.ByteArrayInputStream;
@@ -241,7 +235,7 @@ extends TmpDirTestCase implements WARCConstants {
     throws FileNotFoundException, IOException {
         WARCReader reader = WARCReaderFactory.get(f);
         assertNotNull(reader);
-        List headers = null;
+        List<ArchiveRecordHeader> headers = null;
         if (recordCount == -1) {
             headers = reader.validate();
         } else {
@@ -263,7 +257,7 @@ extends TmpDirTestCase implements WARCConstants {
         reader.close();
         
         assertTrue("Metadatas not equal", headers.size() == recordCount);
-        for (Iterator i = headers.iterator(); i.hasNext();) {
+        for (Iterator<ArchiveRecordHeader> i = headers.iterator(); i.hasNext();) {
             ArchiveRecordHeader r = (ArchiveRecordHeader)i.next();
             assertTrue("Record is empty", r.getLength() > 0);
         }
@@ -287,7 +281,7 @@ extends TmpDirTestCase implements WARCConstants {
         long offset = -1;
         long totalRecords = 0;
         boolean readSecond = false;
-        for (final Iterator i = reader.iterator(); i.hasNext();
+        for (final Iterator<ArchiveRecord> i = reader.iterator(); i.hasNext();
                 totalRecords++) {
             WARCRecord ar = (WARCRecord)i.next();
             if (!readFirst) {
@@ -309,7 +303,7 @@ extends TmpDirTestCase implements WARCConstants {
         // Get reader again.  See how iterator works with offset
         reader = WARCReaderFactory.get(f, offset);
         int count = 0;
-        for (final Iterator i = reader.iterator(); i.hasNext(); i.next()) {
+        for (final Iterator<ArchiveRecord> i = reader.iterator(); i.hasNext(); i.next()) {
             count++;
         }
         reader.close();

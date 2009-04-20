@@ -43,21 +43,7 @@ import org.archive.util.IoUtils;
  * @author pjack
  */
 public class CrawlControllerImplTest extends ModuleTestBase {
-    
-    
-    @Override
-    protected Class<?> getModuleClass() {
-        return CrawlControllerImpl.class;
-    }
-
-    // Public so other tests can use it
-    @Override
-    public Object makeModule() throws Exception {
-        return makeTempCrawlController();
-    }
-    
-    
-    
+ 
     // TODO TESTME
 
     

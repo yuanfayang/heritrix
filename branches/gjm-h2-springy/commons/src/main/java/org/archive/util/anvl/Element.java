@@ -34,7 +34,7 @@ package org.archive.util.anvl;
  * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
  * Language (ANVL)</a>
  */
-class Element {
+public class Element {
     private final SubElement [] subElements;
     
     public Element(final Label l) {

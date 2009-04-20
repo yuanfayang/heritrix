@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.ExtractorUniversal;
-
 
 /**
  * Unit test for {@link ExtractorUniversal}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.ExtractorUniversal;
  */
 public class ExtractorUniversalTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorUniversal.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorUniversal();
-    }
-    
-    
     // TODO TESTME!
     
 }

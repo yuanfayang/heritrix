@@ -1,25 +1,22 @@
-/*  $Id: ExperimentalWARCWriter.java 4604 2006-09-06 05:38:18Z stack-sf $
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * Created on July 27th, 2006
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Copyright (C) 2006 Internet Archive.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.io.warc;
 
 import java.io.ByteArrayInputStream;
@@ -40,6 +37,7 @@ import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
+import org.archive.util.anvl.Element;
 
 
 /**
@@ -73,7 +71,7 @@ implements WARCConstants {
      * Metadata.
      * TODO: Exploit writing warcinfo record.  Currently unused.
      */
-    private final List fileMetadata;
+    private final List<String> fileMetadata;
     
     
     /**
@@ -98,7 +96,7 @@ implements WARCConstants {
     public WARCWriter(final AtomicInteger serialNo,
     		final OutputStream out, final File f,
     		final boolean cmprs, final String a14DigitDate,
-            final List warcinfoData)
+            final List<String> warcinfoData)
     throws IOException {
         super(serialNo, out, f, cmprs, a14DigitDate);
         this.fileMetadata = warcinfoData;
@@ -117,7 +115,7 @@ implements WARCConstants {
     public WARCWriter(final AtomicInteger serialNo,
     		final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final long maxSize, final List warcinfoData) {
+            final long maxSize, final List<String> warcinfoData) {
         super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
         	WARC_FILE_EXTENSION);
         this.fileMetadata = warcinfoData;
@@ -195,7 +193,7 @@ implements WARCConstants {
         sb.append(HEADER_KEY_DATE).append(COLON_SPACE).
             append(create14DigitDate).append(CRLF);
         if (xtraHeaders != null) {
-            for (final Iterator i = xtraHeaders.iterator(); i.hasNext();) {
+            for (final Iterator<Element> i = xtraHeaders.iterator(); i.hasNext();) {
                 sb.append(i.next()).append(CRLF);
             }
         }
@@ -310,7 +308,7 @@ implements WARCConstants {
         	warcinfoBody = "TODO: Unimplemented".getBytes();
         } else {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        	for (final Iterator i = this.fileMetadata.iterator();
+        	for (final Iterator<String> i = this.fileMetadata.iterator();
         			i.hasNext();) {
         		baos.write(i.next().toString().getBytes(UTF8Bytes.UTF8));
         	}

@@ -36,13 +36,6 @@ import org.archive.modules.fetcher.FetchHTTP;
  */
 public class FetchHTTPTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class<?> getModuleClass() {
-        return FetchHTTP.class;
-    }
-    
-    
     @Override
     protected Processor makeModule() {
         FetchHTTP result = new FetchHTTP();
@@ -53,7 +46,6 @@ public class FetchHTTPTest extends ProcessorTestBase {
         result.start();
         return result;
     }
-    
     
     // TODO TESTME!
     

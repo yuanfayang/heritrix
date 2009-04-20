@@ -45,8 +45,8 @@ public final class ThreadLocalHttpConnectionManager implements
     private static final Logger logger = Logger
         .getLogger(ThreadLocalHttpConnectionManager.class.getName());
 
-    private final ThreadLocal tl = new ThreadLocal() {
-        protected synchronized Object initialValue() {
+    private final ThreadLocal<ConnectionInfo> tl = new ThreadLocal<ConnectionInfo>() {
+        protected synchronized ConnectionInfo initialValue() {
             return new ConnectionInfo();
         }
     };

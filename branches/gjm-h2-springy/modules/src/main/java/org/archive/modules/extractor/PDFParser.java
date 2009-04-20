@@ -1,3 +1,4 @@
+/*RELICENSE_RESEARCH*/
 /* Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -194,6 +195,7 @@ public class PDFParser {
      * them to foundURIs
      * @param entity
      */
+    @SuppressWarnings("unchecked")
     protected void extractURIs(PdfObject entity){
 
             // deal with dictionaries
@@ -252,19 +254,15 @@ public class PDFParser {
 
     public static void main(String[] argv){
 
-        try{
+        try {
             PDFParser parser = new PDFParser("/home/parkert/files/pdfspec.pdf");
-
-            ArrayList uris = parser.extractURIs();
-
-            Iterator i = uris.iterator();
-
+            ArrayList<String> uris = parser.extractURIs();
+            Iterator<String> i = uris.iterator();
             while(i.hasNext()){
                 String uri = (String)i.next();
                 System.out.println("got uri: " + uri);
             }
-
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -42,7 +42,7 @@ import com.sleepycat.util.RuntimeExceptionWrapper;
  *
  * @author gojomo
  */
-public class RecyclingSerialBinding extends SerialBinding {
+public class RecyclingSerialBinding<K> extends SerialBinding<K> {
     /**
      * Thread-local cache of reusable FastOutputStream
      */
@@ -50,7 +50,7 @@ public class RecyclingSerialBinding extends SerialBinding {
      = new ThreadLocal<FastOutputStream>();
     
     private ClassCatalog classCatalog;
-    private Class baseClass;
+    private Class<K> baseClass;
 
     /**
      * Constructor. Save parameters locally, as superclass 

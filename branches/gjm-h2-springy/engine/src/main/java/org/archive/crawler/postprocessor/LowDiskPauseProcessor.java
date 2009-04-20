@@ -33,11 +33,11 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
 import org.archive.modules.PostProcessor;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
-import org.archive.util.IoUtils;
 
 /**
  * Processor module which uses 'df -k', where available and with
@@ -147,7 +147,7 @@ public class LowDiskPauseProcessor extends Processor implements PostProcessor {
      */
     private ProcessResult checkAvailableSpace(ProcessorURI curi) {
         try {
-            String df = IoUtils.readFullyAsString(Runtime.getRuntime().exec(
+            String df = IOUtils.toString(Runtime.getRuntime().exec(
                     "df -k").getInputStream());
             Matcher matcher = VALID_DF_OUTPUT.matcher(df);
             if(!matcher.matches()) {

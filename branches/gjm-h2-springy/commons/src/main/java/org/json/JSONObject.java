@@ -86,6 +86,7 @@ import java.util.Map;
  * @author JSON.org
  * @version 2
  */
+@SuppressWarnings("unchecked")
 public class JSONObject {
 
     /**
@@ -279,7 +280,7 @@ public class JSONObject {
                 		key = key.substring(0, 1).toLowerCase() +
                 			key.substring(1);
                 	}
-                	this.put(key, method.invoke(object, null));
+                	this.put(key, method.invoke(object, (Object[]) null));
                 }
             } catch (Exception e) {
                 /* forget about it */

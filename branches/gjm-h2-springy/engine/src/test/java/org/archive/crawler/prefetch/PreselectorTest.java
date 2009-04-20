@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class PreselectorTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return Preselector.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new Preselector();
-    }
-    
-    
     // TODO TESTME!
     
 }

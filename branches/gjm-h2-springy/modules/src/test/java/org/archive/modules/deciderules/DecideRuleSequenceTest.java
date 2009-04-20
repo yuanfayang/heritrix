@@ -23,10 +23,7 @@
  */
 package org.archive.modules.deciderules;
 
-
-import org.archive.modules.deciderules.DecideRuleSequence;
 import org.archive.state.ModuleTestBase;
-
 
 /**
  * Unit test for DecideRuleSequence.
@@ -35,18 +32,5 @@ import org.archive.state.ModuleTestBase;
  */
 public class DecideRuleSequenceTest extends ModuleTestBase {
 
-
-    
-    @Override
-    protected Object makeModule() {
-        return new DecideRuleSequence();
-    }
-    
-    
-    @Override
-    protected Class getModuleClass() {
-        return DecideRuleSequence.class;
-    }
-    
     // TODO TESTME
 }

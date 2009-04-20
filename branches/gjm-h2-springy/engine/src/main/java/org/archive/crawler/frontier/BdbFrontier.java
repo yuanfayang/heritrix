@@ -302,7 +302,7 @@ implements Serializable, Checkpointable {
         for(int precedenceKey : inactiveQueuesByPrecedence.keySet()) {
             Database inactiveQueuesDb = 
                 bdb.getDatabase("inactiveQueues-"+precedenceKey);
-            ((StoredQueue)inactiveQueuesByPrecedence.get(precedenceKey))
+            ((StoredQueue<String>)inactiveQueuesByPrecedence.get(precedenceKey))
                 .hookupDatabase(inactiveQueuesDb, String.class, null);
         }
         

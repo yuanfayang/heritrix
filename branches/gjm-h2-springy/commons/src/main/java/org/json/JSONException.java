@@ -5,6 +5,7 @@ package org.json;
  * @author JSON.org
  * @version 2
  */
+@SuppressWarnings({ "unchecked", "serial" })
 public class JSONException extends Exception {
     private Throwable cause;
 

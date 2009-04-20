@@ -47,8 +47,8 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -409,12 +409,13 @@ public abstract class AbstractFrontier
      */
     
     {
-        setCanonicalizationRules(Collections.EMPTY_LIST);
+        setCanonicalizationRules(new LinkedList<CanonicalizationRule>());
     }
     @SuppressWarnings("unchecked")
     public List<CanonicalizationRule> getCanonicalizationRules() {
         return (List<CanonicalizationRule>) kp.get("canonicalizationRules");
     }
+    @Autowired(required=false)
     public void setCanonicalizationRules(List<CanonicalizationRule> rules) {
         kp.put("canonicalizationRules",rules);
     }
@@ -431,6 +432,7 @@ public abstract class AbstractFrontier
     public QueueAssignmentPolicy getQueueAssignmentPolicy() {
         return (QueueAssignmentPolicy) kp.get("queueAssignmentPolicy");
     }
+    @Autowired(required=false)
     public void setQueueAssignmentPolicy(QueueAssignmentPolicy policy) {
         kp.put("queueAssignmentPolicy",policy);
     }

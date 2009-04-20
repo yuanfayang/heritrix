@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class LexicalCrawlMapperTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class<?> getModuleClass() {
-        return LexicalCrawlMapper.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new LexicalCrawlMapper();
-    }
-    
-    
     // TODO TESTME!
     
 }

@@ -38,10 +38,10 @@ public class HostsReport extends Report {
     public void write(final PrintWriter writer) {
         // TODO: use CrawlHosts for all stats; only perform sorting on 
         // manageable number of hosts
-        SortedMap hd = stats.getReverseSortedHostsDistribution();
+        SortedMap<String,LongWrapper> hd = stats.getReverseSortedHostsDistribution();
         // header
         writer.print("[#urls] [#bytes] [host] [#robots] [#remaining]\n");
-        for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
+        for (Iterator<String> i = hd.keySet().iterator(); i.hasNext();) {
             // Key is 'host'.
             String key = (String) i.next();
             CrawlHost host = stats.serverCache.getHostFor(key);

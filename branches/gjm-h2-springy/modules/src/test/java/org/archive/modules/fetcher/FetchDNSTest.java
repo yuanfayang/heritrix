@@ -25,10 +25,7 @@
  */
 package org.archive.modules.fetcher;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.fetcher.FetchDNS;
-
 
 /**
  * @author pjack
@@ -36,19 +33,6 @@ import org.archive.modules.fetcher.FetchDNS;
  */
 public class FetchDNSTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return FetchDNS.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new FetchDNS(); // FIXME
-    }
-    
-    
     // TODO TESTME!
     
 }

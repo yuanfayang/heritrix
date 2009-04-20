@@ -19,7 +19,6 @@
 
 package org.archive.modules.writer;
 
-
 import java.io.File;
 
 import org.archive.modules.ProcessorTestBase;
@@ -37,13 +36,6 @@ import org.archive.util.TmpDirTestCase;
  */
 public class ARCWriterProcessorTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class<?> getModuleClass() {
-        return ARCWriterProcessor.class;
-    }
-    
-    
     @Override
     protected Object makeModule() throws Exception {
         File tmp = TmpDirTestCase.tmpDir();
@@ -60,16 +52,12 @@ public class ARCWriterProcessorTest extends ProcessorTestBase {
         return result;
     }
 
-
     @Override
     protected void verifySerialization(Object first, byte[] firstBytes, 
             Object second, byte[] secondBytes) throws Exception {
 
     }
-    
-    
-    
-    
+
     // TODO TESTME!
 
 }

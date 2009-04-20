@@ -34,18 +34,5 @@ import org.archive.state.ModuleTestBase;
  */
 public class HopsUriPrecedencePolicyTest extends ModuleTestBase {
 
-    @Override
-    protected Class<?> getModuleClass() {
-        return HopsUriPrecedencePolicy.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new HopsUriPrecedencePolicy();
-    }
-
-    
-
-
 }
 

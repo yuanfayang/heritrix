@@ -22,7 +22,6 @@
  */
 package org.archive.modules.canonicalize;
 
-import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.management.InvalidAttributeValueException;
@@ -38,16 +37,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class RegexRuleTest extends ModuleTestBase {
 
-    @Override
-    protected Class getModuleClass() {
-        return RegexRule.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new RegexRule();
-    }
-    
     public void testCanonicalize()
     throws URIException, InvalidAttributeValueException {
         final String url = "http://www.aRchive.Org/index.html";

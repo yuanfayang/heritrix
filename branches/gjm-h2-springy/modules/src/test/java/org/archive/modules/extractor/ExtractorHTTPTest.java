@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.ExtractorHTTP;
-
 
 /**
  * Unit test for {@link ExtractorHTTP}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.ExtractorHTTP;
  */
 public class ExtractorHTTPTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorHTTP.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorHTTP();
-    }
-    
-    
     // TODO TESTME!
     
 }

@@ -46,19 +46,19 @@ public class CheckpointUtils {
     }
     
     public static File getClassCheckpointFile(File checkpointDir,
-            final String suffix, Class c) {
+            final String suffix, Class<?> c) {
         return new File(checkpointDir, getClassCheckpointFilename(c, suffix));
     }
     
-    public static File getClassCheckpointFile(File checkpointDir, Class c) {
+    public static File getClassCheckpointFile(File checkpointDir, Class<?> c) {
         return new File(checkpointDir, getClassCheckpointFilename(c, null));
     }
     
-    public static String getClassCheckpointFilename(final Class c) {
+    public static String getClassCheckpointFilename(final Class<?> c) {
         return getClassCheckpointFilename(c, null);
     }
     
-    public static String getClassCheckpointFilename(final Class c,
+    public static String getClassCheckpointFilename(final Class<?> c,
             final String suffix) {
         return c.getName() + ((suffix == null)? "": "." + suffix) +
             SERIALIZED_CLASS_SUFFIX;

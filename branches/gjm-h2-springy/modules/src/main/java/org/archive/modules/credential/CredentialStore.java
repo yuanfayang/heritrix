@@ -1,25 +1,22 @@
-/* CredentialStore
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * Created on Apr 1, 2004
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Copyright (C) 2004 Internet Archive.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.modules.credential;
 
 import java.io.Serializable;
@@ -74,7 +71,7 @@ public class CredentialStore implements Serializable, HasKeyedProperties {
     public Map<String,Credential> getCredentials() {
         return (Map<String,Credential>) kp.get("credentials");
     }
-    public void setCredentials(Map map) {
+    public void setCredentials(Map<String,Credential> map) {
         kp.put("credentials",map);
     }
     
@@ -84,11 +81,11 @@ public class CredentialStore implements Serializable, HasKeyedProperties {
      * This types are inner classes of this credential type so they cannot
      * be created without their being associated with a credential list.
      */
-    private static final List<Class> credentialTypes;
+    private static final List<Class<?>> credentialTypes;
     // Initialize the credentialType data member.
     static {
         // Array of all known credential types.
-        Class [] tmp = {HtmlFormCredential.class, Rfc2617Credential.class};
+        Class<?> [] tmp = {HtmlFormCredential.class, Rfc2617Credential.class};
         credentialTypes = Collections.unmodifiableList(Arrays.asList(tmp));
     }
 
@@ -101,7 +98,7 @@ public class CredentialStore implements Serializable, HasKeyedProperties {
     /**
      * @return Unmodifable list of credential types.
      */
-    public static List<Class> getCredentialTypes() {
+    public static List<Class<?>> getCredentialTypes() {
         return CredentialStore.credentialTypes;
     }
 
@@ -139,7 +136,7 @@ public class CredentialStore implements Serializable, HasKeyedProperties {
      * credentials.
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public Set subset(ProcessorURI context, Class type) {
+    public Set<Credential> subset(ProcessorURI context, Class<?> type) {
         return subset(context, type, null);
     }
 
@@ -156,7 +153,7 @@ public class CredentialStore implements Serializable, HasKeyedProperties {
      * but different ports (e.g. http and https).
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public Set<Credential> subset(ProcessorURI context, Class type, String rootUri) {
+    public Set<Credential> subset(ProcessorURI context, Class<?> type, String rootUri) {
         Set<Credential> result = null;
         for (Credential c: getAll()) {
             if (!type.isInstance(c)) {

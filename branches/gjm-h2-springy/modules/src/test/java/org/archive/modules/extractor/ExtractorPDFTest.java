@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.ExtractorPDF;
-
 
 /**
  * Unit test for {@link ExtractorPDF}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.ExtractorPDF;
  */
 public class ExtractorPDFTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorPDF.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorPDF();
-    }
-    
-    
     // TODO TESTME!
     
 }

@@ -20,11 +20,9 @@
 package org.archive.crawler.restlet;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.logging.Level;
 
-import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.restlet.Context;

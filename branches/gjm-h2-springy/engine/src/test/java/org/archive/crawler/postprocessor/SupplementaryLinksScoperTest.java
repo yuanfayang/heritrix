@@ -37,19 +37,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class SupplementaryLinksScoperTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return SupplementaryLinksScoper.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new SupplementaryLinksScoper();
-    }
-    
-    
     // TODO TESTME!
     
 }

@@ -36,20 +36,6 @@ import org.archive.modules.ProcessorTestBase;
  */
 public class LowDiskPauseProcessorTest extends ProcessorTestBase {
 
-    
-    
-    @Override
-    protected Class getModuleClass() {
-        return LowDiskPauseProcessor.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new LowDiskPauseProcessor();
-    }
-    
-    
     // TODO TESTME!
     
 }

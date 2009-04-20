@@ -91,6 +91,7 @@ import org.archive.util.Recorder; // <- // IA/HERITRIX import
  * 
  * @version   $Revision$ $Date$
  */
+@SuppressWarnings("unchecked") // <- HERITRIX CHANGE
 public class HttpConnection {
 
     // ----------------------------------------------------------- Constructors

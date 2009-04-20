@@ -72,12 +72,12 @@ public interface ArchiveRecordHeader {
     /**
      * @return Header field name keys.
      */
-    public abstract Set getHeaderFieldKeys();
+    public abstract Set<String> getHeaderFieldKeys();
 
     /**
      * @return Map of header fields.
      */
-    public abstract Map getHeaderFields();
+    public abstract Map<String,Object> getHeaderFields();
 
     /**
      * @return Returns identifier for current Archive file.  Be aware this

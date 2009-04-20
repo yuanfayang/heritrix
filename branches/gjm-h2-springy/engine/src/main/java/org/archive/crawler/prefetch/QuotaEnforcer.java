@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.Frontier;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
@@ -309,13 +308,6 @@ public class QuotaEnforcer extends Processor {
     @Autowired
     public void setFrontier(Frontier frontier) {
         this.frontier = frontier;
-    }
-    
-    /**
-     * Constructor.
-     */
-    public QuotaEnforcer(CrawlControllerImpl controller) {
-        super();
     }
     
     protected boolean shouldProcess(ProcessorURI puri) {

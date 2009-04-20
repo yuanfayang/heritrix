@@ -131,7 +131,7 @@ public abstract class CharSequenceLinkExtractor implements LinkExtractor {
     /* (non-Javadoc)
      * @see java.util.Iterator#next()
      */
-    public Object next() {
+    public Link next() {
         return nextLink();
     }
 

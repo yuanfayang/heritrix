@@ -56,15 +56,14 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
      * Represents a long fingerprint and (possibly) its corresponding
      * CrawlURI, awaiting the next merge in a 'pending' state. 
      */
-    public class PendingItem implements Comparable {
+    public class PendingItem implements Comparable<PendingItem> {
         long fp;
         CrawlURI caUri;
         public PendingItem(long fp, CrawlURI value) {
             this.fp = fp;
             this.caUri = value;
         }
-        public int compareTo(Object arg0) {
-            PendingItem vs = (PendingItem) arg0;
+        public int compareTo(PendingItem vs) {
             return (fp < vs.fp) ? -1 : ( (fp == vs.fp) ? 0 : 1); 
         }
     }
@@ -257,7 +256,7 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
         Long currFp = null; 
         PendingItem currPend = null; 
         
-        Iterator pendIter = pendingSet.iterator();
+        Iterator<PendingItem> pendIter = pendingSet.iterator();
         LongIterator fpIter = beginFpMerge();
 
         currPend = (PendingItem) (pendIter.hasNext() ? pendIter.next() : null);

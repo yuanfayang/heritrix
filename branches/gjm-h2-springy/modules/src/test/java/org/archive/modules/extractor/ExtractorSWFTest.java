@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.ExtractorSWF;
-
 
 /**
  * Unit test for {@link ExtractorSWF}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.ExtractorSWF;
  */
 public class ExtractorSWFTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorSWF.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorSWF();
-    }
-    
-    
     // TODO TESTME!
     
 }

@@ -1,25 +1,22 @@
-/* FetchHistoryProcessor
- * 
- * Created on Feb 12, 2005
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * Copyright (C) 2007 Internet Archive.
- * 
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.modules.recrawl;
 
 import java.util.HashMap;
@@ -40,8 +37,7 @@ import static org.archive.modules.ModuleAttributeConstants.A_FETCH_BEGAN_TIME;
  * @version $Date: 2006-09-25 20:19:54 +0000 (Mon, 25 Sep 2006) $, $Revision: 4654 $
  */
 public class FetchHistoryProcessor extends Processor {
-
-    private static final long serialVersionUID = 8476621038669163983L;
+    private static final long serialVersionUID = 1L;
     
     /** Desired history array length. */
     int historyLength = 2;
@@ -62,6 +58,7 @@ public class FetchHistoryProcessor extends Processor {
     public FetchHistoryProcessor() {
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void innerProcess(ProcessorURI curi) throws InterruptedException {
         curi.addPersistentDataMapKey(A_FETCH_HISTORY);

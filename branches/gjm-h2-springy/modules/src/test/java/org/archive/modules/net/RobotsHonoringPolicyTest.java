@@ -26,28 +26,13 @@
 
 package org.archive.modules.net;
 
-import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.state.ModuleTestBase;
 
 /**
  * @author pjack
- *
  */
 public class RobotsHonoringPolicyTest extends ModuleTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return RobotsHonoringPolicy.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new RobotsHonoringPolicy();
-    }
-
-    
     // TODO TESTME
     
 }

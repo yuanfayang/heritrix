@@ -61,7 +61,7 @@ import org.apache.commons.logging.LogFactory;
  * 
  * @version $Revision$ $Date$
  */
-@SuppressWarnings("serial") // <- HERITRIX CHANGE
+@SuppressWarnings({"serial","unchecked"}) // <- HERITRIX CHANGE
 public class Cookie extends NameValuePair implements Serializable, Comparator {
 
     // ----------------------------------------------------------- Constructors

@@ -1,3 +1,4 @@
+/*RELICENSE-RESEARCH*/
 /*
  * Created on 2006-aug-25
  *
@@ -22,16 +23,14 @@ package org.archive.modules.canonicalize;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Strip any extra slashes, '/', found in the path. 
+ * Use this rule to equate 'http://www.archive.org//A//B/index.html' and 
+ * 'http://www.archive.org/A/B/index.html'."
+ */
 public class StripExtraSlashes extends BaseRule {
-
-
     private static final long serialVersionUID = 1L;
 
-    private static final String DESCRIPTION = 
-        "Strip any extra slashes, '/', found in the path. " +
-        "Use this rule to equate 'http://www.archive.org//A//B/index.html' and " +
-        "'http://www.archive.org/A/B/index.html'.";
-        
     private static final Pattern REGEX = Pattern.compile("(^https?://.*?)//+(.*)");
 
     public StripExtraSlashes() {

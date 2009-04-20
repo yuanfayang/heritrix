@@ -61,12 +61,7 @@ public class ExtractorCSSTest extends StringExtractorTestBase {
         "http://www.archive.org/start/style.css",
 
     };
-    
-    @Override
-    protected Class<?> getModuleClass() {
-        return ExtractorCSS.class;
-    }
-    
+
     @Override
     protected Extractor makeExtractor() {
         ExtractorCSS result = new ExtractorCSS();

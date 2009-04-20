@@ -1,26 +1,22 @@
-/* Copyright (C) 2003 Internet Archive.
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * RobotsExclusionPolicy.java
- * Created on Apr 17, 2003
- *
- * $Header$
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.modules.net;
 
 import java.io.BufferedReader;
@@ -58,13 +54,11 @@ import org.archive.modules.ProcessorURI;
  *
  */
 public class RobotsExclusionPolicy implements Serializable {
-
     private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
         Logger.getLogger(RobotsExclusionPolicy.class.getName());
 
-    
     public static enum Type {
         NORMAL, 
         ALLOWALL, 
@@ -125,11 +119,11 @@ public class RobotsExclusionPolicy implements Serializable {
         // IF honoring policy is most favored of set, then make a list with only the set as members
         } else if(honoringPolicy.isType(RobotsHonoringPolicy.Type.MOST_FAVORED_SET)) {
             userAgentsToTest = new ArrayList<String>();
-            Iterator userAgentSet = honoringPolicy.getUserAgents().iterator();
+            Iterator<String> userAgentSet = honoringPolicy.getUserAgents().iterator();
             while(userAgentSet.hasNext()) {
                 String userAgent = (String) userAgentSet.next();
 
-                Iterator iter = robotstxt.getUserAgents().iterator();
+                Iterator<String> iter = robotstxt.getUserAgents().iterator();
                 while ( iter.hasNext() ) {
                     String ua = (String)iter.next();
                     if (userAgent.indexOf(ua)>-1) {
@@ -161,7 +155,7 @@ public class RobotsExclusionPolicy implements Serializable {
 
             lastUsedUserAgent = userAgent;
             userAgentsToTest = new ArrayList<String>();
-            Iterator iter = robotstxt.getUserAgents().iterator();
+            Iterator<String> iter = robotstxt.getUserAgents().iterator();
             String lowerCaseUserAgent = userAgent.toLowerCase();
             while ( iter.hasNext() ) {
                 String ua = (String)iter.next();
@@ -177,7 +171,7 @@ public class RobotsExclusionPolicy implements Serializable {
         String ua = null;
 
         // Go thru list of all user agents we might act as
-        Iterator uas = userAgentsToTest.iterator();
+        Iterator<String> uas = userAgentsToTest.iterator();
         while(uas.hasNext()) {
             ua = (String) uas.next();
             String path = null; 

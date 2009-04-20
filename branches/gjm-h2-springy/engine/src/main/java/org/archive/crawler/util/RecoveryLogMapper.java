@@ -212,14 +212,14 @@ public class RecoveryLogMapper {
     /**
      * @return Returns the seedUrlToDiscoveredUrlsMap.
      */
-    public Map getSeedUrlToDiscoveredUrlsMap() {
+    public Map<String,Set<String>> getSeedUrlToDiscoveredUrlsMap() {
         return this.seedUrlToDiscoveredUrlsMap;
     }
 
     /**
      * @return Returns the successfullyCrawledUrls.
      */
-    public Set getSuccessfullyCrawledUrls() {
+    public Set<String> getSuccessfullyCrawledUrls() {
         return this.successfullyCrawledUrls;
     }
 
@@ -233,12 +233,12 @@ public class RecoveryLogMapper {
     private class SuccessfullyCrawledURLsIterator
     implements Iterator<String> {
         private String nextValue = null;
-        private Iterator discoveredUrlsIterator;
+        private Iterator<String> discoveredUrlsIterator;
 
         public SuccessfullyCrawledURLsIterator(String seedUrlString)
         throws SeedUrlNotFoundException {
-            Set discoveredUrlList =
-                (Set)getSeedUrlToDiscoveredUrlsMap().get(seedUrlString);
+            Set<String> discoveredUrlList =
+                (Set<String>)getSeedUrlToDiscoveredUrlsMap().get(seedUrlString);
             if (discoveredUrlList == null) {
                 throw new SeedUrlNotFoundException("Seed URL " +
                     seedUrlString + "  not found in seed list");
@@ -251,8 +251,7 @@ public class RecoveryLogMapper {
          */
         private void populateNextValue() {
             while (nextValue == null & discoveredUrlsIterator.hasNext()) {
-                String curDiscoveredUrl =
-                    (String)discoveredUrlsIterator.next();
+                String curDiscoveredUrl = discoveredUrlsIterator.next();
                 boolean succCrawled = getSuccessfullyCrawledUrls().
                     contains(curDiscoveredUrl);
                 if (getLogger().isLoggable(Level.FINE)) {
@@ -308,7 +307,7 @@ public class RecoveryLogMapper {
             for (String curSeedUrl: myRecoveryLogMapper.getSeedCollection()) {
                 System.out.println("URLs successfully crawled from seed URL "
                     + curSeedUrl);
-                Iterator iteratorOfUrlsCrawledFromSeedUrl =
+                Iterator<String> iteratorOfUrlsCrawledFromSeedUrl =
                     myRecoveryLogMapper.
                         getIteratorOfURLsSuccessfullyCrawledFromSeedUrl(
                             curSeedUrl);

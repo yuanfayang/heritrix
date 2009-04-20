@@ -1,3 +1,4 @@
+/*RELICENSE_RESEARCH*/
 /* JerichoExtractorHTML
  * 
  * Copyright (C) 2006 Olaf Freyer
@@ -20,6 +21,7 @@
  *
  * $Id$
  */
+
 package org.archive.modules.extractor;
 
 import java.util.ArrayList;
@@ -71,6 +73,7 @@ import au.id.jericho.lib.html.StartTagType;
  * @author Olaf Freyer
  * @version $Date$ $Revision$
  */
+@SuppressWarnings("unchecked")
 public class JerichoExtractorHTML extends ExtractorHTML {
 
     private static final long serialVersionUID = 1684681316546343615L;

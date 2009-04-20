@@ -1,27 +1,20 @@
-/* 
- * Copyright (C) 2007 Internet Archive.
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * PrefixFinderTest.java
- *
- * Created on Jun 26, 2007
- *
- * $Id:$
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.archive.settings.file;
@@ -76,7 +69,7 @@ public class PrefixFinderTest extends TmpDirTestCase {
     }
     
     public void testSortedMap() {
-        TreeMap map = new TreeMap();
+        TreeMap<String,String> map = new TreeMap<String,String>();
         testUrlsNoMatch(map);
     }
     
@@ -102,17 +95,16 @@ public class PrefixFinderTest extends TmpDirTestCase {
         bdbEnvironment.close();
     }
 
-    @SuppressWarnings("unchecked")
-    private void testUrlsNoMatch(SortedMap sm) {
+    private void testUrlsNoMatch(SortedMap<String,String> sm) {
         sm.put("http://(com,ilovepauljack,www,", "foo");
         for (int i = 0; i < 10; i++) {
             sm.put("http://" + Math.random(), "foo");
         }
-        Set keys = sm.keySet(); 
+        Set<String> keys = sm.keySet(); 
         if(!(keys instanceof SortedSet)) {
-            keys = new TreeSet(keys);
+            keys = new TreeSet<String>(keys);
         }
-        List<String> results = PrefixFinder.find((SortedSet)keys, "http://");
+        List<String> results = PrefixFinder.find((SortedSet<String>)keys, "http://");
         assertTrue(results.isEmpty());
     }
 

@@ -1,27 +1,23 @@
-/* Rfc2617Credential
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * Created on Apr 7, 2004
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Copyright (C) 2004 Internet Archive.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-package org.archive.modules.credential;
 
+package org.archive.modules.credential;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -41,7 +37,6 @@ import org.archive.modules.ProcessorURI;
  * @version $Revision$, $Date$
  */
 public class Rfc2617Credential extends Credential {
-
     private static final long serialVersionUID = 3L;
 
     private static Logger logger =
@@ -163,7 +158,7 @@ public class Rfc2617Credential extends Credential {
      * credential w/ passed realm name, and there shouldn't be, we return first
      * found.
      */
-    public static Rfc2617Credential getByRealm(Set rfc2617Credentials,
+    public static Rfc2617Credential getByRealm(Set<Credential> rfc2617Credentials,
             String realm, ProcessorURI context) {
 
         Rfc2617Credential result = null;
@@ -171,7 +166,7 @@ public class Rfc2617Credential extends Credential {
             return result;
         }
         if (rfc2617Credentials != null && rfc2617Credentials.size() > 0) {
-            for (Iterator i = rfc2617Credentials.iterator(); i.hasNext();) {
+            for (Iterator<Credential> i = rfc2617Credentials.iterator(); i.hasNext();) {
                 Rfc2617Credential c = (Rfc2617Credential)i.next();
                     if (c.getRealm().equals(realm)) {
                         result = c;

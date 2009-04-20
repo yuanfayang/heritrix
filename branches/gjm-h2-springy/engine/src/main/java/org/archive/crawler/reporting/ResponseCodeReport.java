@@ -36,8 +36,9 @@ public class ResponseCodeReport extends Report {
         // header
         writer.print("[rescode] [#urls]\n");
         
-        TreeMap scd = stats.getReverseSortedCopy(stats.getStatusCodeDistribution());
-        for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
+        TreeMap<String,LongWrapper> scd = 
+            stats.getReverseSortedCopy(stats.getStatusCodeDistribution());
+        for (Iterator<String> i = scd.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
             writer.print((String)key);
             writer.print(" ");

@@ -37,19 +37,6 @@ import org.archive.modules.extractor.AggressiveExtractorHTML;
  */
 public class AggressiveExtractorHTMLTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class<?> getModuleClass() {
-        return AggressiveExtractorHTML.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new AggressiveExtractorHTML();
-    }
-    
-    
     // TODO TESTME!
     
 }

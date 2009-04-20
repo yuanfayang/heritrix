@@ -34,16 +34,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class StripWWWNRuleTest extends ModuleTestBase {
 
-    @Override
-    protected Class getModuleClass() {
-        return StripWWWNRule.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new StripWWWNRule();
-    }
-
     public void testCanonicalize() throws URIException {
         String url = "http://WWW.aRchive.Org/index.html";
         String expectedResult = "http://aRchive.Org/index.html";

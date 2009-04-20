@@ -24,7 +24,6 @@ package org.archive.io;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -128,6 +127,7 @@ class ByteReplayCharSequence implements ReplayCharSequence {
      * 8-bit encoding used reading single bytes from buffer and
      * stream.
      */
+    @SuppressWarnings("unused")
     private static final String DEFAULT_SINGLE_BYTE_ENCODING =
         "ISO-8859-1";
 

@@ -35,20 +35,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class BdbFrontierTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return BdbFrontier.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() throws Exception {
-        BdbFrontier result = new BdbFrontier();
-        return result;
-    }
-
-
     @Override
     public void testSerialization() {
         // FIXME
