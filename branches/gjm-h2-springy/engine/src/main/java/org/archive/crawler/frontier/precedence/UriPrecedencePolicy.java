@@ -24,6 +24,8 @@
 */
 package org.archive.crawler.frontier.precedence;
 
+import java.io.Serializable;
+
 import org.archive.crawler.datamodel.CrawlURI;
 
 /**
@@ -37,7 +39,7 @@ import org.archive.crawler.datamodel.CrawlURI;
  * that consults URI precedence values is chosen. 
  * 
  */
-abstract public class UriPrecedencePolicy {
+abstract public class UriPrecedencePolicy implements Serializable {
 
     /**
      * Add a precedence value to the supplied CrawlURI, which is being 

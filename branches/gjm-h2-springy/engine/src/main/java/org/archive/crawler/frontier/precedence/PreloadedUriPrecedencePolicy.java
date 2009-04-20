@@ -44,6 +44,11 @@ import com.sleepycat.je.DatabaseException;
 /**
  * UriPrecedencePolicy which assigns URIs a precedence from a value that 
  * was preloaded for them into the uri-history database. 
+ * 
+ * NOTE: Because this is a Lifecycle bean requiring start and stop, it
+ * should not be instantiated as an anonymous inner bean. Rather, it 
+ * should be a top-level named bean, then either autowired or placed-by-
+ * reference into the frontier.
  */
 public class PreloadedUriPrecedencePolicy extends BaseUriPrecedencePolicy 
 implements Lifecycle {
@@ -67,6 +72,7 @@ implements Lifecycle {
         this.bdb = bdb;
     }
 
+    @SuppressWarnings("unchecked")
     protected StoredSortedMap store;
     protected Database historyDb;
     
@@ -94,15 +100,12 @@ implements Lifecycle {
     public boolean isRunning() {
         return historyDb != null; 
     }
+    
     public void stop() {
         if(!isRunning()) {
             return;
         }
-        try {
-            historyDb.close();
-        } catch (DatabaseException e) {
-            // silent
-        }
+        // BdbModule will handle closing of DB
         historyDb = null; 
     }
     

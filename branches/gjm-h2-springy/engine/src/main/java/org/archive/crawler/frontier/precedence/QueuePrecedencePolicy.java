@@ -24,6 +24,8 @@
 */ 
 package org.archive.crawler.frontier.precedence;
 
+import java.io.Serializable;
+
 import org.archive.crawler.frontier.WorkQueue;
 
 /**
@@ -31,7 +33,7 @@ import org.archive.crawler.frontier.WorkQueue;
  * on uri-queues inside the frontier when the uri-queue is first created, and 
  * before the uri-queue is placed on a new internal queue-of-queues. 
  */
-abstract public class QueuePrecedencePolicy {
+abstract public class QueuePrecedencePolicy implements Serializable {
     
     /**
      * Set an appropriate initial precedence value on the given
