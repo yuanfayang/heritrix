@@ -17,7 +17,7 @@
  *  limitations under the License.
  */
  
-package org.archive.spring;
+package org.archive.crawler.spring;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -28,6 +28,8 @@ import java.util.TreeMap;
 import org.apache.commons.collections.ListUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.settings.file.PrefixFinder;
+import org.archive.spring.OverlayMapsSource;
+import org.archive.spring.Sheet;
 import org.archive.util.SurtPrefixSet;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;

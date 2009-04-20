@@ -17,38 +17,26 @@
  *  limitations under the License.
  */
  
-package org.archive.spring;
+package org.archive.crawler.spring;
 
-import org.archive.modules.deciderules.DecideRule;
+import java.util.List;
+
+import org.archive.spring.Sheet;
 import org.springframework.beans.factory.annotation.Required;
-import org.springframework.core.Ordered;
 
 /**
- * Sheet applied on the basis of DecideRules. 
+ * Sheet applied on the basis of a matching SURT prefix. 
  * 
  * @contributor gojomo
  */
-public class SheetForDecideRuled extends Sheet implements Ordered, Comparable {
-    DecideRule rules;
-    int order = 0; 
-    
-    public DecideRule getRules() {
-        return rules;
+public class SheetForSurtPrefixes extends Sheet {
+    List<String> surtPrefixes;
+
+    public List<String> getSurtPrefixes() {
+        return surtPrefixes;
     }
     @Required
-    public void setRules(DecideRule rules) {
-        this.rules = rules;
-    }
-
-    public int getOrder() {
-        return order;
-    }
-    public void setOrder(int order) {
-        this.order = order;
-    }
-
-    // compare on the basis of Ordered value
-    public int compareTo(Object o) {
-        return order - ((Ordered)o).getOrder();
+    public void setSurtPrefixes(List<String> surtPrefixes) {
+        this.surtPrefixes = surtPrefixes;
     }
 }

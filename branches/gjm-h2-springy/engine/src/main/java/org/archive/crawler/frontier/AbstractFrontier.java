@@ -66,6 +66,7 @@ import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.crawler.framework.CrawlControllerImpl;
 import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.spring.SheetOverlaysManager;
 import org.archive.modules.ModuleAttributeConstants;
 import org.archive.modules.canonicalize.CanonicalizationRule;
 import org.archive.modules.canonicalize.Canonicalizer;
@@ -85,7 +86,6 @@ import org.archive.settings.CheckpointRecovery;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
-import org.archive.spring.SheetOverlaysManager;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
@@ -407,6 +407,7 @@ public abstract class AbstractFrontier
      * Ordered list of url canonicalization rules.  Rules are applied in the 
      * order listed from top to bottom.
      */
+    
     {
         setCanonicalizationRules(Collections.EMPTY_LIST);
     }
@@ -414,7 +415,7 @@ public abstract class AbstractFrontier
     public List<CanonicalizationRule> getCanonicalizationRules() {
         return (List<CanonicalizationRule>) kp.get("canonicalizationRules");
     }
-    public void setCanonicalizationRules(List rules) {
+    public void setCanonicalizationRules(List<CanonicalizationRule> rules) {
         kp.put("canonicalizationRules",rules);
     }
 
