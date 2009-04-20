@@ -1,28 +1,22 @@
-/* 
- * Copyright (C) 2007 Internet Archive.
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * BdbEnvironment.java
- *
- * Created on Feb 15, 2007
- *
- * $Id:$
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+ 
 package org.archive.settings.file;
 
 import java.io.Closeable;
@@ -46,11 +40,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
 import org.archive.settings.CheckpointRecovery;
 import org.archive.settings.RecoverAction;
 import org.archive.spring.ConfigPath;
 import org.archive.util.CachedBdbMap;
-import org.archive.util.FileUtils;
 import org.archive.util.bdbje.EnhancedEnvironment;
 import org.springframework.context.Lifecycle;
 
@@ -210,6 +204,7 @@ Serializable, Closeable {
         
     private transient StoredClassCatalog classCatalog;
     
+    @SuppressWarnings("unchecked")
     private Map<String,CachedBdbMap> bigMaps = 
         new ConcurrentHashMap<String,CachedBdbMap>();
     
@@ -358,6 +353,7 @@ Serializable, Closeable {
     
 
     
+    @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream in) 
     throws IOException, ClassNotFoundException {
         in.defaultReadObject();
@@ -399,6 +395,7 @@ Serializable, Closeable {
     }
 
 
+    @SuppressWarnings("unchecked")
     public void checkpoint(File dir, List<RecoverAction> actions) 
     throws IOException {
         if (checkpointCopyLogs) {
@@ -422,7 +419,7 @@ Serializable, Closeable {
             throw io;
         }
         
-        final List bkgrdThreads = Arrays.asList(new String []
+        final List<String> bkgrdThreads = Arrays.asList(new String []
             {"je.env.runCheckpointer", "je.env.runCleaner",
                 "je.env.runINCompressor"});
         try {
@@ -494,7 +491,7 @@ Serializable, Closeable {
 
                 srcFilenames =
                     new HashSet<String>(Arrays.asList(getDir().getFile().list(filter)));
-                List tgtFilenames = Arrays.asList(bdbDir.list(filter));
+                List<String> tgtFilenames = Arrays.asList(bdbDir.list(filter));
                 if (tgtFilenames != null && tgtFilenames.size() > 0) {
                     srcFilenames.removeAll(tgtFilenames);
                 }
@@ -502,11 +499,11 @@ Serializable, Closeable {
                     // Sort files.
                     srcFilenames = new TreeSet<String>(srcFilenames);
                     int count = 0;
-                    for (final Iterator i = srcFilenames.iterator();
+                    for (final Iterator<String> i = srcFilenames.iterator();
                             i.hasNext() && !pastLastLogFile;) {
                         String name = (String) i.next();
                         if (this.checkpointCopyLogs) {
-                            FileUtils.copyFiles(new File(getDir().getFile(), name),
+                            FileUtils.copyDirectory(new File(getDir().getFile(), name),
                                 new File(bdbDir, name));
                         }
                         pw.println(name);
@@ -530,8 +527,8 @@ Serializable, Closeable {
 
     
     private void setBdbjeBkgrdThreads(final EnvironmentConfig config,
-            final List threads, final String setting) {
-        for (final Iterator i = threads.iterator(); i.hasNext();) {
+            final List<String> threads, final String setting) {
+        for (final Iterator<String> i = threads.iterator(); i.hasNext();) {
             config.setConfigParam((String)i.next(), setting);
         }
     }
@@ -555,6 +552,7 @@ Serializable, Closeable {
         shutdownHook = null; 
     }
     
+    @SuppressWarnings("unchecked")
     void close2() {
         if (classCatalog == null) {
             return;
@@ -609,7 +607,7 @@ Serializable, Closeable {
             CheckpointRecovery recovery) throws Exception {
             File bdbDir = getBdbSubDirectory(checkpointDir);
             path = recovery.translatePath(path);
-            FileUtils.copyFiles(bdbDir, new File(path));
+            FileUtils.copyDirectory(bdbDir, new File(path));
         }
         
     }

@@ -112,7 +112,7 @@ public abstract class Sheet implements BeanFactoryAware, BeanNameAware {
             hkp.getKeyedProperties().addExternalPath(beanPath);
             // verify type-compatibility
             BeanWrapperImpl wrapper = new BeanWrapperImpl(hkp);
-            Class requiredType = wrapper.getPropertyType(terminalProp);
+            Class<?> requiredType = wrapper.getPropertyType(terminalProp);
             try {
                 // convert for destination type
                 map.put(fullpath, wrapper.convertForProperty(value,terminalProp));

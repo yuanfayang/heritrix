@@ -240,6 +240,7 @@ public class FileUtils {
      * @param dir
      * @return true if all deletions were successful. If a deletion fails, the
      *          method stops attempting to delete and returns false.
+     * @deprecated use org.apache.commons.io.FileUtils.deleteDirectory()
      */
     public static boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
