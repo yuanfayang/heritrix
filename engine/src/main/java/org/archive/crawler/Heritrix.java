@@ -32,7 +32,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -43,6 +45,7 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.output.TeeOutputStream;
 import org.archive.crawler.framework.EngineImpl;
 import org.archive.crawler.restlet.EngineApplication;
 import org.archive.util.ArchiveUtils;
@@ -76,26 +79,17 @@ import org.restlet.data.Protocol;
  * @author Stack
  */
 public class Heritrix {
-
+    @SuppressWarnings("unused")
+    private static final Logger logger = Logger.getLogger(Heritrix.class.getName());
     
-    /**
-     * Name of configuration directory.
-     */
+    /** Name of configuration directory */
     private static final String CONF = "conf";
     
-    /**
-     * Name of the heritrix properties file.
-     */
+    /** Name of the heritrix properties file */
     private static final String PROPERTIES = "logging.properties";
 
-
-    /**
-     * Heritrix logging instance.
-     */
-    private static final Logger logger =
-        Logger.getLogger(Heritrix.class.getName());
-
-    
+    protected EngineImpl engine; 
+    protected Component component;
     /**
      * Heritrix start log file.
      *
@@ -131,14 +125,6 @@ public class Heritrix {
                 "webui to bind to.");
         options.addOption("p", "webui-port", true, "The port the webui " +
                 "should listen on.");
-        options.addOption("w", "webui-war-path", true, "The path to the " +
-                "Heritrix webui WAR.");
-        options.addOption("n", "no-webui", false, "Do not run the admin web " +
-                "user interface; only run the crawl engine.  If set, the " +
-        	"crawl engine will need to be controlled via JMX or a remote " +
-        	"web UI.");
-        options.addOption("u", "no-engine", false, "Do not run the crawl " +
-        	"engine; only run the admin web UI."); 
         options.addOption("r", "run-job", true,  "Specify a ready job or a " +
         	"profile name to launch at launch.  If you specify a profile " +
         	"name, the profile will first be copied to a new ready job, " +
@@ -173,13 +159,18 @@ public class Heritrix {
     }
 
     /**
-     * Launch program.
-     * Will also register Heritrix MBean with platform MBeanServer.
+     * Launches a local Engine and restfgul web interface given the
+     * command-line options or defaults. 
      * 
      * @param args Command line arguments.
      * @throws Exception
      */
-    public static void main(String[] args)
+    public static void main(String[] args) 
+    throws Exception {
+        new Heritrix().instanceMain(args); 
+    }
+    
+    public void instanceMain(String[] args)
     throws Exception {
         // Set some system properties early.
         // Can't use class names here without loading them.
@@ -194,48 +185,43 @@ public class Heritrix {
             System.setProperty(maxFormSize, "52428800");
         }
         
-        PrintStream out;
-        if (isDevelopment()) {
-            out = System.out;
-            out.println("heritrix.development mode");
-        } else {
-            File startLog = new File(getHeritrixHome(), STARTLOG);
-            out = new PrintStream(
-                    new BufferedOutputStream(
-                            new FileOutputStream(startLog),16384));
-        }
+        
+        BufferedOutputStream startupOutStream = 
+            new BufferedOutputStream(
+                new FileOutputStream(
+                    new File(getHeritrixHome(), STARTLOG)),16384);
+        PrintStream startupOut = 
+            new PrintStream(
+                new TeeOutputStream(
+                    System.out,
+                    startupOutStream));
 
-
-        CommandLine cl = getCommandLine(out, args);
+        CommandLine cl = getCommandLine(startupOut, args);
         if (cl == null) return;
 
         if (cl.hasOption('h')) {
-          usage(out);
+          usage(startupOut);
           return ;
         }
 
-        if (cl.hasOption('n') && cl.hasOption('u')) {
-            out.println("Only one of -n or -u may be specified.");
-            usage(out);
-            System.exit(1);
-        }
-
-        WebUIConfig webConfig = new WebUIConfig();
+        int port = 8080;
+        Set<String> bindHosts = new HashSet<String>();
+        String authPassword = "";
         File properties = getDefaultPropertiesFile();
 
-        if (!cl.hasOption('n')) {
-            if (cl.hasOption('a')) {
-                webConfig.setUiPassword(cl.getOptionValue('a'));
-            } else {
-                System.err.println("Unless -n is specified, you must specify " +
-                	"an admin password for the web UI using -a.");
-                System.exit(1);
-            }
+        if (cl.hasOption('a')) {
+            authPassword = cl.getOptionValue('a');
+        } else {
+            System.err.println(
+                "You must specify a password for the web interface using -a.");
+            System.exit(1);
         }
         
         File jobsDir = null; 
         if (cl.hasOption('j')) {
             jobsDir = new File(cl.getOptionValue('j'));
+        } else {
+            jobsDir = new File("./jobs");
         }
                 
         if (cl.hasOption('l')) {
@@ -246,21 +232,18 @@ public class Heritrix {
             String hosts = cl.getOptionValue('b');
             List<String> list;
             if("/".equals(hosts)) {
+                // '/' means all, signified by empty-list
                 list = new ArrayList<String>(); 
             } else {
                 list = Arrays.asList(hosts.split(","));
             }
-            webConfig.getHosts().addAll(list);
+            bindHosts.addAll(list);
         } else {
             // default: only localhost
-            webConfig.getHosts().add("localhost");
+            bindHosts.add("localhost");
         }
         if (cl.hasOption('p')) {
-            int port = Integer.parseInt(cl.getOptionValue('p'));
-            webConfig.setPort(port);
-        }
-        if (cl.hasOption('w')) {
-            webConfig.setPathToWAR(cl.getOptionValue('w'));
+            port = Integer.parseInt(cl.getOptionValue('p'));
         }
 
         if (properties.exists()) {
@@ -269,63 +252,50 @@ public class Heritrix {
             finp.close();
         }
         
-        
         // Set timezone here.  Would be problematic doing it if we're running
         // inside in a container.
         TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
 
         // Start Heritrix.
-        WebUI webui = null;
         try {
-            if (cl.hasOption('u')) {
-                out.println("Not running crawl engine.");
+            engine = new EngineImpl(jobsDir);
+            component = new Component();
+            
+            // TODO: require SSL, generating cert if necessary
+            // TODO: require authPassword for all access
+            
+            if(bindHosts.isEmpty()) {
+                // listen all addresses
+                component.getServers().add(Protocol.HTTP,port);
             } else {
-                EngineImpl engine = new EngineImpl(jobsDir);
-                
-                Component component = new Component();
-                // TODO: update, make port configurable
-                component.getServers().add(Protocol.HTTP,8888);
-                component.getClients().add(Protocol.FILE);
-                component.getDefaultHost().attach(new EngineApplication(engine));
-                component.start();
-                out.println("engine listening at port 8888");
-                if (cl.hasOption('r')) {
-                    engine.requestLaunch(cl.getOptionValue('r'));
+                // bind only to declared addresses, or just 'localhost'
+                for(String address : bindHosts) {
+                    component.getServers().add(Protocol.HTTP,address,port);
                 }
             }
+            component.getClients().add(Protocol.FILE);
+            component.getDefaultHost().attach(new EngineApplication(engine));
+            component.start();
+            startupOut.println("engine listening at port "+port);
+            startupOut.println("administrator password is "+authPassword);
+            if (cl.hasOption('r')) {
+                engine.requestLaunch(cl.getOptionValue('r'));
+            }
+
             
-//            // Start WebUI, if desired.
-//            if (cl.hasOption('n')) {
-//                out.println("Not running web UI.");
-//            } else {
-//                webui = new WebUI(webConfig);
-//                webui.start();
-//                out.println("Web UI listening on " 
-//                        + webConfig.hostAndPort() + ".");
-//            }
         } catch (Exception e) {
             // Show any exceptions in STARTLOG.
-            e.printStackTrace(out);
-            if (webui != null) {
-                webui.stop();
+            e.printStackTrace(startupOut);
+            if (component != null) {
+                component.stop();
             }
             throw e;
         } finally {
-            // If not development, close the file that signals the wrapper
-            // script that we've started.  Otherwise, just flush it; if in
-            // development, the output is probably a console.
-            if (!isDevelopment()) {
-                if (out != null) {
-                    out.flush();
-                    out.close();
-                }
-                System.out.println("Heritrix version: " +
-                        ArchiveUtils.VERSION);
-            } else {
-                if (out != null) {
-                    out.flush();
-                }
-            }
+            startupOut.flush();
+            // stop writing to side startup file
+            startupOutStream.close();
+            System.out.println("Heritrix version: " +
+                    ArchiveUtils.VERSION);
         }
     }
     
@@ -351,8 +321,15 @@ public class Heritrix {
         }
         return heritrixHome;
     }
-    
-    protected static boolean isDevelopment() {
-        return System.getProperty("heritrix.development") != null;
-    }    
+
+
+    public EngineImpl getEngine() {
+        return engine;
+    }
+
+
+    public Component getComponent() {
+        return component;
+    }
+
 }
