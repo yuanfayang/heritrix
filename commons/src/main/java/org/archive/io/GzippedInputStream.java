@@ -1,33 +1,27 @@
-/* GzippedInputStream
-*
-* $Id$
-*
-* Created on July 5, 2004
-*
-* Copyright (C) 2004 Internet Archive.
-*
-* This file is part of the Heritrix web crawler (crawler.archive.org).
-*
-* Heritrix is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser Public License as published by
-* the Free Software Foundation; either version 2.1 of the License, or
-* any later version.
-*
-* Heritrix is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Lesser Public License for more details.
-*
-* You should have received a copy of the GNU Lesser Public License
-* along with Heritrix; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.archive.io;
 
 import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
@@ -195,7 +189,7 @@ implements RepositionableStream {
      * you must get new instance if you want to get Iterator again.
      * @return Iterator over GZIP Members.
      */
-    public Iterator iterator() {
+    public Iterator<GzippedInputStream> iterator() {
         final Logger logger = Logger.getLogger(this.getClass().getName());
         
         try {
@@ -208,7 +202,7 @@ implements RepositionableStream {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return new Iterator() {
+        return new Iterator<GzippedInputStream>() {
             private GzippedInputStream compressedStream =
                 GzippedInputStream.this;
             
@@ -231,7 +225,7 @@ implements RepositionableStream {
             /**
              * @return An InputStream onto a GZIP Member.
              */
-            public Object next() {
+            public GzippedInputStream next() {
                 try {
                     gzipMemberSeek();
                 } catch (IOException e) {

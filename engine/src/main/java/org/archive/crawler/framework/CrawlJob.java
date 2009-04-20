@@ -429,6 +429,16 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
             ac.close();
             ac = null; 
             beansException(be);
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            getJobLogger().log(Level.SEVERE,e.getMessage(),e);
+            try {
+                ac.close();
+            } catch (Exception e2) {
+                e2.printStackTrace(System.err);
+            } finally {
+                ac = null;
+            }
         }
     }
 

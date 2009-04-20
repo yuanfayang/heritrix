@@ -161,7 +161,8 @@ public class Arc2Warc {
     * @throws IOException
     * @throws java.text.ParseException
     */
-   public static void main(String [] args)
+   @SuppressWarnings("unchecked")
+public static void main(String [] args)
    throws ParseException, IOException, java.text.ParseException {
        Options options = new Options();
        options.addOption(new Option("h","help", false,

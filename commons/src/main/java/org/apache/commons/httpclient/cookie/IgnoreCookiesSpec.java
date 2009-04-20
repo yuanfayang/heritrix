@@ -42,6 +42,7 @@ import org.apache.commons.httpclient.NameValuePair;
  * 
  * @since 3.0
  */
+@SuppressWarnings("unchecked") // <- IA/HERITRIX CHANGE
 public class IgnoreCookiesSpec implements CookieSpec {
 
     /**

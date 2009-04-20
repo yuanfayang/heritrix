@@ -1,27 +1,22 @@
-/* StoredQueue.java
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * $Id: BloomFilter32bitSplit.java 5197 2007-06-06 01:31:46Z gojomo $
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Created on Jun 14, 2007
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2007 Internet Archive
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.queue;
 
 import java.io.Serializable;
@@ -52,7 +47,7 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  imple
     private static final Logger logger =
         Logger.getLogger(StoredQueue.class.getName());
 
-    transient StoredSortedMap queueMap; // Long -> E
+    transient StoredSortedMap<Long,E> queueMap; // Long -> E
     transient Database queueDb; // Database
     AtomicLong tailIndex; // next spot for insert
     AtomicLong headIndex; // next spot for read
@@ -68,7 +63,7 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  imple
      * @param clsOrNull 
      * @param classCatalog
      */
-    public StoredQueue(Database db, Class clsOrNull, StoredClassCatalog classCatalog) {
+    public StoredQueue(Database db, Class<E> clsOrNull, StoredClassCatalog classCatalog) {
         tailIndex = new AtomicLong(0);
         headIndex = new AtomicLong(0);
         hookupDatabase(db, clsOrNull, classCatalog);
@@ -79,20 +74,19 @@ public class StoredQueue<E extends Serializable> extends AbstractQueue<E>  imple
      * @param clsOrNull
      * @param classCatalog
      */
-    public void hookupDatabase(Database db, Class clsOrNull, StoredClassCatalog classCatalog) {
-        EntryBinding valueBinding = TupleBinding.getPrimitiveBinding(clsOrNull);
+    public void hookupDatabase(Database db, Class<E> clsOrNull, StoredClassCatalog classCatalog) {
+        EntryBinding<E> valueBinding = TupleBinding.getPrimitiveBinding(clsOrNull);
         if(valueBinding == null) {
-            valueBinding = new SerialBinding(classCatalog, clsOrNull);
+            valueBinding = new SerialBinding<E>(classCatalog, clsOrNull);
         }
         queueDb = db;
-        queueMap = new StoredSortedMap(
+        queueMap = new StoredSortedMap<Long,E>(
                 db,
                 TupleBinding.getPrimitiveBinding(Long.class),
                 valueBinding,
                 true);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Iterator<E> iterator() {
         return queueMap.values().iterator();

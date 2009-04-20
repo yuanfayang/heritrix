@@ -32,16 +32,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class FixupQueryStringTest extends ModuleTestBase {
 
-    @Override
-    protected Class getModuleClass() {
-        return FixupQueryString.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new FixupQueryString();
-    }
-
     public void testCanonicalize() throws URIException {
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Mangled " + url,

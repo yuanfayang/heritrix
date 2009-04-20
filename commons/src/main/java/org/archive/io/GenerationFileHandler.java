@@ -43,7 +43,7 @@ public class GenerationFileHandler extends FileHandler {
     /**
      * @return Returns the filenameSeries.
      */
-    public List getFilenameSeries() {
+    public List<String> getFilenameSeries() {
         return filenameSeries;
     }
 

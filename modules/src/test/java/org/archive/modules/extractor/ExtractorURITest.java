@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.ExtractorURI;
-
 
 /**
  * Unit test for {@link ExtractorURI}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.ExtractorURI;
  */
 public class ExtractorURITest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorURI.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorURI();
-    }
-    
-    
     // TODO TESTME!
     
 }

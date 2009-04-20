@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.ExtractorJS;
-
 
 /**
  * Unit test for {@link ExtractorJS}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.ExtractorJS;
  */
 public class ExtractorJSTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorJS.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorJS();
-    }
-    
-    
     // TODO TESTME!
     
 }

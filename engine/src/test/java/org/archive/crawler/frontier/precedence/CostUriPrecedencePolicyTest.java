@@ -34,18 +34,7 @@ import org.archive.state.ModuleTestBase;
  */
 public class CostUriPrecedencePolicyTest extends ModuleTestBase {
 
-    @Override
-    protected Class<?> getModuleClass() {
-        return CostUriPrecedencePolicy.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new CostUriPrecedencePolicy();
-    }
-
-    
-
+    //TODO add tests
 
 }
 

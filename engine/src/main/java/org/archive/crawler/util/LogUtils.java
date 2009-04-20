@@ -68,7 +68,7 @@ public class LogUtils {
             // Manage the formatter to use.
             tmp = System.getProperty("java.util.logging.FileHandler.formatter");
             if (tmp != null && tmp.length() > 0) {
-                Constructor co = Class.forName(tmp).
+                Constructor<?> co = Class.forName(tmp).
                     getConstructor(new Class[] {});
                 Formatter f = (Formatter) co.newInstance(new Object[] {});
                 fh.setFormatter(f);

@@ -34,17 +34,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class StripUserinfoRuleTest extends ModuleTestBase {
 
-
-    @Override
-    protected Class getModuleClass() {
-        return StripUserinfoRule.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new StripUserinfoRule();
-    }
-
     public void testCanonicalize() throws URIException {
         String url = "http://WWW.aRchive.Org/index.html";
         final String expectedResult = url;

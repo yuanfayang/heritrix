@@ -1269,7 +1269,7 @@ ApplicationContextAware {
      * @param writer to receive report
      * @param iterator over queues of interest.
      */
-    private void queueSingleLinesTo(PrintWriter writer, Iterator iterator) {
+    private void queueSingleLinesTo(PrintWriter writer, Iterator<?> iterator) {
         Object obj;
         WorkQueue q;
         boolean legendWritten = false;
@@ -1465,7 +1465,7 @@ ApplicationContextAware {
      * @param total
      * @param max
      */
-    protected void appendQueueReports(PrintWriter w, Iterator iterator,
+    protected void appendQueueReports(PrintWriter w, Iterator<?> iterator,
             int total, int max) {
         Object obj;
         WorkQueue q;

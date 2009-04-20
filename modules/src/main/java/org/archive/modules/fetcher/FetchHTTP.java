@@ -1,27 +1,22 @@
-/* FetchHTTP.java
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * $Id$
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Created on Jun 5, 2003
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2003 Internet Archive.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.modules.fetcher;
 
 import static org.archive.modules.ProcessorURI.FetchType.HTTP_POST;
@@ -46,9 +41,9 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -206,13 +201,13 @@ public class FetchHTTP extends Processor implements Lifecycle {
      * header, e.g., 'Accept-Language: en'.
      */
     {
-        setAcceptHeaders(Collections.EMPTY_LIST);
+        setAcceptHeaders(new LinkedList<String>());
     }
     @SuppressWarnings("unchecked")
     public List<String> getAcceptHeaders() {
         return (List<String>) kp.get("acceptHeaders");
     }
-    public void setAcceptHeaders(List headers) {
+    public void setAcceptHeaders(List<String> headers) {
         kp.put("acceptHeaders",headers);
     }
     
@@ -669,6 +664,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
      * @param curi CrawlURI
      * @param rec HttpRecorder
      */
+    @SuppressWarnings("unchecked")
     protected void setSizes(ProcessorURI curi, Recorder rec) {
         // set reporting size
         curi.setContentSize(rec.getRecordedInput().getSize());
@@ -923,6 +919,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
      * @param sourceHeader header to consult in URI history
      * @param targetHeader header to set if possible
      */
+    @SuppressWarnings("unchecked")
     protected void setConditionalGetHeader(ProcessorURI curi, HttpMethod method, 
             boolean conditional, String sourceHeader, String targetHeader) {
         if (conditional) {
@@ -1121,7 +1118,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
         // Look to see if this curi had rfc2617 avatars loaded. If so, are
         // any of them for this realm? If so, then the credential failed
         // if we got a 401 and it should be let die a natural 401 death.
-        Set curiRfc2617Credentials = getCredentials(curi,
+        Set<Credential> curiRfc2617Credentials = getCredentials(curi,
                 Rfc2617Credential.class);
         Rfc2617Credential extant = Rfc2617Credential.getByRealm(
                 curiRfc2617Credentials, realm, curi);
@@ -1142,7 +1139,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
             // second time around.
             String serverKey = getServerKey(curi);
             CrawlServer server = serverCache.getServerFor(serverKey);
-            Set storeRfc2617Credentials = getCredentialStore().subset(curi,
+            Set<Credential> storeRfc2617Credentials = getCredentialStore().subset(curi,
                     Rfc2617Credential.class, server.getName());
             if (storeRfc2617Credentials == null
                     || storeRfc2617Credentials.size() <= 0) {
@@ -1169,6 +1166,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
      *            ProcessorURI that got a 401.
      * @return Returns first wholesome authscheme found else null.
      */
+    @SuppressWarnings("unchecked")
     protected AuthScheme getAuthScheme(final HttpMethod method,
             final ProcessorURI curi) {
         Header[] headers = method.getResponseHeaders("WWW-Authenticate");
@@ -1240,11 +1238,11 @@ public class FetchHTTP extends Processor implements Lifecycle {
      *            Class of credential to get from curi.
      * @return Set of credentials attached to this curi.
      */
-    private Set<Credential> getCredentials(ProcessorURI curi, Class type) {
+    private Set<Credential> getCredentials(ProcessorURI curi, Class<?> type) {
         Set<Credential> result = null;
 
         if (curi.hasCredentialAvatars()) {
-            for (Iterator i = curi.getCredentialAvatars().iterator(); i
+            for (Iterator<CredentialAvatar> i = curi.getCredentialAvatars().iterator(); i
                     .hasNext();) {
                 CredentialAvatar ca = (CredentialAvatar) i.next();
                 if (ca.match(type)) {

@@ -95,6 +95,7 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         publishEvent(new ContextStartedEvent(this));
     }
     
+    @SuppressWarnings("unchecked")
     protected void doStart(Map lifecycleBeans, String beanName) {
         Lifecycle bean = (Lifecycle) lifecycleBeans.remove(beanName);
         if (bean != null) {
@@ -119,6 +120,7 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
         publishEvent(new ContextStoppedEvent(this));
     }
     
+    @SuppressWarnings("unchecked")
     protected void doStop(Map lifecycleBeans, String beanName) {
         Lifecycle bean = (Lifecycle) lifecycleBeans.remove(beanName);
         if (bean != null) {
@@ -188,6 +190,7 @@ public class PathSharingContext extends FileSystemXmlApplicationContext {
     //
     
     HashMap<String,Errors> allErrors; // bean name -> Errors
+    @SuppressWarnings("unchecked")
     public void validate() {
         allErrors = new HashMap<String,Errors>();
             

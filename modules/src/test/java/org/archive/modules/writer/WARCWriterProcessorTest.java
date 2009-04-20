@@ -19,7 +19,6 @@
 
 package org.archive.modules.writer;
 
-
 import java.io.File;
 
 import org.archive.modules.ProcessorTestBase;
@@ -28,19 +27,13 @@ import org.archive.modules.net.RobotsHonoringPolicy;
 import org.archive.spring.ConfigPath;
 import org.archive.util.TmpDirTestCase;
 
-
 /**
  * Unit test for {@link WARCWriterProcessor}.
  *
  * @author pjack
  */
 public class WARCWriterProcessorTest extends ProcessorTestBase {
-    @Override
-    protected Class<?> getModuleClass() {
-        return WARCWriterProcessor.class;
-    }
-    
-    
+ 
     @Override
     protected Object makeModule() throws Exception {
         File tmp = TmpDirTestCase.tmpDir();

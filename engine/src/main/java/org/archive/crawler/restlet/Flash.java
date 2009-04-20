@@ -47,6 +47,7 @@ public class Flash {
     
     static long nextdrop = RandomUtils.nextLong();
     static Map<Long,Flash> dropboxes = new LinkedHashMap<Long, Flash>() {
+        private static final long serialVersionUID = 1L;
         @Override
         protected boolean removeEldestEntry(Entry<Long, Flash> eldest) {
             return size()>100;

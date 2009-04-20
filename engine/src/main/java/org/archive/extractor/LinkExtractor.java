@@ -45,7 +45,7 @@ import org.archive.net.UURI;
  * 
  * @author gojomo
  */
-public interface LinkExtractor extends Iterator {
+public interface LinkExtractor extends Iterator<Link> {
     /**
      * Setup the LinkExtractor to operate on the given stream and charset,
      * considering the given contextURI as the initial 'base' URI for

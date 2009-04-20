@@ -94,7 +94,7 @@ import org.apache.commons.logging.LogFactory;
  *
  * @version $Revision$ $Date$
  */
-@SuppressWarnings("deprecation") // <- // IA/HERITRIX change
+@SuppressWarnings({"deprecation","unchecked"}) // <- // IA/HERITRIX change
 public abstract class HttpMethodBase implements HttpMethod {
 
     // -------------------------------------------------------------- Constants

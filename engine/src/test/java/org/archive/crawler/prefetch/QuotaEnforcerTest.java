@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class QuotaEnforcerTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return QuotaEnforcer.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new QuotaEnforcer(controller);
-    }
-    
-    
     // TODO TESTME!
     
 }

@@ -25,10 +25,7 @@
  */
 package org.archive.modules.extractor;
 
-
 import org.archive.modules.ProcessorTestBase;
-import org.archive.modules.extractor.HTTPContentDigest;
-
 
 /**
  * Unit test for {@link HTTPContentDigest}.
@@ -37,19 +34,6 @@ import org.archive.modules.extractor.HTTPContentDigest;
  */
 public class HTTPContentDigestTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return HTTPContentDigest.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new HTTPContentDigest();
-    }
-    
-    
     // TODO TESTME!
     
 }

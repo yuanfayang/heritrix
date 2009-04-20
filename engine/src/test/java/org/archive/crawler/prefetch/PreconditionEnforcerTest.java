@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class PreconditionEnforcerTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return PreconditionEnforcer.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new PreconditionEnforcer();
-    }
-    
-    
     // TODO TESTME!
     
 }

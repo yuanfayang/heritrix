@@ -26,7 +26,6 @@
 
 package org.archive.crawler.frontier.precedence;
 
-import org.archive.crawler.frontier.precedence.SuccessCountsQueuePrecedencePolicy;
 import org.archive.state.ModuleTestBase;
 
 
@@ -34,16 +33,6 @@ import org.archive.state.ModuleTestBase;
  * Tests for SuccessCountsQueuePrecedencePolicy
  */
 public class SuccessCountsQueuePrecedencePolicyTest extends ModuleTestBase {
-
-    @Override
-    protected Class<?> getModuleClass() {
-        return SuccessCountsQueuePrecedencePolicy.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new SuccessCountsQueuePrecedencePolicy();
-    }
 
 }
 

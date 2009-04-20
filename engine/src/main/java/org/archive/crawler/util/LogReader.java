@@ -32,7 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.archive.crawler.framework.CrawlerLoggerModule;
 import org.archive.io.CompositeFileReader;
 import org.archive.util.ArchiveUtils;
 

@@ -71,11 +71,6 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
     }
 
     @Override
-    protected Class<?> getModuleClass() {
-        return ExtractorHTML.class;
-    }
-
-    @Override
     protected Extractor makeExtractor() {
         ExtractorHTML result = new ExtractorHTML();
         UriErrorLoggerModule ulm = new UnitTestUriLoggerModule();   

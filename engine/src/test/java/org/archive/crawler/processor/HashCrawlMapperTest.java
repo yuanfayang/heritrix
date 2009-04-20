@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class HashCrawlMapperTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return HashCrawlMapper.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new HashCrawlMapper();
-    }
-    
-    
     // TODO TESTME!
     
 }

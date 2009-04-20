@@ -26,7 +26,6 @@
 
 package org.archive.modules.credential;
 
-import org.archive.modules.credential.HtmlFormCredential;
 import org.archive.state.ModuleTestBase;
 
 /**
@@ -35,14 +34,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class HtmlFormCredentialTest extends ModuleTestBase {
 
-    @Override
-    protected Class getModuleClass() {
-        return HtmlFormCredential.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new HtmlFormCredential();
-    }
-
+    //TODO: add tests
+    
 }

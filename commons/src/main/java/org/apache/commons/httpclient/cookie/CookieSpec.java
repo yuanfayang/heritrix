@@ -51,6 +51,7 @@ import org.apache.commons.httpclient.Cookie;
  *
  * @since 2.0
  */
+@SuppressWarnings("unchecked") // <- IA/HERITRIX CHANGE
 public interface CookieSpec {    
 
     /** Path delimiter */

@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class CrawlStateUpdaterTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return CrawlStateUpdater.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new CrawlStateUpdater();
-    }
-    
-    
     // TODO TESTME!
     
 }

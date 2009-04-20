@@ -29,8 +29,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.DecimalFormat;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -69,12 +67,6 @@ public class Checkpointer implements Serializable {
      * Next  overall series checkpoint number.
      */
     private int nextCheckpoint = 1;
-
-    /**
-     * All checkpoint names in chain prior to now. May not all still
-     * exist on disk.
-     */
-    private List predecessorCheckpoints = new LinkedList();
 
     /**
      * If a checkpoint has begun, its directory under
@@ -338,13 +330,6 @@ public class Checkpointer implements Serializable {
         // checkpoints made from a recovery.  Allow for there being
         // multiple 'r' prefixes.
         initialize(cc, 'r' + this.checkpointPrefix);
-    }
-    
-    /**
-     * @return Returns the predecessorCheckpoints.
-     */
-    public List getPredecessorCheckpoints() {
-        return this.predecessorCheckpoints;
     }
 
     protected boolean isCheckpointErrors() {

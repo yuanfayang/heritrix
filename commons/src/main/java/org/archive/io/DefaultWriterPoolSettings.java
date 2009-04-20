@@ -48,7 +48,7 @@ implements WriterPoolSettings, Serializable {
 
 
     private long maxSize;
-    private List metadata = new ArrayList();;
+    private List<String> metadata = new ArrayList<String>();;
     transient private List<File> outputDirs = new ArrayList<File>();
     private String prefix;
     private String suffix;
@@ -79,12 +79,12 @@ implements WriterPoolSettings, Serializable {
     }
     
     
-    public List getMetadata() {
+    public List<String> getMetadata() {
         return metadata;
     }
     
     
-    public void setMetadata(List metadata) {
+    public void setMetadata(List<String> metadata) {
         this.metadata = metadata;
     }
     

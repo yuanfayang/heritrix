@@ -29,6 +29,7 @@ import org.archive.crawler.frontier.precedence.BaseUriPrecedencePolicy;
  * @author pjack
  */
 public class KeyWordUriPrecedencePolicy extends BaseUriPrecedencePolicy {
+    private static final long serialVersionUID = 1L;
 
     @Override
     protected int calculatePrecedence(CrawlURI curi) {

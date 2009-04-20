@@ -280,7 +280,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
         if (resources == null) {
             return (tally-next.size())>0;
         }
-        Iterator iter = resources.iterator();
+        Iterator<String> iter = resources.iterator();
         UURI codebaseURI = null;
         String res = null;
         try {

@@ -33,17 +33,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class LowercaseRuleTest extends ModuleTestBase {
 
-
-    @Override
-    protected Class getModuleClass() {
-        return LowercaseRule.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new LowercaseRule();
-    }
-
     public void testCanonicalize() throws URIException {
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Didn't lowercase" + url,

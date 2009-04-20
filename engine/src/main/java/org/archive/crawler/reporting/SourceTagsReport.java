@@ -37,14 +37,15 @@ public class SourceTagsReport extends Report {
 
         writer.print("[source] [host] [#urls]\n");
         // for each source
-        for (Iterator i = stats.sourceHostDistribution.keySet().iterator(); i.hasNext();) {
-            Object sourceKey = i.next();
-            Map<String,LongWrapper> hostCounts 
-             = (Map<String,LongWrapper>)stats.sourceHostDistribution.get(sourceKey);
+        for (Iterator<String> i = stats.sourceHostDistribution.keySet().iterator(); i.hasNext();) {
+            String sourceKey = i.next();
+            Map<String,LongWrapper> hostCounts = 
+                (Map<String,LongWrapper>)stats.sourceHostDistribution.get(sourceKey);
             // sort hosts by #urls
-            SortedMap sortedHostCounts = stats.getReverseSortedHostCounts(hostCounts);
+            SortedMap<String,LongWrapper> sortedHostCounts = 
+                stats.getReverseSortedHostCounts(hostCounts);
             // for each host
-            for (Iterator j = sortedHostCounts.keySet().iterator(); j.hasNext();) {
+            for (Iterator<String> j = sortedHostCounts.keySet().iterator(); j.hasNext();) {
                 Object hostKey = j.next();
                 LongWrapper hostCount = (LongWrapper) hostCounts.get(hostKey);
                 writer.print(sourceKey.toString());

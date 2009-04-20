@@ -1,27 +1,22 @@
-/* ARCWriterTest
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * $Id$
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Created on Dec 31, 2003.
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2003 Internet Archive.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.io.arc;
 
 import java.io.ByteArrayInputStream;
@@ -29,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Date;
@@ -41,6 +35,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.io.output.NullOutputStream;
 import org.archive.io.ArchiveRecord;
+import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
@@ -121,6 +116,7 @@ extends TmpDirTestCase implements ARCConstants {
         "</body></html>";
     }
 
+    @SuppressWarnings("deprecation")
     protected int writeRandomHTTPRecord(ARCWriter arcWriter, int index)
     throws IOException {
         String indexStr = Integer.toString(index);
@@ -161,7 +157,7 @@ extends TmpDirTestCase implements ARCConstants {
     throws FileNotFoundException, IOException {
         ARCReader reader = ARCReaderFactory.get(arcFile);
         assertNotNull(reader);
-        List metaDatas = null;
+        List<ArchiveRecordHeader> metaDatas = null;
         if (recordCount == -1) {
             metaDatas = reader.validate();
         } else {
@@ -181,7 +177,7 @@ extends TmpDirTestCase implements ARCConstants {
         }
         reader.close();
         assertTrue("Metadatas not equal", metaDatas.size() == recordCount);
-        for (Iterator i = metaDatas.iterator(); i.hasNext();) {
+        for (Iterator<ArchiveRecordHeader> i = metaDatas.iterator(); i.hasNext();) {
                 ARCRecordMetaData r = (ARCRecordMetaData)i.next();
                 assertTrue("Record is empty", r.getLength() > 0);
         }
@@ -215,7 +211,7 @@ extends TmpDirTestCase implements ARCConstants {
         long offset = -1;
         long totalRecords = 0;
         boolean readSecond = false;
-        for (final Iterator i = reader.iterator(); i.hasNext(); totalRecords++) {
+        for (final Iterator<ArchiveRecord> i = reader.iterator(); i.hasNext(); totalRecords++) {
             ARCRecord ar = (ARCRecord)i.next();
             if (!readFirst) {
                 readFirst = true;
@@ -236,7 +232,7 @@ extends TmpDirTestCase implements ARCConstants {
         // Get reader again.  See how iterator works with offset
         reader = ARCReaderFactory.get(arcFile, offset);
         int count = 0;
-        for (final Iterator i = reader.iterator(); i.hasNext(); i.next()) {
+        for (final Iterator<ArchiveRecord> i = reader.iterator(); i.hasNext(); i.next()) {
             count++;
         }
         reader.close();
@@ -251,7 +247,6 @@ extends TmpDirTestCase implements ARCConstants {
     }
     
     public void testWriteGiantRecord() throws IOException {
-        File [] files = {getTmpDir()};
         PrintStream dummyStream = new PrintStream(new NullOutputStream());
         ARCWriter arcWriter = new ARCWriter(SERIAL_NO, dummyStream,
                 new File("dummy"),
@@ -302,7 +297,7 @@ extends TmpDirTestCase implements ARCConstants {
     protected int iterateRecords(ARCReader r)
     throws IOException {
         int count = 0;
-        for (Iterator i = r.iterator(); i.hasNext();) {
+        for (Iterator<ArchiveRecord> i = r.iterator(); i.hasNext();) {
             ARCRecord rec = (ARCRecord)i.next();
             rec.close();
             if (count != 0) {
@@ -542,7 +537,7 @@ extends TmpDirTestCase implements ARCConstants {
 		w.close();
 		// Get reader on said ARC.
 		ARCReader r = ARCReaderFactory.get(w.getFile());
-		final Iterator i = r.iterator();
+		final Iterator<ArchiveRecord> i = r.iterator();
 		// Skip first ARC meta record.
 		ARCRecord ar = (ARCRecord) i.next();
 		i.hasNext();

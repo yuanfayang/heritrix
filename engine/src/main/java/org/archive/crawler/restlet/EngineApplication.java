@@ -21,9 +21,7 @@ package org.archive.crawler.restlet;
 
 import java.io.IOException;
 
-import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.archive.crawler.framework.EngineImpl;
-import org.archive.util.FileUtils;
 import org.restlet.Application;
 import org.restlet.Directory;
 import org.restlet.Restlet;

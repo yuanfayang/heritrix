@@ -34,18 +34,5 @@ import org.archive.state.ModuleTestBase;
  */
 public class BucketQueueAssignmentPolicyTest extends ModuleTestBase {
 
-    @Override
-    protected Class<?> getModuleClass() {
-        return BucketQueueAssignmentPolicy.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new BucketQueueAssignmentPolicy();
-    }
-
-    
-
-
 }
 

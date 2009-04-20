@@ -36,19 +36,6 @@ import org.archive.crawler.framework.CrawlerProcessorTestBase;
  */
 public class RuntimeLimitEnforcerTest extends CrawlerProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return RuntimeLimitEnforcer.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new RuntimeLimitEnforcer();
-    }
-    
-    
     // TODO TESTME!
     
 }

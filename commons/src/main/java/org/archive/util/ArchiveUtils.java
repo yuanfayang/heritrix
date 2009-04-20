@@ -1,29 +1,22 @@
 /*
- * ArchiveUtils
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
  *
- * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/util/ArchiveUtils.java,v 1.38 2007/01/23 00:29:48 gojomo Exp $
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
  *
- * Created on Jul 7, 2003
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2003 Internet Archive.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 package org.archive.util;
 
 import java.io.BufferedReader;
@@ -647,7 +640,7 @@ public class ArchiveUtils {
      * @param version
      * @return UID based off class and version number.
      */
-    public static long classnameBasedUID(Class class1, int version) {
+    public static long classnameBasedUID(Class<?> class1, int version) {
         String callingClassname = class1.getName();
         return (long)callingClassname.hashCode() << 32 + version;
     }
@@ -777,6 +770,7 @@ public class ArchiveUtils {
      * @param Map
      * @return prettified (in curly brackets) string of Map contents
      */
+    @SuppressWarnings("unchecked")
     public static String prettyString(Map map) {
         StringBuilder builder = new StringBuilder();
         builder.append("{ ");
@@ -800,6 +794,7 @@ public class ArchiveUtils {
      * @param Map[]
      * @return prettified (in square brackets) of Map[]
      */
+    @SuppressWarnings("unchecked")
     public static String prettyString(Map[] maps) {
         StringBuilder builder = new StringBuilder();
         builder.append("[ ");

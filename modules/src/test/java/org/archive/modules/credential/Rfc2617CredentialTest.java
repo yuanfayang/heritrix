@@ -26,7 +26,6 @@
 
 package org.archive.modules.credential;
 
-import org.archive.modules.credential.Rfc2617Credential;
 import org.archive.state.ModuleTestBase;
 
 /**
@@ -35,14 +34,6 @@ import org.archive.state.ModuleTestBase;
  */
 public class Rfc2617CredentialTest extends ModuleTestBase {
 
-    @Override
-    protected Class getModuleClass() {
-        return Rfc2617Credential.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new Rfc2617Credential();
-    }
-
+    //TODO: add tests
+    
 }

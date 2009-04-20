@@ -59,8 +59,8 @@ public abstract class ModuleTestBase extends TestCase {
      * locale file and remove any HTML markup.
      */    
     public ModuleTestBase() {
-        File srcDir = getSourceCodeDir();
-        File resourceDir = getResourceDir();
+        getSourceCodeDir();
+        getResourceDir();
     }
 
     

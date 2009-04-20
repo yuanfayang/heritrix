@@ -24,18 +24,9 @@
  */
 package org.archive.io;
 
-import java.io.ByteArrayInputStream;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-
 import junit.framework.TestCase;
 
 public class SinkHandlerTest extends TestCase {
-    private static final Logger LOGGER =
-        Logger.getLogger(SinkHandlerTest.class.getName());
-
 
     public void testNothing() {
     }  

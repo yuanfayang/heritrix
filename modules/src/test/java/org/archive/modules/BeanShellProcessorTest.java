@@ -25,10 +25,6 @@
  */
 package org.archive.modules;
 
-
-import org.archive.modules.BeanShellProcessor;
-
-
 /**
  * Unit test for {@link BeanShellProcessor}.
  *
@@ -36,19 +32,6 @@ import org.archive.modules.BeanShellProcessor;
  */
 public class BeanShellProcessorTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return BeanShellProcessor.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new BeanShellProcessor();
-    }
-    
-    
     // TODO TESTME!
     
 }

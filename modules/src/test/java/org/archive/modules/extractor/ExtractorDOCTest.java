@@ -37,19 +37,6 @@ import org.archive.modules.extractor.ExtractorDOC;
  */
 public class ExtractorDOCTest extends ProcessorTestBase {
 
-    
-    @Override
-    protected Class getModuleClass() {
-        return ExtractorDOC.class;
-    }
-    
-    
-    @Override
-    protected Object makeModule() {
-        return new ExtractorDOC();
-    }
-    
-    
     // TODO TESTME!
     
 }

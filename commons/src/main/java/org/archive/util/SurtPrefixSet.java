@@ -1,27 +1,22 @@
-/* SURTPrefixSet
-*
-* $Id$
-*
-* Created on Jul 23, 2004
-*
-* Copyright (C) 2004 Internet Archive.
-*
-* This file is part of the Heritrix web crawler (crawler.archive.org).
-*
-* Heritrix is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser Public License as published by
-* the Free Software Foundation; either version 2.1 of the License, or
-* any later version.
-*
-* Heritrix is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Lesser Public License for more details.
-*
-* You should have received a copy of the GNU Lesser Public License
-* along with Heritrix; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.archive.util;
 
 import java.io.BufferedInputStream;
@@ -67,7 +62,7 @@ public class SurtPrefixSet extends PrefixSet {
         BufferedReader reader = new BufferedReader(r);
         String s;
         
-        Iterator iter = 
+        Iterator<String> iter = 
             new RegexpLineIterator(
                     new LineReadingIterator(reader),
                     RegexpLineIterator.COMMENT_LINE,
@@ -87,7 +82,7 @@ public class SurtPrefixSet extends PrefixSet {
         BufferedReader reader = new BufferedReader(r);
         String s;
         
-        Iterator iter = 
+        Iterator<String> iter = 
             new RegexpLineIterator(
                     new LineReadingIterator(reader),
                     RegexpLineIterator.COMMENT_LINE,
@@ -113,7 +108,7 @@ public class SurtPrefixSet extends PrefixSet {
         BufferedReader reader = new BufferedReader(r);
         String s;
         
-        Iterator iter = 
+        Iterator<String> iter = 
             new RegexpLineIterator(
                     new LineReadingIterator(reader),
                     RegexpLineIterator.COMMENT_LINE,
@@ -242,7 +237,7 @@ public class SurtPrefixSet extends PrefixSet {
      * @throws IOException
      */
     public void exportTo(FileWriter fw) throws IOException {
-        Iterator iter = this.iterator();
+        Iterator<String> iter = this.iterator();
         while(iter.hasNext()) {
             fw.write((String)iter.next() + "\n");
         }
@@ -257,7 +252,7 @@ public class SurtPrefixSet extends PrefixSet {
      */
     public void convertAllPrefixesToHosts() {
         SurtPrefixSet iterCopy = (SurtPrefixSet) this.clone();
-        Iterator iter = iterCopy.iterator();
+        Iterator<String> iter = iterCopy.iterator();
         while (iter.hasNext()) {
             String prefix = (String) iter.next();
             String convPrefix = convertPrefixToHost(prefix);
@@ -295,7 +290,7 @@ public class SurtPrefixSet extends PrefixSet {
      */
     public void convertAllPrefixesToDomains() {
         SurtPrefixSet iterCopy = (SurtPrefixSet) this.clone();
-        Iterator iter = iterCopy.iterator();
+        Iterator<String> iter = iterCopy.iterator();
         while (iter.hasNext()) {
             String prefix = (String) iter.next();
             String convPrefix = convertPrefixToDomain(prefix);

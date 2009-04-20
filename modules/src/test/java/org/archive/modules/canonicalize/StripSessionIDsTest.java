@@ -35,18 +35,6 @@ import org.archive.state.ModuleTestBase;
 public class StripSessionIDsTest extends ModuleTestBase {
     private static final String  BASE = "http://www.archive.org/index.html";
 
-
-    @Override
-    protected Class getModuleClass() {
-        return StripSessionIDs.class;
-    }
-
-    @Override
-    protected Object makeModule() throws Exception {
-        return new StripSessionIDs();
-    }
-
-
     public void testCanonicalize() throws URIException {
         String str32id = "0123456789abcdefghijklemopqrstuv";
         String url = BASE + "?jsessionid=" + str32id;
