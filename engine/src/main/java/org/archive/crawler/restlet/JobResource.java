@@ -344,7 +344,7 @@ public class JobResource extends Resource {
         } else if("unpause".equals(action)) {
             cj.getCrawlController().requestCrawlResume();
         } else if("terminate".equals(action)) {
-            cj.getCrawlController().requestCrawlStop();
+            cj.terminate();
         }
         // default: redirect to GET self
         getResponse().redirectSeeOther(getRequest().getOriginalRef());
