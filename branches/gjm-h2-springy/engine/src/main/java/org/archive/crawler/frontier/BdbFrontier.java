@@ -45,9 +45,9 @@ import javax.management.openmbean.CompositeData;
 import org.apache.commons.collections.Closure;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.queue.StoredQueue;
+import org.archive.settings.Checkpointable;
 import org.archive.settings.RecoverAction;
 import org.archive.settings.file.BdbModule;
-import org.archive.settings.file.Checkpointable;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 

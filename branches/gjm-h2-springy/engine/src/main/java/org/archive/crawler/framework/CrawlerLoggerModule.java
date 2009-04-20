@@ -42,17 +42,21 @@ import org.archive.io.GenerationFileHandler;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.settings.Checkpointable;
 import org.archive.settings.RecoverAction;
-import org.archive.settings.file.Checkpointable;
 import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.Lifecycle;
+import org.springframework.stereotype.Component;
 
 /**
- * @author pjack
- *
+ * Module providing all expected whole-crawl logging facilities
+ * 
+ * @contributor pjack
+ * @contributor gojomo
  */
+@Component("loggerModule")
 public class CrawlerLoggerModule 
     implements 
         UriErrorLoggerModule, Lifecycle, InitializingBean,

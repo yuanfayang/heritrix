@@ -27,9 +27,9 @@ import java.util.TreeMap;
 
 import org.apache.commons.collections.ListUtils;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.settings.file.PrefixFinder;
 import org.archive.spring.OverlayMapsSource;
 import org.archive.spring.Sheet;
+import org.archive.util.PrefixFinder;
 import org.archive.util.SurtPrefixSet;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.stereotype.Component;
 
 /**
  * Manager which marks-up CrawlURIs with the names of all applicable 
@@ -47,6 +48,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
  * @contributor gojomo
  */
 @SuppressWarnings("unchecked")
+@Component("sheetOverlaysManager")
 public class SheetOverlaysManager implements 
 BeanFactoryAware, InitializingBean, OverlayMapsSource, ApplicationListener {
 
