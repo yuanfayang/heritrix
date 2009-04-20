@@ -71,7 +71,7 @@ public class Histotable<K> extends TreeMap<K,Long> {
     /**
      * @return Return an up-to-date sorted version of the totalled info.
      */
-    public TreeSet getSortedByCounts() {
+    public TreeSet<Map.Entry<K,Long>> getSortedByCounts() {
         // sorted by count
         TreeSet<Map.Entry<K,Long>> sorted = 
           new TreeSet<Map.Entry<K,Long>>(
@@ -83,8 +83,8 @@ public class Histotable<K> extends TreeMap<K,Long> {
                 if (firstVal < secondVal) { return 1; }
                 if (secondVal < firstVal) { return -1; }
                 // If the values are the same, sort by keys.
-                String firstKey = (String) ((Map.Entry) e1).getKey();
-                String secondKey = (String) ((Map.Entry) e2).getKey();
+                String firstKey = (String) ((Map.Entry<K,Long>) e1).getKey();
+                String secondKey = (String) ((Map.Entry<K,Long>) e2).getKey();
                 return firstKey.compareTo(secondKey);
             }
         });
@@ -136,8 +136,9 @@ public class Histotable<K> extends TreeMap<K,Long> {
      * @param e Map key.
      * @return String 'count key'.
      */
+    @SuppressWarnings("unchecked")
     public static String entryString(Object e) {
-        Map.Entry entry = (Map.Entry) e;
+        Map.Entry<?,Long> entry = (Map.Entry<?,Long>) e;
         return entry.getValue() + " " + entry.getKey();
     }
     

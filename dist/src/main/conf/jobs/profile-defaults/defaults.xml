@@ -31,6 +31,7 @@
  <bean id="metadata" class="org.archive.modules.writer.DefaultMetadataProvider" autowire="byName">
   <property name="description" value="Default seed sites crawl."/>
   <property name="jobName" value="dummy-name"/>
+  <property name="operatorContactUrl" value="USE_AN_URL_WITH_CONTACT_INFO_HERE_FOR_WEBMASTERS_AFFECTED_BY_YOUR_CRAWL"/>
   <!-- autowired robots-honoring-policy reference -->
   <!-- autowired job-home reference -->
  </bean>
@@ -46,7 +47,7 @@
  <bean id="seeds" class="org.archive.modules.seeds.SeedModuleImpl">
   <property name="seedsSource">
    <bean class="org.archive.spring.ConfigString">
-    <property name="value" value="# override this"/>
+    <property name="value" value="# override this with seeds"/>
    </bean>
   </property>
  </bean>
@@ -79,9 +80,6 @@
   <!--  autowired BDB reference?  -->
  </bean>
  
- <bean id="queueAssignmentPolicy" class="org.archive.crawler.frontier.SurtAuthorityQueueAssignmentPolicy">
- </bean>
- 
  <bean id="serverCache" class="org.archive.modules.net.BdbServerCache" autowire="byName">
   <!--  autowired BDB reference?  -->
  </bean>
@@ -110,7 +108,7 @@
   <!-- autowired serverCache reference -->
  </bean>
  
- <bean id="sheetOverlaysManager" class="org.archive.spring.SheetOverlaysManager" autowire="byType">
+ <bean id="sheetOverlaysManager" class="org.archive.crawler.spring.SheetOverlaysManager" autowire="byType">
  </bean>
 
  <bean id="frontier" class="org.archive.crawler.frontier.BdbFrontier" autowire="byName">

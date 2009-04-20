@@ -21,6 +21,7 @@ package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 
 import org.archive.util.ArchiveUtils;
@@ -272,12 +273,12 @@ public class ToePool extends ThreadGroup implements Reporter {
                 processors.tally(tt.getCurrentProcessorName());
             }
         }
-        TreeSet sortedSteps = steps.getSortedByCounts();
+        TreeSet<Map.Entry<Object,Long>> sortedSteps = steps.getSortedByCounts();
         w.print(getToeCount());
         w.print(" threads: ");        
         w.print(Histotable.entryString(sortedSteps.first()));
         if(sortedSteps.size()>1) {
-            Iterator iter = sortedSteps.iterator();
+            Iterator<Map.Entry<Object,Long>> iter = sortedSteps.iterator();
             iter.next();
             w.print(", ");
             w.print(Histotable.entryString(iter.next()));
@@ -286,10 +287,10 @@ public class ToePool extends ThreadGroup implements Reporter {
             w.print(", etc...");
         }
         w.print("; ");
-        TreeSet sortedProcessors = processors.getSortedByCounts();
+        TreeSet<Map.Entry<Object,Long>> sortedProcessors = processors.getSortedByCounts();
         w.print(Histotable.entryString(sortedProcessors.first()));
         if(sortedProcessors.size()>1) {
-            Iterator iter = sortedProcessors.iterator();
+            Iterator<Map.Entry<Object,Long>> iter = sortedProcessors.iterator();
             iter.next();
             while(iter.hasNext()) {
                 w.print(", ");
