@@ -1,16 +1,36 @@
-package org.archive.crawler;
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
+package org.archive.crawler;
 
 import java.io.File;
 
+import org.apache.commons.io.FileUtils;
 import org.archive.spring.PathSharingContext;
-import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
-import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.BeansException;
 
 /**
- * @author pjack
- *
+ * Test all bundled job directories -- that they build, but have 
+ * exactly one validation error (need to enter contact URL).
+ * 
+ * @contributor pjack
  */
 public class BasicProfileTest extends TmpDirTestCase {
 
@@ -18,52 +38,39 @@ public class BasicProfileTest extends TmpDirTestCase {
     /**
      * Tests the default profile that gets put in the heritrix tarball.
      */
-    public void testDefaultProfile() throws Exception {
+    public void testBundledProfiles() throws Exception {
         File srcDir = new File("src/main/conf/jobs");
         if (!srcDir.exists()) {
             srcDir = new File("dist/src/main/conf/jobs");
         }
         if (!srcDir.exists()) {
-            throw new IllegalStateException("Couldn't find default profile.");
+            throw new IllegalStateException("Couldn't find jobs directory");
         }
         for (File f: srcDir.listFiles()) {
             if (f.isDirectory() && !f.getName().startsWith(".")) {
-                doTest(f);
+                testProfileDirectory(f);
             }
         }
     }
 
-    private void doTest(File srcDir) throws Exception {
+    protected void testProfileDirectory(File srcDir) throws Exception {
         System.out.println("\nNow testing " + srcDir.getName());
         File tmpDir = new File(getTmpDir(), "validatorTest");
         File configDir = new File(tmpDir, srcDir.getName());
         configDir.mkdirs();
-        FileUtils.copyFiles(srcDir, configDir);
+        FileUtils.copyDirectory(srcDir, configDir);
 
-//        File config = new File(configDir, "config.txt");
-//        new FileOutputStream(config).close();
-//        
-//        int errors = Validator.validate(config.getAbsolutePath());
-        
-        int errors = 0; 
-        
         PathSharingContext ac = null;
         try {
-            File config = new File(configDir,"crawler-beans.xml");
-            ac = new PathSharingContext(config.getAbsolutePath());
-        } catch (BeanCreationException bce){
-            // TODO: change to more informative exception
-            if(bce.getCause() instanceof IllegalArgumentException) {
-//                errors = 1;
-            }
+            File config = new File(configDir,"profile-crawler-beans.cxml");
+            ac = new PathSharingContext("file:"+config.getAbsolutePath());
+        } catch (BeansException be){
+            be.printStackTrace(System.err);
         } finally {
-            if(ac!=null) {
-                ac.destroy();
-            }
+            assertNotNull("profile not buildable",ac);
+            ac.validate();
+            assertEquals("did not get the expected one error",1,ac.getAllErrors().size());
+            ac.destroy();
         }
-        
-        // We expect one error:
-        //  root:metadata:operator-contact-url=string, ENTER-A-CONTACT-HTTP-URL-FOR-CRAWL-OPERATOR
-        assertEquals(1, errors);
     }
 }
