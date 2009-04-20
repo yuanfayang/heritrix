@@ -163,7 +163,9 @@ public class CrawlControllerImpl implements
     }
     public void setMaxToeThreads(int maxToeThreads) {
         this.maxToeThreads = maxToeThreads;
-        toePool.setSize(this.maxToeThreads);
+        if(toePool!=null) {
+            toePool.setSize(this.maxToeThreads);
+        }
     }
     
     /** whether to pause, rather than finish, when crawl appears done */
