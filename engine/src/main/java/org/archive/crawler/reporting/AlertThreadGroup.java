@@ -17,7 +17,7 @@
  *  limitations under the License.
  */
 
-package org.archive.crawler.framework;
+package org.archive.crawler.reporting;
 
 import java.util.LinkedList;
 import java.util.logging.LogRecord;

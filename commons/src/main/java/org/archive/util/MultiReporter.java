@@ -19,29 +19,28 @@
 
 package org.archive.util;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 
-public interface Reporter {
+/**
+ * @contributor stack
+ */
+public interface MultiReporter  extends Reporter {
     /**
-     * Make a default report to the passed-in Writer. Should
-     * be equivalent to reportTo(null, writer)
+     * Get an array of report names offered by this Reporter. 
+     * A name in brackets indicates a free-form String, 
+     * in accordance with the informal description inside
+     * the brackets, may yield a useful report.
+     * 
+     * @return String array of report names, empty if there is only
+     * one report type
+     */
+    public String[] getReports();
+    
+    /**
+     * Make a report of the given name to the passed-in Writer,
+     * If null, give the default report. 
      * 
      * @param writer to receive report
      */
-    public void reportTo(PrintWriter writer) throws IOException;
-    
-    /**
-     * Write a short single-line summary report 
-     * 
-     * @param writer to receive report
-     */
-    public void singleLineReportTo(PrintWriter pw) throws IOException;
-    
-    /**
-     * Return a legend for the single-line summary report as a String.
-     * 
-     * @return String single-line summary legend
-     */
-    public String singleLineLegend();
+    public void reportTo(String name, PrintWriter writer);
 }

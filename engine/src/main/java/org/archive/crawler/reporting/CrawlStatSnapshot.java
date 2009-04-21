@@ -18,7 +18,7 @@
  */
 package org.archive.crawler.reporting;
 
-import org.archive.crawler.framework.CrawlControllerImpl;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -64,7 +64,7 @@ public class CrawlStatSnapshot {
      * @param controller
      * @param stats
      */
-    public void collect(CrawlControllerImpl controller, StatisticsTracker stats) {
+    public void collect(CrawlController controller, StatisticsTracker stats) {
         // TODO: reconsider names of these methods, inline?    
         downloadedUriCount = controller.getFrontier().succeededFetchCount();
         bytesProcessed = stats.crawledBytes.getTotal();

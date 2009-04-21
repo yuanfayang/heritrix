@@ -1,27 +1,22 @@
-/* SurtPrefixedDecideRule
-*
-* $Id$
-*
-* Created on Apr 5, 2005
-*
-* Copyright (C) 2005 Internet Archive.
-*
-* This file is part of the Heritrix web crawler (crawler.archive.org).
-*
-* Heritrix is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser Public License as published by
-* the Free Software Foundation; either version 2.1 of the License, or
-* any later version.
-*
-* Heritrix is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Lesser Public License for more details.
-*
-* You should have received a copy of the GNU Lesser Public License
-* along with Heritrix; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+/*
+ *  This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ *  Licensed to the Internet Archive (IA) by one or more individual 
+ *  contributors. 
+ *
+ *  The IA licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.archive.modules.deciderules.surt;
 
 import java.io.File;
@@ -32,11 +27,13 @@ import java.io.Reader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.archive.io.ReadSource;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.PredicatedDecideRule;
 import org.archive.modules.seeds.SeedListener;
-import org.archive.modules.seeds.SeedModuleImpl;
+import org.archive.modules.seeds.SeedModule;
 import org.archive.net.UURI;
 import org.archive.util.SurtPrefixSet;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,12 +132,12 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         kp.put("alsoCheckVia", checkVia);
     }
 
-    protected SeedModuleImpl seeds;
-    public SeedModuleImpl getSeeds() {
+    protected SeedModule seeds;
+    public SeedModule getSeeds() {
         return this.seeds;
     }
     @Autowired
-    public void setSeeds(SeedModuleImpl seeds) {
+    public void setSeeds(SeedModule seeds) {
         this.seeds = seeds;
     }
     
@@ -267,19 +264,18 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         // interpret seeds as surts, if appropriate
         boolean deduceFromSeeds = getSeedsAsSurtPrefixes();
         if(deduceFromSeeds) {
-            try {
-                fr = seeds.getReader();
-                try {
-                    newSurtPrefixes.importFromMixed(fr, deduceFromSeeds);
-                } finally {
-                    fr.close();
+            if(seeds instanceof ReadSource) {
+                // scan text
+                fr = ((ReadSource)seeds).getReader();
+                newSurtPrefixes.importFromMixed(fr, deduceFromSeeds);
+                IOUtils.closeQuietly(fr);
+            }  else {
+                // just deduce from URIs
+                for(UURI u : seeds) {
+                    newSurtPrefixes.addFromPlain(u.toCustomString());
                 }
-            } catch (IOException e) {
-                logger.log(Level.SEVERE,"Problem reading seeds via: "+seeds,e);
-                // continue: operator will see severe log message or alert
             }
         }
-
         surtPrefixes = newSurtPrefixes;
     }
 
@@ -294,24 +290,17 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         // perhaps by remembering mod-time
     }
 
-    /**
-     * Dig through everything to get the crawl-global seeds file. 
-     * Add self as listener while at it. 
-     * 
-     * @return Seed list file
-     */
-    protected Reader getSeedfile() {
-        seeds.addSeedListener(this);
-        return seeds.getReader();
-    }
-
     public synchronized void addedSeed(final ProcessorURI curi) {
         SurtPrefixSet newSurtPrefixes = (SurtPrefixSet) surtPrefixes.clone();
         newSurtPrefixes.add(prefixFrom(curi.toString()));
         surtPrefixes = newSurtPrefixes;
     }
     
+    public void seedsRefreshed() {
+        // TODO update?        
+    }
+    
     protected String prefixFrom(String uri) {
         return SurtPrefixSet.prefixFromPlainForceHttp(uri);
     }
-}
+}//EOC

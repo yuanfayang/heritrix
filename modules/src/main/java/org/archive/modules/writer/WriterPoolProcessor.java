@@ -38,10 +38,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import org.archive.checkpointing.RecoverAction;
 import org.archive.io.DefaultWriterPoolSettings;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
+import org.archive.modules.CrawlMetadata;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;
@@ -49,7 +51,6 @@ import org.archive.modules.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.settings.RecoverAction;
 import org.archive.spring.ConfigPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
@@ -186,11 +187,11 @@ implements Lifecycle {
         this.maxTotalBytesToWrite = maxTotalBytesToWrite;
     }
 
-    public DefaultMetadataProvider getMetadataProvider() {
-        return (DefaultMetadataProvider) kp.get("metadataProvider");
+    public CrawlMetadata getMetadataProvider() {
+        return (CrawlMetadata) kp.get("metadataProvider");
     }
     @Autowired
-    public void setMetadataProvider(DefaultMetadataProvider provider) {
+    public void setMetadataProvider(CrawlMetadata provider) {
         kp.put("metadataProvider",provider);
     }
 

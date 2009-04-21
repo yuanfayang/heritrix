@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.archive.settings.RecoverAction;
+import org.archive.checkpointing.RecoverAction;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 

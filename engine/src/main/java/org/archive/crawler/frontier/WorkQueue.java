@@ -18,7 +18,7 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Reporter;
+import org.archive.util.MultiReporter;
 
 /**
  * A single queue of related URIs to visit, grouped by a classKey
@@ -28,7 +28,7 @@ import org.archive.util.Reporter;
  * @author Christian Kohlschuetter 
  */
 public abstract class WorkQueue implements Frontier.FrontierGroup,
-        Serializable, Reporter, Delayed {
+        Serializable, MultiReporter, Delayed {
     private static final long serialVersionUID = -3199666138837266341L;
     private static final Logger logger =
         Logger.getLogger(WorkQueue.class.getName());

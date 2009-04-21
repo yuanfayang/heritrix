@@ -21,7 +21,7 @@ package org.archive.modules.recrawl;
 
 import java.util.Map;
 
-import org.archive.settings.file.BdbModule;
+import org.archive.bdb.BdbModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
 

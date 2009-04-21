@@ -30,7 +30,7 @@ import java.util.List;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.archive.crawler.framework.CrawlJob;
-import org.archive.crawler.framework.EngineImpl;
+import org.archive.crawler.framework.Engine;
 import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -315,7 +315,7 @@ public class JobResource extends Resource {
         }
     }
 
-    protected EngineImpl getEngine() {
+    protected Engine getEngine() {
         return ((EngineApplication)getApplication()).getEngine();
     }
 

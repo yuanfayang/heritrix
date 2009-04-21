@@ -178,7 +178,7 @@ public class Precedence1SelfTest extends SelfTestBase {
             "  <property name='basePrecedence' value='5'/>\n" +
             " </bean>" +
             "</property>";
-        config = config.replace("<!--@@frontier_properties@@-->", uriPrecedencePolicy);
+        config = config.replace("<!--@@FRONTIER_PROPERTIES@@-->", uriPrecedencePolicy);
         
         config = configureSheets(config);
         return super.changeGlobalConfig(config);

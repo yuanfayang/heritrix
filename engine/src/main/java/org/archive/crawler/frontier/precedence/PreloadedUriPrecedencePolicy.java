@@ -28,9 +28,9 @@ import static org.archive.crawler.datamodel.CoreAttributeConstants.A_PRECALC_PRE
 
 import java.util.Map;
 
+import org.archive.bdb.BdbModule;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.modules.recrawl.PersistProcessor;
-import org.archive.settings.file.BdbModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
 

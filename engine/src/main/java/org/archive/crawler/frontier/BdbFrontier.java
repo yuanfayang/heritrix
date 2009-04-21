@@ -43,12 +43,11 @@ import java.util.regex.Pattern;
 import javax.management.openmbean.CompositeData;
 
 import org.apache.commons.collections.Closure;
+import org.archive.bdb.BdbModule;
+import org.archive.checkpointing.Checkpointable;
+import org.archive.checkpointing.RecoverAction;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.queue.StoredQueue;
-import org.archive.settings.Checkpointable;
-import org.archive.settings.RecoverAction;
-import org.archive.settings.file.BdbModule;
-import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.collections.StoredIterator;
@@ -63,9 +62,7 @@ import com.sleepycat.je.DatabaseException;
  */
 public class BdbFrontier extends WorkQueueFrontier 
 implements Serializable, Checkpointable {
-    // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils
-        .classnameBasedUID(BdbFrontier.class, 1);
+    private static final long serialVersionUID = 1L;
 
     private static final Logger logger =
         Logger.getLogger(BdbFrontier.class.getName());

@@ -26,7 +26,7 @@ package org.archive.crawler.deciderules;
 
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlControllerImpl;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.MatchesRegExpDecideRule;
 
@@ -42,12 +42,12 @@ public class ClassKeyMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
     private static final long serialVersionUID = 3L;
 
 
-    final private CrawlControllerImpl controller;
+    final private CrawlController controller;
     
     /**
      * Usual constructor. 
      */
-    public ClassKeyMatchesRegExpDecideRule(CrawlControllerImpl controller) {
+    public ClassKeyMatchesRegExpDecideRule(CrawlController controller) {
         this.controller = controller;
     }
 

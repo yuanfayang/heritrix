@@ -29,7 +29,7 @@ import java.io.Serializable;
 
 import org.archive.modules.ProcessorURI;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Reporter;
+import org.archive.util.MultiReporter;
 
 /**
  * Collector of statististics for a 'subset' of a crawl,
@@ -38,7 +38,7 @@ import org.archive.util.Reporter;
  * 
  * @author gojomo
  */
-public class FetchStats implements Serializable, FetchStatusCodes, Reporter {
+public class FetchStats implements Serializable, FetchStatusCodes, MultiReporter {
     private static final long serialVersionUID = 8624425657056569036L;
 
     public enum Stage {SCHEDULED, RELOCATED, RETRIED, 

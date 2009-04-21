@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.archive.settings.DefaultCheckpointRecovery;
+import org.archive.bdb.BdbModule;
+import org.archive.checkpointing.DefaultCheckpointRecovery;
 import org.archive.spring.ConfigPath;
 import org.archive.util.TmpDirTestCase;
 

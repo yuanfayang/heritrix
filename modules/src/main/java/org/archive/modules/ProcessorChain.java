@@ -1,10 +1,13 @@
 package org.archive.modules;
 
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
 
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
+import org.archive.util.ArchiveUtils;
+import org.archive.util.Reporter;
 import org.springframework.context.Lifecycle;
 
 /**
@@ -19,7 +22,10 @@ import org.springframework.context.Lifecycle;
  *  
  */
 public class ProcessorChain 
-implements Iterable<Processor>, HasKeyedProperties, Lifecycle {
+implements Iterable<Processor>, 
+           HasKeyedProperties, 
+           Reporter,
+           Lifecycle {
     
     KeyedProperties kp = new KeyedProperties();
     public KeyedProperties getKeyedProperties() {
@@ -64,4 +70,37 @@ implements Iterable<Processor>, HasKeyedProperties, Lifecycle {
         }
         isRunning = false; 
     }
+
+    /**
+     * Compiles and returns a human readable report on the active processors.
+     * @param writer Where to write to.
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public void reportTo(PrintWriter writer) {
+        writer.print(
+            "Processors report - "
+                + ArchiveUtils.get12DigitDate()
+                + "\n");
+ 
+            writer.print("  Number of Processors: " + size() + "\n");
+        writer.print("  NOTE: Some processors may not return a report!\n\n");
+
+        for (Processor p: this) {
+            writer.print(p.report());
+        }
+    }
+
+    public String singleLineLegend() {
+        return "";
+    }
+
+    public void singleLineReportTo(PrintWriter pw) {
+        pw.print(size());
+        pw.print(" processors: ");
+        for(Processor p : this) {
+            pw.print(p.getName());
+            pw.print(" ");
+        }
+    }
+
 }

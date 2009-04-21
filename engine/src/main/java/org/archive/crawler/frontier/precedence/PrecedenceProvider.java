@@ -31,13 +31,13 @@ import org.archive.modules.ProcessorURI;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.modules.fetcher.FetchStats.Stage;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Reporter;
+import org.archive.util.MultiReporter;
 
 /**
  * Parent class for precedence-providers, stateful helpers that can be 
  * installed in a WorkQueue to implement various queue-precedence policies. 
  */
-abstract public class PrecedenceProvider implements Reporter, 
+abstract public class PrecedenceProvider implements MultiReporter, 
 FetchStats.CollectsFetchStats, Serializable {
 
     abstract public int getPrecedence();

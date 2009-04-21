@@ -71,12 +71,12 @@ public class CrawlLimitEnforcer implements ApplicationListener {
         this.maxTimeSeconds = maxTimeSeconds;
     }
 
-    protected CrawlControllerImpl controller;
-    public CrawlControllerImpl getCrawlController() {
+    protected CrawlController controller;
+    public CrawlController getCrawlController() {
         return this.controller;
     }
     @Autowired
-    public void setCrawlController(CrawlControllerImpl controller) {
+    public void setCrawlController(CrawlController controller) {
         this.controller = controller;
     }
     

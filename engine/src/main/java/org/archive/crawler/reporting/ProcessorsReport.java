@@ -20,8 +20,6 @@ package org.archive.crawler.reporting;
 
 import java.io.PrintWriter;
 
-import org.archive.crawler.framework.CrawlControllerImpl;
-
 /**
  * The "Processors Report", delegated through the CrawlController 
  * to each Processor to dump whatever information it collects for 
@@ -33,7 +31,7 @@ public class ProcessorsReport extends Report {
 
     @Override
     public void write(PrintWriter writer) {
-        stats.controller.reportTo(CrawlControllerImpl.PROCESSORS_REPORT,writer);
+        stats.controller.getProcessorChain().reportTo(writer);
     }
 
     @Override

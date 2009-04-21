@@ -30,7 +30,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 
 import static org.archive.modules.fetcher.FetchStatusCodes.*;
 
-import org.archive.crawler.framework.CrawlControllerImpl;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlStatus;
 import org.archive.crawler.reporting.StatisticsTracker;
 import org.archive.modules.ProcessResult;
@@ -136,12 +136,12 @@ public class RuntimeLimitEnforcer extends Processor {
         this.expirationOperation = op; 
     }
 
-    protected CrawlControllerImpl controller;
-    public CrawlControllerImpl getCrawlController() {
+    protected CrawlController controller;
+    public CrawlController getCrawlController() {
         return this.controller;
     }
     @Autowired
-    public void setCrawlController(CrawlControllerImpl controller) {
+    public void setCrawlController(CrawlController controller) {
         this.controller = controller;
     }
     
@@ -173,7 +173,7 @@ public class RuntimeLimitEnforcer extends Processor {
     @Override
     protected ProcessResult innerProcessResult(ProcessorURI curi)
     throws InterruptedException {
-        CrawlControllerImpl controller = getCrawlController();
+        CrawlController controller = getCrawlController();
         StatisticsTracker stats = getStatisticsTracker();
         long allowedRuntimeMs = getRuntimeSeconds() * 1000L;
         long currentRuntimeMs = stats.getCrawlElapsedTime();

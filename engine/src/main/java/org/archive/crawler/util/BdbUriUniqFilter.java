@@ -32,7 +32,7 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.settings.file.BdbModule;
+import org.archive.bdb.BdbModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
 

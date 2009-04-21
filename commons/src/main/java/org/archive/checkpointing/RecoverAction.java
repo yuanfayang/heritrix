@@ -17,28 +17,29 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Checkpointable.java
+ * RecoverAction.java
  *
- * Created on Mar 1, 2007
+ * Created on Mar 2, 2007
  *
  * $Id:$
  */
 
-package org.archive.settings;
+package org.archive.checkpointing;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
+import java.io.Serializable;
+
 
 
 /**
+ * An action to be taken before a checkpoint's object graph is deserialized.
+ * 
  * @author pjack
- *
  */
-public interface Checkpointable {
+public interface RecoverAction extends Serializable {
 
     
-    void checkpoint(File dir, List<RecoverAction> actions) throws IOException;
-    
+    void recoverFrom(File checkpointDir, CheckpointRecovery recovery)
+    throws Exception;
 
 }

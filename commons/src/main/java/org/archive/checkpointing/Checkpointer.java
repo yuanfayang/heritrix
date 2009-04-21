@@ -17,7 +17,7 @@
  *  limitations under the License.
  */
 
-package org.archive.settings;
+package org.archive.checkpointing;
 
 import java.io.File;
 import java.io.FileInputStream;

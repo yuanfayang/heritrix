@@ -16,6 +16,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.archive.modules.seeds;
 
 import java.io.BufferedReader;
@@ -24,139 +25,47 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.URIException;
+import org.archive.checkpointing.Checkpointable;
+import org.archive.checkpointing.RecoverAction;
+import org.archive.io.ReadSource;
 import org.archive.modules.ProcessorURI;
 import org.archive.net.UURI;
-import org.archive.settings.Checkpointable;
-import org.archive.settings.RecoverAction;
-import org.archive.spring.ReadSource;
 import org.archive.spring.WriteTarget;
 import org.archive.util.DevUtils;
 import org.springframework.beans.factory.annotation.Required;
 
 /**
- * Module that maintains a list of seeds.
+ * Module that provides a list of seeds from a text source (such
+ * as a ConfigFile or ConfigString). 
  *
- * TODO: Rename to SeedModule in absence of separate interface
- * 
  * @contributor gojomo
  */
-public class SeedModuleImpl implements 
-    ReadSource,
-    Serializable, 
-    Checkpointable {
-
+public class TextSeedModule extends SeedModule 
+implements ReadSource,
+           Serializable, 
+           Checkpointable {
     private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
-        Logger.getLogger(SeedModuleImpl.class.getName());
+        Logger.getLogger(TextSeedModule.class.getName());
 
     /**
-     * File from which to extract seeds.
+     * Text from which to extract seeds
      */
-    protected ReadSource seedsSource = null;
-    public ReadSource getSeedsSource() {
-        return seedsSource;
+    protected ReadSource textSource = null;
+    public ReadSource getTextSource() {
+        return textSource;
     }
     @Required
-    public void setSeedsSource(ReadSource seedsSource) {
-        this.seedsSource = seedsSource;
+    public void setTextSource(ReadSource seedsSource) {
+        this.textSource = seedsSource;
     }
 
-    /**
-     * Whether to reread the seeds specification, whether it has changed or not,
-     * every time any configuration change occurs. If true, seeds are reread
-     * even when (for example) new domain overrides are set. Rereading the seeds
-     * can take a long time with large seed lists.
-     */
-    protected boolean rereadSeedsOnConfig = true;
-    public boolean getRereadSeedsOnConfig() {
-        return rereadSeedsOnConfig;
-    }
-    public void setRereadSeedsOnConfig(boolean rereadSeedsOnConfig) {
-        this.rereadSeedsOnConfig = rereadSeedsOnConfig;
-    }
-
-
-    protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();
-
-    protected Set<SeedRefreshListener> seedRefreshListeners = 
-        new HashSet<SeedRefreshListener>();
-
-    /** 
-     * Constructor.
-     */
-    public SeedModuleImpl() {
-        super();
-    }
-
-    /**
-     * Refresh seeds.
-     *
-     */
-    public void refreshSeeds() {
-        fireSeedsRefreshed();
-    }
-    
-    
-    protected void fireSeedsRefreshed() {
-        for (SeedRefreshListener l: seedRefreshListeners) {
-            l.seedsRefreshed();
-        }
-    }
-
-    /** Check if a URI is in the seeds.
-     *
-     * @param o the URI to check.
-     * @return true if URI is a seed.
-     */
-    protected boolean isSeed(Object o) {
-        return o instanceof ProcessorURI && ((ProcessorURI) o).isSeed();
-    }
-
-    /**
-     * @param a First UURI of compare.
-     * @param b Second UURI of compare.
-     * @return True if UURIs are of same host.
-     */
-    protected boolean isSameHost(UURI a, UURI b) {
-        boolean isSameHost = false;
-        if (a != null && b != null) {
-            // getHost can come back null.  See
-            // "[ 910120 ] java.net.URI#getHost fails when leading digit"
-            try {
-                if (a.getReferencedHost() != null && b.getReferencedHost() != null) {
-                    if (a.getReferencedHost().equals(b.getReferencedHost())) {
-                        isSameHost = true;
-                    }
-                }
-            }
-            catch (URIException e) {
-                logger.severe("Failed compare of " + a + " " + b + ": " +
-                    e.getMessage());
-            }
-        }
-        return isSameHost;
-    }
-
-    /**
-     * Take note of a situation (such as settings edit) where
-     * involved reconfiguration (such as reading from external
-     * files) may be necessary.
-     */
-    public void noteReconfiguration(/*KeyChangeEvent event*/) {
-        // TODO: further improve this so that case with hundreds of
-        // thousands or millions of seeds works better without requiring
-        // this specific settings check 
-        if (getRereadSeedsOnConfig()) {
-            refreshSeeds();
-        }
+    public TextSeedModule() {
     }
 
     /**
@@ -166,6 +75,7 @@ public class SeedModuleImpl implements
      *
      * @return Iterator, perhaps over a disk file, of seeds
      */
+    @Override
     public Iterator<UURI> seedsIterator() {
         return seedsIterator(null);
     }
@@ -178,20 +88,10 @@ public class SeedModuleImpl implements
      * @param ignoredItemWriter optional writer to get ignored seed items report
      * @return Iterator, perhaps over a disk file, of seeds
      */
+    @Override
     public Iterator<UURI> seedsIterator(Writer ignoredItemWriter) {
-        BufferedReader br = new BufferedReader(seedsSource.getReader());
+        BufferedReader br = new BufferedReader(textSource.getReader());
         return new SeedFileIterator(br,ignoredItemWriter);
-    }
-    
-    /**
-     * Convenience method to close SeedFileIterator, if appropriate.
-     * 
-     * @param iter Iterator to check if SeedFileIterator needing closing
-     */
-    protected void checkClose(Iterator<?> iter) {
-        if(iter instanceof SeedFileIterator) {
-            ((SeedFileIterator)iter).close();
-        }
     }
     
     /**
@@ -206,13 +106,14 @@ public class SeedModuleImpl implements
      * @param curi CandidateUri to add
      * @return true if successful, false if add failed for any reason
      */
+    @Override
     public boolean addSeed(final ProcessorURI curi) {
-        if(!(seedsSource instanceof WriteTarget)) {
+        if(!(textSource instanceof WriteTarget)) {
             // TODO: do something else to log seed update
-            
+            logger.warning("nowhere to log added seed: "+curi);
         } else {
             try {
-                Writer fw = ((WriteTarget)seedsSource).getWriter(true);
+                Writer fw = ((WriteTarget)textSource).getWriter(true);
                 // Write to new (last) line the URL.
                 fw.write("\n");
                 fw.write("# Heritrix added seed " +
@@ -233,15 +134,7 @@ public class SeedModuleImpl implements
         return false; 
     }
     
-    public void addSeedListener(SeedListener sl) {
-        seedListeners.add(sl);
-    }
-    
-    public void addSeedRefreshListener(SeedRefreshListener srl) {
-        seedRefreshListeners.add(srl);
-    }
-
-
+    @Override
     public void checkpoint(File dir, List<RecoverAction> actions)
             throws IOException {
         int id = System.identityHashCode(this);
@@ -273,6 +166,6 @@ public class SeedModuleImpl implements
 //    }
 
     public Reader getReader() {
-        return seedsSource.getReader();
+        return textSource.getReader();
     }
 }

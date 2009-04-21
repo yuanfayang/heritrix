@@ -24,11 +24,7 @@
  */
 package org.archive.net;
 
-
 import java.io.IOException;
-
-import org.archive.util.ArchiveUtils;
-
 
 /**
  * Indicates that a FTP operation failed due to a protocol violation.
@@ -37,18 +33,12 @@ import org.archive.util.ArchiveUtils;
  * @author pjack
  */
 public class FTPException extends IOException {
-
-
-    /** Serialization ID; robust against trivial API changes. */
-    private static final long serialVersionUID =
-     ArchiveUtils.classnameBasedUID(FTPException.class,1);
-
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * The reply code from the FTP server.
      */
     private int code;
-    
     
     /**
      * Constructs a new <code>FTPException</code>.

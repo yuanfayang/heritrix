@@ -146,7 +146,7 @@ public class SurtPrefixSet extends PrefixSet {
      * 
      * @param u String of URI or hostname
      */
-    private void addFromPlain(String u) {
+    public void addFromPlain(String u) {
         u = prefixFromPlainForceHttp(u);
         add(u);
     }

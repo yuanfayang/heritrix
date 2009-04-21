@@ -42,12 +42,10 @@ import com.sleepycat.je.DatabaseException;
  */
 public class BdbWorkQueue extends WorkQueue
 implements Serializable {
+    private static final long serialVersionUID = 1L;
     private static Logger LOGGER =
         Logger.getLogger(BdbWorkQueue.class.getName());
-    
-    // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils
-        .classnameBasedUID(BdbWorkQueue.class, 1);
+
 
     /**
      * All items in this queue have this same 'origin'

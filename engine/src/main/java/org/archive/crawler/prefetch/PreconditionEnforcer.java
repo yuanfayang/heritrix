@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlerLoggerModule;
+import org.archive.crawler.reporting.CrawlerLoggerModule;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.Processor;
 import org.archive.modules.ProcessorURI;

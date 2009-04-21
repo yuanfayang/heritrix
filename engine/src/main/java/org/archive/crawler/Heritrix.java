@@ -41,7 +41,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.output.TeeOutputStream;
-import org.archive.crawler.framework.EngineImpl;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.restlet.EngineApplication;
 import org.archive.util.ArchiveUtils;
 import org.restlet.Component;
@@ -83,7 +83,7 @@ public class Heritrix {
     /** Name of the heritrix properties file */
     private static final String PROPERTIES = "logging.properties";
 
-    protected EngineImpl engine; 
+    protected Engine engine; 
     protected Component component;
     /**
      * Heritrix start log file.
@@ -253,7 +253,7 @@ public class Heritrix {
 
         // Start Heritrix.
         try {
-            engine = new EngineImpl(jobsDir);
+            engine = new Engine(jobsDir);
             component = new Component();
             
             // TODO: require SSL, generating cert if necessary
@@ -318,7 +318,7 @@ public class Heritrix {
     }
 
 
-    public EngineImpl getEngine() {
+    public Engine getEngine() {
         return engine;
     }
 
