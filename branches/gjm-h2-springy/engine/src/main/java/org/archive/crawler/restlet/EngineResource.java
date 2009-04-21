@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import org.archive.crawler.framework.CrawlJob;
-import org.archive.crawler.framework.EngineImpl;
+import org.archive.crawler.framework.Engine;
 import org.restlet.Context;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.Form;
@@ -77,7 +77,7 @@ public class EngineResource extends Resource {
     }
 
     protected void writeHtml(Writer writer) {
-        EngineImpl engine = getEngine();
+        Engine engine = getEngine();
         String engineTitle = "Heritrix Engine "+engine.getHeritrixVersion();
         String baseRef = getRequest().getResourceRef().getBaseRef().toString();
         if(!baseRef.endsWith("/")) {
@@ -110,7 +110,7 @@ public class EngineResource extends Resource {
         pw.flush();
     }
 
-    protected EngineImpl getEngine() {
+    protected Engine getEngine() {
         return ((EngineApplication)getApplication()).getEngine();
     }
 }

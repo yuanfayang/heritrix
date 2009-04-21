@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.archive.io.ReadSource;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -38,7 +39,7 @@ import org.springframework.context.support.AbstractApplicationContext;
  * 
  * @contributor gojomo
  */
-public class ConfigPathConfiguration 
+public class ConfigPathConfigurer 
     implements BeanPostProcessor, ApplicationContextAware {
     
     //// BEANPOSTPROCESSOR IMPLEMENTATION
@@ -80,6 +81,8 @@ public class ConfigPathConfiguration
     
     //// BEAN PROPERTIES
     
+    /** 'home' directory for all other paths to be resolved 
+     * relative to; defaults to directory of primary XML config file */
     ConfigPath path; 
     public ConfigPath getPath() {
         return path;

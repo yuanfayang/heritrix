@@ -44,21 +44,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.bdb.BdbModule;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStateEvent;
 import org.archive.crawler.event.CrawlURIDispositionEvent;
 import org.archive.crawler.event.StatSnapshotEvent;
-import org.archive.crawler.framework.CrawlControllerImpl;
-import org.archive.crawler.framework.CrawlerLoggerModule;
-import org.archive.crawler.framework.EngineImpl;
-import org.archive.crawler.framework.SeedRecord;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.crawler.util.TopNSet;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.modules.seeds.SeedModuleImpl;
+import org.archive.modules.seeds.SeedModule;
 import org.archive.net.UURI;
-import org.archive.settings.file.BdbModule;
 import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
@@ -71,7 +69,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.Lifecycle;
-import org.springframework.stereotype.Component;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -126,7 +123,6 @@ import com.sleepycat.je.DatabaseException;
  * @contributor Kristinn Sigurdsson
  * @contributor gojomo
  */
-@Component("statisticsTracker")
 public class StatisticsTracker 
     implements 
         ApplicationContextAware, 
@@ -136,12 +132,12 @@ public class StatisticsTracker
         Serializable {
     private static final long serialVersionUID = 5L;
 
-    protected SeedModuleImpl seeds;
-    public SeedModuleImpl getSeeds() {
+    protected SeedModule seeds;
+    public SeedModule getSeeds() {
         return this.seeds;
     }
     @Autowired
-    public void setSeeds(SeedModuleImpl seeds) {
+    public void setSeeds(SeedModule seeds) {
         this.seeds = seeds;
     }
 
@@ -151,7 +147,7 @@ public class StatisticsTracker
         this.bdb = bdb;
     }
 
-    protected ConfigPath reportsDir = new ConfigPath(EngineImpl.REPORTS_DIR_NAME,".");
+    protected ConfigPath reportsDir = new ConfigPath(Engine.REPORTS_DIR_NAME,".");
     public ConfigPath getReportsDir() {
         return reportsDir;
     }
@@ -220,12 +216,12 @@ public class StatisticsTracker
         this.keepSnapshotsCount = count;
     }
     
-    protected CrawlControllerImpl controller;
-    public CrawlControllerImpl getCrawlController() {
+    protected CrawlController controller;
+    public CrawlController getCrawlController() {
         return this.controller;
     }
     @Autowired
-    public void setCrawlController(CrawlControllerImpl controller) {
+    public void setCrawlController(CrawlController controller) {
         this.controller = controller;
     }
 
@@ -361,7 +357,7 @@ public class StatisticsTracker
      * This method will be called by run() at intervals specified in
      * the crawl order file.  It is also invoked when pausing or
      * stopping a crawl to capture the state at that point.  Default behavior is
-     * call to {@link CrawlControllerImpl#logProgressStatistics} so CrawlController
+     * call to {@link CrawlController#logProgressStatistics} so CrawlController
      * can act on progress statistics event.
      * <p>
      * It is recommended that for implementations of this method it be
@@ -850,12 +846,6 @@ public class StatisticsTracker
         // TODO Auto-generated method stub
         
     }
-    /**
-     * @param writer Where to write.
-     */
-    protected void writeManifestReportTo(PrintWriter writer) {
-        controller.reportTo(CrawlControllerImpl.MANIFEST_REPORT, writer);
-    } 
     
     /**
      * Run the reports.

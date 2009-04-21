@@ -59,8 +59,8 @@ public class DevUtils {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw); 
         final Thread current = Thread.currentThread();
-        if (current instanceof Reporter) {
-            Reporter tt = (Reporter)current;
+        if (current instanceof MultiReporter) {
+            MultiReporter tt = (MultiReporter)current;
             try {
                 tt.reportTo(pw);
             } catch (IOException e) {

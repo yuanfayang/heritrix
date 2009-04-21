@@ -102,7 +102,6 @@ import org.archive.modules.net.CrawlHost;
 import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.ServerCache;
 import org.archive.net.UURI;
-import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.Lifecycle;
@@ -118,9 +117,7 @@ import org.springframework.context.Lifecycle;
  * @version $Id$
  */
 public class FetchHTTP extends Processor implements Lifecycle {
-    // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils
-            .classnameBasedUID(FetchHTTP.class, 1);
+    private static final long serialVersionUID = 1L;
 
     private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
 
@@ -416,8 +413,8 @@ public class FetchHTTP extends Processor implements Lifecycle {
     public static final String HTTPS_SCHEME = "https";
 
     
-    CookieStorage cookieStorage;
-    @Autowired
+    CookieStorage cookieStorage = new BdbCookieStorage();
+    @Autowired(required=false)
     public void setCookieStorage(CookieStorage storage) {
         this.cookieStorage = storage; 
     }

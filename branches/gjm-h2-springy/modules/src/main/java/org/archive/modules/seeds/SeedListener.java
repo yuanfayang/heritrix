@@ -27,10 +27,11 @@ import org.archive.modules.ProcessorURI;
 
 /**
  * Implemented by components which want notifications of 
- * seed list changes from a Scope. 
+ * seed list changes.
  * 
  * @author gojomo
  */
 public interface SeedListener {
     void addedSeed(final ProcessorURI uuri);
+    void seedsRefreshed();
 }

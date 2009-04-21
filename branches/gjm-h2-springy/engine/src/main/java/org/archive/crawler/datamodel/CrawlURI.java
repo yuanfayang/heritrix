@@ -90,8 +90,8 @@ import org.archive.spring.OverlayContext;
 import org.archive.spring.OverlayMapsSource;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
+import org.archive.util.MultiReporter;
 import org.archive.util.Recorder;
-import org.archive.util.Reporter;
 
 
 /**
@@ -106,14 +106,12 @@ import org.archive.util.Reporter;
  *
  * @author Gordon Mohr
  */
-public class CrawlURI implements ProcessorURI, Reporter, Serializable, OverlayContext{
-
+public class CrawlURI 
+implements ProcessorURI, MultiReporter, Serializable, OverlayContext {
     private static final long serialVersionUID = 3L;
-
 
     public static final int UNCALCULATED = -1;
     
-
     /**
      * The URI being crawled.  It's transient to save space when storing to BDB.
      */

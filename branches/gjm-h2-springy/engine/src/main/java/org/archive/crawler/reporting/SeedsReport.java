@@ -21,7 +21,6 @@ package org.archive.crawler.reporting;
 import java.io.PrintWriter;
 import java.util.Iterator;
 
-import org.archive.crawler.framework.SeedRecord;
 
 /**
  * The "Seeds Report", results per provided seed.

@@ -46,10 +46,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
 import org.archive.crawler.event.CrawlStateEvent;
+import org.archive.crawler.reporting.AlertThreadGroup;
 import org.archive.crawler.reporting.CrawlStatSnapshot;
 import org.archive.crawler.reporting.StatisticsTracker;
 import org.archive.spring.ConfigPath;
-import org.archive.spring.ConfigPathConfiguration;
+import org.archive.spring.ConfigPathConfigurer;
 import org.archive.spring.PathSharingContext;
 import org.archive.util.ArchiveUtils;
 import org.joda.time.DateTime;
@@ -377,7 +378,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
             getJobLogger().log(Level.SEVERE,"Can't relaunch running job");
             return;
         } else {
-            CrawlControllerImpl cc = getCrawlController();
+            CrawlController cc = getCrawlController();
             if(cc!=null && cc.hasStarted()) {
                 getJobLogger().log(Level.SEVERE,"Can't relaunch previously-launched assembled job");
                 return;
@@ -460,15 +461,15 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         return this.ac != null && this.ac.isActive() && this.ac.isRunning();
     }
 
-    public CrawlControllerImpl getCrawlController() {
+    public CrawlController getCrawlController() {
         if(ac==null) {
             return null;
         }
-        return (CrawlControllerImpl) ac.getBean("crawlController");
+        return (CrawlController) ac.getBean("crawlController");
     }
 
     public boolean isPausable() {
-        CrawlControllerImpl cc = getCrawlController(); 
+        CrawlController cc = getCrawlController(); 
         if(cc==null) {
             return false;
         }
@@ -476,7 +477,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     }
     
     public boolean isUnpausable() {
-        CrawlControllerImpl cc = getCrawlController(); 
+        CrawlController cc = getCrawlController(); 
         if(cc==null) {
             return false;
         }
@@ -489,7 +490,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
      */
     public void reset() {
         if(ac!=null) {
-            CrawlControllerImpl cc = getCrawlController();
+            CrawlController cc = getCrawlController();
             if(cc!=null) {
                 cc.requestCrawlStop();
                 // TODO: wait for stop?
@@ -557,8 +558,8 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
         if(ac==null) {
             return MapUtils.EMPTY_MAP;
         }
-        ConfigPathConfiguration cpc = 
-            (ConfigPathConfiguration)ac.getBean("configPathConfiguration");
+        ConfigPathConfigurer cpc = 
+            (ConfigPathConfigurer)ac.getBean("configPathConfiguration");
         return cpc.getPaths();        
     }
 
@@ -599,7 +600,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
      * @return true if launchable
      */
     public boolean isLaunchable() {
-        CrawlControllerImpl cc = getCrawlController();
+        CrawlController cc = getCrawlController();
         if(cc==null) {
             return true;
         }
@@ -611,7 +612,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     }
     
     protected StatisticsTracker getStats() {
-        CrawlControllerImpl cc = getCrawlController();
+        CrawlController cc = getCrawlController();
         return cc!=null ? cc.getStatisticsTracker() : null;
     }
 
@@ -693,7 +694,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     }
 
     public String threadReport() {
-        CrawlControllerImpl cc = getCrawlController();
+        CrawlController cc = getCrawlController();
         if(cc==null) {
             return "<i>n/a</i>";
         }
@@ -701,7 +702,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
     }
 
     public String frontierReport() {
-        CrawlControllerImpl cc = getCrawlController();
+        CrawlController cc = getCrawlController();
         if(cc==null) {
             return "<i>n/a</i>";
         }

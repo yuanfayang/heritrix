@@ -181,7 +181,7 @@ public class Precedence3SelfTest extends SelfTestBase {
             "  <property name='basePrecedence' value='5'/>\n" +
             " </bean>" +
             "</property>";
-        config = config.replace("<!--@@frontier_properties@@-->", uriPrecedencePolicy);
+        config = config.replace("<!--@@FRONTIER_PROPERTIES@@-->", uriPrecedencePolicy);
 
         // add the keyword processor after linkScoper
         config = config.replace(

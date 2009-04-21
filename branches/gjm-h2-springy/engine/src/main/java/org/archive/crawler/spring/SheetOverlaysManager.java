@@ -39,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.stereotype.Component;
 
 /**
  * Manager which marks-up CrawlURIs with the names of all applicable 
@@ -48,7 +47,6 @@ import org.springframework.stereotype.Component;
  * @contributor gojomo
  */
 @SuppressWarnings("unchecked")
-@Component("sheetOverlaysManager")
 public class SheetOverlaysManager implements 
 BeanFactoryAware, InitializingBean, OverlayMapsSource, ApplicationListener {
 

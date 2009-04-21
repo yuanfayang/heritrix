@@ -30,6 +30,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.archive.modules.ProcessorURI;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;

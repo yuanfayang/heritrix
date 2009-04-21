@@ -48,8 +48,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -60,16 +58,17 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
+import org.archive.checkpointing.CheckpointRecovery;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.SchedulingConstants;
 import org.archive.crawler.event.CrawlStateEvent;
-import org.archive.crawler.framework.CrawlControllerImpl;
-import org.archive.crawler.framework.CrawlerLoggerModule;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.reporting.CrawlerLoggerModule;
 import org.archive.crawler.spring.SheetOverlaysManager;
 import org.archive.modules.ModuleAttributeConstants;
-import org.archive.modules.canonicalize.CanonicalizationRule;
-import org.archive.modules.canonicalize.Canonicalizer;
+import org.archive.modules.ProcessorURI;
+import org.archive.modules.canonicalize.UriCanonicalizationPolicy;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.extractor.ExtractorParameters;
 import org.archive.modules.fetcher.UserAgentProvider;
@@ -79,10 +78,9 @@ import org.archive.modules.net.CrawlServer;
 import org.archive.modules.net.RobotsExclusionPolicy;
 import org.archive.modules.net.ServerCache;
 import org.archive.modules.net.ServerCacheUtil;
-import org.archive.modules.seeds.SeedModuleImpl;
-import org.archive.modules.seeds.SeedRefreshListener;
+import org.archive.modules.seeds.SeedListener;
+import org.archive.modules.seeds.SeedModule;
 import org.archive.net.UURI;
-import org.archive.settings.CheckpointRecovery;
 import org.archive.spring.ConfigPath;
 import org.archive.spring.HasKeyedProperties;
 import org.archive.spring.KeyedProperties;
@@ -104,7 +102,7 @@ public abstract class AbstractFrontier
     implements Frontier, 
                Serializable, 
                Lifecycle, // InitializingBean, 
-               SeedRefreshListener, 
+               SeedListener, 
                HasKeyedProperties,
                ExtractorParameters {
     private static final long serialVersionUID = 555881755284996860L;
@@ -126,12 +124,12 @@ public abstract class AbstractFrontier
     }
 
 
-    protected CrawlControllerImpl controller;
-    public CrawlControllerImpl getCrawlController() {
+    protected CrawlController controller;
+    public CrawlController getCrawlController() {
         return this.controller;
     }
     @Autowired
-    public void setCrawlController(CrawlControllerImpl controller) {
+    public void setCrawlController(CrawlController controller) {
         this.controller = controller;
     }
     
@@ -153,12 +151,12 @@ public abstract class AbstractFrontier
         this.loggerModule = loggerModule;
     }
 
-    protected SeedModuleImpl seeds;
-    public SeedModuleImpl getSeeds() {
+    protected SeedModule seeds;
+    public SeedModule getSeeds() {
         return this.seeds;
     }
     @Autowired
-    public void setSeeds(SeedModuleImpl seeds) {
+    public void setSeeds(SeedModule seeds) {
         this.seeds = seeds;
     }
     
@@ -408,16 +406,13 @@ public abstract class AbstractFrontier
      * order listed from top to bottom.
      */
     
-    {
-        setCanonicalizationRules(new LinkedList<CanonicalizationRule>());
-    }
     @SuppressWarnings("unchecked")
-    public List<CanonicalizationRule> getCanonicalizationRules() {
-        return (List<CanonicalizationRule>) kp.get("canonicalizationRules");
+    public UriCanonicalizationPolicy getUriCanonicalizationPolicy() {
+        return (UriCanonicalizationPolicy) kp.get("uriCanonicalizationRules");
     }
-    @Autowired(required=false)
-    public void setCanonicalizationRules(List<CanonicalizationRule> rules) {
-        kp.put("canonicalizationRules",rules);
+    @Autowired
+    public void setCanonicalizationPolicy(UriCanonicalizationPolicy policy) {
+        kp.put("uriCanonicalizationRules",policy);
     }
 
     /**
@@ -511,7 +506,7 @@ public abstract class AbstractFrontier
         if(isRunning()) {
             return; 
         }
-        seeds.addSeedRefreshListener(this);
+        seeds.addSeedListener(this);
         
         if (getRecoveryLogEnabled()) try {
             initJournal(loggerModule.getPath().getFile().getAbsolutePath());
@@ -1029,7 +1024,10 @@ public abstract class AbstractFrontier
         loadSeeds();
     }
     
-
+    public void addedSeed(ProcessorURI puri) {
+        // TODO: schedule?
+    }
+    
     /**
      * Dump ignored seed items (if any) to disk; delete file otherwise.
      * Static to allow non-derived sibling classes (frontiers not yet 
@@ -1391,9 +1389,7 @@ public abstract class AbstractFrontier
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        //Sheet global = null; // manager.getGlobalSheet(); //TODO:SPRINGY overrides
-        List<CanonicalizationRule> rules = getCanonicalizationRules();
-        return Canonicalizer.canonicalize(uuri.toString(), rules);
+        return getUriCanonicalizationPolicy().canonicalize(uuri.toString());
     }
 
     /**

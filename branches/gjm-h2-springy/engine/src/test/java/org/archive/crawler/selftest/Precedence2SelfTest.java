@@ -30,9 +30,9 @@ public class Precedence2SelfTest extends Precedence1SelfTest {
             " <bean id='uriPrecedencePolicy' class='org.archive.crawler.frontier.precedence.PreloadedUriPrecedencePolicy'>\n" +
             "  <property name='basePrecedence' value='5'/>\n" +
             " </bean>";
-        config = config.replace("<!--@@beans_morebeans@@-->", uriPrecedencePolicy);
+        config = config.replace("<!--@@BEANS_MOREBEANS@@-->", uriPrecedencePolicy);
         // suppress superclass insertion of inner bean policy
-        config = config.replace("<!--@@frontier_properties@@-->", "");
+        config = config.replace("<!--@@FRONTIER_PROPERTIES@@-->", "");
         return super.changeGlobalConfig(config);
     }
 

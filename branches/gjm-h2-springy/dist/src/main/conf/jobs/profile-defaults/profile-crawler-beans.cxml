@@ -19,6 +19,8 @@
    <value>
 
 metadata.operatorContactUrl=ENTER_AN_URL_WITH_CONTACT_INFO_HERE_FOR_WEBMASTERS_AFFECTED_BY_YOUR_CRAWL
+metadata.description=basic crawl
+metadata.jobName=basic
 
    </value>
   </property>
@@ -27,7 +29,7 @@ metadata.operatorContactUrl=ENTER_AN_URL_WITH_CONTACT_INFO_HERE_FOR_WEBMASTERS_A
  <bean id="longerOverrides" class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
   <property name="properties">
    <props>
-    <prop key="seeds.seedsSource.value">
+    <prop key="seeds.textSource.value">
 
 # URLS HERE
 http://example.example/example

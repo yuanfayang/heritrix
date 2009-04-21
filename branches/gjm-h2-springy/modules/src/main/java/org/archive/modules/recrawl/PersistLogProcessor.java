@@ -29,10 +29,10 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.SerializationUtils;
+import org.archive.checkpointing.Checkpointable;
+import org.archive.checkpointing.RecoverAction;
 import org.archive.io.CrawlerJournal;
 import org.archive.modules.ProcessorURI;
-import org.archive.settings.Checkpointable;
-import org.archive.settings.RecoverAction;
 import org.archive.spring.ConfigPath;
 import org.springframework.context.Lifecycle;
 

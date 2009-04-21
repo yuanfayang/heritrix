@@ -29,21 +29,20 @@ import java.util.LinkedList;
 import java.util.logging.Logger;
 
 import org.archive.crawler.event.CrawlStateEvent;
+import org.archive.crawler.reporting.AlertThreadGroup;
+import org.archive.crawler.reporting.CrawlerLoggerModule;
 import org.archive.crawler.reporting.StatisticsTracker;
-import org.archive.modules.Processor;
+import org.archive.modules.CrawlMetadata;
 import org.archive.modules.ProcessorChain;
 import org.archive.modules.net.ServerCache;
-import org.archive.modules.writer.DefaultMetadataProvider;
 import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Reporter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.Lifecycle;
 import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.stereotype.Component;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
 
@@ -57,17 +56,11 @@ import org.xbill.DNS.Lookup;
  *
  * @contributor gojomo
  */
-// TODO: rename back to CrawlController
-@Component("crawlController")
-public class CrawlControllerImpl implements 
-    Serializable, 
-    Reporter, 
-    Lifecycle,
-    ApplicationContextAware {
- 
-    // be robust against trivial implementation changes
-    private static final long serialVersionUID =
-        ArchiveUtils.classnameBasedUID(CrawlControllerImpl.class,1);
+public class CrawlController 
+implements Serializable, 
+           Lifecycle,
+           ApplicationContextAware {
+    private static final long serialVersionUID = 1L;
     
     // ApplicationContextAware implementation, for eventing
     AbstractApplicationContext appCtx;
@@ -75,12 +68,12 @@ public class CrawlControllerImpl implements
         this.appCtx = (AbstractApplicationContext)applicationContext;
     }
     
-    DefaultMetadataProvider metadata;
-    public DefaultMetadataProvider getMetadata() {
+    CrawlMetadata metadata;
+    public CrawlMetadata getMetadata() {
         return metadata;
     }
     @Autowired
-    public void setMetadata(DefaultMetadataProvider provider) {
+    public void setMetadata(CrawlMetadata provider) {
         this.metadata = provider;
     }
     
@@ -239,7 +232,7 @@ public class CrawlControllerImpl implements
      * They appear on console.
      */
     private final static Logger LOGGER =
-        Logger.getLogger(CrawlControllerImpl.class.getName());
+        Logger.getLogger(CrawlController.class.getName());
 
     private transient ToePool toePool;
 
@@ -267,14 +260,7 @@ public class CrawlControllerImpl implements
      */
     private Checkpointer checkpointer;
 
-    /**
-     * A manifest of all files used/created during this crawl. Written to file
-     * at the end of the crawl (the absolutely last thing done).
-     */
-    transient private StringBuffer manifest;
-
-    public CrawlControllerImpl() {
-
+    public CrawlController() {
     }
     
     transient AlertThreadGroup alertThreadGroup;
@@ -293,7 +279,6 @@ public class CrawlControllerImpl implements
                 this, getCheckpointsDir().getFile());
 
         sExit = CrawlStatus.FINISHED_ABNORMAL;
-        this.manifest = new StringBuffer();
 
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
         // also cap size at 1 (we never wanta cached value; 0 is non-operative)
@@ -369,7 +354,6 @@ public class CrawlControllerImpl implements
         LOGGER.fine("Entered complete stop.");
 
         loggerModule.closeLogFiles();
-        this.manifest = null;
         this.reserveMemory = null;
         if (this.checkpointer != null) {
             this.checkpointer.cleanup();
@@ -544,14 +528,6 @@ public class CrawlControllerImpl implements
     public ToePool getToePool() {
         return toePool;
     }
-    
-	/**
-	 * @return toepool one-line report
-	 */
-	public String oneLineReportThreads() {
-		// TODO Auto-generated method stub
-		return toePool.singleLineReport();
-	}
 
     /**
      * Kills a thread. For details see
@@ -564,7 +540,6 @@ public class CrawlControllerImpl implements
     public void killThread(int threadNumber, boolean replace){
         toePool.killThread(threadNumber, replace);
     }
-
 
     /**
      * Evaluate if the crawl should stop because it is finished.
@@ -588,9 +563,6 @@ public class CrawlControllerImpl implements
     private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         this.state = State.PAUSED;
-
-        this.manifest = new StringBuffer();
-
         stream.defaultReadObject();
     }
   
@@ -600,83 +572,7 @@ public class CrawlControllerImpl implements
             System.gc();
         }
     }
-    
-    // 
-    // Reporter
-    //
-    public final static String PROCESSORS_REPORT = "processors";
-    public final static String MANIFEST_REPORT = "manifest";
-    protected final static String[] REPORTS = {PROCESSORS_REPORT, MANIFEST_REPORT};
-    
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#getReports()
-     */
-    public String[] getReports() {
-        return REPORTS;
-    }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
-     */
-    public void reportTo(PrintWriter writer) {
-        reportTo(null,writer);
-    }
-
-    public String singleLineReport() {
-        return ArchiveUtils.singleLineReport(this);
-    }
-
-    public void reportTo(String name, PrintWriter writer) {
-        if(PROCESSORS_REPORT.equals(name)) {
-            reportProcessorsTo(writer);
-            return;
-        } else if (MANIFEST_REPORT.equals(name)) {
-            reportManifestTo(writer);
-            return;
-        } else if (name!=null) {
-            writer.println("requested report unknown: "+name);
-        }
-        singleLineReportTo(writer);
-    }
-
-    /**
-     * @param writer Where to write report to.
-     */
-    protected void reportManifestTo(PrintWriter writer) {
-        writer.print(manifest.toString());
-    }
-
-    /**
-     * Compiles and returns a human readable report on the active processors.
-     * @param writer Where to write to.
-     * @see org.archive.crawler.framework.Processor#report()
-     */
-    protected void reportProcessorsTo(PrintWriter writer) {
-        writer.print(
-            "Processors report - "
-                + ArchiveUtils.get12DigitDate()
-                + "\n");
-        writer.print("  Job being crawled:    " + metadata.getJobName()
-                + "\n");
-
-        writer.print("  Number of Processors: " + getProcessorChain().size() + "\n");
-        writer.print("  NOTE: Some processors may not return a report!\n\n");
-
-        for (Processor p: getProcessorChain()) {
-            writer.print(p.report());
-        }
-    }
-
-    public void singleLineReportTo(PrintWriter writer) {
-        // TODO: imrpvoe to be summary of crawl state
-        writer.write("[Crawl Controller]\n");
-    }
-
-    public String singleLineLegend() {
-        // TODO improve
-        return "nothingYet";
-    }
-    
     /**
      * Log to the progress statistics log.
      * @param msg Message to write the progress statistics log.
@@ -703,7 +599,7 @@ public class CrawlControllerImpl implements
     }
 
     public String getToeThreadReportShort() {
-        return (toePool == null) ? "" : toePool.singleLineReport();
+        return (toePool == null) ? "" : ArchiveUtils.singleLineReport(toePool);
     }
 
     public String getFrontierReport() {
@@ -718,13 +614,7 @@ public class CrawlControllerImpl implements
     }
 
     public String getFrontierReportShort() {
-        return getFrontier().singleLineReport();
-    }
-
-    public String getProcessorsReport() {
-        StringWriter sw = new StringWriter();
-        this.reportTo(CrawlControllerImpl.PROCESSORS_REPORT,new PrintWriter(sw));
-        return sw.toString();
+        return ArchiveUtils.singleLineReport(getFrontier());
     }
 
     /**

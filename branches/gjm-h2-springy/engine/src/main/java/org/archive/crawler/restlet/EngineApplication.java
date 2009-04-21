@@ -21,7 +21,7 @@ package org.archive.crawler.restlet;
 
 import java.io.IOException;
 
-import org.archive.crawler.framework.EngineImpl;
+import org.archive.crawler.framework.Engine;
 import org.restlet.Application;
 import org.restlet.Directory;
 import org.restlet.Restlet;
@@ -39,8 +39,8 @@ import org.restlet.util.Template;
  * @contributor gojomo
  */
 public class EngineApplication extends Application {
-    EngineImpl engine; 
-    public EngineApplication(EngineImpl engine) {
+    Engine engine; 
+    public EngineApplication(Engine engine) {
         this.engine = engine;
         getMetadataService().addExtension("log", MediaType.TEXT_PLAIN );
         getMetadataService().addExtension("cxml", MediaType.APPLICATION_XML );
@@ -84,7 +84,7 @@ public class EngineApplication extends Application {
         return router;
     }
 
-    public EngineImpl getEngine() {
+    public Engine getEngine() {
         return engine;
     }  
 }

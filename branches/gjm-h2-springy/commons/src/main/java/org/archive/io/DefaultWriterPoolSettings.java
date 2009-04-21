@@ -34,7 +34,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.settings.CheckpointRecovery;
+import org.archive.checkpointing.CheckpointRecovery;
 
 /**
  * @author pjack

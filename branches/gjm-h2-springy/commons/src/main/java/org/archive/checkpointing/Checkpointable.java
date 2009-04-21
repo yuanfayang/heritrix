@@ -17,24 +17,28 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * SeedRefreshListener.java
+ * Checkpointable.java
  *
- * Created on Mar 20, 2007
+ * Created on Mar 1, 2007
  *
  * $Id:$
  */
 
-package org.archive.modules.seeds;
+package org.archive.checkpointing;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 
 /**
  * @author pjack
  *
  */
-public interface SeedRefreshListener {
+public interface Checkpointable {
 
     
-    void seedsRefreshed();
+    void checkpoint(File dir, List<RecoverAction> actions) throws IOException;
     
-    
+
 }

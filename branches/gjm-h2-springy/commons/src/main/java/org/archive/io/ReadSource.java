@@ -16,27 +16,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.archive.crawler.event;
 
-import org.archive.crawler.framework.CrawlController.State;
-import org.springframework.context.ApplicationEvent;
+package org.archive.io;
 
-public class CrawlStateEvent extends ApplicationEvent {
-    private static final long serialVersionUID = 1L;
-    protected State state;
-    protected String message;
+import java.io.Reader;
 
-    public CrawlStateEvent(Object source, State state, String message) {
-        super(source);
-        this.state = state;
-        this.message = message; 
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public State getState() {
-        return state;
-    }
+public interface ReadSource {
+    Reader getReader();
 }

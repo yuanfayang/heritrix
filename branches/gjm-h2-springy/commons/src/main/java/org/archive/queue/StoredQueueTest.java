@@ -24,7 +24,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.io.FileUtils;
-import org.archive.settings.file.BdbModule;
+import org.archive.bdb.BdbModule;
 import org.archive.util.TmpDirTestCase;
 import org.archive.util.bdbje.EnhancedEnvironment;
 

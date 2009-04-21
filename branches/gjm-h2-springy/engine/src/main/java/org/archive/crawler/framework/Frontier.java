@@ -33,7 +33,7 @@ import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.modules.deciderules.DecideRule;
 import org.archive.modules.fetcher.FetchStats;
 import org.archive.net.UURI;
-import org.archive.util.Reporter;
+import org.archive.util.MultiReporter;
 import org.json.JSONException;
 
 
@@ -55,7 +55,7 @@ import org.json.JSONException;
  * amount), delays between connections etc.
  *
  * <p>A URIFrontier is created by the
- * {@link org.archive.crawler.framework.CrawlControllerImpl CrawlController} which
+ * {@link org.archive.crawler.framework.CrawlController CrawlController} which
  * is in turn responsible for providing access to it. Most significant among
  * those modules interested in the Frontier are the
  * {@link org.archive.crawler.framework.ToeThread ToeThreads} who perform the
@@ -96,16 +96,16 @@ import org.json.JSONException;
  * @author Gordon Mohr
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.framework.CrawlControllerImpl
- * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURIDisregardEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURIFailureEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURINeedRetryEvent(CrawlURI)
- * @see org.archive.crawler.framework.CrawlControllerImpl#fireCrawledURISuccessfulEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURIDisregardEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURIFailureEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURINeedRetryEvent(CrawlURI)
+ * @see org.archive.crawler.framework.CrawlController#fireCrawledURISuccessfulEvent(CrawlURI)
  * @see org.archive.crawler.framework.StatisticsTracker
  * @see org.archive.crawler.framework.ToeThread
  * @see org.archive.crawler.settings.ModuleType
  */
-public interface Frontier extends Reporter {
+public interface Frontier extends MultiReporter {
 
     /**
      * Get the next URI that should be processed. If no URI becomes availible

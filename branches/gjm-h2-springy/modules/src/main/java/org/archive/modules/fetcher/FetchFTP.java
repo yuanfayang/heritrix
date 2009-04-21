@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.net.ftp.FTPCommand;
-
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayCharSequence;
 import org.archive.modules.Processor;
@@ -48,7 +47,6 @@ import org.archive.net.ClientFTP;
 import org.archive.net.FTPException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 
 
@@ -62,11 +60,7 @@ import org.archive.util.Recorder;
  *
  */
 public class FetchFTP extends Processor  {
-
-    
-    /** Serialization ID; robust against trivial API changes. */
-    private static final long serialVersionUID =
-     ArchiveUtils.classnameBasedUID(FetchFTP.class,1);
+    private static final long serialVersionUID = 1L;
 
     /** Logger for this class. */
     private static Logger logger = Logger.getLogger(FetchFTP.class.getName());

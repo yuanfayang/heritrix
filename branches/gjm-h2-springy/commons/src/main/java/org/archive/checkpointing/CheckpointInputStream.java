@@ -24,7 +24,7 @@
  * $Id:$
  */
 
-package org.archive.settings;
+package org.archive.checkpointing;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -17,7 +17,7 @@
  *  limitations under the License.
  */
  
-package org.archive.settings.file;
+package org.archive.bdb;
 
 import java.io.Closeable;
 import java.io.File;
@@ -41,9 +41,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
-import org.archive.settings.CheckpointRecovery;
-import org.archive.settings.Checkpointable;
-import org.archive.settings.RecoverAction;
+import org.archive.checkpointing.CheckpointRecovery;
+import org.archive.checkpointing.Checkpointable;
+import org.archive.checkpointing.RecoverAction;
 import org.archive.spring.ConfigPath;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.bdbje.EnhancedEnvironment;
@@ -63,6 +63,12 @@ import com.sleepycat.je.SecondaryKeyCreator;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
+/**
+ * Utility module for managing a shared BerkeleyDB-JE environment
+ * 
+ * @contributor pjack
+ * @contributor gojomo
+ */
 public class BdbModule implements Lifecycle, Checkpointable, 
 Serializable, Closeable {
     private static final long serialVersionUID = 1L;

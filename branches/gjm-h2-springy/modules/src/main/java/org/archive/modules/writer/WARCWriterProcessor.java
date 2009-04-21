@@ -73,6 +73,7 @@ import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.WARCWriter;
 import org.archive.io.warc.WARCWriterPool;
+import org.archive.modules.CrawlMetadata;
 import org.archive.modules.ProcessResult;
 import org.archive.modules.ProcessorURI;
 import org.archive.modules.deciderules.recrawl.IdenticalDigestDecideRule;
@@ -547,7 +548,7 @@ public class WARCWriterProcessor extends WriterPoolProcessor {
         record.addLabelValue("conformsTo","http://crawler.archive.org/warc/0.17/WARC0.17ISO.doc");
         // Get other values from metadata provider
 
-        DefaultMetadataProvider provider = getMetadataProvider();
+        CrawlMetadata provider = getMetadataProvider();
 
         addIfNotBlank(record,"operator", provider.getOperator());
         addIfNotBlank(record,"publisher", provider.getOrganization());

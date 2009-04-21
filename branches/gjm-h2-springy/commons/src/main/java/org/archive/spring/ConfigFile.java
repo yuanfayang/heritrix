@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 
+import org.archive.io.ReadSource;
+
 /**
  * ConfigPath with added implication that it is an individual,
  * readable/writable File. 

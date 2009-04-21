@@ -24,7 +24,7 @@
  * $Id:$
  */
 
-package org.archive.settings;
+package org.archive.checkpointing;
 
 import java.net.URI;
 

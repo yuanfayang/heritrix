@@ -24,9 +24,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
 
+import org.archive.crawler.reporting.AlertThreadGroup;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Histotable;
-import org.archive.util.Reporter;
+import org.archive.util.MultiReporter;
 
 /**
  * A collection of ToeThreads. The class manages the ToeThreads currently
@@ -39,11 +40,11 @@ import org.archive.util.Reporter;
  *
  * @see org.archive.crawler.framework.ToeThread
  */
-public class ToePool extends ThreadGroup implements Reporter {
+public class ToePool extends ThreadGroup implements MultiReporter {
     /** run worker thread slightly lower than usual */
     public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
     
-    protected CrawlControllerImpl controller;
+    protected CrawlController controller;
     protected int nextSerialNumber = 1;
     protected int targetSize = 0; 
 
@@ -52,7 +53,7 @@ public class ToePool extends ThreadGroup implements Reporter {
      *
      * @param c A reference to the CrawlController for the current crawl.
      */
-    public ToePool(AlertThreadGroup atg, CrawlControllerImpl c) {
+    public ToePool(AlertThreadGroup atg, CrawlController c) {
         super(atg, "ToeThreads");        
         this.controller = c;
         setDaemon(true);
@@ -178,7 +179,7 @@ public class ToePool extends ThreadGroup implements Reporter {
     /**
      * @return Instance of CrawlController.
      */
-    public CrawlControllerImpl getController() {
+    public CrawlController getController() {
         return controller;
     }
     
@@ -304,10 +305,6 @@ public class ToePool extends ThreadGroup implements Reporter {
      */
     public String singleLineLegend() {
         return "total: mostCommonStateTotal secondMostCommonStateTotal";
-    }
-    
-    public String singleLineReport() {
-        return ArchiveUtils.singleLineReport(this);
     }
 
     public void reportTo(PrintWriter writer) {

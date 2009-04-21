@@ -17,7 +17,7 @@
  *  limitations under the License.
  */
 
-package org.archive.crawler.framework;
+package org.archive.crawler.reporting;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +32,9 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.checkpointing.Checkpointable;
+import org.archive.checkpointing.RecoverAction;
+import org.archive.crawler.framework.Engine;
 import org.archive.crawler.io.NonFatalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
@@ -42,13 +45,10 @@ import org.archive.io.GenerationFileHandler;
 import org.archive.modules.extractor.UriErrorLoggerModule;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.settings.Checkpointable;
-import org.archive.settings.RecoverAction;
 import org.archive.spring.ConfigPath;
 import org.archive.util.ArchiveUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.Lifecycle;
-import org.springframework.stereotype.Component;
 
 /**
  * Module providing all expected whole-crawl logging facilities
@@ -56,14 +56,13 @@ import org.springframework.stereotype.Component;
  * @contributor pjack
  * @contributor gojomo
  */
-@Component("loggerModule")
 public class CrawlerLoggerModule 
     implements 
         UriErrorLoggerModule, Lifecycle, InitializingBean,
         Checkpointable {
     private static final long serialVersionUID = 1L;
 
-    protected ConfigPath path = new ConfigPath(EngineImpl.LOGS_DIR_NAME,"logs"); 
+    protected ConfigPath path = new ConfigPath(Engine.LOGS_DIR_NAME,"logs"); 
     public ConfigPath getPath() {
         return path;
     }

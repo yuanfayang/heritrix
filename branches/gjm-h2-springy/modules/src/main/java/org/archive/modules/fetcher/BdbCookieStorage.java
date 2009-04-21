@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import org.apache.commons.httpclient.Cookie;
-import org.archive.settings.file.BdbModule;
+import org.archive.bdb.BdbModule;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.sleepycat.bind.serial.SerialBinding;
