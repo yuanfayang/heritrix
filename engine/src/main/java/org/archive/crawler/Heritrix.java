@@ -45,6 +45,8 @@ import org.archive.crawler.framework.Engine;
 import org.archive.crawler.restlet.EngineApplication;
 import org.archive.util.ArchiveUtils;
 import org.restlet.Component;
+import org.restlet.Guard;
+import org.restlet.data.ChallengeScheme;
 import org.restlet.data.Protocol;
 
 
@@ -201,11 +203,19 @@ public class Heritrix {
 
         int port = 8080;
         Set<String> bindHosts = new HashSet<String>();
+        String authLogin = "admin";
         String authPassword = "";
         File properties = getDefaultPropertiesFile();
 
         if (cl.hasOption('a')) {
-            authPassword = cl.getOptionValue('a');
+            String aOption = cl.getOptionValue('a');
+            int colonIndex = aOption.indexOf(':');
+            if(colonIndex>-1) {
+                authLogin = aOption.substring(0,colonIndex);
+                authPassword = aOption.substring(colonIndex+1);
+            } else {
+                authPassword = aOption;
+            }
         } else {
             System.err.println(
                 "You must specify a password for the web interface using -a.");
@@ -257,8 +267,6 @@ public class Heritrix {
             component = new Component();
             
             // TODO: require SSL, generating cert if necessary
-            // TODO: require authPassword for all access
-            
             if(bindHosts.isEmpty()) {
                 // listen all addresses
                 component.getServers().add(Protocol.HTTP,port);
@@ -269,10 +277,15 @@ public class Heritrix {
                 }
             }
             component.getClients().add(Protocol.FILE);
-            component.getDefaultHost().attach(new EngineApplication(engine));
+            Guard guard = new Guard(null,
+                    ChallengeScheme.HTTP_DIGEST, "Authentication Required");
+            guard.getSecrets().put(authLogin, authPassword.toCharArray());
+            guard.setNext(new EngineApplication(engine));
+            component.getDefaultHost().attach(guard);
             component.start();
             startupOut.println("engine listening at port "+port);
-            startupOut.println("administrator password is "+authPassword);
+            startupOut.println("operator login is '"+authLogin
+                               +"' password '"+authPassword+"");
             if (cl.hasOption('r')) {
                 engine.requestLaunch(cl.getOptionValue('r'));
             }
