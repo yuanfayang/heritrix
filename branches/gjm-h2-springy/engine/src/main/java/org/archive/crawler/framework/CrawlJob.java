@@ -559,7 +559,7 @@ public class CrawlJob implements Comparable<CrawlJob>, ApplicationListener{
             return MapUtils.EMPTY_MAP;
         }
         ConfigPathConfigurer cpc = 
-            (ConfigPathConfigurer)ac.getBean("configPathConfiguration");
+            (ConfigPathConfigurer)ac.getBean("configPathConfigurer");
         return cpc.getPaths();        
     }
 
