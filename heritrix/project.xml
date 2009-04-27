@@ -4,6 +4,8 @@
      http://maven.apache.org/
      http://www.onjava.com/pub/a/onjava/2003/10/22/maven.html?page=1	
      http://www-106.ibm.com/developerworks/java/library/j-maven/
+  
+    test commit to kick CruiseControl on the build box: siznax 2009-04-27
 
     Maven builds into ${basedir}/target. Its hard to change this going by the
     maven.build.dir note in http://maven.apache.org/reference/user-guide.html.
