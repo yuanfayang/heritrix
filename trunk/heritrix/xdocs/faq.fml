@@ -19,8 +19,8 @@
       Where can I go to get a good introduction/overview of Heritrix?
       </question>
       <answer>
-        <p><a href="An Introduction to Heritrix.pdf">An Introduction to
-            Heritrix</a>.
+        <p>Please see the documentation on the <a href="http://webteam.archive.org/confluence/display/Heritrix/Home">Heritrix Wiki</a>.   
+        The document <a href="Mohr-et-al-2004.pdf">An Introduction to Heritrix</a> describes the Heritrix architecture.
         </p>
       </answer>
     </faq>
