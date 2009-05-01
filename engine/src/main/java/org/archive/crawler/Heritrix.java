@@ -20,11 +20,16 @@
 package org.archive.crawler;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.security.KeyStore;
+import java.security.MessageDigest;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -40,14 +45,18 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.archive.crawler.framework.Engine;
 import org.archive.crawler.restlet.EngineApplication;
 import org.archive.util.ArchiveUtils;
 import org.restlet.Component;
 import org.restlet.Guard;
+import org.restlet.Server;
 import org.restlet.data.ChallengeScheme;
 import org.restlet.data.Protocol;
+
+import sun.security.tools.KeyTool;
 
 
 /**
@@ -76,6 +85,10 @@ import org.restlet.data.Protocol;
  * @author Stack
  */
 public class Heritrix {
+    private static final String ADHOC_PASSWORD = "password";
+
+    private static final String ADHOC_KEYSTORE = "adhoc.keystore";
+
     @SuppressWarnings("unused")
     private static final Logger logger = Logger.getLogger(Heritrix.class.getName());
     
@@ -87,6 +100,7 @@ public class Heritrix {
 
     protected Engine engine; 
     protected Component component;
+    
     /**
      * Heritrix start log file.
      *
@@ -126,6 +140,9 @@ public class Heritrix {
         	"profile name to launch at launch.  If you specify a profile " +
         	"name, the profile will first be copied to a new ready job, " +
         	"and that ready job will be launched.");
+        options.addOption("s", "ssl-params", true,  "Specify a keystore " +
+                "path, keystore password, and key password for HTTPS use. " +
+                "Separate with commas, no whitespace.");
         return options;
     }
     
@@ -200,11 +217,15 @@ public class Heritrix {
           usage(startupOut);
           return ;
         }
-
-        int port = 8080;
+        
+        // DEFAULTS until changed by cmd-line options
+        int port = 8443;
         Set<String> bindHosts = new HashSet<String>();
         String authLogin = "admin";
-        String authPassword = "";
+        String authPassword;
+        String keystorePath;
+        String keystorePassword;
+        String keyPassword;
         File properties = getDefaultPropertiesFile();
 
         if (cl.hasOption('a')) {
@@ -220,6 +241,7 @@ public class Heritrix {
             System.err.println(
                 "You must specify a password for the web interface using -a.");
             System.exit(1);
+            authPassword = ""; // suppresses uninitialized warning
         }
         
         File jobsDir = null; 
@@ -247,8 +269,24 @@ public class Heritrix {
             // default: only localhost
             bindHosts.add("localhost");
         }
+        
         if (cl.hasOption('p')) {
             port = Integer.parseInt(cl.getOptionValue('p'));
+        }
+        
+        // SSL options (possibly none, in which case adhoc keystore 
+        // is created or reused
+        if(cl.hasOption('s')) {
+            String[] sslParams = cl.getOptionValue('s').split(",");
+            keystorePath = sslParams[0];
+            keystorePassword = sslParams[1];
+            keyPassword = sslParams[2];
+        } else {
+            // use ad hoc keystore, creating if necessary
+            keystorePath = ADHOC_KEYSTORE;
+            keystorePassword = ADHOC_PASSWORD;
+            keyPassword = ADHOC_PASSWORD;
+            useAdhocKeystore(startupOut); 
         }
 
         if (properties.exists()) {
@@ -266,14 +304,13 @@ public class Heritrix {
             engine = new Engine(jobsDir);
             component = new Component();
             
-            // TODO: require SSL, generating cert if necessary
             if(bindHosts.isEmpty()) {
                 // listen all addresses
-                component.getServers().add(Protocol.HTTP,port);
+                setupServer(port, null, keystorePath, keystorePassword, keyPassword);
             } else {
                 // bind only to declared addresses, or just 'localhost'
                 for(String address : bindHosts) {
-                    component.getServers().add(Protocol.HTTP,address,port);
+                    setupServer(port, address, keystorePath, keystorePassword, keyPassword);
                 }
             }
             component.getClients().add(Protocol.FILE);
@@ -285,12 +322,11 @@ public class Heritrix {
             component.start();
             startupOut.println("engine listening at port "+port);
             startupOut.println("operator login is '"+authLogin
-                               +"' password '"+authPassword+"");
+                               +"' password '"+authPassword+"'");
+           
             if (cl.hasOption('r')) {
                 engine.requestLaunch(cl.getOptionValue('r'));
-            }
-
-            
+            } 
         } catch (Exception e) {
             // Show any exceptions in STARTLOG.
             e.printStackTrace(startupOut);
@@ -306,7 +342,64 @@ public class Heritrix {
                     ArchiveUtils.VERSION);
         }
     }
-    
+
+    /**
+     * Perform preparation to use an ad-hoc, created-as-necessary 
+     * certificate/keystore for HTTPS access. A keystore with new
+     * cert is created if necessary, as adhoc.keystore in the working
+     * directory. Otherwise, a preexisting adhoc.keystore is read 
+     * and the certificate fingerprint shown to assist in operator
+     * browser-side verification.
+     * @param startupOut where to report fingerprint
+     */
+    protected void useAdhocKeystore(PrintStream startupOut) {
+        try {
+            File keystoreFile = new File(ADHOC_KEYSTORE); 
+            if(!keystoreFile.exists())  {
+                String[] args = {
+                        "-keystore",ADHOC_KEYSTORE,
+                        "-storepass",ADHOC_PASSWORD,
+                        "-keypass",ADHOC_PASSWORD,
+                        "-alias","adhoc",
+                        "-genkey","-keyalg","RSA",
+                        "-dname", "CN=Heritrix Ad-Hoc HTTPS Certificate"};
+                KeyTool.main(args);
+            }
+
+            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+            InputStream inStream = new ByteArrayInputStream(
+                    FileUtils.readFileToByteArray(keystoreFile));
+            keystore.load(inStream, ADHOC_PASSWORD.toCharArray());
+            Certificate cert = keystore.getCertificate("adhoc");
+            byte[] certBytes = cert.getEncoded();
+            byte[] sha1 = MessageDigest.getInstance("SHA1").digest(certBytes);
+            startupOut.print("Using ad-hoc HTTPS certificate with fingerprint...\nSHA1");
+            for(byte b : sha1) {
+                startupOut.print(String.format(":%02X",b));
+            }
+            startupOut.println("\nVerify in browser before accepting exception.");
+        } catch (Exception e) {
+            // fatal, rethrow
+            throw new RuntimeException(e);
+        }         
+    }
+
+    /**
+     * Create an HTTPS restlet Server instance matching the given parameters. 
+     * 
+     * @param port
+     * @param address
+     * @param keystorePath
+     * @param keystorePassword
+     * @param keyPassword
+     */
+    protected void setupServer(int port, String address, String keystorePath, String keystorePassword, String keyPassword) {
+        Server server = new Server(Protocol.HTTPS,address,port,null);
+        component.getServers().add(server);
+        server.getContext().getParameters().add("keystorePath", keystorePath);
+        server.getContext().getParameters().add("keystorePassword", keystorePassword);
+        server.getContext().getParameters().add("keyPassword", keyPassword);
+    }
     
     /**
      * Exploit <code>-Dheritrix.home</code> if available to us.
