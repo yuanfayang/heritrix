@@ -49,6 +49,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.archive.crawler.framework.Engine;
 import org.archive.crawler.restlet.EngineApplication;
+import org.archive.crawler.restlet.RateLimitGuard;
 import org.archive.util.ArchiveUtils;
 import org.restlet.Component;
 import org.restlet.Guard;
@@ -314,7 +315,7 @@ public class Heritrix {
                 }
             }
             component.getClients().add(Protocol.FILE);
-            Guard guard = new Guard(null,
+            Guard guard = new RateLimitGuard(null,
                     ChallengeScheme.HTTP_DIGEST, "Authentication Required");
             guard.getSecrets().put(authLogin, authPassword.toCharArray());
             guard.setNext(new EngineApplication(engine));
