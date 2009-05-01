@@ -519,7 +519,7 @@ list below, send a description of a couple of lines to the mailing list).
       <answer>
         <p>The following are all worth at least a quick skim:
     <ol>
-    <li><a href="http://en.wikipedia.org/wiki/Webcrawler">The Wikipedia
+    <li><a href="http://en.wikipedia.org/wiki/Web_crawler">The Wikipedia
     Webcrawler</a> page offers a nice introduction on general crawling
     problem.  It has a good overview of current, most cited literature.</li>
     <li><a href="http://citeseer.nj.nec.com/heydon99mercator.html">Mercator: A 
