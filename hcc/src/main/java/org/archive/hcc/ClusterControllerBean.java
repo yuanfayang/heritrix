@@ -470,10 +470,11 @@ public class ClusterControllerBean implements
      * @throws MBeanException
      */
     public ObjectName createCrawler() throws MBeanException {
-        List<Container> containers = resolveLeastLoadedContainers();
+    	ContainerLoadBalancingStrategy strategy = new ContainerLoadBalancingStrategy();
+        List<Container> orderedContainers = strategy.prioritize(this.containers);
 
-        if (containers != null) {
-            for(Container container : containers){
+        if (orderedContainers != null) {
+            for(Container container : orderedContainers){
                 try {
                 	log.info("attempting to create crawler on container: " + container.getAddress());
                     return createCrawlerIn(container);
@@ -481,7 +482,6 @@ public class ClusterControllerBean implements
                 	log.warning("unexpected error!!! failed to create crawler as expected on " + container.getAddress());
                 	e.printStackTrace();
                 }
-            	
             }
             
             log.severe("unable to start any crawlers on container due to communication " +
@@ -500,40 +500,41 @@ public class ClusterControllerBean implements
     }
 
 
+//  This is the old implementation - didn't take into account the load on a particular host machine
+//    /**
+//     * @return A list of available (ie not fully loaded) containers sorted from least loaded to most loaded. If no
+//     * containers are available, returns null.
+//     */
+//    protected List<Container> resolveLeastLoadedContainers() {
+//
+//        List<Container>leastLoaded = null;
+//        Container last = null;
+//        
+//        List<Container> currentContainers = new LinkedList<Container>(this.containers);
+//        
+//        Collections.sort(currentContainers, new Comparator(){
+//        	public int compare(Object o1, Object o2) {
+//        		Container c1 = (Container)o1;
+//        		Container c2 = (Container)o2;
+//        		return new Integer(c1.getCrawlers().size()).compareTo(new Integer(c2.getCrawlers().size()));
+//        	}
+//        });
+//
+//        for (Container n : currentContainers) {
+//            if (n.getCrawlers().size() >= n.getMaxInstances()) {
+//                continue;
+//            }
+//            
+//            if(leastLoaded == null){
+//            	leastLoaded = new LinkedList<Container>();
+//            }
+//           
+//            leastLoaded.add(n);
+//        }
+//
+//        return leastLoaded;
+//    }
 
-    /**
-     * @return A list of available (ie not fully loaded) containers sorted from least loaded to most loaded. If no
-     * containers are available, returns null.
-     */
-    protected List<Container> resolveLeastLoadedContainers() {
-
-        List<Container>leastLoaded = null;
-        Container last = null;
-        
-        List<Container> currentContainers = new LinkedList<Container>(this.containers);
-        
-        Collections.sort(currentContainers, new Comparator(){
-        	public int compare(Object o1, Object o2) {
-        		Container c1 = (Container)o1;
-        		Container c2 = (Container)o2;
-        		return new Integer(c1.getCrawlers().size()).compareTo(new Integer(c2.getCrawlers().size()));
-        	}
-        });
-
-        for (Container n : currentContainers) {
-            if (n.getCrawlers().size() >= n.getMaxInstances()) {
-                continue;
-            }
-            
-            if(leastLoaded == null){
-            	leastLoaded = new LinkedList<Container>();
-            }
-           
-            leastLoaded.add(n);
-        }
-
-        return leastLoaded;
-    }
 
     private OpenMBeanOperationInfo[] buildOperations() {
         try {
@@ -1208,36 +1209,6 @@ public class ClusterControllerBean implements
         }
     }
 
-//    /**
-//     * @return Returns a list of containers registered with the jndi service.
-//     */
-//    protected final List<ObjectName> retrieveContainerListFromJndi() {
-//        List<ObjectName> list = new LinkedList<ObjectName>();
-//
-//        try {
-//            NamingEnumeration<NameClassPair> e = context.list("");
-//            while (e.hasMore()) {
-//                NameClassPair ncp = e.next();
-//                String jndiName = ncp.getName();
-//                
-//                try {
-//                    ObjectName on = new ObjectName(":" + jndiName);
-//                    Hashtable ht = on.getKeyPropertyList();
-//                    if (ht.get("type").equals("container")) {
-//                        list.add(on);
-//                    }
-//
-//                } catch (MalformedObjectNameException e1) {
-//                    e1.printStackTrace();
-//                }
-//            }
-//
-//        } catch (NamingException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return list;
-//    }
     
     protected final void refreshRegistry() {
         List<Container> containerNameList = retrieveContainerListFromXml();
@@ -1315,48 +1286,6 @@ public class ClusterControllerBean implements
         return containers;
     }    
     
-//    /**
-//     * Synchronizes the container list with the fresh list (fresh meaning, last
-//     * polled from jndi), removing those that went away, and adding any newly
-//     * discovered containers.
-//     * 
-//     * @param containers
-//     * @param freshContainers
-//     * @return Map of container object names.
-//     */
-//    protected final Map<ObjectName, Container> synchronizeContainers(
-//            Map<ObjectName, Container> containers,
-//            List<ObjectName> freshContainers) {
-//
-//        Map<ObjectName, Container> staleContainers = new HashMap<ObjectName, Container>(
-//                containers);
-//
-//        // remove and destroy all containers not in the new list.
-//        for (ObjectName n : staleContainers.keySet()) {
-//            if (!freshContainers.contains(n)) {
-//                handleContainerRemoved(n);
-//            }
-//        }
-//
-//        // add new containers not in the old list.
-//        for (ObjectName n : freshContainers) {
-//            if (!containers.keySet().contains(n)) {
-//                try {
-//                    InetSocketAddress address = JmxUtils.extractAddress(n);
-//                    registerAddress(address);
-//                    synchronizeContainer(n);
-//                    
-//                    attachMBeanServerDelegateNotificationListener(
-//                            address,
-//                            this.remoteNotificationDelegator);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//
-//        return containers;
-//    }
 
     /**
      * Attaches a notification listener to the remote mbean server delegate at
