@@ -42,13 +42,10 @@ class Container {
     private InetSocketAddress address = null;
     public Container(InetSocketAddress address, Integer maxInstances){
     	this.address = address;
+    	this.maxInstances = maxInstances;
     }
     
-//    public Container(ObjectName name, int maxInstances) {
-//        super();
-//        this.name = name;
-//        this.maxInstances = maxInstances;
-//    }
+
 
     public Collection<Crawler> getCrawlers() {
         return crawlers;
