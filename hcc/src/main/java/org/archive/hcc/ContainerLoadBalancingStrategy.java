@@ -10,15 +10,12 @@ import java.util.Map;
 public class ContainerLoadBalancingStrategy {
     /**
      * Returns a list of partially loaded (ie available) containers sorted least loaded host, least loaded container. If no
-     * containers are available, returns null.
+     * containers are available, returns empty list.
      */
 
 	public List<Container> prioritize(List<Container> containers){
-        List<Container>leastLoaded = null;
-        Container last = null;
-        
+        List<Container>leastLoaded = new LinkedList<Container>();
         List<Container> currentContainers = new LinkedList<Container>(containers);
-        
 
         //count instances per host
         final Map<String,Integer> instanceCountByHostMap = new HashMap<String,Integer>();
@@ -39,12 +36,9 @@ public class ContainerLoadBalancingStrategy {
                 continue;
             }
             
-            if(leastLoaded == null){
-            	leastLoaded = new LinkedList<Container>();
-            }
-           
             leastLoaded.add(n);
         }
+        
         
         //sort the leastLoaded collection by least loaded host and then least loaded container
         Collections.sort(leastLoaded, new Comparator(){
