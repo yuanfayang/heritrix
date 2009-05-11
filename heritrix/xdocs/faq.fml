@@ -165,7 +165,7 @@ Also see <a href="http://groups.yahoo.com/group/archive-crawler/message/3019">Cr
     <faq id="crawllogstatuscodes">
       <question>Where do I go to learn about these cryptic crawl.log status
       codes (-6, -7, -9998, etc.)?</question>
-      <answer>See the <a href="http://crawler.archive.org/articles/user_manual.html#statuscodes">User Manual Glossary</a>.</answer>
+      <answer>See the <a href="http://crawler.archive.org/articles/user_manual/glossary.html#statuscodes">User Manual Glossary</a>.</answer>
     </faq>
 
 
