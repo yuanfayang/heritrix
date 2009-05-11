@@ -3,7 +3,7 @@
 <parent>
   <groupId>org.archive</groupId>
   <artifactId>heritrix</artifactId>
-  <version>2.2.0-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
 </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.archive.heritrix</groupId>
@@ -69,14 +69,7 @@
         <dependency>
              <groupId>org.archive.heritrix</groupId>
              <artifactId>engine</artifactId>
-             <version>2.2.0-SNAPSHOT</version>
-             <scope>compile</scope>
-        </dependency>
-        <dependency>
-             <groupId>org.archive.heritrix</groupId>
-             <artifactId>webui</artifactId>
-             <version>2.2.0-SNAPSHOT</version>
-             <type>war</type>
+             <version>3.0.0-SNAPSHOT</version>
              <scope>compile</scope>
         </dependency>
         <dependency>
@@ -126,43 +119,6 @@
             <phase>test</phase>
           </execution>
         </executions>
-      </plugin>
-    
-      <plugin>
-        <groupId>com.agilejava.docbkx</groupId>
-        <artifactId>docbkx-maven-plugin</artifactId>
-        <version>2.0.3</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate-html</goal>
-            </goals>
-            <phase>prepare-package</phase>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.docbook</groupId>
-            <artifactId>docbook-xml</artifactId>
-            <version>4.4</version>
-            <scope>runtime</scope>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <includes>**/*.xml</includes>
-          <sourceDirectory> ${basedir}/src/site/articles</sourceDirectory>
-          <targetDirectory> ${project.reporting.outputDirectory}/articles </targetDirectory>
-          <generateIdAttributes>1</generateIdAttributes>
-          <sectionAutolabel>1</sectionAutolabel>
-          <partAutolabel>1</partAutolabel>
-          <chapterAutolabel>1</chapterAutolabel>
-          <generateMetaAbstract>1</generateMetaAbstract>
-          <htmlStylesheet>docbook.css</htmlStylesheet>
-          <cssDecoration>1</cssDecoration>
-          <postProcess>
-            <copy file="src/site/articles/docbook.css" overwrite="true" todir="${project.reporting.outputDirectory}/articles"/>
-          </postProcess>
-        </configuration>
       </plugin>
      
      <plugin>
