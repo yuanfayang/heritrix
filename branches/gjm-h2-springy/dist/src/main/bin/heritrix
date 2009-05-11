@@ -20,19 +20,6 @@
 ##                  heritrix in foreground (Used by build system when it runs
 ##                  selftest to see if completed successfully or not).
 ##
-## JMX_OPTS         Default is to startup the JVM JMX administration 
-##                  on port 8849 if the JVM is SUN JVM 1.5.  This allows JMX
-##                  administration of Heritrix.  If the JVM is other than the
-##                  SUN JDK 1.5, the arguments are ignored. If you do not want
-##                  to start the JVM JXM administration server on the SUN JDK
-##                  1.5, set this variable to empty string.
-##
-## JMX_PORT         Port you'd like the JVM JMX administration server to run
-##                  on. Default is 8849.
-##
-## JMX_OFF          Set to a non-empty string to disable JMX (and JMX setup of
-##                  password file, etc.)
-##
 
 # Resolve links - $0 may be a softlink
 PRG="$0"
@@ -99,28 +86,6 @@ fi
 if [ -z "$JAVA_OPTS" ]
 then
   JAVA_OPTS=" -Xmx256m"
-fi
-
-if [ -z "${JMX_OFF}" ]
-then
-  if [ -z "${JMX_PORT}" ]
-  then
-      JMX_PORT=8849
-  fi
-
-  if [ -z "$JMX_OPTS" ]
-  then
-    if [ -f "${HERITRIX_HOME}/conf/jmxremote.password" ]
-    then
-      JMX_OPTS="-Dcom.sun.management.jmxremote.port=${JMX_PORT} \
-        -Dcom.sun.management.jmxremote.ssl=false \
-        -Dcom.sun.management.jmxremote.password.file=${HERITRIX_HOME}/conf/jmxremote.password"
-    else
-      echo 'WARNING: $HERITRIX_HOME/conf/jmxremote.password not found.'
-      echo 'WARNING: Disabling remote JMX.'
-      JMX_OPTS="-Dcom.sun.management.jmxremote"
-    fi
-  fi
 fi
 
 # Main heritrix class.
