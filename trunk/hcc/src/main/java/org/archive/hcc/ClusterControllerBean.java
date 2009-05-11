@@ -473,19 +473,19 @@ public class ClusterControllerBean implements
     	ContainerLoadBalancingStrategy strategy = new ContainerLoadBalancingStrategy();
         List<Container> orderedContainers = strategy.prioritize(this.containers);
 
-        if (orderedContainers != null) {
-            for(Container container : orderedContainers){
-                try {
-                	log.info("attempting to create crawler on container: " + container.getAddress());
-                    return createCrawlerIn(container);
-                } catch (Exception e) {
-                	log.warning("unexpected error!!! failed to create crawler as expected on " + container.getAddress());
-                	e.printStackTrace();
-                }
+        for(Container container : orderedContainers){
+            try {
+            	log.info("attempting to create crawler on container: " + container.getAddress());
+                return createCrawlerIn(container);
+            } catch (Exception e) {
+            	log.warning("unexpected error!!! failed to create crawler as expected on " + container.getAddress());
+            	e.printStackTrace();
             }
-            
+        }
+        
+        if(orderedContainers.size() > 0){
             log.severe("unable to start any crawlers on container due to communication " +
-            		"failure with all available containers.");
+    		"failure with all available containers.");
         }
 
         MBeanException e =  new MBeanException(
