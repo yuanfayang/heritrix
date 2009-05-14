@@ -1,3 +1,5 @@
+// downloaded on 2009-05-14 from: http://mxr.mozilla.org/mozilla-central/source/netwerk/dns/src/effective_tld_names.dat?raw=1
+
 // ***** BEGIN LICENSE BLOCK *****
 // Version: MPL 1.1/GPL 2.0/LGPL 2.1
 // 
@@ -4188,6 +4190,7 @@ or.ug
 !icnet.uk
 !jet.uk
 !nel.uk
+!nhs.uk
 !nls.uk
 !national-library-scotland.uk
 !parliament.uk
