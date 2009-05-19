@@ -140,11 +140,17 @@ public class HashtableAList implements MutableAList, Serializable {
     }
     
     public void copyKeysFrom(Iterator keys, AList other) {
+        copyKeysFrom(keys, other, true);  // clobber
+    }
+    
+    public void copyKeysFrom(Iterator keys, AList other, boolean clobber) {
         for (; keys.hasNext();) {
             String key = (String)keys.next();
+            if (!clobber && containsKey(key))
+                continue;
             Object value = other.getObject(key);
             // TODO: consider shallow or deep copy in some cases?
-            // perhaps controlled by a third parameter?
+            // perhaps controlled by an additional parameter?
             if(value!=null) {
                 putObject(key,value);
             }

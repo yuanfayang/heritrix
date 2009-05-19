@@ -111,12 +111,22 @@ public interface AList {
     public void clear();
 
     /**
-     * Copy the iterator's keys from one AList to another. 
+     * Copy the iterator's keys from one AList to another, replacing any 
+     * entries that exist in the destination.
      * 
      * @param keys Iterator of String keys
      * @param other source AList
      */
     public void copyKeysFrom(Iterator keys, AList other);
+    
+    /**
+     * Copy the iterator's keys from one AList to another. 
+     * 
+     * @param keys Iterator of String keys
+     * @param other source AList
+     * @param clobber whether to replace entries that exist in the destination
+     */
+    public void copyKeysFrom(Iterator keys, AList other, boolean clobber);
 
     /**
      * Provides a somewhat pretty (matching brackets for nesting) 
