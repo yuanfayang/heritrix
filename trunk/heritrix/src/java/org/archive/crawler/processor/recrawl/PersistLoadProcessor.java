@@ -101,7 +101,7 @@ public class PersistLoadProcessor extends PersistOnlineProcessor {
             if(prior!=null) {
                 // merge in keys
                 Iterator iter = prior.getKeys();
-                curi.getAList().copyKeysFrom(iter,prior);
+                curi.getAList().copyKeysFrom(iter, prior, false);
             }
         }
     }
