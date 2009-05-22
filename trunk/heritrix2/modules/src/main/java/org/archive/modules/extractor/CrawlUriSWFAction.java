@@ -69,7 +69,7 @@ extends SWFActionsImpl {
     public void getURL(String url, String target)
     throws IOException {
         if (url.startsWith(JSSTRING)) {
-            linkCount =+ ExtractorJS.considerStrings(uriErrors, curi, url, 
+            linkCount += ExtractorJS.considerStrings(uriErrors, curi, url, 
                     false);
         } else {
             int max = uriErrors.getMaxOutlinks(curi);
