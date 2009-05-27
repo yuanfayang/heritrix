@@ -16,7 +16,7 @@
 ::
 :: 2006-08-04  Disclaimer added by Michael Stack
 ::
-:: 2006-08-28  A few fixes by Max Schöfmann:
+:: 2006-08-28  A few fixes by Max Schï¿½fmann:
 ::             - command extensions and veriable expansion are automatically
 ::               enabled
 ::             - JMX configuration fixed (not the fancy "sed" stuff however)
@@ -27,6 +27,8 @@
 ::             - comments changed from rem to :: and file renamed to .cmd 
 ::               (to make clear it won't work on Win 9x...)
 ::
+:: 2009-04-23  Fixing jmxremote.password permissions now works for username
+::             with spaces (Sergey Khenkin)
 ::
 ::  Optional environment variables
 :: 
@@ -264,7 +266,7 @@ echo - permissions problem with the JMX password file.
 echo.
 set /P FIXIT=Do you want to try to fix the permissions (Y/N)?
 if /I "%FIXIT:~0,1%"=="n" goto :end
-cacls "%HERITRIX_HOME%\jmxremote.password" /P %USERNAME%:R
+cacls "%HERITRIX_HOME%\jmxremote.password" /P "%USERNAME%":R
 if errorlevel 1 goto fix_jmx_permission_failed
 set PERMISSIONS_FIXED=true
 set /P RESTART=Restart Heritrix (Y/N)?
