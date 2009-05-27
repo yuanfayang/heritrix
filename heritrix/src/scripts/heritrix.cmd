@@ -42,6 +42,9 @@
 ::             - Show hint when admin switch / nowui wasn't given
 ::             - Start message wasn't shown on slow/busy machines
 ::
+:: 2009-04-23  Fixing jmxremote.password permissions now works for username
+::             with spaces (Sergey Khenkin)
+::
 ::  Optional environment variables
 :: 
 ::  JAVA_HOME        Point at a JDK install to use.
@@ -240,7 +243,7 @@ echo.
 if not exist "%HERITRIX_HOME%\jmxremote.password" goto permissions_file_missing
 set /P FIXIT=Do you want to try to fix the permissions (Y/N)?
 if /I "%FIXIT:~0,1%"=="n" goto end
-echo y|cacls "%HERITRIX_HOME%\jmxremote.password" /P %USERNAME%:R >nul
+echo y|cacls "%HERITRIX_HOME%\jmxremote.password" /P "%USERNAME%":R >nul
 if errorlevel 1 goto fix_jmx_permission_failed
 set PERMISSIONS_FIXED=true
 set /P RESTART=Restart Heritrix (Y/N)?
