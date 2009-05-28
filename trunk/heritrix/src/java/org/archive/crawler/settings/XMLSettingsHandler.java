@@ -283,7 +283,7 @@ public class XMLSettingsHandler extends SettingsHandler {
                 // on classpath.
                 if (!f.getName().startsWith(settingsFilename)) {
                     is = XMLSettingsHandler.class.
-                        getResourceAsStream(f.getPath());
+                        getResourceAsStream(toResourcePath(f));
                 }
             } else {
                 is = new FileInputStream(f);
@@ -316,6 +316,22 @@ public class XMLSettingsHandler extends SettingsHandler {
                 + f.getAbsolutePath() + "': " + e.getMessage());
         }
         return result;
+    }
+
+    /**
+     * Convert a File to a path that might be resolved from classpath/JAR
+     * resource sources. Such paths use linux-like path-separators. 
+     * 
+     * @param f File 
+     * @return path, shorn of any Windows-specific drive identifiers
+     */
+    public static String toResourcePath(File f) {
+        String path = f.toURI().getPath(); 
+        if(path.matches("^/[A-Z]:/.*")) {
+            // remove Windows drive-prefix, if any
+            path = path.substring(3); 
+        }
+        return path; 
     }
 
     protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
