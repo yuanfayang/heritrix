@@ -261,10 +261,13 @@ goto end
 :permissions_file_missing
 echo.
 echo JMX permissions file missing. A template can be found in
-echo   %HERITRIX_HOME%\jmxremote.password.template.
+echo   %HERITRIX_HOME%\conf\jmxremote.password.template.
 echo Copy it to 
 echo   %HERITRIX_HOME%\jmxremote.password 
-echo and edit the passwords at the end of the file.
+echo and edit the passwords at the end of the file. Then, make sure
+echo the file is read-restricted to only the user that the Heritrix
+echo Java VM will run as. For example: 
+echo >cacls jmxremote.password /P USERNAME:R
 goto end
 
 :fix_jmx_permission_failed
