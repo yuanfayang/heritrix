@@ -261,11 +261,14 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         assertTrue(
             XMLSettingsHandler.toResourcePath(new File("/home/user1/Test.java"))
             .startsWith("/home/user1/Test.java"));
-        assertTrue(
-            XMLSettingsHandler.toResourcePath(new File("C:\\Windows\\System32"))
-            .startsWith("/Windows/System32"));
-        assertTrue(
-            XMLSettingsHandler.toResourcePath(new File("Z:\\some.dir\\another.dir\\some.file.ext"))
-            .startsWith("/some.dir/another.dir/some.file.ext"));
+        if(File.separatorChar=='\\') {
+            // run these only on relevant platform (Windows)
+            assertTrue(
+                XMLSettingsHandler.toResourcePath(new File("C:\\Windows\\System32"))
+                .startsWith("/Windows/System32"));
+            assertTrue(
+                XMLSettingsHandler.toResourcePath(new File("Z:\\some.dir\\another.dir\\some.file.ext"))
+                .startsWith("/some.dir/another.dir/some.file.ext"));
+        }
     }
 }
