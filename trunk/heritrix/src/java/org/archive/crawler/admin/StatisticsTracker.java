@@ -29,11 +29,11 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EventObject;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -42,8 +42,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.collections.Closure;
+import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.crawler.framework.CrawlController;
@@ -51,7 +53,6 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Histotable;
 import org.archive.util.LongWrapper;
 import org.archive.util.MimetypeUtils;
 import org.archive.util.PaddingStringBuffer;
@@ -148,6 +149,10 @@ implements CrawlURIDispositionListener, Serializable {
      */
     /** tally sizes novel, verified (same hash), vouched (not-modified) */ 
     protected CrawledBytesHistotable crawledBytes = new CrawledBytesHistotable();
+
+    protected long notModifiedUriCount = 0;
+    protected long dupByHashUriCount = 0;
+    protected long novelUriCount = 0;
     
     /** Keep track of the file types we see (mime type -> count) */
     protected Hashtable<String,LongWrapper> mimeTypeDistribution
@@ -743,6 +748,15 @@ implements CrawlURIDispositionListener, Serializable {
         handleSeed(curi,SEED_DISPOSITION_SUCCESS);
         // save crawled bytes tally
         crawledBytes.accumulate(curi);
+
+        // save crawled docs tally
+        if(curi.getFetchStatus()==HttpStatus.SC_NOT_MODIFIED) {
+            notModifiedUriCount++;
+        } else if (IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
+            dupByHashUriCount++;
+        } else {
+            novelUriCount++;
+        }
         
         // Save status codes
         incrementMapCount(statusCodeDistribution,
@@ -1032,6 +1046,12 @@ implements CrawlURIDispositionListener, Serializable {
         // hostsDistribution contains all hosts crawled plus an entry for dns.
         writer.print("\nTotal Hosts Crawled: " + (hostsDistribution.size()-1));
         writer.print("\nTotal Documents Crawled: " + finishedUriCount);
+        writer.print("\nDocuments Crawled Successfully: " + downloadedUriCount);
+        writer.print("\nNovel Documents Crawled: " + novelUriCount);
+        if (dupByHashUriCount > 0)
+            writer.print("\nDuplicate-by-hash Documents Crawled: " + dupByHashUriCount);
+        if (notModifiedUriCount > 0)
+            writer.print("\nNot-modified Documents Crawled: " + notModifiedUriCount);
         writer.print("\nProcessed docs/sec: " +
                 ArchiveUtils.doubleToString(docsPerSecond,2));
         writer.print("\nBandwidth in Kbytes/sec: " + totalKBPerSec);
