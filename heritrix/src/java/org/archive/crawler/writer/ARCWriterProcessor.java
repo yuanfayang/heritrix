@@ -116,6 +116,13 @@ WriterPoolSettings, FetchStatusCodes {
             return;
         }
         
+        // XXX This happens normally with ftp (empty directory or equivalent of
+        // 40x). We should write a record here, but we're not worrying about
+        // full ftp support for arcs, just warcs.
+        if (curi.getHttpRecorder() == null) {
+            return;
+        }
+        
         // If no recorded content at all, don't write record.
         long recordLength = curi.getHttpRecorder().getRecordedInput().getSize();
         if (recordLength <= 0) {

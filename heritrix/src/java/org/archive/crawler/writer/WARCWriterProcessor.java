@@ -172,15 +172,16 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             return;
         }
         
-        // If no recorded content at all, don't write record.
+        // If no recorded content at all, don't write record. Except FTP, which
+        // can have empty content, since the "headers" don't count as content.
+        String scheme = curi.getUURI().getScheme().toLowerCase();
         long recordLength = curi.getContentSize();
-        if (recordLength <= 0) {
+        if (recordLength <= 0 && !scheme.equals("ftp")) {
             // getContentSize() should be > 0 if any material (even just
             // HTTP headers with zero-length body) is available. 
-        	return;
+            return;
         }
         
-        String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
             if (shouldWrite(curi)) {
                 write(scheme, curi);
@@ -198,6 +199,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     
     protected void write(final String lowerCaseScheme, final CrawlURI curi)
     throws IOException {
+        logger.info("writing warc record for " + curi);
         WriterPoolMember writer = getPool().borrowFile();
         long position = writer.getPosition();
         // See if we need to open a new file because we've exceeed maxBytes.
@@ -279,6 +281,32 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 }
                 writeResponse(w, timestamp, curi.getContentType(), baseid,
                     curi, headers);
+            } else if (lowerCaseScheme.equals("ftp")) {
+                ANVLRecord headers = new ANVLRecord(1);
+                String controlConversation = curi.getString(A_FTP_CONTROL_CONVERSATION);
+                URI rid = writeFtpControlConversation(w, timestamp, baseid, curi, headers, controlConversation);
+                
+                if (curi.getHttpRecorder() != null) {
+                    headers = new ANVLRecord(2);
+                    if (curi.isTruncatedFetch()) {
+                        String value = curi.isTimeTruncatedFetch()?
+                            NAMED_FIELD_TRUNCATED_VALUE_TIME:
+                            curi.isLengthTruncatedFetch()?
+                                NAMED_FIELD_TRUNCATED_VALUE_LENGTH:
+                                curi.isHeaderTruncatedFetch()?
+                                    NAMED_FIELD_TRUNCATED_VALUE_HEAD:
+                            // TODO: Add this to spec.
+                            TRUNCATED_VALUE_UNSPECIFIED;
+                        headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+                    }
+                    headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
+                    rid = writeResource(w, timestamp, FTP_PAYLOAD_DATA_MIMETYPE, baseid, curi, headers);
+                }
+                if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
+                    headers = new ANVLRecord(1);
+                    headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
+                    writeMetadata(w, timestamp, baseid, curi, headers);
+                } 
             } else {
                 logger.warning("No handler for scheme " + lowerCaseScheme);
             }
@@ -300,6 +328,16 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         checkBytesWritten();
     }
     
+    protected URI writeFtpControlConversation(WARCWriter w, String timestamp, URI baseid,
+            CrawlURI curi, ANVLRecord headers, String controlConversation) 
+    throws IOException {
+        final URI uid = qualifyRecordID(baseid, TYPE, METADATA);
+        byte[] b = controlConversation.getBytes("UTF-8");
+        w.writeMetadataRecord(curi.toString(), timestamp, FTP_CONTROL_CONVERSATION_MIMETYPE,
+            uid, headers, new ByteArrayInputStream(b), b.length);
+        return uid;
+    }
+
     protected URI writeRequest(final WARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
@@ -458,6 +496,11 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         long duration = curi.getFetchDuration();
         if(duration>-1) {
             r.addLabelValue("fetchTimeMs", Long.toString(duration));
+        }
+        
+        if (curi.containsKey(A_FTP_FETCH_STATUS)) {
+            r.addLabelValue("ftpFetchStatus", curi.getString(A_FTP_FETCH_STATUS));
+            r.addLabelValue("ftpFetchStatusHttpEquiv", new Integer(curi.getFetchStatus()).toString());
         }
         
         // Add outlinks though they are effectively useless without anchor text.

@@ -25,6 +25,9 @@
 package org.archive.crawler.fetcher;
 
 
+import static org.archive.crawler.extractor.Link.NAVLINK_HOP;
+import static org.archive.crawler.extractor.Link.NAVLINK_MISC;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
@@ -37,19 +40,17 @@ import java.util.regex.Pattern;
 import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPCommand;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.extractor.Link;
-import static org.archive.crawler.extractor.Link.NAVLINK_HOP;
-import static org.archive.crawler.extractor.Link.NAVLINK_MISC;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.ClientFTP;
-import org.archive.net.FTPException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
@@ -65,7 +66,7 @@ import org.archive.util.HttpRecorder;
  * @author pjack
  *
  */
-public class FetchFTP extends Processor implements CoreAttributeConstants {
+public class FetchFTP extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 
     
     /** Serialization ID; robust against trivial API changes. */
@@ -101,7 +102,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
     "in this field.";
     
     /** The default value for the <code>password</code> attribute. */
-    final private static String DEFAULT_PASSWORD = "";
+    final private static String DEFAULT_PASSWORD = "heritrix@";
 
     
     /** The name for the <code>extract-from-dirs</code> attribute. */
@@ -157,7 +158,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
     
     /** The default value for the <code>timeout-seconds</code> attribute. */
     final private static int DEFAULT_TIMEOUT = 1200;
-    
+
 
     /**
      * Constructs a new <code>FetchFTP</code>.
@@ -247,19 +248,25 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
         HttpRecorder recorder = HttpRecorder.getHttpRecorder();
         ClientFTP client = new ClientFTP();
-        
+                
         try {
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("attempting to fetch ftp uri: " + curi);
+            }
             fetch(curi, client, recorder);
-        } catch (FTPException e) {
-            logger.log(Level.SEVERE, "FTP server reported problem.", e);
-            curi.setFetchStatus(e.getReplyCode());
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "IO Error during FTP fetch.", e);
-            curi.setFetchStatus(FetchStatusCodes.S_CONNECT_LOST);
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info(curi + ": " + e);
+            }
+            curi.addLocalizedError(this.getName(), e, "uhhhh");
+            curi.setFetchStatus(S_CONNECT_FAILED);
         } finally {
             disconnect(client);
-            curi.setContentSize(recorder.getRecordedInput().getSize());
             curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+            curi.putString(A_FTP_CONTROL_CONVERSATION, client.getControlConversation());
+            if (logger.isLoggable(Level.INFO)) {
+                logger.info("finished attempt to fetch ftp uri: " + curi);
+            }
         }
     }
 
@@ -281,11 +288,12 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         if (port == -1) {
             port = 21;
         }
-        client.connectStrict(uuri.getHost(), port);
+        
+        client.connect(uuri.getHost(), port);
         
         // Authenticate.
         String[] auth = getAuth(curi);
-        client.loginStrict(auth[0], auth[1]);
+        client.login(auth[0], auth[1]);
         
         // The given resource may or may not be a directory.
         // To figure out which is which, execute a CD command to
@@ -293,42 +301,95 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         boolean dir = client.changeWorkingDirectory(uuri.getPath());
         if (dir) {
             curi.setContentType("text/plain");
+            curi.addAnnotation("ftp-directory-list");
         }
         
-        // TODO: A future version of this class could use the system string to
-        // set up custom directory parsing if the FTP server doesn't support 
-        // the nlist command.
-        if (logger.isLoggable(Level.FINE)) {
-            String system = client.getSystemName();
-            logger.fine(system);
-        }
-        
-        // Get a data socket.  This will either be the result of a NLIST
+        // Get a data socket.  This will either be the result of a NLST
         // command for a directory, or a RETR command for a file.
-        int command = dir ? FTPCommand.NLST : FTPCommand.RETR;
-        String path = dir ? "." : uuri.getPath();
+        int command;
+        String path;
+        if (dir) {
+            command = FTPCommand.NLST;
+            client.setFileType(FTP.ASCII_FILE_TYPE);
+            path = ".";
+        } else { 
+            command = FTPCommand.RETR;
+            client.setFileType(FTP.BINARY_FILE_TYPE);
+            path = uuri.getPath();
+        }
         client.enterLocalPassiveMode();
-        client.setBinary();
         Socket socket = client.openDataConnection(command, path);
-        curi.setFetchStatus(client.getReplyCode());
+        curi.setFetchStatus(-1000 - client.getReplyCode());
 
         // Save the streams in the CURI, where downstream processors
         // expect to find them.
-        try {
-            saveToRecorder(curi, socket, recorder);
-        } finally {
-            recorder.close();
-            close(socket);
-        }
+        if (socket != null) {
+            try {
+                saveToRecorder(curi, socket, recorder);
+            } finally {
+                // "226 Transfer complete."
+                client.getReply();
+                curi.putString(A_FTP_FETCH_STATUS, client.getReplyStrings()[0]);
 
-        curi.setFetchStatus(200);
-        if (dir) {
-            extract(curi, recorder);
+                recorder.close();
+                client.closeDataConnection(); // does socket.close()
+                curi.setContentSize(recorder.getRecordedInput().getSize());
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info("read " + recorder.getRecordedInput().getSize()
+                            + " bytes from ftp data socket");
+                }
+            }
+
+            curi.setFetchStatus(200);
+            if (dir) {
+                extract(curi, recorder);
+            }
+        } else {
+            if (client.getReplyStrings() != null && client.getReplyStrings().length >= 1) {
+                curi.putString(A_FTP_FETCH_STATUS, client.getReplyStrings()[0]);
+            } else {
+                curi.putString(A_FTP_FETCH_STATUS, "XXX No response from server!");
+            }
+
+            if (client.getReplyCode() == 450) {
+                // 450 No files found
+                curi.setFetchStatus(200); // XXX hmmm no payload
+            } else if (client.getReplyCode() == 530) {
+                // ftp://ftp.gamma.ru/ 530 Login incorrect.
+                curi.setFetchStatus(401);
+            } else if (client.getReplyString().matches("(?s)550.*No such file.*")) {
+                // 550 fdasfdafds: No such file or directory
+                curi.setFetchStatus(404);
+            } else if (client.getReplyString().matches("(?s)550.*Failed to open file.*")) {
+                // could mean 404 not found or 403 forbidden 
+                // ftp://ftp.wu-wien.ac.at/outgoing
+                // ftp://ftp.kernel.org/lost%2Bfound
+                // 550 Failed to open file.
+                curi.setFetchStatus(400);
+            } else if (client.getReplyString().matches("(?s)550.*No files found.*")) {
+                // ftp://ftp.calyx.nl/bin : 550 No files found.
+                curi.setFetchStatus(200); // XXX hmmm no payload
+            } else if (client.getReplyString().matches("(?s)550.*Operation not permitted.*")) {
+                // ftp://mirror.roothell.org/lost%2Bfound
+                // 550 /lost+found: Operation not permitted.
+                curi.setFetchStatus(403);
+            } else if (client.getReplyString().matches("(?s)[45]50.*Permission denied.*")) {
+                // ftp://ftp.fr.openbsd.org/private: 550 /private: Permission denied.
+                // ftp://ftp.earthlink.net/etc: 450 .: Permission denied
+                curi.setFetchStatus(403);
+            } else if (client.getReplyString().matches("(?s)550.*Prohibited file name.*")) {
+                // ftp://ftp.freebsdchina.org/pub/FreeBSD/.message
+                // 550 Prohibited file name: /pub/FreeBSD/.message
+                curi.setFetchStatus(400);
+            } else {
+                // could be timeout connecting to data port or a 421(right?); should
+                // try it again, see AbstractFrontier.needsRetrying()
+                curi.setFetchStatus(S_CONNECT_LOST);
+            }
         }
         addParent(curi);
     }
-    
-    
+
     /**
      * Saves the given socket to the given recorder.
      * 
@@ -586,20 +647,6 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
 
 
     /**
-     * Quietly closes the given socket.
-     * 
-     * @param socket  the socket to close
-     */
-    private static void close(Socket socket) {
-        try {
-            socket.close();
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "IO error closing socket.", e);
-        }
-    }
-
-
-    /**
      * Quietly closes the given sequence.
      * If an IOException is raised, this method logs it as a warning.
      * 
@@ -617,7 +664,6 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         }
     }
 
-    
     /**
      * Quietly disconnects from the given FTP client.
      * If an IOException is raised, this method logs it as a warning.
@@ -626,14 +672,17 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      */
     private static void disconnect(ClientFTP client) {
         if (client.isConnected()) try {
+            client.logout();
+        } catch (IOException e) {
+        }
+
+        if (client.isConnected()) try {
             client.disconnect();
         } catch (IOException e) {
             if (logger.isLoggable(Level.WARNING)) {
                 logger.warning("Could not disconnect from FTP client: " 
-                 + e.getMessage());
+                        + e.getMessage());
             }
-        }        
+        }
     }
-
-
 }
