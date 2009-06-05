@@ -233,4 +233,8 @@ public interface WARCConstants extends ArchiveFileConstants {
     	"application/http; msgtype=request";
     public static final String HTTP_RESPONSE_MIMETYPE =
     	"application/http; msgtype=response";
+    public static final String FTP_CONTROL_CONVERSATION_MIMETYPE =
+        "application/ftp; msgtype=control-conversation";
+    public static final String FTP_PAYLOAD_DATA_MIMETYPE =
+        "application/ftp; msgtype=payload-data";
 }

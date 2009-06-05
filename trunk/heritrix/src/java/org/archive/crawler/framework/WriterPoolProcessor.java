@@ -314,7 +314,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         } else if (scheme.equals("http") || scheme.equals("https")) {
             retVal = curi.getFetchStatus() > 0 && curi.isHttpTransaction();
         } else if (scheme.equals("ftp")) {
-            retVal = curi.getFetchStatus() == 200;
+            retVal = curi.getFetchStatus() > 0;
         } else {
             // unsupported scheme
             curi.addAnnotation(ANNOTATION_UNWRITTEN + ":scheme");

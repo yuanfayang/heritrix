@@ -59,6 +59,8 @@ public interface CoreAttributeConstants {
     public static String A_FETCH_BEGAN_TIME= "fetch-began-time";
     public static String A_FETCH_COMPLETED_TIME = "fetch-completed-time";
     public static String A_HTTP_TRANSACTION = "http-transaction";
+    public static String A_FTP_CONTROL_CONVERSATION = "ftp-control-conversation";
+    public static String A_FTP_FETCH_STATUS = "ftp-fetch-status";
 
     public static String A_RUNTIME_EXCEPTION = "runtime-exception";
     public static String A_LOCALIZED_ERRORS = "localized-errors";
