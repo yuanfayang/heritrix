@@ -282,12 +282,13 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 writeResponse(w, timestamp, curi.getContentType(), baseid,
                     curi, headers);
             } else if (lowerCaseScheme.equals("ftp")) {
-                ANVLRecord headers = new ANVLRecord(1);
+                ANVLRecord headers = new ANVLRecord(2);
+                headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
                 String controlConversation = curi.getString(A_FTP_CONTROL_CONVERSATION);
                 URI rid = writeFtpControlConversation(w, timestamp, baseid, curi, headers, controlConversation);
                 
                 if (curi.getHttpRecorder() != null) {
-                    headers = new ANVLRecord(2);
+                    headers = new ANVLRecord(3);
                     if (curi.isTruncatedFetch()) {
                         String value = curi.isTimeTruncatedFetch()?
                             NAMED_FIELD_TRUNCATED_VALUE_TIME:
@@ -298,6 +299,10 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                             // TODO: Add this to spec.
                             TRUNCATED_VALUE_UNSPECIFIED;
                         headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+                    }
+                    if (curi.getContentDigest() != null) {
+                        headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
+                            curi.getContentDigestSchemeString());
                     }
                     headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
                     rid = writeResource(w, timestamp, FTP_PAYLOAD_DATA_MIMETYPE, baseid, curi, headers);
