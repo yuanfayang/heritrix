@@ -152,7 +152,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     public static final String ATTR_DIGEST_CONTENT = "digest-content";
     public static final String ATTR_DIGEST_ALGORITHM = "digest-algorithm";
     public static final String ATTR_FETCH_BANDWIDTH_MAX = "fetch-bandwidth";
-   
+
+    public static final String DESC_DIGEST_CONTENT = "Whether or not to"
+        + " perform an on-the-fly digest hash of retrieved content-bodies.";
+    public static final String DESC_DIGEST_ALGORITHM = "Which algorithm (for"
+        + " example MD5 or SHA-1) to use to perform an on-the-fly digest hash"
+        + " of retrieved content-bodies.";
+
     /**
      * SSL trust level setting attribute name.
      */
@@ -354,14 +360,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             DEFAULT_CONTENT_CHARSET + ".",
             DEFAULT_CONTENT_CHARSET));
         e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(ATTR_DIGEST_CONTENT,
-                "Whether or not to perform an on-the-fly digest hash of" +
-                " retrieved content-bodies.",
+        e = addElementToDefinition(new SimpleType(ATTR_DIGEST_CONTENT, DESC_DIGEST_CONTENT,
                 DEFAULT_DIGEST_CONTENT));
         e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(ATTR_DIGEST_ALGORITHM,
-                "Which algorithm (for example MD5 or SHA-1) to use to perform an on-the-fly digest" +
-                " hash of retrieved content-bodies.",
+        e = addElementToDefinition(new SimpleType(ATTR_DIGEST_ALGORITHM, DESC_DIGEST_ALGORITHM,
                 DEFAULT_DIGEST_ALGORITHM, DIGEST_ALGORITHMS));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_SEND_IF_MODIFIED_SINCE,

@@ -94,14 +94,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 "or other mechanisms.", DEFAULT_ACCEPT_NON_DNS_RESOLVES));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(FetchHTTP.ATTR_DIGEST_CONTENT,
-                "Whether or not to perform an on-the-fly digest hash of" +
-                " retrieved content-bodies.",
-                FetchHTTP.DEFAULT_DIGEST_CONTENT));
+                FetchHTTP.DESC_DIGEST_CONTENT, FetchHTTP.DEFAULT_DIGEST_CONTENT));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(
-            FetchHTTP.ATTR_DIGEST_ALGORITHM, "Which algorithm (for example " +
-                "MD5 or SHA-1) to use to perform an on-the-fly digest" +
-                " hash of retrieved content-bodies.",
+                FetchHTTP.ATTR_DIGEST_ALGORITHM, 
+                FetchHTTP.DESC_DIGEST_ALGORITHM,
                 FetchHTTP.DEFAULT_DIGEST_ALGORITHM,
                 FetchHTTP.DIGEST_ALGORITHMS));
         e.setExpertSetting(true);
