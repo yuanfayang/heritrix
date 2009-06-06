@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URLEncoder;
+import java.security.MessageDigest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -174,8 +175,18 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
         add(ATTR_MAX_LENGTH, DESC_MAX_LENGTH, DEFAULT_MAX_LENGTH);
         add(ATTR_BANDWIDTH, DESC_BANDWIDTH, DEFAULT_BANDWIDTH);
         add(ATTR_TIMEOUT, DESC_TIMEOUT, DEFAULT_TIMEOUT);
+        
+        org.archive.crawler.settings.Type e = addElementToDefinition(new SimpleType(
+                FetchHTTP.ATTR_DIGEST_CONTENT, FetchHTTP.DESC_DIGEST_CONTENT,
+                FetchHTTP.DEFAULT_DIGEST_CONTENT));
+        e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(
+                FetchHTTP.ATTR_DIGEST_ALGORITHM, 
+                FetchHTTP.DESC_DIGEST_ALGORITHM,
+                FetchHTTP.DEFAULT_DIGEST_ALGORITHM,
+                FetchHTTP.DIGEST_ALGORITHMS));
+        e.setExpertSetting(true);
     }
-
     
     /**
      * Convenience method for adding an attribute.
@@ -246,9 +257,9 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
         }
         
         curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
-        HttpRecorder recorder = HttpRecorder.getHttpRecorder();
         ClientFTP client = new ClientFTP();
-                
+        HttpRecorder recorder = HttpRecorder.getHttpRecorder();
+        
         try {
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("attempting to fetch ftp uri: " + curi);
@@ -324,6 +335,20 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
         // Save the streams in the CURI, where downstream processors
         // expect to find them.
         if (socket != null) {
+            // Shall we get a digest on the content downloaded?
+            boolean digestContent  = ((Boolean)getUncheckedAttribute(curi,
+                    FetchHTTP.ATTR_DIGEST_CONTENT)).booleanValue();
+            String algorithm = null; 
+            if (digestContent) {
+                algorithm = ((String)getUncheckedAttribute(curi,
+                    FetchHTTP.ATTR_DIGEST_ALGORITHM));
+                recorder.getRecordedInput().setDigest(algorithm);
+                recorder.getRecordedInput().startDigest();
+            } else {
+                // clear
+                recorder.getRecordedInput().setDigest((MessageDigest)null);
+            }
+                    
             try {
                 saveToRecorder(curi, socket, recorder);
             } finally {
@@ -337,6 +362,11 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
                 if (logger.isLoggable(Level.INFO)) {
                     logger.info("read " + recorder.getRecordedInput().getSize()
                             + " bytes from ftp data socket");
+                }
+
+                if (digestContent) {
+                    curi.setContentDigest(algorithm,
+                        recorder.getRecordedInput().getDigestValue());
                 }
             }
 
