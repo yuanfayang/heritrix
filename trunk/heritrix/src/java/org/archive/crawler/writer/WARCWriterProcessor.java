@@ -49,6 +49,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.extractor.Link;
+import org.archive.crawler.fetcher.FetchFTP;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -305,7 +306,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                             curi.getContentDigestSchemeString());
                     }
                     headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
-                    rid = writeResource(w, timestamp, FTP_PAYLOAD_DATA_MIMETYPE, baseid, curi, headers);
+                    rid = writeResource(w, timestamp, curi.getContentType(), baseid, curi, headers);
                 }
                 if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
                     headers = new ANVLRecord(1);
