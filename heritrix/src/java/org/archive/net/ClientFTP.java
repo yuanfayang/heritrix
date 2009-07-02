@@ -25,15 +25,19 @@
 package org.archive.net;
 
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.LineIterator;
 import org.apache.commons.net.ProtocolCommandEvent;
 import org.apache.commons.net.ProtocolCommandListener;
 import org.apache.commons.net.ftp.FTPClient;
-import org.archive.util.StringLinesIterator;
 
 /**
  * Client for FTP operations. Saves the commands sent to the server and replies
@@ -132,8 +136,17 @@ public class ClientFTP extends FTPClient implements ProtocolCommandListener {
         return controlConversation.toString();
     }    
 
+    private class IterableLineIterator extends LineIterator implements Iterable<String> {
+        public IterableLineIterator(final Reader reader) throws IllegalArgumentException {
+            super(reader);
+        }
+        public Iterator<String> iterator() {
+            return this;
+        }
+    }
+    
     protected void recordControlMessage(String linePrefix, String message) {
-        for (String line: new StringLinesIterator(message)) {
+        for (String line: new IterableLineIterator(new BufferedReader(new StringReader(message)))) {
             controlConversation.append(linePrefix);
             controlConversation.append(line);
             controlConversation.append(NETASCII_EOL);

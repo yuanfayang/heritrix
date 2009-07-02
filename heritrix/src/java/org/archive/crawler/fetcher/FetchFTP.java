@@ -69,7 +69,7 @@ import org.archive.util.HttpRecorder;
  */
 public class FetchFTP extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 
-    
+
     /** Serialization ID; robust against trivial API changes. */
     private static final long serialVersionUID =
      ArchiveUtils.classnameBasedUID(FetchFTP.class,1);
@@ -99,11 +99,11 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
    
     /** The description for the <code>password</code> attribute. */
     final private static String DESC_PASSWORD = "The password to send to " +
-    "FTP servers.  By convention, anonymous users send their email address " +
-    "in this field.";
+    "FTP servers. By convention, anonymous users send their email address " +
+    "in this field. If unset the crawl operator 'From' value is used.";
     
     /** The default value for the <code>password</code> attribute. */
-    final private static String DEFAULT_PASSWORD = "heritrix@";
+    final private static String DEFAULT_PASSWORD = "";
 
     
     /** The name for the <code>extract-from-dirs</code> attribute. */
@@ -310,16 +310,13 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
         // To figure out which is which, execute a CD command to
         // the UURI's path.  If CD works, it's a directory.
         boolean dir = client.changeWorkingDirectory(uuri.getPath());
-        if (dir) {
-            curi.setContentType("text/plain");
-            curi.addAnnotation("ftp-directory-list");
-        }
         
         // Get a data socket.  This will either be the result of a NLST
         // command for a directory, or a RETR command for a file.
         int command;
         String path;
         if (dir) {
+            curi.addAnnotation("ftpDirectoryList");
             command = FTPCommand.NLST;
             client.setFileType(FTP.ASCII_FILE_TYPE);
             path = ".";
@@ -359,6 +356,13 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
                 recorder.close();
                 client.closeDataConnection(); // does socket.close()
                 curi.setContentSize(recorder.getRecordedInput().getSize());
+                
+                if (dir) {
+                    curi.setContentType("text/plain");
+                } else {
+                    curi.setContentType("application/octet-stream");
+                }
+                
                 if (logger.isLoggable(Level.INFO)) {
                     logger.info("read " + recorder.getRecordedInput().getSize()
                             + " bytes from ftp data socket");
@@ -618,7 +622,6 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
         return (Integer)get(curi, ATTR_BANDWIDTH, DEFAULT_BANDWIDTH);
     }
 
-
     /**
      * Returns the username and password for the given URI.  This method
      * always returns an array of length 2.  The first element in the returned
@@ -632,7 +635,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
      * <p>Otherwise the settings system is probed for the <code>username</code>
      * and <code>password</code> attributes for this <code>FTPFetch</code>
      * and the given <code>curi</code> context.  The values of those 
-     * attributes are then returned.
+     * attributes are then returned. If the FetchFTP password attribute is 
+     * not set, the crawl operator 'From' attribute is used.
      * 
      * @param curi  the curi whose username and password to return
      * @return  an array containing the username and password
@@ -656,25 +660,15 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
                 return result;
             }
         }
+
         result[0] = (String)get(curi, ATTR_USERNAME, DEFAULT_USERNAME);
         result[1] = (String)get(curi, ATTR_PASSWORD, DEFAULT_PASSWORD);
+        if (result[1].equals("")) {
+            result[1] = getSettingsHandler().getOrder().getFrom(curi);
+        }
+
         return result;
     }
-    
-    
-    /**
-     * Determines the password for the given URI.  If the URI itself contains
-     * a password, then that password is returned.  Otherwise the settings
-     * system is probed for the <code>password</code> attribute, and the value
-     * for that attribute is returned.
-     * 
-     * @param curi  the curi whose password to return
-     * @return  that password
-     */
-    public String determinePassword(CrawlURI curi) {
-        return (String)get(curi, ATTR_PASSWORD, DEFAULT_PASSWORD);
-    }
-
 
     /**
      * Quietly closes the given sequence.
