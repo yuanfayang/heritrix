@@ -35,10 +35,10 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.util.LongWrapper;
 
 
 /**
@@ -99,26 +99,26 @@ public class StatisticsSummary {
     protected String totalDataWritten;
     
     /** Keep track of the file types we see (mime type -> count) */
-    protected Hashtable<String,LongWrapper> mimeTypeDistribution = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> mimeTypeBytes = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> mimeTypeDnsDistribution = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> mimeTypeDnsBytes = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,AtomicLong> mimeTypeDistribution = new Hashtable<String,AtomicLong>();
+    protected Hashtable<String,AtomicLong> mimeTypeBytes = new Hashtable<String,AtomicLong>();
+    protected Hashtable<String,AtomicLong> mimeTypeDnsDistribution = new Hashtable<String,AtomicLong>();
+    protected Hashtable<String,AtomicLong> mimeTypeDnsBytes = new Hashtable<String,AtomicLong>();
     
     /** Keep track of status codes */
-    protected Hashtable<String,LongWrapper> statusCodeDistribution = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> dnsStatusCodeDistribution
-     = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,AtomicLong> statusCodeDistribution = new Hashtable<String,AtomicLong>();
+    protected Hashtable<String,AtomicLong> dnsStatusCodeDistribution
+     = new Hashtable<String,AtomicLong>();
     
     /** Keep track of hosts */
-    protected Hashtable<String,LongWrapper> hostsDistribution = new Hashtable<String,LongWrapper>(); 
-    protected Hashtable<String,LongWrapper> hostsBytes = new Hashtable<String,LongWrapper>(); 
-    protected Hashtable<String,LongWrapper> hostsDnsDistribution = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> hostsDnsBytes = new Hashtable<String,LongWrapper>(); 
+    protected Hashtable<String,AtomicLong> hostsDistribution = new Hashtable<String,AtomicLong>(); 
+    protected Hashtable<String,AtomicLong> hostsBytes = new Hashtable<String,AtomicLong>(); 
+    protected Hashtable<String,AtomicLong> hostsDnsDistribution = new Hashtable<String,AtomicLong>();
+    protected Hashtable<String,AtomicLong> hostsDnsBytes = new Hashtable<String,AtomicLong>(); 
 
     /** Keep track of TLDs */
-    protected Hashtable<String,LongWrapper> tldDistribution = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> tldBytes = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> tldHostDistribution = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,AtomicLong> tldDistribution = new Hashtable<String,AtomicLong>();
+    protected Hashtable<String,AtomicLong> tldBytes = new Hashtable<String,AtomicLong>();
+    protected Hashtable<String,AtomicLong> tldHostDistribution = new Hashtable<String,AtomicLong>();
 
     /** Keep track of processed seeds */
     protected transient Map<String,SeedRecord> processedSeedsRecords 
@@ -159,7 +159,7 @@ public class StatisticsSummary {
      *               exist it will be added (set to 1).  If null it will
      *            increment the counter "unknown".
      */
-    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+    protected static void incrementMapCount(Map<String,AtomicLong> map, 
             String key) {
     	incrementMapCount(map,key,1);
     }
@@ -179,16 +179,17 @@ public class StatisticsSummary {
      *            The amount to increment counter related to the
      *            <code>key</code>.
      */
-    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+    protected static void incrementMapCount(Map<String,AtomicLong> map, 
             String key, long increment) {
         if (key == null) {
             key = "unknown";
         }
-        LongWrapper lw = map.get(key);
+        // FIXME: for true safety this may need to use ConcurrenMap methods
+        AtomicLong lw = map.get(key);
         if(lw == null) {
-            map.put(key, new LongWrapper(increment));
+            map.put(key, new AtomicLong(increment));
         } else {
-            lw.longValue += increment;
+            lw.addAndGet(increment);
         }
     }
   
@@ -197,7 +198,7 @@ public class StatisticsSummary {
      *  mime type -> count.
      * <p>
      * <b>Note:</b> All the values are wrapped with a
-     * {@link LongWrapper LongWrapper}
+     * {@link AtomicLong AtomicLong}
      * @return mimeTypeDistribution
      */
     public Hashtable getMimeDistribution() {
@@ -226,7 +227,7 @@ public class StatisticsSummary {
      * val represents (string)code -&gt; (integer)count.
      * 
      * <b>Note: </b> All the values are wrapped with a
-     * {@link LongWrapper LongWrapper}
+     * {@link AtomicLong AtomicLong}
      * 
      * @return statusCodeDistribution
      */
@@ -240,7 +241,7 @@ public class StatisticsSummary {
      * val represents (string)code -&gt; (integer)count.
      * 
      * <b>Note: </b> All the values are wrapped with a
-     * {@link LongWrapper LongWrapper}
+     * {@link AtomicLong AtomicLong}
      * 
      * @return dnsStatusCodeDistribution
      */
@@ -326,7 +327,7 @@ public class StatisticsSummary {
 
     /**
      * Sort the entries of the given HashMap in descending order by their
-     * values, which must be longs wrapped with <code>LongWrapper</code>.
+     * values, which must be <code>AtomicLong</code>s.
      * <p>
      * Elements are sorted by value from largest to smallest. Equal values are
      * sorted in an arbitrary, but consistent manner by their keys. Only items
@@ -335,17 +336,17 @@ public class StatisticsSummary {
      * If the passed-in map requires access to be synchronized, the caller
      * should ensure this synchronization. 
      * 
-     * @param mapOfLongWrapperValues
-     *            Assumes values are wrapped with LongWrapper.
+     * @param mapOfAtomicLongValues
+     *            Assumes values are AtomicLongs.
      * @return a sorted set containing the same elements as the map.
      */
-    public TreeMap<String,LongWrapper> getReverseSortedCopy(
-            final Map<String,LongWrapper> mapOfLongWrapperValues) {
-        TreeMap<String,LongWrapper> sortedMap = new TreeMap<String,LongWrapper>(
+    public TreeMap<String,AtomicLong> getReverseSortedCopy(
+            final Map<String,AtomicLong> mapOfAtomicLongValues) {
+        TreeMap<String,AtomicLong> sortedMap = new TreeMap<String,AtomicLong>(
           new Comparator<String>() {
             public int compare(String e1, String e2) {
-                long firstVal = mapOfLongWrapperValues.get(e1).longValue;
-                long secondVal = mapOfLongWrapperValues.get(e2).longValue;
+                long firstVal = mapOfAtomicLongValues.get(e1).get();
+                long secondVal = mapOfAtomicLongValues.get(e2).get();
                 if (firstVal < secondVal) {
                     return 1;
                 }
@@ -357,10 +358,10 @@ public class StatisticsSummary {
             }
         });
         try {
-            sortedMap.putAll(mapOfLongWrapperValues);
+            sortedMap.putAll(mapOfAtomicLongValues);
         } catch (UnsupportedOperationException e) {
-            for (String key: mapOfLongWrapperValues.keySet()) {
-                sortedMap.put(key, mapOfLongWrapperValues.get(key));
+            for (String key: mapOfAtomicLongValues.keySet()) {
+                sortedMap.put(key, mapOfAtomicLongValues.get(key));
             }
         }
         return sortedMap;
@@ -373,8 +374,8 @@ public class StatisticsSummary {
      * @return		Total crawled hosts
      */
     public long getHostsPerTld(String tld) {
-    	LongWrapper lw = (LongWrapper)tldHostDistribution.get(tld);
-    	return (lw == null ? 0 : lw.longValue);
+    	AtomicLong lw = (AtomicLong)tldHostDistribution.get(tld);
+    	return (lw == null ? 0 : lw.get());
     }
     
     /**
@@ -408,14 +409,14 @@ public class StatisticsSummary {
 	    			  // DNS status code
 	    			  long total = Long.parseLong(items[1]);
 	    			  dnsStatusCodeDistribution.put(items[0], 
-	    					  new LongWrapper(total));
+	    					  new AtomicLong(total));
 	    			  totalDnsStatusCodeDocuments += total;
 	    		  }
 	    		  else {
 	    			  // HTTP status code
 	    			  long total = Long.parseLong(items[1]);
 	    			  statusCodeDistribution.put(items[0], 
-	    					  new LongWrapper(total));
+	    					  new AtomicLong(total));
 	    			  totalStatusCodeDocuments += total;
 	    		  }
 	    	  }
@@ -470,14 +471,14 @@ public class StatisticsSummary {
 	    			// Seperate DNS reconrds from HTTP
 	    			if (mime.equalsIgnoreCase("text/dns")) {
 	    				mimeTypeDnsDistribution.put(mime,
-                                new LongWrapper(total));
-	    				mimeTypeDnsBytes.put(mime, new LongWrapper(bytes));
+                                new AtomicLong(total));
+	    				mimeTypeDnsBytes.put(mime, new AtomicLong(bytes));
 	    				totalDnsMimeTypeDocuments += total;
 	    				totalDnsMimeSize += bytes;
 	    			}
 	    			else {
-	    				mimeTypeDistribution.put(mime, new LongWrapper(total));
-	    				mimeTypeBytes.put(mime, new LongWrapper(bytes));
+	    				mimeTypeDistribution.put(mime, new AtomicLong(total));
+	    				mimeTypeBytes.put(mime, new AtomicLong(bytes));
 	    				totalMimeTypeDocuments += total;
 	    				totalMimeSize += bytes;
 	    			}
@@ -532,14 +533,14 @@ public class StatisticsSummary {
 
 	    			// Seperate DNS reconrds from HTTP
 	    			if (host.startsWith("dns:", 0)) {
-	    				hostsDnsDistribution.put(host, new LongWrapper(total));
-	    				hostsDnsBytes.put(host, new LongWrapper(bytes));
+	    				hostsDnsDistribution.put(host, new AtomicLong(total));
+	    				hostsDnsBytes.put(host, new AtomicLong(bytes));
 	    				totalDnsHostDocuments += total;
 	    				totalDnsHostSize += bytes;
 	    			}
 	    			else {
-	    				hostsDistribution.put(host, new LongWrapper(total));
-	    				hostsBytes.put(host, new LongWrapper(bytes));
+	    				hostsDistribution.put(host, new AtomicLong(total));
+	    				hostsBytes.put(host, new AtomicLong(bytes));
 	    				totalHostDocuments += total;
 	    				totalHostSize += bytes;
 
@@ -580,8 +581,8 @@ public class StatisticsSummary {
     	long bytes = -1;
     	
     	bytes = host != null && host.startsWith("dns:", 0) ? 
-	    	((LongWrapper)hostsDnsBytes.get(host)).longValue :
-	    	((LongWrapper)hostsBytes.get(host)).longValue;	    
+	    	((AtomicLong)hostsDnsBytes.get(host)).get() :
+	    	((AtomicLong)hostsBytes.get(host)).get();	    
     	
     	return bytes;
     }
@@ -592,8 +593,8 @@ public class StatisticsSummary {
      * @return the total number of bytes downloaded for a given TLD
      */
     public long getBytesPerTld(String tld) {
-    	LongWrapper lw = (LongWrapper)tldBytes.get(tld);
-    	return (lw == null ? 0 : lw.longValue);
+    	AtomicLong lw = (AtomicLong)tldBytes.get(tld);
+    	return (lw == null ? 0 : lw.get());
     }
 
     /**
@@ -607,11 +608,11 @@ public class StatisticsSummary {
     	if (filetype != null) {    	
 	    	if (filetype.equals("text/dns")) {	    		
 	    		bytes = mimeTypeDnsBytes.get(filetype) == null ? 0 :
-	    			((LongWrapper)mimeTypeDnsBytes.get(filetype)).longValue;
+	    			((AtomicLong)mimeTypeDnsBytes.get(filetype)).get();
 	    	}
 	    	else {
 	    		bytes = mimeTypeBytes.get(filetype) == null ? 0 :
-	    			((LongWrapper)mimeTypeBytes.get(filetype)).longValue;
+	    			((AtomicLong)mimeTypeBytes.get(filetype)).get();
 	    	}
     	}
     	return bytes;
