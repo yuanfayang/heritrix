@@ -3,7 +3,7 @@
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%@ page import="org.archive.crawler.admin.StatisticsSummary" %>
-<%@ page import="org.archive.util.LongWrapper" %>
+<%@ page import="java.util.concurrent.atomic.AtomicLong" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.archive.crawler.admin.SeedRecord" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
