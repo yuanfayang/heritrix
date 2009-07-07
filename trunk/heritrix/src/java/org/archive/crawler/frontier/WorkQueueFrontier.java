@@ -28,15 +28,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Queue;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -154,7 +154,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
 
     /** All known queues.
      */
-    protected transient Map<String,WorkQueue> allQueues = null; 
+    protected transient ConcurrentMap<String,WorkQueue> allQueues = null; 
     // of classKey -> ClassKeyQueue
 
     /**
@@ -303,8 +303,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     && getQueueAssignmentPolicy(null).maximumNumberOfKeys() >= 0
                     && getQueueAssignmentPolicy(null).maximumNumberOfKeys() <= 
                         MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
-                this.allQueues = Collections.synchronizedMap(
-                        new HashMap<String,WorkQueue>());
+                this.allQueues = new ConcurrentHashMap<String,WorkQueue>(701, .9f, 100);
             } else {
                 this.allQueues = c.getBigMap("allqueues",
                         String.class, WorkQueue.class);
