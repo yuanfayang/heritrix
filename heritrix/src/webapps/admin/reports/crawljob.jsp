@@ -1,7 +1,7 @@
 <%@include file="/include/handler.jsp"%>
 
 <%@ page import="java.util.*" %>
-<%@ page import="org.archive.util.LongWrapper"%>
+<%@ page import="java.util.concurrent.atomic.AtomicLong"%>
 <%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%@ page import="org.archive.crawler.admin.*" %>
@@ -781,7 +781,7 @@
                 for (Iterator i = scd.keySet().iterator();
                         i.hasNext();) {
                     Object key = i.next();
-                    long count = ((LongWrapper)scd.get(key)).longValue;
+                    long count = ((AtomicLong)scd.get(key)).longValue;
                     long displaybarwidth = 0;
                     if(stats.successfullyFetchedCount()/6>0){
                        displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
@@ -824,7 +824,7 @@
                         getFileDistribution());
                 for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    long count = ((LongWrapper)fd.get(key)).longValue;
+                    long count = ((AtomicLong)fd.get(key)).longValue;
                     long displaybarwidth = 0;
                     if(stats.successfullyFetchedCount()/6>0){
                        displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
@@ -882,7 +882,7 @@
                             <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=(String)key%>&grep=true"><%=(String)key%></a>&nbsp;
                         </td>
                         <td nowrap>
-                            <% LongWrapper lw = ((LongWrapper)hd.get(key)); %>
+                            <% AtomicLong lw = ((AtomicLong)hd.get(key)); %>
                             <%=(lw == null) ?
                                 "null": Long.toString(lw.longValue)%>&nbsp;
                         </td>
