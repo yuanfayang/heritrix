@@ -1,7 +1,7 @@
-<%@include file="/include/handler.jsp"%>
+<%@include file="/include/handler.jsp"%> 
 
 <%@ page import="java.util.*" %>
-<%@ page import="java.util.concurrent.atomic.AtomicLong"%>
+<%@ page import="org.archive.util.LongWrapper"%>
 <%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%@ page import="org.archive.crawler.admin.*" %>
@@ -158,7 +158,7 @@
                 TreeMap scd = summary.getReverseSortedCopy(summary.getStatusCodeDistribution());
                 for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    long count = ((AtomicLong)scd.get(key)).get();
+                    long count = ((LongWrapper)scd.get(key)).longValue;
                     long displaybarwidth = 0;
                     long barwidthadjust = 5;
                     double per = ((double)count) / summary.getTotalStatusCodeDocuments();
@@ -210,7 +210,7 @@
                 TreeMap fd = summary.getReverseSortedCopy(summary.getMimeDistribution());
                 for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    long count = ((AtomicLong)fd.get(key)).get();
+                    long count = ((LongWrapper)fd.get(key)).longValue;
                     long displaybarwidth = 0;
                     double per = ((double)count) / summary.getTotalMimeTypeDocuments();
                     if(summary.getTotalMimeTypeDocuments()>1){
@@ -266,8 +266,8 @@
                 SortedMap hd = summary.getReverseSortedHostsDistribution();
                 for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    AtomicLong lw = (AtomicLong)hd.get(key);
-                    long count = lw == null ? 0 : lw.get();
+                    LongWrapper lw = (LongWrapper)hd.get(key);
+                    long count = lw == null ? 0 : lw.longValue;
                     long displaybarwidth = 0;
                     double per = ((double)count) / summary.getTotalHostDocuments();
                     if(summary.getTotalHostDocuments() > 1) {
@@ -332,8 +332,8 @@
             	scd = summary.getReverseSortedCopy(summary.getTldDistribution());
                 for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    AtomicLong lw = (AtomicLong)scd.get(key);
-                    long count = lw == null ? 0 : lw.get();
+                    LongWrapper lw = (LongWrapper)scd.get(key);
+                    long count = lw == null ? 0 : lw.longValue;
                     long displaybarwidth = 0;
                     double per = ((double)count) / summary.getTotalTldDocuments();
                     
@@ -409,7 +409,7 @@
                 scd = summary.getReverseSortedCopy(summary.getDnsStatusCodeDistribution());
                 for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    long count = ((AtomicLong)scd.get(key)).get();
+                    long count = ((LongWrapper)scd.get(key)).longValue;
                     long displaybarwidth = 0;
                     long barwidthadjust = 3;
                     double per = ((double)count) / summary.getTotalDnsStatusCodeDocuments(); 
@@ -461,7 +461,7 @@
                 fd = summary.getReverseSortedCopy(summary.getDnsMimeDistribution());
                 for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    long count = ((AtomicLong)fd.get(key)).get();
+                    long count = ((LongWrapper)fd.get(key)).longValue;
                     long displaybarwidth = 0;
                     double per = ((double)count)/summary.getTotalDnsMimeTypeDocuments();
                     if(summary.getTotalMimeTypeDocuments()/6>0){
@@ -520,8 +520,8 @@
                 hd = summary.getReverseSortedCopy(summary.getHostsDnsDistribution());
                 for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    AtomicLong lw = (AtomicLong)hd.get(key);
-                    long count = lw == null ? 0 : lw.get();
+                    LongWrapper lw = (LongWrapper)hd.get(key);
+                    long count = lw == null ? 0 : lw.longValue;
                     long displaybarwidth = 0;
                     double per = ((double)count) / summary.getTotalHostDnsDocuments();
                     if(summary.getTotalHostDnsDocuments() > 1) {
@@ -781,7 +781,7 @@
                 for (Iterator i = scd.keySet().iterator();
                         i.hasNext();) {
                     Object key = i.next();
-                    long count = ((AtomicLong)scd.get(key)).get();
+                    long count = ((LongWrapper)scd.get(key)).longValue;
                     long displaybarwidth = 0;
                     if(stats.successfullyFetchedCount()/6>0){
                        displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
@@ -824,7 +824,7 @@
                         getFileDistribution());
                 for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
-                    long count = ((AtomicLong)fd.get(key)).get();
+                    long count = ((LongWrapper)fd.get(key)).longValue;
                     long displaybarwidth = 0;
                     if(stats.successfullyFetchedCount()/6>0){
                        displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
@@ -882,9 +882,9 @@
                             <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=(String)key%>&grep=true"><%=(String)key%></a>&nbsp;
                         </td>
                         <td nowrap>
-                            <% AtomicLong lw = ((AtomicLong)hd.get(key)); %>
+                            <% LongWrapper lw = ((LongWrapper)hd.get(key)); %>
                             <%=(lw == null) ?
-                                "null": Long.toString(lw.get())%>&nbsp;
+                                "null": Long.toString(lw.longValue)%>&nbsp;
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)key))%>&nbsp;
