@@ -1,8 +1,8 @@
-/* ServerCache 
+/* ServerCache
  * 
  * Created on Nov 19, 2004
  *
- * Copyright (C) 2004 Internet Archive.
+ * Copyright (C) 2009 Internet Archive.
  * 
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  * 
@@ -22,9 +22,8 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.util.Map;
-import java.util.Hashtable;
-import java.util.logging.Level;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 import org.apache.commons.collections.Closure;
@@ -47,13 +46,13 @@ public class ServerCache {
      * hostname[:port] -> CrawlServer.
      * Set in the initialization.
      */
-    protected Map<String,CrawlServer> servers = null;
+    protected ConcurrentMap<String,CrawlServer> servers = null;
     
     /**
      * hostname -> CrawlHost.
      * Set in the initialization.
      */
-    protected Map<String,CrawlHost> hosts = null;
+    protected ConcurrentMap<String,CrawlHost> hosts = null;
     
     /**
      * Constructor.
@@ -73,10 +72,16 @@ public class ServerCache {
     public ServerCache(final SettingsHandler sh)
     throws Exception {
         this.settingsHandler = sh;
-        this.servers = new Hashtable<String,CrawlServer>();
-        this.hosts = new Hashtable<String,CrawlHost>();
+        this.servers = new ConcurrentHashMap<String,CrawlServer>();
+        this.hosts = new ConcurrentHashMap<String,CrawlHost>();
     }
     
+    /**
+     * Create a ServerCache that uses the given CrawlController to initialize the
+     * maps of servers and hosts.
+     * @param c 
+     * @throws Exception
+     */
     public ServerCache(final CrawlController c)
     throws Exception {
         this.settingsHandler = c.getSettingsHandler();
@@ -85,27 +90,21 @@ public class ServerCache {
     }
     
     /**
-     * Get the {@link CrawlServer} associated with <code>name</code>.
+     * Get the {@link CrawlServer} associated with <code>name</code>,
+     * creating if necessary. 
      * @param serverKey Server name we're to return server for.
      * @return CrawlServer instance that matches the passed server name.
      */
-    public synchronized CrawlServer getServerFor(String serverKey) {
+    public CrawlServer getServerFor(String serverKey) {
         CrawlServer cserver = (CrawlServer)this.servers.get(serverKey);
-        return (cserver != null)? cserver: createServerFor(serverKey);
-    }
-    
-    protected CrawlServer createServerFor(String s) {
-        CrawlServer cserver = (CrawlServer)this.servers.get(s);
-        if (cserver != null) {
-            return cserver;
-        }
-        // Ensure key is private object
-        String skey = new String(s);
-        cserver = new CrawlServer(skey);
-        cserver.setSettingsHandler(settingsHandler);
-        servers.put(skey,cserver);
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Created server " + s);
+        if(cserver==null) {
+            String skey = new String(serverKey); // ensure private minimal key
+            cserver = new CrawlServer(skey);
+            cserver.setSettingsHandler(settingsHandler);
+            CrawlServer prevVal = servers.putIfAbsent(skey, cserver);
+            if(prevVal!=null) {
+                cserver = prevVal;
+            }
         }
         return cserver;
     }
@@ -139,27 +138,18 @@ public class ServerCache {
      * @param hostname Host name we're to return Host for.
      * @return CrawlHost instance that matches the passed Host name.
      */
-    public synchronized CrawlHost getHostFor(String hostname) {
+    public CrawlHost getHostFor(String hostname) {
         if (hostname == null || hostname.length() == 0) {
             return null;
         }
         CrawlHost host = (CrawlHost)this.hosts.get(hostname);
-        return (host != null)? host: createHostFor(hostname);
-    }
-    
-    protected CrawlHost createHostFor(String hostname) {
-        if (hostname == null || hostname.length() == 0) {
-            return null;
-        }
-        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
-        if (host != null) {
-            return host;
-        }
-        String hkey = new String(hostname); 
-        host = new CrawlHost(hkey);
-        this.hosts.put(hkey, host);
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Created host " + hostname);
+        if(host==null) {
+            String hkey = new String(hostname); // ensure private minimal key
+            host = new CrawlHost(hkey);
+            CrawlHost prevVal = this.hosts.putIfAbsent(hkey, host);
+            if(prevVal!=null) {
+                host = prevVal;
+            }
         }
         return host;
     }
