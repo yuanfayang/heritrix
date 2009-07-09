@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Internet Archive. 
+/* Copyright (C) 2009 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -1944,7 +1945,7 @@ public class CrawlController implements Serializable, Reporter {
      * if none available, returns instance of HashMap.
      * @throws Exception
      */
-    public <K,V> Map<K,V> getBigMap(final String dbName, 
+    public <K,V> ConcurrentMap<K,V> getBigMap(final String dbName, 
             final Class<? super K> keyClass,
             final Class<? super V> valueClass)
     throws Exception {

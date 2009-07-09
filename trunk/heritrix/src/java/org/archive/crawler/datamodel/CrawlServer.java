@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Internet Archive. 
+/* Copyright (C) 2009 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -35,8 +35,6 @@ import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
-import org.archive.crawler.framework.Checkpointer;
-import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.ReplayInputStream;
@@ -116,6 +114,28 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
 
     public String toString() {
         return "CrawlServer("+server+")";
+    }
+
+    @Override
+    public int hashCode() {
+        return this.server != null ? this.server.hashCode() : 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CrawlServer other = (CrawlServer) obj;
+        if (this.server != other.server   // identity compare
+                && (this.server == null 
+                    || !this.server.equals(other.server))) {
+            return false;
+        }
+        return true;
     }
 
     /** Update the robots exclusion policy.
