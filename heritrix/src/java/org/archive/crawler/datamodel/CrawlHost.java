@@ -1,4 +1,4 @@
-/* Copyright (C) 2009 Internet Archive.
+/* Copyright (C) 2003 Internet Archive. 
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -150,28 +150,6 @@ public class CrawlHost implements Serializable, CrawlSubstats.HasCrawlSubstats {
 
     public String toString() {
         return "CrawlHost<" + hostname + "(ip:" + ip + ")>";
-    }
-
-    @Override
-    public int hashCode() {
-        return this.hostname != null ? this.hostname.hashCode() : 0;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final CrawlHost other = (CrawlHost) obj;
-        if (this.hostname != other.hostname   // identity compare
-                && (this.hostname == null 
-                    || !this.hostname.equals(other.hostname))) {
-            return false;
-        }
-        return true;
     }
 
     /**
