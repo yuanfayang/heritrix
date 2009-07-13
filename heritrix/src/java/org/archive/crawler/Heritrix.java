@@ -1,4 +1,4 @@
-/* Heritrix  
+/* Heritrix
  *
  * $Id$
  *
