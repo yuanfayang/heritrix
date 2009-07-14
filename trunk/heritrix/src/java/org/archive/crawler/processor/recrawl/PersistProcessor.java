@@ -184,7 +184,7 @@ public abstract class PersistProcessor extends Processor {
     private static int populatePersistEnvFromLog(BufferedReader persistLogReader, StoredSortedMap<String,AList> historyMap) 
     throws UnsupportedEncodingException, DatabaseException {
         int count = 0;
-        
+
         Iterator<String> iter = new LineReadingIterator(persistLogReader);
         while (iter.hasNext()) {
             String line = iter.next(); 
@@ -196,14 +196,16 @@ public abstract class PersistProcessor extends Processor {
                 logger.severe("bad line: " + line);
                 continue;
             }
-            try {
-                AList alist = (AList) IoUtils.deserializeFromByteArray(Base64.decodeBase64(splits[1].getBytes("UTF8")));
+
+            AList alist = (AList) IoUtils.deserializeFromByteArray(Base64.decodeBase64(splits[1].getBytes("UTF-8")));
+
+            if (logger.isLoggable(Level.FINE)) {
                 logger.fine(splits[0] + " " + alist.toPrettyString());
-                if (historyMap != null) {
-                    historyMap.put(splits[0], alist);
-                }
-            } catch (RuntimeException e) {
-                logger.log(Level.SEVERE, "problem with line: " + line, e);
+            }
+
+            if (historyMap != null) {
+                // XXX allow RuntimeExceptions to propagate
+                historyMap.put(splits[0], alist);
             }
             count++;
         }

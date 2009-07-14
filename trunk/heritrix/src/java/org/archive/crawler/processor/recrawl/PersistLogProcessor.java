@@ -84,7 +84,9 @@ public class PersistLogProcessor extends PersistProcessor implements CrawlStatus
     
     @Override
     protected void finalTasks() {
-        log.close();
+        if (log != null) {
+            log.close();
+        }
     }
 
     @Override
