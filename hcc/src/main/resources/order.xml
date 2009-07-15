@@ -245,7 +245,7 @@
         <boolean name="extract-javascript">true</boolean>
         <boolean name="treat-frames-as-embed-links">true</boolean>
         <boolean name="ignore-form-action-urls">false</boolean>
-        <boolean name="overly-eager-link-detection">true</boolean>
+        <boolean name="extract-value-attributes">true</boolean>
         <boolean name="ignore-unexpected-html">true</boolean>
       </newObject>
       <newObject name="ExtractorCSS" class="org.archive.crawler.extractor.ExtractorCSS">
