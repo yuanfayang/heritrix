@@ -466,11 +466,11 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     }
 
 	public void crawlEnding(String sExitMessage) {
-		this.pool.close();
 	}
 
 	public void crawlEnded(String sExitMessage) {
         // sExitMessage is unused.
+	    this.pool.close();
 	}
 
     /* (non-Javadoc)
