@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.processor.recrawl;
 
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -33,10 +32,10 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
+import st.ata.util.AList;
+
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.DatabaseException;
-
-import st.ata.util.AList;
 
 /**
  * Store CrawlURI attributes from latest fetch to persistent storage for
@@ -69,8 +68,6 @@ public class PersistLoadProcessor extends PersistOnlineProcessor {
         e.setOverrideable(false);
         e.setExpertSetting(false);
     }
-
-    
     
     @Override
     protected StoredSortedMap<String,AList> initStore() {
@@ -81,18 +78,17 @@ public class PersistLoadProcessor extends PersistOnlineProcessor {
             (String) getUncheckedAttribute(null, ATTR_PRELOAD_SOURCE);
         if (StringUtils.isNotBlank(preloadSource)) {
             try {
-                PersistProcessor.copyPersistSourceToHistoryMap(
+                int count = PersistProcessor.copyPersistSourceToHistoryMap(
                         getController().getDisk(), preloadSource, historyMap);
+                logger.info("Loaded deduplication information for " + count + " previously fetched urls from " + preloadSource);
             } catch (IOException ioe) {
-                logger.log(Level.WARNING, "Proceeding without persisted environment! " + ioe);
+                logger.log(Level.WARNING, "Problem loading " + preloadSource + ", proceeding without deduplication! " + ioe);
             } catch(DatabaseException de) {
-                logger.log(Level.WARNING, "Proceeding without persisted environment! " + de);
+                logger.log(Level.WARNING, "Problem loading " + preloadSource + ", proceeding without deduplication! " + de);
             }
         }
         return historyMap;
     }
-
-
 
     @Override
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
