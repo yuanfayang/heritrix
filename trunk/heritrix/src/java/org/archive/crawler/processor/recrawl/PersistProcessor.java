@@ -153,10 +153,14 @@ public abstract class PersistProcessor extends Processor {
         StoredSortedMap<String,AList> sourceHistoryMap = new StoredSortedMap<String,AList>(sourceHistoryDB,
                 new StringBinding(), new SerialBinding<AList>(sourceClassCatalog,
                         AList.class), true);
+
         Iterator<Entry<String,AList>> iter = sourceHistoryMap.entrySet().iterator();
         while (iter.hasNext()) {
             Entry<String,AList> item = iter.next(); 
-            logger.fine(item.getKey() + " " + item.getValue().toPrettyString());
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine(item.getKey() + " " + item.getValue().toPrettyString());
+            }
+            
             if (historyMap != null) {
                 historyMap.put(item.getKey(), item.getValue());
             }
