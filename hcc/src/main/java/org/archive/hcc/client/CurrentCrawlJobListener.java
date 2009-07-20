@@ -37,5 +37,5 @@ public interface CurrentCrawlJobListener extends
 
     public void crawlJobCompleted(CompletedCrawlJob job);
 
-    public void statisticsChanged(CurrentCrawlJob job, Map statistics);
+    public void statisticsChanged(CurrentCrawlJob job, Map<String,Object> statistics);
 }
