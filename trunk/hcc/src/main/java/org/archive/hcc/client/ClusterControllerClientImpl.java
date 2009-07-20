@@ -211,7 +211,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     ObjectName source = (ObjectName) n.getSource();
                     if (source.getKeyProperty(JmxUtils.TYPE).equals(
                             JmxUtils.JOB)) {
-                        Map statistics = toMap(n.getUserData());
+                        Map<String,Object> statistics = toMap(n.getUserData());
                         handleCrawlServiceJobAttributesChanged(
                                 source,
                                 statistics,
@@ -293,7 +293,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                         connection);
     }
 
-    private static Map toMap(Object object) {
+    private static Map<String,Object> toMap(Object object) {
         if (object instanceof Map) {
             return (Map) object;
         } else if (object instanceof CompositeData) {
@@ -303,7 +303,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     "downloadFailures", "totalKBPerSec", "totalMemory",
                     "currentKBPerSec", "currentDocsPerSecond", "busyThreads",
                     "averageDepth", "discoveredUriCount", "congestionRatio","totalProcessedBytes" };
-            Map map = new HashMap();
+            Map<String,Object> map = new HashMap<String,Object>();
             
             Object[] values = cd.getAll(keys);
             for (int i = 0; i < keys.length; i++) {
@@ -508,20 +508,18 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
     }
 
     private MBeanServer createMBeanServer() {
-        MBeanServer result = null;
-        List servers = MBeanServerFactory.findMBeanServer(null);
+        List<MBeanServer> servers = MBeanServerFactory.findMBeanServer(null);
         if (servers == null) {
-            return result;
+            return null;
         }
-        for (Iterator i = servers.iterator(); i.hasNext();) {
-            MBeanServer server = (MBeanServer) i.next();
-            if (server == null) {
-                continue;
+
+        for (MBeanServer server: servers) {
+            if (server != null) {
+                return server;
             }
-            result = server;
-            break;
         }
-        return result;
+        
+        return null;
     }
 
     public Crawler createCrawler() throws 

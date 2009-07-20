@@ -50,7 +50,7 @@ public class CurrentCrawlJobAdapter implements CurrentCrawlJobListener {
 
     }
 
-    public void statisticsChanged(CurrentCrawlJob job, Map statistics) {
+    public void statisticsChanged(CurrentCrawlJob job, Map<String,Object> statistics) {
         // TODO Auto-generated method stub
 
     }

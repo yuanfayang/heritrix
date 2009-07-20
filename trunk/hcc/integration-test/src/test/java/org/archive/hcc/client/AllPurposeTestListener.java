@@ -26,7 +26,7 @@ public class AllPurposeTestListener implements
 
     CompletedCrawlJob completedj;
 
-    Map statistics;
+    Map<String,Object> statistics;
 
     public void crawlerCreated(Crawler c) {
         this.c = c;
@@ -65,7 +65,7 @@ public class AllPurposeTestListener implements
 
     }
 
-    public void statisticsChanged(CurrentCrawlJob job, Map statistics) {
+    public void statisticsChanged(CurrentCrawlJob job, Map<String,Object> statistics) {
         this.j = job;
         this.statistics = statistics;
         crawlJobStatisticsChangedLatch.countDown();

@@ -40,9 +40,11 @@ import javax.management.NotificationListener;
 public class MBeanFutureTask implements
         NotificationListener,
         NotificationFilter,
-        Future,
+        Future<Object>,
         Serializable {
     
+    private static final long serialVersionUID = 1L;
+
     private static Logger log = Logger.getLogger(MBeanFutureTask.class.getName());
 
     private CountDownLatch latch;

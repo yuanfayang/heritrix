@@ -258,20 +258,17 @@ public class ClusterControllerBean implements
     }
 
     private static MBeanServer createMBeanServer() {
-        MBeanServer result = null;
-        List servers = MBeanServerFactory.findMBeanServer(null);
+        List<MBeanServer> servers = MBeanServerFactory.findMBeanServer(null);
         if (servers == null) {
-            return result;
+            return null;
         }
-        for (Iterator i = servers.iterator(); i.hasNext();) {
-            MBeanServer server = (MBeanServer) i.next();
-            if (server == null) {
-                continue;
-            }
-            result = server;
-            break;
+
+        for (MBeanServer server: servers) {
+            if (server != null)
+                return server;
         }
-        return result;
+
+        return null;
     }
 
     /**
@@ -1566,6 +1563,7 @@ public class ClusterControllerBean implements
                     address);
 
             t = new MBeanFutureTask("create crawler:" + address) {
+                private static final long serialVersionUID = 1L;
                 public boolean isNotificationEnabled(Notification notification) {
                     if (notification
                             .getType()
@@ -1645,7 +1643,7 @@ public class ClusterControllerBean implements
                 remoteNameToCrawlerMap.put(new RemoteMapKey(newCrawler), crawler);
                 this.mbeanServer.registerMBean(proxy, proxyName);
 
-                Hashtable props = new Hashtable();
+                Hashtable<String,String> props = new Hashtable<String,String>();
                 props.put(JmxUtils.TYPE, JmxUtils.JOB);
                 props.put(JmxUtils.MOTHER, newCrawler
                         .getKeyProperty(JmxUtils.NAME));
@@ -1715,9 +1713,9 @@ public class ClusterControllerBean implements
     private ObjectName createClientProxyName(ObjectName remote) {
         try {
 
-            Hashtable lp = this.name.getKeyPropertyList();
-            Hashtable cp = new Hashtable();
-            Hashtable rp = remote.getKeyPropertyList();
+            Hashtable<String,String> lp = this.name.getKeyPropertyList();
+            Hashtable<String,String> cp = new Hashtable<String,String>();
+            Hashtable<String,String> rp = remote.getKeyPropertyList();
             cp.put(JmxUtils.TYPE, rp.get(JmxUtils.TYPE));
             cp.put(JmxUtils.NAME, rp.get(JmxUtils.NAME));
             cp.put(JmxUtils.HOST, lp.get(JmxUtils.HOST));
