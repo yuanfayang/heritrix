@@ -1,3 +1,0 @@
-override1	root.css.decide-rules.rules.2=object:org.archive.processors.deciderules.AcceptDecideRule
-override1	root.css.decide-rules.rules.3=object:org.archive.processors.deciderules.AcceptDecideRule
-override1	root.css.decide-rules.rules.4=object:org.archive.processors.deciderules.AcceptDecideRule

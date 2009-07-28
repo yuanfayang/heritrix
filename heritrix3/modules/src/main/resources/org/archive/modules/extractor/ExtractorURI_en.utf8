@@ -1,3 +1,0 @@
-description:
-URI Extractor. Extracts links inside other discovered URIs. Should appear last
-among extractors.
