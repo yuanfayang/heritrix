@@ -12,16 +12,7 @@ AC_ISC_POSIX
 AC_HEADER_STDC
 AC_PROG_LIBTOOL
 
-# ***************************
-# Check for required packages
-# ***************************
-
-GLIB_REQUIRED=2.18.1
-
-PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED])
-
-# *************************************
-# *************************************
+PKG_CHECK_MODULES([DEPENDENCIES], [glib-2.0 >= 2.21 gio-2.0 >= 2.21])
 
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])

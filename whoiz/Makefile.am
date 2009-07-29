@@ -1,4 +1,3 @@
-
 bin_PROGRAMS = whoiz
 
 whoiz_SOURCES = \
@@ -10,7 +9,7 @@ whoiz_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 whoiz_CFLAGS = \
-	   $(GLIB_CFLAGS)	\
+	   $(DEPENDENCIES_CFLAGS)	\
 	   $(WARN_CFLAGS)		\
 	   $(AM_CFLAGS)
 
@@ -18,7 +17,7 @@ whoiz_LDFLAGS = \
 	$(AM_LDFLAGS)
 
 whoiz_LDADD = \
-	$(GLIB_LIBS)	\
+	$(DEPENDENCIES_LIBS)	\
  	$(INTLLIBS)
 
 EXTRA_DIST = autogen.sh
