@@ -1,5 +1,4 @@
-/* whoiz.c
- *
+/*
  * Copyright 2009 Noah Levitt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +15,37 @@
  */
 
 #include <glib.h>
+#include <stdlib.h>
+
+static char *host_option;
+
+static GOptionEntry entries[] =
+{
+  { "host", 'h', 0, G_OPTION_ARG_STRING, &host_option, "Connect to server HOST", "HOST" },
+  { NULL }
+};
 
 int
 main (int    argc,
       char **argv)
 {
-  g_print ("hello, world\n");
-  return 0;
+  GOptionContext *context = g_option_context_new ("QUERY");
+  GError *error = NULL;
+
+  g_option_context_add_main_entries (context, entries, NULL);
+
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_printerr ("%s\n\n", error->message);
+      // g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
+      exit (1);
+    }
+
+  if (argc != 2)
+    {
+      g_printerr ("Query not specified\n\n");
+      g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
+    }
+
+  exit (0);
 }
