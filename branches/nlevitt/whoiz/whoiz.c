@@ -52,6 +52,7 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+/* do not free return value */
 static GRegex *
 referral_server_regex ()
 {
@@ -65,7 +66,8 @@ referral_server_regex ()
                            0, &error);
       if (regex == NULL || error != NULL)
         {
-          g_printerr ("g_regex_new (%s): %s\n", REFERRAL_SERVER_REGEX, error->message);
+		  g_printerr ("g_regex_new (%s): %s\n", REFERRAL_SERVER_REGEX,
+				      error->message);
           exit (6);
         }
     }
@@ -73,22 +75,24 @@ referral_server_regex ()
   return regex;
 }
 
-static GSocket *
-open_socket (char *server_colon_port,
-             int   default_port)
+/* return value must be freed */
+static GSocketConnection *
+open_connection (char *server_colon_port,
+                 int   default_port)
 {
   GSocketClient *client = g_socket_client_new ();
-
+  GSocketConnection *connection;
   GError *error = NULL;
 
-  GSocketConnection *connection = g_socket_client_connect_to_host (client, server_colon_port, default_port, NULL, &error);
+  connection = g_socket_client_connect_to_host (client, server_colon_port, default_port, NULL, &error);
   if (connection == NULL) 
     {
       g_printerr ("g_socket_client_connect_to_host (%s): %s\n", server_colon_port, error->message);
       exit (3);
     }
 
-  return g_socket_connection_get_socket (connection);
+  g_object_unref (client);
+  return connection;
 }
 
 static void 
@@ -112,6 +116,8 @@ send_query (GSocket *socket,
 static char *
 get_response (GSocket *socket)
 {
+  g_assert (g_socket_is_connected (socket));
+
   GString *response = g_string_new ("");
   static char buf[4096];
   GError *error = NULL;
@@ -140,12 +146,23 @@ simple_lookup (char *server_colon_port,
                int   port,
                char *query)
 {
+  GSocketConnection *connection = open_connection (server_colon_port, port);
+  GSocket *socket = g_socket_connection_get_socket (connection);
+
   GString *query_plus_newline = g_string_new (query);
   g_string_append_c (query_plus_newline, '\n');
 
-  GSocket *socket = open_socket (server_colon_port, port);
+  /* the transaction */
   send_query (socket, query_plus_newline->str);
-  return get_response (socket);
+  char *response = get_response (socket);
+
+  g_string_free (query_plus_newline, TRUE);
+  g_object_unref (connection);
+
+  /* it seems that the connection owns this object (doc is unclear) */
+  /* g_object_unref (socket); */
+
+  return response;
 }
 
 /* return value must be freed */
@@ -192,27 +209,23 @@ smart_lookup (char *query)
       char *response = simple_lookup (next_server, next_port, next_query);
       puts (response);
 
+	  gboolean is_cctld = (strlen (next_query) == 2);
+	  g_free (next_server);
+	  g_free (next_query);
+	  next_server = NULL;
+
+	  /* look for referral server in the response */
       GMatchInfo *match_info;
       if (g_regex_match (referral_server_regex (), response, 0, &match_info))
         {
-          g_free (next_server);
-          g_free (next_query);
           next_server = g_match_info_fetch (match_info, 1);
           next_query = smart_query_for_server (next_server, query);
         }
       else if (strlen (next_query) == 2)
         {
-          /* country code without its own whois server */
-          g_free (next_server);
-          g_free (next_query);
+          /* use fallback for country code without its own whois server */
           next_server = g_strdup (FALLBACK_CCTLD_WHOIS_SERVER);
           next_query = smart_query_for_server (next_server, query);
-        }
-      else
-        {
-          g_free (next_server);
-          g_free (next_query);
-          next_server = NULL;
         }
 
       g_match_info_free (match_info);
@@ -255,6 +268,7 @@ main (int    argc,
       int port = user_specified_port > 0 ? user_specified_port : 43;
       char *response = simple_lookup (user_specified_server, port, argv[1]);
       puts (response);
+	  g_free (response);
     }
   else
     smart_lookup (argv[1]);
