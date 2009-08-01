@@ -1,3 +1,5 @@
+# $Id$
+
 AC_INIT([Whoiz],[0.0.1],[mailto:nlevitt@gmail.com],[whoiz])
 
 AM_INIT_AUTOMAKE([1.9 foreign dist-bzip2])

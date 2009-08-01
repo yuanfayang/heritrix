@@ -1,3 +1,5 @@
+# $Id$
+
 bin_PROGRAMS = whoiz
 
 whoiz_SOURCES = \
