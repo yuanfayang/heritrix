@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <locale.h>
 
 /* North America-centric, but it should refer us to the right server e.g.
  * "ReferralServer: whois://whois.apnic.net" */
@@ -36,7 +37,7 @@ static const char *FALLBACK_CCTLD_WHOIS_SERVER = "whois.cocca.cx";
  * [whois://whois.iana.org/fr] Whois Server (port 43): whois.nic.fr
  * [whois://whois.verisign-grs.com/domain%201stbattalion9thmarinesfirebase.net]    Whois Server: whois.fastdomain.com
  */
-static const char *WHOIS_SERVER_REGEX = "(?i)(?:whois server|ReferralServer)[^:]*:.*?([a-zA-Z0-9.:-]+)$";
+static const char *REFERRAL_SERVER_REGEX = "^(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)$";
 
 static char *user_specified_server = NULL;
 static int user_specified_port = -1;
@@ -47,6 +48,27 @@ static GOptionEntry entries[] =
   { "port", 'p', 0, G_OPTION_ARG_INT, &user_specified_port, "Connect to port PORT", "PORT" },
   { NULL }
 };
+
+static GRegex *
+referral_server_regex ()
+{
+  static GRegex *regex = NULL;
+
+  if (regex == NULL)
+    {
+      GError *error = NULL;
+      regex = g_regex_new (REFERRAL_SERVER_REGEX, 
+                           G_REGEX_CASELESS|G_REGEX_MULTILINE|G_REGEX_RAW, 
+                           0, &error);
+      if (regex == NULL || error != NULL)
+        {
+          g_printerr ("g_regex_new (%s): %s\n", REFERRAL_SERVER_REGEX, error->message);
+          exit (6);
+        }
+    }
+
+  return regex;
+}
 
 static GSocket *
 open_socket (char *server_colon_port,
@@ -59,7 +81,7 @@ open_socket (char *server_colon_port,
   GSocketConnection *connection = g_socket_client_connect_to_host (client, server_colon_port, default_port, NULL, &error);
   if (connection == NULL) 
     {
-      g_printerr ("g_socket_client_connect_to_host: %s\n", error->message);
+      g_printerr ("g_socket_client_connect_to_host (%s): %s\n", server_colon_port, error->message);
       exit (3);
     }
 
@@ -83,37 +105,60 @@ send_query (GSocket *socket,
     }
 }
 
-static void
-simple_lookup (char *server,
-               int   port,
-               char *query)
+/* return value must be freed */
+static char *
+get_response (GSocket *socket)
 {
-  g_printerr ("whoiz: looking up \"%s\" at %s:%d\n", query, server, port);
-
-  GSocket *socket = open_socket (server, port);
-
-  GString *query_plus_newline = g_string_new (query);
-  g_string_append_c (query_plus_newline, '\n');
-
-  send_query (socket, query_plus_newline->str);
-
+  GString *response = g_string_new ("");
+  /* static char buf[4096]; */
+  static char buf[439];
   GError *error = NULL;
-  char buf[4096];
   gssize bytes_received;
 
   do 
     {
       bytes_received = g_socket_receive (socket, buf, sizeof (buf), NULL, &error);
-      if (bytes_received < 0)
+
+      if (bytes_received > 0)
+        g_string_append_len (response, buf, bytes_received);
+      else if (bytes_received < 0)
         {
           g_printerr ("g_socket_receive: %s\n", error->message);
           exit (5);
         }
-
-      if (bytes_received > 0)
-        fputs (buf, stdout);
     }
   while (bytes_received > 0);
+
+  return g_string_free (response, FALSE);
+}
+
+/* returns whois response which must be freed */
+static char *
+simple_lookup (char *server_colon_port,
+               int   port,
+               char *query)
+{
+  g_print ("----- [server: %s] [query: \"%s\"] ----- \n", server_colon_port, query);
+  GString *query_plus_newline = g_string_new (query);
+  g_string_append_c (query_plus_newline, '\n');
+
+  GSocket *socket = open_socket (server_colon_port, port);
+  send_query (socket, query_plus_newline->str);
+  return get_response (socket);
+}
+
+/* return value must be freed */
+static char *
+smart_query_for_server (const char *server_colon_port,
+                        const char *query)
+{
+  GString *smart_query = g_string_new (query);
+
+  if (g_strcmp0 (server_colon_port, "whois.verisign-grs.com") == 0 || 
+      g_strcmp0 (server_colon_port, "whois.verisign-grs.com:43") == 0)
+    g_string_printf (smart_query, "domain %s", query);
+
+  return g_string_free (smart_query, FALSE);
 }
 
 /* Assumes query is either an ip address or domain name. If not, user should
@@ -127,26 +172,44 @@ smart_lookup (char *query)
 
   if (g_hostname_is_ip_address (query))
     {
-      next_server = (char *) DEFAULT_IP_WHOIS_SERVER;
-      next_query = query;
+      next_server = g_strdup (DEFAULT_IP_WHOIS_SERVER);
+      next_query = g_strdup (query);
     }
   else
     {
-      next_server = (char *) ULTRA_SUFFIX_WHOIS_SERVER;
+      next_server = g_strdup (ULTRA_SUFFIX_WHOIS_SERVER);
       char *last_dot = strrchr (query, '.');
       if (last_dot != NULL)
-        next_query = last_dot + 1;
+        next_query = g_strdup (last_dot + 1);
       else
-        next_query = query;
+        next_query = g_strdup (query);
     }
 
-  simple_lookup (next_server, next_port, next_query);
+  while (next_server != NULL)
+    {
+      char *response = simple_lookup (next_server, next_port, next_query);
+      puts (response);
+
+      g_free (next_server);
+      g_free (next_query);
+      next_server = NULL;
+
+      GMatchInfo *match_info;
+      if (g_regex_match (referral_server_regex (), response, 0, &match_info))
+        {
+          next_server = g_match_info_fetch (match_info, 1);
+          next_query = smart_query_for_server (next_server, query);
+        }
+      g_match_info_free (match_info);
+      g_free (response);
+    }
 }
 
 int
 main (int    argc,
       char **argv)
 {
+  setlocale (LC_ALL, "");
   g_type_init ();
 
   GOptionContext *context = g_option_context_new ("QUERY");
@@ -157,7 +220,7 @@ main (int    argc,
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
       g_printerr ("g_option_context_parse: %s\n", error->message);
-      // g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
+      /* g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL)); */
       exit (1);
     }
 
@@ -175,7 +238,8 @@ main (int    argc,
   if (user_specified_server != NULL)
     {
       int port = user_specified_port > 0 ? user_specified_port : 43;
-      simple_lookup (user_specified_server, port, argv[1]);
+      char *response = simple_lookup (user_specified_server, port, argv[1]);
+      puts (response);
     }
   else
     smart_lookup (argv[1]);
