@@ -212,7 +212,7 @@ smart_lookup (char *query)
 
   while (next_server != NULL)
     {
-      g_print ("----- [server: %s] [query: \"%s\"] -----\n", next_server, query);
+      g_print ("======== [server: %s] [query: \"%s\"] ========\n", next_server, query);
       char *response = simple_lookup (next_server, next_port, next_query);
       puts (response);
 
@@ -228,7 +228,7 @@ smart_lookup (char *query)
           next_server = g_match_info_fetch (match_info, 1);
           next_query = smart_query_for_server (next_server, query);
         }
-      else if (strlen (next_query) == 2)
+      else if (is_cctld)
         {
           /* use fallback for country code without its own whois server */
           next_server = g_strdup (FALLBACK_CCTLD_WHOIS_SERVER);
