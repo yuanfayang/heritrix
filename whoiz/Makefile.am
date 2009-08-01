@@ -22,4 +22,4 @@ whoiz_LDADD = \
 	$(DEPENDENCIES_LIBS)	\
  	$(INTLLIBS)
 
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = autogen.sh rfc3912.txt
