@@ -37,7 +37,7 @@ static const char *FALLBACK_CCTLD_WHOIS_SERVER = "whois.cocca.cx";
  * [whois://whois.iana.org/fr] Whois Server (port 43): whois.nic.fr
  * [whois://whois.verisign-grs.com/domain%201stbattalion9thmarinesfirebase.net]    Whois Server: whois.fastdomain.com
  */
-static const char *REFERRAL_SERVER_REGEX = "^(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)$";
+static const char *REFERRAL_SERVER_REGEX = "^\\s*(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)$";
 
 static char *user_specified_server = NULL;
 static int user_specified_port = -1;
