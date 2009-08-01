@@ -113,8 +113,7 @@ static char *
 get_response (GSocket *socket)
 {
   GString *response = g_string_new ("");
-  /* static char buf[4096]; */
-  static char buf[439];
+  static char buf[4096];
   GError *error = NULL;
   gssize bytes_received;
 
@@ -141,7 +140,6 @@ simple_lookup (char *server_colon_port,
                int   port,
                char *query)
 {
-  g_print ("----- [server: %s] [query: \"%s\"] -----\n", server_colon_port, query);
   GString *query_plus_newline = g_string_new (query);
   g_string_append_c (query_plus_newline, '\n');
 
@@ -190,6 +188,7 @@ smart_lookup (char *query)
 
   while (next_server != NULL)
     {
+      g_print ("----- [server: %s] [query: \"%s\"] -----\n", next_server, query);
       char *response = simple_lookup (next_server, next_port, next_query);
       puts (response);
 
