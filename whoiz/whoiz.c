@@ -190,6 +190,9 @@ smart_query_for_server (const char *server_colon_port,
   if (g_strcmp0 (server_colon_port, "whois.verisign-grs.com") == 0 || 
       g_strcmp0 (server_colon_port, "whois.verisign-grs.com:43") == 0)
     g_string_printf (smart_query, "domain %s", query);
+  else if (g_strcmp0 (server_colon_port, "whois.denic.de") == 0 || 
+           g_strcmp0 (server_colon_port, "whois.denic.de:43") == 0)
+    g_string_printf (smart_query, "-T dn,ace %s", query);
 
   return g_string_free (smart_query, FALSE);
 }
@@ -220,7 +223,7 @@ smart_lookup (char *query)
 
   while (next_server != NULL)
     {
-      g_print ("======== [server: %s] [query: \"%s\"] ========\n", next_server, query);
+      g_print ("======== [server: %s] [query: \"%s\"] ========\n", next_server, next_query);
       char *response = simple_lookup (next_server, next_port, next_query);
       puts (response);
 
