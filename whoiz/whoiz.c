@@ -25,13 +25,15 @@
  * "ReferralServer: whois://whois.apnic.net" */
 static const char *DEFAULT_IP_WHOIS_SERVER = "whois.arin.net";
 
-/* look up "com" "net" "fr" "info" etc */
+/* Look up "com" "net" "fr" "info" etc */
 static const char *ULTRA_SUFFIX_WHOIS_SERVER = "whois.iana.org";
 
-/* if whois.iana.org doesn't know of a server for a particular country code, look it up here instead */
+/* If whois.iana.org doesn't know of a server for a particular country code,
+ * look it up here instead */
 static const char *FALLBACK_CCTLD_WHOIS_SERVER = "whois.cocca.cx";
 
-/* [whois://whois.arin.net/192.102.239.53] ReferralServer: whois://whois.apnic.net
+/*
+ * [whois://whois.arin.net/192.102.239.53] ReferralServer: whois://whois.apnic.net
  * [whois://whois.arin.net/208.49.199.10] ReferralServer: rwhois://rwhois.gblx.net:4321
  * [whois://whois.arin.net/195.154.120.129] ReferralServer: whois://whois.ripe.net:43
  * [whois://whois.iana.org/fr] Whois Server (port 43): whois.nic.fr
@@ -190,16 +192,29 @@ smart_lookup (char *query)
       char *response = simple_lookup (next_server, next_port, next_query);
       puts (response);
 
-      g_free (next_server);
-      g_free (next_query);
-      next_server = NULL;
-
       GMatchInfo *match_info;
       if (g_regex_match (referral_server_regex (), response, 0, &match_info))
         {
+          g_free (next_server);
+          g_free (next_query);
           next_server = g_match_info_fetch (match_info, 1);
           next_query = smart_query_for_server (next_server, query);
         }
+      else if (strlen (next_query) == 2)
+        {
+          /* country code without its own whois server */
+          g_free (next_server);
+          g_free (next_query);
+          next_server = g_strdup (FALLBACK_CCTLD_WHOIS_SERVER);
+          next_query = smart_query_for_server (next_server, query);
+        }
+      else
+        {
+          g_free (next_server);
+          g_free (next_query);
+          next_server = NULL;
+        }
+
       g_match_info_free (match_info);
       g_free (response);
     }
