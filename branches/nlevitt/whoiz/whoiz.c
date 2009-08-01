@@ -42,8 +42,9 @@ static const char *FALLBACK_CCTLD_WHOIS_SERVER = "whois.cocca.cx";
  * [whois://whois.arin.net/195.154.120.129] ReferralServer: whois://whois.ripe.net:43
  * [whois://whois.iana.org/fr] Whois Server (port 43): whois.nic.fr
  * [whois://whois.verisign-grs.com/domain%201stbattalion9thmarinesfirebase.net]    Whois Server: whois.fastdomain.com
+ * [server: whois.arin.net] [query: "206.51.225.143"] ReferralServer: rwhois://rwhois.noc4hosts.com:4321/
  */
-static const char *REFERRAL_SERVER_REGEX = "^\\s*(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)$";
+static const char *REFERRAL_SERVER_REGEX = "^\\s*(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)/*$";
 
 /* will break the connection after receiving more than this many bytes */
 static const gsize MAX_SANE_RESPONSE_BYTES = 50000;
@@ -182,19 +183,19 @@ simple_lookup (char *server_colon_port,
 
 /* return value must be freed */
 static char *
-smart_query_for_server (const char *server_colon_port,
-                        const char *query)
+domain_query_special_syntax (const char *server_colon_port,
+                             const char *domain)
 {
-  GString *smart_query = g_string_new (query);
+  GString *special_query = g_string_new (domain);
 
   if (g_strcmp0 (server_colon_port, "whois.verisign-grs.com") == 0 || 
       g_strcmp0 (server_colon_port, "whois.verisign-grs.com:43") == 0)
-    g_string_printf (smart_query, "domain %s", query);
+    g_string_printf (special_query, "domain %s", domain);
   else if (g_strcmp0 (server_colon_port, "whois.denic.de") == 0 || 
            g_strcmp0 (server_colon_port, "whois.denic.de:43") == 0)
-    g_string_printf (smart_query, "-T dn %s", query);
+    g_string_printf (special_query, "-T dn %s", domain);
 
-  return g_string_free (smart_query, FALSE);
+  return g_string_free (special_query, FALSE);
 }
 
 /* Assumes query is either an ip address or domain name. If not, user should
@@ -237,13 +238,13 @@ smart_lookup (char *query)
       if (g_regex_match (referral_server_regex (), response, 0, &match_info))
         {
           next_server = g_match_info_fetch (match_info, 1);
-          next_query = smart_query_for_server (next_server, query);
+          next_query = domain_query_special_syntax (next_server, query);
         }
       else if (is_cctld)
         {
           /* use fallback for country code without its own whois server */
           next_server = g_strdup (FALLBACK_CCTLD_WHOIS_SERVER);
-          next_query = smart_query_for_server (next_server, query);
+          next_query = domain_query_special_syntax (next_server, query);
         }
 
       g_match_info_free (match_info);
@@ -261,7 +262,7 @@ main (int    argc,
   GOptionContext *context = g_option_context_new ("QUERY");
   GError *error = NULL;
 
-  g_option_context_set_summary (context, "whoiz: Perform whois queries (RFC 3912)");
+  g_option_context_set_summary (context, "Perform whois queries (RFC 3912)");
   g_option_context_add_main_entries (context, entries, NULL);
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
