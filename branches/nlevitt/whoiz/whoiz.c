@@ -20,13 +20,31 @@
 #include <string.h>
 #include <stdio.h>
 
-static char *server = "whois.arin.net";
-static int port = 43;
+/* North America-centric, but it should refer us to the right server e.g.
+ * "ReferralServer: whois://whois.apnic.net" */
+static const char *DEFAULT_IP_WHOIS_SERVER = "whois.arin.net";
+
+/* look up "com" "net" "fr" "info" etc */
+static const char *ULTRA_SUFFIX_WHOIS_SERVER = "whois.iana.org";
+
+/* if whois.iana.org doesn't know of a server for a particular country code, look it up here instead */
+static const char *FALLBACK_CCTLD_WHOIS_SERVER = "whois.cocca.cx";
+
+/* [whois://whois.arin.net/192.102.239.53] ReferralServer: whois://whois.apnic.net
+ * [whois://whois.arin.net/208.49.199.10] ReferralServer: rwhois://rwhois.gblx.net:4321
+ * [whois://whois.arin.net/195.154.120.129] ReferralServer: whois://whois.ripe.net:43
+ * [whois://whois.iana.org/fr] Whois Server (port 43): whois.nic.fr
+ * [whois://whois.verisign-grs.com/domain%201stbattalion9thmarinesfirebase.net]    Whois Server: whois.fastdomain.com
+ */
+static const char *WHOIS_SERVER_REGEX = "(?i)(?:whois server|ReferralServer)[^:]*:.*?([a-zA-Z0-9.:-]+)$";
+
+static char *user_specified_server = NULL;
+static int user_specified_port = -1;
 
 static GOptionEntry entries[] =
 {
-  { "host", 'h', 0, G_OPTION_ARG_STRING, &server, "Connect to server HOST", "HOST" },
-  { "port", 'p', 0, G_OPTION_ARG_STRING, &server, "Connect to port PORT", "PORT" },
+  { "host", 'h', 0, G_OPTION_ARG_STRING, &user_specified_server, "Connect to server HOST", "HOST" },
+  { "port", 'p', 0, G_OPTION_ARG_INT, &user_specified_port, "Connect to port PORT", "PORT" },
   { NULL }
 };
 
@@ -56,6 +74,7 @@ send_query (GSocket *socket,
 
   GError *error = NULL;
 
+  /* XXX this needs to be in a loop... */
   gssize bytes_sent = g_socket_send (socket, query, strlen (query), NULL, &error);
   if (bytes_sent == -1) 
     {
@@ -65,12 +84,18 @@ send_query (GSocket *socket,
 }
 
 static void
-do_whois_lookup (char *server,
-                 int   port,
-                 char *query)
+simple_lookup (char *server,
+               int   port,
+               char *query)
 {
+  g_printerr ("whoiz: looking up \"%s\" at %s:%d\n", query, server, port);
+
   GSocket *socket = open_socket (server, port);
-  send_query (socket, query);
+
+  GString *query_plus_newline = g_string_new (query);
+  g_string_append_c (query_plus_newline, '\n');
+
+  send_query (socket, query_plus_newline->str);
 
   GError *error = NULL;
   char buf[4096];
@@ -86,9 +111,36 @@ do_whois_lookup (char *server,
         }
 
       if (bytes_received > 0)
-        fputs (buf, stderr);
+        fputs (buf, stdout);
     }
   while (bytes_received > 0);
+}
+
+/* Assumes query is either an ip address or domain name. If not, user should
+ * specify server on the command line with -s. */
+static void
+smart_lookup (char *query)
+{
+  char *next_server;
+  char *next_query;
+  int next_port = 43;
+
+  if (g_hostname_is_ip_address (query))
+    {
+      next_server = (char *) DEFAULT_IP_WHOIS_SERVER;
+      next_query = query;
+    }
+  else
+    {
+      next_server = (char *) ULTRA_SUFFIX_WHOIS_SERVER;
+      char *last_dot = strrchr (query, '.');
+      if (last_dot != NULL)
+        next_query = last_dot + 1;
+      else
+        next_query = query;
+    }
+
+  simple_lookup (next_server, next_port, next_query);
 }
 
 int
@@ -111,21 +163,22 @@ main (int    argc,
 
   if (argc != 2)
     {
-      g_printerr ("Query not specified\n\n");
+      g_printerr ("whoiz: error: nothing to look up, whois query not specified\n\n");
       g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       exit (2);
     }
 
-  GString *query = g_string_new ("");
-  g_string_printf (query, "%s\n", argv[1]);
-  do_whois_lookup (server, port, query->str);
+  if (user_specified_server == NULL && user_specified_port != -1)
+    g_printerr ("whoiz: warning: you specified a port (%d) on the command line,"
+                " but no server; the port setting will be ignored\n", user_specified_port);
+
+  if (user_specified_server != NULL)
+    {
+      int port = user_specified_port > 0 ? user_specified_port : 43;
+      simple_lookup (user_specified_server, port, argv[1]);
+    }
+  else
+    smart_lookup (argv[1]);
 
   exit (0);
 }
-
-
-
-
-/*
- * gboolean            g_hostname_is_ip_address            (const gchar *hostname);
- */
