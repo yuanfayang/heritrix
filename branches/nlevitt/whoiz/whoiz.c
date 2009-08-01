@@ -1,6 +1,7 @@
 /* $Id$
  *
- * Copyright 2009 Noah Levitt
+ * Copyright (C) 2009 Internet Archive
+ * Copyright (C) 2009 Noah Levitt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,13 +103,19 @@ send_query (GSocket *socket,
   g_assert (g_socket_is_connected (socket));
 
   GError *error = NULL;
+  gssize bytes_sent = 0;
+  gint bytes_left = strlen (query);
 
-  /* XXX this needs to be in a loop... */
-  gssize bytes_sent = g_socket_send (socket, query, strlen (query), NULL, &error);
-  if (bytes_sent == -1) 
+  while (bytes_left > 0)
     {
-      g_printerr ("g_socket_send: %s\n", error->message);
-      exit (4);
+      gssize bytes_sent = g_socket_send (socket, query, bytes_left, NULL, &error);
+      if (bytes_sent == -1) 
+        {
+          g_printerr ("g_socket_send: %s\n", error->message);
+          exit (4);
+        }
+
+      bytes_left -= bytes_sent;
     }
 }
 
