@@ -192,7 +192,7 @@ smart_query_for_server (const char *server_colon_port,
     g_string_printf (smart_query, "domain %s", query);
   else if (g_strcmp0 (server_colon_port, "whois.denic.de") == 0 || 
            g_strcmp0 (server_colon_port, "whois.denic.de:43") == 0)
-    g_string_printf (smart_query, "-T dn,ace %s", query);
+    g_string_printf (smart_query, "-T dn %s", query);
 
   return g_string_free (smart_query, FALSE);
 }
