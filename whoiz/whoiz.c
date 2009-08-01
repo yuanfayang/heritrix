@@ -100,8 +100,8 @@ send_query (GSocket *socket,
   gssize bytes_sent = g_socket_send (socket, query, strlen (query), NULL, &error);
   if (bytes_sent == -1) 
     {
-        g_printerr ("g_socket_send: %s\n", error->message);
-        exit (4);
+      g_printerr ("g_socket_send: %s\n", error->message);
+      exit (4);
     }
 }
 
@@ -138,7 +138,7 @@ simple_lookup (char *server_colon_port,
                int   port,
                char *query)
 {
-  g_print ("----- [server: %s] [query: \"%s\"] ----- \n", server_colon_port, query);
+  g_print ("----- [server: %s] [query: \"%s\"] -----\n", server_colon_port, query);
   GString *query_plus_newline = g_string_new (query);
   g_string_append_c (query_plus_newline, '\n');
 
@@ -162,7 +162,7 @@ smart_query_for_server (const char *server_colon_port,
 }
 
 /* Assumes query is either an ip address or domain name. If not, user should
- * specify server on the command line with -s. */
+ * specify server on the command line with -h. */
 static void
 smart_lookup (char *query)
 {
