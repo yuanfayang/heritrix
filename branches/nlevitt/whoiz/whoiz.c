@@ -1,5 +1,7 @@
 /* $Id$
  *
+ * whoiz.c: Perform whois queries (RFC 3912)
+ *
  * Copyright (C) 2009 Internet Archive
  * Copyright (C) 2009 Noah Levitt
  *
@@ -43,13 +45,16 @@ static const char *FALLBACK_CCTLD_WHOIS_SERVER = "whois.cocca.cx";
  */
 static const char *REFERRAL_SERVER_REGEX = "^\\s*(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)$";
 
+/* will break the connection after receiving more than this many bytes */
+static const gsize MAX_SANE_RESPONSE_BYTES = 50000;
+
 static char *user_specified_server = NULL;
 static int user_specified_port = -1;
 
 static GOptionEntry entries[] =
 {
-  { "host", 'h', 0, G_OPTION_ARG_STRING, &user_specified_server, "Connect to server HOST", "HOST" },
-  { "port", 'p', 0, G_OPTION_ARG_INT, &user_specified_port, "Connect to port PORT", "PORT" },
+  { "host", 'h', 0, G_OPTION_ARG_STRING, &user_specified_server, "Query whois server HOST", "HOST" },
+  { "port", 'p', 0, G_OPTION_ARG_INT, &user_specified_port, "Connect to server port PORT", "PORT" },
   { NULL }
 };
 
@@ -67,8 +72,8 @@ referral_server_regex ()
                            0, &error);
       if (regex == NULL || error != NULL)
         {
-		  g_printerr ("g_regex_new (%s): %s\n", REFERRAL_SERVER_REGEX,
-				      error->message);
+          g_printerr ("g_regex_new (%s): %s\n", REFERRAL_SERVER_REGEX,
+                      error->message);
           exit (6);
         }
     }
@@ -141,8 +146,11 @@ get_response (GSocket *socket)
           g_printerr ("g_socket_receive: %s\n", error->message);
           exit (5);
         }
+
+      if (response->len > MAX_SANE_RESPONSE_BYTES)
+        g_printerr ("whoiz: warning: Truncating response after %ld bytes", response->len);
     }
-  while (bytes_received > 0);
+  while (bytes_received > 0 && response->len <= MAX_SANE_RESPONSE_BYTES);
 
   return g_string_free (response, FALSE);
 }
@@ -156,14 +164,14 @@ simple_lookup (char *server_colon_port,
   GSocketConnection *connection = open_connection (server_colon_port, port);
   GSocket *socket = g_socket_connection_get_socket (connection);
 
-  GString *query_plus_newline = g_string_new (query);
-  g_string_append_c (query_plus_newline, '\n');
+  GString *query_plus_crlf = g_string_new (query);
+  g_string_append (query_plus_crlf, "\r\n");
 
   /* the transaction */
-  send_query (socket, query_plus_newline->str);
+  send_query (socket, query_plus_crlf->str);
   char *response = get_response (socket);
 
-  g_string_free (query_plus_newline, TRUE);
+  g_string_free (query_plus_crlf, TRUE);
   g_object_unref (connection);
 
   /* it seems that the connection owns this object (doc is unclear) */
@@ -216,12 +224,12 @@ smart_lookup (char *query)
       char *response = simple_lookup (next_server, next_port, next_query);
       puts (response);
 
-	  gboolean is_cctld = (strlen (next_query) == 2);
-	  g_free (next_server);
-	  g_free (next_query);
-	  next_server = NULL;
+      gboolean is_cctld = (strlen (next_query) == 2);
+      g_free (next_server);
+      g_free (next_query);
+      next_server = NULL;
 
-	  /* look for referral server in the response */
+      /* look for referral server in the response */
       GMatchInfo *match_info;
       if (g_regex_match (referral_server_regex (), response, 0, &match_info))
         {
@@ -250,6 +258,7 @@ main (int    argc,
   GOptionContext *context = g_option_context_new ("QUERY");
   GError *error = NULL;
 
+  g_option_context_set_summary (context, "whoiz: Perform whois queries (RFC 3912)");
   g_option_context_add_main_entries (context, entries, NULL);
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
@@ -259,26 +268,37 @@ main (int    argc,
       exit (1);
     }
 
-  if (argc != 2)
+  if (argc < 2)
     {
-      g_printerr ("whoiz: error: nothing to look up, whois query not specified\n\n");
+      g_printerr ("whoiz: error: Nothing to look up, whois query not specified\n\n");
       g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       exit (2);
     }
 
   if (user_specified_server == NULL && user_specified_port != -1)
-    g_printerr ("whoiz: warning: you specified a port (%d) on the command line,"
-                " but no server; the port setting will be ignored\n", user_specified_port);
+    g_printerr ("whoiz: warning: You specified a port (%d) on the command line,"
+                " but no server. The port setting will be ignored.\n", user_specified_port);
+
+  GString *query = g_string_new (argv[1]);
+  int i;
+  for (i = 2; i < argc; i++)
+    {
+      g_string_append_c (query, ' ');
+      g_string_append (query, argv[i]);
+    }
 
   if (user_specified_server != NULL)
     {
       int port = user_specified_port > 0 ? user_specified_port : 43;
-      char *response = simple_lookup (user_specified_server, port, argv[1]);
+      g_printerr ("======== [server: %s] [query: \"%s\"] ========\n", user_specified_server, query->str);
+      char *response = simple_lookup (user_specified_server, port, query->str);
       puts (response);
-	  g_free (response);
+      g_free (response);
     }
   else
-    smart_lookup (argv[1]);
+    smart_lookup (query->str);
+
+  g_string_free (query, TRUE);
 
   exit (0);
 }
