@@ -1,4 +1,6 @@
-/* $Id$
+/* vim: set sw=2 et:
+ *
+ * $Id$
  *
  * whoiz.c: Perform whois queries (RFC 3912)
  *
@@ -25,6 +27,8 @@
 #include <stdio.h>
 #include <locale.h>
 
+static const int DEFAULT_PORT = 43;
+
 /* North America-centric, but it should refer us to the right server e.g.
  * "ReferralServer: whois://whois.apnic.net" */
 static const char *DEFAULT_IP_WHOIS_SERVER = "whois.arin.net";
@@ -44,18 +48,18 @@ static const char *FALLBACK_CCTLD_WHOIS_SERVER = "whois.cocca.cx";
  * [whois://whois.verisign-grs.com/domain%201stbattalion9thmarinesfirebase.net]    Whois Server: whois.fastdomain.com
  * [server: whois.arin.net] [query: "206.51.225.143"] ReferralServer: rwhois://rwhois.noc4hosts.com:4321/
  */
-static const char *REFERRAL_SERVER_REGEX = "^\\s*(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)/*$";
+static const char *REFERRAL_SERVER_PATTERN = "^\\s*(?:whois server|ReferralServer)[^:\r\n]*:.*?([a-zA-Z0-9.:-]+)/*$";
 
-/* will break the connection after receiving more than this many bytes */
+/* Break the connection after receiving more than this many bytes */
 static const gsize MAX_SANE_RESPONSE_BYTES = 50000;
 
-static char *user_specified_server = NULL;
-static int user_specified_port = -1;
+static char *minus_h_host = NULL;
+static int minus_p_port = -1;
 
 static GOptionEntry entries[] =
 {
-  { "host", 'h', 0, G_OPTION_ARG_STRING, &user_specified_server, "Query whois server HOST", "HOST" },
-  { "port", 'p', 0, G_OPTION_ARG_INT, &user_specified_port, "Connect to server port PORT", "PORT" },
+  { "host", 'h', 0, G_OPTION_ARG_STRING, &minus_h_host, "Query whois server HOST", "HOST" },
+  { "port", 'p', 0, G_OPTION_ARG_INT, &minus_p_port, "Connect to server port PORT", "PORT" },
   { NULL }
 };
 
@@ -68,12 +72,12 @@ referral_server_regex ()
   if (regex == NULL)
     {
       GError *error = NULL;
-      regex = g_regex_new (REFERRAL_SERVER_REGEX, 
+      regex = g_regex_new (REFERRAL_SERVER_PATTERN, 
                            G_REGEX_CASELESS|G_REGEX_MULTILINE|G_REGEX_RAW, 
                            0, &error);
       if (regex == NULL || error != NULL)
         {
-          g_printerr ("g_regex_new (%s): %s\n", REFERRAL_SERVER_REGEX,
+          g_printerr ("g_regex_new (%s): %s\n", REFERRAL_SERVER_PATTERN,
                       error->message);
           exit (6);
         }
@@ -159,10 +163,9 @@ get_response (GSocket *socket)
 /* returns whois response which must be freed */
 static char *
 simple_lookup (char *server_colon_port,
-               int   port,
                char *query)
 {
-  GSocketConnection *connection = open_connection (server_colon_port, port);
+  GSocketConnection *connection = open_connection (server_colon_port, DEFAULT_PORT);
   GSocket *socket = g_socket_connection_get_socket (connection);
 
   GString *query_plus_crlf = g_string_new (query);
@@ -205,7 +208,6 @@ smart_lookup (char *query)
 {
   char *next_server;
   char *next_query;
-  int next_port = 43;
 
   if (g_hostname_is_ip_address (query))
     {
@@ -225,7 +227,7 @@ smart_lookup (char *query)
   while (next_server != NULL)
     {
       g_print ("======== [server: %s] [query: \"%s\"] ========\n", next_server, next_query);
-      char *response = simple_lookup (next_server, next_port, next_query);
+      char *response = simple_lookup (next_server, next_query);
       puts (response);
 
       gboolean is_cctld = (strlen (next_query) == 2);
@@ -252,15 +254,59 @@ smart_lookup (char *query)
     }
 }
 
-int
-main (int    argc,
-      char **argv)
+/* Returns FALSE if it's not a whois url. Fills in *server and *query which
+ * must be freed. */
+static gboolean
+parse_whois_url (char  *url,
+                 char **server,
+                 char **query)
 {
-  setlocale (LC_ALL, "");
-  g_type_init ();
-
-  GOptionContext *context = g_option_context_new ("QUERY");
+  char *whois_url_pattern = "whois://([^/]*)/(.*)$";
   GError *error = NULL;
+  gboolean is_whois_url = FALSE;
+
+  GRegex *whois_url_regex = g_regex_new (whois_url_pattern, G_REGEX_CASELESS|G_REGEX_RAW, 0, &error);
+  GMatchInfo *match_info;
+  if (whois_url_regex == NULL || error != NULL)
+    {
+      g_printerr ("g_regex_new (%s): %s\n", whois_url_pattern, error->message);
+      exit (7);
+    }
+
+  if (g_regex_match (whois_url_regex, url, 0, &match_info))
+    {
+      is_whois_url = TRUE;
+
+      char *s = g_match_info_fetch (match_info, 1);
+      if (strlen (s) > 0)
+        *server = s;
+      else
+        g_free (s);
+
+      char *escaped_query = g_match_info_fetch (match_info, 2);
+      *query = g_uri_unescape_string (escaped_query, NULL);
+      g_free (escaped_query);
+    }
+
+  g_match_info_free (match_info);
+  g_regex_unref (whois_url_regex);
+
+  return is_whois_url;
+}
+
+/* Fills in *server and *query, which must be freed by the caller */
+static void
+parse_command_line (int    argc,
+                    char **argv,
+                    char **server,
+                    char **query)
+{
+  GOptionContext *context = g_option_context_new ("{ QUERY | WHOIS_URL }");
+  GError *error = NULL;
+  int i;
+
+  *server = NULL;
+  *query = NULL;
 
   g_option_context_set_summary (context, "Perform whois queries (RFC 3912)");
   g_option_context_add_main_entries (context, entries, NULL);
@@ -268,41 +314,69 @@ main (int    argc,
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
       g_printerr ("g_option_context_parse: %s\n", error->message);
-      /* g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL)); */
       exit (1);
     }
 
   if (argc < 2)
     {
-      g_printerr ("whoiz: error: Nothing to look up, whois query not specified\n\n");
+      g_printerr ("whoiz: error: Nothing to look up, whois query or url not specified\n\n");
       g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       exit (2);
     }
 
-  if (user_specified_server == NULL && user_specified_port != -1)
-    g_printerr ("whoiz: warning: You specified a port (%d) on the command line,"
-                " but no server. The port setting will be ignored.\n", user_specified_port);
-
-  GString *query = g_string_new (argv[1]);
-  int i;
+  /* concatenate remaining args into a query */
+  GString *query_or_url = g_string_new (argv[1]);
   for (i = 2; i < argc; i++)
     {
-      g_string_append_c (query, ' ');
-      g_string_append (query, argv[i]);
+      g_string_append_c (query_or_url, ' ');
+      g_string_append (query_or_url, argv[i]);
     }
 
-  if (user_specified_server != NULL)
+  if (parse_whois_url (query_or_url->str, server, query))
     {
-      int port = user_specified_port > 0 ? user_specified_port : 43;
-      g_printerr ("======== [server: %s] [query: \"%s\"] ========\n", user_specified_server, query->str);
-      char *response = simple_lookup (user_specified_server, port, query->str);
-      puts (response);
-      g_free (response);
+      if (minus_h_host != NULL)
+        {
+          g_printerr ("whoiz: warning: You specified a whois url to lookup, but also specified a host with -h. That setting will be ignored.");
+          g_free (minus_h_host);
+        }
+      g_string_free (query_or_url, TRUE);
     }
   else
-    smart_lookup (query->str);
+    {
+      /* not a whois:// url, just a query string */
+      *query = g_string_free (query_or_url, FALSE);
+      if (minus_h_host != NULL)
+        *server = minus_h_host;
+    }
 
-  g_string_free (query, TRUE);
+  g_option_context_free (context);
+}
+
+int
+main (int    argc,
+      char **argv)
+{
+  setlocale (LC_ALL, "");
+  g_type_init ();
+
+  char *server;
+  char *query;
+
+  parse_command_line (argc, argv, &server, &query);
+
+  if (server != NULL)
+    {
+      g_printerr ("======== [server: %s] [query: \"%s\"] ========\n", server, query);
+      char *response = simple_lookup (server, query);
+      puts (response);
+
+      g_free (response);
+      g_free (server);
+    }
+  else
+    smart_lookup (query);
+
+  g_free (query);
 
   exit (0);
 }
