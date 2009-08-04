@@ -216,25 +216,20 @@ implements ConcurrentMap<K,V>, Serializable {
     //  outside the bounds of the above described expected "two styles".
     
     /** count of expunge already done */
-    transient private AtomicInteger expungeStatsNullPhantom 
-            = new AtomicInteger(0);
+    transient private AtomicInteger expungeStatsNullPhantom;
 
     /** count of {@link #putIfAbsent} / {@link #remove} races,
      * if they occur */
-    transient private AtomicInteger expungeStatsTransientCond 
-            = new AtomicInteger(0);
+    transient private AtomicInteger expungeStatsTransientCond;
     
     /** count of {@link SoftEntry#awaitExpunge()) */
-    transient private AtomicInteger expungeStatsAwaitExpunge 
-            = new AtomicInteger(0);
+    transient private AtomicInteger expungeStatsAwaitExpunge;
 
     /** count of expunge already done to see if they occur */
-    transient private AtomicInteger expungeStatsNullValue 
-            = new AtomicInteger(0);
+    transient private AtomicInteger expungeStatsNullValue;
     
     /** count of expunge of entries not in memMap to see if they occur */
-    transient private AtomicInteger expungeStatsNotInMap 
-            = new AtomicInteger(0);
+    transient private AtomicInteger expungeStatsNotInMap;
     
     /** static count {@link SoftEntry#awaitExpunge()) timeouts to see if
      * they occur */
@@ -254,28 +249,22 @@ implements ConcurrentMap<K,V>, Serializable {
             = new AtomicInteger(0);
     
     /** count of one arg {@link #remove } use */
-    transient private AtomicInteger useStatsRemove1Used 
-            = new AtomicInteger(0);
+    transient private AtomicInteger useStatsRemove1Used;
     
     /** count of two arg {@link #remove} use */
-    transient private AtomicInteger useStatsRemove2Used 
-            = new AtomicInteger(0);
+    transient private AtomicInteger useStatsRemove2Used;
     
     /** count of {@link #replace} (2 or 3 arg) use */
-    transient private AtomicInteger useStatsReplaceUsed 
-            = new AtomicInteger(0);
+    transient private AtomicInteger useStatsReplaceUsed;
     
     /** count of {@link #put} use */
-    transient private AtomicInteger useStatsPutUsed 
-            = new AtomicInteger(0);
+    transient private AtomicInteger useStatsPutUsed;
     
     /** count of {@link #putIfAbsent} use */
-    transient private AtomicInteger useStatsPutIfUsed 
-            = new AtomicInteger(0);
+    transient private AtomicInteger useStatsPutIfUsed;
     
     /** count of {@link #sync()} use */
-    transient private AtomicInteger useStatsSyncUsed 
-            = new AtomicInteger(0);
+    transient private AtomicInteger useStatsSyncUsed;
     
     /**
      * Count of times we got an object from in-memory cache.
