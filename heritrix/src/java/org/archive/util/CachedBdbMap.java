@@ -216,24 +216,24 @@ implements ConcurrentMap<K,V>, Serializable {
     //  outside the bounds of the above described expected "two styles".
     
     /** count of expunge already done */
-    final transient private AtomicInteger expungeStatsNullPhantom 
+    transient private AtomicInteger expungeStatsNullPhantom 
             = new AtomicInteger(0);
 
     /** count of {@link #putIfAbsent} / {@link #remove} races,
      * if they occur */
-    final transient private AtomicInteger expungeStatsTransientCond 
+    transient private AtomicInteger expungeStatsTransientCond 
             = new AtomicInteger(0);
     
     /** count of {@link SoftEntry#awaitExpunge()) */
-    final transient private AtomicInteger expungeStatsAwaitExpunge 
+    transient private AtomicInteger expungeStatsAwaitExpunge 
             = new AtomicInteger(0);
 
     /** count of expunge already done to see if they occur */
-    final transient private AtomicInteger expungeStatsNullValue 
+    transient private AtomicInteger expungeStatsNullValue 
             = new AtomicInteger(0);
     
     /** count of expunge of entries not in memMap to see if they occur */
-    final transient private AtomicInteger expungeStatsNotInMap 
+    transient private AtomicInteger expungeStatsNotInMap 
             = new AtomicInteger(0);
     
     /** static count {@link SoftEntry#awaitExpunge()) timeouts to see if
@@ -254,27 +254,27 @@ implements ConcurrentMap<K,V>, Serializable {
             = new AtomicInteger(0);
     
     /** count of one arg {@link #remove } use */
-    final transient private AtomicInteger useStatsRemove1Used 
+    transient private AtomicInteger useStatsRemove1Used 
             = new AtomicInteger(0);
     
     /** count of two arg {@link #remove} use */
-    final transient private AtomicInteger useStatsRemove2Used 
+    transient private AtomicInteger useStatsRemove2Used 
             = new AtomicInteger(0);
     
     /** count of {@link #replace} (2 or 3 arg) use */
-    final transient private AtomicInteger useStatsReplaceUsed 
+    transient private AtomicInteger useStatsReplaceUsed 
             = new AtomicInteger(0);
     
     /** count of {@link #put} use */
-    final transient private AtomicInteger useStatsPutUsed 
+    transient private AtomicInteger useStatsPutUsed 
             = new AtomicInteger(0);
     
     /** count of {@link #putIfAbsent} use */
-    final transient private AtomicInteger useStatsPutIfUsed 
+    transient private AtomicInteger useStatsPutIfUsed 
             = new AtomicInteger(0);
     
     /** count of {@link #sync()} use */
-    final transient private AtomicInteger useStatsSyncUsed 
+    transient private AtomicInteger useStatsSyncUsed 
             = new AtomicInteger(0);
     
     /**
@@ -431,47 +431,24 @@ implements ConcurrentMap<K,V>, Serializable {
                                                             64 // est. number of concurrent threads
                                                             ); 
         this.refQueue = new ReferenceQueue<V>();
-        startExpunger();
+        initTransientStats(); 
     }
     
-    private void startExpunger() {
-        /*
-        SettingsHandler ambientSettingsHandler = null;
-        try {
-            ambientSettingsHandler 
-                    = SettingsHandler.getThreadContextSettingsHandler();
-        } catch (RuntimeException absorbed) {
-        } 
-        if (ambientSettingsHandler != null) {
-            this.expunger = new Expunger("Expunger_" + dbName, refQueue, 
-                    logger, ambientSettingsHandler);
-            this.expunger.setDaemon(true);
-            this.expunger.setPriority(Thread.MAX_PRIORITY - 1);
-            this.expunger.start();
-        }
-        */
+
+    protected void initTransientStats() {
+        expungeStatsNullPhantom = new AtomicInteger(0);
+        expungeStatsTransientCond = new AtomicInteger(0);
+        expungeStatsAwaitExpunge = new AtomicInteger(0);
+        expungeStatsNullValue = new AtomicInteger(0);
+        expungeStatsNotInMap = new AtomicInteger(0);
+        useStatsRemove1Used = new AtomicInteger(0);    
+        useStatsRemove2Used = new AtomicInteger(0);
+        useStatsReplaceUsed = new AtomicInteger(0);
+        useStatsPutUsed = new AtomicInteger(0);
+        useStatsPutIfUsed = new AtomicInteger(0);
+        useStatsSyncUsed  = new AtomicInteger(0);
     }
-    
-    /**
-     * 
-     * @return true if expunder thread was stopped, false if no expunger is 
-     *     running.
-     */
-    private boolean stopExpunger() {
-        /*
-        if (expunger != null) {
-            expunger.interrupt();
-            try {
-                expunger.join();
-            } catch (InterruptedException ignored) {
-            }
-            expunger = null;
-            return true;
-        }
-        */
-        return false;
-    }
-    
+
     @SuppressWarnings("unchecked")
     protected StoredSortedMap createDiskMap(Database database,
             StoredClassCatalog classCatalog, Class keyClass, Class valueClass) {
@@ -605,7 +582,6 @@ implements ConcurrentMap<K,V>, Serializable {
     }
 
     public synchronized void close() throws DatabaseException {
-        stopExpunger();
         // Close out my bdb db.
         if (this.db != null) {
             try {
@@ -1311,7 +1287,6 @@ implements ConcurrentMap<K,V>, Serializable {
         String dbName = null;
         // Sync. memory and disk.
         useStatsSyncUsed.incrementAndGet();
-        boolean expungerWasRunning = stopExpunger();
         long startTime = 0;
         if (logger.isLoggable(Level.INFO)) {
             dbName = getDatabaseName();
@@ -1355,9 +1330,6 @@ implements ConcurrentMap<K,V>, Serializable {
                 this.diskMapSize.get() + ", mem " + this.memMap.size());
             dumpExtraStats();
         }
-        if (expungerWasRunning) {
-            startExpunger();
-    }
     }
 
     /** log at INFO level, interesting stats if non-zero. */
