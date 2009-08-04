@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Internet Archive. 
+/* Copyright (C) 2009 Internet Archive 
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -30,7 +30,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.EventObject;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,7 +55,6 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.LongWrapper;
 import org.archive.util.MimetypeUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -104,7 +105,7 @@ import org.archive.util.PaddingStringBuffer;
  *
  * @author Parker Thompson
  * @author Kristinn Sigurdsson
- *
+ * 
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.AbstractTracker
  */
@@ -155,36 +156,32 @@ implements CrawlURIDispositionListener, Serializable {
     protected long novelUriCount = 0;
     
     /** Keep track of the file types we see (mime type -> count) */
-    protected Hashtable<String,LongWrapper> mimeTypeDistribution
-     = new Hashtable<String,LongWrapper>();
-    protected Hashtable<String,LongWrapper> mimeTypeBytes
-     = new Hashtable<String,LongWrapper>();
+    protected ConcurrentMap<String,AtomicLong> mimeTypeDistribution
+     = new ConcurrentHashMap<String,AtomicLong>();
+    protected ConcurrentMap<String,AtomicLong> mimeTypeBytes
+     = new ConcurrentHashMap<String,AtomicLong>();
     
     /** Keep track of fetch status codes */
-    protected Hashtable<String,LongWrapper> statusCodeDistribution
-     = new Hashtable<String,LongWrapper>();
+    protected ConcurrentMap<String,AtomicLong> statusCodeDistribution
+     = new ConcurrentHashMap<String,AtomicLong>();
     
     /** Keep track of hosts. 
-     * 
-     * Each of these Maps are individually unsynchronized, and cannot 
-     * be trivially synchronized with the Collections wrapper. Thus
-     * their synchronized access is enforced by this class.
      * 
      * <p>They're transient because usually bigmaps that get reconstituted
      * on recover from checkpoint.
      */
-    protected transient Map<String,LongWrapper> hostsDistribution = null;
-    protected transient Map<String,LongWrapper> hostsBytes = null;
-    protected transient Map<String,Long> hostsLastFinished = null;
+    protected transient ConcurrentMap<String,AtomicLong> hostsDistribution = null;
+    protected transient ConcurrentMap<String,AtomicLong> hostsBytes = null;
+    protected transient ConcurrentMap<String,Long> hostsLastFinished = null;
 
     /** Keep track of URL counts per host per seed */
     protected transient 
-    Map<String,HashMap<String,LongWrapper>> sourceHostDistribution = null;
+        ConcurrentMap<String,ConcurrentMap<String,AtomicLong>> sourceHostDistribution = null;
 
     /**
      * Record of seeds' latest actions.
      */
-    protected transient Map<String,SeedRecord> processedSeedsRecords;
+    protected transient ConcurrentMap<String,SeedRecord> processedSeedsRecords;
 
     // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
     private int seedsCrawled;
@@ -203,11 +200,11 @@ implements CrawlURIDispositionListener, Serializable {
         super.initialize(c);
         try {
             this.sourceHostDistribution = c.getBigMap("sourceHostDistribution",
-            	    String.class, HashMap.class);
+            	    String.class, ConcurrentMap.class);
             this.hostsDistribution = c.getBigMap("hostsDistribution",
-                String.class, LongWrapper.class);
+                String.class, AtomicLong.class);
             this.hostsBytes = c.getBigMap("hostsBytes", String.class,
-                LongWrapper.class);
+                AtomicLong.class);
             this.hostsLastFinished = c.getBigMap("hostsLastFinished",
                 String.class, Long.class);
             this.processedSeedsRecords = c.getBigMap("processedSeedsRecords",
@@ -392,10 +389,10 @@ implements CrawlURIDispositionListener, Serializable {
      *  encountered mime types.  Key/value pairs represent
      *  mime type -> count.
      * <p>
-     * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
+     * <b>Note:</b> All the values are wrapped with a {@link AtomicLong AtomicLong}
      * @return mimeTypeDistribution
      */
-    public Hashtable<String,LongWrapper> getFileDistribution() {
+    public Map<String,AtomicLong> getFileDistribution() {
         return mimeTypeDistribution;
     }
 
@@ -413,7 +410,7 @@ implements CrawlURIDispositionListener, Serializable {
      *               exist it will be added (set to 1).  If null it will
      *            increment the counter "unknown".
      */
-    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+    protected static void incrementMapCount(ConcurrentMap<String,AtomicLong> map, 
             String key) {
     	incrementMapCount(map,key,1);
     }
@@ -422,12 +419,8 @@ implements CrawlURIDispositionListener, Serializable {
      * Increment a counter for a key in a given HashMap by an arbitrary amount.
      * Used for various aggregate data. The increment amount can be negative.
      *
-     * As this is used to change Maps which depend on StatisticsTracker
-     * for their synchronization, this method should only be invoked
-     * from a a block synchronized on 'this'. 
-     *
      * @param map
-     *            The HashMap
+     *            The Map or ConcurrentMap
      * @param key
      *            The key for the counter to be incremented, if it does not exist
      *            it will be added (set to equal to <code>increment</code>).
@@ -435,22 +428,26 @@ implements CrawlURIDispositionListener, Serializable {
      * @param increment
      *            The amount to increment counter related to the <code>key</code>.
      */
-    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+    @SuppressWarnings("unchecked")
+    protected static void incrementMapCount(ConcurrentMap<String,AtomicLong> map, 
             String key, long increment) {
         if (key == null) {
             key = "unknown";
         }
-        LongWrapper lw = (LongWrapper)map.get(key);
+        AtomicLong lw = (AtomicLong)map.get(key);
         if(lw == null) {
-            map.put(key, new LongWrapper(increment));
-        } else {
-            lw.longValue += increment;
-        }
+            lw = new AtomicLong();
+            AtomicLong prevVal = map.putIfAbsent(key, lw);
+            if(prevVal != null) {
+                lw = prevVal;
+            }
+        } 
+        lw.addAndGet(increment);
     }
 
     /**
      * Sort the entries of the given HashMap in descending order by their
-     * values, which must be longs wrapped with <code>LongWrapper</code>.
+     * values, which must be longs wrapped with <code>AtomicLong</code>.
      * <p>
      * Elements are sorted by value from largest to smallest. Equal values are
      * sorted in an arbitrary, but consistent manner by their keys. Only items
@@ -459,19 +456,17 @@ implements CrawlURIDispositionListener, Serializable {
      * If the passed-in map requires access to be synchronized, the caller
      * should ensure this synchronization. 
      * 
-     * @param mapOfLongWrapperValues
-     *            Assumes values are wrapped with LongWrapper.
+     * @param mapOfAtomicLongValues
+     *            Assumes values are wrapped with AtomicLong.
      * @return a sorted set containing the same elements as the map.
      */
-    public TreeMap<String,LongWrapper> getReverseSortedCopy(
-            final Map<String,LongWrapper> mapOfLongWrapperValues) {
-        TreeMap<String,LongWrapper> sortedMap = 
-          new TreeMap<String,LongWrapper>(new Comparator<String>() {
+    public TreeMap<String,AtomicLong> getReverseSortedCopy(
+            final Map<String,AtomicLong> mapOfAtomicLongValues) {
+        TreeMap<String,AtomicLong> sortedMap = 
+          new TreeMap<String,AtomicLong>(new Comparator<String>() {
             public int compare(String e1, String e2) {
-                long firstVal = mapOfLongWrapperValues.get(e1).
-                    longValue;
-                long secondVal = mapOfLongWrapperValues.get(e2).
-                    longValue;
+                long firstVal = mapOfAtomicLongValues.get(e1).get();
+                long secondVal = mapOfAtomicLongValues.get(e2).get();
                 if (firstVal < secondVal) {
                     return 1;
                 }
@@ -483,13 +478,13 @@ implements CrawlURIDispositionListener, Serializable {
             }
         });
         try {
-            sortedMap.putAll(mapOfLongWrapperValues);
+            sortedMap.putAll(mapOfAtomicLongValues);
         } catch (UnsupportedOperationException e) {
-            Iterator<String> i = mapOfLongWrapperValues.keySet().iterator();
+            Iterator<String> i = mapOfAtomicLongValues.keySet().iterator();
             for (;i.hasNext();) {
                 // Ok. Try doing it the slow way then.
                 String key = i.next();
-                sortedMap.put(key, mapOfLongWrapperValues.get(key));
+                sortedMap.put(key, mapOfAtomicLongValues.get(key));
             }
         }
         return sortedMap;
@@ -501,11 +496,11 @@ implements CrawlURIDispositionListener, Serializable {
      * val represents (string)code -&gt; (integer)count.
      * 
      * <b>Note: </b> All the values are wrapped with a
-     * {@link LongWrapper LongWrapper}
+     * {@link AtomicLong AtomicLong}
      * 
      * @return statusCodeDistribution
      */
-    public Hashtable<String,LongWrapper> getStatusCodeDistribution() {
+    public Map<String,AtomicLong> getStatusCodeDistribution() {
         return statusCodeDistribution;
     }
     
@@ -520,9 +515,7 @@ implements CrawlURIDispositionListener, Serializable {
      */
     public long getHostLastFinished(String host){
         Long l = null;
-        synchronized(hostsLastFinished){
-            l = (Long)hostsLastFinished.get(host);
-        }
+        l = (Long)hostsLastFinished.get(host);
         return (l != null)? l.longValue(): -1;
     }
 
@@ -532,9 +525,7 @@ implements CrawlURIDispositionListener, Serializable {
      * @return the accumulated number of bytes downloaded from a given host
      */
     public long getBytesPerHost(String host){
-        synchronized(hostsBytes){
-            return ((LongWrapper)hostsBytes.get(host)).longValue;
-        }
+        return ((AtomicLong)hostsBytes.get(host)).get();
     }
 
     /**
@@ -543,7 +534,7 @@ implements CrawlURIDispositionListener, Serializable {
      * @return the accumulated number of bytes from files of a given mime type
      */
     public long getBytesPerFileType(String filetype){
-        return ((LongWrapper)mimeTypeBytes.get(filetype)).longValue;
+        return ((AtomicLong)mimeTypeBytes.get(filetype)).get();
     }
 
     /**
@@ -732,7 +723,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
 
     /**
-     * If the curi is a seed, we update the processedSeeds table.
+     * If the curi is a seed, we insert into the processedSeedsRecords map.
      *
      * @param curi The CrawlURI that may be a seed.
      * @param disposition The dispositino of the CrawlURI.
@@ -740,6 +731,7 @@ implements CrawlURIDispositionListener, Serializable {
     private void handleSeed(CrawlURI curi, String disposition) {
         if(curi.isSeed()){
             SeedRecord sr = new SeedRecord(curi, disposition);
+            // we don't mind clobbering previous/simultaneous values
             processedSeedsRecords.put(sr.getUri(), sr);
         }
     }
@@ -781,33 +773,28 @@ implements CrawlURIDispositionListener, Serializable {
     }
          
     protected void saveSourceStats(String source, String hostname) {
-        synchronized(sourceHostDistribution) {
-            HashMap<String,LongWrapper> hostUriCount = 
-                sourceHostDistribution.get(source);
-            if (hostUriCount == null) {
-                hostUriCount = new HashMap<String,LongWrapper>();
-                sourceHostDistribution.put(source, hostUriCount);
+        ConcurrentMap<String,AtomicLong> hostUriCount = 
+            sourceHostDistribution.get(source);
+        if (hostUriCount == null) {
+            hostUriCount = new ConcurrentHashMap<String,AtomicLong>();
+            ConcurrentMap<String,AtomicLong> prevVal = 
+                sourceHostDistribution.putIfAbsent(source, hostUriCount);
+            if(prevVal!=null) {
+                hostUriCount = prevVal; 
             }
-            // TODO: Dan suggests we don't need a hashtable value.  Might
-            // be faster if we went without. Could just have keys of:
-            //  seed | host (concatenated as string)
-            // and values of: 
-            //  #urls
-            incrementMapCount(hostUriCount, hostname);
         }
+        // TODO: Dan suggests we don't need a hashtable value.  Might
+        // be faster if we went without. Could just have keys of:
+        //  seed | host (concatenated as string)
+        // and values of: 
+        //  #urls
+        incrementMapCount(hostUriCount, hostname);
     }
     
     protected void saveHostStats(String hostname, long size) {
-        synchronized(hostsDistribution){
-            incrementMapCount(hostsDistribution, hostname);
-        }
-        synchronized(hostsBytes){
-            incrementMapCount(hostsBytes, hostname, size);
-        }
-        synchronized(hostsLastFinished){
-            hostsLastFinished.put(hostname,
-                new Long(System.currentTimeMillis()));
-        }
+        incrementMapCount(hostsDistribution, hostname);
+        incrementMapCount(hostsBytes, hostname, size);
+        hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
     }
 
     public void crawledURINeedRetry(CrawlURI curi) {
@@ -870,7 +857,7 @@ implements CrawlURIDispositionListener, Serializable {
             SeedRecord sr = (SeedRecord) processedSeedsRecords.get(seed);
             if(sr==null) {
                 sr = new SeedRecord(seed,SEED_DISPOSITION_NOT_PROCESSED);
-                processedSeedsRecords.put(seed,sr);
+                processedSeedsRecords.putIfAbsent(seed,sr);
             }
             sortedSet.add(sr);
         }
@@ -921,19 +908,19 @@ implements CrawlURIDispositionListener, Serializable {
         // for each source
         for (Iterator i = sourceHostDistribution.keySet().iterator(); i.hasNext();) {
             Object sourceKey = i.next();
-            Map<String,LongWrapper> hostCounts 
-             = (Map<String,LongWrapper>)sourceHostDistribution.get(sourceKey);
+            Map<String,AtomicLong> hostCounts 
+             = (Map<String,AtomicLong>)sourceHostDistribution.get(sourceKey);
             // sort hosts by #urls
             SortedMap sortedHostCounts = getReverseSortedHostCounts(hostCounts);
             // for each host
             for (Iterator j = sortedHostCounts.keySet().iterator(); j.hasNext();) {
                 Object hostKey = j.next();
-                LongWrapper hostCount = (LongWrapper) hostCounts.get(hostKey);
+                AtomicLong hostCount = (AtomicLong) hostCounts.get(hostKey);
                 writer.print(sourceKey.toString());
                 writer.print(" ");
                 writer.print(hostKey.toString());
                 writer.print(" ");
-                writer.print(hostCount.longValue);
+                writer.print(hostCount.get());
                 writer.print("\n");
             }
         }
@@ -946,10 +933,8 @@ implements CrawlURIDispositionListener, Serializable {
      * @return SortedMap of hosts distribution
      */
     public SortedMap getReverseSortedHostCounts(
-            Map<String,LongWrapper> hostCounts) {
-        synchronized(hostCounts){
-            return getReverseSortedCopy(hostCounts);
-        }
+            Map<String,AtomicLong> hostCounts) {
+        return getReverseSortedCopy(hostCounts);
     }
 
     
@@ -963,9 +948,9 @@ implements CrawlURIDispositionListener, Serializable {
             // Key is 'host'.
             String key = (String) i.next();
             CrawlHost host = controller.getServerCache().getHostFor(key);
-            LongWrapper val = (LongWrapper)hd.get(key);
+            AtomicLong val = (AtomicLong)hd.get(key);
             writeReportLine(writer,
-                    ((val==null)?"-":val.longValue),
+                    ((val==null)?"-":val.get()),
                     getBytesPerHost(key),
                     key,
                     host.getSubstats().getRobotsDenials(),
@@ -1002,9 +987,7 @@ implements CrawlURIDispositionListener, Serializable {
      * @return SortedMap of hosts distribution
      */
     public SortedMap getReverseSortedHostsDistribution() {
-        synchronized(hostsDistribution){
-            return getReverseSortedCopy(hostsDistribution);
-        }
+        return getReverseSortedCopy(hostsDistribution);
     }
 
     protected void writeMimetypesReportTo(PrintWriter writer) {
@@ -1014,7 +997,7 @@ implements CrawlURIDispositionListener, Serializable {
         for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
             // Key is mime type.
-            writer.print(Long.toString(((LongWrapper)fd.get(key)).longValue));
+            writer.print(Long.toString(((AtomicLong)fd.get(key)).get()));
             writer.print(" ");
             writer.print(Long.toString(getBytesPerFileType((String)key)));
             writer.print(" ");
@@ -1031,7 +1014,7 @@ implements CrawlURIDispositionListener, Serializable {
             Object key = i.next();
             writer.print((String)key);
             writer.print(" ");
-            writer.print(Long.toString(((LongWrapper)scd.get(key)).longValue));
+            writer.print(Long.toString(((AtomicLong)scd.get(key)).get()));
             writer.print("\n");
         }
     }
