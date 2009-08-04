@@ -200,7 +200,7 @@ implements ConcurrentMap<K,V>, Serializable {
      * high-concurrency client of this class in terms of number of objects 
      * stored and performance impact.
      */
-    private transient ConcurrentHashMap<K,SoftEntry<V>> memMap;
+    protected transient ConcurrentHashMap<K,SoftEntry<V>> memMap;
 
     protected transient ReferenceQueue<V> refQueue;
 
@@ -383,7 +383,6 @@ implements ConcurrentMap<K,V>, Serializable {
             logger.info("BdbConfiguration: Cache percentage "  +
                 cfg.getCachePercent() + ", cache size " + cfg.getCacheSize() +
                 ", Map size: " + size() + " cfg=" + cfg);
-            System.out.println(" cfg=" + cfg); //DEBUG 
         }
     }
     
@@ -773,6 +772,7 @@ implements ConcurrentMap<K,V>, Serializable {
         if (pu == 1 && LOG_ERROR_ON_DESIGN_VIOLATING_METHODS) {
             logger.warning("design violating put() used on dbName=" + dbName);
         }
+        expungeStaleEntries();
         int attemptTolerance = BDB_LOCK_ATTEMPT_TOLERANCE;
         while (--attemptTolerance > 0) {
             try {
@@ -847,7 +847,9 @@ implements ConcurrentMap<K,V>, Serializable {
             // warn on non-accretive use
             logger.warning("design violating replace(,,) used on dbName=" + dbName);
         }
-
+        
+        expungeStaleEntries();
+        
         //  make the ref wrappers
         SoftEntry<V> newEntry = new SoftEntry<V>(key, newValue, refQueue);
         SoftEntry<V> oldEntry = new SoftEntry<V>(key, oldValue, refQueue);
@@ -1782,5 +1784,24 @@ implements ConcurrentMap<K,V>, Serializable {
     @SuppressWarnings("unchecked")
     private SoftEntry<?> refQueuePoll() {
         return (SoftEntry<?>)refQueue.poll();
+    }
+    
+    //
+    // Crude, probably unreliable/fragile but harmless mechanism to 
+    // trigger expunge of cleared SoftReferences in low-memory 
+    // conditions even without any of the other get/put triggers. 
+    //
+    
+    protected SoftReference<LowMemoryCanary> canary =
+        new SoftReference<LowMemoryCanary>(new LowMemoryCanary());
+    protected class LowMemoryCanary {
+        /** When collected/finalized -- as should be expected in 
+         *  low-memory conditions -- trigger an expunge and a 
+         *  new 'canary' insertion. */
+        public void finalize() {
+            CachedBdbMap.this.expungeStaleEntries();
+            CachedBdbMap.this.canary = 
+                new SoftReference<LowMemoryCanary>(new LowMemoryCanary());
+        }
     }
 }
