@@ -338,7 +338,7 @@ implements ConcurrentMap<K,V>, Serializable {
     }
     
     /**
-     * Shudown default constructor.
+     * Shutdown default constructor.
      */
     private CachedBdbMap() {
         super();
