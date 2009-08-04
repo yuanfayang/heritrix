@@ -420,6 +420,7 @@ implements ConcurrentMap<K,V>, Serializable {
                                                             ); 
         this.refQueue = new ReferenceQueue<V>();
         initTransientStats(); 
+        canary = new SoftReference<LowMemoryCanary>(new LowMemoryCanary());
     }
     
 
@@ -1792,8 +1793,7 @@ implements ConcurrentMap<K,V>, Serializable {
     // conditions even without any of the other get/put triggers. 
     //
     
-    protected SoftReference<LowMemoryCanary> canary =
-        new SoftReference<LowMemoryCanary>(new LowMemoryCanary());
+    protected transient SoftReference<LowMemoryCanary> canary;
     protected class LowMemoryCanary {
         /** When collected/finalized -- as should be expected in 
          *  low-memory conditions -- trigger an expunge and a 
