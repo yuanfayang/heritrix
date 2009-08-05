@@ -63,6 +63,7 @@ public class OrderJarFactory {
     private boolean oneHopOff = false;
     private String operator = null;
     private String persistSource = null;
+	private long dataLimit = 0l;
     
     public OrderJarFactory(String name, String userAgent, String fromEmail, String description, String organization, List<String> seeds) {
     	assert name != null;
@@ -111,6 +112,7 @@ public class OrderJarFactory {
         order = replaceKey(order, "$oneHopOff", isOneHopOff());
         order = replaceKey(order, "$duration", new Long(this.durationLimit)); //order file is in seconds.
         order = replaceKey(order, "$documentLimit", documentLimit);
+        order = replaceKey(order, "$dataLimit", dataLimit);
         order = replaceKey(order, "$userAgent", userAgent);
         order = replaceKey(order, "$fromEmail", fromEmail);
         order = replaceKey(order, "$diskPath", diskPath, "");
@@ -377,5 +379,13 @@ public class OrderJarFactory {
 
 	public void setOperator(String operator) {
 		this.operator = operator;
+	}
+
+	public void setDataLimit(Long byteLimit) {
+		if (byteLimit != null) {
+			this.dataLimit = byteLimit;
+		} else {
+			this.dataLimit = 0l;
+		}
 	}
 }
