@@ -25,37 +25,18 @@
  */
 package org.archive.crawler.writer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.transform.SourceLocator;
-import javax.xml.transform.Templates;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
 import org.apache.commons.io.IOUtils;
-import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.WriterPoolProcessor;
-import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
@@ -80,6 +61,10 @@ WriterPoolSettings, FetchStatusCodes {
 	private static final long serialVersionUID = 1957518408532644531L;
 
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
+    
+    public long getDefaultMaxFileSize() {
+        return 100000000L; // 100 SI mega-bytes (10^8 bytes), by tradition
+    }
     
     /**
      * Default path list.

@@ -78,6 +78,7 @@ import org.archive.io.WriterPoolMember;
  */
 public abstract class WriterPoolProcessor extends Processor
 implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
+    private static final long serialVersionUID = 1L;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
     /**
@@ -142,10 +143,8 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     
     /**
      * Default maximum file size.
-     * TODO: Check that subclasses can set a different MAX_FILE_SIZE and
-     * it will be used in the constructor as default.
      */
-    private static final int DEFAULT_MAX_FILE_SIZE = 100000000;
+    public abstract long getDefaultMaxFileSize();
     
     /**
      * Default path list.
@@ -207,7 +206,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of each file",
-                new Long(DEFAULT_MAX_FILE_SIZE)));
+                new Long(getDefaultMaxFileSize())));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new StringList(ATTR_PATH, "Where to files. " +
@@ -388,7 +387,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     */
     public long getMaxSize() {
         Object obj = getAttributeUnchecked(ATTR_MAX_SIZE_BYTES);
-        return (obj == null)? DEFAULT_MAX_FILE_SIZE: ((Long)obj).longValue();
+        return (obj == null)? getDefaultMaxFileSize(): ((Long)obj).longValue();
     }
 
     public String getPrefix() {
@@ -396,6 +395,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         return (obj == null)? WriterPoolMember.DEFAULT_PREFIX: (String)obj;
     }
 
+    @SuppressWarnings("unchecked")
     public List<File> getOutputDirs() {
         Object obj = getAttributeUnchecked(ATTR_PATH);
         List list = (obj == null)? Arrays.asList(DEFAULT_PATH): (StringList)obj;
