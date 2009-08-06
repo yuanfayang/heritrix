@@ -49,15 +49,14 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.extractor.Link;
-import org.archive.crawler.fetcher.FetchFTP;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.warc.WARCWriter;
 import org.archive.io.warc.WARCConstants;
+import org.archive.io.warc.WARCWriter;
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
@@ -83,6 +82,10 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     private static final long serialVersionUID = 6182850087635847443L;
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
+    
+    public long getDefaultMaxFileSize() {
+          return 1000000000L; // 1 SI giga-byte (109 bytes), per WARC appendix A
+    }
     
     /**
      * Key for whether to write 'request' type records where possible
