@@ -1,0 +1,26 @@
+# $Id: configure.ac 6415 2009-08-01 07:03:21Z nlevitt $
+
+AC_INIT([Internet Archive Tools],[0.0.1],[mailto:nlevitt@gmail.com],[ia-tools])
+
+AM_INIT_AUTOMAKE([1.9 foreign dist-bzip2])
+
+AC_CONFIG_SRCDIR([bin_search.c])
+AC_CONFIG_HEADERS([config.h])
+
+AM_MAINTAINER_MODE
+
+AC_PROG_CC
+AC_ISC_POSIX
+AC_HEADER_STDC
+AC_PROG_LIBTOOL
+
+PKG_CHECK_MODULES([DEPENDENCIES], [glib-2.0 >= 2.20])
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_CFLAGS])
+AC_SUBST([AM_CXXFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT
