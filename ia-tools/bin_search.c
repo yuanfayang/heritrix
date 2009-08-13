@@ -1,6 +1,6 @@
 /* vim: set sw=2 et:
  *
- * $Id: whoiz.c 6450 2009-08-13 21:45:31Z nlevitt $
+ * $Id$
  *
  * bin_search.c: Perform binary search of sorted text file. Replacement for
  * alexa tools bin_search.

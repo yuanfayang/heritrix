@@ -1,4 +1,4 @@
-# $Id: Makefile.am 6425 2009-08-01 19:24:25Z nlevitt $
+# $Id$
 
 bin_PROGRAMS = bin_search
 
