@@ -254,8 +254,8 @@ smart_lookup (char *query)
     }
 }
 
-/* Returns FALSE if it's not a whois url. Fills in *server and *query which
- * must be freed. */
+/* If it's a whois url, returns TRUE and populates *server and *query, which
+ * must be freed. Otherwise returns FALSE. */
 static gboolean
 parse_whois_url (char  *url,
                  char **server,
@@ -336,7 +336,8 @@ parse_command_line (int    argc,
     {
       if (minus_h_host != NULL)
         {
-          g_printerr ("whoiz: warning: You specified a whois url to lookup, but also specified a host with -h. That setting will be ignored.");
+          g_printerr ("whoiz: warning: You specified a whois url to lookup, so "
+                      "the host you specified with --host will be ignored.\n");
           g_free (minus_h_host);
         }
       g_string_free (query_or_url, TRUE);
