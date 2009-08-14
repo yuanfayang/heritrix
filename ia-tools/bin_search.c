@@ -64,12 +64,12 @@ parse_command_line (int    *argc,
   g_option_context_add_main_entries (context, entries, NULL);
   g_option_context_set_summary (context, "Perform binary search of sorted text file(s).");
   g_option_context_set_description (context, "Input file MUST have specified column in normal \"sort\" order, or may be in \"sort -r\" order when using \"-r\" option."
-      "\n\nProgram will binary search the file, looking for a(ny) line that begins with the string."
-      "\n\nString chars can be \"\\t\", which is the TAB character.\n");
+      "\n\nStrings are compared according to their native byte values; therefore the files need to have been sorted with LC_COLLATE=C (or LC_ALL=C)."
+      "\n\nProgram will binary search the file, looking for a(ny) line that begins with the string.\n");
 
   if (!g_option_context_parse (context, argc, argv, &error))
     {
-      g_printerr ("g_option_context_parse: %s\n", error->message);
+      g_printerr ("bin_search: g_option_context_parse: %s\n", error->message);
       exit (1);
     }
 
@@ -92,7 +92,7 @@ open_file (const char *filename)
   GIOChannel *io_channel = g_io_channel_new_file (filename, "r", &error);
   if (io_channel == NULL)
     {
-      g_printerr ("g_io_channel_new_file (\"%s\"): %s\n", filename, error->message);
+      g_printerr ("bin_search: g_io_channel_new_file (\"%s\"): %s\n", filename, error->message);
       exit (3);
     }
 
@@ -101,13 +101,17 @@ open_file (const char *filename)
   GIOStatus status = g_io_channel_set_encoding (io_channel, NULL, &error);
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("g_io_channel_set_encoding: %s\n", error->message);
+      g_printerr ("bin_search: g_io_channel_set_encoding: %s\n", error->message);
       exit (4);
     }
   g_assert (status == G_IO_STATUS_NORMAL);
 
-  /* sanity check */
-  g_assert (g_io_channel_get_flags (io_channel) & (G_IO_FLAG_IS_READABLE|G_IO_FLAG_IS_SEEKABLE));
+  /* make sure it's seekable */
+  if ((g_io_channel_get_flags (io_channel) & G_IO_FLAG_IS_SEEKABLE) != G_IO_FLAG_IS_SEEKABLE)
+    {
+      g_printerr ("bin_search: File %s is not seekable (perhaps it's a directory?)\n", filename);
+      exit (9);
+    }
 
   return io_channel;
 }
@@ -120,7 +124,7 @@ file_size (const char *filename)
 
   if (g_stat (filename, &buf) != 0)
     {
-      g_printerr ("stat (\"%s\"): %s\n", filename, g_strerror (errno));
+      g_printerr ("bin_search: stat (\"%s\"): %s\n", filename, g_strerror (errno));
       exit (2);
     }
 
@@ -135,12 +139,12 @@ seek (GIOChannel *io_channel,
   GIOStatus status = g_io_channel_seek_position (io_channel, offset, G_SEEK_SET, &error);
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("g_io_channel_seek_position: %s\n", error->message);
+      g_printerr ("bin_search: g_io_channel_seek_position: %s\n", error->message);
       exit (5);
     }
   else if (status != G_IO_STATUS_NORMAL)
     {
-      g_printerr ("g_io_channel_seek_position: non-normal status %d\n", status);
+      g_printerr ("bin_search: g_io_channel_seek_position: non-normal status %d\n", status);
       exit (8);
     }
 }
@@ -160,7 +164,7 @@ read_byte (GIOChannel *io_channel)
   g_assert (status != G_IO_STATUS_AGAIN); /* can't happen right? */
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("g_io_channel_read_chars: %s\n", error->message);
+      g_printerr ("bin_search: g_io_channel_read_chars: %s\n", error->message);
       exit (6);
     }
   else if (status == G_IO_STATUS_EOF)
@@ -197,25 +201,48 @@ get_line_at_offset (GIOChannel *io_channel,
   g_assert (status != G_IO_STATUS_AGAIN);
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("g_io_channel_read_line_string: %s\n", error->message);
+      g_printerr ("bin_search: g_io_channel_read_line_string: %s\n", error->message);
       exit (7);
     }
 
   /* all done, line_buf has been filled in */
 }
 
-/* respects options (XXX well, not yet) */
+/* respects options (XXX not yet) */
 static void
 bin_search (const char *string,
             const char *filename)
 {
-  GIOChannel *io_channel = open_file (filename);
-  GString *current_line = g_string_new ("");
   gint64 left = 0l;
   gint64 right = file_size (filename) - 1;
 
-  get_line_at_offset (io_channel, (left + right) / 2, current_line);
-  g_print ("%s: %s\n", filename, current_line->str);
+  GIOChannel *io_channel = open_file (filename);
+  GString *current_line = g_string_new ("");
+  int len = strlen (string);
+
+  while (right - left >= len)
+    {
+      gint64 pos = (left + right + 1) / 2;
+
+      get_line_at_offset (io_channel, pos, current_line);
+
+      int cmp;
+      if (options.exact)
+        cmp = strcmp (string, current_line->str);
+      else
+        cmp = strncmp (string, current_line->str, len);
+
+      if (cmp == 0)
+        {
+          fputs (current_line->str, stdout);
+          break;
+        }
+      else if (cmp < 0)
+        right = pos - 1;
+      else 
+        left = pos + 1;
+    }
+
 
   /* finished, clean up */
   g_io_channel_unref (io_channel);
