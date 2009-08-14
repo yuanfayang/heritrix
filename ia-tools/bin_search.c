@@ -64,12 +64,14 @@ parse_command_line (int    *argc,
   g_option_context_add_main_entries (context, entries, NULL);
   g_option_context_set_summary (context, "Perform binary search of sorted text file(s).");
   g_option_context_set_description (context, "Input file MUST have specified column in normal \"sort\" order, or may be in \"sort -r\" order when using \"-r\" option."
-      "\n\nStrings are compared according to their native byte values; therefore the files need to have been sorted with LC_COLLATE=C (or LC_ALL=C)."
+      "\n\nStrings are compared according to their native byte values, so the files need to have been sorted with LC_COLLATE=C (or LC_ALL=C)."
+      "\n\nAssumes lines are terminated by a single newline character '\\n'."
       "\n\nProgram will binary search the file, looking for a(ny) line that begins with the string.\n");
 
   if (!g_option_context_parse (context, argc, argv, &error))
     {
-      g_printerr ("bin_search: g_option_context_parse: %s\n", error->message);
+      g_printerr ("bin_search: %s\n", error->message);
+      g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       exit (1);
     }
 
@@ -233,11 +235,15 @@ compare (const char *string,
     if (*linep == *options.delim)
       delim_count++;
 
-  int len = strlen (string);
   if (options.exact)
-    result = strcmp (string, linep);
+    {
+      /* exact up to next delimiter or end of line */
+      int n; 
+      for (n = 0; linep[n] != '\0' && linep[n] != '\n' && linep[n] != *options.delim; n++);
+      result = strncmp (string, linep, n); 
+    }
   else
-    result = strncmp (string, linep, len);
+    result = strncmp (string, linep, strlen (string));
 
   return options.reverse ? -result : result;
 }
@@ -247,9 +253,11 @@ compare (const char *string,
  * line_buf. */
 static void
 print_results (const char *string,
+               const char *filename,
                GIOChannel *io_channel,
                GString    *line_buf,
-               gint64      line_pos)
+               gint64      line_pos,
+               gboolean    prefix)
 {
   if (!options.any)
     {
@@ -262,7 +270,10 @@ print_results (const char *string,
         line_pos = get_line_at_pos (io_channel, line_pos + line_buf->len, line_buf);
     }
 
-  fputs (line_buf->str, stdout);
+  if (!options.quiet)
+    g_printerr ("%s%sFound string at offset: %ld\n", prefix ? filename : "", prefix ? ": " : "", line_pos);
+
+  g_print ("%s%s%s", prefix ? filename : "", prefix ? ": " : "", line_buf->str);
 
   /* --all */
   while (options.all)
@@ -270,14 +281,15 @@ print_results (const char *string,
       line_pos = get_line_at_pos (io_channel, line_pos + line_buf->len, line_buf);
       if (compare (string, line_buf->str) != 0)
         break;
-      fputs (line_buf->str, stdout);
+      g_print ("%s%s%s", prefix ? filename : "", prefix ? ": " : "", line_buf->str);
     }
 }
 
 /* respects options */
 static void
 bin_search (const char *string,
-            const char *filename)
+            const char *filename,
+            gboolean    prefix)
 {
   gint64 left = 0l;
   gint64 right = file_size (filename) - 1;
@@ -295,7 +307,7 @@ bin_search (const char *string,
       int cmp = compare (string, line_buf->str);
       if (cmp == 0)
         {
-          print_results (string, io_channel, line_buf, line_pos);
+          print_results (string, filename, io_channel, line_buf, line_pos, prefix);
           break;
         }
       else if (cmp < 0)
@@ -321,7 +333,7 @@ main (int    argc,
 
   int i;
   for (i = 2; i < argc; i++)
-    bin_search (argv[1], argv[i]);
+    bin_search (argv[1], argv[i], argc > 3);
 
   exit (0);
 }

@@ -1,6 +1,6 @@
 # $Id$
 
-AC_INIT([Internet Archive Tools],[0.0.1],[mailto:nlevitt@gmail.com],[ia-tools])
+AC_INIT([Internet Archive Tools],[0.0.1],[mailto:nlevitt@archive.org],[ia-tools])
 
 AM_INIT_AUTOMAKE([1.9 foreign dist-bzip2])
 
