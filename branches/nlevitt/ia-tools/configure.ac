@@ -14,8 +14,8 @@ AC_ISC_POSIX
 AC_HEADER_STDC
 AC_PROG_LIBTOOL
 
-PKG_CHECK_MODULES([DEPENDENCIES], [glib-2.0 >= 2.20 
-		                   gobject-2.0 >= 2.20])
+PKG_CHECK_MODULES([DEPENDENCIES], [glib-2.0 >= 2.18 
+		                   gobject-2.0 >= 2.18])
 
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])
