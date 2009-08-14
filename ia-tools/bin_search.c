@@ -125,7 +125,7 @@ file_size (const char *filename)
   if (g_stat (filename, &buf) != 0)
     {
       g_printerr ("bin_search: stat (\"%s\"): %s\n", filename, g_strerror (errno));
-      exit (2);
+      exit (10);
     }
 
   return buf.st_size;
@@ -133,10 +133,10 @@ file_size (const char *filename)
 
 static void
 seek (GIOChannel *io_channel,
-      gint64      offset)
+      gint64      pos)
 {
   GError *error = NULL;
-  GIOStatus status = g_io_channel_seek_position (io_channel, offset, G_SEEK_SET, &error);
+  GIOStatus status = g_io_channel_seek_position (io_channel, pos, G_SEEK_SET, &error);
   if (status == G_IO_STATUS_ERROR)
     {
       g_printerr ("bin_search: g_io_channel_seek_position: %s\n", error->message);
@@ -177,27 +177,38 @@ read_byte (GIOChannel *io_channel)
   return (int) c;
 }
 
-/* fills in line_buf with the line that offset is in the middle of */
-static void
-get_line_at_offset (GIOChannel *io_channel,
-                    gint64      offset,
-                    GString    *line_buf)
+/* fills in line_buf with the line that pos is in the middle of, returns
+ * position of beginning of line */
+static gint64
+get_line_at_pos (GIOChannel *io_channel,
+                 gint64      start_pos,
+                 GString    *line_buf)
 {
   gint64 pos;
   int c = -1;
 
   /* find beginning of line */
-  for (pos = offset - 1; pos > 0 && c != '\n'; pos--)
+  for (pos = start_pos - 1; pos >= 0 && c != '\n'; pos--)
     {
       seek (io_channel, pos);
-      c = read_byte (io_channel); /* advances file pos by 1 */
+      c = read_byte (io_channel); /* advances seek position by 1 */
     }
 
-  gsize terminator_pos = -1;
-  GError *error = NULL;
+  if (c == '\n')
+    {
+      /* pos is pointing to byte before '\n' */
+      pos += 2;
+    }
+  else if (pos < 0)
+    {
+      /* either we never seeked or read_byte() ate first byte of file */
+      pos = 0;
+      seek (io_channel, pos);
+    }
 
   /* read in the line */
-  GIOStatus status = g_io_channel_read_line_string (io_channel, line_buf, &terminator_pos, &error);
+  GError *error = NULL;
+  GIOStatus status = g_io_channel_read_line_string (io_channel, line_buf, NULL, &error);
   g_assert (status != G_IO_STATUS_AGAIN);
   if (status == G_IO_STATUS_ERROR)
     {
@@ -205,10 +216,65 @@ get_line_at_offset (GIOChannel *io_channel,
       exit (7);
     }
 
-  /* all done, line_buf has been filled in */
+  return pos;
 }
 
-/* respects options (XXX not yet) */
+/* respects options */
+static int
+compare (const char *string,
+         const char *line)
+{
+  char *linep;
+  int delim_count = 0;
+  int result;
+
+  /* find -f column */
+  for (linep = (char *) line; *linep != '\0' && delim_count + 1 < options.field; linep++)
+    if (*linep == *options.delim)
+      delim_count++;
+
+  int len = strlen (string);
+  if (options.exact)
+    result = strcmp (string, linep);
+  else
+    result = strncmp (string, linep, len);
+
+  return options.reverse ? -result : result;
+}
+
+/* If --any, just print the line we found; otherwise backtrack to the first
+ * occurrence and print it (default) or all occurrences if --all. Reuses
+ * line_buf. */
+static void
+print_results (const char *string,
+               GIOChannel *io_channel,
+               GString    *line_buf,
+               gint64      line_pos)
+{
+  if (!options.any)
+    {
+      /* backtrack */
+      while (line_pos > 0 && compare (string, line_buf->str) == 0)
+        line_pos = get_line_at_pos (io_channel, line_pos - 1, line_buf);
+
+      /* get next line if we went too far */
+      if (compare (string, line_buf->str) != 0)
+        line_pos = get_line_at_pos (io_channel, line_pos + line_buf->len, line_buf);
+    }
+
+  fputs (line_buf->str, stdout);
+
+  /* --all */
+  while (options.all)
+    {
+      line_pos = get_line_at_pos (io_channel, line_pos + line_buf->len, line_buf);
+      if (compare (string, line_buf->str) != 0)
+        break;
+      fputs (line_buf->str, stdout);
+    }
+}
+
+/* respects options */
 static void
 bin_search (const char *string,
             const char *filename)
@@ -217,24 +283,19 @@ bin_search (const char *string,
   gint64 right = file_size (filename) - 1;
 
   GIOChannel *io_channel = open_file (filename);
-  GString *current_line = g_string_new ("");
+  GString *line_buf = g_string_new ("");
   int len = strlen (string);
 
   while (right - left >= len)
     {
       gint64 pos = (left + right + 1) / 2;
 
-      get_line_at_offset (io_channel, pos, current_line);
+      gint64 line_pos = get_line_at_pos (io_channel, pos, line_buf);
 
-      int cmp;
-      if (options.exact)
-        cmp = strcmp (string, current_line->str);
-      else
-        cmp = strncmp (string, current_line->str, len);
-
+      int cmp = compare (string, line_buf->str);
       if (cmp == 0)
         {
-          fputs (current_line->str, stdout);
+          print_results (string, io_channel, line_buf, line_pos);
           break;
         }
       else if (cmp < 0)
@@ -246,7 +307,7 @@ bin_search (const char *string,
 
   /* finished, clean up */
   g_io_channel_unref (io_channel);
-  g_string_free (current_line, TRUE);
+  g_string_free (line_buf, TRUE);
 }
 
 int
