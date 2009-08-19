@@ -451,7 +451,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         if (sfx.contains(WriterPoolMember.HOSTNAME_VARIABLE)) {
             String str = "localhost.localdomain";
             try {
-                str = InetAddress.getLocalHost().getHostName();
+                str = InetAddress.getLocalHost().getCanonicalHostName();
             } catch (UnknownHostException ue) {
                 logger.severe("Failed getHostAddress for this host: " + ue);
             }
@@ -688,7 +688,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
             xformer.setParameter("ip",
                 InetAddress.getLocalHost().getHostAddress());
             xformer.setParameter("hostname",
-                InetAddress.getLocalHost().getHostName());
+                InetAddress.getLocalHost().getCanonicalHostName());
             StreamSource source = new StreamSource(
                 new FileInputStream(orderFile));
             StringWriter writer = new StringWriter();
