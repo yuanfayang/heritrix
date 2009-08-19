@@ -2453,7 +2453,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         @SuppressWarnings("unchecked")
         Hashtable<String,String> ht = name.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.HOST)) {
-            ht.put(JmxUtils.HOST, InetAddress.getLocalHost().getHostName());
+            ht.put(JmxUtils.HOST, InetAddress.getLocalHost().getCanonicalHostName());
             name = new ObjectName(name.getDomain(), ht);
         }
         if (!ht.containsKey(JmxUtils.JMX_PORT)) {
