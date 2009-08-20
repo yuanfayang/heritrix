@@ -26,8 +26,6 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import javax.management.ObjectName;
-
 /**
  * Represents the relationship between a container and the crawlers "container"
  * by it.

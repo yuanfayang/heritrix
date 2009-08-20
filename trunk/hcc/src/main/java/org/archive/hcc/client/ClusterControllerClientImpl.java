@@ -28,28 +28,25 @@ import java.net.InetSocketAddress;
 import java.security.InvalidParameterException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerFactory;
-import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.SimpleType;
-import javax.naming.InsufficientResourcesException;
 import javax.swing.event.EventListenerList;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegatableBase;
 import org.archive.hcc.util.NotificationDelegator;
@@ -65,8 +62,7 @@ import org.archive.util.JmxUtils;
  */
 class ClusterControllerClientImpl implements ClusterControllerClient{
 
-    private static final Logger log = Logger.getLogger(
-            ClusterControllerClientImpl.class.getName());
+	private static Log log = LogFactory.getLog(ClusterControllerClientImpl.class);
 
     private MBeanServerConnection connection;
 
@@ -151,9 +147,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                                 ClusterControllerNotification.
                                     CRAWL_SERVICE_CREATED_NOTIFICATION.getKey())) {
                     
-                    if (log.isLoggable(Level.FINE)) {
-                        log.fine("crawler service created: " + n.getUserData());
-                    }
+                    log.debug("crawler service created: " + n.getUserData());
                     handleCrawlServiceCreated((ObjectName) n.getUserData());
                     return true;
                 }
@@ -169,10 +163,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                                 ClusterControllerNotification.
                                     CRAWL_SERVICE_DESTROYED_NOTIFICATION.getKey())) {
                    
-                    if (log.isLoggable(Level.INFO)) {
-                        log.info("crawler service destroyed: "
-                                + n.getUserData());
-                    }
+                	log.info("crawler service destroyed: " + n.getUserData());
 
                     handleCrawlServiceDestroyed((ObjectName) n.getUserData());
                     return true;

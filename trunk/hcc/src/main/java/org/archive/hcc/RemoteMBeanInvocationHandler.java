@@ -26,8 +26,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -37,6 +35,9 @@ import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * This invocation handler is responsible for proxying calls to and
  * remote notifications from remote mbean instances.
@@ -45,8 +46,7 @@ import javax.management.ObjectName;
 public class RemoteMBeanInvocationHandler implements
         InvocationHandler {
     
-    private static Logger log =
-        Logger.getLogger(RemoteMBeanInvocationHandler.class.getName());
+	private static Log log = LogFactory.getLog(RemoteMBeanInvocationHandler.class);
 
     private ObjectName remoteObjectName;
 
@@ -95,10 +95,9 @@ public class RemoteMBeanInvocationHandler implements
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
 
-        if (log.isLoggable(Level.FINER)) {
-            log.finer("method=" + method);
-        }
-        if (method.getName().equals("invoke")) {
+    	log.debug("method=" + method);
+
+    	if (method.getName().equals("invoke")) {
             return this.connection.invoke(
                     this.remoteObjectName,
                     (String) args[0],

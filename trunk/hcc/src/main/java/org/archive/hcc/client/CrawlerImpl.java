@@ -24,7 +24,6 @@ package org.archive.hcc.client;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Set;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;

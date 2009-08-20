@@ -27,8 +27,9 @@ package org.archive.hcc.client;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * This class manages singleton instances of the ClusterControllerClient. Within
@@ -40,8 +41,8 @@ import java.util.logging.Logger;
  * 
  */
 public class ClusterControllerClientManager {
-    private static Logger log = Logger
-            .getLogger(ClusterControllerClientManager.class.getName());
+	
+	private static Log log = LogFactory.getLog(ClusterControllerClientManager.class);
 
     private static ClusterControllerClient defaultClient;
 
@@ -73,10 +74,7 @@ public class ClusterControllerClientManager {
             return defaultClient;
         } catch (Exception e) {
             e.printStackTrace();
-            if (log.isLoggable(Level.SEVERE)) {
-                log.severe(": " + e.getMessage());
-            }
-
+            log.error(": " + e.getMessage());
             throw new RuntimeException(e);
         }
     }

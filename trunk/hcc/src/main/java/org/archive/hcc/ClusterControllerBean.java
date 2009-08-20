@@ -28,12 +28,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +38,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -84,6 +79,8 @@ import javax.management.openmbean.SimpleType;
 import javax.management.openmbean.TabularData;
 import javax.naming.NamingException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegator;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
@@ -115,8 +112,7 @@ public class ClusterControllerBean implements
     /**
      * logger
      */
-    private static Logger log = Logger.getLogger(ClusterControllerBean.class
-            .getName());
+	private static Log log = LogFactory.getLog(ClusterControllerBean.class);
 
     /**
      * A timer thread that polls the nodes for new containers.
@@ -209,10 +205,7 @@ public class ClusterControllerBean implements
                     Notification notification,
                     Object handback) {
 
-                if (log.isLoggable(Level.INFO)) {
-                    log.info(">>>>>>>>>spyListener: notification="
-                            + notification);
-                }
+            	log.info(">>>>>>>>>spyListener: notification=" + notification);
 
                 fireNotificationEvent(notification);
             }
@@ -475,13 +468,13 @@ public class ClusterControllerBean implements
             	log.info("attempting to create crawler on container: " + container.getAddress());
                 return createCrawlerIn(container);
             } catch (Exception e) {
-            	log.warning("unexpected error!!! failed to create crawler as expected on " + container.getAddress());
+            	log.warn("unexpected error!!! failed to create crawler as expected on " + container.getAddress());
             	e.printStackTrace();
             }
         }
         
         if(orderedContainers.size() > 0){
-            log.severe("unable to start any crawlers on container due to communication " +
+            log.error("unable to start any crawlers on container due to communication " +
     		"failure with all available containers.");
         }
 
@@ -887,15 +880,11 @@ public class ClusterControllerBean implements
      */
     public void destroy() {
         try {
-            if (log.isLoggable(Level.INFO)) {
-                log.info("destroying cluster controller.");
-            }
+        	log.info("destroying cluster controller.");
 
             nodePoller.cancel();
 
-            if (log.isLoggable(Level.INFO)) {
-                log.info("cancelled jndi poller");
-            }
+            log.info("cancelled jndi poller");
 
             nodePoller = null;
 
@@ -937,16 +926,12 @@ public class ClusterControllerBean implements
             this.mbeanServer.unregisterMBean(crawler
                     .getCrawlServiceProxyObjectName());
         } catch (InstanceNotFoundException e) {
-            if (log.isLoggable(Level.WARNING)) {
-                log.warning(e.getMessage());
-            }
+        	log.warn(e.getMessage());
 
             e.printStackTrace();
 
         } catch (MBeanRegistrationException e) {
-            if (log.isLoggable(Level.WARNING)) {
-                log.warning(e.getMessage());
-            }
+        	log.warn(e.getMessage());
 
             e.printStackTrace();
         }
@@ -957,16 +942,9 @@ public class ClusterControllerBean implements
                 this.mbeanServer.unregisterMBean(crawlJob);
             }
         } catch (InstanceNotFoundException e) {
-            if (log.isLoggable(Level.WARNING)) {
-                log.warning(e.getMessage());
-            }
-
+        	log.warn(e.getMessage());
         } catch (MBeanRegistrationException e) {
-            if (log.isLoggable(Level.WARNING)) {
-                log.warning(e.getMessage());
-            }
-
-            e.printStackTrace();
+        	log.warn(e.getMessage(), e);
         }
     }
 
@@ -1051,16 +1029,12 @@ public class ClusterControllerBean implements
     }
 
     protected void handleJobRemoved(ObjectName job) {
-    	if(log.isLoggable(Level.INFO)){
-    		log.info("entering: job=" + job);
-    	}
+    	log.info("entering: job=" + job);
         // locate crawler
         Crawler c = getJobContext(job);
         
         if(c == null){
-        	if(log.isLoggable(Level.WARNING)){
-        		log.warning("no crawler context found for job=" + job);
-        	}
+        	log.warn("no crawler context found for job=" + job);
         	
         	return;
         }
@@ -1068,20 +1042,18 @@ public class ClusterControllerBean implements
         // unregister job proxy.
         ObjectName jobProxy = c.getCrawlJobProxyObjectName();
         if(jobProxy == null){
-        	if(log.isLoggable(Level.WARNING)){
-        		log.warning("jobProxy was not found on crawler=" + c.getCrawlJobProxyObjectName());
-        	}
+        	log.warn("jobProxy was not found on crawler=" + c.getCrawlJobProxyObjectName());
         	return;
         }
         
         try {
             this.mbeanServer.unregisterMBean(jobProxy);
         } catch (InstanceNotFoundException e) {
-       		log.severe("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + "; error.class=" + e.getClass() + ";  error.message=" + e.getMessage());
+       		log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + "; error.class=" + e.getClass() + ";  error.message=" + e.getMessage());
 
             e.printStackTrace();
         } catch (MBeanRegistrationException e) {
-       		log.severe("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job  + "; error.class=" + e.getClass() + "; message=" + e.getMessage());
+       		log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job  + "; error.class=" + e.getClass() + "; message=" + e.getMessage());
             e.printStackTrace();
         }
 
@@ -1091,9 +1063,7 @@ public class ClusterControllerBean implements
                 ClusterControllerNotification.
                     CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey());
             
-    	if(log.isLoggable(Level.INFO)){
-    		log.info("exitting successfully: job=" + job);
-    	}
+        log.info("exitting successfully: job=" + job);
             
     }
 
@@ -1272,7 +1242,7 @@ public class ClusterControllerBean implements
                             address,
                             this.remoteNotificationDelegator);
                 } catch (IOException e) {
-                	log.warning("unabled to synchronize container on " + 
+                	log.warn("unabled to synchronize container on " + 
                 			address.getHostName()+":" + address.getPort() + 
                 			" - message: " + e.getMessage());
                     
@@ -1384,7 +1354,7 @@ public class ClusterControllerBean implements
         MBeanServerConnection mbc = this.connections.get(address);
 
         if (mbc == null) {
-        	log.warning("unable to synchronize container: no mbean server connection found on " + address);
+        	log.warn("unable to synchronize container: no mbean server connection found on " + address);
         	return;
         }
 
@@ -1397,8 +1367,7 @@ public class ClusterControllerBean implements
             }
 
         } catch (IOException e) {
-        	log.warning(e.getMessage());
-            e.printStackTrace();
+        	log.warn(e.getMessage(), e);
         }
     }
 
@@ -1424,18 +1393,14 @@ public class ClusterControllerBean implements
         // define the timer task
                 new TimerTask() {
                     public void run() {
-                        if (log.isLoggable(Level.FINE)) {
-                            log.fine("running poll task...");
-                        }
+                    	log.debug("running poll task...");
 
                         if (nodePoller == null) {
                             return;
                         }
 
                         refreshRegistry();
-                        if (log.isLoggable(Level.FINE)) {
-                            log.fine("poll task done.");
-                        }
+                        log.debug("poll task done.");
                     }
 
                 },
@@ -1698,9 +1663,7 @@ public class ClusterControllerBean implements
                 .currentTimeMillis());
         n.setUserData(name);
         fireNotificationEvent(n);
-        if (log.isLoggable(Level.INFO)) {
-            log.info("name=" + name + "; type=" + type);
-        }
+        log.info("name=" + name + "; type=" + type);
     }
 
     private void fireCrawlerCreated(ObjectName proxyName) {

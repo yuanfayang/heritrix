@@ -22,12 +22,12 @@
  */
 package org.archive.hcc.util;
 
-import java.util.logging.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 
 abstract public class DelegatableBase implements Delegatable {
-    private static Logger log =
-        Logger.getLogger(DelegatableBase.class.getName());
+	private static Log log = LogFactory.getLog(DelegatableBase.class);
 
     public final boolean delegate(Object object) {
         log.info("object=" + object);

@@ -30,12 +30,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.management.Notification;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class MBeanFutureTask implements
         NotificationListener,
@@ -45,7 +46,7 @@ public class MBeanFutureTask implements
     
     private static final long serialVersionUID = 1L;
 
-    private static Logger log = Logger.getLogger(MBeanFutureTask.class.getName());
+    private static Log log = LogFactory.getLog(MBeanFutureTask.class);
 
     private CountDownLatch latch;
 
@@ -78,12 +79,10 @@ public class MBeanFutureTask implements
     public void handleNotification(Notification notification, Object handback) {
         this.notification = notification;
         this.latch.countDown();
-        if (log.isLoggable(Level.FINE)) {
-            log.fine("this.name=" + name + "; thread.name="
-                    + Thread.currentThread().getName() + "; latch.count="
-                    + latch.getCount() + "; notification.type="
-                    + notification.getType());
-        }
+        log.debug("this.name=" + name + "; thread.name="
+        		+ Thread.currentThread().getName() + "; latch.count="
+        		+ latch.getCount() + "; notification.type="
+        		+ notification.getType());
     }
 
     public boolean cancel(boolean mayInterruptIfRunning) {
@@ -115,19 +114,15 @@ public class MBeanFutureTask implements
             throws InterruptedException,
             TimeoutException {
         try {
-            if (log.isLoggable(Level.FINE)) {
-                log.fine("this.name=" + name + "; thread.name="
-                        + Thread.currentThread().getName());
-            }
+        	log.debug("this.name=" + name + "; thread.name="
+        			+ Thread.currentThread().getName());
 
             if (timer == null) {
                 timer = new Timer();
                 timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        if (log.isLoggable(Level.FINE)) {
-                            log.fine(name + ": waiting for notification");
-                        }
+                    	log.debug(name + ": waiting for notification");
                     }
 
                 }, 60 * 1000, 60 * 1000);
