@@ -27,19 +27,21 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.archive.hcc.Config;
 
 public class MBeanServerConnectionFactory {
   
-    private static Logger log = Logger.getLogger(MBeanServerConnectionFactory.class.getName());
+   // private static Logger log = Logger.getLogger(MBeanServerConnectionFactory.class.getName());
+	private static Log log = LogFactory.getLog(MBeanServerConnectionFactory.class);
+	
     /**
      * Creates a new MBeanServerConnection on the specified port.
      * 
@@ -57,11 +59,9 @@ public class MBeanServerConnectionFactory {
 
         MBeanServerConnection mbeanServerConnection = jmxc
                 .getMBeanServerConnection();
-        
-        if (log.isLoggable(Level.INFO)) {
+
             log.info("successfully created mbeanServerConnection on "
                     + address);
-        }
         return mbeanServerConnection;
     }
 
@@ -72,10 +72,7 @@ public class MBeanServerConnectionFactory {
             String serviceUrl = "service:jmx:rmi://" + hostport
                     + "/jndi/rmi://" + hostport + "/jmxrmi";
 
-            
-            if (log.isLoggable(Level.INFO)) {
-                log.info("service url: " + serviceUrl);
-            }
+            log.info("service url: " + serviceUrl);
 
             return new JMXServiceURL(serviceUrl);
         } catch (MalformedURLException e) {

@@ -22,19 +22,18 @@
  */
 package org.archive.hcc.util;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 
 public class NotificationDelegator
         extends Delegator implements NotificationListener {
     
-    private static Logger log = 
-        Logger.getLogger(NotificationDelegator.class.getName());
+	private static Log log = LogFactory.getLog(NotificationDelegator.class);
 
     public NotificationDelegator() {
         super(DelegatorPolicy.ACCEPT_ALL);
@@ -45,17 +44,15 @@ public class NotificationDelegator
     }
 
     public void handleNotification(Notification notification, Object handback) {
-        if (log.isLoggable(Level.FINER)) {
-            log.finer("notification.type=" + notification.getType());
-            log.finer("notification.message=" + notification.getMessage());
-            log.finer("notification.userData=" + notification.getUserData());
+    	log.debug("notification.type=" + notification.getType());
+    	log.debug("notification.message=" + notification.getMessage());
+    	log.debug("notification.userData=" + notification.getUserData());
 
-            if (notification instanceof MBeanServerNotification) {
-                log.finer("notification.mbeanName="
-                        + ((MBeanServerNotification) notification)
-                                .getMBeanName());
-            }
-        }
+    	if (notification instanceof MBeanServerNotification) {
+    		log.debug("notification.mbeanName="
+    				+ ((MBeanServerNotification) notification)
+    				.getMBeanName());
+    	}
 
         delegate(notification, handback);
     }

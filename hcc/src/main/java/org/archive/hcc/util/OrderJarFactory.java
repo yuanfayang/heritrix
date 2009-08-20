@@ -37,18 +37,16 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.archive.hcc.Config;
 
 public class OrderJarFactory {
 	public static String SETTINGS_DIRECTORY_PROPERTY= OrderJarFactory.class.getName() + ".settingsDefaultsDir";
-    private static Logger log =
-        Logger.getLogger(OrderJarFactory.class.getName());
+	private static Log log = LogFactory.getLog(OrderJarFactory.class);
     private String name;
     private String description;
     private String userAgent;
@@ -202,18 +200,12 @@ public class OrderJarFactory {
 
             jos.close();
             
-            if (log.isLoggable(Level.FINE)) {
-                log.fine("created jar file" + jarFile.getAbsolutePath());
-            }
+            log.debug("created jar file" + jarFile.getAbsolutePath());
 
             return jarFile;
 
         } catch (Exception e) {
-            if (log.isLoggable(Level.SEVERE)) {
-                log.severe(e.getMessage());
-            }
-
-            e.printStackTrace();
+        	log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
@@ -288,7 +280,7 @@ public class OrderJarFactory {
             	log.info("Settings directory parameter specified: " + settingsDirectoryRoot);
                 recursivelyAddChildren(files, settingsDirectory, null);
             }else{
-            	log.warning("Settings directory parameter points to a non-existent directory: " + settingsDirectoryRoot);
+            	log.warn("Settings directory parameter points to a non-existent directory: " + settingsDirectoryRoot);
             }
         }else{
         	log.info("Settings directory property is null: no settings directory specified.");
@@ -311,7 +303,7 @@ public class OrderJarFactory {
 				String filePath = settingDirectoryRoot.getCanonicalPath();
 				
 				String key = file.getCanonicalPath().replace(filePath + File.separator, "");
-				log.fine("adding file to settings map: " + file.getCanonicalPath() + " keyed as " + key);
+				log.debug("adding file to settings map: " + file.getCanonicalPath() + " keyed as " + key);
 				files.put(key, fis);
 			}else{
 				String[] children = file.list();
