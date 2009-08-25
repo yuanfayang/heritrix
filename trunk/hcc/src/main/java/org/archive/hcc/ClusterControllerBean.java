@@ -271,6 +271,10 @@ public class ClusterControllerBean implements
         return this.remoteNameToCrawlerMap.size();
     }
 
+    public String getHeritrixInstances() {
+    	return containers.toString();
+    }
+    
     private OpenMBeanInfoSupport buildOpenMBeanInfo() {
        return new OpenMBeanInfoSupport(
                 ClusterControllerBean.class.getName(),
@@ -293,7 +297,11 @@ public class ClusterControllerBean implements
                     true,
                     false,
                     false,
-                    new Integer(0)) };
+                    new Integer(0)),
+                new OpenMBeanAttributeInfoSupport("HeritrixInstances", 
+                		"List of Heritrix crawler containers", 
+                		SimpleType.STRING, true, false, false, "UHHH")
+                    };
         } catch (OpenDataException e) {
             throw new RuntimeException(e);
         }
@@ -1386,8 +1394,13 @@ public class ClusterControllerBean implements
             throws AttributeNotFoundException,
             MBeanException,
             ReflectionException {
-        // TODO Auto-generated method stub
-        return null;
+    	if (attribute.equals("TotalCrawlerCount")) {
+    		return getTotalCrawlerCount();
+    	} else if (attribute.equals("HeritrixInstances")) {
+    		return getHeritrixInstances();
+    	}
+
+    	return null;
     }
 
     public AttributeList getAttributes(String[] attributes) {
