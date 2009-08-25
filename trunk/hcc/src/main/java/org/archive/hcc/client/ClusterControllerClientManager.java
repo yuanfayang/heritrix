@@ -73,8 +73,7 @@ public class ClusterControllerClientManager {
 
             return defaultClient;
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error(": " + e.getMessage());
+            log.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }

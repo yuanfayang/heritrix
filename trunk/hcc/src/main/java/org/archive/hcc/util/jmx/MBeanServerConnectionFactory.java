@@ -76,7 +76,7 @@ public class MBeanServerConnectionFactory {
 
             return new JMXServiceURL(serviceUrl);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             return null;
         }
 

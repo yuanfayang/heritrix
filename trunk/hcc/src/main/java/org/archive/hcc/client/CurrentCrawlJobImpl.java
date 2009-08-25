@@ -27,12 +27,16 @@ import java.net.InetSocketAddress;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.archive.util.JmxUtils;
 
 
 public class CurrentCrawlJobImpl extends CrawlJobBase
 implements CurrentCrawlJob {
-    
+
+	private static Log log = LogFactory.getLog(CurrentCrawlJobImpl.class);
+
     private ObjectName name;
 
     public CurrentCrawlJobImpl(
@@ -68,7 +72,7 @@ implements CurrentCrawlJob {
                     new Object[0],
                     new String[0]);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new IllegalStateException(e);
         }
 
@@ -82,7 +86,7 @@ implements CurrentCrawlJob {
                     new Object[0],
                     new String[0]);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new IllegalStateException(e);
         }
     }

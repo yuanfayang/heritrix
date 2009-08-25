@@ -105,7 +105,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     new Object());
             this.listenerList = new EventListenerList();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString(), e);
             throw new RuntimeException(e);
         }
     }
@@ -226,7 +226,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                                         JmxUtils.extractAddress(source)),
                                 connection));
                     } catch (ClusterException e) {
-                        e.printStackTrace();
+                        log.warn(e.toString(), e);
                     }
                     return true;
                 }
@@ -247,7 +247,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                                 connection));
                         return true;
                     } catch (ClusterException e) {
-                        e.printStackTrace();
+                        log.warn(e.toString(), e);
                     }
                 }
                 return false;
@@ -263,7 +263,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                         fireCrawlJobStopping(createCurrentCrawlJob(source, connection));
                         return true;
                     } catch (ClusterException e) {
-                        e.printStackTrace();
+                        log.warn(e.toString(), e);
                     }
                 }
                 return false;
@@ -321,8 +321,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                 listener[i].statisticsChanged(cj, newValue);
             }
         } catch (ClusterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
     }
 
@@ -342,8 +341,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                                     crawlJob,this.connection);
             fireCrawlJobStarted(job);
         } catch (ClusterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
     }
     
@@ -356,7 +354,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             fireCrawlJobCompleted(job);
 
         } catch (ClusterException e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
     }
 
@@ -434,7 +432,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
            
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
     }
@@ -449,7 +447,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
            
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
     }
@@ -464,7 +462,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
            
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
     }
@@ -492,7 +490,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
             return null;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
 
@@ -526,12 +524,12 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             if("insufficent crawler resources".equals(e.getMessage())){
                 throw new InsufficientCrawlingResourcesException(e);
             }
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         } 
         
         catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
     }
@@ -550,7 +548,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
             return crawlerList;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
 
@@ -564,17 +562,13 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     new Object[0],
                     new String[0]);
         } catch (InstanceNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (MBeanException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (ReflectionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
     }
     
@@ -595,7 +589,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
             return new CurrentCrawlJobImpl(currentCrawlJob, (CrawlerImpl)crawler, this.connection);
         }catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
     }
@@ -618,7 +612,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             return maxInstances;
            
         }catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
     }
@@ -647,7 +641,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             
            
         }catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         }
     }

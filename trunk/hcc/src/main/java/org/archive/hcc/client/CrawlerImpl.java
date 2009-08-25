@@ -30,12 +30,17 @@ import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.TabularData;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * 
  * @author Daniel Bernstein (dbernstein@archive.org)
  *
  */
 public class CrawlerImpl extends ProxyBase implements Crawler {
+	private static Log log = LogFactory.getLog(CrawlerImpl.class);
+
     public void startPendingJobQueue() {
         try {
             this.connection.invoke(
@@ -44,7 +49,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
                     new Object[0],
                     new String[0]);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new IllegalStateException(e);
         }
     }
@@ -57,7 +62,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
                     new Object[0],
                     new String[0]);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new IllegalStateException(e);
         }
 
@@ -193,7 +198,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
                                 new Object[]{uid.toString(), reportName}, 
                                 new String[]{"java.lang.String", "java.lang.String"});
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         } 
     }
@@ -208,7 +213,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
                                 new String[]{"java.lang.String"});
                                 return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ClusterException(e);
         } 
     }
@@ -248,7 +253,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
             
             
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } 
         
         return completedJobs;

@@ -30,8 +30,14 @@ import javax.management.MBeanParameterInfo;
 import javax.management.ReflectionException;
 import javax.management.openmbean.OpenMBeanOperationInfo;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class SimpleReflectingMbeanInvocation implements
         MBeanInvocation {
+
+	private static Log log = LogFactory.getLog(SimpleReflectingMbeanInvocation.class);
+
     private Object target;
 
     private OpenMBeanOperationInfo info;
@@ -57,19 +63,19 @@ public class SimpleReflectingMbeanInvocation implements
 
     		return method.invoke(this.target, params);
         } catch (SecurityException e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ReflectionException(e);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ReflectionException(e);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ReflectionException(e);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new ReflectionException(e);
         } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            log.warn(e.toString(), e);
             throw new MBeanException(e);
         }
     }
