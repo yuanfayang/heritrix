@@ -185,7 +185,7 @@ public class ClusterControllerBean implements
     /**
      * Upperbound on crawlers per container.
      */
-    private int defaultMaxPerContainer = 1;
+    // private int defaultMaxPerContainer = 1;
 
     /**
      * Creates a cluster controller bean. This object uses a two step
@@ -555,7 +555,7 @@ public class ClusterControllerBean implements
                             "listCrawlers",
                             "lists crawlers associated with the cluster",
                             null,
-                            new ArrayType(1, SimpleType.OBJECTNAME),
+                            new ArrayType<SimpleType<ObjectName>>(1, SimpleType.OBJECTNAME),
                             OpenMBeanOperationInfoSupport.INFO)));
 
 

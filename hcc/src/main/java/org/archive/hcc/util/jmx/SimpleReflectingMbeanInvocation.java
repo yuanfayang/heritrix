@@ -80,7 +80,8 @@ public class SimpleReflectingMbeanInvocation implements
         }
     }
 
-    private static Class[] convertSignature(OpenMBeanOperationInfo info)
+    @SuppressWarnings("unchecked")
+	private static Class[] convertSignature(OpenMBeanOperationInfo info)
             throws ClassNotFoundException {
         MBeanParameterInfo[] params = info.getSignature();
         Class[] classes = new Class[params.length];

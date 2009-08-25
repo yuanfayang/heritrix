@@ -5,6 +5,10 @@ import java.io.Serializable;
 import javax.management.ObjectName;
 
 public class CrawlerInfo implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public ObjectName getName() {
 		return name;
 	}

@@ -14,10 +14,11 @@ public class SimpleReflectingMBeanInvocationTest
             MBeanTestCase {
 
     public void test() {
+        @SuppressWarnings("unused")
         class TestClass {
             private boolean toggled = false;
 
-            public String test() {
+			public String test() {
                 return "test";
             }
 

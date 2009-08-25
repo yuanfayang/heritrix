@@ -61,16 +61,8 @@ public class ConfigXmlConverter {
 	
 	public List<Container> getContainers(){
 	    try {
-	    	int defaultMaxInstances = 1;
 	        Element root = getRoot();
-		    Integer mi = getElementIntAttribute(root, MAX_INSTANCES_ATTRIBUTE);
-		    
-		    if(mi != null){
-		    	defaultMaxInstances = mi;
-		    }
-		    
 			List<Container> containers = new LinkedList<Container>();
-
 		    
 		    for (Object elementObj : root.elements(HOST_ELEMENT)) {
 		      Element host = (Element) elementObj;
@@ -82,7 +74,6 @@ public class ConfigXmlConverter {
 			      Integer maxInstances = getElementIntAttribute(container, MAX_INSTANCES_ATTRIBUTE);
 					Container c = new Container(new InetSocketAddress(hostName, jmxPort), maxInstances);
 					containers.add(c);
-
 		      }
 		    }
 		    

@@ -24,7 +24,9 @@ package org.archive.hcc.client;
 
 public class CrawlerException extends ClusterException {
 
-    public CrawlerException() {
+	private static final long serialVersionUID = 1L;
+
+	public CrawlerException() {
         super();
         // TODO Auto-generated constructor stub
     }

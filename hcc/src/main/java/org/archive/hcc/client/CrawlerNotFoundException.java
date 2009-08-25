@@ -24,7 +24,9 @@ package org.archive.hcc.client;
 
 public class CrawlerNotFoundException extends CrawlerException {
 
-    public CrawlerNotFoundException() {
+	private static final long serialVersionUID = 1L;
+
+	public CrawlerNotFoundException() {
         super();
         // TODO Auto-generated constructor stub
     }
