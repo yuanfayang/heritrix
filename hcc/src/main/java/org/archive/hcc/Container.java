@@ -82,4 +82,8 @@ class Container {
 		return c.address.getHostName().equals(address.getHostName())
 				&& ((Integer)c.address.getPort()).equals(address.getPort());
 	}
+	
+	public String toString() {
+		return getClass().getCanonicalName() + "[address=" + address + ",maxInstances=" + maxInstances + "]";
+	}
 }
