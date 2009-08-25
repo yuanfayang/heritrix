@@ -371,9 +371,9 @@ public class ClusterControllerBean implements
                     return csp;
                 }
             } catch (MBeanException e) {
-                e.printStackTrace();
+            	log.warn(e.toString(), e);
             } catch (ReflectionException e) {
-                e.printStackTrace();
+            	log.warn(e.toString(), e);
             }
         }
 
@@ -468,8 +468,7 @@ public class ClusterControllerBean implements
             	log.info("attempting to create crawler on container: " + container.getAddress());
                 return createCrawlerIn(container);
             } catch (Exception e) {
-            	log.warn("unexpected error!!! failed to create crawler as expected on " + container.getAddress());
-            	e.printStackTrace();
+            	log.warn("unexpected error!!! failed to create crawler as expected on " + container.getAddress(), e);
             }
         }
         
@@ -673,7 +672,7 @@ public class ClusterControllerBean implements
                             OpenMBeanOperationInfoSupport.INFO)));     
             
         } catch (OpenDataException e) {
-            e.printStackTrace();
+        	log.warn(e.toString(), e);
         }
 
         return this.invocationManager.getInfo();
@@ -701,11 +700,9 @@ public class ClusterControllerBean implements
     		try {
 				c.getCrawlServiceProxy().invoke("destroy", new Object[0], new String[0]);
 			} catch (MBeanException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+            	log.warn(e.toString(), e);
 			} catch (ReflectionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+            	log.warn(e.toString(), e);
 			}
     	}
     }
@@ -728,12 +725,12 @@ public class ClusterControllerBean implements
     				m.invoke("pause",  new Object[0], new String[0]);
     			}
 			} catch (AttributeNotFoundException e) {
-				e.printStackTrace();
+				log.warn(e.toString(), e);
 			} catch (MBeanException e) {
-				e.printStackTrace();
+				log.warn(e.toString(), e);
 				success = false;
 			} catch (ReflectionException e) {
-				e.printStackTrace();
+				log.warn(e.toString(), e);
 				success = false;
 			}
     	}
@@ -758,12 +755,12 @@ public class ClusterControllerBean implements
     				m.invoke("resume",  new Object[0], new String[0]);
     			}
 			} catch (AttributeNotFoundException e) {
-				e.printStackTrace();
+				log.warn(e.toString(), e);
 			} catch (MBeanException e) {
-				e.printStackTrace();
+				log.warn(e.toString(), e);
 				success = false;
 			} catch (ReflectionException e) {
-				e.printStackTrace();
+				log.warn(e.toString(), e);
 				success = false;
 			}
     	}
@@ -823,16 +820,14 @@ public class ClusterControllerBean implements
             registerMBean();
 
         } catch (MalformedObjectNameException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+			log.warn(e.toString(), e);
         } catch (NullPointerException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+			log.warn(e.toString(), e);
         } catch (NamingException e) {
-            e.printStackTrace();
+			log.error(e.toString(), e);
             throw new RuntimeException(e);
         }catch (UnknownHostException e) {
-            e.printStackTrace();
+			log.error(e.toString(), e);
             throw new RuntimeException(e);
         }
     }
@@ -863,14 +858,11 @@ public class ClusterControllerBean implements
         try {
             this.mbeanServer.registerMBean(this, this.name);
         } catch (InstanceAlreadyExistsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (MBeanRegistrationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (NotCompliantMBeanException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
     }
 
@@ -905,11 +897,9 @@ public class ClusterControllerBean implements
             try {
                 this.mbeanServer.unregisterMBean(this.name);
             } catch (InstanceNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.warn(e.toString(), e);
             } catch (MBeanRegistrationException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.warn(e.toString(), e);
             }
         }
     }
@@ -926,14 +916,9 @@ public class ClusterControllerBean implements
             this.mbeanServer.unregisterMBean(crawler
                     .getCrawlServiceProxyObjectName());
         } catch (InstanceNotFoundException e) {
-        	log.warn(e.getMessage());
-
-            e.printStackTrace();
-
+            log.warn(e.toString(), e);
         } catch (MBeanRegistrationException e) {
-        	log.warn(e.getMessage());
-
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
 
         try {
@@ -1049,12 +1034,9 @@ public class ClusterControllerBean implements
         try {
             this.mbeanServer.unregisterMBean(jobProxy);
         } catch (InstanceNotFoundException e) {
-       		log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + "; error.class=" + e.getClass() + ";  error.message=" + e.getMessage());
-
-            e.printStackTrace();
+            log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + "; error.class=" + e.getClass() + ";  error.message=" + e.getMessage(), e);
         } catch (MBeanRegistrationException e) {
-       		log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job  + "; error.class=" + e.getClass() + "; message=" + e.getMessage());
-            e.printStackTrace();
+            log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job  + "; error.class=" + e.getClass() + "; message=" + e.getMessage(), e);
         }
 
         c.setCrawlJobProxy(null);
@@ -1095,8 +1077,7 @@ public class ClusterControllerBean implements
                     ClusterControllerNotification.
                         CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey());
         } catch (RuntimeException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
     }
 
@@ -1117,14 +1098,11 @@ public class ClusterControllerBean implements
         try {
             this.mbeanServer.registerMBean(proxy, proxyName);
         } catch (InstanceAlreadyExistsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (MBeanRegistrationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (NotCompliantMBeanException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
 
         ((NotificationEmitter) proxy).addNotificationListener(
@@ -1278,11 +1256,9 @@ public class ClusterControllerBean implements
                     null,
                     null);
         } catch (InstanceNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.warn(e.toString(), e);
         }
     }
 
@@ -1326,14 +1302,11 @@ public class ClusterControllerBean implements
                     JmxUtils.MBEAN_SERVER_DELEGATE,
                     this.remoteNotificationDelegator);
         } catch (InstanceNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        	log.warn("MBeanServerConnection.removeNotificationListener() threw exception: " + e, e);
         } catch (ListenerNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        	log.warn("MBeanServerConnection.removeNotificationListener() threw exception: " + e, e);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        	log.warn("MBeanServerConnection.removeNotificationListener() threw exception: " + e, e);
         }
     }
 
@@ -1507,7 +1480,7 @@ public class ClusterControllerBean implements
 
             return new ObjectName("org.archive.crawler", ht);
         } catch (Exception e) {
-            e.printStackTrace();
+        	log.warn(e.toString(), e);
             throw new RuntimeException(e);
         }
     }
@@ -1551,8 +1524,8 @@ public class ClusterControllerBean implements
             return (ObjectName) t.get(30 * 1000, TimeUnit.MILLISECONDS);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new Exception(e);
+        	log.warn(e.toString(), e);
+            throw e;
         } finally {
             if (t != null) {
                 this.broadCaster.removeNotificationListener(t);
@@ -1629,18 +1602,18 @@ public class ClusterControllerBean implements
                     	
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                	log.warn(e.toString(), e);
                 }
                 return proxyName;
             }
         } catch (InstanceAlreadyExistsException e) {
-            e.printStackTrace();
+        	log.warn(e.toString(), e);
         } catch (MBeanRegistrationException e) {
-            e.printStackTrace();
+        	log.warn(e.toString(), e);
         } catch (NotCompliantMBeanException e) {
-            e.printStackTrace();
+        	log.warn(e.toString(), e);
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
+        	log.warn(e.toString(), e);
         }
         return null;
     }
@@ -1688,10 +1661,10 @@ public class ClusterControllerBean implements
 
             return new ObjectName(this.name.getDomain(), cp);
         } catch (MalformedObjectNameException e) {
-            e.printStackTrace();
+        	log.error(e.toString(), e);
             throw new RuntimeException(e);
         } catch (NullPointerException e) {
-            e.printStackTrace();
+        	log.error(e.toString(), e);
             throw new RuntimeException(e);
         }
 
