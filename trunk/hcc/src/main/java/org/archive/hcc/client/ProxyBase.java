@@ -46,4 +46,8 @@ public class ProxyBase {
     public int hashCode() {
         return this.name.hashCode();
     }
+    
+    public String toString() {
+    	return getClass().getCanonicalName() + "[name=" + name + ",connection=" + connection + "]";
+    }
 }
