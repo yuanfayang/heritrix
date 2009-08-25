@@ -17,7 +17,6 @@ import java.util.jar.JarInputStream;
 
 import junit.framework.TestCase;
 
-import org.archive.hcc.Config;
 import org.archive.hcc.ConfigTest;
 
 public class OrderJarFactoryTest extends TestCase{

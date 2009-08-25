@@ -223,7 +223,8 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         throw new UnsupportedOperationException("deletePendingCrawlJob not implemented yet!");
     }
 
-    public Collection<CompletedCrawlJob> listCompletedCrawlJobs() {
+    @SuppressWarnings("unchecked")
+	public Collection<CompletedCrawlJob> listCompletedCrawlJobs() {
         Collection<CompletedCrawlJob> completedJobs = new LinkedList<CompletedCrawlJob>();
 
         try {

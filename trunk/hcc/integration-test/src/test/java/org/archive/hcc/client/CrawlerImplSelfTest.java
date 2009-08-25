@@ -126,7 +126,7 @@ public class CrawlerImplSelfTest
         cc.addCrawlerLifecycleListener(listener);
         cc.addCrawlJobListener(listener);
         //start a new job
-        String uid = c.addJob(new JobOrder("test","", getTestJar()));
+        c.addJob(new JobOrder("test","", getTestJar()));
 
         try {
             assertTrue(listener.crawlJobStartedLatch.await(
@@ -150,7 +150,7 @@ public class CrawlerImplSelfTest
         cc.addCrawlerLifecycleListener(listener);
         cc.addCrawlJobListener(listener);
         //start a new job
-        String uid = c.addJob(new JobOrder("test", "", getTestJar()));
+        c.addJob(new JobOrder("test", "", getTestJar()));
 
         try {
             assertTrue(listener.crawlJobStartedLatch.await(
@@ -173,7 +173,7 @@ public class CrawlerImplSelfTest
         cc.addCrawlerLifecycleListener(listener);
         cc.addCrawlJobListener(listener);
         //start a new job
-        String uid = c.addJob(new JobOrder("test", "",getTestJar()));
+        c.addJob(new JobOrder("test", "",getTestJar()));
 
 
         int completedJobCount = c.listCompletedCrawlJobs().size();
@@ -205,7 +205,7 @@ public class CrawlerImplSelfTest
         cc.addCrawlerLifecycleListener(listener);
         cc.addCrawlJobListener(listener);
         //start a new job
-        String uid = c.addJob(new JobOrder("test", "",getTestJar()));
+        c.addJob(new JobOrder("test", "",getTestJar()));
 
         try {
             assertTrue(listener.crawlJobStatisticsChangedLatch.await(

@@ -284,9 +284,10 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                         connection);
     }
 
-    private static Map<String,Object> toMap(Object object) {
-        if (object instanceof Map) {
-            return (Map) object;
+	@SuppressWarnings("unchecked")
+	private static Map<String,Object> toMap(Object object) {
+        if (object instanceof Map<?,?>) {
+			return (Map<String,Object>) object;
         } else if (object instanceof CompositeData) {
             CompositeData cd = (CompositeData) object;
             String[] keys = new String[] { "deepestUri", "downloadedUriCount",
@@ -310,8 +311,8 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
     private void handleCrawlServiceJobAttributesChanged(
             ObjectName source,
-            Map oldValue,
-            Map newValue) {
+            Map<String, Object> oldValue,
+            Map<String, Object> newValue) {
         try {
             CurrentCrawlJobImpl cj = createCurrentCrawlJob(
                     source,this.connection);
@@ -424,13 +425,11 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
     public void destroyAllCrawlers() throws ClusterException{
         try {
-            ObjectName parent = (ObjectName) this.connection.invoke(
+        	this.connection.invoke(
                     this.name,
                     "destroyAllCrawlers",
                     new Object[] {},
                     new String[] {});
-
-           
         } catch (Exception e) {
             log.warn(e.toString(), e);
             throw new ClusterException(e);

@@ -1,4 +1,8 @@
-<hcc-config maxInstances="1" defaultSettingsDirectory="" >
+<hcc-config maxInstances="1" defaultSettingsDirectory="">
+	<!-- 
+	host name must match what heritrix calls itself, which is reported at startup; for instance in this case the host must be "cheese":
+	2009-08-25 00:49:05.355 INFO thread-10 org.archive.crawler.Heritrix.postRegister() org.archive.crawler:guiport=8090,host=cheese,jmxport=9090,name=Heritrix,type=CrawlService registered to MBeanServerId=cheese_1251161336895, SpecificationVersion=1.4, ImplementationVersion=1.6.0_14-b08, SpecificationVendor=Sun Microsystems
+	 -->
 	<host name="localhost">
 		<container jmxPort="9090" maxInstances="0"/>
 	</host>

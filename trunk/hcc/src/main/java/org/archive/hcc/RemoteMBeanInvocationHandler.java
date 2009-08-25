@@ -156,7 +156,9 @@ public class RemoteMBeanInvocationHandler implements
                     (NotificationFilter) args[1];
                 interceptingFilter = 
                     new NotificationFilter() {
-                     public boolean isNotificationEnabled(
+                		private static final long serialVersionUID = 1L;
+
+					public boolean isNotificationEnabled(
                              Notification notification) {
                          Notification n = new Notification(notification
                                  .getType(), proxyObjectName, notification

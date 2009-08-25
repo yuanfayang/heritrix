@@ -41,10 +41,8 @@ public class ContainerLoadBalancingStrategy {
         
         
         //sort the leastLoaded collection by least loaded host and then least loaded container
-        Collections.sort(leastLoaded, new Comparator(){
-        	public int compare(Object o1, Object o2) {
-        		Container c1 = (Container)o1;
-        		Container c2 = (Container)o2;
+        Collections.sort(leastLoaded, new Comparator<Container>(){
+        	public int compare(Container c1, Container c2) {
         		Integer hostCount1 = instanceCountByHostMap.get(c1.getAddress().getHostName());
         		Integer hostCount2 = instanceCountByHostMap.get(c2.getAddress().getHostName());
         		if(hostCount1.equals(hostCount2)){

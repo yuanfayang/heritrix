@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 public class ContainerInfo implements Serializable{
+	private static final long serialVersionUID = 1L;
+
 	private InetSocketAddress address;
 	private int maxInstances;
 	private List<CrawlerInfo> crawlerInfoList;

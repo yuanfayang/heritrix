@@ -23,7 +23,9 @@
 package org.archive.hcc.client;
 
 public class CreateCrawlerException extends Exception {
-    public CreateCrawlerException(Exception ex) {
+	private static final long serialVersionUID = 1L;
+
+	public CreateCrawlerException(Exception ex) {
         super(ex);
     }
 }
