@@ -580,7 +580,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         try {
             InetAddress host = InetAddress.getLocalHost();
             record.addLabelValue("ip", host.getHostAddress());
-            record.addLabelValue("hostname", host.getHostName());
+            record.addLabelValue("hostname", host.getCanonicalHostName());
         } catch (UnknownHostException e) {
             logger.log(Level.WARNING,"unable top obtain local crawl engine host",e);
         }
