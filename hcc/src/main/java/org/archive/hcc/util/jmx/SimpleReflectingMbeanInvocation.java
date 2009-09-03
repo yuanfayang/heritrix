@@ -63,19 +63,19 @@ public class SimpleReflectingMbeanInvocation implements
 
     		return method.invoke(this.target, params);
         } catch (SecurityException e) {
-            log.warn(e.toString(), e);
+            log.warn(e.toString());
             throw new ReflectionException(e);
         } catch (NoSuchMethodException e) {
-            log.warn(e.toString(), e);
+            log.warn(e.toString());
             throw new ReflectionException(e);
         } catch (ClassNotFoundException e) {
-            log.warn(e.toString(), e);
+            log.warn(e.toString());
             throw new ReflectionException(e);
         } catch (IllegalAccessException e) {
-            log.warn(e.toString(), e);
+            log.warn(e.toString());
             throw new ReflectionException(e);
         } catch (InvocationTargetException e) {
-            log.warn(e.toString(), e);
+            log.warn(e.toString());
             throw new MBeanException(e);
         }
     }
