@@ -1537,7 +1537,7 @@ public class ClusterControllerBean implements
             return (ObjectName) t.get(30 * 1000, TimeUnit.MILLISECONDS);
 
         } catch (Exception e) {
-        	log.warn(e.toString(), e);
+        	log.warn("failed to create crawler at address " + address + ": " + e);
             throw e;
         } finally {
             if (t != null) {
