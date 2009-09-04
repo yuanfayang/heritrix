@@ -520,13 +520,13 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     new String[0]);
             return new CrawlerImpl(crawler, this.connection);
         }catch (MBeanException e) {
-            if("insufficent crawler resources".equals(e.getMessage())){
+            if(e.getCause() != null && e.getCause().getCause() != null && 
+            		e.getCause().getCause().getMessage().equals("insufficent crawler resources")){
                 throw new InsufficientCrawlingResourcesException(e);
             }
-            log.warn(e.toString(), e);
+            log.warn("exception attempting to create crawler: " + e + ": " + e.getTargetException());
             throw new ClusterException(e);
         } 
-        
         catch (Exception e) {
             log.warn(e.toString(), e);
             throw new ClusterException(e);
