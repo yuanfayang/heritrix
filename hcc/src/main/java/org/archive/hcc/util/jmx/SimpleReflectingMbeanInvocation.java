@@ -24,6 +24,7 @@ package org.archive.hcc.util.jmx;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import javax.management.MBeanException;
 import javax.management.MBeanParameterInfo;
@@ -55,7 +56,6 @@ public class SimpleReflectingMbeanInvocation implements
     }
 
     public Object invoke() throws MBeanException, ReflectionException {
-
     	try {
             Method method = target.getClass().getMethod(
                     info.getName(),
@@ -63,19 +63,19 @@ public class SimpleReflectingMbeanInvocation implements
 
     		return method.invoke(this.target, params);
         } catch (SecurityException e) {
-            log.warn(e.toString());
+            log.warn("exception attempting to invoke method " + info.getName() + " on object " + target + " with parameters " + Arrays.toString(params) + ":" + e);
             throw new ReflectionException(e);
         } catch (NoSuchMethodException e) {
-            log.warn(e.toString());
+            log.warn("exception attempting to invoke method " + info.getName() + " on object " + target + " with parameters " + Arrays.toString(params) + ":" + e);
             throw new ReflectionException(e);
         } catch (ClassNotFoundException e) {
-            log.warn(e.toString());
+            log.warn("exception attempting to invoke method " + info.getName() + " on object " + target + " with parameters " + Arrays.toString(params) + ":" + e);
             throw new ReflectionException(e);
         } catch (IllegalAccessException e) {
-            log.warn(e.toString());
+            log.warn("exception attempting to invoke method " + info.getName() + " on object " + target + " with parameters " + Arrays.toString(params) + ":" + e);
             throw new ReflectionException(e);
         } catch (InvocationTargetException e) {
-            log.warn(e.toString());
+            log.warn("exception attempting to invoke method " + info.getName() + " on object " + target + " with parameters " + Arrays.toString(params) + ":" + e + ": " + e.getTargetException());
             throw new MBeanException(e);
         }
     }

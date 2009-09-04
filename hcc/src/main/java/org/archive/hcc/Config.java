@@ -7,8 +7,13 @@ import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 public class Config {
+	private static Log log = LogFactory.getLog(Config.class);
+
 	private static Config instance = null;
 	private List<Container> containers = null;
 	private String defaultSettingsDirectory = null;
@@ -77,6 +82,7 @@ public class Config {
 	
 
 	private void refreshFromFile(){
+		// log.info("refreshing crawler config from " + configFile);
 		if(this.configFile == null){
 			throw new RuntimeException("The hcc-config file was never initialized.");
 		}
