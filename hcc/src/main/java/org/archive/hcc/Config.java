@@ -33,6 +33,8 @@ public class Config {
 			}
 			try{
 				String configXml = System.getProperty("hcc.config");
+				if (configXml == null)
+					throw new Exception("system property hcc.config is not set, it must point to your hcc-config.xml");
 				instance = new Config(configXml);
 			}catch(Exception ex){
 				throw new RuntimeException(ex);
