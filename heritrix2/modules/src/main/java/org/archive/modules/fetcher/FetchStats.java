@@ -67,12 +67,12 @@ public class FetchStats implements Serializable, FetchStatusCodes, Reporter {
     public synchronized void tally(ProcessorURI curi, Stage stage) {
         switch(stage) {
             case SCHEDULED:
+                fetchResponses++;
                 totalScheduled++;
                 break;
             case RETRIED:
                 if(curi.getFetchStatus()<=0) {
                     fetchNonResponses++;
-                    return;
                 }
                 break;
             case SUCCEEDED:
@@ -90,6 +90,7 @@ public class FetchStats implements Serializable, FetchStatusCodes, Reporter {
                 if(curi.getFetchStatus()<=0) {
                     fetchNonResponses++;
                 } else {
+                    fetchResponses++;
                     totalBytes += curi.getContentSize();
                 }
                 fetchFailures++;
