@@ -26,8 +26,6 @@ package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
 
-import org.apache.commons.httpclient.HttpStatus;
-
 /**
  * Collector of statististics for a 'subset' of a crawl,
  * such as a server (host:port), host, or frontier group 
@@ -62,22 +60,7 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
      * update tallies. 
      * 
      * @param curi
-     * @deprecated
      */
-    public synchronized void tally(CrawlURI curi) {
-        if(curi.getFetchStatus()<=0) {
-            fetchNonResponses++;
-            return;
-        }
-        fetchResponses++;
-        totalBytes += curi.getContentSize();
-        if(curi.getFetchStatus()>=HttpStatus.SC_OK && 
-                curi.getFetchStatus()<300) {
-            fetchSuccesses++;
-            successBytes += curi.getContentSize();
-        }
-    }
-    
     public synchronized void tally(CrawlURI curi, Stage stage) {
         switch(stage) {
             case SCHEDULED:
@@ -86,11 +69,11 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
             case RETRIED:
                 if(curi.getFetchStatus()<=0) {
                     fetchNonResponses++;
-                    return;
                 }
                 break;
             case SUCCEEDED:
                 fetchSuccesses++;
+                fetchResponses++;
                 totalBytes += curi.getContentSize();
                 successBytes += curi.getContentSize();
                 break;
@@ -104,6 +87,7 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
                 if(curi.getFetchStatus()<=0) {
                     fetchNonResponses++;
                 } else {
+                    fetchResponses++;
                     totalBytes += curi.getContentSize();
                 }
                 fetchFailures++;
