@@ -35,7 +35,6 @@ import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.archive.hcc.Config;
 
 public class MBeanServerConnectionFactory {
   
@@ -49,23 +48,22 @@ public class MBeanServerConnectionFactory {
      * @return
      * @throws IOException
      */
-    public static MBeanServerConnection createConnection(
-            InetSocketAddress address) throws IOException {
+    public static MBeanServerConnection createConnection(InetSocketAddress address, String username, String password) throws IOException {
+    	
         JMXConnector jmxc = JMXConnectorFactory.connect(
                 createJMXServiceUrl(address),
-                formatCredentials(
-                	Config.instance().getHeritrixJmxUsername(), 
-            		Config.instance().getHeritrixJmxPassword()));
+                formatCredentials(username, password)); 
 
         MBeanServerConnection mbeanServerConnection = jmxc
                 .getMBeanServerConnection();
-
+        
             log.info("successfully created mbeanServerConnection on "
                     + address);
         return mbeanServerConnection;
     }
+     
 
-    protected static JMXServiceURL createJMXServiceUrl(InetSocketAddress address) {
+	protected static JMXServiceURL createJMXServiceUrl(InetSocketAddress address) {
         try {
             String hostport = address.getHostName() + ":" + address.getPort();
 

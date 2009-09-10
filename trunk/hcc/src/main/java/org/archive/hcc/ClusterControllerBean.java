@@ -1273,8 +1273,10 @@ public class ClusterControllerBean implements
     protected void registerAddress(InetSocketAddress isa) throws IOException {
         if (!this.connections.keySet().contains(isa)) {
             // create connection.
-            MBeanServerConnection mbc = MBeanServerConnectionFactory.createConnection(isa);
-            this.connections.put(isa, mbc);
+            MBeanServerConnection mbc = MBeanServerConnectionFactory.createConnection(isa,
+            		Config.instance().getHeritrixJmxUsername(), 
+            		Config.instance().getHeritrixJmxPassword());
+		    this.connections.put(isa, mbc);
         }
     }
 
