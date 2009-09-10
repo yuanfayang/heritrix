@@ -79,10 +79,10 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
      * @throws InstanceNotFoundException
      * @throws IOException
      */
-    ClusterControllerClientImpl(InetSocketAddress address)
+    ClusterControllerClientImpl(InetSocketAddress address, String username, String password)
             throws InstanceNotFoundException,
             IOException {
-        init(MBeanServerConnectionFactory.createConnection(address));
+        init(MBeanServerConnectionFactory.createConnection(address, username, password));
     }
 
     private void init(MBeanServerConnection connection)
