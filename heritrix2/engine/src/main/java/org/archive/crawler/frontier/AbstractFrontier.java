@@ -938,8 +938,9 @@ implements CrawlStatusListener, Frontier, Serializable, Initializable, SeedRefre
             // treating the immediate redirect target as a seed.
             manager.getGlobalSheet().get(this, SEEDS).addSeed(curi);
             // And it needs rapid scheduling.
-	    if (curi.getSchedulingDirective() == SchedulingConstants.NORMAL)
+            if (curi.getSchedulingDirective() == SchedulingConstants.NORMAL) {
                 curi.setSchedulingDirective(SchedulingConstants.MEDIUM);
+            }
         }
 
         // optionally preferencing embeds up to MEDIUM
