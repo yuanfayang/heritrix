@@ -509,7 +509,6 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         
         if (curi.containsKey(A_FTP_FETCH_STATUS)) {
             r.addLabelValue("ftpFetchStatus", curi.getString(A_FTP_FETCH_STATUS));
-            r.addLabelValue("ftpFetchStatusHttpEquiv", new Integer(curi.getFetchStatus()).toString());
         }
         
         // Add outlinks though they are effectively useless without anchor text.

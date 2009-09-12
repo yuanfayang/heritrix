@@ -61,7 +61,7 @@ public class ClientFTP extends FTPClient implements ProtocolCommandListener {
         controlConversation = new StringBuilder();
         addProtocolCommandListener(this);
     }
-    
+
     /**
      * Opens a data connection.
      * 
@@ -69,7 +69,8 @@ public class ClientFTP extends FTPClient implements ProtocolCommandListener {
      *            the data command (eg, RETR or LIST)
      * @param path
      *            the path of the file to retrieve
-     * @return the socket to read data from
+     * @return the socket to read data from, or null if server says not found,
+     *         permission denied, etc
      * @throws IOException
      *             if a network error occurs
      */
@@ -92,7 +93,7 @@ public class ClientFTP extends FTPClient implements ProtocolCommandListener {
                 recordAdditionalInfo("Failed to open data connection: "
                         + e.getMessage());
             }
-            return null;
+            throw e;
         }
     }
 

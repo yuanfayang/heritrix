@@ -309,13 +309,13 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
         // The given resource may or may not be a directory.
         // To figure out which is which, execute a CD command to
         // the UURI's path.  If CD works, it's a directory.
-        boolean dir = client.changeWorkingDirectory(uuri.getPath());
+        boolean isDirectory = client.changeWorkingDirectory(uuri.getPath());
         
         // Get a data socket.  This will either be the result of a NLST
         // command for a directory, or a RETR command for a file.
         int command;
         String path;
-        if (dir) {
+        if (isDirectory) {
             curi.addAnnotation("ftpDirectoryList");
             command = FTPCommand.NLST;
             client.setFileType(FTP.ASCII_FILE_TYPE);
@@ -325,9 +325,21 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
             client.setFileType(FTP.BINARY_FILE_TYPE);
             path = uuri.getPath();
         }
+
         client.enterLocalPassiveMode();
-        Socket socket = client.openDataConnection(command, path);
-        curi.setFetchStatus(-1000 - client.getReplyCode());
+        Socket socket = null;
+
+        try {
+            socket = client.openDataConnection(command, path);
+
+            // if "227 Entering Passive Mode" these will get reset later
+            curi.setFetchStatus(client.getReplyCode());
+            curi.putString(A_FTP_FETCH_STATUS, client.getReplyStrings()[0]);
+
+        } catch (IOException e) {
+            // try it again, see AbstractFrontier.needsRetrying()
+            curi.setFetchStatus(S_CONNECT_LOST);
+        }
 
         // Save the streams in the CURI, where downstream processors
         // expect to find them.
@@ -351,13 +363,14 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
             } finally {
                 // "226 Transfer complete."
                 client.getReply();
+                curi.setFetchStatus(client.getReplyCode());
                 curi.putString(A_FTP_FETCH_STATUS, client.getReplyStrings()[0]);
 
                 recorder.close();
                 client.closeDataConnection(); // does socket.close()
                 curi.setContentSize(recorder.getRecordedInput().getSize());
                 
-                if (dir) {
+                if (isDirectory) {
                     curi.setContentType("text/plain");
                 } else {
                     curi.setContentType("application/octet-stream");
@@ -374,53 +387,11 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
                 }
             }
 
-            curi.setFetchStatus(200);
-            if (dir) {
+            if (isDirectory) {
                 extract(curi, recorder);
             }
-        } else {
-            if (client.getReplyStrings() != null && client.getReplyStrings().length >= 1) {
-                curi.putString(A_FTP_FETCH_STATUS, client.getReplyStrings()[0]);
-            } else {
-                curi.putString(A_FTP_FETCH_STATUS, "XXX No response from server!");
-            }
-
-            if (client.getReplyCode() == 450) {
-                // 450 No files found
-                curi.setFetchStatus(200); // XXX hmmm no payload
-            } else if (client.getReplyCode() == 530) {
-                // ftp://ftp.gamma.ru/ 530 Login incorrect.
-                curi.setFetchStatus(401);
-            } else if (client.getReplyString().matches("(?s)550.*No such file.*")) {
-                // 550 fdasfdafds: No such file or directory
-                curi.setFetchStatus(404);
-            } else if (client.getReplyString().matches("(?s)550.*Failed to open file.*")) {
-                // could mean 404 not found or 403 forbidden 
-                // ftp://ftp.wu-wien.ac.at/outgoing
-                // ftp://ftp.kernel.org/lost%2Bfound
-                // 550 Failed to open file.
-                curi.setFetchStatus(400);
-            } else if (client.getReplyString().matches("(?s)550.*No files found.*")) {
-                // ftp://ftp.calyx.nl/bin : 550 No files found.
-                curi.setFetchStatus(200); // XXX hmmm no payload
-            } else if (client.getReplyString().matches("(?s)550.*Operation not permitted.*")) {
-                // ftp://mirror.roothell.org/lost%2Bfound
-                // 550 /lost+found: Operation not permitted.
-                curi.setFetchStatus(403);
-            } else if (client.getReplyString().matches("(?s)[45]50.*Permission denied.*")) {
-                // ftp://ftp.fr.openbsd.org/private: 550 /private: Permission denied.
-                // ftp://ftp.earthlink.net/etc: 450 .: Permission denied
-                curi.setFetchStatus(403);
-            } else if (client.getReplyString().matches("(?s)550.*Prohibited file name.*")) {
-                // ftp://ftp.freebsdchina.org/pub/FreeBSD/.message
-                // 550 Prohibited file name: /pub/FreeBSD/.message
-                curi.setFetchStatus(400);
-            } else {
-                // could be timeout connecting to data port or a 421(right?); should
-                // try it again, see AbstractFrontier.needsRetrying()
-                curi.setFetchStatus(S_CONNECT_LOST);
-            }
         }
+
         addParent(curi);
     }
 
