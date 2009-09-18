@@ -139,13 +139,10 @@ public class OrderJarFactory {
     
     private InputStream createSeedsInputStream(Collection<String> seeds) throws IOException{
         // write seeds
-        StringBuffer b = new StringBuffer();
-        int count = 0;
+        StringBuilder b = new StringBuilder();
         for (String seed : seeds) {
-            if (count++ > 0) {
-            	b.append("\n");
-            }
             b.append(seed);
+        	b.append("\n");
         }
         return createInputStreamFromString(b.toString());
     }
@@ -159,7 +156,6 @@ public class OrderJarFactory {
         //if a settings directory defaults has been specified,
         //add the contents of the settings directory defaults
         addFilesFromSettingsDirectory(map, Config.instance().getDefaultSettingsDirectory());
-        
         
         //create a unique temp work directory for crawlSettings
         File tempCrawlSettingsDirectoryRoot = 
@@ -180,8 +176,7 @@ public class OrderJarFactory {
         	Map<String,InputStream> map = prepareInputStreamMap();
             // write jar file.
             File jarFile = File.createTempFile("order", ".jar");
-            JarOutputStream jos = new JarOutputStream(new FileOutputStream(
-                    jarFile));
+            JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
             byte[] buf = new byte[1024];            
             // for each map entry
             for (String filename : map.keySet()) {
@@ -200,7 +195,7 @@ public class OrderJarFactory {
 
             jos.close();
             
-            log.debug("created jar file" + jarFile.getAbsolutePath());
+            log.info("created jar file" + jarFile.getAbsolutePath());
 
             return jarFile;
 
@@ -277,13 +272,13 @@ public class OrderJarFactory {
         if(settingsDirectoryRoot != null){
             File settingsDirectory = new File(settingsDirectoryRoot);
             if(settingsDirectory.exists()){
-            	log.info("Settings directory parameter specified: " + settingsDirectoryRoot);
+            	log.info("Adding files from defaultSettingsDirectory: " + settingsDirectoryRoot);
                 recursivelyAddChildren(files, settingsDirectory, null);
             }else{
-            	log.warn("Settings directory parameter points to a non-existent directory: " + settingsDirectoryRoot);
+            	log.warn("defaultSettingsDirectory points to a non-existent directory: " + settingsDirectoryRoot);
             }
         }else{
-        	log.info("Settings directory property is null: no settings directory specified.");
+        	log.info("defaultSettingsDirectory not specified in hcc-config.xml");
         }
     }
     
