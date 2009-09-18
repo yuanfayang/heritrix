@@ -1,7 +1,7 @@
 package org.archive.hcc.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -110,9 +110,9 @@ public class OrderJarFactoryTest extends TestCase{
 			hostConstraints.add(hc);
 			f.setHostConstraints(hostConstraints);
 			
-            File jar = f.createOrderJar();
+            byte[] jar = f.createOrderJar();
 			
-			JarInputStream jis = new JarInputStream(new FileInputStream(jar));
+			JarInputStream jis = new JarInputStream(new ByteArrayInputStream(jar));
 			
 			JarEntry je = null;
 			while((je = jis.getNextJarEntry()) != null){
@@ -122,7 +122,6 @@ public class OrderJarFactoryTest extends TestCase{
 			
 			jis.close();
 			
-			jar.delete();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			assertFalse(true);

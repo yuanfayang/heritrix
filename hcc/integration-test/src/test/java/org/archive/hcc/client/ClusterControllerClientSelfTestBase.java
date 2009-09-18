@@ -1,10 +1,13 @@
 package org.archive.hcc.client;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.management.RuntimeErrorException;
 
 import junit.framework.TestCase;
 
@@ -68,9 +71,11 @@ public class ClusterControllerClientSelfTestBase
         		,seeds
         );
         
-    	
-        
-        return f.createOrderJar();
+    	try {
+    		return f.createOrderJarFile();
+    	} catch (IOException e) {
+    		throw new RuntimeException(e);
+    	}
     }
 
 }

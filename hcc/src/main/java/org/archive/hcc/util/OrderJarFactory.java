@@ -171,12 +171,11 @@ public class OrderJarFactory {
         return map;
     }
     
-    public File createOrderJar() {
+    public byte[] createOrderJar() {
         try {
         	Map<String,InputStream> map = prepareInputStreamMap();
-            // write jar file.
-            File jarFile = File.createTempFile("order", ".jar");
-            JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            JarOutputStream jos = new JarOutputStream(bos);
             byte[] buf = new byte[1024];            
             // for each map entry
             for (String filename : map.keySet()) {
@@ -194,17 +193,20 @@ public class OrderJarFactory {
             }
 
             jos.close();
-            
-            log.info("created jar file" + jarFile.getAbsolutePath());
 
-            return jarFile;
-
+            return bos.toByteArray();
         } catch (Exception e) {
         	log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
     
+	public File createOrderJarFile() throws IOException {
+		File jarFile = File.createTempFile("order", ".jar");
+		FileOutputStream fos = new FileOutputStream(jarFile);
+		fos.write(createOrderJar());
+		return jarFile;
+	}
     
     protected static Map<String, InputStream> writeHostConstraints(List<HostConstraint> hostConstraints, File crawlSettingsDirectoryRoot) throws IOException{
     		
