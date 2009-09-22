@@ -172,7 +172,7 @@ implements CrawlURIDispositionListener, Serializable {
      */
     protected transient ConcurrentMap<String,AtomicLong> hostsDistribution = null;
     protected transient ConcurrentMap<String,AtomicLong> hostsBytes = null;
-    protected transient ConcurrentMap<String,Long> hostsLastFinished = null;
+    protected transient ConcurrentMap<String,AtomicLong> hostsLastFinished = null;
 
     /** Keep track of URL counts per host per seed */
     protected transient 
@@ -206,7 +206,7 @@ implements CrawlURIDispositionListener, Serializable {
             this.hostsBytes = c.getBigMap("hostsBytes", String.class,
                 AtomicLong.class);
             this.hostsLastFinished = c.getBigMap("hostsLastFinished",
-                String.class, Long.class);
+                String.class, AtomicLong.class);
             this.processedSeedsRecords = c.getBigMap("processedSeedsRecords",
                     String.class, SeedRecord.class);
         } catch (Exception e) {
@@ -515,7 +515,7 @@ implements CrawlURIDispositionListener, Serializable {
      */
     public long getHostLastFinished(String host){
         Long l = null;
-        l = (Long)hostsLastFinished.get(host);
+        l = ((AtomicLong)hostsLastFinished.get(host)).longValue();
         return (l != null)? l.longValue(): -1;
     }
 
@@ -731,8 +731,10 @@ implements CrawlURIDispositionListener, Serializable {
     private void handleSeed(CrawlURI curi, String disposition) {
         if(curi.isSeed()){
             SeedRecord sr = new SeedRecord(curi, disposition);
-            // we don't mind clobbering previous/simultaneous values
-            processedSeedsRecords.put(sr.getUri(), sr);
+            SeedRecord prevVal = processedSeedsRecords.putIfAbsent(sr.getUri(), sr);
+            if(prevVal!=null) {
+                sr = prevVal; 
+            }
         }
     }
 
@@ -794,7 +796,11 @@ implements CrawlURIDispositionListener, Serializable {
     protected void saveHostStats(String hostname, long size) {
         incrementMapCount(hostsDistribution, hostname);
         incrementMapCount(hostsBytes, hostname, size);
-        hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
+        long l = System.currentTimeMillis();
+        AtomicLong prevVal = hostsLastFinished.putIfAbsent(hostname, new AtomicLong(l));
+        if(prevVal!=null) {
+            prevVal.set(l);
+        }
     }
 
     public void crawledURINeedRetry(CrawlURI curi) {
