@@ -278,7 +278,10 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                 wq = new BdbWorkQueue(classKey, this);
                 wq.setTotalBudget(((Long)getUncheckedAttribute(
                     curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
-                allQueues.put(classKey, wq);
+                WorkQueue prevVal = allQueues.putIfAbsent(classKey, wq);
+                if(prevVal!=null) {
+                    wq = prevVal; // prefer race winner
+                }
             }
         }
         return wq;
