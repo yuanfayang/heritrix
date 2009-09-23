@@ -47,6 +47,7 @@ import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.net.UURI;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 
 /**
@@ -306,9 +307,11 @@ public class CrawlScope extends Filter {
                 FileWriter fw = new FileWriter(f, true);
                 // Write to new (last) line the URL.
                 fw.write("\n");
-                fw.write("# Heritrix added seed " +
-                    ((curi.getVia() != null) ? "redirect from " + curi.getVia():
-                        "(JMX)") + ".\n");
+                fw.write("# Heritrix added seed ");
+                fw.write((curi.getVia() != null) 
+                            ? "redirect from " + curi.getVia() 
+                            : "(JMX)");
+                fw.write(" " + ArchiveUtils.get17DigitDate() + ".\n");
                 fw.write(curi.toString());
                 fw.flush();
                 fw.close();
