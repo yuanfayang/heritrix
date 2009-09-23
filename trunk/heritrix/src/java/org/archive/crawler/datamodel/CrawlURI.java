@@ -44,7 +44,6 @@ import org.archive.crawler.framework.ProcessorChain;
 import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.HttpRecorder;
 

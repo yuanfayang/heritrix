@@ -24,8 +24,6 @@
 package org.archive.crawler.framework;
 
 import java.lang.reflect.Constructor;
-import java.util.Iterator;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -33,7 +31,6 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.deciderules.DecideRule;
 import org.archive.crawler.deciderules.DecideRuleSequence;
-import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 

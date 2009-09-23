@@ -61,7 +61,8 @@ import com.sleepycat.je.EnvironmentConfig;
 
 /**
  * Superclass for Processors which utilize BDB-JE for URI state
- * (including most notably history) persistence.
+ * (including most notably history) persistence. Includes many static 
+ * utility methods (including a main()). 
  * 
  * @author gojomo
  */
