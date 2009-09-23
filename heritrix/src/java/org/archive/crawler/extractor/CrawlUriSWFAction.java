@@ -70,7 +70,7 @@ extends SWFActionsImpl {
         // to use 'target.' Most of the time 'target' is not set, or it is set
         // to '_self' or '_blank'.
         if (url.startsWith(JSSTRING)) {
-            linkCount =+ ExtractorJS.considerStrings(curi, url, controller, false);
+            linkCount += ExtractorJS.considerStrings(curi, url, controller, false);
         } else {
             curi.createAndAddLinkRelativeToVia(url,Link.EMBED_MISC,Link.EMBED_HOP);
             linkCount++;
