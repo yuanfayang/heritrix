@@ -40,9 +40,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.deciderules.DecideRule;
 import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.extractor.Link;
-import org.archive.crawler.framework.Filter;
 import org.archive.crawler.framework.Scoper;
-import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
@@ -82,11 +80,6 @@ implements FetchStatusCodes {
 
     private final static Integer DEFAULT_PREFERENCE_DEPTH_HOPS =
         new Integer(-1);
-    
-    /**
-     * Instance of rejected uris log filters.
-     */
-    private MapType rejectLogFilters = null;
     
     /**
      * @param name Name of this filter.
