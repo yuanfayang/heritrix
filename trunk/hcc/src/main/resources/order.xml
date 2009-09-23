@@ -219,6 +219,22 @@
         <boolean name="send-range">false</boolean>
         <string name="http-bind-address"/>
       </newObject>
+      <newObject name="FTP" class="org.archive.crawler.fetcher.FetchFTP">
+        <boolean name="enabled">true</boolean>
+        <newObject name="FTP#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
+          <map name="rules">
+          </map>
+        </newObject>
+        <string name="username">anonymous</string>
+        <string name="password"/>
+        <boolean name="extract-from-dirs">true</boolean>
+        <boolean name="extract_parent">false</boolean>
+        <long name="max-length-bytes">0</long>
+        <integer name="fetch-bandwidth">0</integer>
+        <integer name="timeout-seconds">1200</integer>
+        <boolean name="digest-content">true</boolean>
+        <string name="digest-algorithm">sha1</string>
+      </newObject>
       <newObject name="FetchHistoryProcessor" class="org.archive.crawler.processor.recrawl.FetchHistoryProcessor">
         <boolean name="enabled">true</boolean>
         <newObject name="FetchHistoryProcessor#decide-rules" class="org.archive.crawler.deciderules.DecideRuleSequence">
