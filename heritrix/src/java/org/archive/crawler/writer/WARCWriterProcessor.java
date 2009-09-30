@@ -601,16 +601,26 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                     XmlUtils.xpathOrNull(doc,"//meta/audience"));
             addIfNotBlank(record,"isPartOf",
                     XmlUtils.xpathOrNull(doc,"//meta/name"));
-            String rawDate = XmlUtils.xpathOrNull(doc,"//meta/date");
-            if(StringUtils.isNotBlank(rawDate)) {
-                Date date;
-                try {
-                    date = ArchiveUtils.parse14DigitDate(rawDate);
-                    addIfNotBlank(record,"created",ArchiveUtils.getLog14Date(date));
-                } catch (ParseException e) {
-                    logger.log(Level.WARNING,"obtaining warc created date",e);
-                }
-            }
+
+            // disabling "created" field per HER-1634
+            // though it's theoretically useful as a means of distinguishing 
+            // one crawl from another, the current usage/specification is too 
+            // vague... in particular a 'created' field in the 'warcinfo' is 
+            // reasonable to interpret as applying to the WARC-unit, rather 
+            // than the crawl-job-unit so we remove it and see if anyone 
+            // complains or makes a case for restoring it in a less-ambiguous 
+            // manner
+//            String rawDate = XmlUtils.xpathOrNull(doc,"//meta/date");
+//            if(StringUtils.isNotBlank(rawDate)) {
+//            	Date date;
+//            	try {
+//            		date = ArchiveUtils.parse14DigitDate(rawDate);
+//            		addIfNotBlank(record,"created",ArchiveUtils.getLog14Date(date));
+//            	} catch (ParseException e) {
+//            		logger.log(Level.WARNING,"obtaining warc created date",e);
+//            	}
+//            }
+
             addIfNotBlank(record,"description",
                     XmlUtils.xpathOrNull(doc,"//meta/description"));
             addIfNotBlank(record,"robots",
