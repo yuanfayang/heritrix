@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.archive.hcc.Config;
@@ -62,6 +63,7 @@ public class OrderJarFactory {
     private String operator = null;
     private String persistSource = null;
 	private long dataLimit = 0l;
+	private List<String> acceptRegexes;
     
     public OrderJarFactory(String name, String userAgent, String fromEmail, String description, String organization, List<String> seeds) {
     	assert name != null;
@@ -84,49 +86,74 @@ public class OrderJarFactory {
 		this.persistSource = persistSource;
 	}
 	
-    private String readOrderFileContentsIntoString() throws IOException{
+    private StringBuilder readOrderFile() throws IOException{
     	//read in order xml prototype to string buffer
         InputStream orderPrototype = OrderJarFactory.class
                 .getResourceAsStream("/order.xml");
         InputStreamReader reader = new InputStreamReader(orderPrototype);
         char[] cbuf = new char[1024];
-        int read = -1;
-        StringBuffer b = new StringBuffer();
-        while ((read = reader.read(cbuf)) > -1) {
-            b.append(cbuf, 0, read);
+        int bytesRead = -1;
+        StringBuilder buf = new StringBuilder();
+        while ((bytesRead = reader.read(cbuf)) > -1) {
+            buf.append(cbuf, 0, bytesRead);
         }
-        return b.toString();
+        return buf;
         
     }
+
+	public void setAcceptRegexes(List<String> regexList) {
+		this.acceptRegexes = regexList;
+	}
     
     private String buildOrderFileContents() throws IOException{
-    	String order = readOrderFileContentsIntoString();
+    	StringBuilder order = readOrderFile();
         
-    	order = replaceKey(order, "$name", name);
-    	order = replaceKey(order, "$arcPrefix", name);
-    	order = replaceKey(order, "$date", new SimpleDateFormat("yyyyMMddhhmmss").format(new Date()));
-    	order = replaceKey(order, "$operator", operator, "No Operator Specified");
-        order = replaceKey(order, "$writeEnabled", !isTest());
-        order = replaceKey(order, "$oneHopOff", isOneHopOff());
-        order = replaceKey(order, "$duration", new Long(this.durationLimit)); //order file is in seconds.
-        order = replaceKey(order, "$documentLimit", documentLimit);
-        order = replaceKey(order, "$dataLimit", dataLimit);
-        order = replaceKey(order, "$userAgent", userAgent);
-        order = replaceKey(order, "$fromEmail", fromEmail);
-        order = replaceKey(order, "$diskPath", diskPath, "");
-        order = replaceKey(order, "$organization", organization);
-        order = replaceKey(order, "$description", description);
-        order = replaceKey(order, "$persistSource", persistSource);
+    	replaceKey(order, "$name", name);
+    	replaceKey(order, "$arcPrefix", name);
+    	replaceKey(order, "$date", new SimpleDateFormat("yyyyMMddhhmmss").format(new Date()));
+    	replaceKey(order, "$operator", operator, "No Operator Specified");
+        replaceKey(order, "$writeEnabled", !isTest());
+        replaceKey(order, "$oneHopOff", isOneHopOff());
+        replaceKey(order, "$duration", new Long(this.durationLimit)); //order file is in seconds.
+        replaceKey(order, "$documentLimit", documentLimit);
+        replaceKey(order, "$dataLimit", dataLimit);
+        replaceKey(order, "$userAgent", userAgent);
+        replaceKey(order, "$fromEmail", fromEmail);
+        replaceKey(order, "$diskPath", diskPath, "");
+        replaceKey(order, "$organization", organization);
+        replaceKey(order, "$description", description);
+        replaceKey(order, "$persistSource", persistSource);
+        
+        insertAcceptRegexes(order, acceptRegexes);
 
-        return order;
+        return order.toString();
     }
 
-    private String replaceKey(String string, String key, Object value){
-    	return replaceKey(string, key, value, "");
+    private void insertAcceptRegexes(StringBuilder order,
+			List<String> regexes) {
+    	int offset = order.indexOf("<newObject name=\"rejectIfRegexMatch\"");
+    	if (offset < 0) {
+    		throw new RuntimeException("could not find rejectIfRegexMatch rule in order.xml template!!! hcc bug, fix it!");
+    	}
+
+    	for (int i = 0; regexes != null && i < regexes.size(); i++) {
+    		order.insert(offset, 
+    		"<newObject name=\"acceptIfRegexMatch" + i + "\" class=\"org.archive.crawler.deciderules.MatchesRegExpDecideRule\">\n" +
+            "<string name=\"decision\">ACCEPT</string>\n" +
+            "<string name=\"regexp\">" + StringEscapeUtils.escapeXml(regexes.get(i)) + "</string>\n" +
+            "</newObject>\n");
+    	}
+	}
+
+	private void replaceKey(StringBuilder order, String key, Object value){
+    	replaceKey(order, key, value, "");
     }
     
-    private String replaceKey(String string, String key, Object value, Object defaultValue){
-    	return string.replace(key, value != null?value.toString():defaultValue.toString());
+    private void replaceKey(StringBuilder order, String key, Object value, Object defaultValue){
+    	for (int offset = order.indexOf(key); offset >= 0; offset = order.indexOf(key)) {
+    		order.delete(offset, offset + key.length());
+    		order.insert(offset, value != null ? value : defaultValue);
+    	}
     }
     
     private InputStream createInputStreamFromString(String s) throws IOException{
