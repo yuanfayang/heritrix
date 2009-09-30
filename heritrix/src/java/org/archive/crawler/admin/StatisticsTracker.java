@@ -428,13 +428,12 @@ implements CrawlURIDispositionListener, Serializable {
      * @param increment
      *            The amount to increment counter related to the <code>key</code>.
      */
-    @SuppressWarnings("unchecked")
     protected static void incrementMapCount(ConcurrentMap<String,AtomicLong> map, 
             String key, long increment) {
         if (key == null) {
             key = "unknown";
         }
-        AtomicLong lw = (AtomicLong)map.get(key);
+        AtomicLong lw = map.get(key);
         if(lw == null) {
             lw = new AtomicLong();
             AtomicLong prevVal = map.putIfAbsent(key, lw);
@@ -480,10 +479,7 @@ implements CrawlURIDispositionListener, Serializable {
         try {
             sortedMap.putAll(mapOfAtomicLongValues);
         } catch (UnsupportedOperationException e) {
-            Iterator<String> i = mapOfAtomicLongValues.keySet().iterator();
-            for (;i.hasNext();) {
-                // Ok. Try doing it the slow way then.
-                String key = i.next();
+            for (String key: mapOfAtomicLongValues.keySet()) {
                 sortedMap.put(key, mapOfAtomicLongValues.get(key));
             }
         }
@@ -833,7 +829,7 @@ implements CrawlURIDispositionListener, Serializable {
         return seedsCopy.iterator();
     }
 
-    public Iterator getSeedRecordsSortedByStatusCode() {
+    public Iterator<SeedRecord> getSeedRecordsSortedByStatusCode() {
         return getSeedRecordsSortedByStatusCode(getSeeds());
     }
     
@@ -886,9 +882,9 @@ implements CrawlURIDispositionListener, Serializable {
 
         seedsCrawled = 0;
         seedsNotCrawled = 0;
-        for (Iterator i = getSeedRecordsSortedByStatusCode(getSeeds());
+        for (Iterator<SeedRecord> i = getSeedRecordsSortedByStatusCode(getSeeds());
                 i.hasNext();) {
-            SeedRecord sr = (SeedRecord)i.next();
+            SeedRecord sr = i.next();
             writer.print(sr.getStatusCode());
             writer.print(" ");
             if((sr.getStatusCode() > 0)) {
@@ -912,16 +908,13 @@ implements CrawlURIDispositionListener, Serializable {
         
         writer.print("[source] [host] [#urls]\n");
         // for each source
-        for (Iterator i = sourceHostDistribution.keySet().iterator(); i.hasNext();) {
-            Object sourceKey = i.next();
-            Map<String,AtomicLong> hostCounts 
-             = (Map<String,AtomicLong>)sourceHostDistribution.get(sourceKey);
+        for (String sourceKey: sourceHostDistribution.keySet()) {
+            Map<String,AtomicLong> hostCounts = sourceHostDistribution.get(sourceKey);
             // sort hosts by #urls
-            SortedMap sortedHostCounts = getReverseSortedHostCounts(hostCounts);
+            SortedMap<String,AtomicLong> sortedHostCounts = getReverseSortedHostCounts(hostCounts);
             // for each host
-            for (Iterator j = sortedHostCounts.keySet().iterator(); j.hasNext();) {
-                Object hostKey = j.next();
-                AtomicLong hostCount = (AtomicLong) hostCounts.get(hostKey);
+            for (String hostKey: sortedHostCounts.keySet()) {
+                AtomicLong hostCount = hostCounts.get(hostKey);
                 writer.print(sourceKey.toString());
                 writer.print(" ");
                 writer.print(hostKey.toString());
@@ -938,7 +931,7 @@ implements CrawlURIDispositionListener, Serializable {
      * 
      * @return SortedMap of hosts distribution
      */
-    public SortedMap getReverseSortedHostCounts(
+    public SortedMap<String,AtomicLong> getReverseSortedHostCounts(
             Map<String,AtomicLong> hostCounts) {
         return getReverseSortedCopy(hostCounts);
     }
@@ -947,16 +940,15 @@ implements CrawlURIDispositionListener, Serializable {
     protected void writeHostsReportTo(final PrintWriter writer) {
         // TODO: use CrawlHosts for all stats; only perform sorting on 
         // manageable number of hosts
-        SortedMap hd = getReverseSortedHostsDistribution();
+        SortedMap<String,AtomicLong> hd = getReverseSortedHostsDistribution();
         // header
         writer.print("[#urls] [#bytes] [host] [#robots] [#remaining]\n");
-        for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
+        for (String key: hd.keySet()) {
             // Key is 'host'.
-            String key = (String) i.next();
             CrawlHost host = controller.getServerCache().getHostFor(key);
-            AtomicLong val = (AtomicLong)hd.get(key);
+            AtomicLong val = hd.get(key);
             writeReportLine(writer,
-                    ((val==null)?"-":val.get()),
+                    val == null ? "-" : val.get(),
                     getBytesPerHost(key),
                     key,
                     host.getSubstats().getRobotsDenials(),
@@ -992,22 +984,21 @@ implements CrawlURIDispositionListener, Serializable {
      * (largest first) order. 
      * @return SortedMap of hosts distribution
      */
-    public SortedMap getReverseSortedHostsDistribution() {
+    public SortedMap<String,AtomicLong> getReverseSortedHostsDistribution() {
         return getReverseSortedCopy(hostsDistribution);
     }
 
     protected void writeMimetypesReportTo(PrintWriter writer) {
         // header
         writer.print("[#urls] [#bytes] [mime-types]\n");
-        TreeMap fd = getReverseSortedCopy(getFileDistribution());
-        for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
-            Object key = i.next();
+        TreeMap<String,AtomicLong> fd = getReverseSortedCopy(getFileDistribution());
+        for (String key: fd.keySet()) { 
             // Key is mime type.
-            writer.print(Long.toString(((AtomicLong)fd.get(key)).get()));
+            writer.print(Long.toString(fd.get(key).get()));
             writer.print(" ");
-            writer.print(Long.toString(getBytesPerFileType((String)key)));
+            writer.print(Long.toString(getBytesPerFileType(key)));
             writer.print(" ");
-            writer.print((String)key);
+            writer.print(key);
             writer.print("\n");
         }
     }
@@ -1015,12 +1006,11 @@ implements CrawlURIDispositionListener, Serializable {
     protected void writeResponseCodeReportTo(PrintWriter writer) {
         // Build header.
         writer.print("[rescode] [#urls]\n");
-        TreeMap scd = getReverseSortedCopy(getStatusCodeDistribution());
-        for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
-            Object key = i.next();
-            writer.print((String)key);
+        TreeMap<String,AtomicLong> scd = getReverseSortedCopy(getStatusCodeDistribution());
+        for (String key: scd.keySet()) { 
+            writer.print(key);
             writer.print(" ");
-            writer.print(Long.toString(((AtomicLong)scd.get(key)).get()));
+            writer.print(Long.toString(scd.get(key).get()));
             writer.print("\n");
         }
     }
