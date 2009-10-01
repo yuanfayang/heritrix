@@ -57,9 +57,11 @@ public class Config {
 	
 	private Config(){
 		this.containers = new LinkedList<Container>();
+		log.info("hcc initializing without config file");
 	}
 	
 	private Config(String configXml) throws IOException {
+		log.info("hcc initializing from config file: " + configXml);
 		File configXmlFile = new File(configXml);
 		configXmlFile.getAbsolutePath();
 		if(!configXmlFile.exists()){
