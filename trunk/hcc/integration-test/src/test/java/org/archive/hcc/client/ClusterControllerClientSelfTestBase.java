@@ -7,8 +7,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.management.RuntimeErrorException;
-
 import junit.framework.TestCase;
 
 import org.archive.hcc.ClusterControllerBean;
