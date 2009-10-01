@@ -47,6 +47,7 @@ import org.apache.commons.collections.Closure;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
@@ -758,9 +759,8 @@ implements CrawlURIDispositionListener, Serializable {
         incrementMapCount(mimeTypeBytes, mime, curi.getContentSize());
 
         // Save hosts stats.
-        saveHostStats((curi.getFetchStatus() == 1)? "dns:":
-                this.controller.getServerCache().
-                getHostFor(curi).getHostName(),
+        saveHostStats(curi.getFetchStatus() == FetchStatusCodes.S_DNS_SUCCESS ? "dns:" :
+                this.controller.getServerCache().getHostFor(curi).getHostName(),
                 curi.getContentSize());
         
         if (curi.containsKey(CrawlURI.A_SOURCE_TAG)){
@@ -942,7 +942,7 @@ implements CrawlURIDispositionListener, Serializable {
         // manageable number of hosts
         SortedMap<String,AtomicLong> hd = getReverseSortedHostsDistribution();
         // header
-        writer.print("[#urls] [#bytes] [host] [#robots] [#remaining]\n");
+        writer.print("[#urls] [#bytes] [host] [#robots] [#remaining] [#novel-urls] [#novel-bytes] [#dup-by-hash-urls] [#dup-by-hash-bytes] [#not-modified-urls] [#not-modified-bytes]\n");
         for (String key: hd.keySet()) {
             // Key is 'host'.
             CrawlHost host = controller.getServerCache().getHostFor(key);
@@ -952,7 +952,13 @@ implements CrawlURIDispositionListener, Serializable {
                     getBytesPerHost(key),
                     key,
                     host.getSubstats().getRobotsDenials(),
-                    host.getSubstats().getRemaining());
+                    host.getSubstats().getRemaining(),
+                    host.getSubstats().getNovelUrls(),
+                    host.getSubstats().getNovelBytes(),
+                    host.getSubstats().getDupByHashUrls(),
+                    host.getSubstats().getDupByHashBytes(),
+                    host.getSubstats().getNotModifiedUrls(),
+                    host.getSubstats().getNotModifiedBytes());
         }
         // StatisticsTracker doesn't know of zero-completion hosts; 
         // so supplement report with those entries from host cache
@@ -965,7 +971,13 @@ implements CrawlURIDispositionListener, Serializable {
                             host.getSubstats().getTotalBytes(),
                             host.getHostName(),
                             host.getSubstats().getRobotsDenials(),
-                            host.getSubstats().getRemaining());
+                            host.getSubstats().getRemaining(),
+                            host.getSubstats().getNovelUrls(),
+                            host.getSubstats().getNovelBytes(),
+                            host.getSubstats().getDupByHashUrls(),
+                            host.getSubstats().getDupByHashBytes(),
+                            host.getSubstats().getNotModifiedUrls(),
+                            host.getSubstats().getNotModifiedBytes());
                 }
             }};
         controller.getServerCache().forAllHostsDo(logZeros);

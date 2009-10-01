@@ -26,8 +26,11 @@ package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
 
+import org.apache.commons.httpclient.HttpStatus;
+import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
+
 /**
- * Collector of statististics for a 'subset' of a crawl,
+ * Collector of statistics for a 'subset' of a crawl,
  * such as a server (host:port), host, or frontier group 
  * (eg queue). 
  * 
@@ -54,6 +57,12 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
     long totalBytes;       // total size of all responses
     long fetchNonResponses; // processing attempts resulting in no response
                            // (both failures and temp deferrals)
+    long novelBytes;
+    long novelUrls;
+    long notModifiedBytes;
+    long notModifiedUrls;
+    long dupByHashBytes;
+    long dupByHashUrls;
     
     /**
      * Examing the CrawlURI and based on its status and internal values,
@@ -76,6 +85,18 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
                 fetchResponses++;
                 totalBytes += curi.getContentSize();
                 successBytes += curi.getContentSize();
+                
+                if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED) {
+                    notModifiedBytes += curi.getContentSize();
+                    notModifiedUrls++;
+                } else if (IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
+                    dupByHashBytes += curi.getContentSize();
+                    dupByHashUrls++;
+                } else {
+                    novelBytes += curi.getContentSize();
+                    novelUrls++;
+                }
+                
                 break;
             case DISREGARDED:
                 fetchDisregards++;
@@ -89,6 +110,16 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
                 } else {
                     fetchResponses++;
                     totalBytes += curi.getContentSize();
+                    if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED) {
+                        notModifiedBytes += curi.getContentSize();
+                        notModifiedUrls++;
+                    } else if (IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
+                        dupByHashBytes += curi.getContentSize();
+                        dupByHashUrls++;
+                    } else {
+                        novelBytes += curi.getContentSize();
+                        novelUrls++;
+                    }
                 }
                 fetchFailures++;
                 break;
@@ -123,7 +154,32 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
     public long getRemaining() {
         return totalScheduled - (fetchSuccesses + fetchFailures + fetchDisregards);
     }
+
     public long getRecordedFinishes() {
         return fetchSuccesses + fetchFailures;
+    }
+
+    public long getNovelBytes() {
+        return novelBytes;
+    }
+
+    public long getNovelUrls() {
+        return novelUrls;
+    }
+
+    public long getNotModifiedBytes() {
+        return notModifiedBytes;
+    }
+
+    public long getNotModifiedUrls() {
+        return notModifiedUrls;
+    }
+
+    public long getDupByHashBytes() {
+        return dupByHashBytes;
+    }
+
+    public long getDupByHashUrls() {
+        return dupByHashUrls;
     }
 }
