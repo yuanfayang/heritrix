@@ -361,14 +361,14 @@ public class FetchFTP extends Processor implements CoreAttributeConstants, Fetch
             try {
                 saveToRecorder(curi, socket, recorder);
             } finally {
+                recorder.close();
+                client.closeDataConnection(); // does socket.close()
+                curi.setContentSize(recorder.getRecordedInput().getSize());
+
                 // "226 Transfer complete."
                 client.getReply();
                 curi.setFetchStatus(client.getReplyCode());
                 curi.putString(A_FTP_FETCH_STATUS, client.getReplyStrings()[0]);
-
-                recorder.close();
-                client.closeDataConnection(); // does socket.close()
-                curi.setContentSize(recorder.getRecordedInput().getSize());
                 
                 if (isDirectory) {
                     curi.setContentType("text/plain");
