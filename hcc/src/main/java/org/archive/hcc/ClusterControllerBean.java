@@ -1227,11 +1227,10 @@ public class ClusterControllerBean implements
                     attachMBeanServerDelegateNotificationListener(
                             address,
                             this.remoteNotificationDelegator);
-                } catch (IOException e) {
+                } catch (Exception e) {
                 	log.warn("unable to synchronize container on " + 
                 			address.getHostName()+":" + address.getPort() + 
-                			" - message: " + e.getMessage());
-                    
+                			": " + e);
                 }
             }
         }
@@ -1382,7 +1381,12 @@ public class ClusterControllerBean implements
                             return;
                         }
 
-                        refreshRegistry();
+                        try {
+                        	refreshRegistry();
+                        } catch (Exception e) {
+                        	log.error("caught exception refreshing hcc config: " + e);
+                        }
+
                         log.debug("poll task done.");
                     }
 
