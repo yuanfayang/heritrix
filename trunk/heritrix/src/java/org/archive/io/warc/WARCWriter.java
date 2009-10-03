@@ -33,6 +33,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
@@ -54,6 +56,8 @@ import org.archive.util.anvl.ANVLRecord;
  */
 public class WARCWriter extends WriterPoolMember
 implements WARCConstants {
+    private static final Logger logger = 
+        Logger.getLogger(WARCWriter.class.getName());
 
     /**
      * NEWLINE as bytes.
@@ -128,21 +132,21 @@ implements WARCConstants {
     }
     
     protected void baseCharacterCheck(final char c, final String parameter)
-    throws IOException {
+    throws IllegalArgumentException {
         // TODO: Too strict?  UNICODE control characters?
         if (Character.isISOControl(c) || !Character.isValidCodePoint(c)) {
-            throw new IOException("Contains illegal character 0x" +
+            throw new IllegalArgumentException("Contains illegal character 0x" +
                 Integer.toHexString(c) + ": " + parameter);
         }
     }
     
     protected String checkHeaderValue(final String value)
-    throws IOException {
+    throws IllegalArgumentException {
         for (int i = 0; i < value.length(); i++) {
         	final char c = value.charAt(i);
         	baseCharacterCheck(c, value);
         	if (Character.isWhitespace(c)) {
-                throw new IOException("Contains disallowed white space 0x" +
+                throw new IllegalArgumentException("Contains disallowed white space 0x" +
                     Integer.toHexString(c) + ": " + value);
         	}
         }
@@ -234,11 +238,20 @@ implements WARCConstants {
     		    "of content-length zero and base headers only.");
     	}
     	
-        preWriteRecordTasks();
+    	String header;
+    	try {
+    		header = createRecordHeader(type, url,
+    				create14DigitDate, mimetype, recordId, xtraHeaders,
+    				contentLength);
+
+    	} catch (IllegalArgumentException e) {
+    		logger.log(Level.SEVERE,"could not write record type: " + type 
+    				+ "for URL: " + url, e);
+    		return;
+    	}    	   	
+
         try {
-            final String header = createRecordHeader(type, url,
-            	create14DigitDate, mimetype, recordId, xtraHeaders,
-            	contentLength);
+            preWriteRecordTasks();
             // TODO: Revisit endcoding of header.
             write(header.getBytes(WARC_HEADER_ENCODING));
             
