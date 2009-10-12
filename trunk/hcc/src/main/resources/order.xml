@@ -12,9 +12,9 @@
     <string name="settings-directory">settings</string>
     <string name="disk-path">$diskPath</string>
     <string name="logs-path">logs</string>
-    <string name="checkpoints-path">checkpoints</string>
-    <string name="state-path">state</string>
-    <string name="scratch-path">scratch</string>
+    <string name="checkpoints-path">$checkpointsPath</string>
+    <string name="state-path">$statePath</string>
+    <string name="scratch-path">$scratchPath</string>
     <long name="max-bytes-download">$dataLimit</long>
     <long name="max-document-download">$documentLimit</long>
     <long name="max-time-sec">$duration</long>
@@ -343,7 +343,7 @@
         <string name="suffix">${HOSTNAME}</string>
         <long name="max-size-bytes">100000000</long>
         <stringList name="path">
-          <string>warcs</string>
+          <string>$warcPath</string>
         </stringList>
         <integer name="pool-max-active">1</integer>
         <integer name="pool-max-wait">300000</integer>
