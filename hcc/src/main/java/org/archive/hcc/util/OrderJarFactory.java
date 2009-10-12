@@ -64,6 +64,10 @@ public class OrderJarFactory {
     private String persistSource = null;
 	private long dataLimit = 0l;
 	private List<String> acceptRegexes;
+	private String checkpointsPath = "checkpoints";
+	private String statePath = "state";
+	private String scratchPath = "scratch";
+	private String warcPath = "warcs";
     
     public OrderJarFactory(String name, String userAgent, String fromEmail, String description, String organization, List<String> seeds) {
     	assert name != null;
@@ -123,6 +127,10 @@ public class OrderJarFactory {
         replaceKey(order, "$organization", organization);
         replaceKey(order, "$description", description);
         replaceKey(order, "$persistSource", persistSource);
+        replaceKey(order, "$checkpointsPath", checkpointsPath);
+        replaceKey(order, "$scratchPath", scratchPath);
+        replaceKey(order, "$statePath", statePath);
+        replaceKey(order, "$warcPath", warcPath);
         
         insertAcceptRegexes(order, acceptRegexes);
 
@@ -403,5 +411,37 @@ public class OrderJarFactory {
 		} else {
 			this.dataLimit = 0l;
 		}
+	}
+
+	public String getCheckpointsPath() {
+		return checkpointsPath;
+	}
+
+	public void setCheckpointsPath(String checkpointsPath) {
+		this.checkpointsPath = checkpointsPath;
+	}
+
+	public String getStatePath() {
+		return statePath;
+	}
+
+	public void setStatePath(String statePath) {
+		this.statePath = statePath;
+	}
+
+	public String getScratchPath() {
+		return scratchPath;
+	}
+
+	public void setScratchPath(String scratchPath) {
+		this.scratchPath = scratchPath;
+	}
+
+	public String getWarcPath() {
+		return warcPath;
+	}
+
+	public void setWarcPath(String warcPath) {
+		this.warcPath = warcPath;
 	}
 }
