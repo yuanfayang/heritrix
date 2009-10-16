@@ -26,6 +26,7 @@
 package org.archive.crawler.admin;
 
 import java.io.Serializable;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
@@ -39,9 +40,11 @@ import org.archive.crawler.datamodel.CrawlURI;
  */
 public class SeedRecord implements CoreAttributeConstants, Serializable {
     private static final long serialVersionUID = -8455358640509744478L;
+    private static Logger logger =
+        Logger.getLogger(SeedRecord.class.getName());
     private final String uri;
     private int statusCode;
-    private final String disposition;
+    private String disposition;
     private String redirectUri;
     
     /**
@@ -95,6 +98,31 @@ public class SeedRecord implements CoreAttributeConstants, Serializable {
         this.redirectUri = redirectUri;        
     }
 
+    
+    /**
+     * A later/repeat report of the same seed has arrived; update with
+     * latest. Should be rare/never?
+     * 
+     * @param curi
+     */
+    public void updateWith(CrawlURI curi,String disposition) {
+        if(!this.uri.equals(curi.toString())) {
+            logger.warning("SeedRecord URI changed: "+uri+"->"+curi.toString());
+        }
+        this.statusCode = curi.getFetchStatus();
+        this.disposition = disposition;
+        if (statusCode==301 || statusCode == 302) {
+            for (CandidateURI cauri: curi.getOutCandidates()) {
+                if("location:".equalsIgnoreCase(cauri.getViaContext().
+                        toString())) {
+                    redirectUri = cauri.toString();
+                }
+            }
+        } else {
+            redirectUri = null; 
+        }
+    }
+    
     /**
      * @return Returns the disposition.
      */
