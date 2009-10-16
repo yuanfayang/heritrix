@@ -199,9 +199,9 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
                 WriterPoolMember.DEFAULT_PREFIX));
         e = addElementToDefinition(
             new SimpleType(ATTR_SUFFIX, "Suffix to tag onto " +
-                "files. '${HOSTNAME}' in the suffix will be " +
-                "replaced with the local hostname. If empty, " +
-                "no suffix will be added.",
+                "files. '${HOSTNAME_ADMINPORT}' in the suffix " + 
+                "will be replaced with the local hostname and " +
+                "web UI port. If empty, no suffix will be added.",
                 WriterPoolMember.DEFAULT_SUFFIX));
         e.setOverrideable(false);
         e = addElementToDefinition(
@@ -442,20 +442,36 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         return (obj == null)? WriterPool.DEFAULT_MAXIMUM_WAIT:
             ((Integer)obj).intValue();
     }
+    
+    private String getHostname() {
+        String hostname = "localhost.localdomain";
+        try {
+            hostname = InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (UnknownHostException ue) {
+            logger.severe("Failed getHostAddress for this host: " + ue);
+        }
+        
+        return hostname;
+    }
+    
+    private int getPort() {
+        if (Heritrix.getHttpServer() != null) {
+            return Heritrix.getHttpServer().getPort();
+        } else {
+            return 0;
+        }
+    }
 
     public String getSuffix() {
         Object obj = getAttributeUnchecked(ATTR_SUFFIX);
         String sfx = (obj == null)?
             WriterPoolMember.DEFAULT_SUFFIX: (String)obj;
         sfx = sfx.trim(); 
-        if (sfx.contains(WriterPoolMember.HOSTNAME_VARIABLE)) {
-            String str = "localhost.localdomain";
-            try {
-                str = InetAddress.getLocalHost().getCanonicalHostName();
-            } catch (UnknownHostException ue) {
-                logger.severe("Failed getHostAddress for this host: " + ue);
-            }
-            sfx = sfx.replace(WriterPoolMember.HOSTNAME_VARIABLE, str);
+        if (sfx.contains(WriterPoolMember.HOSTNAME_ADMINPORT_VARIABLE) 
+                || sfx.contains(WriterPoolMember.HOSTNAME_VARIABLE)) {
+            String hostname = getHostname();
+            sfx = sfx.replace(WriterPoolMember.HOSTNAME_ADMINPORT_VARIABLE, hostname + "-" + getPort());
+            sfx = sfx.replace(WriterPoolMember.HOSTNAME_VARIABLE, hostname);
         }
         return sfx;
     }

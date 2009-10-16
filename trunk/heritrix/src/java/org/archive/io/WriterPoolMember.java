@@ -68,9 +68,14 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     public static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
     
     /**
+     * Value to interpolate with actual hostname-port.
+     */
+    public static final String HOSTNAME_ADMINPORT_VARIABLE = "${HOSTNAME_ADMINPORT}";
+    
+    /**
      * Default for file suffix.
      */
-    public static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
+    public static final String DEFAULT_SUFFIX = HOSTNAME_ADMINPORT_VARIABLE;
 
     /**
      * Reference to file we're currently writing.
