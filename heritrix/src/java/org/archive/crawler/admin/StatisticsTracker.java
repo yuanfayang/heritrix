@@ -723,13 +723,16 @@ implements CrawlURIDispositionListener, Serializable {
      * If the curi is a seed, we insert into the processedSeedsRecords map.
      *
      * @param curi The CrawlURI that may be a seed.
-     * @param disposition The disposition of the CrawlURI.
+     * @param disposition The dispositino of the CrawlURI.
      */
     private void handleSeed(CrawlURI curi, String disposition) {
         if(curi.isSeed()){
             SeedRecord sr = new SeedRecord(curi, disposition);
-            // we don't mind clobbering previous/simultaneous values - see HER-1685
-            processedSeedsRecords.put(sr.getUri(), sr);
+            SeedRecord prevVal = processedSeedsRecords.putIfAbsent(sr.getUri(), sr);
+            if(prevVal!=null) {
+                sr = prevVal; 
+                sr.updateWith(curi,disposition);
+            }
         }
     }
 
