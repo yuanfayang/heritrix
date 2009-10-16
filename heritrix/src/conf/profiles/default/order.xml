@@ -180,7 +180,7 @@
         </map>
         <boolean name="compress">true</boolean>
         <string name="prefix">IAH</string>
-        <string name="suffix">${HOSTNAME}</string>
+        <string name="suffix">${HOSTNAME_ADMINPORT}</string>
         <integer name="max-size-bytes">100000000</integer>
         <stringList name="path">
           <string>arcs</string>
