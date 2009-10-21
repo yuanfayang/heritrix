@@ -162,7 +162,13 @@ public class ServerCache {
     public CrawlHost getHostFor(CandidateURI cauri) {
         CrawlHost h = null;
         try {
-            h = getHostFor(cauri.getUURI().getReferencedHost());
+            String hostKey;
+            if (cauri.getUURI().getScheme().equals("dns")) {
+                hostKey = "dns:";
+            } else {
+                hostKey = cauri.getUURI().getReferencedHost();
+            }
+            h = getHostFor(hostKey);
         } catch (URIException e) {
             e.printStackTrace();
         }
