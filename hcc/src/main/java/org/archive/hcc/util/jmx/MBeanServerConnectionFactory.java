@@ -70,8 +70,6 @@ public class MBeanServerConnectionFactory {
             String serviceUrl = "service:jmx:rmi://" + hostport
                     + "/jndi/rmi://" + hostport + "/jmxrmi";
 
-            log.info("service url: " + serviceUrl);
-
             return new JMXServiceURL(serviceUrl);
         } catch (MalformedURLException e) {
             log.warn(e.toString(), e);

@@ -1228,7 +1228,9 @@ public class ClusterControllerBean implements
                             address,
                             this.remoteNotificationDelegator);
                 } catch (Exception e) {
-                	log.warn("unable to synchronize container on " + 
+                	// it is common and usually not a problem for an instance 
+                	// of heritrix to be missing, thus debug level
+                	log.debug("unable to synchronize container on " + 
                 			address.getHostName()+":" + address.getPort() + 
                 			": " + e);
                 }
