@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.archive</groupId>
 	<artifactId>hcc</artifactId>
-	<version>0.3.0</version>
+	<version>0.3.1</version>
 	<name>Heritrix :: Cluster Conroller</name>
 	<packaging>jar</packaging>
 	<description>The Heritrix Cluster Controller (hcc) is a set of packages that enable control of a cluster of &lt;a href="http://crawler.archive.org/"&gt;heritrix&lt;/a&gt; instances running across multiple machines. There are two main components - the controller itself and a client API for accessing the component. The controller itself is essentially a facade with a DynamicMBean interface.  Internally it effectively finds all heritrix resources in a JNDI scope and then proxies all communication to them.  It provides a set of attributes and methods which perform the general functions of finding, listing, and invoking operations on single remote instances or groups of them.  The client serves to translate the generic MBean interface into an easy to use domain specific interface thus simplying the work of programmers interested in building application specific extensions without having to deal with a generic JMX OpenDynamicMBean interface.  To download latest binary, see under the &lt;i&gt;Build Artifacts&lt;/i&gt; link of this page up on our &lt;a href="http://crawltools.archive.org:8080/cruisecontrol/buildresults/HEAD-hcc"&gt;continuous build server&lt;/a&gt;.  For how to get started using hcc, see &lt;i&gt;Getting Started&lt;/i&gt; in &lt;a hef="http://crawler.archive.org/hcc/apidocs/index.html"&gt;description&lt;/a&gt; section of the javadoc overview.</description>
@@ -20,6 +20,13 @@
             <name>Daniel Bernstein</name>
             <id>dbernstein</id>
             <email>dbernstein@archive.org</email>
+            <organization>The Internet Archive</organization>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <name>Noah Levitt</name>
+            <id>nlevitt</id>
+            <email>nlevitt@archive.org</email>
             <organization>The Internet Archive</organization>
             <timezone>-8</timezone>
         </developer>
