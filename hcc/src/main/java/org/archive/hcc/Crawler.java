@@ -26,8 +26,9 @@ import java.lang.reflect.Proxy;
 
 import javax.management.DynamicMBean;
 import javax.management.ObjectName;
+
 /**
- * Represents the relationship between a crawler, it's container and it's transient 
+ * Represents the relationship between a crawler, its container and its transient 
  * child crawl job bean.
  * 
  * @author Daniel Bernstein (dbernstein@archive.org)
