@@ -487,6 +487,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                 return new CrawlerImpl(parent, this.connection);
             }
 
+            log.warn("no parent (crawl service) found for job address=" + address + " uid=" + uid); 
             return null;
         } catch (Exception e) {
             log.warn(e.toString(), e);

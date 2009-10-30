@@ -46,6 +46,7 @@ import javax.management.DynamicMBean;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.JMException;
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
@@ -103,11 +104,6 @@ public class ClusterControllerBean implements
         DynamicMBean,
         NotificationEmitter,
         MBeanRegistration {
-
-//    /**
-//     * The Jndi context
-//     */
-//    private Context context;
 
     /**
      * logger
@@ -1022,44 +1018,42 @@ public class ClusterControllerBean implements
     }
 
     protected void handleJobRemoved(ObjectName job) {
-    	log.info("entering: job=" + job);
+    	log.info("handling removed job " + job);
         // locate crawler
-        Crawler c = getJobContext(job);
+        Crawler crawler = getJobContext(job);
         
-        if(c == null){
-        	log.warn("no crawler context found for job=" + job);
-        	
+        if(crawler == null){
+        	log.error("no crawler context found for job " + job);
         	return;
         }
+
         // remove job reference from crawler
         // unregister job proxy.
-        ObjectName jobProxy = c.getCrawlJobProxyObjectName();
+        ObjectName jobProxy = crawler.getCrawlJobProxyObjectName();
         if(jobProxy == null){
-        	log.warn("jobProxy was not found on crawler=" + c.getCrawlJobProxyObjectName());
+        	log.error("jobProxy was not found on crawler " + crawler);
         	return;
         }
         
         try {
             this.mbeanServer.unregisterMBean(jobProxy);
         } catch (InstanceNotFoundException e) {
-            log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + "; error.class=" + e.getClass() + ";  error.message=" + e.getMessage(), e);
+            log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + ": " + e, e);
         } catch (MBeanRegistrationException e) {
-            log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job  + "; error.class=" + e.getClass() + "; message=" + e.getMessage(), e);
+            log.error("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + ": " + e, e);
         }
 
-        c.setCrawlJobProxy(null);
+        crawler.setCrawlJobProxy(null);
         fireNotification(
                 jobProxy,
                 ClusterControllerNotification.
                     CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey());
             
-        log.info("exitting successfully: job=" + job);
-            
+        log.info("successfully handled removed job " + job);
     }
 
     private boolean isJobOnCrawler(ObjectName job, ObjectName crawler) {
-        
-    	return equals(job, crawler, JmxUtils.JMX_PORT)
+     	return equals(job, crawler, JmxUtils.JMX_PORT)
                 && equals(job, crawler, JmxUtils.HOST)
                 && job.getKeyProperty(JmxUtils.MOTHER).equals(
                         crawler.getKeyProperty(JmxUtils.NAME));
@@ -1077,6 +1071,7 @@ public class ClusterControllerBean implements
     }
 
     protected void handleJobAdded(ObjectName job) {
+    	log.info("handling crawl job added event: " + job);
         try {
             ObjectName proxyName = addCrawlJob(job);
             // fire event
@@ -1084,41 +1079,42 @@ public class ClusterControllerBean implements
                     proxyName,
                     ClusterControllerNotification.
                         CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey());
-        } catch (RuntimeException e) {
-            log.warn(e.toString(), e);
+        } catch (JMException e) {
+            log.error("something is funky, please investigate: problem handling adding crawl job " + job + ": " + e);
         }
     }
 
-    private ObjectName addCrawlJob(ObjectName job) {
-        InetSocketAddress address = JmxUtils.extractAddress(job);
-        Crawler crawler = getJobContext(job);
-        ObjectName proxyName = createClientProxyName(job);
-        DynamicMBean proxy = (DynamicMBean) Proxy.newProxyInstance(
-                DynamicMBean.class.getClassLoader(),
-                new Class[] { DynamicMBean.class, NotificationEmitter.class },
-                new RemoteMBeanInvocationHandler(
-                        job,
-                        proxyName,
-                        this.connections.get(address),
-                        spyListener));
-
-        crawler.setCrawlJobProxy(proxy);
+    private ObjectName addCrawlJob(ObjectName job) throws JMException {
+    	DynamicMBean proxy = null;
+    	ObjectName proxyName = null;
+    	
         try {
+        	InetSocketAddress address = JmxUtils.extractAddress(job);
+        	Crawler crawler = getJobContext(job);
+        	proxyName = createClientProxyName(job);
+        	proxy = (DynamicMBean) Proxy.newProxyInstance(
+        			DynamicMBean.class.getClassLoader(),
+        			new Class[] { DynamicMBean.class, NotificationEmitter.class },
+        			new RemoteMBeanInvocationHandler(
+        					job,
+        					proxyName,
+        					this.connections.get(address),
+        					spyListener));
+
             this.mbeanServer.registerMBean(proxy, proxyName);
-        } catch (InstanceAlreadyExistsException e) {
-            log.warn(e.toString(), e);
-        } catch (MBeanRegistrationException e) {
-            log.warn(e.toString(), e);
-        } catch (NotCompliantMBeanException e) {
-            log.warn(e.toString(), e);
+
+            ((NotificationEmitter) proxy).addNotificationListener(
+                    this.remoteNotificationDelegator,
+                    null,
+                    new Object());
+
+            crawler.setCrawlJobProxy(proxy);
+
+            return proxyName;
+        } catch (Exception e) {
+        	log.error("problem registering mbean " + proxy + " with name " + proxyName + ": " + e, e);
+        	throw new JMException(e.toString());
         }
-
-        ((NotificationEmitter) proxy).addNotificationListener(
-                this.remoteNotificationDelegator,
-                null,
-                new Object());
-
-        return proxyName;
     }
 
     protected boolean equals(ObjectName a, ObjectName b, String key) {
@@ -1228,9 +1224,7 @@ public class ClusterControllerBean implements
                             address,
                             this.remoteNotificationDelegator);
                 } catch (Exception e) {
-                	// it is common and usually not a problem for an instance 
-                	// of heritrix to be missing, thus debug level
-                	log.debug("unable to synchronize container on " + 
+                	log.info("unable to synchronize container on " + 
                 			address.getHostName()+":" + address.getPort() + 
                 			": " + e);
                 }
@@ -1332,13 +1326,13 @@ public class ClusterControllerBean implements
      * @param c Container to check.
      */
     protected void synchronizeContainer(Container c) {
-        log.info("synchonizing container:" + c.toString());
+        log.info("synchonizing container: " + c.toString());
     	
         InetSocketAddress address = c.getAddress();
         MBeanServerConnection mbc = this.connections.get(address);
 
         if (mbc == null) {
-        	log.warn("unable to synchronize container: no mbean server connection found on " + address);
+        	log.debug("unable to synchronize container: no mbean server connection found on " + address);
         	return;
         }
 

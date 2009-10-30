@@ -59,5 +59,7 @@ abstract public class CrawlJobBase implements CrawlJob {
         return mother;
     }
     
-    
+    public String toString() {
+    	return getClass().getSimpleName() + "[uid=" + uid + ",connection=" + connection + ",mother=" + mother + ",jobName=" + jobName + "]";
+    }
 }
