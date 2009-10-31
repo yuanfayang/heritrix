@@ -584,5 +584,6 @@ public class BdbMultipleWorkQueues {
             CrawlURI item = (CrawlURI)crawlUriBinding.entryToObject(value);
             c.execute(item);
         }
+        cursor.close();
     }
 }
