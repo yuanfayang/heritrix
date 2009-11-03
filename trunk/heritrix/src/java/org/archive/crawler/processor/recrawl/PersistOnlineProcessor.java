@@ -58,7 +58,9 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
     protected void initialTasks() {
         // TODO: share single store instance between Load and Store processors
         // (shared context? EnhancedEnvironment?)
-        store = initStore(); 
+        if (isProcessorEnabled()) {
+            store = initStore();
+        }
     }
 
     protected StoredSortedMap<String,AList> initStore() {
@@ -79,6 +81,7 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
 
     @Override
     protected void finalTasks() {
+        if (isProcessorEnabled()) {
             try {
                 historyDb.sync();
                 historyDb.close();
@@ -86,5 +89,6 @@ public abstract class PersistOnlineProcessor extends PersistProcessor {
                 throw new RuntimeException(e);
             }
         }
+    }
 
 }

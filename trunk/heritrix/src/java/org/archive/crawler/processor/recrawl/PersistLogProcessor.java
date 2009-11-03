@@ -71,6 +71,11 @@ public class PersistLogProcessor extends PersistProcessor implements CrawlStatus
 
     @Override
     protected void initialTasks() {
+        // do not create persist log if processor is disabled
+        if (!isProcessorEnabled()) {
+            return;
+        }
+
         // Add this class to crawl state listeners to note checkpoints
         getController().addCrawlStatusListener(this);
         try {

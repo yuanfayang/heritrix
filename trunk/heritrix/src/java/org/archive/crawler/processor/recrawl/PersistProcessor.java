@@ -35,6 +35,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.JMException;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -347,5 +349,14 @@ public abstract class PersistProcessor extends Processor {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
         return new EnhancedEnvironment(env, envConfig);
+    }
+    
+    protected boolean isProcessorEnabled() {
+        try {
+            return ((Boolean) getAttribute(ATTR_ENABLED)).booleanValue();
+        } catch (JMException e) {
+            logger.severe(e.getMessage());
+            return true;
+        }
     }
 }
