@@ -29,9 +29,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.text.ParseException;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -227,95 +225,11 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final String timestamp =
                 ArchiveUtils.getLog14Date(curi.getLong(A_FETCH_BEGAN_TIME));
             if (lowerCaseScheme.startsWith("http")) {
-                // Add named fields for ip, checksum, and relate the metadata
-                // and request to the resource field.
-                // TODO: Use other than ANVL (or rename ANVL as NameValue or
-                // use RFC822 (commons-httpclient?).
-                ANVLRecord headers = new ANVLRecord(5);
-                if (curi.getContentDigest() != null) {
-                    headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
-                        curi.getContentDigestSchemeString());
-                }
-                headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
-                URI rid;
-                
-                if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
-                        ((Boolean)getUncheckedAttribute(curi, 
-                                ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
-                    rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
-                            baseid, curi, headers);
-                } else if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED && 
-                        ((Boolean)getUncheckedAttribute(curi, 
-                                ATTR_WRITE_REVISIT_FOR_NOT_MODIFIED))) {
-                    rid = writeRevisitNotModified(w, timestamp,
-                            baseid, curi, headers);
-                } else {
-                    if (curi.isTruncatedFetch()) {
-                        String value = curi.isTimeTruncatedFetch()?
-                            NAMED_FIELD_TRUNCATED_VALUE_TIME:
-                            curi.isLengthTruncatedFetch()?
-                                NAMED_FIELD_TRUNCATED_VALUE_LENGTH:
-                                curi.isHeaderTruncatedFetch()?
-                                    NAMED_FIELD_TRUNCATED_VALUE_HEAD:
-                            // TODO: Add this to spec.
-                            TRUNCATED_VALUE_UNSPECIFIED;
-                        headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
-                    }
-                    rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
-                    	baseid, curi, headers);
-                }
-                
-                headers = new ANVLRecord(1);
-                headers.addLabelValue(HEADER_KEY_CONCURRENT_TO,
-                    '<' + rid.toString() + '>');
-
-                if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_REQUESTS))) {
-                    writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
-                            baseid, curi, headers);
-                }
-                if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
-                    writeMetadata(w, timestamp, baseid, curi, headers);
-                } 
+                writeHttpRecords(w, curi, baseid, timestamp); 
             } else if (lowerCaseScheme.equals("dns")) {
-                ANVLRecord headers = null;
-                String ip = curi.getString(A_DNS_SERVER_IP_LABEL);
-                if (ip != null && ip.length() > 0) {
-                    headers = new ANVLRecord(1);
-                    headers.addLabelValue(HEADER_KEY_IP, ip);
-                }
-                writeResponse(w, timestamp, curi.getContentType(), baseid,
-                    curi, headers);
+                writeDnsRecords(w, curi, baseid, timestamp);
             } else if (lowerCaseScheme.equals("ftp")) {
-                ANVLRecord headers = new ANVLRecord(2);
-                headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
-                String controlConversation = curi.getString(A_FTP_CONTROL_CONVERSATION);
-                URI rid = writeFtpControlConversation(w, timestamp, baseid, curi, headers, controlConversation);
-                
-                if (curi.getHttpRecorder() != null) {
-                    headers = new ANVLRecord(3);
-                    if (curi.isTruncatedFetch()) {
-                        String value = curi.isTimeTruncatedFetch()?
-                            NAMED_FIELD_TRUNCATED_VALUE_TIME:
-                            curi.isLengthTruncatedFetch()?
-                                NAMED_FIELD_TRUNCATED_VALUE_LENGTH:
-                                curi.isHeaderTruncatedFetch()?
-                                    NAMED_FIELD_TRUNCATED_VALUE_HEAD:
-                            // TODO: Add this to spec.
-                            TRUNCATED_VALUE_UNSPECIFIED;
-                        headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
-                    }
-                    if (curi.getContentDigest() != null) {
-                        headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
-                            curi.getContentDigestSchemeString());
-                    }
-                    headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
-                    rid = writeResource(w, timestamp, curi.getContentType(), baseid, curi, headers);
-                }
-                if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
-                    headers = new ANVLRecord(1);
-                    headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
-                    writeMetadata(w, timestamp, baseid, curi, headers);
-                } 
+                writeFtpRecords(w, curi, baseid, timestamp); 
             } else {
                 logger.warning("No handler for scheme " + lowerCaseScheme);
             }
@@ -335,6 +249,105 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             }
         }
         checkBytesWritten();
+    }
+
+    private void writeFtpRecords(WARCWriter w, final CrawlURI curi, final URI baseid,
+            final String timestamp) throws IOException {
+        ANVLRecord headers = new ANVLRecord(2);
+        headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
+        String controlConversation = curi.getString(A_FTP_CONTROL_CONVERSATION);
+        URI rid = writeFtpControlConversation(w, timestamp, baseid, curi, headers, controlConversation);
+        
+        if (curi.getHttpRecorder() != null) {
+            headers = new ANVLRecord(3);
+            if (curi.isTruncatedFetch()) {
+                String value = curi.isTimeTruncatedFetch()?
+                    NAMED_FIELD_TRUNCATED_VALUE_TIME:
+                    curi.isLengthTruncatedFetch()?
+                        NAMED_FIELD_TRUNCATED_VALUE_LENGTH:
+                        curi.isHeaderTruncatedFetch()?
+                            NAMED_FIELD_TRUNCATED_VALUE_HEAD:
+                    // TODO: Add this to spec.
+                    TRUNCATED_VALUE_UNSPECIFIED;
+                headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+            }
+            if (curi.getContentDigest() != null) {
+                headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
+                    curi.getContentDigestSchemeString());
+            }
+            headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
+            rid = writeResource(w, timestamp, curi.getContentType(), baseid, curi, headers);
+        }
+        if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
+            headers = new ANVLRecord(1);
+            headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
+            writeMetadata(w, timestamp, baseid, curi, headers);
+        }
+    }
+
+    private void writeDnsRecords(WARCWriter w, final CrawlURI curi, final URI baseid,
+            final String timestamp) throws IOException {
+        ANVLRecord headers = null;
+        String ip = curi.getString(A_DNS_SERVER_IP_LABEL);
+        if (ip != null && ip.length() > 0) {
+            headers = new ANVLRecord(1);
+            headers.addLabelValue(HEADER_KEY_IP, ip);
+        }
+        writeResponse(w, timestamp, curi.getContentType(), baseid,
+            curi, headers);
+    }
+
+    private void writeHttpRecords(WARCWriter w, final CrawlURI curi, final URI baseid,
+            final String timestamp) throws IOException {
+        // Add named fields for ip, checksum, and relate the metadata
+        // and request to the resource field.
+        // TODO: Use other than ANVL (or rename ANVL as NameValue or
+        // use RFC822 (commons-httpclient?).
+        ANVLRecord headers = new ANVLRecord(5);
+        if (curi.getContentDigest() != null) {
+            headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
+                curi.getContentDigestSchemeString());
+        }
+        headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
+        URI rid;
+        
+        if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
+                ((Boolean)getUncheckedAttribute(curi, 
+                        ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
+            rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+                    baseid, curi, headers);
+        } else if (curi.getFetchStatus() == HttpStatus.SC_NOT_MODIFIED && 
+                ((Boolean)getUncheckedAttribute(curi, 
+                        ATTR_WRITE_REVISIT_FOR_NOT_MODIFIED))) {
+            rid = writeRevisitNotModified(w, timestamp,
+                    baseid, curi, headers);
+        } else {
+            if (curi.isTruncatedFetch()) {
+                String value = curi.isTimeTruncatedFetch()?
+                    NAMED_FIELD_TRUNCATED_VALUE_TIME:
+                    curi.isLengthTruncatedFetch()?
+                        NAMED_FIELD_TRUNCATED_VALUE_LENGTH:
+                        curi.isHeaderTruncatedFetch()?
+                            NAMED_FIELD_TRUNCATED_VALUE_HEAD:
+                    // TODO: Add this to spec.
+                    TRUNCATED_VALUE_UNSPECIFIED;
+                headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+            }
+            rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+            	baseid, curi, headers);
+        }
+        
+        headers = new ANVLRecord(1);
+        headers.addLabelValue(HEADER_KEY_CONCURRENT_TO,
+            '<' + rid.toString() + '>');
+
+        if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_REQUESTS))) {
+            writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
+                    baseid, curi, headers);
+        }
+        if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
+            writeMetadata(w, timestamp, baseid, curi, headers);
+        }
     }
     
     protected URI writeFtpControlConversation(WARCWriter w, String timestamp, URI baseid,
