@@ -259,24 +259,31 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         URI rid = writeFtpControlConversation(w, timestamp, baseid, curi, headers, controlConversation);
         
         if (curi.getHttpRecorder() != null) {
-            headers = new ANVLRecord(3);
-            if (curi.isTruncatedFetch()) {
-                String value = curi.isTimeTruncatedFetch()?
-                    NAMED_FIELD_TRUNCATED_VALUE_TIME:
-                    curi.isLengthTruncatedFetch()?
+            if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
+                    ((Boolean)getUncheckedAttribute(curi, 
+                        ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
+                rid = writeRevisitDigest(w, timestamp, null,
+                        baseid, curi, headers);
+            } else {
+                headers = new ANVLRecord(3);
+                if (curi.isTruncatedFetch()) {
+                    String value = curi.isTimeTruncatedFetch()?
+                        NAMED_FIELD_TRUNCATED_VALUE_TIME:
+                        curi.isLengthTruncatedFetch()?
                         NAMED_FIELD_TRUNCATED_VALUE_LENGTH:
                         curi.isHeaderTruncatedFetch()?
-                            NAMED_FIELD_TRUNCATED_VALUE_HEAD:
-                    // TODO: Add this to spec.
-                    TRUNCATED_VALUE_UNSPECIFIED;
-                headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+                        NAMED_FIELD_TRUNCATED_VALUE_HEAD:
+                        // TODO: Add this to spec.
+                        TRUNCATED_VALUE_UNSPECIFIED;
+                    headers.addLabelValue(HEADER_KEY_TRUNCATED, value);
+                }
+                if (curi.getContentDigest() != null) {
+                    headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
+                            curi.getContentDigestSchemeString());
+                }
+                headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
+                rid = writeResource(w, timestamp, curi.getContentType(), baseid, curi, headers);
             }
-            if (curi.getContentDigest() != null) {
-                headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
-                    curi.getContentDigestSchemeString());
-            }
-            headers.addLabelValue(HEADER_KEY_CONCURRENT_TO, '<' + rid.toString() + '>');
-            rid = writeResource(w, timestamp, curi.getContentType(), baseid, curi, headers);
         }
         if(((Boolean)getUncheckedAttribute(curi, ATTR_WRITE_METADATA))) {
             headers = new ANVLRecord(1);
@@ -423,16 +430,23 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
-        long revisedLength = curi.getHttpRecorder().getRecordedInput().getContentBegin();
-        revisedLength = revisedLength > 0 
-            ? revisedLength 
-            : curi.getHttpRecorder().getRecordedInput().getSize();
         namedFields.addLabelValue(
-        		HEADER_KEY_PROFILE, PROFILE_REVISIT_IDENTICAL_DIGEST);
+                HEADER_KEY_PROFILE, PROFILE_REVISIT_IDENTICAL_DIGEST);
         namedFields.addLabelValue(
-        		HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LENGTH);
-        ReplayInputStream ris =
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
+                HEADER_KEY_TRUNCATED, NAMED_FIELD_TRUNCATED_VALUE_LENGTH);
+        
+        ReplayInputStream ris = null;
+        long revisedLength = 0;
+        
+        // null mimetype implies no payload
+        if (mimetype != null) {
+            ris = curi.getHttpRecorder().getRecordedInput().getReplayInputStream();
+            revisedLength = curi.getHttpRecorder().getRecordedInput().getContentBegin();
+            revisedLength = revisedLength > 0 
+                ? revisedLength 
+                : curi.getHttpRecorder().getRecordedInput().getSize();
+        }
+        
         try {
             w.writeRevisitRecord(curi.toString(), timestamp, mimetype, baseid,
                 namedFields, ris, revisedLength);
