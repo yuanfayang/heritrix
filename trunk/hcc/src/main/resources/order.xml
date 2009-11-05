@@ -80,7 +80,7 @@
       <string name="from">$fromEmail</string>
     </map>
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
-      <string name="type">classic</string>
+      <string name="type">$robotsHonoringPolicy</string>
       <boolean name="masquerade">false</boolean>
       <text name="custom-robots"/>
       <stringList name="user-agents">
