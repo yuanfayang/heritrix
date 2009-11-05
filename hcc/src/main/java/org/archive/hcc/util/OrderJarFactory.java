@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
+
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,6 +62,7 @@ public class OrderJarFactory {
     private String diskPath = null;
     private boolean test = false;
     private boolean oneHopOff = false;
+    private boolean ignoreRobots = false;
     private String operator = null;
     private String persistSource = null;
 	private long dataLimit = 0l;
@@ -68,6 +71,7 @@ public class OrderJarFactory {
 	private String statePath = "state";
 	private String scratchPath = "scratch";
 	private String warcPath = "warcs";
+	
     
     public OrderJarFactory(String name, String userAgent, String fromEmail, String description, String organization, List<String> seeds) {
     	assert name != null;
@@ -118,6 +122,8 @@ public class OrderJarFactory {
     	replaceKey(order, "$operator", operator, "No Operator Specified");
         replaceKey(order, "$writeEnabled", !isTest());
         replaceKey(order, "$oneHopOff", isOneHopOff());
+        replaceKey(order, "$robotsHonoringPolicy", isIgnoreRobots() ? "ignore" : "classic");
+
         replaceKey(order, "$duration", new Long(this.durationLimit)); //order file is in seconds.
         replaceKey(order, "$documentLimit", documentLimit);
         replaceKey(order, "$dataLimit", dataLimit);
@@ -137,7 +143,9 @@ public class OrderJarFactory {
         return order.toString();
     }
 
-    private void insertAcceptRegexes(StringBuilder order,
+
+
+	private void insertAcceptRegexes(StringBuilder order,
 			List<String> regexes) {
     	int offset = order.indexOf("<newObject name=\"rejectIfRegexMatch\"");
     	if (offset < 0) {
@@ -443,5 +451,14 @@ public class OrderJarFactory {
 
 	public void setWarcPath(String warcPath) {
 		this.warcPath = warcPath;
+	}
+
+	public void setIgnoreRobots(boolean ignore) {
+		this.ignoreRobots = ignore;
+		
+	}
+
+    private boolean isIgnoreRobots() {
+		return this.ignoreRobots;
 	}
 }
