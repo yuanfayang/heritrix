@@ -1058,10 +1058,6 @@ public class CrawlController implements Serializable, Reporter {
         this.scratchDisk = null;
         this.order = null;
         this.scope = null;
-        if (this.settingsHandler !=  null) {
-            this.settingsHandler.cleanup();
-        }
-        this.settingsHandler = null;
         this.reserveMemory = null;
         this.processorChains = null;
         if (this.serverCache != null) {
@@ -1082,6 +1078,10 @@ public class CrawlController implements Serializable, Reporter {
             this.bdbEnvironment = null;
         }
         this.bigmaps = null;
+        if (this.settingsHandler !=  null) {
+            this.settingsHandler.cleanup();
+        }
+        this.settingsHandler = null;
         if (this.toePool != null) {
             this.toePool.cleanup();
             // I played with launching a thread here to do cleanup of the

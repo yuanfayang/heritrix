@@ -6,7 +6,7 @@
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%@ page import="org.archive.crawler.admin.*" %>
 <%
-    /**
+     /**
      * Page allows user to view the information on seeds in the
      * StatisticsTracker for a completed job.
      * Parameter: job - UID for the job.
@@ -34,7 +34,6 @@
     
     String title = "Crawl job report"; 
     int tab = 4;
-    
 %>
 
 <%@include file="/include/head.jsp"%>
@@ -60,11 +59,12 @@
 %>
         <p>&nbsp;<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Invalid job selected.</b>
 <%
-    } else if(!viewingCurrentJob && summary != null && summary.isStats()) {
+		} else if(!viewingCurrentJob && summary != null && summary.isStats()) {
 		// If the job selected is not the current job, then show stats
         // for completed job
 		java.text.DecimalFormat percentFormat =
-            new java.text.DecimalFormat("#####.#");                                  %>
+            new java.text.DecimalFormat("#####.#");
+%>
         <table border="0">
             <tr>
                 <td valign="top">
@@ -90,7 +90,7 @@
                                 <b>Time:</b>&nbsp;
                             </td>
                             <td>
-                               <%= summary.getDurationTime() %>
+                               <%=summary.getDurationTime()%>
                             </td>
                         </tr>
                     </table>
@@ -105,7 +105,7 @@
                                 <b>Processed docs/sec:</b>&nbsp;
                             </td>
                             <td>                           
-                               <%= summary.getProcessedDocsPerSec() %>                              
+                               <%=summary.getProcessedDocsPerSec()%>                              
                             </td>
                             </tr>
                         <tr>
@@ -113,7 +113,7 @@
                                 <b>Processed KB/sec:</b>&nbsp;
                             </td>
                             <td>
-                               <%= summary.getBandwidthKbytesPerSec() %>
+                               <%=summary.getBandwidthKbytesPerSec()%>
                             </td>
                         </tr>
                         <tr>
@@ -121,7 +121,7 @@
                                 <b>Total data written:</b>&nbsp;
                             </td>
                             <td>
-                                <%= summary.getTotalDataWritten() %>
+                                <%=summary.getTotalDataWritten()%>
                             </td>
                         </tr>
                     </table>
@@ -154,22 +154,22 @@
                 </th>
             </tr>
             <%
-                boolean alt = true;
-                TreeMap scd = summary.getReverseSortedCopy(summary.getStatusCodeDistribution());
-                for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
-                    long count = ((AtomicLong)scd.get(key)).get();
-                    long displaybarwidth = 0;
-                    long barwidthadjust = 5;
-                    double per = ((double)count) / summary.getTotalStatusCodeDocuments();
-                    if(summary.getTotalStatusCodeDocuments() > 0){
-                       displaybarwidth = (long)(per * MAX_BAR_WIDTH);
-                    } 
-                    if(displaybarwidth==0){
-                       displaybarwidth=1;
-                    }
-                    
-                    String percent = percentFormat.format(100 * per);
+                            boolean alt = true;
+                            TreeMap scd = summary.getReverseSortedCopy(summary.getStatusCodeDistribution());
+                            for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
+                                long count = ((AtomicLong)scd.get(key)).get();
+                                long displaybarwidth = 0;
+                                long barwidthadjust = 5;
+                                double per = ((double)count) / summary.getTotalStatusCodeDocuments();
+                                if(summary.getTotalStatusCodeDocuments() > 0){
+                                   displaybarwidth = (long)(per * MAX_BAR_WIDTH);
+                                } 
+                                if(displaybarwidth==0){
+                                   displaybarwidth=1;
+                                }
+                                
+                                String percent = percentFormat.format(100 * per);
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -179,16 +179,16 @@
                         </td>
                         <td colspan="2" nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
-                            	<span class=percent>(<%= percent %>%)</span>
+                            	<span class=percent>(<%=percent%>%)</span>
                         </td>
                     </tr>
             <%
-                    alt = !alt;
-                }
+                            alt = !alt;
+                            }
             %>                
             <tr class="totalrow">
             	<td><b>Total:</b></td>
-            	<td><%= summary.getTotalStatusCodeDocuments() %> &nbsp; </td>
+            	<td><%=summary.getTotalStatusCodeDocuments()%> &nbsp; </td>
             	<td>&nbsp;</td>
             </tr>
             <tr>
@@ -206,21 +206,21 @@
                 </th>
             </tr>
             <%
-                alt = true;
-                TreeMap fd = summary.getReverseSortedCopy(summary.getMimeDistribution());
-                for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
-                    long count = ((AtomicLong)fd.get(key)).get();
-                    long displaybarwidth = 0;
-                    double per = ((double)count) / summary.getTotalMimeTypeDocuments();
-                    if(summary.getTotalMimeTypeDocuments()>1){
-                       displaybarwidth = (long)(per * MAX_BAR_WIDTH);
-                    } 
-                    if(displaybarwidth==0){
-                       displaybarwidth=1;
-                    }
-                    
-                    String percent = percentFormat.format(100 * per);
+                            alt = true;
+                            TreeMap fd = summary.getReverseSortedCopy(summary.getMimeDistribution());
+                            for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
+                                long count = ((AtomicLong)fd.get(key)).get();
+                                long displaybarwidth = 0;
+                                double per = ((double)count) / summary.getTotalMimeTypeDocuments();
+                                if(summary.getTotalMimeTypeDocuments()>1){
+                                   displaybarwidth = (long)(per * MAX_BAR_WIDTH);
+                                } 
+                                if(displaybarwidth==0){
+                                   displaybarwidth=1;
+                                }
+                                
+                                String percent = percentFormat.format(100 * per);
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -228,22 +228,22 @@
                         </td>
                         <td nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
-                            	<span class=percent>(<%= percent %>%)</span>
+                            	<span class=percent>(<%=percent%>%)</span>
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(summary.getBytesPerMimeType((String)key))%>&nbsp;
                         </td>
                     </tr>
             <%
-                    alt = !alt;
-                }
+                            alt = !alt;
+                            }
             %>   
            
             <tr class="totalrow">
   	        	<td><b>Total</b></td>
-  	        	<td><%= summary.getTotalMimeTypeDocuments() %> &nbsp; </td> 
+  	        	<td><%=summary.getTotalMimeTypeDocuments()%> &nbsp; </td> 
   	        	<td align="right" nowrap>
-        	      		<%= ArchiveUtils.formatBytesForDisplay(summary.getTotalMimeSize()) %>&nbsp;
+        	      		<%=ArchiveUtils.formatBytesForDisplay(summary.getTotalMimeSize())%>&nbsp;
         	    </td>
             </tr>
             	    
@@ -262,22 +262,22 @@
                 </th>
             </tr>
             <%
-                alt = true;
-                SortedMap hd = summary.getReverseSortedHostsDistribution();
-                for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
-                    AtomicLong lw = (AtomicLong)hd.get(key);
-                    long count = lw == null ? 0 : lw.get();
-                    long displaybarwidth = 0;
-                    double per = ((double)count) / summary.getTotalHostDocuments();
-                    if(summary.getTotalHostDocuments() > 1) {
-                       displaybarwidth = (long)(per * MAX_BAR_WIDTH);
-                    } 
-                    if(displaybarwidth==0){
-                       displaybarwidth=1;
-                    }
-                    
-                    String percent = percentFormat.format(100 * per);
+                            alt = true;
+                            SortedMap hd = summary.getReverseSortedHostsDistribution();
+                            for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
+                                AtomicLong lw = (AtomicLong)hd.get(key);
+                                long count = lw == null ? 0 : lw.get();
+                                long displaybarwidth = 0;
+                                double per = ((double)count) / summary.getTotalHostDocuments();
+                                if(summary.getTotalHostDocuments() > 1) {
+                                   displaybarwidth = (long)(per * MAX_BAR_WIDTH);
+                                } 
+                                if(displaybarwidth==0){
+                                   displaybarwidth=1;
+                                }
+                                
+                                String percent = percentFormat.format(100 * per);
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -285,21 +285,21 @@
                         </td>
                         <td nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
-                            	<span class=percent>(<%= percent %>%)</span>
+                            	<span class=percent>(<%=percent%>%)</span>
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(summary.getBytesPerHost((String)key))%>&nbsp;
                         </td>                      
                     </tr>
             <%
-                    alt = !alt;
-                }
+                            alt = !alt;
+                            }
             %>                
             <tr class="totalrow">
   	        	<td><b>Total</b></td>
-  	        	<td><%= summary.getTotalHostDocuments() %> &nbsp; </td> 
+  	        	<td><%=summary.getTotalHostDocuments()%> &nbsp; </td> 
   	        	<td align="right" nowrap>
-        	      		<%= ArchiveUtils.formatBytesForDisplay(summary.getTotalHostSize()) %>&nbsp;
+        	      		<%=ArchiveUtils.formatBytesForDisplay(summary.getTotalHostSize())%>&nbsp;
         	    </td>
             </tr>
             
@@ -328,53 +328,53 @@
                 </th>
             </tr>
             <%
-                alt = true;
-            	scd = summary.getReverseSortedCopy(summary.getTldDistribution());
-                for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
-                    AtomicLong lw = (AtomicLong)scd.get(key);
-                    long count = lw == null ? 0 : lw.get();
-                    long displaybarwidth = 0;
-                    double per = ((double)count) / summary.getTotalTldDocuments();
-                    
-                    long hostsPerTld = summary.getHostsPerTld((String)key);
-                    double perHost = ((double)hostsPerTld) / summary.getTotalHosts();
-                    
-                    if (summary.getTotalTldDocuments() > 1) {
-                       displaybarwidth = (long)(per * MAX_BAR_WIDTH);
-                    } 
-                    if (displaybarwidth == 0){
-                       displaybarwidth = 1;
-                    }
-                    
-                    String percent = percentFormat.format(100 * per);
-                    String percentHost = percentFormat.format(100 * perHost);
+                        	alt = true;
+                        	scd = summary.getReverseSortedCopy(summary.getTldDistribution());
+                            for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
+                                AtomicLong lw = (AtomicLong)scd.get(key);
+                                long count = lw == null ? 0 : lw.get();
+                                long displaybarwidth = 0;
+                                double per = ((double)count) / summary.getTotalTldDocuments();
+                                
+                                long hostsPerTld = summary.getHostsPerTld((String)key);
+                                double perHost = ((double)hostsPerTld) / summary.getTotalHosts();
+                                
+                                if (summary.getTotalTldDocuments() > 1) {
+                                   displaybarwidth = (long)(per * MAX_BAR_WIDTH);
+                                } 
+                                if (displaybarwidth == 0){
+                                   displaybarwidth = 1;
+                                }
+                                
+                                String percent = percentFormat.format(100 * per);
+                                String percentHost = percentFormat.format(100 * perHost);
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
                             <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=(String)key%>&grep=true"><%=(String)key%></a>&nbsp;
                         </td>
                         <td>
-                        	<%= hostsPerTld %> &nbsp; <span class=percent>(<%= percentHost %>%)</span>
+                        	<%=hostsPerTld%> &nbsp; <span class=percent>(<%=percentHost%>%)</span>
                         </td>
                         <td nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
-                            	<span class=percent>(<%= percent %>%)</span>
+                            	<span class=percent>(<%=percent%>%)</span>
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(summary.getBytesPerTld((String)key))%>&nbsp;
                         </td>                      
                     </tr>
             <%
-                    alt = !alt;
-                }
+                            alt = !alt;
+                            }
             %>                
             <tr class="totalrow">
   	        	<td><b>Total</b></td>
-  	        	<td><%= summary.getTotalHosts() %></td>
-  	        	<td><%= summary.getTotalTldDocuments() %> &nbsp; </td> 
+  	        	<td><%=summary.getTotalHosts()%></td>
+  	        	<td><%=summary.getTotalTldDocuments()%> &nbsp; </td> 
   	        	<td align="right" nowrap>
-        	      		<%= ArchiveUtils.formatBytesForDisplay(summary.getTotalTldSize()) %>&nbsp;
+        	      		<%=ArchiveUtils.formatBytesForDisplay(summary.getTotalTldSize())%>&nbsp;
         	    </td>
             </tr>                   
             
@@ -405,22 +405,22 @@
                 </th>
             </tr>
             <%
-                alt = true;
-                scd = summary.getReverseSortedCopy(summary.getDnsStatusCodeDistribution());
-                for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
-                    long count = ((AtomicLong)scd.get(key)).get();
-                    long displaybarwidth = 0;
-                    long barwidthadjust = 3;
-                    double per = ((double)count) / summary.getTotalDnsStatusCodeDocuments(); 
-                    if(summary.getTotalDnsStatusCodeDocuments()/barwidthadjust>0){
-                       displaybarwidth = (long)(per * MAX_BAR_WIDTH);
-                    } 
-                    if(displaybarwidth==0){
-                       displaybarwidth=1;
-                    }
-                                 
-                    String percent = percentFormat.format(100 * per);
+                            alt = true;
+                            scd = summary.getReverseSortedCopy(summary.getDnsStatusCodeDistribution());
+                            for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
+                                long count = ((AtomicLong)scd.get(key)).get();
+                                long displaybarwidth = 0;
+                                long barwidthadjust = 3;
+                                double per = ((double)count) / summary.getTotalDnsStatusCodeDocuments(); 
+                                if(summary.getTotalDnsStatusCodeDocuments()/barwidthadjust>0){
+                                   displaybarwidth = (long)(per * MAX_BAR_WIDTH);
+                                } 
+                                if(displaybarwidth==0){
+                                   displaybarwidth=1;
+                                }
+                                             
+                                String percent = percentFormat.format(100 * per);
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -430,16 +430,16 @@
                         </td>
                         <td colspan="2" nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
-                            	<span class=percent>(<%= percent %>%)</span>
+                            	<span class=percent>(<%=percent%>%)</span>
                         </td>
                     </tr>
             <%
-                    alt = !alt;
-                }
+                            alt = !alt;
+                            }
             %>                
             <tr class="totalrow">
             	<td><b>Total:</b></td>
-            	<td><%= summary.getTotalDnsStatusCodeDocuments() %> &nbsp; </td>
+            	<td><%=summary.getTotalDnsStatusCodeDocuments()%> &nbsp; </td>
             	<td>&nbsp;</td>
             </tr>
             <tr>
@@ -457,22 +457,21 @@
                 </th>
             </tr>
             <%
-                alt = true;
-                fd = summary.getReverseSortedCopy(summary.getDnsMimeDistribution());
-                for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
-                    long count = ((AtomicLong)fd.get(key)).get();
-                    long displaybarwidth = 0;
-                    double per = ((double)count)/summary.getTotalDnsMimeTypeDocuments();
-                    if(summary.getTotalMimeTypeDocuments()/6>0){
-                       displaybarwidth = (long)(per * MAX_BAR_WIDTH);
-                    } 
-                    if(displaybarwidth==0){
-                       displaybarwidth=1;
-                    }
-                    
-                    String percent = percentFormat.format(100 * per);
-
+                            alt = true;
+                            fd = summary.getReverseSortedCopy(summary.getDnsMimeDistribution());
+                            for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
+                                long count = ((AtomicLong)fd.get(key)).get();
+                                long displaybarwidth = 0;
+                                double per = ((double)count)/summary.getTotalDnsMimeTypeDocuments();
+                                if(summary.getTotalMimeTypeDocuments()/6>0){
+                                   displaybarwidth = (long)(per * MAX_BAR_WIDTH);
+                                } 
+                                if(displaybarwidth==0){
+                                   displaybarwidth=1;
+                                }
+                                
+                                String percent = percentFormat.format(100 * per);
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -480,23 +479,23 @@
                         </td>
                         <td nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
-                             <span class=percent>(<%= percent %>%)</span>
+                             <span class=percent>(<%=percent%>%)</span>
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(summary.getBytesPerMimeType((String)key))%>&nbsp;                           
                         </td>
                     </tr>
             <%
-                    alt = !alt;
-                }               
+                            alt = !alt;
+                            }
             %>   
 		            <tr class="totalrow">
         	        	<td><b>Total</b></td>
         	        	<td>
-        	        		<%= summary.getTotalDnsMimeTypeDocuments() %> &nbsp; 
+        	        		<%=summary.getTotalDnsMimeTypeDocuments()%> &nbsp; 
         	        	</td> 
         	        	<td align="right" nowrap>
-        	        		<%= ArchiveUtils.formatBytesForDisplay(summary.getTotalDnsMimeSize()) %>&nbsp;
+        	        		<%=ArchiveUtils.formatBytesForDisplay(summary.getTotalDnsMimeSize())%>&nbsp;
         	        	</td>
             	    </tr>
             	    
@@ -516,22 +515,22 @@
                 </th>
             </tr>
             <%
-                alt = true;
-                hd = summary.getReverseSortedCopy(summary.getHostsDnsDistribution());
-                for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
-                    AtomicLong lw = (AtomicLong)hd.get(key);
-                    long count = lw == null ? 0 : lw.get();
-                    long displaybarwidth = 0;
-                    double per = ((double)count) / summary.getTotalHostDnsDocuments();
-                    if(summary.getTotalHostDnsDocuments() > 1) {
-                       displaybarwidth = (long)(per * MAX_BAR_WIDTH);
-                    } 
-                    if(displaybarwidth==0){
-                       displaybarwidth=1;
-                    }
-                    
-                    String percent = percentFormat.format(100 * per);
+                            alt = true;
+                            hd = summary.getReverseSortedCopy(summary.getHostsDnsDistribution());
+                            for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
+                                AtomicLong lw = (AtomicLong)hd.get(key);
+                                long count = lw == null ? 0 : lw.get();
+                                long displaybarwidth = 0;
+                                double per = ((double)count) / summary.getTotalHostDnsDocuments();
+                                if(summary.getTotalHostDnsDocuments() > 1) {
+                                   displaybarwidth = (long)(per * MAX_BAR_WIDTH);
+                                } 
+                                if(displaybarwidth==0){
+                                   displaybarwidth=1;
+                                }
+                                
+                                String percent = percentFormat.format(100 * per);
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -539,21 +538,21 @@
                         </td>
                         <td nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
-                            	<span class=percent>(<%= percent %>%)</span>
+                            	<span class=percent>(<%=percent%>%)</span>
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(summary.getBytesPerHost((String)key))%>&nbsp;
                         </td>                      
                     </tr>
             <%
-                    alt = !alt;
-                }
+                            alt = !alt;
+                            }
             %>                
             <tr class="totalrow">
   	        	<td><b>Total</b></td>
-  	        	<td><%= summary.getTotalDnsHostDocuments() %> &nbsp; </td> 
+  	        	<td><%=summary.getTotalDnsHostDocuments()%> &nbsp; </td> 
   	        	<td align="right" nowrap>
-        	      		<%= ArchiveUtils.formatBytesForDisplay(summary.getTotalDnsHostSize()) %>&nbsp;
+        	      		<%=ArchiveUtils.formatBytesForDisplay(summary.getTotalDnsHostSize())%>&nbsp;
         	    </td>
             </tr>
             
@@ -562,13 +561,13 @@
             </tr>
 	</table>
  <%
-    } else if(stats == null) {
-        out.println("<b>No statistics associated with job.</b><p><b>Job status:</b> " + cjob.getStatus());            
-        if(cjob.getErrorMessage()!=null){
-            out.println("<p><pre><font color='red'>"+cjob.getErrorMessage()+"</font></pre>");
-        }
-    } else {
-%>
+         } else if(stats == null) {
+         out.println("<b>No statistics associated with job.</b><p><b>Job status:</b> " + cjob.getStatus());            
+         if(cjob.getErrorMessage()!=null){
+             out.println("<p><pre><font color='red'>"+cjob.getErrorMessage()+"</font></pre>");
+         }
+     } else {
+ %>
         <table border="0">
             <tr>
                 <td valign="top">
@@ -595,21 +594,21 @@
                             </td>
                             <td>
                                 <%
-                                    long time = (stats.getCrawlerTotalElapsedTime())/1000;
-                                    if(time>3600)
-                                    {
-                                        //got hours.
-                                        out.println(time/3600 + " h., ");
-                                        time = time % 3600;
-                                    }
-                                    
-                                    if(time > 60)
-                                    {
-                                        out.println(time/60 + " min. and ");
-                                        time = time % 60;
-                                    }
+                                                                    long time = (stats.getCrawlerTotalElapsedTime())/1000;
+                                                                    if(time>3600)
+                                                                    {
+                                                                        //got hours.
+                                                                        out.println(time/3600 + " h., ");
+                                                                        time = time % 3600;
+                                                                    }
+                                                                    
+                                                                    if(time > 60)
+                                                                    {
+                                                                        out.println(time/60 + " min. and ");
+                                                                        time = time % 60;
+                                                                    }
 
-                                    out.println(time + " sec.");
+                                                                    out.println(time + " sec.");
                                 %>
                             </td>
                         </tr>
@@ -626,20 +625,20 @@
                             </td>
                             <td>
                                 <%
-                                    if(cjob.getStatus().equalsIgnoreCase(CrawlJob.STATUS_RUNNING))
-                                    {
-                                        // Show current and overall stats.
+                                                                    if(cjob.getStatus().equalsIgnoreCase(CrawlJob.STATUS_RUNNING))
+                                                                    {
+                                                                        // Show current and overall stats.
                                 %>
                                         <%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>)
                                 <%
-                                    }
-                                    else
-                                    {
-                                        // Only show overall stats.
-                                %>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                // Only show overall stats.
+                                        %>
                                         <%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>
                                 <%
-                                    }
+                                }
                                 %>
                             </td>
                         </tr>
@@ -649,20 +648,20 @@
                             </td>
                             <td>
                                 <%
-                                    if(cjob.getStatus().equalsIgnoreCase(CrawlJob.STATUS_RUNNING))
-                                    {
-                                        // Show current and overall stats.
+                                                                    if(cjob.getStatus().equalsIgnoreCase(CrawlJob.STATUS_RUNNING))
+                                                                    {
+                                                                        // Show current and overall stats.
                                 %>
                                         <%=ArchiveUtils.doubleToString(stats.currentProcessedKBPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedKBPerSec(),2)%>)
                                 <%
-                                    }
-                                    else
-                                    {
-                                        // Only show overall stats.
-                                %>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                // Only show overall stats.
+                                        %>
                                         <%=ArchiveUtils.doubleToString(stats.processedKBPerSec(),2)%>
                                 <%
-                                    }
+                                }
                                 %>
                             </td>
                         </tr>
@@ -775,20 +774,20 @@
                 </th>
             </tr>
             <%
-                boolean alt = true;
-                TreeMap scd = stats.getReverseSortedCopy(stats.
-                    getStatusCodeDistribution());
-                for (Iterator i = scd.keySet().iterator();
-                        i.hasNext();) {
-                    Object key = i.next();
-                    long count = ((AtomicLong)scd.get(key)).get();
-                    long displaybarwidth = 0;
-                    if(stats.successfullyFetchedCount()/6>0){
-                       displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
-                    } 
-                    if(displaybarwidth==0){
-                       displaybarwidth=1;
-                    }
+                            boolean alt = true;
+                            TreeMap scd = stats.getReverseSortedCopy(stats.
+                                getStatusCodeDistribution());
+                            for (Iterator i = scd.keySet().iterator();
+                                    i.hasNext();) {
+                                Object key = i.next();
+                                long count = ((AtomicLong)scd.get(key)).get();
+                                long displaybarwidth = 0;
+                                if(stats.successfullyFetchedCount()/6>0){
+                                   displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
+                                } 
+                                if(displaybarwidth==0){
+                                   displaybarwidth=1;
+                                }
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -872,10 +871,10 @@
                 <% } %>
             </tr>
             <%
-                alt = true;
-                SortedMap hd = stats.getReverseSortedHostsDistribution();
-                for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
-                    Object key = i.next();
+                            alt = true;
+                            SortedMap hd = stats.getReverseSortedHostsDistribution();
+                            for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
+                                Object key = i.next();
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
@@ -893,7 +892,7 @@
                                  cjob.getStatus().equals(CrawlJob.STATUS_PAUSED) ||
                                  cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)){ %>
                             <td align="right">
-                                <%=ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-stats.getHostLastFinished((String)key))%>
+                                <%=ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-stats.getHostLastFinished((String)key).longValue())%>
                             </td>
                         <% } %>
                     </tr>

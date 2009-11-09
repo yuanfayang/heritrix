@@ -102,7 +102,9 @@ public class ServerCache {
                 new Supplier<CrawlServer>() {
                     public CrawlServer get() {
                         String skey = new String(serverKey); // ensure private minimal key
-                        return new CrawlServer(skey);
+                        CrawlServer cs = new CrawlServer(skey);
+                        cs.setSettingsHandler(settingsHandler);
+                        return cs;
                     }});
         return cserver;
     }

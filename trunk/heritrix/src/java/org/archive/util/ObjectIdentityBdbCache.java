@@ -104,7 +104,7 @@ implements ObjectIdentityCache<String, V>, Closeable, Serializable {
     /** count of expunge put() to BDB (implies disk) */
     private AtomicLong expungeStatsDiskPut = new AtomicLong(0);
     /** count of {@link #sync()} use */
-    transient private AtomicLong useStatsSyncUsed = new AtomicLong(0);
+    private AtomicLong useStatsSyncUsed = new AtomicLong(0);
     
     /** Reference to the Reference#referent Field. */
     protected static Field referentField;
