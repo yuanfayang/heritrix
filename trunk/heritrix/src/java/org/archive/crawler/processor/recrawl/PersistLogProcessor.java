@@ -72,7 +72,7 @@ public class PersistLogProcessor extends PersistProcessor implements CrawlStatus
     @Override
     protected void initialTasks() {
         // do not create persist log if processor is disabled
-        if (!isProcessorEnabled()) {
+        if (!isEnabled()) {
             return;
         }
 

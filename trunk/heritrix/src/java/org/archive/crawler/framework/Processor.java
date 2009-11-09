@@ -271,4 +271,8 @@ public class Processor extends ModuleType {
     public void kickUpdate() {
         // by default do nothing
     }
+    
+    public boolean isEnabled() {
+        return ((Boolean)getUncheckedAttribute(null, ATTR_ENABLED)).booleanValue();
+    }
 }
