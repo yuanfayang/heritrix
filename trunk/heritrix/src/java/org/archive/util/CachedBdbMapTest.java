@@ -56,7 +56,7 @@ public class CachedBdbMapTest extends TmpDirTestCase {
     
     @SuppressWarnings("unchecked")
     public void testReadConsistencyUnderLoad() throws Exception {
-        final CachedBdbMap<Integer,AtomicInteger> cbdbmap = 
+        final CachedBdbMap<String,AtomicInteger> cbdbmap = 
             new CachedBdbMap(
                     this.envDir, 
                     this.getClass().getName(), 
@@ -68,7 +68,7 @@ public class CachedBdbMapTest extends TmpDirTestCase {
             final int maxLevel = 64; 
             // initial fill
             for(int i=0; i < keyCount; i++) {
-                cbdbmap.put(i, new AtomicInteger(level.get()));
+                cbdbmap.put(""+i, new AtomicInteger(level.get()));
             }
             // backward checking that all values always at level or higher
             new Thread() {
@@ -95,7 +95,7 @@ public class CachedBdbMapTest extends TmpDirTestCase {
                             break untilmax;
                         }
                         assertTrue("stale value random key "+j,
-                                cbdbmap.get(j).get()>=targetValue);
+                                cbdbmap.get(""+j).get()>=targetValue);
                         Thread.yield();
                     }
                 }
@@ -103,7 +103,7 @@ public class CachedBdbMapTest extends TmpDirTestCase {
             // increment all keys
             for(; level.get() < maxLevel; level.incrementAndGet()) {
                 for(int k = 0; k < keyCount; k++) {
-                    int foundValue = cbdbmap.get(k).getAndIncrement();
+                    int foundValue = cbdbmap.get(""+k).getAndIncrement();
                     assertEquals("stale value preinc key "+k, level.get(), foundValue);
                 }
                 if(level.get() % 10 == 0) {

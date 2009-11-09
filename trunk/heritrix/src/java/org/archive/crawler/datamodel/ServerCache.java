@@ -22,14 +22,15 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 import org.apache.commons.collections.Closure;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SettingsHandler;
+import org.archive.util.ObjectIdentityCache;
+import org.archive.util.ObjectIdentityMemCache;
+import org.archive.util.Supplier;
 
 /**
  * Server and Host cache.
@@ -46,13 +47,13 @@ public class ServerCache {
      * hostname[:port] -> CrawlServer.
      * Set in the initialization.
      */
-    protected ConcurrentMap<String,CrawlServer> servers = null;
+    protected ObjectIdentityCache<String,CrawlServer> servers = null;
     
     /**
      * hostname -> CrawlHost.
      * Set in the initialization.
      */
-    protected ConcurrentMap<String,CrawlHost> hosts = null;
+    protected ObjectIdentityCache<String,CrawlHost> hosts = null;
     
     /**
      * Constructor.
@@ -72,8 +73,8 @@ public class ServerCache {
     public ServerCache(final SettingsHandler sh)
     throws Exception {
         this.settingsHandler = sh;
-        this.servers = new ConcurrentHashMap<String,CrawlServer>();
-        this.hosts = new ConcurrentHashMap<String,CrawlHost>();
+        this.servers = new ObjectIdentityMemCache<CrawlServer>();
+        this.hosts = new ObjectIdentityMemCache<CrawlHost>();
     }
     
     /**
@@ -85,8 +86,8 @@ public class ServerCache {
     public ServerCache(final CrawlController c)
     throws Exception {
         this.settingsHandler = c.getSettingsHandler();
-        this.servers = c.getBigMap("servers", String.class, CrawlServer.class);
-        this.hosts = c.getBigMap("hosts", String.class, CrawlHost.class);
+        this.servers = c.getBigMap("servers", CrawlServer.class);
+        this.hosts = c.getBigMap("hosts", CrawlHost.class);
     }
     
     /**
@@ -95,17 +96,14 @@ public class ServerCache {
      * @param serverKey Server name we're to return server for.
      * @return CrawlServer instance that matches the passed server name.
      */
-    public CrawlServer getServerFor(String serverKey) {
-        CrawlServer cserver = (CrawlServer)this.servers.get(serverKey);
-        if(cserver==null) {
-            String skey = new String(serverKey); // ensure private minimal key
-            cserver = new CrawlServer(skey);
-            cserver.setSettingsHandler(settingsHandler);
-            CrawlServer prevVal = servers.putIfAbsent(skey, cserver);
-            if(prevVal!=null) {
-                cserver = prevVal;
-            }
-        }
+    public CrawlServer getServerFor(final String serverKey) {
+        CrawlServer cserver = servers.getOrUse(
+                serverKey,
+                new Supplier<CrawlServer>() {
+                    public CrawlServer get() {
+                        String skey = new String(serverKey); // ensure private minimal key
+                        return new CrawlServer(skey);
+                    }});
         return cserver;
     }
 
@@ -138,19 +136,17 @@ public class ServerCache {
      * @param hostname Host name we're to return Host for.
      * @return CrawlHost instance that matches the passed Host name.
      */
-    public CrawlHost getHostFor(String hostname) {
+    public CrawlHost getHostFor(final String hostname) {
         if (hostname == null || hostname.length() == 0) {
             return null;
         }
-        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
-        if(host==null) {
-            String hkey = new String(hostname); // ensure private minimal key
-            host = new CrawlHost(hkey);
-            CrawlHost prevVal = this.hosts.putIfAbsent(hkey, host);
-            if(prevVal!=null) {
-                host = prevVal;
-            }
-        }
+        CrawlHost host = hosts.getOrUse(
+                hostname,
+                new Supplier<CrawlHost>() {
+                    public CrawlHost get() {
+                        String hkey = new String(hostname); // ensure private minimal key
+                        return new CrawlHost(hkey);
+                    }});
         return host;
     }
     
@@ -198,11 +194,11 @@ public class ServerCache {
         if (this.hosts != null) {
             // If we're using a bdb bigmap, the call to clear will
             // close down the bdb database.
-            this.hosts.clear();
+            this.hosts.close();
             this.hosts = null;
         }
         if (this.servers != null) { 
-            this.servers.clear();
+            this.servers.close();
             this.servers = null;
         }
     }

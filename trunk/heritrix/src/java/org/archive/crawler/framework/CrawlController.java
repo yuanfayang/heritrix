@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -80,6 +79,8 @@ import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
+import org.archive.util.ObjectIdentityBdbCache;
+import org.archive.util.ObjectIdentityCache;
 import org.archive.util.Reporter;
 import org.archive.util.bdbje.EnhancedEnvironment;
 import org.xbill.DNS.DClass;
@@ -87,7 +88,6 @@ import org.xbill.DNS.Lookup;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
-import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.DbInternal;
 import com.sleepycat.je.EnvironmentConfig;
@@ -299,7 +299,7 @@ public class CrawlController implements Serializable, Reporter {
      * Keep a list of all BigMap instance made -- shouldn't be many -- so that
      * we can checkpoint.
      */
-    private transient Map<String,CachedBdbMap<?,?>> bigmaps = null;
+    private transient Map<String,ObjectIdentityCache<?,?>> bigmaps = null;
     
     /**
      * Default constructor
@@ -325,7 +325,7 @@ public class CrawlController implements Serializable, Reporter {
         installThreadContextSettingsHandler();
         this.order = settingsHandler.getOrder();
         this.order.setController(this);
-        this.bigmaps = new Hashtable<String,CachedBdbMap<?,?>>();
+        this.bigmaps = new Hashtable<String,ObjectIdentityCache<?,?>>();
         sExit = "";
         this.manifest = new StringBuffer();
         String onFailMessage = "";
@@ -1108,7 +1108,7 @@ public class CrawlController implements Serializable, Reporter {
             return false;
         }
 
-        if (maxBytes > 0 && frontier.totalBytesWritten() >= maxBytes) {
+        if (maxBytes > 0 && statistics.totalBytesCrawled() >= maxBytes) {
             // Hit the max byte download limit!
             sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
             return false;
@@ -1932,6 +1932,10 @@ public class CrawlController implements Serializable, Reporter {
         return "nothingYet";
     }
     
+    
+    /** controls which alternate ObjectIdentityCache implementation to use */
+    private static boolean USE_OIBC = true;
+
     /**
      * Call this method to get instance of the crawler BigMap implementation.
      * A "BigMap" is a Map that knows how to manage ever-growing sets of
@@ -1945,19 +1949,69 @@ public class CrawlController implements Serializable, Reporter {
      * if none available, returns instance of HashMap.
      * @throws Exception
      */
-    public <K,V> ConcurrentMap<K,V> getBigMap(final String dbName, 
-            final Class<? super K> keyClass,
+    public <V> ObjectIdentityCache<String,V> getBigMap(final String dbName, 
             final Class<? super V> valueClass)
     throws Exception {
-        CachedBdbMap<K,V> result = new CachedBdbMap<K,V>(dbName);
+        if(USE_OIBC) {
+            return getOIBC(dbName, valueClass);
+        } else {
+            return getCBM(dbName, valueClass);
+        }
+    }
+    
+    /**
+     * Implement 'big map' with ObjectIdentityBdbCache.
+     * 
+     * @param dbName Name to give any associated database.  Also used
+     * as part of name serializing out bigmap.  Needs to be unique to a crawl.
+     * @param keyClass Class of keys we'll be using.
+     * @param valueClass Class of values we'll be using.
+     * @return Map that knows how to carry large sets of key/value pairs or
+     * if none available, returns instance of HashMap.
+     * @throws Exception
+     */
+    protected <K,V> ObjectIdentityBdbCache<V> getOIBC(final String dbName,
+            final Class<? super V> valueClass)
+    throws Exception {
+        ObjectIdentityBdbCache<V> result = new ObjectIdentityBdbCache<V>();
         if (isCheckpointRecover()) {
             File baseDir = getCheckpointRecover().getDirectory();
             @SuppressWarnings("unchecked")
-            CachedBdbMap<K,V> temp = CheckpointUtils.
+            ObjectIdentityBdbCache<V> temp = CheckpointUtils.
                 readObjectFromFile(result.getClass(), dbName, baseDir);
             result = temp;
         }
-        result.initialize(getBdbEnvironment(), keyClass, valueClass,
+        result.initialize(getBdbEnvironment(), dbName, valueClass,
+                getBdbEnvironment().getClassCatalog());
+        // Save reference to all big maps made so can manage their
+        // checkpointing.
+        this.bigmaps.put(dbName, result);
+        return result;
+    }
+    
+    /**
+     * Implement 'big map' with CachedBdbMap.
+     * 
+     * @param dbName Name to give any associated database.  Also used
+     * as part of name serializing out bigmap.  Needs to be unique to a crawl.
+     * @param keyClass Class of keys we'll be using.
+     * @param valueClass Class of values we'll be using.
+     * @return Map that knows how to carry large sets of key/value pairs or
+     * if none available, returns instance of HashMap.
+     * @throws Exception
+     */
+    protected <V> CachedBdbMap<String,V> getCBM(final String dbName,
+            final Class<? super V> valueClass)
+    throws Exception {
+        CachedBdbMap<String,V> result = new CachedBdbMap<String,V>(dbName);
+        if (isCheckpointRecover()) {
+            File baseDir = getCheckpointRecover().getDirectory();
+            @SuppressWarnings("unchecked")
+            CachedBdbMap<String,V> temp = CheckpointUtils.
+                readObjectFromFile(result.getClass(), dbName, baseDir);
+            result = temp;
+        }
+        result.initialize(getBdbEnvironment(), valueClass,
                 getBdbEnvironment().getClassCatalog());
         // Save reference to all big maps made so can manage their
         // checkpointing.
@@ -1969,12 +2023,12 @@ public class CrawlController implements Serializable, Reporter {
     throws Exception {
         for (final Iterator i = this.bigmaps.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
-            Object obj = this.bigmaps.get(key);
+            ObjectIdentityCache obj = this.bigmaps.get(key);
             // TODO: I tried adding sync to custom serialization of BigMap
             // implementation but data member counts of the BigMap
             // implementation were not being persisted properly.  Look at
             // why.  For now, do sync in advance of serialization for now.
-            ((CachedBdbMap)obj).sync();
+            obj.sync();
             CheckpointUtils.writeObjectToFile(obj, (String)key, cpDir);
         }
     }

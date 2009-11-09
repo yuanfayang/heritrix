@@ -56,6 +56,7 @@ import org.archive.crawler.util.DiskFPMergeUriUniqFilter;
 import org.archive.crawler.util.MemFPMergeUriUniqFilter;
 import org.archive.queue.StoredQueue;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Supplier;
 
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseException;
@@ -269,22 +270,21 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
      * @param curi CrawlURI to base queue on
      * @return the found or created BdbWorkQueue
      */
-    protected WorkQueue getQueueFor(CrawlURI curi) {
-        WorkQueue wq;
-        String classKey = curi.getClassKey();
+    protected WorkQueue getQueueFor(final CrawlURI curi) {
+        final String classKey = curi.getClassKey();
         synchronized (allQueues) {
-            wq = (WorkQueue)allQueues.get(classKey);
-            if (wq == null) {
-                wq = new BdbWorkQueue(classKey, this);
-                wq.setTotalBudget(((Long)getUncheckedAttribute(
-                    curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
-                WorkQueue prevVal = allQueues.putIfAbsent(classKey, wq);
-                if(prevVal!=null) {
-                    wq = prevVal; // prefer race winner
-                }
-            }
+            WorkQueue wq = allQueues.getOrUse(
+                classKey,
+                new Supplier<WorkQueue>() {
+                    public WorkQueue get() {
+                        String qKey = new String(classKey); // ensure private minimal key
+                        WorkQueue q = new BdbWorkQueue(qKey, BdbFrontier.this);
+                        q.setTotalBudget(((Long)getUncheckedAttribute(
+                                curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue()); 
+                        return q;
+                    }});
+            return wq;
         }
-        return wq;
     }
     
     /**
