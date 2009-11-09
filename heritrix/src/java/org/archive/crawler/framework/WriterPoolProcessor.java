@@ -201,7 +201,9 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
             new SimpleType(ATTR_SUFFIX, "Suffix to tag onto " +
                 "files. '${HOSTNAME_ADMINPORT}' in the suffix " + 
                 "will be replaced with the local hostname and " +
-                "web UI port. If empty, no suffix will be added.",
+                "web UI port. '${HOSTNAME}' in the suffix will be " + 
+                "replaced with the local hostname. If empty, no "+  
+                "suffix will be added.",
                 WriterPoolMember.DEFAULT_SUFFIX));
         e.setOverrideable(false);
         e = addElementToDefinition(
@@ -442,7 +444,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         return (obj == null)? WriterPool.DEFAULT_MAXIMUM_WAIT:
             ((Integer)obj).intValue();
     }
-    
+
     private String getHostname() {
         String hostname = "localhost.localdomain";
         try {
@@ -472,7 +474,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
             String hostname = getHostname();
             sfx = sfx.replace(WriterPoolMember.HOSTNAME_ADMINPORT_VARIABLE, hostname + "-" + getPort());
             sfx = sfx.replace(WriterPoolMember.HOSTNAME_VARIABLE, hostname);
-        }
+            }
         return sfx;
     }
     
