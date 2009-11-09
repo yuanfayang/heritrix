@@ -1819,8 +1819,13 @@ implements ConcurrentMap<K,V>, Serializable {
          *  new 'canary' insertion. */
         public void finalize() {
             CachedBdbMap.this.expungeStaleEntries();
-            CachedBdbMap.this.canary = 
-                new SoftReference<LowMemoryCanary>(new LowMemoryCanary());
+            // only install new canary if map still 'open' with db reference
+            if(CachedBdbMap.this.db !=null) {
+                CachedBdbMap.this.canary = 
+                    new SoftReference<LowMemoryCanary>(new LowMemoryCanary());
+            } else {
+                CachedBdbMap.this.canary = null;
+            }
         }
     }
 }
