@@ -24,6 +24,7 @@
  */
 package org.archive.util;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.Serializable;
 import java.lang.ref.PhantomReference;
@@ -101,7 +102,7 @@ import com.sleepycat.je.EnvironmentConfig;
  *  
  */
 public class CachedBdbMap<K,V> extends AbstractMap<K,V> 
-implements ConcurrentMap<K,V>, Serializable {
+implements ConcurrentMap<K,V>, ObjectIdentityCache<K,V>, Serializable, Closeable {
     private static final long serialVersionUID = -8655539411367047332L;
 
     private static final Logger logger =
@@ -393,7 +394,7 @@ implements ConcurrentMap<K,V>, Serializable {
         this(dbName);
         this.dbEnvironment = getDbEnvironment(dbDir);
         this.dbEnvironment.openDbCount++;
-        initialize(dbEnvironment.environment, keyClass, valueClass,
+        initialize(dbEnvironment.environment, valueClass,
             dbEnvironment.classCatalog);
         if (logger.isLoggable(Level.INFO)) {
             // Write out the bdb configuration.
@@ -416,12 +417,12 @@ implements ConcurrentMap<K,V>, Serializable {
      * @param classCatalog
      * @throws DatabaseException
      */
-    public synchronized void initialize(final Environment env, final Class keyClass,
+    public synchronized void initialize(final Environment env, 
             final Class valueClass, final StoredClassCatalog classCatalog)
     throws DatabaseException {
         initializeInstance();
         this.db = openDatabase(env, this.dbName);
-        this.diskMap = createDiskMap(this.db, classCatalog, keyClass,
+        this.diskMap = createDiskMap(this.db, classCatalog, String.class,
             valueClass);
     }
     
@@ -632,7 +633,7 @@ implements ConcurrentMap<K,V>, Serializable {
         return environment.openDatabase(null, dbName, dbConfig);
     }
 
-    public synchronized void close() throws DatabaseException {
+    public synchronized void close() {
         // Close out my bdb db.
         if (this.db != null) {
             try {
@@ -647,8 +648,12 @@ implements ConcurrentMap<K,V>, Serializable {
         if (dbEnvironment != null) {
             dbEnvironment.openDbCount--;
             if (dbEnvironment.openDbCount <= 0) {
-                dbEnvironment.classCatalog.close();
-                dbEnvironment.environment.close();
+                try {
+                    dbEnvironment.classCatalog.close();
+                    dbEnvironment.environment.close();
+                } catch (DatabaseException de) {
+                    de.printStackTrace();
+                }
                 dbEnvironmentMap.remove(dbEnvironment.dbDir.getAbsolutePath());
                 dbEnvironment = null;
             }
@@ -674,6 +679,22 @@ implements ConcurrentMap<K,V>, Serializable {
         // Would require complicated implementation to 
         // maintain identity guarantees, so skipping
         throw new UnsupportedOperationException();
+    }
+    
+    /**
+     * ObjectIdentityCache get-or-atomic-create method.
+     */
+    public V getOrUse(K key, Supplier<V> supplierOrNull) {
+        V val = get(key); 
+        if(val!=null || supplierOrNull == null) {
+            return val; 
+        }
+        val = supplierOrNull.get();
+        V prevVal = putIfAbsent(key, val);
+        if(prevVal!=null) {
+            return prevVal;
+        }
+        return val; 
     }
 
     public V get(final Object object) {
@@ -1161,11 +1182,7 @@ implements ConcurrentMap<K,V>, Serializable {
         this.memMap.clear();
         this.diskMap.clear();
         this.diskMapSize.set(0);
-        try {
-            close();
-        } catch (DatabaseException e) {
-            e.printStackTrace();
-        }
+        close();
     }
 
     /** Remove mapping for the given key.

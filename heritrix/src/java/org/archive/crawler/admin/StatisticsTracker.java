@@ -57,7 +57,9 @@ import org.archive.crawler.util.CrawledBytesHistotable;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.MimetypeUtils;
+import org.archive.util.ObjectIdentityCache;
 import org.archive.util.PaddingStringBuffer;
+import org.archive.util.Supplier;
 
 /**
  * This is an implementation of the AbstractTracker. It is designed to function
@@ -166,23 +168,30 @@ implements CrawlURIDispositionListener, Serializable {
     protected ConcurrentMap<String,AtomicLong> statusCodeDistribution
      = new ConcurrentHashMap<String,AtomicLong>();
     
+    /** reusable Supplier for initial zero AtomicLong instances */
+    private static final Supplier<AtomicLong> ATOMIC_ZERO_SUPPLIER = 
+        new Supplier<AtomicLong>() {
+            public AtomicLong get() {
+                return new AtomicLong(0); 
+            }};
+
     /** Keep track of hosts. 
      * 
      * <p>They're transient because usually bigmaps that get reconstituted
      * on recover from checkpoint.
      */
-    protected transient ConcurrentMap<String,AtomicLong> hostsDistribution = null;
-    protected transient ConcurrentMap<String,AtomicLong> hostsBytes = null;
-    protected transient ConcurrentMap<String,AtomicLong> hostsLastFinished = null;
+    protected transient ObjectIdentityCache<String,AtomicLong> hostsDistribution = null;
+    protected transient ObjectIdentityCache<String,AtomicLong> hostsBytes = null;
+    protected transient ObjectIdentityCache<String,AtomicLong> hostsLastFinished = null;
 
     /** Keep track of URL counts per host per seed */
     protected transient 
-        ConcurrentMap<String,ConcurrentMap<String,AtomicLong>> sourceHostDistribution = null;
+        ObjectIdentityCache<String,ConcurrentMap<String,AtomicLong>> sourceHostDistribution = null;
 
     /**
      * Record of seeds' latest actions.
      */
-    protected transient ConcurrentMap<String,SeedRecord> processedSeedsRecords;
+    protected transient ObjectIdentityCache<String,SeedRecord> processedSeedsRecords;
 
     // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
     private int seedsCrawled;
@@ -201,15 +210,14 @@ implements CrawlURIDispositionListener, Serializable {
         super.initialize(c);
         try {
             this.sourceHostDistribution = c.getBigMap("sourceHostDistribution",
-            	    String.class, ConcurrentMap.class);
+            	ConcurrentMap.class);
             this.hostsDistribution = c.getBigMap("hostsDistribution",
-                String.class, AtomicLong.class);
-            this.hostsBytes = c.getBigMap("hostsBytes", String.class,
                 AtomicLong.class);
+            this.hostsBytes = c.getBigMap("hostsBytes", AtomicLong.class);
             this.hostsLastFinished = c.getBigMap("hostsLastFinished",
-                String.class, AtomicLong.class);
+                AtomicLong.class);
             this.processedSeedsRecords = c.getBigMap("processedSeedsRecords",
-                    String.class, SeedRecord.class);
+                SeedRecord.class);
         } catch (Exception e) {
             throw new FatalConfigurationException("Failed setup of" +
                 " StatisticsTracker: " + e);
@@ -220,23 +228,23 @@ implements CrawlURIDispositionListener, Serializable {
     protected void finalCleanup() {
         super.finalCleanup();
         if (this.hostsBytes != null) {
-            this.hostsBytes.clear();
+            this.hostsBytes.close();
             this.hostsBytes = null;
         }
         if (this.hostsDistribution != null) {
-            this.hostsDistribution.clear();
+            this.hostsDistribution.close();
             this.hostsDistribution = null;
         }
         if (this.hostsLastFinished != null) {
-            this.hostsLastFinished.clear();
+            this.hostsLastFinished.close();
             this.hostsLastFinished = null;
         }
         if (this.processedSeedsRecords != null) {
-            this.processedSeedsRecords.clear();
+            this.processedSeedsRecords.close();
             this.processedSeedsRecords = null;
         }
         if (this.sourceHostDistribution != null) {
-            this.sourceHostDistribution.clear();
+            this.sourceHostDistribution.close();
             this.sourceHostDistribution = null;
         }
 
@@ -417,6 +425,43 @@ implements CrawlURIDispositionListener, Serializable {
     }
 
     /**
+     * Increment a counter for a key in a given cache. Used for various
+     * aggregate data.
+     * 
+     * @param cache the ObjectIdentityCache
+     * @param key The key for the counter to be incremented, if it does not
+     *               exist it will be added (set to 1).  If null it will
+     *            increment the counter "unknown".
+     */
+    protected static void incrementCacheCount(ObjectIdentityCache<String,AtomicLong> cache, 
+            String key) {
+        incrementCacheCount(cache,key,1);
+    }
+    
+    /**
+     * Increment a counter for a key in a given cache by an arbitrary amount.
+     * Used for various aggregate data. The increment amount can be negative.
+     *
+     *
+     * @param cache
+     *            The ObjectIdentityCache
+     * @param key
+     *            The key for the counter to be incremented, if it does not exist
+     *            it will be added (set to equal to <code>increment</code>).
+     *            If null it will increment the counter "unknown".
+     * @param increment
+     *            The amount to increment counter related to the <code>key</code>.
+     */
+    protected static void incrementCacheCount(ObjectIdentityCache<String,AtomicLong> cache, 
+            String key, long increment) {
+        if (key == null) {
+            key = "unknown";
+        }
+        AtomicLong lw = cache.getOrUse(key, ATOMIC_ZERO_SUPPLIER);
+        lw.addAndGet(increment);
+    }
+    
+    /**
      * Increment a counter for a key in a given HashMap by an arbitrary amount.
      * Used for various aggregate data. The increment amount can be negative.
      *
@@ -486,6 +531,44 @@ implements CrawlURIDispositionListener, Serializable {
         }
         return sortedMap;
     }
+    
+    /**
+     * Sort the entries of the given ObjectIdentityCache in descending order by their
+     * values, which must be longs wrapped with <code>AtomicLong</code>.
+     * <p>
+     * Elements are sorted by value from largest to smallest. Equal values are
+     * sorted in an arbitrary, but consistent manner by their keys. Only items
+     * with identical value and key are considered equal.
+     *
+     * If the passed-in map requires access to be synchronized, the caller
+     * should ensure this synchronization. 
+     * 
+     * @param mapOfAtomicLongValues
+     *            Assumes values are wrapped with AtomicLong.
+     * @return a sorted set containing the same elements as the map.
+     */
+    public TreeMap<String,AtomicLong> getReverseSortedCopy(
+            final ObjectIdentityCache<String,AtomicLong> mapOfAtomicLongValues) {
+        TreeMap<String,AtomicLong> sortedMap = 
+          new TreeMap<String,AtomicLong>(new Comparator<String>() {
+            public int compare(String e1, String e2) {
+                long firstVal = mapOfAtomicLongValues.get(e1).get();
+                long secondVal = mapOfAtomicLongValues.get(e2).get();
+                if (firstVal < secondVal) {
+                    return 1;
+                }
+                if (secondVal < firstVal) {
+                    return -1;
+                }
+                // If the values are the same, sort by keys.
+                return e1.compareTo(e2);
+            }
+        });
+        for (String key: mapOfAtomicLongValues.keySet()) {
+            sortedMap.put(key, mapOfAtomicLongValues.get(key));
+        }
+        return sortedMap;
+    }
 
     /**
      * Return a HashMap representing the distribution of status codes for
@@ -510,10 +593,9 @@ implements CrawlURIDispositionListener, Serializable {
      * host was last finished processing. If no URI has been completed for host
      * -1 will be returned. 
      */
-    public long getHostLastFinished(String host){
-        Long l = null;
-        l = ((AtomicLong)hostsLastFinished.get(host)).longValue();
-        return (l != null)? l.longValue(): -1;
+    public AtomicLong getHostLastFinished(String host){
+        AtomicLong fini = hostsLastFinished.getOrUse(host, ATOMIC_ZERO_SUPPLIER);
+        return fini;
     }
 
     /**
@@ -725,14 +807,15 @@ implements CrawlURIDispositionListener, Serializable {
      * @param curi The CrawlURI that may be a seed.
      * @param disposition The dispositino of the CrawlURI.
      */
-    private void handleSeed(CrawlURI curi, String disposition) {
+    private void handleSeed(final CrawlURI curi, final String disposition) {
         if(curi.isSeed()){
-            SeedRecord sr = new SeedRecord(curi, disposition);
-            SeedRecord prevVal = processedSeedsRecords.putIfAbsent(sr.getUri(), sr);
-            if(prevVal!=null) {
-                sr = prevVal; 
-                sr.updateWith(curi,disposition);
-            }
+            SeedRecord sr = processedSeedsRecords.getOrUse(
+                    curi.toString(),
+                    new Supplier<SeedRecord>() {
+                        public SeedRecord get() {
+                            return new SeedRecord(curi, disposition);
+                        }});
+            sr.updateWith(curi,disposition); 
         }
     }
 
@@ -772,32 +855,25 @@ implements CrawlURIDispositionListener, Serializable {
     }
          
     protected void saveSourceStats(String source, String hostname) {
-        ConcurrentMap<String,AtomicLong> hostUriCount = 
-            sourceHostDistribution.get(source);
-        if (hostUriCount == null) {
-            hostUriCount = new ConcurrentHashMap<String,AtomicLong>();
-            ConcurrentMap<String,AtomicLong> prevVal = 
-                sourceHostDistribution.putIfAbsent(source, hostUriCount);
-            if(prevVal!=null) {
-                hostUriCount = prevVal; 
-            }
+        synchronized(sourceHostDistribution) {
+            ConcurrentMap<String,AtomicLong> hostUriCount = 
+                sourceHostDistribution.getOrUse(
+                        source,
+                        new Supplier<ConcurrentMap<String,AtomicLong>>() {
+                            public ConcurrentMap<String, AtomicLong> get() {
+                                return new ConcurrentHashMap<String,AtomicLong>();
+                            }});
+            incrementMapCount(hostUriCount, hostname);
         }
-        // TODO: Dan suggests we don't need a hashtable value.  Might
-        // be faster if we went without. Could just have keys of:
-        //  seed | host (concatenated as string)
-        // and values of: 
-        //  #urls
-        incrementMapCount(hostUriCount, hostname);
     }
     
     protected void saveHostStats(String hostname, long size) {
-        incrementMapCount(hostsDistribution, hostname);
-        incrementMapCount(hostsBytes, hostname, size);
-        long l = System.currentTimeMillis();
-        AtomicLong prevVal = hostsLastFinished.putIfAbsent(hostname, new AtomicLong(l));
-        if(prevVal!=null) {
-            prevVal.set(l);
-        }
+        incrementCacheCount(hostsDistribution, hostname);
+
+        incrementCacheCount(hostsBytes, hostname, size);
+        
+        long time = new Long(System.currentTimeMillis());
+        getHostLastFinished(hostname).set(time); 
     }
 
     public void crawledURINeedRetry(CrawlURI curi) {
@@ -860,7 +936,6 @@ implements CrawlURIDispositionListener, Serializable {
             SeedRecord sr = (SeedRecord) processedSeedsRecords.get(seed);
             if(sr==null) {
                 sr = new SeedRecord(seed,SEED_DISPOSITION_NOT_PROCESSED);
-                processedSeedsRecords.putIfAbsent(seed,sr);
             }
             sortedSet.add(sr);
         }
@@ -1151,7 +1226,7 @@ implements CrawlURIDispositionListener, Serializable {
         writeReportFile("processors","processors-report.txt");
         writeReportFile("manifest","crawl-manifest.txt");
         writeReportFile("frontier","frontier-report.txt");
-        if (!sourceHostDistribution.isEmpty()) {
+        if (sourceHostDistribution.size()>0) {
             writeReportFile("source","source-report.txt");
         }
         // TODO: Save object to disk?

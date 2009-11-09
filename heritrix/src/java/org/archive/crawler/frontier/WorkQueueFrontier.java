@@ -32,8 +32,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +56,8 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.ObjectIdentityCache;
+import org.archive.util.ObjectIdentityMemCache;
 
 import com.sleepycat.collections.StoredIterator;
 
@@ -151,7 +151,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
 
     /** All known queues.
      */
-    protected transient ConcurrentMap<String,WorkQueue> allQueues = null; 
+    protected transient ObjectIdentityCache<String,WorkQueue> allQueues = null; 
     // of classKey -> ClassKeyQueue
 
     /**
@@ -300,10 +300,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     && getQueueAssignmentPolicy(null).maximumNumberOfKeys() >= 0
                     && getQueueAssignmentPolicy(null).maximumNumberOfKeys() <= 
                         MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
-                this.allQueues = new ConcurrentHashMap<String,WorkQueue>(701, .9f, 100);
+                this.allQueues = new ObjectIdentityMemCache<WorkQueue>(701, .9f, 100);
             } else {
-                this.allQueues = c.getBigMap("allqueues",
-                        String.class, WorkQueue.class);
+                this.allQueues = c.getBigMap("allqueues", WorkQueue.class);
                 if (logger.isLoggable(Level.FINE)) {
                     Iterator i = this.allQueues.keySet().iterator();
                     try {
@@ -388,7 +387,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         }
         this.wakeTimer.cancel();
         
-        this.allQueues.clear();
+        this.allQueues.close();
         this.allQueues = null;
         this.inProcessQueues = null;
         this.readyClassQueues = null;
@@ -571,7 +570,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // active under the new rules.
         Object key = this.retiredQueues.poll();
         while (key != null) {
-            WorkQueue q = (WorkQueue)this.allQueues.get(key);
+            WorkQueue q = (WorkQueue)this.allQueues.get((String)key);
             if(q != null) {
                 unretireQueue(q);
             }
@@ -643,7 +642,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             WorkQueue readyQ = null;
             Object key = readyClassQueues.poll(DEFAULT_WAIT,TimeUnit.MILLISECONDS);
             if (key != null) {
-                readyQ = (WorkQueue)this.allQueues.get(key);
+                readyQ = (WorkQueue)this.allQueues.get((String)key);
             }
             if (readyQ != null) {
                 while(true) { // loop left by explicit return or break on empty
@@ -730,7 +729,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         if (key == null) {
             return;
         }
-        WorkQueue candidateQ = (WorkQueue)this.allQueues.get(key);
+        WorkQueue candidateQ = (WorkQueue)this.allQueues.get((String)key);
         if(candidateQ != null) {
             synchronized(candidateQ) {
                 replenishSessionBalance(candidateQ);
@@ -1149,7 +1148,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             }
             q = (obj instanceof WorkQueue)?
                 (WorkQueue)obj:
-                (WorkQueue)this.allQueues.get(obj);
+                (WorkQueue)this.allQueues.get((String)obj);
             if(q == null) {
                 writer.print(" ERROR: "+obj);
             }
@@ -1309,7 +1308,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             }
             q = (obj instanceof WorkQueue)?
                 (WorkQueue)obj:
-                (WorkQueue)this.allQueues.get(obj);
+                (WorkQueue)this.allQueues.get((String)obj);
             if(q == null) {
                 w.print("WARNING: No report for queue "+obj);
             }
