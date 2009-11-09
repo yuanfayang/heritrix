@@ -222,6 +222,14 @@ implements ConcurrentMap<K,V>, Serializable {
      * if they occur */
     transient private AtomicInteger expungeStatsTransientCond;
     
+    /** count of {@link #putIfAbsent} / {@link #remove} races,
+     * if they occur */
+    transient private AtomicInteger expungeStatsTransientCond2;
+    
+    /** count of {@link #putIfAbsent} / {@link #remove} races,
+     * if they occur */
+    transient private AtomicInteger expungeStatsTransientCond3;
+    
     /** count of {@link SoftEntry#awaitExpunge()) */
     transient private AtomicInteger expungeStatsAwaitExpunge;
 
@@ -243,10 +251,20 @@ implements ConcurrentMap<K,V>, Serializable {
     /** static count of swap-in re-tries timeouts to see if they occur */
     final static private AtomicInteger expungeStatsSwapInRetry 
             = new AtomicInteger(0);
+
+    /** static count of swap-in re-tries timeouts to see if they occur */
+    final static private AtomicInteger expungeStatsSwapInRetry2 
+            = new AtomicInteger(0);
     
     /** static count of expunge put() to BDB (implies disk) */
     final static private AtomicInteger expungeStatsDiskPut 
             = new AtomicInteger(0);
+
+    /** transient count of expunge  get mem check condition */
+    transient private AtomicInteger expungeStatsGetMemCheck;
+
+    /** transient count of expunge  via poll */
+    transient private AtomicInteger expungeStatsViaPoll;
     
     /** count of one arg {@link #remove } use */
     transient private AtomicInteger useStatsRemove1Used;
@@ -427,6 +445,10 @@ implements ConcurrentMap<K,V>, Serializable {
     protected void initTransientStats() {
         expungeStatsNullPhantom = new AtomicInteger(0);
         expungeStatsTransientCond = new AtomicInteger(0);
+        expungeStatsTransientCond2 = new AtomicInteger(0);
+        expungeStatsTransientCond3 = new AtomicInteger(0);
+        expungeStatsGetMemCheck = new AtomicInteger(0);
+        expungeStatsViaPoll = new AtomicInteger(0);
         expungeStatsAwaitExpunge = new AtomicInteger(0);
         expungeStatsNullValue = new AtomicInteger(0);
         expungeStatsNotInMap = new AtomicInteger(0);
@@ -463,7 +485,7 @@ implements ConcurrentMap<K,V>, Serializable {
      * If this thread is interrupted, the condition is cleared and 
      * the method returns immediately.
      * <p/>
-     * For transitive "happens after" correctness invariant to be true,
+     * For transitive "happens before" correctness invariant to be true,
      * these operations must occur in the following order in one thread:
      *  <pre>
      *  1. if (entry.get() == null) // cleared by GC
@@ -487,28 +509,28 @@ implements ConcurrentMap<K,V>, Serializable {
         
         V val = entry.get();
         if (val == null) { 
-            if (entry.startExpunge()) { // try do the expunge now
+            if (entry.startExpunge()) { // try do the expunge now, if needed
                 // got exclusive expunge access
                 expungeStaleEntry(entry, true);
                 return true;
-            } else if (entry.expungeStarted()) {  // wait for expunge
+            } else if (entry.expungeStarted()) {  // might need to wait for expunge
                 expungeStatsAwaitExpunge.incrementAndGet();
                 expungeStaleEntries();
-                while (true) {
-                    // the proper way to handle interrupted
-                    try {
-                        ret = entry.awaitExpunge();
-                        if(ret) {
-                            verifyExpunge(entry, key); 
-                        }
-                        return ret;
-                    } catch (InterruptedException ex) {
-                        if (Thread.interrupted()) {
-                            break; // be lively
-                        }
+                // preserve interrupted status
+                boolean wasInterrupted = Thread.interrupted();
+                try {
+                    ret = entry.awaitExpunge();
+                    if(ret) {
+                        verifyExpunge(entry, key); 
+                    }
+                    return ret;
+                } catch (InterruptedException ex) { // timeout (stats already incr.)
+                    return true; // be lively 
+                } finally {
+                    if (wasInterrupted) {
+                        Thread.currentThread().interrupt();
                     }
                 }
-                return ret;
             } else {
                 logger.log(
                     Level.WARNING,
@@ -524,12 +546,14 @@ implements ConcurrentMap<K,V>, Serializable {
     /**
      * Verify that expunction has taken place; for debugging. Only 
      * called after awaitExpunge() reports an entry has been expunged.
-     * 
+     * Detects whether memMap.get() returns the same entry by identity;
+     * (entries are not recycled.)
      * @param entry entry that should be gone from memMap
      */
     private void verifyExpunge(SoftEntry<V> entry, K key) {
         if(memMap.get(key)==entry) {
             logger.log(Level.WARNING,"reported-expunged entry at key '"+key+"' still present: "+entry,new Exception()); 
+            dumpExtraStats();
             // try fixup
             // FIXME: this is just papering over/recovering from a state
             // which should not be reached; remove this code when true bug
@@ -705,9 +729,10 @@ implements ConcurrentMap<K,V>, Serializable {
                             expungeStatsSwapInRetry.incrementAndGet();
                             continue;  // re-try insert into memMap
                         } else {
+                            expungeStatsSwapInRetry2.incrementAndGet();
                             try {
                                 // stuck memMap entry
-                                Thread.sleep(0L, 100000);
+                                Thread.sleep(0L, 10000);
                             } catch (InterruptedException ignored) {
                             }
                             logger.log(Level.WARNING,"Swap-In Retry", new Exception());
@@ -737,6 +762,7 @@ implements ConcurrentMap<K,V>, Serializable {
                     // entry has been removed, lookup again
                     continue; // tail recursion optimization
                 } else {
+                    expungeStatsGetMemCheck.incrementAndGet();
                     logger.log(Level.WARNING,"entry not expunged AND value is null", new Exception());
                     return null;
                 }
@@ -1004,7 +1030,8 @@ implements ConcurrentMap<K,V>, Serializable {
      * Preconditions: (diskMap.containsKey(), memMap.containsKey(SoftEntry)) are:
      * (F,F) initial starting conditions: is absent, put to diskMap then memMap.
      * (F,T) transient remove(): await other thread to finish with memMap, 
-     *     then proceed as (F,F).
+     *     then proceed as (F,F) 
+     *       OR (if remove not used) an unexpected data race occurred.
      * (T,F) reloadable from disk or in process of inserting first time:
      *     not absent.
      * (T,T) normal swapped in condition: not absent.
@@ -1064,13 +1091,14 @@ implements ConcurrentMap<K,V>, Serializable {
                 if (prevMemValue == null && isExpunged(prevEntry, key)) {
                     prevEntry = (SoftEntry<V>) memMap.putIfAbsent(key, newEntry);
                     if (prevEntry == null) {
-                        // this put "happens after" the concurrent expunge or remove()
+                        // a concurrent expunge or remove() "happens before" this put
                         return null; // put succeeded
                     } else {
                         prevMemValue = prevEntry.get();
                     }
                 }
                 newEntry.clearPhantom(); // unused instance
+                expungeStatsTransientCond2.getAndIncrement();
                 // other thread won, return value it set
                 return prevMemValue;
             } else {
@@ -1087,6 +1115,7 @@ implements ConcurrentMap<K,V>, Serializable {
                 //   It is always possible that another thread could remove
                 //  an entry before the calling client sees it, but this is 
                 //  unlikely by design.  
+                expungeStatsTransientCond3.getAndIncrement();
                 logger.log(Level.WARNING,"unusual put/remove activity for key=" + key,new Exception());
             }
             return retValue;
@@ -1374,18 +1403,25 @@ implements ConcurrentMap<K,V>, Serializable {
             if (logger.isLoggable(Level.FINE)  ||
                     (expungeStatsNullPhantom.get() 
                     + expungeStatsTransientCond.get() 
+                    + expungeStatsTransientCond2.get() 
+                    + expungeStatsTransientCond3.get() 
                     + expungeStatsAwaitExpunge.get() 
                     + expungeStatsNullValue.get() 
                     + expungeStatsNotInMap.get() 
                     + expungeStatsAwaitTimeout.get()
                     + expungeStatsSwapIn.get()
                     + expungeStatsSwapInRetry.get()
+                    + expungeStatsSwapInRetry2.get()
+                    + expungeStatsGetMemCheck.get()
+                    + expungeStatsViaPoll.get()
                     + useStatsRemove1Used.get() 
                     + useStatsRemove2Used.get() 
                     + useStatsReplaceUsed.get()) > 0) {
                 logger.info(composeCacheSummary() + "  "
                         + expungeStatsNullPhantom + "=NullPhantom  " 
                         + expungeStatsTransientCond + "=TransientCond  " 
+                        + expungeStatsTransientCond2 + "=TransientCond2  " 
+                        + expungeStatsTransientCond3 + "=TransientCond3  " 
                         + expungeStatsAwaitExpunge + "=AwaitExpunge  " 
                         + expungeStatsNullValue + "=NullValue  " 
                         + expungeStatsNotInMap+ "=NotInMap  " 
@@ -1395,7 +1431,10 @@ implements ConcurrentMap<K,V>, Serializable {
                         + cacheHit+ "=cacheHit  " 
                         + countOfGets+ "=countOfGets  " 
                         + expungeStatsSwapInRetry+ "=SwapInRetry  " 
-                        + expungeStatsDiskPut + "=DiskPut  " 
+                        + expungeStatsSwapInRetry2+ "=SwapInRetry2  " 
+                        + expungeStatsDiskPut + "=DiskPut  "
+                        + expungeStatsGetMemCheck + "=GetMemCheck  "
+                        + expungeStatsViaPoll + "=ViaPoll  "
                         + useStatsRemove1Used + "=Remove1Used  " 
                         + useStatsRemove2Used + "=Remove2Used  " 
                         + useStatsReplaceUsed + "=ReplaceUsed  " 
@@ -1418,6 +1457,7 @@ implements ConcurrentMap<K,V>, Serializable {
         long startTime = System.currentTimeMillis();
         for(SoftEntry<V> entry; (entry = (SoftEntry<V>)refQueuePoll()) != null;) {
             expungeStaleEntry(entry, false);
+            expungeStatsViaPoll.incrementAndGet();
             c++;
         }
         if (c > 0 && logger.isLoggable(Level.FINER)) {
@@ -1474,11 +1514,14 @@ implements ConcurrentMap<K,V>, Serializable {
         // {@link #get(String)} and then it went on the poll queue and
         // when it came off inside in expungeStaleEntries, this method
         // was called again.
+        //  OR, could be http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6837858
+        //
         V phantomValue = null;
         // keep this ref on stack so it cannot be nulled in mid-operation
         PhantomEntry<V> phantom = (PhantomEntry<V>)entry.getPhantom(); // unchecked cast
         if (phantom == null) {
             expungeStatsNullPhantom.incrementAndGet(); 
+            entry.clearPhantom(); // free up waiting threads, if any
             return; // nothing to do
         } else {
             // recover hidden value
@@ -1615,7 +1658,8 @@ implements ConcurrentMap<K,V>, Serializable {
 
         /** count down to expunged; if null, then expunge has not
          *   been started.  See {@link #startExpunge()} and
-         *   {@link #expungeStarted()}
+         *   {@link #expungeStarted()}.
+         *  Effectively final (never goes back to null).
          */
         private CountDownLatch expunged = null;
 
@@ -1625,17 +1669,27 @@ implements ConcurrentMap<K,V>, Serializable {
             this.phantom = new PhantomEntry(key, referent); // unchecked cast
         }
 
+        /**
+         * Synchronized so this can be atomic and have
+         * proper happens-before (inter-thread data sync) 
+         * w.r.t. other methods of this instance regardless of 
+         * what thread is the caller.
+         * @return referent.
+         */
         public T get() {
-            // ensure visibility 
+            // ensure visibility
             synchronized (this) {
                 return super.get();
             }
         }
 
         /**
-         * Synchronized so this can be atomic w.r.t. 
-         *     {@link #clearPhantom()}, {@link #expungeStarted()}, and
-         *     {@link #startExpunge()}.
+         * Get the phantom.
+         *
+         * Synchronized so this can be atomic and have
+         * proper happens-before (inter-thread data sync) 
+         * w.r.t. other methods of this instance regardless of 
+         * what thread is the caller.
          * @return Returns the phantom reference.
          */
         final public synchronized PhantomEntry getPhantom() {
@@ -1656,17 +1710,20 @@ implements ConcurrentMap<K,V>, Serializable {
          * or putIfAbsent() and
          * there should be no residue so a fresh entry can be created
          * when the value is swapped in from diskMap.
-         * <p/>Causes any threads that called isExpunged() on this
-         * instance to continue.
-         * 
+         * <p/>Causes any threads that called or will later
+         * call awaitExpunge() on this
+         * instance to continue
          * 
          * <p/>Idempotent.
          * 
          * After this method returns, 
          *     {@link #clearPhantom()} will return true. 
-         * Synchronized so this can be atomic w.r.t.
-         *     {@link #getPhantom()}, {@link #expungeStarted()}, and
-         *     {@link #startExpunge()}.         */
+         * 
+         * Synchronized so this can be atomic and have
+         * proper happens-before (inter-thread data sync) 
+         * w.r.t. other methods of this instance regardless of 
+         * what thread is the caller.
+         */
         final public synchronized void clearPhantom() {
             if (this.phantom != null) {
                 this.phantom.clear();
@@ -1679,9 +1736,14 @@ implements ConcurrentMap<K,V>, Serializable {
         }
     
         /**
-         * Synchronized so this can be atomic w.r.t.
-         *     {@link #clearPhantom()}, {@link #getPhantom()}, and
-         *     {@link #startExpunge()}.
+         * Was expunge ever started on this instance?
+         * (If instance was temporary and thrown away,
+         * we pretend it was expunged.)
+         * 
+         * Synchronized so this can be atomic and have
+         * proper happens-before (inter-thread data sync) 
+         * w.r.t. other methods of this instance regardless of 
+         * what thread is the caller.
          * No side-effects.
          * @return true if expunge was ever started on this entry,
          *     expunge may or may not be finished and #isCleared()
@@ -1701,13 +1763,14 @@ implements ConcurrentMap<K,V>, Serializable {
          * Side Effect: if true is returned, sets up latch for any
          *    threads that want to await for expunge.
          * 
-         * Synchronized so this can be atomic w.r.t.
-         *     {@link #clearPhantom()}, {@link #expungeStarted()}, and
-         *     {@link #getPhantom()}.
+         * Synchronized so this can be atomic and have
+         * proper happens-before (inter-thread data sync) 
+         * w.r.t. other methods of this instance regardless of 
+         * what thread is the caller.
          * @return true if calling thread has exclusive access to
          *     expunge this instance; do not call this unless
          *     going to do the expunge; true is only returned
-         *     once.
+         *     once per instance.
          */
         final public synchronized boolean startExpunge() {
             if (isCleared() || expungeStarted()) {
@@ -1722,8 +1785,16 @@ implements ConcurrentMap<K,V>, Serializable {
          * (when {@link #expungeStarted()} is true), then this will wait
          * until the expunge is finished.  If expunge was not started
          * or was finished, this method returns immediately.
-         * Just in case, 1sec timeout is used.
-         * @throws java.lang.InterruptedException
+         * 
+         * To ensure liveliness, a multi sec timeout is used that
+         * if triggered, throws InterruptedException.
+         *
+         * Effectively synchronized so this can be atomic and have
+         * proper happens-before (inter-thread data sync) 
+         * w.r.t. other methods of this instance regardless of 
+         * what thread is the caller.
+         * 
+         * @throws java.lang.InterruptedException if timeout occurred.
          * @return true if expunge is completed (or timeout) or this 
          *    entry was never used, false if expunge is not happening.
          */
@@ -1732,14 +1803,14 @@ implements ConcurrentMap<K,V>, Serializable {
                 return true; // expunge completed, or entry was unused
             }
             if (expungeStarted()) {
-                long longerThanFullGCsec = 60L;
-                if (expunged.await(longerThanFullGCsec, TimeUnit.SECONDS)) {
+                // much longer than time for diskMap.putIfAbsent(key,value)
+                long plentyOfWriteLatencySec = 6L;
+                if (expunged.await(plentyOfWriteLatencySec, TimeUnit.SECONDS)) {
                     return true; // finished
-                } else { // timeout
-                    // just in case
+                } else { // timeout, just in case
                     expungeStatsAwaitTimeout.incrementAndGet();
                     logger.log(Level.WARNING, "timeout at " 
-                            + longerThanFullGCsec + " sec", new Exception());
+                            + plentyOfWriteLatencySec + " sec", new Exception());
                     throw new InterruptedException("timeout");
                 }
             } else { 
