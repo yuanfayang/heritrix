@@ -253,11 +253,16 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
 
     private void writeFtpRecords(WARCWriter w, final CrawlURI curi, final URI baseid,
             final String timestamp) throws IOException {
-        ANVLRecord headers = new ANVLRecord(2);
+        ANVLRecord headers = new ANVLRecord(3);
         headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
         String controlConversation = curi.getString(A_FTP_CONTROL_CONVERSATION);
         URI rid = writeFtpControlConversation(w, timestamp, baseid, curi, headers, controlConversation);
         
+        if (curi.getContentDigest() != null) {
+            headers.addLabelValue(HEADER_KEY_PAYLOAD_DIGEST,
+                curi.getContentDigestSchemeString());
+        }
+
         if (curi.getHttpRecorder() != null) {
             if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
                     ((Boolean)getUncheckedAttribute(curi, 
