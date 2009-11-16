@@ -2,7 +2,7 @@
  *
  * vim: set sw=2 et:
  *
- * bin_search.c: Perform binary search of sorted text file(s). Replacement for
+ * bin-search.c: Perform binary search of sorted text file(s). Replacement for
  * alexa tools bin_search.
  *
  * Copyright (C) 2009 Internet Archive
@@ -44,13 +44,20 @@ options = { FALSE, FALSE, "\t", FALSE, 1, FALSE, FALSE };
 
 static GOptionEntry entries[] =
 {
-  { "all", 0, 0, G_OPTION_ARG_NONE, &options.all, "Get ALL (not the default of get the first) occurrence of line(s) with the string.", NULL },
-  { "any", 0, 0, G_OPTION_ARG_NONE, &options.any, "Get ANY (not the default of get the first) occurrence of a line with the string.", NULL },
-  { "delim", 'd', 0, G_OPTION_ARG_STRING, &options.delim, "Use char X as delimiter (used w/ -f options). Default is <TAB>.", "X" },
-  { "exact", 'e', 0, G_OPTION_ARG_NONE, &options.exact, "Only return exact matches (default is to match a prefix).", NULL },
-  { "field", 'f', 0, G_OPTION_ARG_INT, &options.field, "Use sorted column X for comparison. Default is 1.", "X" },
+  { "all", 0, 0, G_OPTION_ARG_NONE, &options.all, 
+    "Get ALL (not the default of get the first) occurrence of line(s) with the"
+    " string.", NULL },
+  { "any", 0, 0, G_OPTION_ARG_NONE, &options.any, "Get ANY (not the default of"
+    " get the first) occurrence of a line with the string.", NULL },
+  { "delim", 'd', 0, G_OPTION_ARG_STRING, &options.delim, "Use char X as"
+    " delimiter (used w/ -f options). Default is <TAB>.", "X" },
+  { "exact", 'e', 0, G_OPTION_ARG_NONE, &options.exact, "Only return exact"
+    " matches (default is to match a prefix).", NULL },
+  { "field", 'f', 0, G_OPTION_ARG_INT, &options.field, "Use sorted column X"
+    " for comparison. Default is 1.", "X" },
   { "quiet", 'q', 0, G_OPTION_ARG_NONE, &options.quiet, "Quiet(er).", NULL },
-  { "reverse", 'r', 0, G_OPTION_ARG_NONE, &options.reverse, "The file is in \"sort -r\" order.", NULL },
+  { "reverse", 'r', 0, G_OPTION_ARG_NONE, &options.reverse, "The file is in"
+    " \"sort -r\" order.", NULL },
   { NULL }
 };
 
@@ -70,14 +77,14 @@ parse_command_line (int    *argc,
 
   if (!g_option_context_parse (context, argc, argv, &error))
     {
-      g_printerr ("bin_search: %s\n", error->message);
+      g_printerr ("bin-search: %s\n\n", error->message);
       g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       exit (1);
     }
 
   if (*argc < 3)
     {
-      g_printerr ("bin_search: error: You must specify a search string and at least one file to search\n\n");
+      g_printerr ("bin-search: error: You must specify a search string and at least one file to search\n\n");
       g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       exit (2);
     }
@@ -94,7 +101,7 @@ open_file (const char *filename)
   GIOChannel *io_channel = g_io_channel_new_file (filename, "r", &error);
   if (io_channel == NULL)
     {
-      g_printerr ("bin_search: g_io_channel_new_file (\"%s\"): %s\n", filename, error->message);
+      g_printerr ("bin-search: g_io_channel_new_file (\"%s\"): %s\n", filename, error->message);
       exit (3);
     }
 
@@ -103,7 +110,7 @@ open_file (const char *filename)
   GIOStatus status = g_io_channel_set_encoding (io_channel, NULL, &error);
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("bin_search: g_io_channel_set_encoding: %s\n", error->message);
+      g_printerr ("bin-search: g_io_channel_set_encoding: %s\n", error->message);
       exit (4);
     }
   g_assert (status == G_IO_STATUS_NORMAL);
@@ -111,7 +118,7 @@ open_file (const char *filename)
   /* make sure it's seekable */
   if ((g_io_channel_get_flags (io_channel) & G_IO_FLAG_IS_SEEKABLE) != G_IO_FLAG_IS_SEEKABLE)
     {
-      g_printerr ("bin_search: File %s is not seekable (perhaps it's a directory?)\n", filename);
+      g_printerr ("bin-search: File %s is not seekable (perhaps it's a directory?)\n", filename);
       exit (9);
     }
 
@@ -126,7 +133,7 @@ file_size (const char *filename)
 
   if (g_stat (filename, &buf) != 0)
     {
-      g_printerr ("bin_search: stat (\"%s\"): %s\n", filename, g_strerror (errno));
+      g_printerr ("bin-search: stat (\"%s\"): %s\n", filename, g_strerror (errno));
       exit (10);
     }
 
@@ -141,12 +148,12 @@ seek (GIOChannel *io_channel,
   GIOStatus status = g_io_channel_seek_position (io_channel, pos, G_SEEK_SET, &error);
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("bin_search: g_io_channel_seek_position: %s\n", error->message);
+      g_printerr ("bin-search: g_io_channel_seek_position: %s\n", error->message);
       exit (5);
     }
   else if (status != G_IO_STATUS_NORMAL)
     {
-      g_printerr ("bin_search: g_io_channel_seek_position: non-normal status %d\n", status);
+      g_printerr ("bin-search: g_io_channel_seek_position: non-normal status %d\n", status);
       exit (8);
     }
 }
@@ -159,14 +166,14 @@ read_byte (GIOChannel *io_channel)
   g_assert (g_io_channel_get_encoding (io_channel) == NULL);
 
   GError *error = NULL;
-  char c = 0;
+  unsigned char c = 0;
   gsize bytes_read = -1;
 
   GIOStatus status = g_io_channel_read_chars (io_channel, &c, 1, &bytes_read, &error);
   g_assert (status != G_IO_STATUS_AGAIN); /* can't happen right? */
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("bin_search: g_io_channel_read_chars: %s\n", error->message);
+      g_printerr ("bin-search: g_io_channel_read_chars: %s\n", error->message);
       exit (6);
     }
   else if (status == G_IO_STATUS_EOF)
@@ -176,7 +183,7 @@ read_byte (GIOChannel *io_channel)
   g_assert (status == G_IO_STATUS_NORMAL);
   g_assert (bytes_read == 1);
 
-  return (int) c;
+  return c;
 }
 
 /* fills in line_buf with the line that pos is in the middle of, returns
@@ -214,7 +221,7 @@ get_line_at_pos (GIOChannel *io_channel,
   g_assert (status != G_IO_STATUS_AGAIN);
   if (status == G_IO_STATUS_ERROR)
     {
-      g_printerr ("bin_search: g_io_channel_read_line_string: %s\n", error->message);
+      g_printerr ("bin-search: g_io_channel_read_line_string: %s\n", error->message);
       exit (7);
     }
 
@@ -285,8 +292,8 @@ print_results (const char *string,
     }
 }
 
-/* respects options */
-static void
+/* returns true if match found; respects options */
+static gboolean
 bin_search (const char *string,
             const char *filename,
             gboolean    prefix)
@@ -297,6 +304,7 @@ bin_search (const char *string,
   GIOChannel *io_channel = open_file (filename);
   GString *line_buf = g_string_new ("");
   int len = strlen (string);
+  gboolean found_match = FALSE;
 
   while (right - left >= len)
     {
@@ -307,6 +315,7 @@ bin_search (const char *string,
       int cmp = compare (string, line_buf->str);
       if (cmp == 0)
         {
+          found_match = TRUE;
           print_results (string, filename, io_channel, line_buf, line_pos, prefix);
           break;
         }
@@ -316,10 +325,11 @@ bin_search (const char *string,
         left = pos + 1;
     }
 
-
   /* finished, clean up */
   g_io_channel_unref (io_channel);
   g_string_free (line_buf, TRUE);
+
+  return found_match;
 }
 
 int
@@ -332,8 +342,10 @@ main (int    argc,
   parse_command_line (&argc, &argv);
 
   int i;
-  for (i = 2; i < argc; i++)
-    bin_search (argv[1], argv[i], argc > 3);
+  gboolean found_match = FALSE;
 
-  exit (0);
+  for (i = 2; i < argc; i++)
+    found_match = (found_match || bin_search (argv[1], argv[i], argc > 3));
+
+  exit (found_match ? 0 : 255);
 }
