@@ -13,8 +13,7 @@ Why another whois client?
 
   When I started working on the whois fetcher for Heritrix I went looking for
   some existing code to base it on. But the existing clients were all GPL, and
-  Heritrix is hoping to be Apache licensed some day. So I started from scratch
-  to find the best way to write a smart whois client. 
+  Heritrix is now mostly Apache licensed. So I started from scratch.
 
   Existing whois clients mostly have lists of servers for different TLDs and
   such. But it turns out that today only a small handful of servers need to be
