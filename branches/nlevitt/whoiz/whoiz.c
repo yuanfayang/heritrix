@@ -2,7 +2,7 @@
  *
  * $Id$
  *
- * whoiz.c: Perform whois queries (RFC 3912)
+ * whoiz.c: Perform whois queries (RFC 3912).
  *
  * Copyright (C) 2009 Internet Archive
  * Copyright (C) 2009 Noah Levitt
@@ -308,8 +308,15 @@ parse_command_line (int    argc,
   *server = NULL;
   *query = NULL;
 
-  g_option_context_set_summary (context, "Perform whois queries (RFC 3912)");
+  g_option_context_set_summary (context, "Perform whois queries (RFC 3912).");
   g_option_context_add_main_entries (context, entries, NULL);
+  g_option_context_set_description (context, 
+      "Examples of usage:\n"
+      "  whoiz archive.org\n"
+      "  whoiz whois://whois.pir.org/archive.org\n"
+      "  whoiz whois:///192.168.1.1\n"
+      "  whoiz -h whois.ripe.net -- -q sources\n"
+      "  whoiz whois://whois.ripe.net:43/-q\%20sources\n");
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
@@ -325,8 +332,11 @@ parse_command_line (int    argc,
     }
 
   /* concatenate remaining args into a query */
-  GString *query_or_url = g_string_new (argv[1]);
-  for (i = 2; i < argc; i++)
+  i = 1;
+  if (g_strcmp0 (argv[i], "--") == 0)
+    i++;
+  GString *query_or_url = g_string_new (argv[i]);
+  for (i++; i < argc; i++)
     {
       g_string_append_c (query_or_url, ' ');
       g_string_append (query_or_url, argv[i]);
@@ -336,8 +346,8 @@ parse_command_line (int    argc,
     {
       if (minus_h_host != NULL)
         {
-          g_printerr ("whoiz: warning: You specified a whois url to lookup, so "
-                      "the host you specified with --host will be ignored.\n");
+          g_printerr ("whoiz: warning: You specified a whois url to look up, so"
+                      " the host you specified with --host will be ignored.\n");
           g_free (minus_h_host);
         }
       g_string_free (query_or_url, TRUE);
