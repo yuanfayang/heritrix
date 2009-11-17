@@ -23,7 +23,7 @@
 	<classpathentry kind="lib" path="lib/mg4j-1.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/fastutil-5.0.3-heritrix-subset-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/bsh-2.0b4.jar"/>
-	<classpathentry kind="lib" path="lib/commons-net-1.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-net-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/jericho-html-2.6.jar"/>
 	<classpathentry kind="lib" path="lib/jets3t-0.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/je-3.3.82.jar"/>
