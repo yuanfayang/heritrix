@@ -21,6 +21,8 @@
  */
  
 #include <glib.h>
+#include <glib-object.h>
+#include <glib/gstdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -169,7 +171,7 @@ read_byte (GIOChannel *io_channel)
   unsigned char c = 0;
   gsize bytes_read = -1;
 
-  GIOStatus status = g_io_channel_read_chars (io_channel, &c, 1, &bytes_read, &error);
+  GIOStatus status = g_io_channel_read_chars (io_channel, (char *) &c, 1, &bytes_read, &error);
   g_assert (status != G_IO_STATUS_AGAIN); /* can't happen right? */
   if (status == G_IO_STATUS_ERROR)
     {
@@ -278,7 +280,7 @@ print_results (const char *string,
     }
 
   if (!options.quiet)
-    g_printerr ("%s%sFound string at offset: %ld\n", prefix ? filename : "", prefix ? ": " : "", line_pos);
+    g_printerr ("%s%sFound string at offset: %lld\n", prefix ? filename : "", prefix ? ": " : "", line_pos);
 
   g_print ("%s%s%s", prefix ? filename : "", prefix ? ": " : "", line_buf->str);
 
