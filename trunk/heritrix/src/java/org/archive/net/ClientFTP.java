@@ -141,6 +141,7 @@ public class ClientFTP extends FTPClient implements ProtocolCommandListener {
         public IterableLineIterator(final Reader reader) throws IllegalArgumentException {
             super(reader);
         }
+        @SuppressWarnings("unchecked")
         public Iterator<String> iterator() {
             return this;
         }
@@ -168,5 +169,11 @@ public class ClientFTP extends FTPClient implements ProtocolCommandListener {
     // for noting things like successful/unsuccessful connection to data port
     private void recordAdditionalInfo(String message) {
         recordControlMessage("* ", message);
+    }
+
+    // XXX see https://issues.apache.org/jira/browse/NET-257
+    @Override
+    public String[] getReplyStrings() {
+        return _replyLines.toArray(new String[0]);
     }
 }
