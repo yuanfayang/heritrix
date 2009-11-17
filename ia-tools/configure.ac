@@ -15,7 +15,7 @@ AC_HEADER_STDC
 AC_PROG_LIBTOOL
 
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.18 
-		                   gobject-2.0 >= 2.18])
+                           gobject-2.0 >= 2.18])
 
 AC_CHECK_HEADER([zlib.h], [], AC_MSG_ERROR([zlib header file zlib.h not found]))
 AC_CHECK_LIB([z], [gzread], [ZLIB_LIBS=-lz], AC_MSG_ERROR([zlib library libz not found]))
