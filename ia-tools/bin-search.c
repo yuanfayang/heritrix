@@ -280,7 +280,9 @@ print_results (const char *string,
     }
 
   if (!options.quiet)
-    g_printerr ("%s%sFound string at offset: %lld\n", prefix ? filename : "", prefix ? ": " : "", line_pos);
+    g_printerr ("%s%sFound string at offset: %lld\n", 
+                prefix ? filename : "", prefix ? ": " : "", 
+                (long long) line_pos);
 
   g_print ("%s%s%s", prefix ? filename : "", prefix ? ": " : "", line_buf->str);
 
