@@ -23,11 +23,12 @@ package org.archive.crawler.admin;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -532,7 +533,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             settingsFile = settingsFile.substring(jobDirAbsolute.length()+1);
         }
         try {
-            FileWriter jobWriter = new FileWriter(f, false);
+            OutputStreamWriter jobWriter = 
+                new OutputStreamWriter(
+                    new FileOutputStream(f, false),
+                    "UTF-8");
             try {
                 jobWriter.write(UID + "\n");
                 jobWriter.write(name + "\n");
@@ -766,6 +770,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             this.cj = cj;
         }
         
+        @SuppressWarnings("unchecked")
         public void progressStatisticsEvent(final EventObject e) {
             super.progressStatisticsEvent(e);
             if (this.cj.getMbeanName() == null) {
@@ -1636,7 +1641,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         if (attribute_name.equals(TOTAL_DATA_ATTR)) {
             return new Long(this.controller == null &&
                     this.controller.getStatistics() != null? 0:
-                this.controller.getStatistics().totalBytesWritten());
+                this.controller.getStatistics().totalBytesCrawled());
         }
         if (attribute_name.equals(CRAWL_TIME_ATTR)) {
             return new Long(this.controller == null &&

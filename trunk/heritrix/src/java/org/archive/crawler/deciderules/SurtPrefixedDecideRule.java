@@ -25,9 +25,10 @@
 package org.archive.crawler.deciderules;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlScope;
@@ -185,7 +186,8 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
                     .getDisk(), dumpPath);
             }
             try {
-                FileWriter fw = new FileWriter(dump);
+                OutputStreamWriter fw = 
+                    new OutputStreamWriter(new FileOutputStream(dump),"UTF-8");
                 try {
                     surtPrefixes.exportTo(fw);
                 } finally {

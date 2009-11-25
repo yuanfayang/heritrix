@@ -27,8 +27,8 @@ package org.archive.net;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -99,7 +99,9 @@ public class PublicSuffixes {
         BufferedWriter writer;
         if (args.length >= 2) {
             // writer to specified file
-            writer = new BufferedWriter(new FileWriter(args[1]));
+            writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(args[1]),"UTF-8"));
             needsClose = true;
         } else {
             // write to stdout

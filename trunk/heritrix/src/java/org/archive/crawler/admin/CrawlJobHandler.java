@@ -25,16 +25,16 @@ package org.archive.crawler.admin;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
+import java.io.OutputStreamWriter;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -57,7 +57,6 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
-import org.archive.crawler.frontier.RecoveryJournal;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
@@ -916,8 +915,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (seeds != null) {
             BufferedWriter writer = null;
             try {
-                writer = new BufferedWriter(new FileWriter(newHandler
-                    .getPathRelativeToWorkingDirectory(seedfile)));
+                writer = new BufferedWriter(
+                    new OutputStreamWriter(
+                        new FileOutputStream(
+                            newHandler.getPathRelativeToWorkingDirectory(seedfile)),
+                        "UTF-8"));
                 try {
                     writer.write(seeds);
                 } finally {
