@@ -16,6 +16,9 @@
     /**
      * Create a new job
      */
+     if(request.getCharacterEncoding() == null) {
+     	request.setCharacterEncoding("UTF-8");
+     }
     CrawlJob theJob = handler.getJob(request.getParameter("job"));
     boolean isProfile = "true".equals(request.getParameter("profile"));
     // Recover can have a value of 'true' if we are to do a recover-log
