@@ -26,8 +26,9 @@ package org.archive.crawler.frontier;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -630,7 +631,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         File ignoredFile = new File(dir, IGNORED_SEEDS_FILENAME);
         if(ignoredItems==null | ignoredItems.length()>0) {
             try {
-                BufferedWriter bw = new BufferedWriter(new FileWriter(ignoredFile));
+                BufferedWriter bw = new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream(ignoredFile),"UTF-8"));
                 bw.write(ignoredItems);
                 bw.close();
             } catch (IOException e) {

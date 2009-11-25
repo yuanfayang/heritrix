@@ -29,12 +29,12 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.Iterator;
 
 import org.apache.commons.httpclient.URIException;
@@ -259,7 +259,7 @@ public class SurtPrefixSet extends PrefixSet {
      * @param fw
      * @throws IOException
      */
-    public void exportTo(FileWriter fw) throws IOException {
+    public void exportTo(Writer fw) throws IOException {
         Iterator iter = this.iterator();
         while(iter.hasNext()) {
             fw.write((String)iter.next() + "\n");

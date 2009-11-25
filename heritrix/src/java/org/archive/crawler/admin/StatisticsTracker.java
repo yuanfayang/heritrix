@@ -22,8 +22,9 @@
 package org.archive.crawler.admin;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Comparator;
@@ -1153,7 +1154,10 @@ implements CrawlURIDispositionListener, Serializable {
     protected void writeReportFile(String reportName, String filename) {
         File f = new File(controller.getDisk().getPath(), filename);
         try {
-            PrintWriter bw = new PrintWriter(new FileWriter(f));
+            PrintWriter bw = new PrintWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(f, false),
+                    "UTF-8"));
             writeReportTo(reportName, bw);
             bw.close();
             controller.addToManifest(f.getAbsolutePath(),

@@ -28,14 +28,16 @@ import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.archive.util.MimetypeUtils;
@@ -675,7 +677,8 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
                 DOT_COMPRESSED_FILE_EXTENSION);
             cdxFilename = stripExtension(cdxFilename, getDotFileExtension());
             cdxFilename += ('.' + CDX);
-            cdxWriter = new BufferedWriter(new FileWriter(cdxFilename));
+            cdxWriter = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(cdxFilename),"UTF-8"));
         }
         
         String header = "CDX b e a m s c " + ((isCompressed()) ? "V" : "v")

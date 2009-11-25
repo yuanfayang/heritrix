@@ -2,7 +2,7 @@
 
 <%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.crawler.util.LogReader" %>
 
-<%@ page import="java.io.FileWriter,java.io.File"%>
+<%@ page import="java.io.File"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="org.archive.crawler.admin.ui.CookieUtils"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
@@ -45,7 +45,8 @@
                 int number = theJob.getNumberOfJournalEntries()+1;
                 File file = new File(diskPath);
                 file.mkdirs();
-                FileWriter fw = new FileWriter(diskPath + journalFilename,true);
+                OutputStreamWriter fw = 
+                    new OutputStreamWriter(new FileOutputStream(diskPath + journalFilename,true),"UTF-8");
                 fw.write("#" + number + "\n");
                 fw.write("Operator: " + operator+"\n");
                 SimpleDateFormat journalsdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
