@@ -1,3 +1,4 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page errorPage="/error.jsp" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="org.archive.crawler.Heritrix" %>
@@ -8,7 +9,6 @@
 <%@ page import="org.archive.crawler.Heritrix" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.Iterator" %>
-<%@ page contentType="text/html; charset=UTF-8" %>
 <%
     String currentHeritrixName = (heritrix == null)?
         "No current Heritrix instance":
@@ -52,7 +52,7 @@
 
 <html>
     <head>
-    	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <title>Heritrix: <%=title%></title>
         <link rel="stylesheet" 
             href="<%=request.getContextPath()%>/css/heritrix.css">

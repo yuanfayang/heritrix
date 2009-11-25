@@ -25,9 +25,11 @@ package org.archive.crawler.framework;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -270,7 +272,10 @@ public class CrawlScope extends Filter {
     public Iterator<UURI> seedsIterator(Writer ignoredItemWriter) {
         BufferedReader br;
         try {
-            br = new BufferedReader(new FileReader(getSeedfile()));
+            br = new BufferedReader(
+                new InputStreamReader(
+                    new FileInputStream(getSeedfile()),
+                    "UTF-8"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -304,7 +309,8 @@ public class CrawlScope extends Filter {
         File f = getSeedfile();
         if (f != null) {
             try {
-                FileWriter fw = new FileWriter(f, true);
+                OutputStreamWriter fw = 
+                    new OutputStreamWriter(new FileOutputStream(f, true),"UTF-8");
                 // Write to new (last) line the URL.
                 fw.write("\n");
                 fw.write("# Heritrix added seed ");

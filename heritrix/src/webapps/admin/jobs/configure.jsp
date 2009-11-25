@@ -15,13 +15,16 @@
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="java.io.FileReader" %>
-<%@ page import="java.io.FileWriter" %>
 <%@ page import="java.io.BufferedReader" %>
 <%@ page import="java.io.BufferedWriter" %>
 <%@ page import="java.io.IOException" %>
 
 <% 
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
+
+    if(request.getCharacterEncoding() == null) {
+    	request.setCharacterEncoding("UTF-8");
+    }
 
     // Should we update with changes.
     if(request.getParameter("update") != null &&

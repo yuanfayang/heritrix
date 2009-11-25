@@ -26,14 +26,13 @@
 package org.archive.crawler.admin.ui;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
@@ -50,6 +49,7 @@ import javax.management.ReflectionException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.settings.ComplexType;
@@ -155,6 +155,7 @@ public class JobConfigureUtils {
      *            if true expert settings will be updated, otherwise they will
      *            be ignored.
      */
+    @SuppressWarnings("unchecked")
     protected static void checkAttribute(ModuleAttributeInfo att,
             ComplexType mbean, CrawlerSettings settings,
             HttpServletRequest request, boolean expert) {
@@ -439,8 +440,15 @@ public class JobConfigureUtils {
     throws AttributeNotFoundException, MBeanException, ReflectionException,
     IOException {
         File seedfile = getSeedFile(hndlr);
-        writeReader(new StringReader(payload),
-            new BufferedWriter(new FileWriter(seedfile)));
+        // no matter the encoding of the returned page, or the encoding
+        // set on the JSP request before getParameter, the Strings we 
+        // get back are UTF-8-bytes-as-if-ISO8859-1... so reinterpret
+        String utf8 = new String(payload.getBytes("ISO8859-1"),"UTF-8");
+        Writer out = new OutputStreamWriter(new FileOutputStream(seedfile, false),"UTF-8");
+        IOUtils.copy(
+            new StringReader(utf8), 
+            out);
+        out.close();
     }
     
     /**
@@ -457,7 +465,7 @@ public class JobConfigureUtils {
             IOException {
         // getSeedStream looks for seeds on disk and on classpath.
         InputStream is = getSeedStream(hndlr);
-        writeReader(new BufferedReader(new InputStreamReader(is)), out);
+        IOUtils.copy(new BufferedReader(new InputStreamReader(is,"UTF-8")), out);
     }
     
     /**
@@ -517,22 +525,5 @@ public class JobConfigureUtils {
             " readable.");
         }
         return is;
-    }
-    
-    /**
-     * Print complete seeds list on passed in PrintWriter.
-     * @param reader File to read seeds from.
-     * @param out Writer to write out all seeds to.
-     * @throws IOException
-     */
-    protected static void writeReader(Reader reader, Writer out)
-    throws IOException {
-        final int bufferSize = 1024 * 4;
-        char [] buffer = new char[bufferSize];
-        int read = -1;
-        while ((read = reader.read(buffer, 0, bufferSize)) != -1) {
-            out.write(buffer, 0, read);
-        }
-        out.flush();
     }
 }
