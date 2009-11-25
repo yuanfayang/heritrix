@@ -418,6 +418,7 @@ public abstract class SettingsHandler {
      *
      * @throws InvocationTargetException
      */
+    @SuppressWarnings("unchecked")
     public static ModuleType instantiateModuleTypeFromClassName(
             String name, String className)
             throws InvocationTargetException {
@@ -573,9 +574,14 @@ public abstract class SettingsHandler {
             return threadContextSettingsHandler.get();
         }
         
-        // TODO: log differently? (if no throw here
-        // NPE is inevitable)
-        throw new RuntimeException(
-                "No threadContextSettingsHandler available.");
+        // in most cases, returning a null means an NPE soon, 
+        // so perhaps this should log/raise differently
+        
+        // however, requesting object *might* just be transiently
+        // instantiated (as in momentary deserialization with some 
+        // Stored** operations), including in finalization thread 
+        // (which will never be linked to a usable settingsHandler).
+        // So, don't raise/log a noisy error for now. 
+        return null;
     }
 }
