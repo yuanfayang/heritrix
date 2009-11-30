@@ -3,6 +3,7 @@
 <%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.crawler.util.LogReader" %>
 
 <%@ page import="java.io.File"%>
+<%@ page import="java.io.OutputStreamWriter"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="org.archive.crawler.admin.ui.CookieUtils"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
