@@ -4,6 +4,7 @@
 
 <%@ page import="java.io.File"%>
 <%@ page import="java.io.OutputStreamWriter"%>
+<%@ page import="java.io.FileOutputStream"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="org.archive.crawler.admin.ui.CookieUtils"%>
 <%@ page import="org.archive.util.ArchiveUtils"%>
