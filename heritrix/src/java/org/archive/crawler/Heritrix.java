@@ -1319,13 +1319,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             final HttpURLConnection connection,
             final String name, final String description, final String seeds)
     throws IOException, FatalConfigurationException {
+        connection.connect();
         // Look see if its a jar file.  If it is undo it.
-        boolean isJar = url.getPath() != null &&
-            url.getPath().toLowerCase().endsWith(JAR_SUFFIX);
+        boolean isJar = url.getPath() != null
+                && url.getPath().toLowerCase().endsWith(JAR_SUFFIX)
+                || "application/java-archive".equals(connection
+                        .getHeaderField("Content-Type"));
         // If http url connection, bring down the resource local.
         File localFile = File.createTempFile(Heritrix.class.getName(),
            isJar? JAR_SUFFIX: null, TMPDIR);
-        connection.connect();
         String result = null;
         try {
             IoUtils.readFullyToFile(connection.getInputStream(), localFile);
@@ -2219,12 +2221,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }
         // INFO logging of JMX invokes: [#HER-907]
         if (logger.isLoggable(Level.INFO)) {
-            String paramsString = "";
+            // String paramsString = "";
+            StringBuilder buf = new StringBuilder();
             for (Object o : params) {
-                paramsString.concat("[" + o.toString() + "]");
+                buf.append("\"" + o + "\", ");
             }
-            logger.info("JMX invoke: " + operationName + " [" + paramsString
-                    + "]");
+            logger.info("JMX invoke: " + operationName + "(" + buf + ")");
         } 
         // The pattern in the below is to match an operation and when found
         // do a return out of if clause.  Doing it this way, I can fall
