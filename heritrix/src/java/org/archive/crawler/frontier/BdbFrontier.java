@@ -104,8 +104,18 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
      */
     public BdbFrontier(String name) {
         this(name, "BdbFrontier. "
-            + "A Frontier using BerkeleyDB Java Edition databases for "
-            + "persistence to disk.");
+                + "A Frontier using BerkeleyDB Java Edition databases for "
+                + "persistence to disk.");
+    }
+
+    /**
+     * Create the BdbFrontier
+     * 
+     * @param name
+     * @param description
+     */
+    public BdbFrontier(String name, String description) {
+        super(name, description);
         Type t = addElementToDefinition(new SimpleType(ATTR_INCLUDED,
                 "Structure to use for tracking already-seen URIs. Non-default " +
                 "options may require additional configuration via system " +
@@ -119,16 +129,6 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         t.setExpertSetting(true);
     }
 
-    /**
-     * Create the BdbFrontier
-     * 
-     * @param name
-     * @param description
-     */
-    public BdbFrontier(String name, String description) {
-        super(name, description);
-    }
-    
     /**
      * Create the single object (within which is one BDB database)
      * inside which all the other queues live. 
