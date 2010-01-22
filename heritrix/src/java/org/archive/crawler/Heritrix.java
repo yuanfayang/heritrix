@@ -1413,6 +1413,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             }
             addCrawlJob(job);
             return job.getUID();
+        } catch (RuntimeException e) {
+            logger.severe("problem adding crawl job from order jar " + jarFile + ": " + e);
+            throw new FatalConfigurationException(e.toString());
          } finally {
              // After job has been added, no more need of expanded content.
              // (Let the caller be responsible for cleanup of jar. Sometimes
