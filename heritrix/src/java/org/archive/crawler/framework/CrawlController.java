@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -140,6 +141,7 @@ public class CrawlController implements Serializable, Reporter {
     
     private transient Frontier frontier;
 
+    private transient AtomicInteger loopingToes;
     private transient ToePool toePool;
     
     private transient ServerCache serverCache;
@@ -390,6 +392,7 @@ public class CrawlController implements Serializable, Reporter {
         Lookup.getDefaultCache(DClass.IN).setMaxEntries(1);
         //dns.getRecords("localhost", Type.A, DClass.IN);
         
+        loopingToes = new AtomicInteger(0);
         setupToePool();
         setThresholds();
         
@@ -1814,7 +1817,7 @@ public class CrawlController implements Serializable, Reporter {
      * Note that a ToeThread ended, possibly completing the crawl-stop. 
      */
     public synchronized void toeEnded() {
-        if (state == STOPPING && toePool.getActiveToeCount() == 0) {
+        if (state == STOPPING && loopingToes.get() == 0) {
             completeStop();
         }
     }
@@ -2061,5 +2064,9 @@ public class CrawlController implements Serializable, Reporter {
 
     public File getCheckpointsDisk() {
         return this.checkpointsDisk;
+    }
+    
+    public AtomicInteger getLoopingToes() {
+        return loopingToes;
     }
 }
