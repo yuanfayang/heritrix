@@ -25,6 +25,7 @@ package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -135,6 +136,8 @@ Reporter, ProgressStatisticsReporter {
         logger.fine(getName()+" started for order '"+name+"'");
 
         try {
+            controller.getLoopingToes().incrementAndGet();
+            
             while ( true ) {
                 // TODO check for thread-abort? or is waiting for interrupt enough?
                 continueCheck();
@@ -173,6 +176,7 @@ Reporter, ProgressStatisticsReporter {
         } catch (OutOfMemoryError err) {
             seriousError(err);
         } finally {
+            controller.getLoopingToes().decrementAndGet();
             controller.releaseContinuePermission();
         }
         setCurrentCuri(null);
