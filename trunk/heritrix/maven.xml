@@ -431,7 +431,7 @@
             <arg value="--rsh=ssh" />
             <arg
               value="${maven.build.dir}/docs/"/>
-            <arg value="${maven.username},archive-crawler@web.sourceforge.net:htdocs/" />
+            <arg value="${maven.username},archive-crawler@shell.sourceforge.net:htdocs/" />
         </exec>
     </goal>
 
