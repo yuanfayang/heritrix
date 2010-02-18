@@ -792,8 +792,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
         
         if (((Boolean)getUncheckedAttribute(curi,
-                ATTR_SEND_REFERER)).booleanValue() && 
-                !Link.PREREQ_MISC.equals(curi.getViaContext().toString())) {            
+                ATTR_SEND_REFERER)).booleanValue() 
+                && (curi.getViaContext()==null || 
+                        !Link.PREREQ_MISC.equals(
+                                curi.getViaContext().toString()))) {
             // RFC2616 says no referer header if referer is https and the url
             // is not
             String via = curi.flattenVia();
