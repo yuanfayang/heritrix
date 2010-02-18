@@ -94,6 +94,7 @@ import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.deciderules.DecideRule;
 import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
@@ -791,7 +792,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
         
         if (((Boolean)getUncheckedAttribute(curi,
-                ATTR_SEND_REFERER)).booleanValue()) {
+                ATTR_SEND_REFERER)).booleanValue() && 
+                !Link.PREREQ_MISC.equals(curi.getViaContext().toString())) {            
             // RFC2616 says no referer header if referer is https and the url
             // is not
             String via = curi.flattenVia();
