@@ -51,7 +51,7 @@ public class Link implements Serializable {
     public static final String NAVLINK_MISC = "=NAVLINK_MISC".intern();
     /** stand-in value for speculative/aggressively extracted urls without other context */
     public static final String SPECULATIVE_MISC = "=SPECULATIVE_MISC".intern();
-    /** stanf-in value for prerequisite without other context */
+    /** stand-in value for prerequisite without other context */
     public static final String PREREQ_MISC = "=PREREQ_MISC".intern(); 
     
     /* hop types */
