@@ -154,12 +154,6 @@ implements FetchStatusCodes {
                         curi.createCandidateURI(curi.getBaseURI(), wref, 
                             directive, 
                             considerAsSeed(curi, wref, redirectsNewSeeds));
-                    // Schedule redirects here to avoid issue of same URI as a
-                    // link causing redirect to be rejected as duplicate.
-                    if (caURI.isSeed() && caURI.getVia() != null
-                            && caURI.flattenVia().length() > 0) {
-                        this.getController().getFrontier().schedule(caURI);  
-                    }
                     if (isInScope(caURI)) {
                         inScopeLinks.add(caURI);
                     }
