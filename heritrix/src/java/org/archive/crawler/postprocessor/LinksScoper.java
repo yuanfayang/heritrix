@@ -25,8 +25,8 @@
  */
 package org.archive.crawler.postprocessor;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -142,7 +142,7 @@ implements FetchStatusCodes {
             ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
         int preferenceDepthHops = ((Integer)getUncheckedAttribute(curi,
             ATTR_PREFERENCE_DEPTH_HOPS)).intValue();
-        Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
+        Collection<CandidateURI> inScopeLinks = new ArrayList<CandidateURI>();
         for (final Iterator i = curi.getOutObjects().iterator(); i.hasNext();) {
             Object o = i.next();
             if(o instanceof Link){
