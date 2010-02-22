@@ -1179,7 +1179,7 @@ implements FetchStatusCodes {
      * The LinksScoper processor converts Link instances in this collection
      * to CandidateURI instances. 
      */
-    transient Collection<Object> outLinks = new HashSet<Object>();
+    transient Collection<Object> outLinks = new ArrayList<Object>();
     
     /**
      * Returns discovered links.  The returned collection might be empty if
@@ -1399,8 +1399,8 @@ implements FetchStatusCodes {
             ClassNotFoundException {
         stream.defaultReadObject();
         @SuppressWarnings("unchecked")
-        HashSet<Object> ol = (HashSet<Object>) stream.readObject();
-        outLinks = (ol == null) ? new HashSet<Object>() : ol;
+        Collection<Object> ol = (Collection<Object>) stream.readObject();
+        outLinks = (ol == null) ? new ArrayList<Object>() : ol;
     }
 
     public long getFetchDuration() {
