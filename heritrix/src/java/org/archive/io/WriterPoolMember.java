@@ -75,7 +75,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     /**
      * Default for file suffix.
      */
-    public static final String DEFAULT_SUFFIX = HOSTNAME_ADMINPORT_VARIABLE;
+    public static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
 
     /**
      * Reference to file we're currently writing.
