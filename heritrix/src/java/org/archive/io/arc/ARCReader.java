@@ -103,7 +103,7 @@ implements ARCConstants {
      * 
      * Used to initialize <code>headerFieldNameKeys</code>.
      */
-    private final String [] headerFieldNameKeysArray = {
+    private final static String [] headerFieldNameKeysArray = {
         URL_FIELD_KEY,
         IP_HEADER_FIELD_KEY,
         DATE_FIELD_KEY,
@@ -118,10 +118,14 @@ implements ARCConstants {
      * We used to read these in from the arc file first record 3rd line but
      * now we hardcode them for sake of improved performance.
      */
-    private final List<String> headerFieldNameKeys =
-        Arrays.asList(this.headerFieldNameKeysArray);
+    private static final List<String> headerFieldNameKeys =
+        Arrays.asList(headerFieldNameKeysArray);
     
     private boolean parseHttpHeaders = true;
+    
+    static List<String> getHeaderFieldNameKeys() {
+        return headerFieldNameKeys;
+    }
     
     ARCReader() {
     	super();
@@ -218,7 +222,7 @@ implements ARCConstants {
 
         try {
             currentRecord(new ARCRecord(is,
-                (ArchiveRecordHeader)computeMetaData(this.headerFieldNameKeys,
+                (ArchiveRecordHeader)computeMetaData(ARCReader.headerFieldNameKeys,
                 	firstLineValues,
                     getVersion(), offset), bodyOffset, isDigest(),
                     isStrict(), isParseHttpHeaders()));
