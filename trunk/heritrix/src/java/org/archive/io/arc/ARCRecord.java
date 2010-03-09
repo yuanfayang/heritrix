@@ -28,11 +28,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpParser;
 import org.apache.commons.httpclient.StatusLine;
 import org.apache.commons.httpclient.util.EncodingUtil;
+import org.apache.commons.lang.StringUtils;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.RecoverableIOException;
@@ -77,6 +79,21 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         "HTTP/1.1 200 OK\r\n".length();
     
     /**
+     * verbatim ARC record header string
+     */
+    private String headerString;
+    private void setHeaderString() {
+        List<String> hl = new ArrayList<String>();
+        for (String headerFieldNameKey : ARCReader.getHeaderFieldNameKeys()) {
+            hl.add(headerFieldNameKey);
+        }
+        this.headerString = StringUtils.join(hl," ");
+    }
+    public String getHeaderString() {   
+        return this.headerString;
+    }
+
+    /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
@@ -109,6 +126,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         final boolean parseHttpHeaders) 
     throws IOException {
     	super(in, metaData, bodyOffset, digest, strict);
+    	this.setHeaderString();
         if (parseHttpHeaders) {
             this.httpHeaderStream = readHttpHeader();
         }

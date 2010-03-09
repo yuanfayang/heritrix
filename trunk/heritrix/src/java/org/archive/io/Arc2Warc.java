@@ -47,6 +47,9 @@ import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriter;
 import org.archive.util.FileUtils;
 import org.archive.util.anvl.ANVLRecord;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.ISODateTimeFormat;
 
 
 /**
@@ -134,23 +137,47 @@ public class Arc2Warc {
 	   }
    }
    
-   protected void write(final WARCWriter writer,
-		   final ARCRecord r)
+   protected void write(final WARCWriter writer, final ARCRecord r)
    throws IOException {
-	   ANVLRecord ar = new ANVLRecord();
-	   String ip = (String)r.getHeader().
-	       getHeaderValue((ARCConstants.IP_HEADER_FIELD_KEY));
-	   if (ip != null && ip.length() > 0) {
-		   ar.addLabelValue(WARCConstants.NAMED_FIELD_IP_LABEL, ip);
-	   }
-	   // If contentBody > 0, assume http headers.  Make the mimetype
-	   // be application/http.  Otherwise, give it ARC mimetype.
-	   writer.writeResourceRecord(r.getHeader().getUrl(),
-	       r.getHeader().getDate(),
-	       (r.getHeader().getContentBegin() > 0)?
-	    	   WARCConstants.HTTP_RESPONSE_MIMETYPE:
-	    	   r.getHeader().getMimetype(),
-	    	   ar, r, r.getHeader().getLength());
+
+       // convert ARC date to WARC-Date format
+       String arcDateString = r.getHeader().getDate();
+       String warcDateString = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+           .withZone(DateTimeZone.UTC)
+               .parseDateTime(arcDateString)
+                   .toString(ISODateTimeFormat.dateTimeNoMillis());
+
+       ANVLRecord ar = new ANVLRecord();
+       String ip = (String)r.getHeader()
+           .getHeaderValue((ARCConstants.IP_HEADER_FIELD_KEY));
+       if (ip != null && ip.length() > 0) {
+           ar.addLabelValue(WARCConstants.NAMED_FIELD_IP_LABEL, ip);
+           r.getMetaData();
+           // enable reconstruction of ARC from WARC 
+           ar.addLabelValue("ARC-Header-Line", 
+               r.getHeaderString());
+           ar.addLabelValue("ARC-File", 
+               r.getMetaData().getArc());
+           ar.addLabelValue("ARC-Offset", 
+               String.valueOf(r.getHeader().getOffset()));
+           ar.addLabelValue("ARC-Length", 
+               String.valueOf(r.getHeader().getLength()));
+       }
+
+       // If contentBody > 0, assume http headers.  Make the mimetype
+       // be application/http.  Otherwise, give it ARC mimetype.
+       String warcMimeTypeString;
+       if (r.getHeader().getContentBegin() > 0) {
+           warcMimeTypeString = WARCConstants.HTTP_RESPONSE_MIMETYPE;
+           writer.writeResponseRecord(r.getHeader().getUrl(), warcDateString,
+               warcMimeTypeString, WARCWriter.getRecordID(), ar, r, 
+                   r.getHeader().getLength());
+       } else {
+           warcMimeTypeString = r.getHeader().getMimetype();
+           writer.writeResourceRecord(r.getHeader().getUrl(), warcDateString,
+               warcMimeTypeString, ar, r, r.getHeader().getLength());
+       }
+
    }
 
    /**
@@ -170,7 +197,7 @@ public class Arc2Warc {
        	   "Force overwrite of target file."));
        PosixParser parser = new PosixParser();
        CommandLine cmdline = parser.parse(options, args, false);
-       List cmdlineArgs = cmdline.getArgList();
+       List<?> cmdlineArgs = cmdline.getArgList();
        Option [] cmdlineOptions = cmdline.getOptions();
        HelpFormatter formatter = new HelpFormatter();
        
