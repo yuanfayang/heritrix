@@ -764,6 +764,18 @@
                 http://www.apache.org/licenses/LICENSE-2.0</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>joda-time</id>
+            <version>1.6</version>
+            <url>http://joda-time.sourceforge.net/</url>
+            <properties>
+                <description>
+                Use Joda-Time for standard datetime capability
+                </description>
+                <license>Apache 2.0
+                http://www.apache.org/licenses/LICENSE-2.0</license>
+            </properties>
+        </dependency>
   </dependencies>
 
   
