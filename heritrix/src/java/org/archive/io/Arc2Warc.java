@@ -153,16 +153,16 @@ public class Arc2Warc {
        if (ip != null && ip.length() > 0) {
            ar.addLabelValue(WARCConstants.NAMED_FIELD_IP_LABEL, ip);
            r.getMetaData();
-           // enable reconstruction of ARC from WARC 
-           ar.addLabelValue("ARC-Header-Line", 
-               r.getHeaderString());
-           ar.addLabelValue("ARC-File", 
-               r.getMetaData().getArc());
-           ar.addLabelValue("ARC-Offset", 
-               String.valueOf(r.getHeader().getOffset()));
-           ar.addLabelValue("ARC-Length", 
-               String.valueOf(r.getHeader().getLength()));
        }
+       // enable reconstruction of ARC from WARC 
+       ar.addLabelValue("ARC-Header-Line", 
+           r.getHeaderString());
+       ar.addLabelValue("ARC-File", 
+           r.getMetaData().getArc());
+       ar.addLabelValue("ARC-Offset", 
+           String.valueOf(r.getHeader().getOffset()));
+       ar.addLabelValue("ARC-Length", 
+           String.valueOf(r.getHeader().getLength()));
 
        // If contentBody > 0, assume http headers.  Make the mimetype
        // be application/http.  Otherwise, give it ARC mimetype.
