@@ -82,11 +82,10 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
      * verbatim ARC record header string
      */
     private String headerString;
-    private void setHeaderString() {
+    private void fillHeaderString() {
         List<String> hl = new ArrayList<String>();
-        for (String headerFieldNameKey : ARCReader.getHeaderFieldNameKeys()) {
-            hl.add(headerFieldNameKey);
-        }
+        for (String key : ARCReader.HEADER_FIELD_NAME_KEYS) 
+            hl.add((String) this.getMetaData().getHeaderValue(key));
         this.headerString = StringUtils.join(hl," ");
     }
     public String getHeaderString() {   
@@ -126,7 +125,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         final boolean parseHttpHeaders) 
     throws IOException {
     	super(in, metaData, bodyOffset, digest, strict);
-    	this.setHeaderString();
+    	this.fillHeaderString();
         if (parseHttpHeaders) {
             this.httpHeaderStream = readHttpHeader();
         }

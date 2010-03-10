@@ -99,11 +99,13 @@ implements ARCConstants {
     private static final int MAX_HEADER_LINE_LENGTH = 1024 * 100;
 
     /**
-     * Array of field names.
+     * An array of the header field names found in the ARC file header on
+     * the 3rd line.
      * 
-     * Used to initialize <code>headerFieldNameKeys</code>.
+     * We used to read these in from the arc file first record 3rd line but
+     * now we hardcode them for sake of improved performance.
      */
-    private final static String [] headerFieldNameKeysArray = {
+    public final static String [] HEADER_FIELD_NAME_KEYS = {
         URL_FIELD_KEY,
         IP_HEADER_FIELD_KEY,
         DATE_FIELD_KEY,
@@ -111,22 +113,8 @@ implements ARCConstants {
         LENGTH_FIELD_KEY
     };
     
-    /**
-     * An array of the header field names found in the ARC file header on
-     * the 3rd line.
-     * 
-     * We used to read these in from the arc file first record 3rd line but
-     * now we hardcode them for sake of improved performance.
-     */
-    private static final List<String> headerFieldNameKeys =
-        Arrays.asList(headerFieldNameKeysArray);
-    
     private boolean parseHttpHeaders = true;
-    
-    static List<String> getHeaderFieldNameKeys() {
-        return headerFieldNameKeys;
-    }
-    
+        
     ARCReader() {
     	super();
     }
@@ -221,11 +209,12 @@ implements ARCConstants {
         }
 
         try {
-            currentRecord(new ARCRecord(is,
-                (ArchiveRecordHeader)computeMetaData(ARCReader.headerFieldNameKeys,
-                	firstLineValues,
-                    getVersion(), offset), bodyOffset, isDigest(),
-                    isStrict(), isParseHttpHeaders()));
+            currentRecord(new ARCRecord(is, 
+                    (ArchiveRecordHeader)computeMetaData(
+                            Arrays.asList(HEADER_FIELD_NAME_KEYS),
+                            firstLineValues, getVersion(), offset), 
+                            bodyOffset, isDigest(), isStrict(), 
+                            isParseHttpHeaders()));
         } catch (IOException e) {
             if (e instanceof RecoverableIOException) {
                 // Don't mess with RecoverableIOExceptions.  Let them out.
