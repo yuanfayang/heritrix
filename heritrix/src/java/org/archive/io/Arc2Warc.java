@@ -159,7 +159,7 @@ public class Arc2Warc {
            r.getHeaderString());
        ar.addLabelValue("ARC-File", 
            r.getMetaData().getArc());
-       ar.addLabelValue("ARC-Offset", 
+       ar.addLabelValue("ARC-Compressed-Offset", 
            String.valueOf(r.getHeader().getOffset()));
        ar.addLabelValue("ARC-Length", 
            String.valueOf(r.getHeader().getLength()));
