@@ -152,30 +152,30 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private static final Logger logger =
         Logger.getLogger(Heritrix.class.getName());
     
-    private static final File TMPDIR =
+    public static final File TMPDIR =
         new File(System.getProperty("java.io.tmpdir", "/tmp"));
 
     /**
      * Name of the heritrix properties file.
      */
-    private static final String PROPERTIES = "heritrix.properties";
+    public static final String PROPERTIES = "heritrix.properties";
 
     /**
      * Name of the key to use specifying alternate heritrix properties on
      * command line.
      */
-    private static final String PROPERTIES_KEY = PROPERTIES;
+    public static final String PROPERTIES_KEY = PROPERTIES;
     
     /**
      * Prefix used on our properties we'll add to the System.properties list.
      */
-    private static final String HERITRIX_PROPERTIES_PREFIX = "heritrix.";
+    public static final String HERITRIX_PROPERTIES_PREFIX = "heritrix.";
 
     /**
      * Prefix used on other properties we'll add to the System.properties 
      * list (after stripping this prefix). 
      */
-    private static final String SYSTEM_PREFIX = "system.";
+    public static final String SYSTEM_PREFIX = "system.";
 
     /**
      * Instance of web server if one was started.
@@ -195,7 +195,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * <code>bin/heritrix</code> shell script.  This is a DEPENDENCY the shell
      * wrapper has on this here java heritrix.
      */
-    private static final String STARTLOG = "heritrix_dmesg.log";
+    public static final String STARTLOG = "heritrix_dmesg.log";
 
     /**
      * Default encoding.
@@ -213,7 +213,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * this program has with the wrapper shell script.  Shell can actually
      * pass us an alternate to use for this file.
      */
-    private static String DEFAULT_HERITRIX_OUT = "heritrix_out.log";
+    public static String DEFAULT_HERITRIX_OUT = "heritrix_out.log";
 
     /**
      * Where to write this classes startup output.
@@ -226,23 +226,23 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     /**
      * The org.archive package
      */
-    private static final String ARCHIVE_PACKAGE = "org.archive.";
+    public static final String ARCHIVE_PACKAGE = "org.archive.";
 
     /**
      * The crawler package.
      */
-	private static final String CRAWLER_PACKAGE = Heritrix.class.getName().
+	public static final String CRAWLER_PACKAGE = Heritrix.class.getName().
         substring(0, Heritrix.class.getName().lastIndexOf('.'));
     
     /**
      * The root context for a webapp.
      */
-    private static final String ROOT_CONTEXT = "/";
+    public static final String ROOT_CONTEXT = "/";
 
     /**
      * Set to true if application is started from command line.
      */
-    private static boolean commandLine = false;
+    public static boolean commandLine = false;
     
     /**
      * True if container initialization has been run.
@@ -254,7 +254,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     private static boolean propertiesLoaded = false;
     
-    private static final String JAR_SUFFIX = ".jar";
+    public static final String JAR_SUFFIX = ".jar";
     
     private AlertManager alertManager;
 
@@ -267,14 +267,14 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * True if we're to put up a GUI.
      * Cmdline processing can override.
      */
-    private static boolean gui =
+    public static boolean gui =
         !PropertyUtils.getBooleanProperty("heritrix.cmdline.nowui");
     
     /**
      * Port to put the GUI up on.
      * Cmdline processing can override.
      */
-    private static int guiPort = SimpleHttpServer.DEFAULT_PORT;
+    public static int guiPort = SimpleHttpServer.DEFAULT_PORT;
 
     
     /**
@@ -291,13 +291,13 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * Set to an empty collection to indicate that all available network
      * interfaces should be used for the webserver.
      */
-    private static Collection<String> guiHosts = LOCALHOST_ONLY;
+    public static Collection<String> guiHosts = LOCALHOST_ONLY;
     
     
     /**
      * Web UI server, realm, context name.
      */
-    private static String ADMIN = "admin";
+    public static String ADMIN = "admin";
     
     // OpenMBean support.
     /**
@@ -326,39 +326,39 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      = new Hashtable<String,Heritrix>();
     
     private OpenMBeanInfoSupport openMBeanInfo;
-    private final static String STATUS_ATTR = "Status";
-    private final static String VERSION_ATTR = "Version";
-    private final static String ISRUNNING_ATTR = "IsRunning";
-    private final static String ISCRAWLING_ATTR = "IsCrawling";
-    private final static String ALERTCOUNT_ATTR = "AlertCount";
-    private final static String NEWALERTCOUNT_ATTR = "NewAlertCount";
-    private final static String CURRENTJOB_ATTR = "CurrentJob";
-    private final static List ATTRIBUTE_LIST;
+    public static final String STATUS_ATTR = "Status";
+    public static final String VERSION_ATTR = "Version";
+    public static final String ISRUNNING_ATTR = "IsRunning";
+    public static final String ISCRAWLING_ATTR = "IsCrawling";
+    public static final String ALERTCOUNT_ATTR = "AlertCount";
+    public static final String NEWALERTCOUNT_ATTR = "NewAlertCount";
+    public static final String CURRENTJOB_ATTR = "CurrentJob";
+    public static final List ATTRIBUTE_LIST;
     static {
         ATTRIBUTE_LIST = Arrays.asList(new String [] {STATUS_ATTR,
             VERSION_ATTR, ISRUNNING_ATTR, ISCRAWLING_ATTR,
             ALERTCOUNT_ATTR, NEWALERTCOUNT_ATTR, CURRENTJOB_ATTR});
     }
     
-    private final static String START_OPER = "start";
-    private final static String STOP_OPER = "stop";
-    private final static String DESTROY_OPER = "destroy";
-    private final static String INTERRUPT_OPER = "interrupt";
-    private final static String START_CRAWLING_OPER = "startCrawling";
-    private final static String STOP_CRAWLING_OPER = "stopCrawling";
-    private final static String ADD_CRAWL_JOB_OPER = "addJob";
-    private final static String TERMINATE_CRAWL_JOB_OPER =
+    public static final String START_OPER = "start";
+    public static final String STOP_OPER = "stop";
+    public static final String DESTROY_OPER = "destroy";
+    public static final String INTERRUPT_OPER = "interrupt";
+    public static final String START_CRAWLING_OPER = "startCrawling";
+    public static final String STOP_CRAWLING_OPER = "stopCrawling";
+    public static final String ADD_CRAWL_JOB_OPER = "addJob";
+    public static final String TERMINATE_CRAWL_JOB_OPER =
         "terminateCurrentJob";
-    private final static String DELETE_CRAWL_JOB_OPER = "deleteJob";
-    private final static String ALERT_OPER = "alert";
-    private final static String ADD_CRAWL_JOB_BASEDON_OPER = "addJobBasedon";
-    private final static String PENDING_JOBS_OPER = "pendingJobs";
-    private final static String COMPLETED_JOBS_OPER = "completedJobs";
-    private final static String CRAWLEND_REPORT_OPER = "crawlendReport";
-    private final static String SHUTDOWN_OPER = "shutdown";
-    private final static String LOG_OPER = "log";
-    private final static String REBIND_JNDI_OPER = "rebindJNDI";
-    private final static List OPERATION_LIST;
+    public static final String DELETE_CRAWL_JOB_OPER = "deleteJob";
+    public static final String ALERT_OPER = "alert";
+    public static final String ADD_CRAWL_JOB_BASEDON_OPER = "addJobBasedon";
+    public static final String PENDING_JOBS_OPER = "pendingJobs";
+    public static final String COMPLETED_JOBS_OPER = "completedJobs";
+    public static final String CRAWLEND_REPORT_OPER = "crawlendReport";
+    public static final String SHUTDOWN_OPER = "shutdown";
+    public static final String LOG_OPER = "log";
+    public static final String REBIND_JNDI_OPER = "rebindJNDI";
+    public static final List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
             INTERRUPT_OPER, START_CRAWLING_OPER, STOP_CRAWLING_OPER,
@@ -370,7 +370,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
     private CompositeType jobCompositeType = null;
     private TabularType jobsTabularType = null;
-    private static final String [] JOB_KEYS =
+    public static final String [] JOB_KEYS =
         new String [] {"uid", "name", "status"};
 
     private static String adminUsername;
