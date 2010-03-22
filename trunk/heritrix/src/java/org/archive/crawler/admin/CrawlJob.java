@@ -221,8 +221,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     
     private transient CrawlController controller = null;
     
-    private static final String RECOVERY_JOURNAL_STYLE = "recoveryJournal";
-    private static final String CRAWL_LOG_STYLE = "crawlLog";
+    public static final String RECOVERY_JOURNAL_STYLE = "recoveryJournal";
+    public static final String CRAWL_LOG_STYLE = "crawlLog";
     
     // OpenMBean support.
 
@@ -231,7 +231,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      */
     private transient MBeanServer mbeanServer = null;
     private transient ObjectName mbeanName = null;
-    private static final String CRAWLJOB_JMXMBEAN_TYPE =
+    public static final String CRAWLJOB_JMXMBEAN_TYPE =
         JmxUtils.SERVICE + ".Job";
     private transient JEMBeanHelper bdbjeMBeanHelper = null;
     private transient List<String> bdbjeAttributeNameList = null;
@@ -244,52 +244,52 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      */
     private transient OpenMBeanInfoSupport openMBeanInfo;
     
-    private final static String NAME_ATTR = "Name";
-    private final static String UID_ATTR = "UID";
-    private final static String STATUS_ATTR = "Status";
-    private final static String FRONTIER_SHORT_REPORT_ATTR =
+    public static final String NAME_ATTR = "Name";
+    public static final String UID_ATTR = "UID";
+    public static final String STATUS_ATTR = "Status";
+    public static final String FRONTIER_SHORT_REPORT_ATTR =
         "FrontierShortReport";
-    private final static String THREADS_SHORT_REPORT_ATTR =
+    public static final String THREADS_SHORT_REPORT_ATTR =
         "ThreadsShortReport";
-    private final static String TOTAL_DATA_ATTR = "TotalData";
-    private final static String CRAWL_TIME_ATTR = "CrawlTime";
-    private final static String DOC_RATE_ATTR = "DocRate";
-    private final static String CURRENT_DOC_RATE_ATTR = "CurrentDocRate";
-    private final static String KB_RATE_ATTR = "KbRate";
-    private final static String CURRENT_KB_RATE_ATTR = "CurrentKbRate";
-    private final static String THREAD_COUNT_ATTR = "ThreadCount";
-    private final static String DOWNLOAD_COUNT_ATTR = "DownloadedCount";
-    private final static String DISCOVERED_COUNT_ATTR = "DiscoveredCount";
-    private final static String [] ATTRIBUTE_ARRAY = {NAME_ATTR, UID_ATTR,
+    public static final String TOTAL_DATA_ATTR = "TotalData";
+    public static final String CRAWL_TIME_ATTR = "CrawlTime";
+    public static final String DOC_RATE_ATTR = "DocRate";
+    public static final String CURRENT_DOC_RATE_ATTR = "CurrentDocRate";
+    public static final String KB_RATE_ATTR = "KbRate";
+    public static final String CURRENT_KB_RATE_ATTR = "CurrentKbRate";
+    public static final String THREAD_COUNT_ATTR = "ThreadCount";
+    public static final String DOWNLOAD_COUNT_ATTR = "DownloadedCount";
+    public static final String DISCOVERED_COUNT_ATTR = "DiscoveredCount";
+    public static final String [] ATTRIBUTE_ARRAY = {NAME_ATTR, UID_ATTR,
         STATUS_ATTR, FRONTIER_SHORT_REPORT_ATTR, THREADS_SHORT_REPORT_ATTR,
         TOTAL_DATA_ATTR, CRAWL_TIME_ATTR, DOC_RATE_ATTR,
         CURRENT_DOC_RATE_ATTR, KB_RATE_ATTR, CURRENT_KB_RATE_ATTR,
         THREAD_COUNT_ATTR, DOWNLOAD_COUNT_ATTR, DISCOVERED_COUNT_ATTR};
-    private final static List ATTRIBUTE_LIST = Arrays.asList(ATTRIBUTE_ARRAY);
+    public static final List ATTRIBUTE_LIST = Arrays.asList(ATTRIBUTE_ARRAY);
     
-    private final static String IMPORT_URI_OPER = "importUri";
-    private final static String IMPORT_URIS_OPER = "importUris";
-    private final static String DUMP_URIS_OPER = "dumpUris";
-    private final static String PAUSE_OPER = "pause";
-    private final static String RESUME_OPER = "resume";
-    private final static String FRONTIER_REPORT_OPER = "frontierReport";
-    private final static String THREADS_REPORT_OPER = "threadsReport";
-    private final static String SEEDS_REPORT_OPER = "seedsReport";
-    private final static String CHECKPOINT_OPER = "startCheckpoint";
-    private final static String PROGRESS_STATISTICS_OPER =
+    public static final String IMPORT_URI_OPER = "importUri";
+    public static final String IMPORT_URIS_OPER = "importUris";
+    public static final String DUMP_URIS_OPER = "dumpUris";
+    public static final String PAUSE_OPER = "pause";
+    public static final String RESUME_OPER = "resume";
+    public static final String FRONTIER_REPORT_OPER = "frontierReport";
+    public static final String THREADS_REPORT_OPER = "threadsReport";
+    public static final String SEEDS_REPORT_OPER = "seedsReport";
+    public static final String CHECKPOINT_OPER = "startCheckpoint";
+    public static final String PROGRESS_STATISTICS_OPER =
         "progressStatistics";
-    private final static String PROGRESS_STATISTICS_LEGEND_OPER =
+    public static final String PROGRESS_STATISTICS_LEGEND_OPER =
         "progressStatisticsLegend";
     
-    private final static String PROG_STATS = "progressStatistics";
+    public static final String PROG_STATS = "progressStatistics";
     
     // Same as JEMBeanHelper.OP_DB_STAT
-    private final static String OP_DB_STAT = "getDatabaseStats";
+    public static final String OP_DB_STAT = "getDatabaseStats";
     
     /**
      * Don't add the following crawl-order items.
      */
-    private final static List ORDER_EXCLUDE;
+    public static final List ORDER_EXCLUDE;
     static {
         ORDER_EXCLUDE = Arrays.asList(new String [] {"bdb-cache-percent",
             "extract-processors", "DNS", "uri-included-structure"});

@@ -127,12 +127,12 @@ public class CrawlController implements Serializable, Reporter {
     public static final char MANIFEST_LOG_FILE = 'L';
 
     // key log names
-    private static final String LOGNAME_PROGRESS_STATISTICS =
+    public static final String LOGNAME_PROGRESS_STATISTICS =
         "progress-statistics";
-    private static final String LOGNAME_URI_ERRORS = "uri-errors";
-    private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
-    private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
-    private static final String LOGNAME_CRAWL = "crawl";
+    public static final String LOGNAME_URI_ERRORS = "uri-errors";
+    public static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
+    public static final String LOGNAME_LOCAL_ERRORS = "local-errors";
+    public static final String LOGNAME_CRAWL = "crawl";
 
     // key subcomponents which define and implement a crawl in progress
     private transient CrawlOrder order;
@@ -166,15 +166,15 @@ public class CrawlController implements Serializable, Reporter {
      */
     private transient String sExit;
 
-    private static final Object NASCENT = "NASCENT".intern();
-    private static final Object RUNNING = "RUNNING".intern();
-    private static final Object PAUSED = "PAUSED".intern();
-    private static final Object PAUSING = "PAUSING".intern();
-    private static final Object CHECKPOINTING = "CHECKPOINTING".intern();
-    private static final Object STOPPING = "STOPPING".intern();
-    private static final Object FINISHED = "FINISHED".intern();
-    private static final Object STARTED = "STARTED".intern();
-    private static final Object PREPARING = "PREPARING".intern();
+    public static final Object NASCENT = "NASCENT".intern();
+    public static final Object RUNNING = "RUNNING".intern();
+    public static final Object PAUSED = "PAUSED".intern();
+    public static final Object PAUSING = "PAUSING".intern();
+    public static final Object CHECKPOINTING = "CHECKPOINTING".intern();
+    public static final Object STOPPING = "STOPPING".intern();
+    public static final Object FINISHED = "FINISHED".intern();
+    public static final Object STARTED = "STARTED".intern();
+    public static final Object PREPARING = "PREPARING".intern();
 
     transient private Object state = NASCENT;
 
