@@ -166,12 +166,6 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
             return;
         }
         
-        if(!gotSomething) {
-            // robots.txt lookup failed and policy not IGNORE
-            validRobots = false;
-            return;
-        }
-        
         if (!curi.is2XXSuccess()) {
             // Not found or anything but a status code in the 2xx range is
             // treated as giving access to all of a sites' content.
