@@ -392,7 +392,8 @@ public class PreconditionEnforcer
     *         be met before we can proceed. False if we can precede to process
     *         this url.
     */
-    private boolean credentialPrecondition(final CrawlURI curi) {
+    @SuppressWarnings("unchecked")
+	private boolean credentialPrecondition(final CrawlURI curi) {
 
         boolean result = false;
 
@@ -470,7 +471,8 @@ public class PreconditionEnforcer
      * @param curi CrawlURI.
      * @return True if already run.
      */
-    private boolean authenticated(final Credential credential,
+    @SuppressWarnings("unchecked")
+	private boolean authenticated(final Credential credential,
             final CrawlURI curi) {
         boolean result = false;
         CrawlServer server =
