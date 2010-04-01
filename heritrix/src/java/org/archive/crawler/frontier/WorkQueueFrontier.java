@@ -304,7 +304,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             } else {
                 this.allQueues = c.getBigMap("allqueues", WorkQueue.class);
                 if (logger.isLoggable(Level.FINE)) {
-                    Iterator i = this.allQueues.keySet().iterator();
+                    Iterator<String> i = this.allQueues.keySet().iterator();
                     try {
                         for (; i.hasNext();) {
                             logger.fine((String) i.next());
@@ -1002,7 +1002,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     public long deleteURIs(String uriMatch, String queueMatch) {
         long count = 0;
         // TODO: DANGER/ values() may not work right from CachedBdbMap
-        Iterator iter = allQueues.keySet().iterator(); 
+        Iterator<String> iter = allQueues.keySet().iterator(); 
         while(iter.hasNext()) {
             String queueKey = ((String)iter.next());
             if(StringUtils.isNotEmpty(queueMatch) && !queueKey.matches(queueMatch)) {
@@ -1131,13 +1131,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
     
     /**
-     * Writer the single-line reports of all queues in the
+     * Write the single-line reports of all queues in the
      * iterator to the writer 
      * 
      * @param writer to receive report
      * @param iterator over queues of interest.
      */
-    private void queueSingleLinesTo(PrintWriter writer, Iterator iterator) {
+    private void queueSingleLinesTo(PrintWriter writer, Iterator<?> iterator) {
         Object obj;
         WorkQueue q;
         boolean legendWritten = false;
@@ -1297,7 +1297,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param total
      * @param max
      */
-    protected void appendQueueReports(PrintWriter w, Iterator iterator,
+    protected void appendQueueReports(PrintWriter w, Iterator<?> iterator,
             int total, int max) {
         Object obj;
         WorkQueue q;
