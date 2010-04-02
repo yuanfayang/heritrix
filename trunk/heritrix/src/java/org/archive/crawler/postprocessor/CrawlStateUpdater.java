@@ -27,12 +27,10 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.framework.Frontier.FrontierGroup;
 
 
 /**
@@ -64,7 +62,7 @@ public class CrawlStateUpdater extends Processor implements
         if (scheme.equals("http") || scheme.equals("https") &&
                 server != null) {
             // Update connection problems counter
-            if(curi.getFetchStatus() == S_CONNECT_FAILED) {
+            if( curi.getFetchStatus() == S_CONNECT_FAILED || curi.getFetchStatus() == S_CONNECT_LOST) {
                 server.incrementConsecutiveConnectionErrors();
             } else if (curi.getFetchStatus() > 0){
                 server.resetConsecutiveConnectionErrors();
@@ -72,9 +70,10 @@ public class CrawlStateUpdater extends Processor implements
 
             // Update robots info
             try {
-                if (curi.getUURI().getPath() != null &&
-                        curi.getUURI().getPath().equals("/robots.txt")) {
+                if ("/robots.txt".equals(curi.getUURI().getPath())) {
                     // Update server with robots info
+                    // NOTE, this *can* change the curi's fetchStatus from a connection
+                    // problem to S_DEEMED_NOT_FOUND to prevent further retries
                     server.updateRobots(curi);
                 }
             }
