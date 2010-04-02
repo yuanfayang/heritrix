@@ -48,14 +48,14 @@ import org.archive.net.UURIFactory;
  *
  * @author gojomo
  */
-public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats {
+public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats, FetchStatusCodes {
 
     private static final long serialVersionUID = -989714570750970369L;
 
     public static final long ROBOTS_NOT_FETCHED = -1;
     /** only check if robots-fetch is perhaps superfluous 
      * after this many tries */
-    public static final long MIN_ROBOTS_RETRIES = 2;
+    public static final long MIN_ROBOTS_RETRIES = 3;
 
     private final String server; // actually, host+port in the https case
     private int port;
@@ -67,8 +67,8 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     CrawlSubstats substats = new CrawlSubstats();
     
     // how many consecutive connection errors have been encountered;
-    // used to drive exponentially increasing retry timeout or decision
-    // to 'freeze' entire class (queue) of URIs
+    // could be used to drive exponentially increasing retry timeout or decision
+    // to 'freeze' entire class (queue) of URIs (but isn't yet)
     protected int consecutiveConnectionErrors = 0;
 
     /**
@@ -148,11 +148,13 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
             settingsHandler.getOrder().getRobotsHonoringPolicy();
 
         robotsFetched = System.currentTimeMillis();
-
-        boolean gotSomething = curi.getFetchStatus() > 0
-                && curi.isHttpTransaction();
+ 
+        boolean gotSomething = curi.isHttpTransaction() &&
+        	(curi.getFetchStatus() > 0 || curi.getFetchStatus() == S_DEEMED_NOT_FOUND );
+        
         if (!gotSomething && curi.getFetchAttempts() < MIN_ROBOTS_RETRIES) {
-            // robots.txt lookup failed, no reason to consider IGNORE yet
+            // robots.txt lookup failed, but still trying at least a few times
+            // no reason to consider IGNORE yet
             validRobots = false;
             return;
         }
@@ -163,11 +165,27 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
             // IGNORE = ALLOWALL
             robots = RobotsExclusionPolicy.ALLOWALL;
             validRobots = true;
+            if(curi.getFetchStatus() < 0) {
+                // prevent the rest of the usual retries
+                curi.setFetchStatus(S_DEEMED_NOT_FOUND);
+            }
+            return;
+        }
+        
+        // special deeming for a particular kind of connection-lost (empty server response)
+        if(curi.getFetchStatus() == S_CONNECT_LOST && curi.annotationContains("NoHttpResponseException")) {
+        	curi.setFetchStatus(S_DEEMED_NOT_FOUND);
+        	gotSomething = true; 
+        }
+        
+        if (!gotSomething) {
+            // robots.txt fetch failed and exceptions (ignore/deeming) don't apply; no valid robots info yet
+            validRobots = false;
             return;
         }
         
         if (!curi.is2XXSuccess()) {
-            // Not found or anything but a status code in the 2xx range is
+            // Not found or any other HTTP status code outside the 2xx range is
             // treated as giving access to all of a sites' content.
             // This is the prevailing practice of Google, since 4xx
             // responses on robots.txt are usually indicative of a 
@@ -301,7 +319,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     /**
      * @return Credential avatars for this server.  Returns null if none.
      */
-    public Set getCredentialAvatars() {
+    public Set<CredentialAvatar> getCredentialAvatars() {
         return this.avatars;
     }
 
