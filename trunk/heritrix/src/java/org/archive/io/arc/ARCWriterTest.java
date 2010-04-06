@@ -555,4 +555,36 @@ extends TmpDirTestCase implements ARCConstants {
 			assertTrue(totalRead > 0);
 		}
 	}
+    
+    public void testArchiveRecordEORConsistent() throws Exception {
+        // Get an ARC with one record.
+        WriterPoolMember w = 
+                createArcWithOneRecord("testArchiveRecordEOFConsistent", true);
+        w.close();
+        // Get reader on said ARC.
+        ARCReader reader = ARCReaderFactory.get(w.getFile());
+        Iterator<ArchiveRecord> ri = reader.iterator(); 
+        // skip first ARC metarecord
+        ARCRecord record = (ARCRecord) ri.next();
+        ri.hasNext();
+        record = (ARCRecord) ri.next();
+        // read to EOR
+        byte [] buf = new byte[1024];
+        int read = 0;
+        while (read >= 0) {
+            read = record.read(buf);
+        }
+        // consecutive reads after EOR should always give -1
+        read = 0;
+        for (int i=0; i<5; i++) {
+            read += record.read(buf);
+        }
+        assertTrue(read == -5);
+    }
+    
+    public void testArchiveRecordResetRecord() throws Exception {
+        // TODO: should not throw premature EOF after mark/reset, close
+        assertTrue(true);
+    }
+    
 }

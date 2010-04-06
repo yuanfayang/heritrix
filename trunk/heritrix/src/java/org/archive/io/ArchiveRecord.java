@@ -189,8 +189,8 @@ public abstract class ArchiveRecord extends InputStream {
 			if (this.digest != null) {
 				this.digest.update((byte) c);
 			}
+	        incrementPosition();
 		}
-		incrementPosition();
 		return c;
 	}
 
@@ -212,8 +212,8 @@ public abstract class ArchiveRecord extends InputStream {
 			if (this.digest != null && read >= 0) {
 				this.digest.update(b, offset, read);
 			}
+	        incrementPosition(read);
 		}
-		incrementPosition(read);
 		return read;
 	}
 
@@ -221,7 +221,7 @@ public abstract class ArchiveRecord extends InputStream {
 	 * This available is not the stream's available. Its an available based on
 	 * what the stated Archive record length is minus what we've read to date.
 	 * 
-	 * @return True if bytes remaining in record content.
+	 * @return bytes remaining in record content.
 	 */
     public int available() {
         long amount = getHeader().getLength() - getPosition();
