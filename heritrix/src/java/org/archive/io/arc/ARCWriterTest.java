@@ -551,11 +551,9 @@ extends TmpDirTestCase implements ARCConstants {
         ARCRecord record = getSingleRecord("testArchiveRecordEORConsistent");
         this.readToEOR(record);
         // consecutive reads after EOR should always give -1
-        int read = 0;
         for (int i=0; i<5; i++) {
-            read += record.read(new byte[1]);
+            assertEquals(-1, record.read(new byte[1]));            
         }
-        assertTrue(read == -5);
     }
     
     // should not throw premature EOF when wrapped with BufferedInputStream
