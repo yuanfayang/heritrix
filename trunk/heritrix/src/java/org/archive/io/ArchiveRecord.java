@@ -189,7 +189,7 @@ public abstract class ArchiveRecord extends InputStream {
 			if (this.digest != null) {
 				this.digest.update((byte) c);
 			}
-	        incrementPosition();
+			incrementPosition();
 		}
 		return c;
 	}
@@ -212,7 +212,7 @@ public abstract class ArchiveRecord extends InputStream {
 			if (this.digest != null && read >= 0) {
 				this.digest.update(b, offset, read);
 			}
-	        incrementPosition(read);
+			incrementPosition(read);
 		}
 		return read;
 	}
