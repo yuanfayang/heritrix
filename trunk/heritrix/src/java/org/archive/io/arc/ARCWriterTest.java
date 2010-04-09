@@ -549,7 +549,7 @@ extends TmpDirTestCase implements ARCConstants {
     // should always give -1 on repeated reads past EOR
     public void testArchiveRecordEORConsistent() throws Exception {
         ARCRecord record = getSingleRecord("testArchiveRecordEORConsistent");
-        this.readToEOR(record);
+        this.readToEOS(record);
         // consecutive reads after EOR should always give -1
         for (int i=0; i<5; i++) {
             assertEquals(-1, record.read(new byte[1]));            
@@ -563,19 +563,13 @@ extends TmpDirTestCase implements ARCConstants {
         record.setStrict(true);
         // ensure mark support
         InputStream stream = new BufferedInputStream(record);
-        try {
-            if (stream.markSupported()) {
-                for (int i=0; i<3; i++) {
-                    this.readToEOS(stream);
-                    stream.mark(stream.available());
-                    stream.reset();
-                }
-                stream.close();
-            } else {
-                fail("failed to test mark support");
+        if (stream.markSupported()) {
+            for (int i=0; i<3; i++) {
+                this.readToEOS(stream);
+                stream.mark(stream.available());
+                stream.reset();
             }
-        } catch (Exception e) {
-            fail(e.getMessage());
+            stream.close();
         }
     }
 
@@ -588,15 +582,6 @@ extends TmpDirTestCase implements ARCConstants {
         }
     }
     
-    protected void readToEOR(ARCRecord record) throws Exception {
-        byte [] buf = new byte[1024];
-        int read = 0;
-        while (read >= 0) {
-            read = record.read(buf);
-            // System.out.println("readToEOR read " + read + " bytes");
-        }
-    }
-
     protected ARCRecord getSingleRecord(String name) throws Exception {
         // Get an ARC with one record.
         WriterPoolMember w = createArcWithOneRecord(name, true);
