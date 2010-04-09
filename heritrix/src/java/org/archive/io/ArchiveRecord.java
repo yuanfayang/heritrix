@@ -176,46 +176,46 @@ public abstract class ArchiveRecord extends InputStream {
     }
 
     /**
-	 * @return Next character in this Record content else -1 if at EOR.
-	 * @throws IOException
-	 */
-	public int read() throws IOException {
-		int c = -1;
-		if (available() > 0) {
-			c = this.in.read();
-			if (c == -1) {
-				throw new IOException("Premature EOF before end-of-record.");
-			}
-			if (this.digest != null) {
-				this.digest.update((byte) c);
-			}
-			incrementPosition();
-		}
-		return c;
-	}
+     * @return Next character in this Record content else -1 if at EOR.
+     * @throws IOException
+     */
+    public int read() throws IOException {
+        int c = -1;
+        if (available() > 0) {
+            c = this.in.read();
+            if (c == -1) {
+                throw new IOException("Premature EOF before end-of-record.");
+            }
+            if (this.digest != null) {
+                this.digest.update((byte) c);
+            }
+            incrementPosition();
+        }
+        return c;
+    }
 
     public int read(byte[] b, int offset, int length) throws IOException {
-		int read = Math.min(length, available());
-		if (read == -1 || read == 0) {
-			read = -1;
-		} else {
-			read = this.in.read(b, offset, read);
-			if (read == -1) {
-				String msg = "Premature EOF before end-of-record: "
-					+ getHeader().getHeaderFields();
-				if (isStrict()) {
-					throw new IOException(msg);
-				}
-				setEor(true);
-				System.err.println(Level.WARNING.toString() + " " + msg);
-			}
-			if (this.digest != null && read >= 0) {
-				this.digest.update(b, offset, read);
-			}
-			incrementPosition(read);
-		}
-		return read;
-	}
+        int read = Math.min(length, available());
+        if (read == -1 || read == 0) {
+            read = -1;
+        } else {
+            read = this.in.read(b, offset, read);
+            if (read == -1) {
+                String msg = "Premature EOF before end-of-record: "
+                    + getHeader().getHeaderFields();
+                if (isStrict()) {
+                    throw new IOException(msg);
+                }
+                setEor(true);
+                System.err.println(Level.WARNING.toString() + " " + msg);
+            }
+            if (this.digest != null && read >= 0) {
+                this.digest.update(b, offset, read);
+            }
+            incrementPosition(read);
+        }
+        return read;
+    }
 
     /**
 	 * This available is not the stream's available. Its an available based on
