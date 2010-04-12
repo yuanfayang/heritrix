@@ -1033,6 +1033,8 @@ public class CrawlController implements Serializable, Reporter {
         LOGGER.fine("Entered complete stop.");
         // Run processors' final tasks
         runProcessorFinalTasks();
+        // Run frontier finalTasks (before crawl can be considered 'finished')
+        frontier.finalTasks(); 
         // Ok, now we are ready to exit.
         sendCrawlStateChangeEvent(FINISHED, this.sExit);
         synchronized (this.registeredCrawlStatusListeners) {
@@ -2002,6 +2004,7 @@ public class CrawlController implements Serializable, Reporter {
      * @return Map that knows how to carry large sets of key/value pairs or
      * if none available, returns instance of HashMap.
      * @throws Exception
+     * @deprecated
      */
     protected <V> CachedBdbMap<String,V> getCBM(final String dbName,
             final Class<? super V> valueClass)

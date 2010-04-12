@@ -340,14 +340,17 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         }
     }
     
-    protected void closeQueue() {
-        if((Boolean)getUncheckedAttribute(null,ATTR_DUMP_PENDING_AT_CLOSE)) {
+    public void finalTasks() {
+    	if((Boolean)getUncheckedAttribute(null,ATTR_DUMP_PENDING_AT_CLOSE)) {
             try {
                 dumpAllPendingToLog();
             } catch (DatabaseException e) {
                 logger.log(Level.WARNING,"dump pending problem",e);
             }
         }
+    }
+    
+    protected void closeQueue() {
         if (this.pendingUris != null) {
             this.pendingUris.close();
             this.pendingUris = null;
