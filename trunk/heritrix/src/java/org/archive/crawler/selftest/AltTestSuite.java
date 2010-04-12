@@ -105,4 +105,13 @@ public class AltTestSuite extends TestSuite {
             && (name.startsWith("test")||name.startsWith(altPrefix)) 
             && returnType.equals(Void.TYPE);
      }
+    
+    /* filler constructor to avoid JUNit "no public constructor" warnings */
+	public AltTestSuite() {
+		super();
+	}
+	/* noop test to avoid "no tests found" warnings */
+	public void testNoop() {
+		
+	}
 }
