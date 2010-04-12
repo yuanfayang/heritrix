@@ -100,6 +100,7 @@ import com.sleepycat.je.EnvironmentConfig;
  * @author gojomo
  * @author paul baclace (conversion to ConcurrentMap)
  *  
+ *  @deprecated use ObjectIdentityBdbCache instead
  */
 public class CachedBdbMap<K,V> extends AbstractMap<K,V> 
 implements ConcurrentMap<K,V>, ObjectIdentityCache<K,V>, Serializable, Closeable {
@@ -418,7 +419,7 @@ implements ConcurrentMap<K,V>, ObjectIdentityCache<K,V>, Serializable, Closeable
      * @throws DatabaseException
      */
     public synchronized void initialize(final Environment env, 
-            final Class valueClass, final StoredClassCatalog classCatalog)
+            final Class<? super V> valueClass, final StoredClassCatalog classCatalog)
     throws DatabaseException {
         initializeInstance();
         this.db = openDatabase(env, this.dbName);
@@ -717,7 +718,6 @@ implements ConcurrentMap<K,V>, ObjectIdentityCache<K,V>, Serializable, Closeable
         return valDisk;
     }
     
-    @SuppressWarnings("unchecked")
     private V _getDisk(K key) {
         V v = diskMapGet(key); // disk io can occur here
         if (v != null) {
