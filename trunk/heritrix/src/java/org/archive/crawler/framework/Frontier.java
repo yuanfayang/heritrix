@@ -484,4 +484,11 @@ public interface Frontier extends Reporter {
     public interface FrontierGroup extends CrawlSubstats.HasCrawlSubstats {
 
     }
+
+	/**
+	 * Perform any final tasks *before* notification crawl has
+	 * reached 'FINISHED' status. (For example, anything that needs to 
+	 * dump final data to disk/logs.)
+	 */
+	public void finalTasks();
 }

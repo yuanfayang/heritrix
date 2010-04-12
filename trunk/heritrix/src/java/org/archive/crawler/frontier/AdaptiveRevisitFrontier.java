@@ -1258,8 +1258,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         // ignore name; only one report for now
         hostQueues.reportTo(name, writer);
     }
-
+     
     /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#finalTasks()
+     */
+    @Override
+	public void finalTasks() {
+		// by default do nothing
+	}
+
+	/* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
      */
     public void crawlStarted(String message) {
