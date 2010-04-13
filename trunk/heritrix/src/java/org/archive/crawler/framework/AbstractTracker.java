@@ -77,7 +77,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     /** Timestamp of when this logger last wrote something to the log */
     protected long lastLogPointTime;
 
-    protected boolean shouldrun = true;
+    volatile protected boolean shouldrun = true;
 
     /**
      * @param name
