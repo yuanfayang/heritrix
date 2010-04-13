@@ -1762,7 +1762,14 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
 
     public void setAttribute(Attribute attribute)
             throws AttributeNotFoundException {
-        // Is it a crawl order attribute?
+        setAttributeInternal(attribute);
+        // prompt updating of settings-sensitive components
+        kickUpdate();
+    }
+
+	protected void setAttributeInternal(Attribute attribute)
+			throws AttributeNotFoundException {
+		// Is it a crawl order attribute?
         CrawlOrder order = this.getController().getOrder();
         String attName = attribute.getName();
         if (attName.startsWith(order.getAbsoluteName())) {
@@ -1799,7 +1806,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         // Else, we don't know how to handle this attribute.
         throw new AttributeNotFoundException("Attribute " + attName +
             " can not be set.");
-    }
+	}
     
     protected void setCrawlOrderAttribute(final String attribute_name,
             final ComplexType ct, final Attribute attribute)
@@ -1831,7 +1838,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         for (int i = 0; i < attributes.size(); i++) {
             try {
                 Attribute attr = (Attribute)attributes.get(i);
-                setAttribute(attr);
+                setAttributeInternal(attr);
                 String an = attr.getName();
                 Object newValue = getAttribute(an);
                 resultList.add(new Attribute(an, newValue));
@@ -1839,6 +1846,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 e.printStackTrace();
             }
         }
+        // prompt updating of settings-sensitive components
+        kickUpdate();
         return resultList;
     }
 
