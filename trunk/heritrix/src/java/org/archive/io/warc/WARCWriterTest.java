@@ -129,29 +129,29 @@ extends TmpDirTestCase implements WARCConstants {
     		new ByteArrayInputStream(bytes), bytes.length);
 	}
 
-	protected void writeBasicRecords(final WARCWriter writer)
+    protected void writeBasicRecords(final WARCWriter writer)
     throws IOException {
-    	ANVLRecord headerFields = new ANVLRecord();
-    	headerFields.addLabelValue("x", "y");
-    	headerFields.addLabelValue("a", "b");
-    	
-    	URI rid = null;
-    	try {
-    		rid = GeneratorFactory.getFactory().
-    			getQualifiedRecordID(TYPE, METADATA);
-    	} catch (URISyntaxException e) {
-    		// Convert to IOE so can let it out.
-    		throw new IOException(e.getMessage());
-    	}
-    	final String content = "Any old content.";
-    	for (int i = 0; i < 10; i++) {
-    		String body = i + ". " + content;
-    		byte [] bodyBytes = body.getBytes(UTF8Bytes.UTF8);
-    		writer.writeRecord(METADATA, "http://www.archive.org/",
-    			ArchiveUtils.get14DigitDate(), "no/type",
-    			rid, headerFields, new ByteArrayInputStream(bodyBytes),
-    			(long)bodyBytes.length, true);
-    	}
+        ANVLRecord headerFields = new ANVLRecord();
+        headerFields.addLabelValue("x", "y");
+        headerFields.addLabelValue("a", "b");
+
+        URI rid = null;
+        try {
+            rid = GeneratorFactory.getFactory().
+            getQualifiedRecordID(TYPE, METADATA);
+        } catch (URISyntaxException e) {
+            // Convert to IOE so can let it out.
+            throw new IOException(e.getMessage());
+        }
+        final String content = "Any old content.";
+        for (int i = 0; i < 10; i++) {
+            String body = i + ". " + content;
+            byte [] bodyBytes = body.getBytes(UTF8Bytes.UTF8);
+            writer.writeRecord(METADATA, "http://www.archive.org/",
+                    ArchiveUtils.get14DigitDate(), "no/type",
+                    rid, headerFields, new ByteArrayInputStream(bodyBytes),
+                    (long)bodyBytes.length, true);
+        }
     }
 
     /**
@@ -241,7 +241,7 @@ extends TmpDirTestCase implements WARCConstants {
     throws FileNotFoundException, IOException {
         WARCReader reader = WARCReaderFactory.get(f);
         assertNotNull(reader);
-        List headers = null;
+        List<ArchiveRecordHeader> headers = null;
         if (recordCount == -1) {
             headers = reader.validate();
         } else {
@@ -263,8 +263,8 @@ extends TmpDirTestCase implements WARCConstants {
         reader.close();
         
         assertTrue("Metadatas not equal", headers.size() == recordCount);
-        for (Iterator i = headers.iterator(); i.hasNext();) {
-            ArchiveRecordHeader r = (ArchiveRecordHeader)i.next();
+        for (Iterator<ArchiveRecordHeader> i = headers.iterator(); i.hasNext();) {
+            ArchiveRecordHeader r = i.next();
             assertTrue("Record is empty", r.getLength() > 0);
         }
     }
@@ -287,7 +287,7 @@ extends TmpDirTestCase implements WARCConstants {
         long offset = -1;
         long totalRecords = 0;
         boolean readSecond = false;
-        for (final Iterator i = reader.iterator(); i.hasNext();
+        for (final Iterator<ArchiveRecord> i = reader.iterator(); i.hasNext();
                 totalRecords++) {
             WARCRecord ar = (WARCRecord)i.next();
             if (!readFirst) {
@@ -309,7 +309,7 @@ extends TmpDirTestCase implements WARCConstants {
         // Get reader again.  See how iterator works with offset
         reader = WARCReaderFactory.get(f, offset);
         int count = 0;
-        for (final Iterator i = reader.iterator(); i.hasNext(); i.next()) {
+        for (final Iterator<ArchiveRecord> i = reader.iterator(); i.hasNext(); i.next()) {
             count++;
         }
         reader.close();
@@ -433,28 +433,28 @@ extends TmpDirTestCase implements WARCConstants {
 //    }
     
     public void testArcRecordOffsetReads() throws Exception {
-    	// Get an ARC with one record.
-		WriterPoolMember w =
-			createWithOneRecord("testArcRecordInBufferStream", true);
-		w.close();
-		// Get reader on said ARC.
-		WARCReader r = WARCReaderFactory.get(w.getFile());
-		final Iterator<ArchiveRecord> i = r.iterator();
-		// Skip first ARC meta record.
-		ArchiveRecord ar = i.next();
-		i.hasNext();
-		// Now we're at first and only record in ARC.
-		ar = (WARCRecord) i.next();
-		// Now try getting some random set of bytes out of it 
-		// at an odd offset (used to fail because we were
-		// doing bad math to find where in buffer to read).
-		final byte[] buffer = new byte[17];
-		final int maxRead = 4;
-		int totalRead = 0;
-		while (totalRead < maxRead) {
-			totalRead = totalRead
-			    + ar.read(buffer, 13 + totalRead, maxRead - totalRead);
-			assertTrue(totalRead > 0);
-		}
-	}
+        // Get an ARC with one record.
+        WriterPoolMember w =
+            createWithOneRecord("testArcRecordInBufferStream", true);
+        w.close();
+        // Get reader on said ARC.
+        WARCReader r = WARCReaderFactory.get(w.getFile());
+        final Iterator<ArchiveRecord> i = r.iterator();
+        // Skip first ARC meta record.
+        ArchiveRecord ar = i.next();
+        i.hasNext();
+        // Now we're at first and only record in ARC.
+        ar = (WARCRecord) i.next();
+        // Now try getting some random set of bytes out of it 
+        // at an odd offset (used to fail because we were
+        // doing bad math to find where in buffer to read).
+        final byte[] buffer = new byte[17];
+        final int maxRead = 4;
+        int totalRead = 0;
+        while (totalRead < maxRead) {
+            totalRead = totalRead
+            + ar.read(buffer, 13 + totalRead, maxRead - totalRead);
+            assertTrue(totalRead > 0);
+        }
+    }
 }
