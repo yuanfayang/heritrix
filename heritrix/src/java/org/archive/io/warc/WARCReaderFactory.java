@@ -115,8 +115,8 @@ implements WARCConstants {
     }
     
     /**
-     * Get an ARCReader.
-     * Pulls the ARC local into whereever the System Property
+     * Get an WARCReader.
+     * Pulls the WARC local into wherever the System Property
      * <code>java.io.tmpdir</code> points. It then hands back an ARCReader that
      * points at this local copy.  A close on this ARCReader instance will
      * remove the local copy.
@@ -267,14 +267,14 @@ implements WARCConstants {
                 private GzippedInputStream gis =
                     (GzippedInputStream)getInputStream();
 
-                private Iterator gzipIterator = this.gis.iterator();
+                private Iterator<?> gzipIterator = this.gis.iterator();
 
                 protected boolean innerHasNext() {
                     return this.gzipIterator.hasNext();
                 }
 
                 protected ArchiveRecord innerNext() throws IOException {
-                    // Get the positoin before gzipIterator.next moves
+                    // Get the position before gzipIterator.next moves
                     // it on past the gzip header.
                     long p = this.gis.position();
                     InputStream is = (InputStream) this.gzipIterator.next();
