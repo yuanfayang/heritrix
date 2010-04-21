@@ -42,6 +42,7 @@ import org.archive.net.UURIFactory;
 import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
 import org.archive.util.TextUtils;
+import org.archive.util.UriUtils;
 
 /**
  * Basic link-extraction, from an HTML content-body,
@@ -150,13 +151,6 @@ implements CoreAttributeConstants {
     // 15: single-quote delimited attr value
     // 16: space-delimited attr value
 
-
-    // much like the javascript likely-URI extractor, but
-    // without requiring quotes -- this can indicate whether
-    // an HTML tag attribute that isn't definitionally a
-    // URI might be one anyway, as in form-tag VALUE attributes
-    static final String LIKELY_URI_PATH =
-     "(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)";
     static final String WHITESPACE = "\\s";
     static final String CLASSEXT =".class";
     static final String APPLET = "applet";
@@ -253,6 +247,11 @@ implements CoreAttributeConstants {
         CharSequence actionContext = null;
         CharSequence method = null; 
         
+        // Just in case it's a VALUE whose interpretation depends on accompanying NAME
+        CharSequence valueVal = null; 
+        CharSequence valueContext = null;
+        CharSequence nameVal = null; 
+        
         final boolean framesAsEmbeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_TREAT_FRAMES_AS_EMBED_LINKS)).booleanValue();
 
@@ -263,7 +262,6 @@ implements CoreAttributeConstants {
                 (curi, EXTRACT_VALUE_ATTRIBUTES)).booleanValue();
         
         final String elementStr = element.toString();
-
         while (attr.find()) {
             int valueGroup =
                 (attr.start(14) > -1) ? 14 : (attr.start(15) > -1) ? 15 : 16;
@@ -272,6 +270,7 @@ implements CoreAttributeConstants {
             assert start >= 0: "Start is: " + start + ", " + curi;
             assert end >= 0: "End is :" + end + ", " + curi;
             CharSequence value = cs.subSequence(start, end);
+            CharSequence attrName = cs.subSequence(attr.start(1),attr.end(1));
             value = TextUtils.unescapeHtml(value);
             if (attr.start(2) > -1) {
                 // HREF
@@ -317,6 +316,8 @@ implements CoreAttributeConstants {
                     attr.group(5));
                 
                 // true, if we expect another HTML page instead of an image etc.
+                // TODO: add explicit 'F'rame hop type? (it's not really L, and
+                // different enough from other 'E's)
                 final char hopType;
                 
                 if(!framesAsEmbeds
@@ -364,13 +365,9 @@ implements CoreAttributeConstants {
                 }
             } else if (attr.start(10) > -1) {
                 // VALUE, with possibility of URI
-                if (extractValueAttributes 
-                        && TextUtils.matches(LIKELY_URI_PATH, value)) {
-                    CharSequence context = Link.elementContext(element,
-                        attr.group(10));
-                    processLink(curi,value, context);
-                }
-
+                // store value, context for handling at end
+                valueVal = value; 
+                valueContext = Link.elementContext(element,attr.group(10));
             } else if (attr.start(11) > -1) {
                 // STYLE inline attribute
                 // then, parse for URIs
@@ -382,6 +379,15 @@ implements CoreAttributeConstants {
                 method = value;
                 // form processing finished at end (after ACTION also collected)
             } else if (attr.start(13) > -1) {
+                if("NAME".equalsIgnoreCase(attrName.toString())) {
+                    // remember 'name' for end-analysis
+                    nameVal = value; 
+                }
+                if("FLASHVARS".equalsIgnoreCase(attrName.toString())) {
+                    // consider FLASHVARS attribute immediately
+                    valueContext = Link.elementContext(element,attr.group(13));
+                    considerQueryStringValues(curi, value, valueContext,Link.SPECULATIVE_HOP);
+                }
                 // any other attribute
                 // ignore for now
                 // could probe for path- or script-looking strings, but
@@ -393,7 +399,7 @@ implements CoreAttributeConstants {
 
         // finish handling codebase/resources now that all available
         if (resources != null) {
-            Iterator iter = resources.iterator();
+            Iterator<String> iter = resources.iterator();
             UURI codebaseURI = null;
             String res = null;
             try {
@@ -427,6 +433,56 @@ implements CoreAttributeConstants {
                 processLink(curi, action, actionContext);
             }
         }
+        
+        // finish handling VALUE
+        if(valueVal != null) {
+            if("PARAM".equalsIgnoreCase(elementStr) && "flashvars".equalsIgnoreCase(nameVal.toString())) {
+                // special handling for <PARAM NAME='flashvars" VALUE="">
+                String queryStringLike = valueVal.toString();
+                // treat value as query-string-like "key=value[;key=value]*" pairings
+                considerQueryStringValues(curi, queryStringLike, valueContext,Link.SPECULATIVE_HOP);
+            } else {
+                // regular VALUE handling
+                if (extractValueAttributes) {
+                    considerIfLikelyUri(curi,valueVal,valueContext,Link.NAVLINK_HOP);
+                }
+            }
+        }
+    }
+
+    /**
+     * Consider a query-string-like collections of key=value[;key=value]
+     * pairs for URI-like strings in the values. Where URI-like strings are
+     * found, add as discovered outlink. 
+     * 
+     * @param curi origin CrawlURI
+     * @param queryString query-string-like string
+     * @param valueContext page context where found
+     */
+    protected void considerQueryStringValues(CrawlURI curi,
+            CharSequence queryString, CharSequence valueContext, char hopType) {
+        for(String pairString : queryString.toString().split(";")) {
+            String[] keyVal = pairString.split("=");
+            if(keyVal.length==2) {
+                considerIfLikelyUri(curi,keyVal[1],valueContext, hopType);
+            }
+        }
+    }
+
+    /**
+     * Consider whether a given string is URI-like. If so, add as discovered 
+     * outlink. 
+     * 
+     * @param curi origin CrawlURI
+     * @param queryString query-string-like string
+     * @param valueContext page context where found
+
+     */
+    protected void considerIfLikelyUri(CrawlURI curi, CharSequence candidate, 
+            CharSequence valueContext, char hopType) {
+        if(UriUtils.isLikelyUriHtmlContextLegacy(candidate)) {
+            addLinkFromString(curi,candidate,valueContext,hopType);
+        }
     }
 
     /**
@@ -459,22 +515,19 @@ implements CoreAttributeConstants {
             if (logger.isLoggable(Level.FINEST)) {
                 logger.finest("link: " + value.toString() + " from " + curi);
             }
-            addLinkFromString(curi,
-                (value instanceof String)?
-                    (String)value: value.toString(),
-                context, Link.NAVLINK_HOP);
+            addLinkFromString(curi, value, context, Link.NAVLINK_HOP);
             this.numberOfLinksExtracted++;
         }
     }
 
-    private void addLinkFromString(CrawlURI curi, String uri,
+    protected void addLinkFromString(CrawlURI curi, CharSequence uri,
             CharSequence context, char hopType) {
         try {
             // We do a 'toString' on context because its a sequence from
             // the underlying ReplayCharSequence and the link its about
             // to become a part of is expected to outlive the current
             // ReplayCharSequence.
-            curi.createAndAddLinkRelativeToBase(uri, context.toString(),
+            curi.createAndAddLinkRelativeToBase(uri.toString(), context.toString(),
                 hopType);
         } catch (URIException e) {
             if (getController() != null) {

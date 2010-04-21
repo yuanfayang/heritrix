@@ -30,13 +30,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 
 import org.apache.commons.io.IOUtils;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.util.TextUtils;
+import org.archive.util.UriUtils;
 
 import com.anotherbigidea.flash.interfaces.SWFActions;
 import com.anotherbigidea.flash.interfaces.SWFTagTypes;
@@ -338,6 +337,7 @@ public class ExtractorSWF extends Extractor implements CoreAttributeConstants {
 	 * SWFTagTypes customized to use <code>ExtractorSWFActions</code>, which
 	 * parse URI-like strings.
 	 */
+    @SuppressWarnings("unchecked")
 	protected class ExtractorSWFTags extends SWFTagTypesImpl {
 
 		private SWFActions actions;
@@ -347,7 +347,7 @@ public class ExtractorSWF extends Extractor implements CoreAttributeConstants {
 			actions = acts;
 		}
 
-		public SWFActions tagDefineButton(int id, Vector buttonRecords)
+        public SWFActions tagDefineButton(int id, Vector buttonRecords)
 				throws IOException {
 
 			return actions;
@@ -429,15 +429,11 @@ public class ExtractorSWF extends Extractor implements CoreAttributeConstants {
 		}
 
 		public void considerStringAsUri(String str) throws IOException {
-			Matcher uri = TextUtils.getMatcher(ExtractorJS.STRING_URI_DETECTOR,
-					str);
-
-			if (uri.matches()) {
-				curi.createAndAddLinkRelativeToVia(uri.group(),
+			if (UriUtils.isLikelyUriJavascriptContextLegacy(str)) {
+				curi.createAndAddLinkRelativeToVia(str,
 						Link.SPECULATIVE_MISC, Link.SPECULATIVE_HOP);
 				incrementLinkCount(1);
 			}
-			TextUtils.recycleMatcher(uri);
 		}
 
 		public void processURIString(String url) throws IOException {
