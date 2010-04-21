@@ -26,7 +26,6 @@
 package org.archive.util;
 
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.text.ParseException;
@@ -38,7 +37,8 @@ import junit.framework.TestSuite;
 /**
  * JUnit test suite for ArchiveUtils
  *
- * @author <a href="mailto:me@jamesc.net">James Casey</a>
+ * @contributor <a href="mailto:me@jamesc.net">James Casey</a>
+ * @contributor gojomo
  * @version $Id$
  */
 public class ArchiveUtilsTest extends TestCase {
@@ -404,6 +404,11 @@ public class ArchiveUtilsTest extends TestCase {
         }
         allDone.acquire(); // wait for all threads to finish
         assertEquals(failures.get()+" format mismatches",0,failures.get()); 
+    }
+    
+    public void testIsTld() {
+        assertTrue("TLD test problem", ArchiveUtils.isTld("com"));
+        assertTrue("TLD test problem", ArchiveUtils.isTld("COM"));
     }
 }
 
