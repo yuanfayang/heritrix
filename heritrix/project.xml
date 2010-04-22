@@ -798,6 +798,7 @@
         <directory>${basedir}/src/resources</directory>
         <includes>
             <include>*.xsl</include>
+            <include>**/tlds-alpha-by-domain.txt</include>
         </includes>
     </resource>
     <resource>
