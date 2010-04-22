@@ -88,8 +88,11 @@ public class UriUtils {
 //
 // new combined test
 //
-    // naive likely-uri test: no whitespace or '<' or '>'; at least one '.' or '/'
-    static final String NAIVE_LIKELY_URI_PATTERN = "[^<>\\s]*[\\./][^<>\\s]*";
+    // naive likely-uri test: 
+    //    no whitespace or '<' or '>'; 
+    //    at least one '.' or '/';
+    //    not ending with '.'
+    static final String NAIVE_LIKELY_URI_PATTERN = "[^<>\\s]*[\\./][^<>\\s]*(?<!\\.)";
     
     // blacklist of strings that NAIVE_LIKELY_URI_PATTERN picks up as URIs,
     // which are known to be problematic, and NOT to be tried as URIs
