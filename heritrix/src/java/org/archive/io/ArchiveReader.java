@@ -237,7 +237,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      *
      * @throws IOException
      */
-    public List validate() throws IOException {
+    public List<ArchiveRecordHeader> validate() throws IOException {
         return validate(-1);
     }
 
@@ -247,9 +247,9 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      * This method iterates over the file throwing exception if it fails
      * to successfully parse.
      *
-     * <p>We start validation from whereever we are in the stream.
+     * <p>We start validation from wherever we are in the stream.
      *
-     * @param noRecords Number of records expected.  Pass -1 if number is
+     * @param numRecords Number of records expected.  Pass -1 if number is
      * unknown.
      *
      * @return List of all read metadatas. As we validate records, we add
@@ -257,32 +257,30 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      *
      * @throws IOException
      */
-    public List validate(int noRecords) throws IOException {
-        List<ArchiveRecordHeader> hs = new ArrayList<ArchiveRecordHeader>();
-        int count = 0;
+    public List<ArchiveRecordHeader> validate(int numRecords) throws IOException {
+        List<ArchiveRecordHeader> hdrList = new ArrayList<ArchiveRecordHeader>();
+        int recordCount = 0;
         setStrict(true);
         for (Iterator<ArchiveRecord> i = iterator(); i.hasNext();) {
-            count++;
+            recordCount++;
             ArchiveRecord r = i.next();
             if (r.getHeader().getLength() <= 0
                 && r.getHeader().getMimetype().
                     equals(MimetypeUtils.NO_TYPE_MIMETYPE)) {
-                throw new IOException("ARCRecord content is empty.");
+                throw new IOException("record content is empty.");
             }
             r.close();
-            // Add reference to metadata into a list of metadatas.
-            hs.add(r.getHeader());
+            hdrList.add(r.getHeader());
         }
-
-        if (noRecords != -1) {
-            if (count != noRecords) {
-                throw new IOException("Count of records, " +
-                    Integer.toString(count) + " is less than expected " +
-                    Integer.toString(noRecords));
+        if (numRecords != -1) {
+            if (recordCount != numRecords) {
+                throw new IOException("Count of records, " 
+                        + Integer.toString(recordCount) 
+                        + " is less than expected " 
+                        + Integer.toString(numRecords));
             }
         }
-
-        return hs;
+        return hdrList;
     }
 
     /**
