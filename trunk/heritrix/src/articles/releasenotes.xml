@@ -12,6 +12,23 @@
     </authorgroup>
   </articleinfo>
 
+<sect1 id="1_14_4">
+    <title>Release 1.14.4 - 2010-04-30</title>
+
+    <abstract>
+      <para>Release 1.14.4 is a bugfix release with 44 tracked 
+      fixes and small improvements.</para>
+    </abstract>
+
+ <para>Other details on this release, including a list of all 
+ tracked issues addressed, are available at:
+ <ulink
+        url="https://webarchive.jira.com/wiki/display/Heritrix/Release+Notes+-+1.14.4">
+        Release Notes - Heritrix 1.14.4 at project wiki</ulink>
+    </para>
+ 
+  </sect1>
+
 <sect1 id="1_14_3">
     <title>Release 1.14.3 - 2009-03-02</title>
 
