@@ -44,6 +44,27 @@
     </section>
     <section name="News and Status">
 
+    <subsection name="Release 1.14.4 available 2010-05-10">
+    <p>Heritrix release 1.14.4 is now available.</p>
+
+<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.4">
+1.14.4 Release Notes</a></p>
+
+<p><a href="https://sourceforge.net/projects/archive-crawler/files/">
+Download from Sourceforge files area</a></p>
+
+<p>This is a 'micro' release with bugfixes and small requested improvements.</p>
+
+<p>Questions and discussion are as always welcome on the 
+<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
+project discussion list.</a></p>
+
+<p>Bugs and enhancement requests may be entered in the 
+<a href="http://webteam.archive.org/jira/browse/HER">
+JIRA project issue tracker.</a>
+    </p>
+    </subsection>
+
     <subsection name="Release 3.0.0 available 2009-12-05">
     <p>Heritrix release 3.0.0 is now available.</p>
 
@@ -79,27 +100,6 @@ and submit bug reports or feature requests via our
 <a href="https://webarchive.jira.com/browse/HER">project JIRA issue tracker</a>.
 </p>
 
-    </subsection>
-
-    <subsection name="Release 1.14.4 available 2010-05-10">
-    <p>Heritrix release 1.14.4 is now available.</p>
-
-<p><a href="http://webteam.archive.org/confluence/display/Heritrix/Release+Notes+-+1.14.4">
-1.14.4 Release Notes</a></p>
-
-<p><a href="https://sourceforge.net/projects/archive-crawler/files/">
-Download from Sourceforge files area</a></p>
-
-<p>This is a 'micro' release with bugfixes and small requested improvements.</p>
-
-<p>Questions and discussion are as always welcome on the 
-<a href="http://tech.groups.yahoo.com/group/archive-crawler/">
-project discussion list.</a></p>
-
-<p>Bugs and enhancement requests may be entered in the 
-<a href="http://webteam.archive.org/jira/browse/HER">
-JIRA project issue tracker.</a>
-    </p>
     </subsection>
 
     <subsection name="Release 1.14.3 available 2009-03-03">
