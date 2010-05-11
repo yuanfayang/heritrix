@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,7 +49,7 @@ public abstract class Scoper extends Processor {
      */
     protected static final String ATTR_OVERRIDE_LOGGER_ENABLED =
         "override-logger";
-    
+
     /**
      * Constructor.
      * @param name
@@ -82,6 +83,20 @@ public abstract class Scoper extends Processor {
             Logger.getLogger(this.getClass().getName()));
     }
     
+    @Override
+    protected void finalTasks() {
+        super.finalTasks();
+        if (isOverrideLogger(null)) {
+            Logger logger = Logger.getLogger(this.getClass().getName());
+            logger.setUseParentHandlers(true);
+            for (Handler handler: logger.getHandlers()) {
+                // XXX is there any chance this logger will have another extra
+                // handler that we shouldn't remove?
+                logger.removeHandler(handler);
+            }
+        }
+    }
+
     /**
      * @param context Context to use looking up attribute.
      * @return True if we are to override default logger (default logs
