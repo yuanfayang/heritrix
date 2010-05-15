@@ -24,6 +24,8 @@
 package org.archive.crawler.extractor;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -440,7 +442,7 @@ implements CoreAttributeConstants {
                     && "flashvars".equalsIgnoreCase(nameVal.toString())) {
                 // special handling for <PARAM NAME='flashvars" VALUE="">
                 String queryStringLike = valueVal.toString();
-                // treat value as query-string-like "key=value[;key=value]*" pairings
+                // treat value as query-string-like "key=value[&key=value]*" pairings
                 considerQueryStringValues(curi, queryStringLike, valueContext,Link.SPECULATIVE_HOP);
             } else {
                 // regular VALUE handling
@@ -452,7 +454,7 @@ implements CoreAttributeConstants {
     }
 
     /**
-     * Consider a query-string-like collections of key=value[;key=value]
+     * Consider a query-string-like collections of key=value[&key=value]
      * pairs for URI-like strings in the values. Where URI-like strings are
      * found, add as discovered outlink. 
      * 
@@ -462,10 +464,13 @@ implements CoreAttributeConstants {
      */
     protected void considerQueryStringValues(CrawlURI curi,
             CharSequence queryString, CharSequence valueContext, char hopType) {
-        for(String pairString : queryString.toString().split(";")) {
-            String[] keyVal = pairString.split("=");
-            if(keyVal.length==2) {
-                considerIfLikelyUri(curi,keyVal[1],valueContext, hopType);
+        for (String pairString : queryString.toString().split("&")) {
+            String[] encodedKeyVal = pairString.split("=");
+            if (encodedKeyVal.length == 2) try {
+                String value = URLDecoder.decode(encodedKeyVal[1], "UTF-8");
+                considerIfLikelyUri(curi, value, valueContext, hopType);
+            } catch (UnsupportedEncodingException e) {
+                throw new AssertionError("all jvms must support UTF-8, and yet somehow this happened: " + e);
             }
         }
     }
