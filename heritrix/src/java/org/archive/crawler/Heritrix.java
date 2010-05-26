@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -1404,13 +1405,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             }
             CrawlJob job =
                 createCrawlJobBasedOn(orderFile, name, description, seeds);
-            // Copy into place any seeds and settings directories before we
-            // add job to Heritrix to crawl.
-            File seedsFile = new File(dir, "seeds.txt");
-            if (seedsFile.exists()) {
-                FileUtils.copyFiles(seedsFile, new File(job.getDirectory(),
-                    seedsFile.getName()));
-            }
+
+            // Copy contents of jar into place (excluding order.xml and settings which are handled in createCrawlJobBasedOn)
+            FileUtils.copyFiles(dir,
+                    new FilenameFilter() {
+                        public boolean accept(File dir, String name) {
+                            return !name.equals("order.xml") && !name.equals("settings");
+                        }
+                    }, 
+                    job.getDirectory(), false, true);
             addCrawlJob(job);
             return job.getUID();
         } catch (RuntimeException e) {
