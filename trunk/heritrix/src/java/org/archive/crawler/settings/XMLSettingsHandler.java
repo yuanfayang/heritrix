@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
@@ -299,21 +300,21 @@ public class XMLSettingsHandler extends SettingsHandler {
                 result = settings;
             }
         } catch (SAXParseException e) {
-            logger.warning(e.getMessage() + " in '" + e.getSystemId()
+            logger.log(Level.WARNING,e.getMessage() + " in '" + e.getSystemId()
                 + "', line: " + e.getLineNumber() + ", column: "
-                + e.getColumnNumber());
+                + e.getColumnNumber(),e);
         } catch (SAXException e) {
-            logger.warning(e.getMessage() + ": "
-                + e.getException().getMessage());
+            logger.log(Level.WARNING,e.getMessage() + ": "
+                + e.getException().getMessage(),e);
         } catch (ParserConfigurationException e) {
-            logger.warning(e.getMessage() + ": "
-                + e.getCause().getMessage());
+            logger.log(Level.WARNING,e.getMessage() + ": "
+                + e.getCause().getMessage(),e);
         } catch (FactoryConfigurationError e) {
-            logger.warning(e.getMessage() + ": "
-                + e.getException().getMessage());
+            logger.log(Level.WARNING,e.getMessage() + ": "
+                + e.getException().getMessage(),e);
         } catch (IOException e) {
-            logger.warning("Could not access file '"
-                + f.getAbsolutePath() + "': " + e.getMessage());
+            logger.log(Level.WARNING,"Could not access file '"
+                + f.getAbsolutePath() + "': " + e.getMessage(),e);
         }
         return result;
     }
