@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.extractor;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.Header;
@@ -60,6 +61,13 @@ implements CoreAttributeConstants {
         HttpMethod method = (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
         addHeaderLink(curi, method.getResponseHeader("Location"));
         addHeaderLink(curi, method.getResponseHeader("Content-Location"));
+        // try /favicon.ico for every HTTP(S) server
+        try {
+            curi.createAndAddLink("/favicon.ico", Link.EMBED_MISC, Link.EMBED_HOP);
+        } catch (URIException e) {
+            // should be impossible so log SEVERE if happens
+            LOGGER.log(Level.SEVERE, curi + ", /favicon.ico", e);
+        }
     }
 
     protected void addHeaderLink(CrawlURI curi, Header loc) {
