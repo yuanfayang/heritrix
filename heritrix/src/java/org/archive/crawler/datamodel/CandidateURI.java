@@ -103,16 +103,6 @@ implements Serializable, Reporter, CoreAttributeConstants {
      * For example LLLE (an embedded image on a page 3 links from seed).
      */
     private String pathFromSeed;
-
-    /**
-     * The hop number of the last seed in the hop path. {@link pathFromSeed}
-     * records the hop path from the original seed. But if that seed was a
-     * redirect, then the second hop may also be a seed.
-     * 
-     * @see TransclusionDecideRule
-     * @see https://webarchive.jira.com/browse/HER-1774
-     */
-    private int lastSeedHop = 0;
     
     /**
      * Where this URI was (presently) discovered. . Transient to allow
@@ -442,13 +432,6 @@ implements Serializable, Reporter, CoreAttributeConstants {
                 link.getDestination().toString());
         CandidateURI newCaURI = new CandidateURI(u, getPathFromSeed() + link.getHopType(),
                 getUURI(), link.getContext());
-        
-        if (isSeed() && getPathFromSeed() != null) {
-            newCaURI.setLastSeedHop(getPathFromSeed().length());
-        } else {
-            newCaURI.setLastSeedHop(getLastSeedHop());
-        }
-        
         newCaURI.inheritFrom(this);
         return newCaURI;
     }
@@ -722,13 +705,5 @@ implements Serializable, Reporter, CoreAttributeConstants {
             // only remaining heritable key is itself; disable completely
             remove(A_HERITABLE_KEYS);
         }
-    }
-
-    public void setLastSeedHop(int lastSeedHop) {
-        this.lastSeedHop = lastSeedHop;
-    }
-
-    public int getLastSeedHop() {
-        return lastSeedHop;
     }
 }
