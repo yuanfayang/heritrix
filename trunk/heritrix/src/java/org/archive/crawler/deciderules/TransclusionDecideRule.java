@@ -114,13 +114,13 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
         int specCount = 0; 
         for (int i = hopsPath.length() - 1; i >= 0; i--) {
             char c = hopsPath.charAt(i);
-            if (c != Link.NAVLINK_HOP) {
+            if (c == Link.NAVLINK_HOP) {
+                break;
+            } else if (c != Link.REFER_HOP) {
                 count++;
-                if(c == Link.SPECULATIVE_HOP) {
+                if (c == Link.SPECULATIVE_HOP) {
                     specCount++;
                 }
-            } else {
-                break;
             }
         }
         return count > 0 && (specCount <= getThresholdSpeculativeHops(object) && count <= getThresholdHops(object));
