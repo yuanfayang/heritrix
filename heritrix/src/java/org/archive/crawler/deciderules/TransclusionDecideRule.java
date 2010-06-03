@@ -110,9 +110,10 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
         if (hopsPath == null || hopsPath.length() == 0) {
             return false; 
         }
+        
         int count = 0;
         int specCount = 0; 
-        for (int i = hopsPath.length() - 1; i >= 0; i--) {
+        for (int i = hopsPath.length() - 1; i >= curi.getLastSeedHop(); i--) {
             char c = hopsPath.charAt(i);
             if (c != Link.NAVLINK_HOP) {
                 count++;

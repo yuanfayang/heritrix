@@ -198,6 +198,7 @@ implements FetchStatusCodes {
             caUri.getViaContext());
         ordinal = o;
         setIsSeed(caUri.isSeed());
+        setLastSeedHop(caUri.getLastSeedHop());
         setSchedulingDirective(caUri.getSchedulingDirective());
         setAList(caUri.getAList());
     }
