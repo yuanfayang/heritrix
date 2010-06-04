@@ -219,13 +219,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // therefore we'll ignore the supplied parameter.
         super(Frontier.ATTR_NAME, description);
         Type t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
-            "Whether to hold newly-created per-host URI work" +
-            " queues until needed to stay busy. If false (default)," +
-            " all queues may contribute URIs for crawling at all" +
-            " times. If true, queues begin (and collect URIs) in" +
-            " an 'inactive' state, and only when the Frontier needs" +
-            " another queue to keep all ToeThreads busy will new" +
-            " queues be activated.", DEFAULT_HOLD_QUEUES));
+            "Whether to hold newly-created per-host URI work " +
+            "queues until needed to stay busy. If true (the default), " +
+            "queues begin (and collect URIs) in an 'inactive' state, and " +
+            "only when the Frontier needs another queue to keep all " +
+            "ToeThreads busy will new queues be activated. If false, all " +
+            "queues contribute URIs for crawling at all times in a " +
+            "round-robin fashion. (This mode is less likely to make " +
+            "effective use of database and IO caches.)", DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
         t = addElementToDefinition(new SimpleType(ATTR_BALANCE_REPLENISH_AMOUNT,
@@ -797,8 +798,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * Wake any queues sitting in the snoozed queue whose time has come.
      */
     void wakeQueues() {
+        long now = System.currentTimeMillis();
+        wakeQueuesAsIfAtTime(now);
+    }
+
+    /**
+     * Wake any queues sitting in the snoozed queue whose time has come.
+     */
+    void wakeQueuesAsIfAtTime(long nowish) {
         synchronized (snoozedClassQueues) {
-            long now = System.currentTimeMillis();
             long nextWakeDelay = 0;
             int wokenQueuesCount = 0;
             while (true) {
@@ -806,7 +814,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     return;
                 }
                 WorkQueue peek = (WorkQueue) snoozedClassQueues.first();
-                nextWakeDelay = peek.getWakeTime() - now;
+                nextWakeDelay = peek.getWakeTime() - nowish;
                 if (nextWakeDelay <= 0) {
                     snoozedClassQueues.remove(peek);
                     peek.setWakeTime(0);
@@ -820,7 +828,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             this.wakeTimer.schedule(nextWake,nextWakeDelay);
         }
     }
-
+    
+    /**
+     * Wake all queues as if we were at the end of time
+     */
+    public void forceWakeQueues() {
+        wakeQueuesAsIfAtTime(Long.MAX_VALUE);
+    }
+    
     /**
      * Note that the previously emitted CrawlURI has completed
      * its processing (for now).
