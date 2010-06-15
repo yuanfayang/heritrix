@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.util.BloomFilter;
-import org.archive.util.BloomFilter32bitSplit;
+import org.archive.util.BloomFilter64bit;
 
 
 /**
@@ -122,7 +122,7 @@ implements Serializable {
      */
     protected void initialize(final int n, final int d) {
         this.expected_n = n;
-        bloom = new BloomFilter32bitSplit(n,d);
+        bloom = new BloomFilter64bit(n,d);
     }
 
     public void forget(String canonical, CandidateURI item) {
