@@ -30,7 +30,7 @@ import junit.framework.TestCase;
  * @contributor gojomo
  * @version $Date: 2009-11-19 14:39:53 -0800 (Thu, 19 Nov 2009) $, $Revision: 6674 $
  */
-public abstract class BloomFilterTest extends TestCase {
+public abstract class BloomFilterTestBase extends TestCase {
     
     abstract BloomFilter createBloom(long n, int d, Random random);
 
