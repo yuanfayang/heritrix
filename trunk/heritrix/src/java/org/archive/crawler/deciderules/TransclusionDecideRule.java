@@ -110,20 +110,35 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
         if (hopsPath == null || hopsPath.length() == 0) {
             return false; 
         }
-        int count = 0;
+        int allCount = 0;
+        int nonrefCount = 0; 
         int specCount = 0; 
         for (int i = hopsPath.length() - 1; i >= 0; i--) {
             char c = hopsPath.charAt(i);
             if (c == Link.NAVLINK_HOP) {
+                // end of hops counted here
                 break;
-            } else if (c != Link.REFER_HOP) {
-                count++;
-                if (c == Link.SPECULATIVE_HOP) {
-                    specCount++;
-                }
+            }
+            allCount++;
+            if(c != Link.REFER_HOP) {
+                nonrefCount++;
+            }
+            if(c == Link.SPECULATIVE_HOP) {
+                specCount++;
             }
         }
-        return count > 0 && (specCount <= getThresholdSpeculativeHops(object) && count <= getThresholdHops(object));
+        // transclusion doesn't apply if there isn't at least one non-nav-hop
+        if (allCount <= 0) {
+            return false;
+        }
+        
+        // too many speculative hops disqualify from transclusion
+        if (specCount > getThresholdSpeculativeHops(object)) {
+            return false;
+        }
+        
+        // transclusion applies as long as non-ref hops less than max
+        return nonrefCount <= getThresholdHops(object);
     }
 
     /**
