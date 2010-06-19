@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +55,13 @@ import org.archive.util.anvl.ANVLRecord;
  * @author stack
  * @version $Revision: 4604 $ $Date: 2006-09-05 22:38:18 -0700 (Tue, 05 Sep 2006) $
  */
-public class WARCWriter extends WriterPoolMember
-implements WARCConstants {
+public class WARCWriter extends WriterPoolMember implements WARCConstants {
+    public static final String TOTALS = "totals";
+    public static final String SIZE_ON_DISK = "sizeOnDisk";
+    public static final String TOTAL_BYTES = "totalBytes";
+    public static final String CONTENT_BYTES = "contentBytes";
+    public static final String NUM_RECORDS = "numRecords";
+
     private static final Logger logger = 
         Logger.getLogger(WARCWriter.class.getName());
 
@@ -76,6 +82,7 @@ implements WARCConstants {
      */
     private final List<String> fileMetadata;
     
+    private Map<String,Map<String,Long>> stats; 
     
     /**
      * Shutdown Constructor
@@ -250,25 +257,88 @@ implements WARCConstants {
     		return;
     	}    	   	
 
+    	long contentBytes = 0;
+    	long totalBytes = 0;
+    	long startPosition;
+    	
         try {
+            checkSize(); // may start a new output file
+            startPosition = getPosition();
             preWriteRecordTasks();
-            // TODO: Revisit endcoding of header.
-            write(header.getBytes(WARC_HEADER_ENCODING));
             
+            // TODO: Revisit encoding of header.
+            totalBytes += write(header.getBytes(WARC_HEADER_ENCODING));
+
             if (contentStream != null && contentLength > 0) {
                 // Write out the header/body separator.
-                write(CRLF_BYTES); // TODO: should this be written even for zero-length?
-            	copyFrom(contentStream, contentLength, enforceLength);
+                totalBytes += write(CRLF_BYTES); // TODO: should this be written even for zero-length?
+                contentBytes += copyFrom(contentStream, contentLength, enforceLength);
+                totalBytes += contentBytes;
             }
-            
+
             // Write out the two blank lines at end of all records, per spec
-            write(CRLF_BYTES);
-            write(CRLF_BYTES);
+            totalBytes += write(CRLF_BYTES);
+            totalBytes += write(CRLF_BYTES);
         } finally {
             postWriteRecordTasks();
         }
+     
+        // TODO: should this be in the finally block?
+        tally(type, contentBytes, totalBytes, getPosition() - startPosition);
     }
     
+    // if compression is enabled, sizeOnDisk means compressed bytes; if not, it
+    // should be the same as totalBytes (right?)
+    protected void tally(String recordType, long contentBytes, long totalBytes, long sizeOnDisk) {
+        if (stats == null) {
+            stats = new HashMap<String,Map<String,Long>>();
+        }
+
+        // add to stats for this record type
+        Map<String,Long> substats = stats.get(recordType);
+        if (substats == null) {
+            substats = new HashMap<String,Long>();
+            stats.put(recordType, substats);
+        }
+        subtally(substats, contentBytes, totalBytes, sizeOnDisk);
+        
+        // add to totals
+        substats = stats.get(TOTALS);
+        if (substats == null) {
+            substats = new HashMap<String,Long>();
+            stats.put(TOTALS, substats);
+        }
+        subtally(substats, contentBytes, totalBytes, sizeOnDisk);
+    }
+
+    protected void subtally(Map<String,Long> substats, long contentBytes,
+            long totalBytes, long sizeOnDisk) {
+        
+        if (substats.get(NUM_RECORDS) == null) {
+            substats.put(NUM_RECORDS, 1l);
+        } else {
+            substats.put(NUM_RECORDS, substats.get(CONTENT_BYTES) + 1l);
+        }
+        
+        if (substats.get(CONTENT_BYTES) == null) {
+            substats.put(CONTENT_BYTES, contentBytes);
+        } else {
+            substats.put(CONTENT_BYTES, substats.get(CONTENT_BYTES) + contentBytes);
+        }
+        
+        if (substats.get(TOTAL_BYTES) == null) {
+            substats.put(TOTAL_BYTES, totalBytes);
+        } else {
+            substats.put(TOTAL_BYTES, substats.get(TOTAL_BYTES) + totalBytes);
+        }
+        
+        if (substats.get(SIZE_ON_DISK) == null) {
+            substats.put(SIZE_ON_DISK, sizeOnDisk);
+        } else {
+            substats.put(SIZE_ON_DISK, substats.get(SIZE_ON_DISK) + sizeOnDisk);
+        }
+    }
+
     protected URI generateRecordId(final Map<String, String> qualifiers)
     throws IOException {
     	URI rid = null;
@@ -456,5 +526,27 @@ implements WARCConstants {
             throw new IOException(e.toString());
         }
         return result;
+    }
+
+    public void resetStats() {
+        if (stats != null) {
+            for (Map<String,Long> substats : stats.values()) {
+                for (Map.Entry<String,Long> entry : substats.entrySet()) {
+                    entry.setValue(0l);
+                }
+            }
+        }
+    }
+
+    public Map<String,Map<String,Long>> getStats() {
+        return stats;
+    }
+
+    public static long getStat(Map<String,Map<String,Long>> statz, String key, String subkey) {
+        if (statz != null && statz.get(key) != null && statz.get(key).get(subkey) != null) {
+            return statz.get(key).get(subkey);
+        } else {
+            return 0;
+        }
     }
 }
