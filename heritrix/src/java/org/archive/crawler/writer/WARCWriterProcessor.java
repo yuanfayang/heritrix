@@ -237,6 +237,13 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 if (WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.NUM_RECORDS) > 0) {
                     addStats(w.getStats());
                     urlsWritten++;
+
+                    String filename = w.getFile().getName();
+                    if (filename.endsWith(WriterPoolMember.OCCUPIED_SUFFIX)) {
+                        filename = filename.substring(0,
+                            filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
+                    }
+                    curi.addAnnotation(filename);
                 }
                 logger.fine("wrote " + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK) + " bytes to " + w.getFile().getName() + " for " + curi);
                 setTotalBytesWritten(getTotalBytesWritten() + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK));
