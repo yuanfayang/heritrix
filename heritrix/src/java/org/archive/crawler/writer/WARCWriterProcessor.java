@@ -80,6 +80,9 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     private static final long serialVersionUID = 6182850087635847443L;
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
+
+    private HashMap<String,Map<String,Long>> stats;
+    private int urlsWritten;
     
     public long getDefaultMaxFileSize() {
           return 1000000000L; // 1 SI giga-byte (109 bytes), per WARC appendix A
@@ -201,23 +204,11 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     
     protected void write(final String lowerCaseScheme, final CrawlURI curi)
     throws IOException {
-        logger.info("writing warc record for " + curi);
+        logger.finer("writing warc record for " + curi);
         WriterPoolMember writer = getPool().borrowFile();
-        long position = writer.getPosition();
-        // See if we need to open a new file because we've exceeed maxBytes.
-        // Call to checkFileSize will open new file if we're at maximum for
-        // current file.
-        writer.checkSize();
-        if (writer.getPosition() != position) {
-            // We just closed the file because it was larger than maxBytes.
-            // Add to the totalBytesWritten the size of the first record
-            // in the file, if any.
-            setTotalBytesWritten(getTotalBytesWritten() +
-            	(writer.getPosition() - position));
-            position = writer.getPosition();
-        }
+        WARCWriter w = (WARCWriter) writer;
+        w.resetStats();
         
-        WARCWriter w = (WARCWriter)writer;
         try {
             // Write a request, response, and metadata all in the one
             // 'transaction'.
@@ -243,12 +234,36 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             throw e;
         } finally {
             if (writer != null) {
-            	setTotalBytesWritten(getTotalBytesWritten() +
-            	     (writer.getPosition() - position));
+                if (WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.NUM_RECORDS) > 0) {
+                    addStats(w.getStats());
+                    urlsWritten++;
+                }
+                logger.fine("wrote " + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK) + " bytes to " + w.getFile().getName() + " for " + curi);
+                setTotalBytesWritten(getTotalBytesWritten() + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK));
+
                 getPool().returnFile(writer);
             }
         }
         checkBytesWritten();
+    }
+
+    protected void addStats(Map<String,Map<String,Long>> statz) {
+        if (stats == null) {
+            stats = new HashMap<String,Map<String,Long>>();
+        }
+
+        for (String key: statz.keySet()) {
+            if (stats.get(key) == null) {
+                stats.put(key, new HashMap<String,Long>());
+            }
+            for (String subkey: statz.get(key).keySet()) {
+                if (stats.get(key).get(subkey) == null) {
+                    stats.get(key).put(subkey, statz.get(key).get(subkey));
+                } else {
+                    stats.get(key).put(subkey, stats.get(key).get(subkey) + statz.get(key).get(subkey));
+                }
+            }
+        }
     }
 
     private void writeFtpRecords(WARCWriter w, final CrawlURI curi, final URI baseid,
@@ -678,5 +693,30 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         if(StringUtils.isNotBlank(value)) {
             record.addLabelValue(label, value);
         }
+    }
+    
+    @Override
+    public String report() {
+        logger.info("final stats: " + stats);
+        
+        StringBuilder buf = new StringBuilder();
+        buf.append("Processor: " + getClass().getName() + "\n");
+        buf.append("  Function:          Writes WARCs\n");
+        buf.append("  Total CrawlURIs:   " + urlsWritten + "\n");
+        buf.append("  Revisit records:   " + WARCWriter.getStat(stats, WARCWriter.REVISIT, WARCWriter.NUM_RECORDS) + "\n");
+        
+        long bytes = WARCWriter.getStat(stats, WARCWriter.RESPONSE, WARCWriter.CONTENT_BYTES)
+                + WARCWriter.getStat(stats, WARCWriter.RESOURCE, WARCWriter.CONTENT_BYTES);
+        buf.append("  Crawled content bytes (including http headers): "
+                + bytes + " (" + ArchiveUtils.formatBytesForDisplay(bytes) + ")\n");
+        
+        bytes = WARCWriter.getStat(stats, WARCWriter.TOTALS, WARCWriter.TOTAL_BYTES);
+        buf.append("  Total uncompressed bytes (including all warc records): "
+                + bytes + " (" + ArchiveUtils.formatBytesForDisplay(bytes) + ")\n");
+        
+        buf.append("  Total size on disk ("+ (isCompressed() ? "compressed" : "uncompressed") + "): "
+                + getTotalBytesWritten() + " (" + ArchiveUtils.formatBytesForDisplay(getTotalBytesWritten()) + ")\n");
+        
+        return buf.toString();
     }
 }
