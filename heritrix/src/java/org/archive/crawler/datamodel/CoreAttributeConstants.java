@@ -88,7 +88,7 @@ public interface CoreAttributeConstants {
     
     /** a 'source' (usu. URI) that's inherited by discovered URIs */
     public static String A_SOURCE_TAG = "source";
-    
+
     /**
      * Key to (optional) attribute specifying a list of keys that
      * are passed to CandidateURIs that 'descend' (are discovered 
@@ -135,5 +135,7 @@ public interface CoreAttributeConstants {
     public static final String A_STATUS = "status"; 
     /** reference length (content length or virtual length */
     public static final String A_REFERENCE_LENGTH = "reference-length";
+    /** name of warc file where uri was archived (revisit records don't count) */
+    public static final String A_CONTENT_WRITTEN_TO_WARC = "content-written-to-warc";
 
 }

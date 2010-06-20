@@ -243,7 +243,13 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                         filename = filename.substring(0,
                             filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
                     }
+
                     curi.addAnnotation(filename);
+
+                    if (WARCWriter.getStat(w.getStats(), WARCWriter.REVISIT, WARCWriter.NUM_RECORDS) == 0) {
+                        curi.getAList().putString(
+                            CoreAttributeConstants.A_CONTENT_WRITTEN_TO_WARC, filename);
+                    } // else leave in place value carried over from previous fetch
                 }
                 logger.fine("wrote " + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK) + " bytes to " + w.getFile().getName() + " for " + curi);
                 setTotalBytesWritten(getTotalBytesWritten() + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK));
@@ -286,7 +292,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         }
 
         if (curi.getHttpRecorder() != null) {
-            if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
+            if (hasArchivedIdenticalDigest(curi) && 
                     ((Boolean)getUncheckedAttribute(curi, 
                         ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
                 rid = writeRevisitDigest(w, timestamp, null,
@@ -345,7 +351,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
         URI rid;
         
-        if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
+        if (hasArchivedIdenticalDigest(curi) && 
                 ((Boolean)getUncheckedAttribute(curi, 
                         ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
             rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
@@ -700,6 +706,12 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         if(StringUtils.isNotBlank(value)) {
             record.addLabelValue(label, value);
         }
+    }
+
+    @Override
+    protected boolean hasArchivedIdenticalDigest(CrawlURI curi) {
+        return IdenticalDigestDecideRule.hasIdenticalDigest(curi)
+            && curi.getAList().containsKey(A_CONTENT_WRITTEN_TO_WARC);
     }
     
     @Override
