@@ -135,7 +135,7 @@ public interface CoreAttributeConstants {
     public static final String A_STATUS = "status"; 
     /** reference length (content length or virtual length */
     public static final String A_REFERENCE_LENGTH = "reference-length";
-    /** name of warc file where uri was archived (revisit records don't count) */
-    public static final String A_CONTENT_WRITTEN_TO_WARC = "content-written-to-warc";
+    /** name of warc file where uri had records written */
+    public static final String A_WRITTEN_TO_WARC = "written-to-warc";
 
 }

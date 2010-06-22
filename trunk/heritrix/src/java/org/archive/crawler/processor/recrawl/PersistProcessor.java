@@ -37,7 +37,9 @@ import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.recrawl.IdenticalDigestDecideRule;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.io.CrawlerJournal;
 import org.archive.util.FileUtils;
@@ -111,14 +113,15 @@ public abstract class PersistProcessor extends Processor {
 
     /**
      * Whether the current CrawlURI's state should be persisted (to log or
-     * direct to database)
+     * direct to database).
      * 
      * @param curi CrawlURI
-     * @return true if state should be stored; false to skip persistence
+     * @return true if any records were written to warc for this url, or if
+     *         content matches previous fetch that was written
      */
     protected boolean shouldStore(CrawlURI curi) {
-        // TODO: don't store some codes, such as 304 unchanged?
-        return curi.isSuccess();
+        return curi.getAList().containsKey(CoreAttributeConstants.A_WRITTEN_TO_WARC)
+                || IdenticalDigestDecideRule.hasIdenticalDigest(curi);
     }
 
     /**

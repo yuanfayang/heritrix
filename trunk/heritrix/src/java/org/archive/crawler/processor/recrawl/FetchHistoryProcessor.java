@@ -140,7 +140,6 @@ public class FetchHistoryProcessor extends Processor implements CoreAttributeCon
     protected void initialTasks() {
         // ensure history info persists across enqueues and recrawls
         CrawlURI.addAlistPersistentMember(A_FETCH_HISTORY);
-        CrawlURI.addAlistPersistentMember(A_CONTENT_WRITTEN_TO_WARC);
     }
     
     
