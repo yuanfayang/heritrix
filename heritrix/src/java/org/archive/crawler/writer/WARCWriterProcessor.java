@@ -245,11 +245,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                     }
 
                     curi.addAnnotation(filename);
-
-                    if (WARCWriter.getStat(w.getStats(), WARCWriter.REVISIT, WARCWriter.NUM_RECORDS) == 0) {
-                        curi.getAList().putString(
-                            CoreAttributeConstants.A_CONTENT_WRITTEN_TO_WARC, filename);
-                    } // else leave in place value carried over from previous fetch
+                    curi.getAList().putString(CoreAttributeConstants.A_WRITTEN_TO_WARC, filename);
                 }
                 logger.fine("wrote " + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK) + " bytes to " + w.getFile().getName() + " for " + curi);
                 setTotalBytesWritten(getTotalBytesWritten() + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK));
@@ -292,7 +288,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         }
 
         if (curi.getHttpRecorder() != null) {
-            if (hasArchivedIdenticalDigest(curi) && 
+            if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
                     ((Boolean)getUncheckedAttribute(curi, 
                         ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
                 rid = writeRevisitDigest(w, timestamp, null,
@@ -351,7 +347,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         headers.addLabelValue(HEADER_KEY_IP, getHostAddress(curi));
         URI rid;
         
-        if (hasArchivedIdenticalDigest(curi) && 
+        if (IdenticalDigestDecideRule.hasIdenticalDigest(curi) && 
                 ((Boolean)getUncheckedAttribute(curi, 
                         ATTR_WRITE_REVISIT_FOR_IDENTICAL_DIGESTS))) {
             rid = writeRevisitDigest(w, timestamp, HTTP_RESPONSE_MIMETYPE,
@@ -708,12 +704,6 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         }
     }
 
-    @Override
-    protected boolean hasArchivedIdenticalDigest(CrawlURI curi) {
-        return IdenticalDigestDecideRule.hasIdenticalDigest(curi)
-            && curi.getAList().containsKey(A_CONTENT_WRITTEN_TO_WARC);
-    }
-    
     @Override
     public String report() {
         logger.info("final stats: " + stats);

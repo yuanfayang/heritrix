@@ -303,7 +303,7 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
     protected boolean shouldWrite(CrawlURI curi) {
         // check for duplicate content write suppression
         if(((Boolean)getUncheckedAttribute(curi, ATTR_SKIP_IDENTICAL_DIGESTS)) 
-            && hasArchivedIdenticalDigest(curi)) {
+            && IdenticalDigestDecideRule.hasIdenticalDigest(curi)) {
             curi.addAnnotation(ANNOTATION_UNWRITTEN + ":identicalDigest");
             return false; 
         }
@@ -730,9 +730,5 @@ implements CoreAttributeConstants, CrawlStatusListener, FetchStatusCodes {
         }
 
         return result;
-    }
-
-    protected boolean hasArchivedIdenticalDigest(CrawlURI curi) {
-        return IdenticalDigestDecideRule.hasIdenticalDigest(curi);
     }
 }
