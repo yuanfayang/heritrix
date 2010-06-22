@@ -244,7 +244,6 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                             filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
                     }
 
-                    curi.addAnnotation(filename);
                     curi.getAList().putString(CoreAttributeConstants.A_WRITTEN_TO_WARC, filename);
                 }
                 logger.fine("wrote " + WARCWriter.getStat(w.getStats(), WARCWriter.TOTALS, WARCWriter.SIZE_ON_DISK) + " bytes to " + w.getFile().getName() + " for " + curi);
