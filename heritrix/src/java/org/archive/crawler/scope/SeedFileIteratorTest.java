@@ -78,5 +78,12 @@ public class SeedFileIteratorTest extends TestCase {
         assertTrue("ignored entry not reported", ignored.toString().indexOf(
                 "+http://www.example.us") >= 0);
     }
+    
+    public void testIgnoreBom() {
+        String bomString = "\ufeffhttp://www.example.com/";
+        SeedFileIterator si = new SeedFileIterator(new java.io.BufferedReader(new java.io.StringReader(bomString)));
+        UURI uuri = si.next();
+        assertEquals("bom not ignored","http://www.example.com/",uuri.toString());
+    }
 }
 
