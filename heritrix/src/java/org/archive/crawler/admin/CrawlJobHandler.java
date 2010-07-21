@@ -568,6 +568,15 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (this.currentJob == null) {
             return false;
         }
+        
+        if(startingNextJob != null) {
+            try {
+                startingNextJob.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         // requestCrawlStop will cause crawlEnding to be invoked.
         // It will handle the clean up.
         this.currentJob.stopCrawling();
