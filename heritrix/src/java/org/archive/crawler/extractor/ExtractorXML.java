@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
@@ -52,8 +53,6 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
 
     private static Logger logger =
         Logger.getLogger(ExtractorXML.class.getName());
-
-    private static String ESCAPED_AMP = "&amp";
 
     static final String XML_URI_EXTRACTOR =    
     "(?i)[\"\'>]\\s*(http:[^\\s\"\'<>]+)\\s*[\"\'<]"; 
@@ -123,9 +122,7 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
         String xmlUri;
         uris = TextUtils.getMatcher(XML_URI_EXTRACTOR, cs);
         while (uris.find()) {
-            xmlUri = uris.group(1);
-            // TODO: Escape more HTML Entities.
-            xmlUri = TextUtils.replaceAll(ESCAPED_AMP, xmlUri, "&");
+            xmlUri = StringEscapeUtils.unescapeXml(uris.group(1));
             foundLinks++;
             try {
                 // treat as speculative, as whether context really 
