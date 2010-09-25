@@ -55,7 +55,7 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
         Logger.getLogger(ExtractorXML.class.getName());
 
     static final String XML_URI_EXTRACTOR =    
-    "(?i)[\"\'>]\\s*(http:[^\\s\"\'<>]+)\\s*[\"\'<]"; 
+    "(?i)[\"\'>]\\s*(https?:[^\\s\"\'<>]+)\\s*[\"\'<]"; 
     // GROUPS:
     // (G1) URI
     
