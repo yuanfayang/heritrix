@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.collections.Closure;
@@ -123,12 +124,10 @@ public class ServerCache {
             if (key != null) {
                 cs = getServerFor(key);
             }
-        } catch (URIException e) {
-            logger.severe(e.getMessage() + ": " + cauri);
-            e.printStackTrace();
+        }  catch (URIException e) {
+            logger.log(Level.FINE, "No server key for: "+cauri.toString(), e);
         } catch (NullPointerException npe) {
-            logger.severe(npe.getMessage() + ": " + cauri);
-            npe.printStackTrace();
+            logger.log(Level.FINE, "No server key for: "+cauri.toString(), npe);
         }
         return cs;
     }
