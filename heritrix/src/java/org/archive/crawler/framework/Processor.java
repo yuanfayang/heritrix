@@ -238,10 +238,9 @@ public class Processor extends ModuleType {
     /**
      * @param curi CrawlURI to examine.
      * @return True if content to process -- content length is > 0 
-     * -- and links have not yet been extracted.
      */
     protected boolean isContentToProcess(CrawlURI curi) {
-        return !curi.hasBeenLinkExtracted() && curi.getContentLength() > 0;
+        return curi.getContentLength() > 0;
     }
     
     /**
