@@ -80,12 +80,6 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
         if (mimeType == null) {
             return;
         }
-        if ((mimeType.toLowerCase().indexOf("xml") < 0) 
-                && (!curi.toString().toLowerCase().endsWith(".rss"))
-                && (!curi.toString().toLowerCase().endsWith(".xml"))) {
-            return;
-        }
-        this.numberOfCURIsHandled++;
 
         ReplayCharSequence cs = null;
         try {
@@ -98,6 +92,15 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
                 curi.toString());
             return;
         }
+        
+        if ((mimeType.toLowerCase().indexOf("xml") < 0) 
+        		&& (!curi.toString().toLowerCase().endsWith(".rss"))
+        		&& (!curi.toString().toLowerCase().endsWith(".xml"))
+        		&& (!cs.subSequence(0, 8).toString().matches("[\\ufeff]?<\\?xml\\s.*"))) {
+        	return;
+        }
+        this.numberOfCURIsHandled++;
+
         try {
             this.numberOfLinksExtracted += processXml(curi, cs,
                 getController());
