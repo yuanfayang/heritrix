@@ -27,6 +27,7 @@ package org.archive.crawler.extractor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 
@@ -86,6 +87,28 @@ public abstract class Extractor extends Processor {
             logger.log(Level.WARNING, getName() + ": CoderMalfunctionError",
                 cme);
         }
+    }
+
+    protected boolean isIndependentExtractors() {
+        try {
+            return ((Boolean) getController().getOrder().getAttribute(
+                    CrawlOrder.ATTR_INDEPENDENT_EXTRACTORS)).booleanValue();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * @return true if the setting
+     *         {@link CrawlOrder#ATTR_INDEPENDENT_EXTRACTORS} is disabled or
+     *         {@link CrawlURI#hasBeenLinkExtracted()} is false, and
+     *         {@link Processor#isHttpTransactionContentToProcess(CrawlURI)} is
+     *         true.
+     */
+    @Override
+    protected boolean isHttpTransactionContentToProcess(CrawlURI curi) {
+        return (isIndependentExtractors() || !curi.hasBeenLinkExtracted())
+                && super.isHttpTransactionContentToProcess(curi);
     }
 
     protected abstract void extract(CrawlURI curi);

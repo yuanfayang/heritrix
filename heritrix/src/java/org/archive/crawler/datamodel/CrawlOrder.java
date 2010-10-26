@@ -93,6 +93,9 @@ public class CrawlOrder extends ModuleType implements Serializable {
     public static final String ATTR_RECORDER_IN_BUFFER =
         "recorder-in-buffer-bytes";
     
+    public static final String ATTR_INDEPENDENT_EXTRACTORS = 
+        "independent-extractors";
+    
     /** Percentage of heap to allocate to bdb cache */
     public static final String ATTR_BDB_CACHE_PERCENT =
         "bdb-cache-percent";
@@ -230,6 +233,15 @@ public class CrawlOrder extends ModuleType implements Serializable {
                 "Default of zero means no preference (accept BDB's default, " +
                 "usually 60%, or the je.maxMemoryPercent property value).",
                 DEFAULT_BDB_CACHE_PERCENT));
+        e.setExpertSetting(true);
+        e.setOverrideable(false);
+        
+        e = addElementToDefinition(new SimpleType(ATTR_INDEPENDENT_EXTRACTORS,
+                "Whether an extractor's decision to run on a url is " +
+                "independent of other extractors. When set to false, " +
+                "most extractors will only run if no other " +
+                "extractor has run on the url.",  
+                false));
         e.setExpertSetting(true);
         e.setOverrideable(false);
         

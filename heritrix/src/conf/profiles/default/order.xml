@@ -21,6 +21,7 @@
     <integer name="recorder-out-buffer-bytes">4096</integer>
     <integer name="recorder-in-buffer-bytes">65536</integer>
     <integer name="bdb-cache-percent">0</integer>
+    <boolean name="independent-extractors">false</boolean>
     <newObject name="scope" class="org.archive.crawler.deciderules.DecidingScope">
       <boolean name="enabled">true</boolean>
       <string name="seedsfile">seeds.txt</string>
