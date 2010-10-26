@@ -1127,7 +1127,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 try {
                     startingNextJob.join();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logger.log(Level.WARNING, 
+                            "interrupt waiting for job start to complete", e);
                     return;
                 }
             }
