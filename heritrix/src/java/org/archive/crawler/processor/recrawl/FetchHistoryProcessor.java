@@ -67,6 +67,10 @@ public class FetchHistoryProcessor extends Processor implements CoreAttributeCon
 
     @Override
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
+        if(!curi.containsKey(A_FETCH_BEGAN_TIME)) {
+            // no fetch attempt details to save
+            return; 
+        }
         AList latestFetch = new HashtableAList();
         
         // save status
