@@ -1288,7 +1288,7 @@ public class CrawlController implements Serializable, Reporter {
             
             // From the sleepycat folks: A trick for flipping db logs.
             EnvironmentImpl envImpl = 
-                DbInternal.envGetEnvironmentImpl(this.bdbEnvironment);
+                DbInternal.getEnvironmentImpl(this.bdbEnvironment);
             long firstFileInNextSet =
                 DbLsn.getFileNumber(envImpl.forceLogFileFlip());
             // So the last file in the checkpoint is firstFileInNextSet - 1.

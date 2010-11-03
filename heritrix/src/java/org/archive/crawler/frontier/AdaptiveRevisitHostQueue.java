@@ -343,7 +343,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                 }
             } else {
                 // Something went wrong. Throw an exception.
-                throw new DatabaseException("Error on add into database for " +
+                throw new IOException("Error on add into database for " +
                         "CrawlURI " + curi.toString() + ". " + 
                         opStatus.toString());
             }
@@ -394,7 +394,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      * 
      * @throws DatabaseException if one occurs while flushing
      */
-    protected void flushProcessingURIs() throws DatabaseException {
+    protected void flushProcessingURIs() throws DatabaseException, IOException {
         Cursor processingCursor = processingUriDB.openCursor(null,null);
         DatabaseEntry keyEntry = new DatabaseEntry();
         DatabaseEntry dataEntry = new DatabaseEntry();
@@ -514,7 +514,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
      * @throws DatabaseException
      * @throws IllegalStateException if the URI was not on the list
      */
-    protected void deleteInProcessing(String uri) throws DatabaseException {
+    protected void deleteInProcessing(String uri) throws DatabaseException, IOException {
         DatabaseEntry keyEntry = new DatabaseEntry();
 
         StringBinding.stringToEntry(uri, keyEntry);
@@ -527,7 +527,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                         + "non-existant URI from the list of URIs being "
                         + "processed. HQ: " + hostName + ", CrawlURI: " + uri);
             }
-            throw new DatabaseException("Error occured deleting URI: " + uri
+            throw new IOException("Error occured deleting URI: " + uri
                     + " from HQ " + hostName + " list "
                     + "of URIs currently being processed. "
                     + opStatus.toString());
@@ -562,7 +562,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                         + "URI into list of URIs being processed. " + "HQ: "
                         + hostName + ", CrawlURI: " + curi.toString());
             }
-            throw new DatabaseException("Error occured adding CrawlURI: "
+            throw new IllegalStateException("Error occured adding CrawlURI: "
                     + curi.toString() + " to HQ " + hostName + " list "
                     + "of URIs currently being processed. "
                     + opStatus.toString());
@@ -732,7 +732,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             OperationStatus opStatus = primaryUriDB.delete(null,keyEntry);
             
             if(opStatus != OperationStatus.SUCCESS){
-                throw new DatabaseException("Error occured removing URI: " +
+                throw new IOException("Error occured removing URI: " +
                         curi.toString() + " from HQ " + hostName + 
                         " priority queue for processing. " + opStatus.toString());
             }
