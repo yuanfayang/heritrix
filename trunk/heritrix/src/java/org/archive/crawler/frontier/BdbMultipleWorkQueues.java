@@ -289,9 +289,15 @@ public class BdbMultipleWorkQueues {
             // get cap; headKey at this point should always point to 
             // a queue-beginning cap entry (zero-length value)
             status = cursor.getSearchKey(headKey, result, null);
-            if(status!=OperationStatus.SUCCESS || result.getData().length > 0) {
-                // cap missing
-                throw new DatabaseException("bdb queue cap missing");
+            if (status != OperationStatus.SUCCESS) {
+                LOGGER.severe("bdb queue cap missing: " 
+                        + status.toString() + " "  + new String(headKey.getData()));
+                return status;
+            }
+            if (result.getData().length > 0) {
+                LOGGER.severe("bdb queue has nonzero size: " 
+                        + result.getData().length);
+                return OperationStatus.KEYEXIST;
             }
             // get next item (real first item of queue)
             status = cursor.getNext(headKey,result,null);
