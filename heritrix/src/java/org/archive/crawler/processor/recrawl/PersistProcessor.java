@@ -152,8 +152,10 @@ public abstract class PersistProcessor extends Processor {
         // open the source env history DB, copying entries to target env
         EnhancedEnvironment sourceEnv = setupCopyEnvironment(sourceDir,true);
         StoredClassCatalog sourceClassCatalog = sourceEnv.getClassCatalog();
+        DatabaseConfig historyDbConfig = historyDatabaseConfig();
+        historyDbConfig.setReadOnly(true);
         Database sourceHistoryDB = sourceEnv.openDatabase(
-                null, URI_HISTORY_DBNAME, historyDatabaseConfig());
+                null, URI_HISTORY_DBNAME, historyDbConfig);
         StoredSortedMap<String,AList> sourceHistoryMap = new StoredSortedMap<String,AList>(sourceHistoryDB,
                 new StringBinding(), new SerialBinding<AList>(sourceClassCatalog,
                         AList.class), true);
