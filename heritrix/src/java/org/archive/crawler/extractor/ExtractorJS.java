@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
@@ -160,6 +161,7 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
 
             if(UriUtils.isLikelyUriJavascriptContextLegacy(subsequence)) {
                 String string = subsequence.toString();
+                string = StringEscapeUtils.unescapeJavaScript(string);
                 string = UriUtils.speculativeFixup(string, curi.getUURI());
                 foundLinks++;
                 try {
