@@ -28,6 +28,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,6 +37,8 @@ import org.archive.io.RecordingInputStream;
 import org.archive.io.RecordingOutputStream;
 import org.archive.io.ReplayCharSequence;
 import org.archive.io.ReplayInputStream;
+
+import com.google.common.base.Charsets;
 
 
 /**
@@ -302,6 +305,27 @@ public class HttpRecorder {
      */
     public ReplayInputStream getReplayInputStream() throws IOException {
         return getRecordedInput().getReplayInputStream();
+    }
+    
+    /**
+     * Return a short prefix of the presumed-textual content as a String.
+     * 
+     * @param size max length of String to return 
+     * @return String prefix, or empty String (with logged exception) on any error
+     */
+    public String getReplayPrefixString(int size) {
+        try {
+            InputStreamReader isr =  (characterEncoding == null) 
+                ? new InputStreamReader(getReplayInputStream(), Charsets.ISO_8859_1)
+                : new InputStreamReader(getReplayInputStream(), characterEncoding); 
+            char[] chars = new char[size];
+            int count = isr.read(chars);
+            isr.close(); 
+            return new String(chars,0,count);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE,"unable to get replay prefix string", e);
+            return ""; 
+        } 
     }
     
     /**

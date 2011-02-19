@@ -81,6 +81,13 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
             return;
         }
 
+        if (mimeType.toLowerCase().indexOf("xml") < 0
+                && !curi.toString().toLowerCase().endsWith(".rss")
+                && !curi.toString().toLowerCase().endsWith(".xml")
+                && !curi.getHttpRecorder().getReplayPrefixString(8).matches("[\\ufeff]?<\\?xml\\s.*")) {
+            return;
+        }
+        
         ReplayCharSequence cs = null;
         try {
             cs = curi.getHttpRecorder().getReplayCharSequence();
@@ -90,14 +97,6 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
         if (cs == null) {
             logger.severe("Failed getting ReplayCharSequence: " +
                 curi.toString());
-            return;
-        }
-        
-        if (mimeType.toLowerCase().indexOf("xml") < 0
-                && !curi.toString().toLowerCase().endsWith(".rss")
-                && !curi.toString().toLowerCase().endsWith(".xml")
-                && (cs.length() >= 8 && !cs.subSequence(0, 8).toString()
-                        .matches("[\\ufeff]?<\\?xml\\s.*"))) {
             return;
         }
         
