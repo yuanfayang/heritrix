@@ -45,6 +45,7 @@ import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.google.common.net.InternetDomainName;
 import com.sleepycat.collections.StoredIterator; // <- IA/HERITRIX CHANGE
 
 /**
@@ -420,7 +421,26 @@ public class CookieSpecBase implements CookieSpec {
                         "Illegal domain attribute \"" + cookie.getDomain() 
                         + "\". Domain of origin: \"" + host + "\"");
                 }
+            } 
+            // BEGIN IA/HERITRIX ADDITION 
+            else {
+                // requested domain is suffix of origin host; now make sure
+                // it's not a public-suffix
+                String requestedDomain = cookie.getDomain(); 
+                if(requestedDomain.startsWith(".")) {
+                    requestedDomain = requestedDomain.substring(1);
+                }
+                try {
+                    if((InternetDomainName.fromLenient(requestedDomain)).isPublicSuffix()) {
+                        throw new MalformedCookieException(
+                                "Illegal public-suffix domain attribute \"" + cookie.getDomain() 
+                                + "\". Domain of origin: \"" + host + "\"");
+                    }  
+                } catch (IllegalArgumentException e) {
+                    // TODO: consider if this means cookie should be invalid
+                }
             }
+           // END IA/HERITRIX ADDITION 
         } else {
             if (!host.equals(cookie.getDomain())) {
                 throw new MalformedCookieException(
@@ -600,10 +620,17 @@ public class CookieSpecBase implements CookieSpec {
             return null;
         }
         List matching = new LinkedList();
-        String narrowHost = host;
-        do {
-            Iterator iter = cookies.subMap(narrowHost,
-                    narrowHost + Cookie.DOMAIN_OVERBOUNDS).values().iterator();
+        InternetDomainName domain; 
+        try {
+            domain = InternetDomainName.fromLenient(host); 
+        } catch(IllegalArgumentException e) {
+            domain = null; 
+        }
+        
+        String candidate = (domain!=null) ? domain.toString() : host;
+        while(candidate!=null) {
+            Iterator iter = cookies.subMap(candidate,
+                    candidate + Cookie.DOMAIN_OVERBOUNDS).values().iterator();
             while (iter.hasNext()) {
                 Cookie cookie = (Cookie) (iter.next());
                 if (match(host, port, path, secure, cookie)) {
@@ -611,9 +638,13 @@ public class CookieSpecBase implements CookieSpec {
                 }
             }
             StoredIterator.close(iter);
-            int trimTo = narrowHost.indexOf('.', 1);
-            narrowHost = (trimTo < 0) ? null : narrowHost.substring(trimTo+1);
-        } while (narrowHost != null);
+            if(domain!=null && domain.isUnderPublicSuffix()) {
+                domain = domain.parent(); 
+                candidate = domain.toString(); 
+            } else {
+                candidate = null;
+            }
+        }
 
         return (Cookie[]) matching.toArray(new Cookie[matching.size()]); 
     }
