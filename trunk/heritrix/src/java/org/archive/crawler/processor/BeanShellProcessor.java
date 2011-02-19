@@ -80,7 +80,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
      */
     public BeanShellProcessor(String name) {
         super(name, "BeanShellProcessor. Runs the BeanShell script source " +
-                "(supplied directly or via a file path) against the " +
+                "(via a file path) against the " +
                 "current URI. Source should define a script method " +
                 "'process(curi)' which will be passed the current CrawlURI. " +
                 "The script may also access this BeanShellProcessor via" +
