@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EventObject;
@@ -1027,7 +1029,7 @@ implements CrawlURIDispositionListener, Serializable {
             writeReportLine(writer,
                     val == null ? "-" : val.get(),
                     getBytesPerHost(key),
-                    key,
+                    fixup(key),
                     host.getSubstats().getRobotsDenials(),
                     host.getSubstats().getRemaining(),
                     host.getSubstats().getNovelUrls(),
@@ -1046,7 +1048,7 @@ implements CrawlURIDispositionListener, Serializable {
                     writeReportLine(writer,
                             host.getSubstats().getRecordedFinishes(),
                             host.getSubstats().getTotalBytes(),
-                            host.getHostName(),
+                            fixup(host.getHostName()),
                             host.getSubstats().getRobotsDenials(),
                             host.getSubstats().getRemaining(),
                             host.getSubstats().getNovelUrls(),
@@ -1060,6 +1062,18 @@ implements CrawlURIDispositionListener, Serializable {
         controller.getServerCache().forAllHostsDo(logZeros);
     }
     
+    protected String fixup(String hostName) {
+        if ("dns:".equals(hostName)) {
+            return hostName;
+        } else {
+            try {
+                return URLEncoder.encode(hostName, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     protected void writeReportLine(PrintWriter writer, Object  ... fields) {
        for(Object field : fields) {
            writer.print(field);
