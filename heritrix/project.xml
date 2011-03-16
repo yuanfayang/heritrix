@@ -776,6 +776,18 @@
                 http://www.apache.org/licenses/LICENSE-2.0</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>guava</id>
+            <version>r08</version>
+            <url>https://code.google.com/p/guava-libraries/</url>
+            <properties>
+                <description>
+                    This project contains several of Google's core libraries that we rely on in our Java-based projects: collections, caching, primitives support, concurrency libraries, common annotations, basic string processing, I/O, etc. 
+                </description>
+                <license>Apache 2.0
+                    http://www.apache.org/licenses/LICENSE-2.0</license>
+            </properties>
+        </dependency>
   </dependencies>
 
   
