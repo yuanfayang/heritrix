@@ -306,18 +306,18 @@ public class HttpRecorder {
     public ReplayInputStream getReplayInputStream() throws IOException {
         return getRecordedInput().getReplayInputStream();
     }
-    
+
     /**
      * Return a short prefix of the presumed-textual content as a String.
      * 
      * @param size max length of String to return 
      * @return String prefix, or empty String (with logged exception) on any error
      */
-    public String getReplayPrefixString(int size) {
+    public String getContentReplayPrefixString(int size) {
         try {
             InputStreamReader isr =  (characterEncoding == null) 
-                ? new InputStreamReader(getReplayInputStream(), Charsets.ISO_8859_1)
-                : new InputStreamReader(getReplayInputStream(), characterEncoding); 
+                ? new InputStreamReader(getRecordedInput().getContentReplayInputStream(), Charsets.ISO_8859_1)
+                : new InputStreamReader(getRecordedInput().getContentReplayInputStream(), characterEncoding); 
             char[] chars = new char[size];
             int count = isr.read(chars);
             isr.close(); 

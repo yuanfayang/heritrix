@@ -84,7 +84,7 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
         if (mimeType.toLowerCase().indexOf("xml") < 0
                 && !curi.toString().toLowerCase().endsWith(".rss")
                 && !curi.toString().toLowerCase().endsWith(".xml")
-                && !curi.getHttpRecorder().getReplayPrefixString(8).matches("[\\ufeff]?<\\?xml\\s.*")) {
+                && !curi.getHttpRecorder().getContentReplayPrefixString(8).matches("[\\ufeff]?<\\?xml\\s.*")) {
             return;
         }
         
