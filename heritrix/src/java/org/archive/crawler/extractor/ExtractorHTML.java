@@ -473,7 +473,7 @@ implements CoreAttributeConstants {
                 // still consider values rejected by URLDecoder
                 considerIfLikelyUri(curi, encodedKeyVal[1], valueContext, hopType);
             } catch (UnsupportedEncodingException e) {
-                throw new AssertionError("all jvms must support UTF-8, and yet somehow this happened: " + e);
+                logger.log(Level.SEVERE,"all jvms must support UTF-8, and yet somehow this happened",e);
             }
         }
     }
