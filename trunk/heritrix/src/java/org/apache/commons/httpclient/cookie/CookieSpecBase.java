@@ -45,7 +45,7 @@ import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.google.common.net.InternetDomainName;
+import com.google.common.net.InternetDomainName; // <- IA/HERITRIX CHANGE
 import com.sleepycat.collections.StoredIterator; // <- IA/HERITRIX CHANGE
 
 /**
