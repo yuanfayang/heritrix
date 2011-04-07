@@ -19,6 +19,9 @@
         crawler seeks to collect and <i>preserve</i> the digital
         artifacts of our culture for the benefit of future researchers and
         generations, this name seemed apt.</p>
+        
+        <p>The most up-to-date information is available from the 
+        <a href="https://webarchive.jira.com/wiki/display/Heritrix/Heritrix+Home">Heritrix Project Wiki</a>.</p>
     </section>
     <section name="Webmasters!">
         <p>Heritrix is designed to respect the
@@ -38,9 +41,16 @@
                 alt="archive -dash- crawler -dash- agent, @at@ lists .dot. sourceforge .dot. net"
                 title="archive -dash- crawler -dash- agent, @at@ lists .dot. sourceforge .dot. net"/>
         </p>
+        
+        <p>(If you see a different User-Agent in your logs that still says
+        'heritrix', it may be someone else using this open-source software. 
+        In such a case, even if we can't directly change how your site is 
+        crawled, we are happy to help you interpret your logs and identify, 
+        contact, or block the source of any troublesome crawling.)</p>
+        
     </section>
     <section name="Getting Started">
-        <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
+        <p>See the <a href="articles/user_manual/index.html">Heritrix 1.X User Manual</a>.</p>
     </section>
     <section name="News and Status">
 
