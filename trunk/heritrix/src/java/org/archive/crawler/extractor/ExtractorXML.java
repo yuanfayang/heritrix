@@ -76,18 +76,11 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
         if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }
-        String mimeType = curi.getContentType();
-        if (mimeType == null) {
-            return;
+        
+        if (!shouldExtract(curi)) {
+        	return;
         }
 
-        if (mimeType.toLowerCase().indexOf("xml") < 0
-                && !curi.toString().toLowerCase().endsWith(".rss")
-                && !curi.toString().toLowerCase().endsWith(".xml")
-                && !curi.getHttpRecorder().getContentReplayPrefixString(8).matches("[\\ufeff]?<\\?xml\\s.*")) {
-            return;
-        }
-        
         ReplayCharSequence cs = null;
         try {
             cs = curi.getHttpRecorder().getReplayCharSequence();
@@ -119,7 +112,31 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
         }
     }
 
-    public static long processXml(CrawlURI curi, CharSequence cs,
+    protected boolean shouldExtract(CrawlURI curi) {
+    	String mimeType = curi.getContentType();
+
+    	// first check for xml mimetype or file extension
+    	// application/vnd.openxmlformats.* seem to be zip archives
+		if (mimeType != null
+				&& (mimeType.toLowerCase().indexOf("xml") >= 0 && !mimeType
+						.matches("(?i)application/vnd.openxmlformats.*"))
+				|| curi.toString().toLowerCase().endsWith(".rss")
+				|| curi.toString().toLowerCase().endsWith(".xml")) {
+    		return true;
+    	}
+
+    	// check if content starts with xml preamble "<?xml" and does not
+    	// contain "<!doctype html" or "<html" early in the content
+    	String contentStartingChunk = curi.getHttpRecorder().getContentReplayPrefixString(400); 
+    	if (contentStartingChunk.matches("(?is)[\\ufeff]?<\\?xml\\s.*")
+    			&& !contentStartingChunk.matches("(?is).*(?:<!doctype\\s+html|<html[>\\s]).*")) {
+    		return true;
+    	}
+
+    	return false;
+    }
+
+	public static long processXml(CrawlURI curi, CharSequence cs,
             CrawlController controller) {
         long foundLinks = 0;
         Matcher uris = null;
