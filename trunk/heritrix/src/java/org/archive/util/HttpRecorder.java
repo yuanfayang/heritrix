@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -314,10 +315,17 @@ public class HttpRecorder {
      * @return String prefix, or empty String (with logged exception) on any error
      */
     public String getContentReplayPrefixString(int size) {
+        Charset charset = Charsets.ISO_8859_1;
+        if (characterEncoding != null) {
+            try {
+                charset = Charset.forName(characterEncoding);
+            } catch (IllegalArgumentException e) {
+                // revert to single-byte for unknown encodings
+            }
+        }
+
         try {
-            InputStreamReader isr =  (characterEncoding == null) 
-                ? new InputStreamReader(getRecordedInput().getContentReplayInputStream(), Charsets.ISO_8859_1)
-                : new InputStreamReader(getRecordedInput().getContentReplayInputStream(), characterEncoding); 
+            InputStreamReader isr =  new InputStreamReader(getRecordedInput().getContentReplayInputStream(), charset);
             char[] chars = new char[size];
             int count = isr.read(chars);
             isr.close(); 
