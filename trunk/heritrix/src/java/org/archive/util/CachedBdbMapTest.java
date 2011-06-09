@@ -174,6 +174,7 @@ public class CachedBdbMapTest extends TmpDirTestCase {
         assertEquals(cache.memMap.size(), 10000);
         assertEquals(cache.size(), 10000);
         TestUtils.forceScarceMemory();
+        System.runFinalization(); 
         Thread.sleep(3000);
         // The 'canary' trick makes this explicit expunge, or
         // an expunge triggered by a get() or put...(), unnecessary
