@@ -1,4 +1,4 @@
-/* $Id: WARCRecord.java 4566 2006-08-31 16:51:41Z stack-sf $
+/* $Id$
  *
  * Created on August 25th, 2006
  *

@@ -1,4 +1,4 @@
-/* $Id: WARCWriterPool.java 4566 2006-08-31 16:51:41Z stack-sf $
+/* $Id$
  *
  * Created on August 1st, 2006.
  *
@@ -33,7 +33,7 @@ import org.archive.io.WriterPoolSettings;
 /**
  * A pool of WARCWriters.
  * @author stack
- * @version $Revision: 4566 $ $Date: 2006-08-31 09:51:41 -0700 (Thu, 31 Aug 2006) $
+ * @version $Revision$ $Date$
  */
 public class WARCWriterPool extends WriterPool {
     /**
