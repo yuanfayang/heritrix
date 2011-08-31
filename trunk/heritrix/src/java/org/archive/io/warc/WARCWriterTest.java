@@ -1,7 +1,7 @@
 /*
  * ExperimentalWARCWriterTest
  *
- * $Id: ExperimentalWARCWriterTest.java 4554 2006-08-30 02:35:48Z stack-sf $
+ * $Id$
  *
  * Created on July 27th, 2006
  *
@@ -50,7 +50,7 @@ import org.archive.util.anvl.ANVLRecord;
 /**
  * Test Writer and Reader.
  * @author stack
- * @version $Date: 2006-08-29 19:35:48 -0700 (Tue, 29 Aug 2006) $ $Version$
+ * @version $Date$ $Version$
  */
 public class WARCWriterTest
 extends TmpDirTestCase implements WARCConstants {

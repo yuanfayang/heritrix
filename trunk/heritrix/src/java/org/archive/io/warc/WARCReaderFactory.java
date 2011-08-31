@@ -1,4 +1,4 @@
-/* $Id: WARCReaderFactory.java 4533 2006-08-24 00:59:04Z stack-sf $
+/* $Id$
  *
  * Created Aug 22, 2006
  *
@@ -42,7 +42,7 @@ import org.archive.util.FileUtils;
  * Figures whether to give out a compressed file Reader or an uncompressed
  * Reader.
  * @author stack
- * @version $Date: 2006-08-23 17:59:04 -0700 (Wed, 23 Aug 2006) $ $Version$
+ * @version $Date$ $Version$
  */
 public class WARCReaderFactory extends ArchiveReaderFactory
 implements WARCConstants {

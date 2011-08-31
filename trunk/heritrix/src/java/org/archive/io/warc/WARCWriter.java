@@ -1,4 +1,4 @@
-/*  $Id: ExperimentalWARCWriter.java 4604 2006-09-06 05:38:18Z stack-sf $
+/*  $Id$
  *
  * Created on July 27th, 2006
  *
@@ -53,7 +53,7 @@ import org.archive.util.anvl.ANVLRecord;
  * <p>While being written, WARCs have a '.open' suffix appended.
  *
  * @author stack
- * @version $Revision: 4604 $ $Date: 2006-09-05 22:38:18 -0700 (Tue, 05 Sep 2006) $
+ * @version $Revision$ $Date$
  */
 public class WARCWriter extends WriterPoolMember implements WARCConstants {
     public static final String TOTALS = "totals";
