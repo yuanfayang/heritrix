@@ -108,6 +108,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
             try {
                 interpreter.set("curi",curi);
                 interpreter.eval("process(curi)");
+                interpreter.unset("curi");
             } catch (EvalError e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
