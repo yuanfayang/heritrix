@@ -25,7 +25,6 @@ package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -160,6 +159,7 @@ Reporter, ProgressStatisticsReporter {
                     controller.getFrontier().finished(currentCuri);
                     setCurrentCuri(null);
                 }
+                curi = null;
                 
                 setStep(STEP_FINISHING_PROCESS);
                 lastFinishTime = System.currentTimeMillis();
