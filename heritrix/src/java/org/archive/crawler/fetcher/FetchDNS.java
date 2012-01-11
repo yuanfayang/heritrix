@@ -78,8 +78,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
     private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES
         = 6 * 60 * 60; // 6 hrs
     
-    private byte [] reusableBuffer = new byte[1024];
-
     /** 
      * Create a new instance of FetchDNS.
      *
@@ -267,7 +265,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
 		// Reading from the wrapped stream, behind the scenes, will write
 		// files into scratch space
 		try {
-			while (is.read(this.reusableBuffer) != -1) {
+            byte[] buf = new byte[256];
+			while (is.read(buf) != -1) {
 				continue;
 			}
 		} finally {
